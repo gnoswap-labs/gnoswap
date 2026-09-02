@@ -9,8 +9,8 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-// TestObservationState_Write tests basic write operations on ObservationState
-func TestObservationState_Write(cur realm, t *testing.T) {
+// TestObservationTree_Write tests basic write operations on ObservationTree
+func TestObservationTree_Write(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	tests := []struct {
@@ -80,7 +80,7 @@ func TestObservationState_Write(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			os := pl.NewObservationState(tt.initialTime)
+			os := pl.NewPoolObservationsTree(tt.initialTime)
 			slot0 := testObservationSlot0(0, 1, 1)
 
 			var err error
@@ -108,8 +108,8 @@ func TestObservationState_Write(cur realm, t *testing.T) {
 	}
 }
 
-// TestObservationState_CircularBuffer tests circular buffer behavior with multiple cardinality
-func TestObservationState_CircularBuffer(cur realm, t *testing.T) {
+// TestObservationTree_CircularBuffer tests circular buffer behavior with multiple cardinality
+func TestObservationTree_CircularBuffer(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	tests := []struct {
@@ -148,7 +148,7 @@ func TestObservationState_CircularBuffer(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			os := pl.NewObservationState(currentTime)
+			os := pl.NewPoolObservationsTree(currentTime)
 			slot0 := testObservationSlot0(0, tt.cardinality, tt.cardinalityNext)
 
 			liquidity := u256.MustFromDecimal("1000000")
@@ -223,23 +223,23 @@ func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 			initPoolTest(cur, t)
 			pool := createTestPool()
 			currentTime := time.Now().Unix()
-			observationState := pool.ObservationState()
+			observations := observationsForTest(pool)
 			slot0 := pool.Slot0()
 
 			if tt.initialCardinality > 0 {
 				slot0.SetObservationIndex(0)
 				slot0.SetObservationCardinality(tt.initialCardinality)
 				slot0.SetObservationCardinalityNext(tt.initialCardinalityNext)
-				writeObservationWithSlot0(observationState, &slot0, currentTime, pool.Slot0Tick(), pool.Liquidity())
+				writeObservationWithSlot0(observations, &slot0, currentTime, pool.Slot0Tick(), pool.Liquidity())
 				pool.SetSlot0(slot0)
-				pool.SetObservationState(observationState)
+				setObservationsForTest(pool, observations)
 			} else {
-				pool.SetObservationState(nil)
+				setObservationsForTest(pool, nil)
 			}
 
-			if tt.expectError {
-				err := increaseObservationCardinalityNextForTest(pool, tt.newCardinalityNext)
-				uassert.ErrorContains(t, err, tt.errorContains)
+		if tt.expectError {
+			_, err := grow(nil, tt.initialCardinalityNext, tt.newCardinalityNext)
+			uassert.ErrorContains(t, err, tt.errorContains)
 			} else {
 				increaseObservationCardinalityNextForTest(pool, tt.newCardinalityNext)
 				slot0 := pool.Slot0()
@@ -292,15 +292,15 @@ func TestOracleConsult_RoundingTable(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := createTestPool()
-			observationState := newObservationStateWithDelta(tt.secondsAgo, tt.tickDelta)
-			pool.SetObservationState(observationState)
+			observations := newObservationTreeWithDelta(tt.secondsAgo, tt.tickDelta)
+			setObservationsForTest(pool, observations)
 			slot0 := pool.Slot0()
 			slot0.SetObservationIndex(1)
 			slot0.SetObservationCardinality(2)
 			slot0.SetObservationCardinalityNext(2)
 			pool.SetSlot0(slot0)
 
-			twapTick, _, err := oracleConsult(pool, tt.secondsAgo)
+			twapTick, _, err := oracleConsult(pool, observationsForTest(pool), tt.secondsAgo)
 			uassert.NoError(t, err, "oracleConsult should succeed for configured observations")
 			uassert.Equal(t, tt.expected, twapTick, "unexpected TWAP tick")
 		})
@@ -360,15 +360,15 @@ func TestOracleConsult_HarmonicMeanLiquidity(cur realm, t *testing.T) {
 			secondsPerLiq1 := u256.MustFromDecimal(tt.secondsPerLiqCumulatives[1])
 			delta := u256.Zero().Sub(secondsPerLiq1, secondsPerLiq0)
 
-			observationState := newObservationStateWithLiquidity(tt.secondsAgo, tt.tickCumulatives[1]-tt.tickCumulatives[0], delta)
-			pool.SetObservationState(observationState)
+			observations := newObservationTreeWithLiquidity(tt.secondsAgo, tt.tickCumulatives[1]-tt.tickCumulatives[0], delta)
+			setObservationsForTest(pool, observations)
 			slot0 := pool.Slot0()
 			slot0.SetObservationIndex(1)
 			slot0.SetObservationCardinality(2)
 			slot0.SetObservationCardinalityNext(2)
 			pool.SetSlot0(slot0)
 
-			arithmeticMeanTick, harmonicMeanLiquidity, err := oracleConsult(pool, tt.secondsAgo)
+			arithmeticMeanTick, harmonicMeanLiquidity, err := oracleConsult(pool, observationsForTest(pool), tt.secondsAgo)
 			uassert.NoError(t, err, "oracleConsult should succeed")
 
 			// Check arithmetic mean tick
@@ -400,7 +400,7 @@ func TestOracleConsult_ErrorCases(cur realm, t *testing.T) {
 			name: "secondsAgo is zero",
 			setupPool: func() *pl.Pool {
 				pool := createTestPool()
-				pool.SetObservationState(pl.NewObservationState(time.Now().Unix()))
+				setObservationsForTest(pool, pl.NewPoolObservationsTree(time.Now().Unix()))
 				return pool
 			},
 			secondsAgo:    0,
@@ -410,7 +410,7 @@ func TestOracleConsult_ErrorCases(cur realm, t *testing.T) {
 			name: "observation state not initialized",
 			setupPool: func() *pl.Pool {
 				pool := createTestPool()
-				pool.SetObservationState(nil)
+				setObservationsForTest(pool, nil)
 				return pool
 			},
 			secondsAgo:    3600,
@@ -421,20 +421,24 @@ func TestOracleConsult_ErrorCases(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := tt.setupPool()
-			_, _, err := oracleConsult(pool, tt.secondsAgo)
+			var observations *pl.ObservationTree
+			if tt.name != "observation state not initialized" {
+				observations = observationsForTest(pool)
+			}
+			_, _, err := oracleConsult(pool, observations, tt.secondsAgo)
 			uassert.ErrorContains(t, err, tt.expectedError)
 		})
 	}
 }
 
-// newObservationStateWithDelta seeds a 2-slot observation state so that the
+// newObservationTreeWithDelta seeds a 2-slot observation state so that the
 // tick cumulative delta over secondsAgo is tickDelta.
-func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.ObservationState {
+func newObservationTreeWithDelta(secondsAgo uint32, tickDelta int64) *pl.ObservationTree {
 	now := time.Now().Unix()
 	start := now - int64(secondsAgo)
 
-	os := pl.NewObservationState(start)
-	os.SetObservation(1, pl.NewObservation(
+	os := pl.NewPoolObservationsTree(start)
+	os.Set(1, pl.NewObservation(
 		now,
 		tickDelta,
 		"0",
@@ -443,14 +447,14 @@ func newObservationStateWithDelta(secondsAgo uint32, tickDelta int64) *pl.Observ
 	return os
 }
 
-// newObservationStateWithLiquidity seeds a 2-slot observation state with
+// newObservationTreeWithLiquidity seeds a 2-slot observation state with
 // tick cumulative delta and seconds per liquidity delta.
-func newObservationStateWithLiquidity(secondsAgo uint32, tickDelta int64, secondsPerLiquidityDelta *u256.Uint) *pl.ObservationState {
+func newObservationTreeWithLiquidity(secondsAgo uint32, tickDelta int64, secondsPerLiquidityDelta *u256.Uint) *pl.ObservationTree {
 	now := time.Now().Unix()
 	start := now - int64(secondsAgo)
 
-	os := pl.NewObservationState(start)
-	os.SetObservation(1, pl.NewObservation(
+	os := pl.NewPoolObservationsTree(start)
+	os.Set(1, pl.NewObservation(
 		now,
 		tickDelta,
 		secondsPerLiquidityDelta.ToString(),

@@ -182,7 +182,8 @@ func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 			restoreContext := setOracleTestContext(tt.currentTime)
 			defer restoreContext()
 
-			got, _, err := oracleConsult(newTwapConsistencyPool(tt), tt.secondsAgo)
+			pool := newTwapConsistencyPool(tt)
+			got, _, err := oracleConsult(pool, observationsForTest(pool), tt.secondsAgo)
 			if tt.wantErr != "" {
 				uassert.ErrorContains(t, err, tt.wantErr)
 				return
@@ -211,7 +212,7 @@ func newTwapConsistencyPool(tt twapConsistencyCase) *pl.Pool {
 	slot0.SetTick(tt.currentTick)
 	pool.SetSlot0(slot0)
 	pool.SetLiquidity(u256.MustFromDecimal("1000"))
-	pool.SetObservationState(newTwapConsistencyObservationState(tt.observations))
+	setObservationsForTest(pool, newTwapConsistencyObservationTree(tt.observations))
 	slot0.SetObservationIndex(uint16(len(tt.observations) - 1))
 	slot0.SetObservationCardinality(uint16(len(tt.observations)))
 	slot0.SetObservationCardinalityNext(uint16(len(tt.observations)))
@@ -220,8 +221,8 @@ func newTwapConsistencyPool(tt twapConsistencyCase) *pl.Pool {
 	return pool
 }
 
-func newTwapConsistencyObservationState(observations []twapConsistencyObservation) *pl.ObservationState {
-	os := pl.NewObservationState(observations[0].timestamp)
+func newTwapConsistencyObservationTree(observations []twapConsistencyObservation) *pl.ObservationTree {
+	os := pl.NewPoolObservationsTree(observations[0].timestamp)
 
 	seeded := make(map[uint16]*pl.Observation)
 	for i, observation := range observations {
@@ -232,7 +233,9 @@ func newTwapConsistencyObservationState(observations []twapConsistencyObservatio
 			true,
 		)
 	}
-	os.SetObservations(seeded)
+	for index, observation := range seeded {
+		os.Set(index, observation)
+	}
 
 	return os
 }

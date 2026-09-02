@@ -322,7 +322,7 @@ func TestSwapComputation_CoreEngine(cur realm, t *testing.T) {
 			}
 
 			// When: Execute swap computation
-			result, err := getMockInstance().computeSwap(mockPool, computation, nil)
+			result, err := getMockInstance().computeSwap(mockPool, observationsForTest(mockPool), computation, nil)
 			// Then: Verify computation result
 			if err != nil {
 				t.Fatalf("Unexpected error during swap computation: %v", err)
@@ -365,7 +365,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 		})
 
 		step := StepComputations{initialized: true, tickNext: 1}
-		newState, err := getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+		newState, err := getMockInstance().tickTransition(step, false, state, pool, observationsForTest(pool), cache, nil)
 		uassert.NoError(t, err)
 
 		uassert.Equal(t, maxUint128.ToString(), newState.liquidity.ToString())
@@ -392,14 +392,14 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 
 		step := StepComputations{initialized: true, tickNext: 1}
 		uassert.PanicsContains(t, cur, "result exceeds uint128 range", func() {
-			_, _ = getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+			_, _ = getMockInstance().tickTransition(step, false, state, pool, observationsForTest(pool), cache, nil)
 		})
 	})
 }
 
 func TestSwap_TickTransitionUsesSwapStartTickForOracle(cur realm, t *testing.T) {
 	pool := pl.NewPool("token0", "token1", FeeTier500, u256.One(), 1, 0, 0)
-	pool.SetObservationState(pl.NewObservationState(100))
+	setObservationsForTest(pool, pl.NewPoolObservationsTree(100))
 
 	tickInfo := pl.NewTickInfo()
 	tickInfo.SetInitialized(true)
@@ -416,7 +416,7 @@ func TestSwap_TickTransitionUsesSwapStartTickForOracle(cur realm, t *testing.T) 
 	cache := newSwapCache(0, u256.NewUint(100), 200, slot0)
 	step := StepComputations{initialized: true, tickNext: 20}
 
-	_, err := getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+	_, err := getMockInstance().tickTransition(step, false, state, pool, observationsForTest(pool), cache, nil)
 	uassert.NoError(t, err)
 	tickInfoAfter, err := pool.GetTick(20)
 	uassert.NoError(t, err)
@@ -425,7 +425,7 @@ func TestSwap_TickTransitionUsesSwapStartTickForOracle(cur realm, t *testing.T) 
 
 func TestSwap_TickTransitionPropagatesOracleError(cur realm, t *testing.T) {
 	pool := pl.NewPool("token0", "token1", FeeTier500, u256.One(), 1, 0, 0)
-	pool.SetObservationState(nil)
+	setObservationsForTest(pool, nil)
 	tickInfo := pl.NewTickInfo()
 	tickInfo.SetInitialized(true)
 	pool.SetTick(20, tickInfo)
@@ -435,7 +435,7 @@ func TestSwap_TickTransitionPropagatesOracleError(cur realm, t *testing.T) {
 	state := newSwapState(i256.Zero(), u256.Zero(), u256.NewUint(100), slot0)
 	step := StepComputations{initialized: true, tickNext: 20}
 
-	_, err := getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+	_, err := getMockInstance().tickTransition(step, false, state, pool, observationsForTest(pool), cache, nil)
 	uassert.ErrorContains(t, err, "observation state not initialized")
 }
 
@@ -1568,7 +1568,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 		Cache:             cache,
 	}
 
-	result, _ := getMockInstance().computeSwap(pool, comp, nil)
+	result, _ := getMockInstance().computeSwap(pool, observationsForTest(pool), comp, nil)
 	uassert.Equal(t, "0", result.Amount0.ToString(), "DrySwap should return amount0=0")
 	uassert.Equal(t, "2", result.Amount1.ToString(), "DrySwap should return amount1=2")
 

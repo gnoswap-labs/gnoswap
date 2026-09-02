@@ -515,14 +515,14 @@ func TestTickUpdateSeedsOracleOutsideForActiveTick(cur realm, t *testing.T) {
 	pool := pl.NewPool("token0", "token1", STANDARD_FEE_TIER, u256.MustFromDecimal(EQUAL_PRICE_RATIO), 1, 5, 0)
 	pool.SetLiquidity(u256.NewUint(100))
 
-	observationState := pl.NewObservationState(startTime)
-	pool.SetObservationState(observationState)
+	observations := pl.NewPoolObservationsTree(startTime)
+	setObservationsForTest(pool, observations)
 	slot0 := pool.Slot0()
-	uassert.NoError(t, writeObservationWithSlot0(observationState, &slot0, initTime, 5, pool.Liquidity()))
+	uassert.NoError(t, writeObservationWithSlot0(observations, &slot0, initTime, 5, pool.Liquidity()))
 	pool.SetSlot0(slot0)
 
 	tickCumulativeAtInit, secondsPerLiquidityAtInit, err := observeSingle(
-		observationState,
+		observations,
 		initTime,
 		0,
 		pool.Slot0Tick(),
@@ -534,7 +534,7 @@ func TestTickUpdateSeedsOracleOutsideForActiveTick(cur realm, t *testing.T) {
 
 	restoreContext := setOracleTestContext(initTime)
 	defer restoreContext()
-	_, err = updatePosition(pool, newModifyPositionParams(address("g1lp"), 0, 10, i256.NewInt(10)), pool.Slot0Tick())
+	_, err = updatePosition(pool, observationsForTest(pool), newModifyPositionParams(address("g1lp"), 0, 10, i256.NewInt(10)), pool.Slot0Tick())
 	uassert.NoError(t, err)
 
 	lowerTick := getTick(pool, 0)
@@ -543,7 +543,7 @@ func TestTickUpdateSeedsOracleOutsideForActiveTick(cur realm, t *testing.T) {
 	uassert.Equal(t, uint32(initTime), lowerTick.SecondsOutside())
 
 	tickCumulativeAtCross, secondsPerLiquidityAtCross, err := observeSingle(
-		observationState,
+		observations,
 		crossTime,
 		0,
 		pool.Slot0Tick(),

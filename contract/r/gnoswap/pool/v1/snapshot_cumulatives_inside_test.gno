@@ -74,7 +74,7 @@ func TestSnapshotCumulativesInside_RangePosition(cur realm, t *testing.T) {
 				tt.upper,
 			)
 
-			tickCumulativeInside, secondsPerLiquidityInsideX128, secondsInside, err := snapshotCumulativesInside(pool, -10, 10)
+			tickCumulativeInside, secondsPerLiquidityInsideX128, secondsInside, err := snapshotCumulativesInside(pool, observationsForTest(pool), -10, 10)
 			uassert.NoError(t, err)
 			uassert.Equal(t, tt.wantTick, tickCumulativeInside)
 			uassert.Equal(t, tt.wantLiquidity, secondsPerLiquidityInsideX128.ToString())
@@ -99,20 +99,20 @@ func TestSnapshotCumulativesInside_UsesCounterfactualCurrentObservation(cur real
 	)
 	pool.SetLiquidity(u256.One())
 
-	observationBefore, ok := pool.ObservationState().ObservationAt(0)
+	observationBefore, ok := observationsForTest(pool).Get(0)
 	uassert.True(t, ok)
 	beforeTimestamp := observationBefore.BlockTimestamp()
 	beforeTickCumulative := observationBefore.TickCumulative()
 	beforeSecondsPerLiquidity := observationBefore.SecondsPerLiquidityCumulativeX128()
 	slot0Before := pool.Slot0()
 
-	tickCumulativeInside, secondsPerLiquidityInsideX128, secondsInside, err := snapshotCumulativesInside(pool, -10, 20)
+	tickCumulativeInside, secondsPerLiquidityInsideX128, secondsInside, err := snapshotCumulativesInside(pool, observationsForTest(pool), -10, 20)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(700), tickCumulativeInside)
 	uassert.Equal(t, u256.Zero().Mul(u256.NewUint(10), consts.Q128()).ToString(), secondsPerLiquidityInsideX128.ToString())
 	uassert.Equal(t, uint32(70), secondsInside)
 
-	observationAfter, ok := pool.ObservationState().ObservationAt(0)
+	observationAfter, ok := observationsForTest(pool).Get(0)
 	uassert.True(t, ok)
 	uassert.Equal(t, beforeTimestamp, observationAfter.BlockTimestamp())
 	uassert.Equal(t, beforeTickCumulative, observationAfter.TickCumulative())
@@ -160,7 +160,7 @@ func TestSnapshotCumulativesInside_ValidatesRangeAndTicks(cur realm, t *testing.
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			_, _, _, err := snapshotCumulativesInside(pool, tt.tickLower, tt.tickUpper)
+			_, _, _, err := snapshotCumulativesInside(pool, observationsForTest(pool), tt.tickLower, tt.tickUpper)
 			uassert.ErrorContains(t, err, tt.wantErr)
 		})
 	}
@@ -185,14 +185,14 @@ func newSnapshotCumulativesInsidePool(
 	pool.SetSlot0(slot0)
 	pool.SetLiquidity(u256.One())
 
-	observationState := pl.NewObservationState(observationTimestamp)
-	observationState.SetObservation(0, pl.NewObservation(
+	observations := pl.NewPoolObservationsTree(observationTimestamp)
+	observations.Set(0, pl.NewObservation(
 		observationTimestamp,
 		observationTickCumulative,
 		observationSecondsPerLiquidityX128,
 		true,
 	))
-	pool.SetObservationState(observationState)
+	setObservationsForTest(pool, observations)
 
 	ticks := pl.NewPoolTicksTree()
 	ticks.Set(pl.EncodeTickKey(tickLower), lower)

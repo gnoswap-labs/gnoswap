@@ -1003,7 +1003,7 @@ func TestIterateTicksBoundary(cur realm, t *testing.T) {
 					tickUpper:      tickUpper,
 					liquidityDelta: i256.MustFromDecimal("1000000"),
 				}
-				_, _, _, err := modifyPosition(pool, params)
+				_, _, _, err := modifyPosition(pool, observationsForTest(pool), params)
 				if err != nil {
 					t.Logf("Warning: Failed to create position for tick %d: %v", tick, err)
 				}

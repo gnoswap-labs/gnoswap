@@ -195,7 +195,7 @@ func (p *Pool) IterateTicks(startTick int32, endTick int32, fn func(tick int32, 
 }
 
 // Clone copies a pool's own fields and leaves its collections nil: ticks,
-// tickBitmaps, positions, and observationState are not copied.
+// tickBitmaps, positions, and observations are not copied.
 //
 // The copy is shallow because the read-only pool view clones every entry a
 // caller reads, so copying the collections would walk the whole tick tree for

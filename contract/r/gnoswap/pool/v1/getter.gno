@@ -107,8 +107,7 @@ func (i *poolV1) GetSlot0(poolPath string) pl.Slot0 {
 }
 
 func (i *poolV1) GetObservationAt(poolPath string, index uint16) (pl.Observation, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
+	if _, err := i.getPool(poolPath); err != nil {
 		return *pl.NewDefaultObservation(), err
 	}
 
@@ -119,12 +118,12 @@ func (i *poolV1) GetObservationAt(poolPath string, index uint16) (pl.Observation
 		return *pl.NewDefaultObservation(), makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("observation index %d out of range", index))
 	}
 
-	observationState := pool.ObservationState()
-	if observationState == nil {
-		return *pl.NewDefaultObservation(), nil
+	observations, err := i.getObservations(poolPath)
+	if err != nil {
+		return *pl.NewDefaultObservation(), err
 	}
 
-	observation, ok := observationState.ObservationAt(index)
+	observation, ok := observations.Get(index)
 	if !ok || observation == nil {
 		return *pl.NewDefaultObservation(), nil
 	}
@@ -141,14 +140,14 @@ func (i *poolV1) Observe(poolPath string, secondsAgos []uint32) ([]int64, []stri
 		return nil, nil, err
 	}
 
-	observationState := pool.ObservationState()
-	if observationState == nil {
-		return nil, nil, errors.New("observation state not initialized")
+	observations, err := i.getObservations(poolPath)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	slot0 := pool.Slot0()
 	return observe(
-		observationState,
+		observations,
 		time.Now().Unix(),
 		secondsAgos,
 		slot0.Tick(),
@@ -170,7 +169,12 @@ func (i *poolV1) SnapshotCumulativesInside(
 		return 0, nil, 0, err
 	}
 
-	return snapshotCumulativesInside(pool, tickLower, tickUpper)
+	observations, err := i.getObservations(poolPath)
+	if err != nil {
+		return 0, nil, 0, err
+	}
+
+	return snapshotCumulativesInside(pool, observations, tickLower, tickUpper)
 }
 
 func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error) {

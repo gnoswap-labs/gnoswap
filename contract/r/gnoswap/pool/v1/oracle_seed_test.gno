@@ -21,7 +21,7 @@ func TestTickTransitionSeedsOracleFromSwapStartTick(cur realm, t *testing.T) {
 	pool := makeMockPool(createMockPoolParams{
 		slot0:            mockSlot0{tick: swapStartTick},
 		liquidity:        u256.One(),
-		observationState: pl.NewObservationState(currentTime - timeDelta),
+		observations: pl.NewPoolObservationsTree(currentTime - timeDelta),
 	})
 	pool.SetTick(crossedTick, pl.NewTickInfo())
 
@@ -33,7 +33,7 @@ func TestTickTransitionSeedsOracleFromSwapStartTick(cur realm, t *testing.T) {
 	cache := newSwapCache(0, u256.One(), currentTime, pool.Slot0())
 	step := StepComputations{tickNext: crossedTick, initialized: true}
 
-	getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+	getMockInstance().tickTransition(step, false, state, pool, observationsForTest(pool), cache, nil)
 
 	tick, err := pool.GetTick(crossedTick)
 	uassert.NoError(t, err)

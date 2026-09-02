@@ -69,6 +69,7 @@ func oracleConsult(p *pl.Pool, observations *pl.ObservationTree, secondsAgo uint
 // snapshotCumulativesInside flow.
 func snapshotCumulativesInside(
 	p *pl.Pool,
+	observations *pl.ObservationTree,
 	tickLower int32,
 	tickUpper int32,
 ) (int64, *u256.Uint, uint32, error) {
@@ -97,14 +98,13 @@ func snapshotCumulativesInside(
 	}
 
 	if slot0.Tick() < tickUpper {
-		observationState := p.ObservationState()
-		if observationState == nil {
-			return 0, nil, 0, errors.New("observation state not initialized")
+		if observations == nil {
+			return 0, nil, 0, errors.New("observations not initialized")
 		}
 
 		currentTime := time.Now().Unix()
 		tickCumulative, secondsPerLiquidityCumulativeX128, err := observeSingle(
-			observationState,
+			observations,
 			currentTime,
 			0,
 			slot0.Tick(),

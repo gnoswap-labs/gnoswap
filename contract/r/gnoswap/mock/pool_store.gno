@@ -8,6 +8,7 @@ import (
 
 type MockPoolStore struct {
 	pools                *bptree.BPTree
+	observations         *bptree.BPTree
 	feeAmountTickSpacing map[uint32]int32
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
@@ -32,6 +33,19 @@ func (s *MockPoolStore) GetPools() *bptree.BPTree {
 // SetPools stores the map containing all pool data.
 func (s *MockPoolStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
 	s.pools = pools
+	return nil
+}
+
+func (s *MockPoolStore) HasObservations() bool {
+	return s.observations != nil
+}
+
+func (s *MockPoolStore) GetObservations() *bptree.BPTree {
+	return s.observations
+}
+
+func (s *MockPoolStore) SetObservations(_ int, rlm realm, observations *bptree.BPTree) error {
+	s.observations = observations
 	return nil
 }
 
@@ -188,6 +202,7 @@ func NewMockPoolStoreWithHook(
 
 	return &MockPoolStore{
 		pools:                pool.NewPoolsTree(),
+		observations:         pool.NewObservationsTree(),
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,

@@ -118,7 +118,7 @@ func createPositionWithValidation(t *testing.T, pool *pl.Pool, scenario Position
 	}
 
 	var err error
-	_, amount0, amount1, err = modifyPosition(pool, params)
+	_, amount0, amount1, err = modifyPosition(pool, observationsForTest(pool), params)
 	if err != nil {
 		t.Fatalf("Failed to create position: %v", err)
 	}
@@ -151,7 +151,7 @@ func updatePositionLiquidity(t *testing.T, pool *pl.Pool, owner address, tickLow
 		liquidityDelta: delta,
 	}
 
-	_, amount0, amount1, err := modifyPosition(pool, params)
+	_, amount0, amount1, err := modifyPosition(pool, observationsForTest(pool), params)
 	if err != nil {
 		t.Fatalf("Failed to update position liquidity: %v", err)
 	}
@@ -318,7 +318,7 @@ func TestPositionUpdateWithKey_LPStrategies(cur realm, t *testing.T) {
 					tickUpper:      MODERATE_UPPER,
 					liquidityDelta: i256.MustFromDecimal(MEDIUM_LIQUIDITY),
 				}
-				modifyPosition(pool, params)
+				modifyPosition(pool, observationsForTest(pool), params)
 			}
 
 			// update position
@@ -587,7 +587,7 @@ func TestModifyPosition_WithDifferentPrice(cur realm, t *testing.T) {
 					liquidityDelta: i256.MustFromDecimal(test.liquidity),
 				}
 
-				_, amount0, amount1, err := modifyPosition(pool, params)
+				_, amount0, amount1, err := modifyPosition(pool, observationsForTest(pool), params)
 				uassert.NoError(t, err, "Position creation should succeed")
 
 				// Then: Validate token requirements based on price
@@ -663,7 +663,7 @@ func TestModifyPositionEdgeCases(cur realm, t *testing.T) {
 			liquidityDelta: i256.Zero(),
 		}
 
-		_, _, _, err := modifyPosition(pool, params)
+		_, _, _, err := modifyPosition(pool, observationsForTest(pool), params)
 		uassert.Equal(t, err.Error(), "[GNOSWAP-POOL-007] zero liquidity || both liquidityDelta and current position's liquidity are zero")
 	})
 
@@ -683,11 +683,11 @@ func TestModifyPositionEdgeCases(cur realm, t *testing.T) {
 			tickUpper:      -9000,
 			liquidityDelta: i256.MustFromDecimal("100000000"),
 		}
-		modifyPosition(pool, params)
+		modifyPosition(pool, observationsForTest(pool), params)
 
 		// remove liquidity
 		params.liquidityDelta = i256.MustFromDecimal("-100000000")
-		_, amount0, amount1, _ := modifyPosition(pool, params)
+		_, amount0, amount1, _ := modifyPosition(pool, observationsForTest(pool), params)
 
 		// remove amount should be same as added amount
 		uassert.Equal(t, amount0.ToString(), "8040315")
@@ -826,7 +826,7 @@ func TestPositionFeeCalculation_EdgeCases(cur realm, t *testing.T) {
 			liquidityDelta: i256.MustFromDecimal("1000000000000000000000"), // Large but safe value
 		}
 
-		modifyPosition(pool, params)
+		modifyPosition(pool, observationsForTest(pool), params)
 
 		// When: Maximum fee growth occurs
 		maxFeeGrowth := "340282366920938463463374607431768211456" // Q128
@@ -835,7 +835,7 @@ func TestPositionFeeCalculation_EdgeCases(cur realm, t *testing.T) {
 		// Update position to trigger fee calculation
 		params.liquidityDelta = i256.Zero()
 		uassert.PanicsContains(t, cur, "overflows int64 range", func() {
-			modifyPosition(pool, params)
+			modifyPosition(pool, observationsForTest(pool), params)
 		})
 
 		t.Logf("✓ Fee overflow protection: overflow is rejected at int64 boundary")
@@ -866,7 +866,7 @@ func TestPositionFeeCalculation_EdgeCases(cur realm, t *testing.T) {
 				tickUpper:      r.tickUpper,
 				liquidityDelta: i256.MustFromDecimal(MEDIUM_LIQUIDITY),
 			}
-			modifyPosition(pool, params)
+			modifyPosition(pool, observationsForTest(pool), params)
 		}
 
 		// Simulate trading activity
@@ -898,7 +898,7 @@ func TestPositionFeeCalculation_EdgeCases(cur realm, t *testing.T) {
 				tickUpper:      r.tickUpper,
 				liquidityDelta: i256.Zero(),
 			}
-			modifyPosition(pool, params)
+			modifyPosition(pool, observationsForTest(pool), params)
 
 			posKey := getPositionKey(r.tickLower, r.tickUpper)
 			positionValue := pool.Positions().Get(posKey)
@@ -945,7 +945,7 @@ func TestPositionSecurity_EdgeCases(cur realm, t *testing.T) {
 			liquidityDelta: i256.MustFromDecimal(SMALL_LIQUIDITY),
 		}
 
-		_, amt0Second, amt1Second, err := modifyPosition(pool, params)
+		_, amt0Second, amt1Second, err := modifyPosition(pool, observationsForTest(pool), params)
 		t.Logf("amt0Second: %s", amt0Second)
 		t.Logf("amt1Second: %s", amt1Second)
 		uassert.NoError(t, err, "Adding to existing position should succeed")
@@ -1007,7 +1007,7 @@ func TestPositionSecurity_EdgeCases(cur realm, t *testing.T) {
 					liquidityDelta: i256.MustFromDecimal(DUST_LIQUIDITY),
 				}
 
-				_, _, _, err := modifyPosition(pool, params)
+				_, _, _, err := modifyPosition(pool, observationsForTest(pool), params)
 
 				if test.valid {
 					uassert.NoError(t, err, "Valid range should succeed")
@@ -1036,12 +1036,12 @@ func TestPositionSecurity_EdgeCases(cur realm, t *testing.T) {
 			liquidityDelta: i256.MustFromDecimal(MEDIUM_LIQUIDITY),
 		}
 
-		modifyPosition(pool, params)
+		modifyPosition(pool, observationsForTest(pool), params)
 		posKey := getPositionKey(CONCENTRATED_LOWER, CONCENTRATED_UPPER)
 
 		// When: Remove all liquidity
 		params.liquidityDelta = i256.MustFromDecimal("-" + MEDIUM_LIQUIDITY)
-		_, removeAmt0, removeAmt1, err := modifyPosition(pool, params)
+		_, removeAmt0, removeAmt1, err := modifyPosition(pool, observationsForTest(pool), params)
 		uassert.NoError(t, err, "Removing liquidity should succeed")
 
 		// Then: Verify position state
@@ -1084,7 +1084,7 @@ func TestPositionSecurity_EdgeCases(cur realm, t *testing.T) {
 				liquidityDelta: i256.MustFromDecimal(lp.amount),
 			}
 
-			_, _, _, err := modifyPosition(pool, params)
+			_, _, _, err := modifyPosition(pool, observationsForTest(pool), params)
 			uassert.NoError(t, err, "LP position creation should succeed")
 
 			liquidityToAdd := u256.MustFromDecimal(lp.amount)
@@ -1192,7 +1192,7 @@ func TestPosition_LiquidityBoundaryEdgeCases(cur realm, t *testing.T) {
 						tickUpper:      60,
 						liquidityDelta: liqDelta,
 					}
-					modifyPosition(pool, params)
+					modifyPosition(pool, observationsForTest(pool), params)
 				})
 			} else {
 				liq := u256.MustFromDecimal(tt.liquidity)
@@ -1203,7 +1203,7 @@ func TestPosition_LiquidityBoundaryEdgeCases(cur realm, t *testing.T) {
 					tickUpper:      60,
 					liquidityDelta: liqDelta,
 				}
-				position, amount0, amount1, err := modifyPosition(pool, params)
+				position, amount0, amount1, err := modifyPosition(pool, observationsForTest(pool), params)
 
 				uassert.NoError(t, err)
 				uassert.Equal(t, tt.liquidity, position.Liquidity())
@@ -1226,18 +1226,18 @@ func TestPosition_LiquidityBoundaryExistingPositionUpdate(cur realm, t *testing.
 		liquidityDelta: gnsmath.SafeConvertToInt128(initialLiquidity),
 	}
 
-	position, _, _, err := modifyPosition(pool, params)
+	position, _, _, err := modifyPosition(pool, observationsForTest(pool), params)
 	uassert.NoError(t, err)
 	uassert.Equal(t, initialLiquidity.ToString(), position.Liquidity())
 
 	params.liquidityDelta = i256.MustFromDecimal("1")
-	position, _, _, err = modifyPosition(pool, params)
+	position, _, _, err = modifyPosition(pool, observationsForTest(pool), params)
 	uassert.NoError(t, err)
 	uassert.Equal(t, maxLiquidityPerTick.ToString(), position.Liquidity())
 
 	params.liquidityDelta = i256.MustFromDecimal("1")
 	uassert.PanicsContains(t, cur, "maxLiquidity", func() {
-		modifyPosition(pool, params)
+		modifyPosition(pool, observationsForTest(pool), params)
 	})
 }
 
@@ -1252,7 +1252,7 @@ func TestPosition_AmountOverflowEdgeCases(cur realm, t *testing.T) {
 			tickUpper:      60,
 			liquidityDelta: i256.MustFromDecimal("1000000"),
 		}
-		position, _, _, err := modifyPosition(pool, params)
+		position, _, _, err := modifyPosition(pool, observationsForTest(pool), params)
 		uassert.NoError(t, err)
 
 		// Verify initial tokensOwed
@@ -1264,7 +1264,7 @@ func TestPosition_AmountOverflowEdgeCases(cur realm, t *testing.T) {
 
 		// Remove liquidity
 		params.liquidityDelta = i256.MustFromDecimal("-1000000")
-		position2, amount0, amount1, err := modifyPosition(pool, params)
+		position2, amount0, amount1, err := modifyPosition(pool, observationsForTest(pool), params)
 		uassert.NoError(t, err)
 
 		// Verify amounts are properly calculated and bounded to uint128
