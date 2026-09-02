@@ -331,7 +331,6 @@ func (i *poolV1) collect(
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
-		common.SafeGRC20Approve(0, rlm, pool.Token0Path(), positionAddr, amount0)
 	}
 	if amount1 > 0 {
 		tokenOwed1 := gnsmath.SafeSubInt64(position.TokensOwed1(), amount1)
@@ -342,7 +341,6 @@ func (i *poolV1) collect(
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
-		common.SafeGRC20Approve(0, rlm, pool.Token1Path(), positionAddr, amount1)
 	}
 
 	setPosition(pool, positionKey, position)
@@ -363,10 +361,10 @@ func (i *poolV1) collect(
 	}
 
 	if amount0AfterFee > 0 {
-		common.SafeGRC20Transfer(cross(rlm), token0Path, recipient, amount0AfterFee)
+		common.SafeGRC20Transfer(0, rlm, token0Path, recipient, amount0AfterFee)
 	}
 	if amount1AfterFee > 0 {
-		common.SafeGRC20Transfer(cross(rlm), token1Path, recipient, amount1AfterFee)
+		common.SafeGRC20Transfer(0, rlm, token1Path, recipient, amount1AfterFee)
 	}
 
 	return amount0, amount1, fee0, fee1

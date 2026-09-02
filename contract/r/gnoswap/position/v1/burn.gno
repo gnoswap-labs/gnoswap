@@ -139,9 +139,6 @@ func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidit
 
 	p.mustUpdatePosition(0, rlm, params.positionId, *position)
 
-	common.SafeGRC20TransferFrom(0, rlm, pToken0, poolAddr, caller, collectAmount0Int64)
-	common.SafeGRC20TransferFrom(0, rlm, pToken1, poolAddr, caller, collectAmount1Int64)
-
 	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, position.PoolKey(), nil
 }
 
