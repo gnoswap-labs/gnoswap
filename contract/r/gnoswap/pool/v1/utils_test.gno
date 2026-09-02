@@ -379,14 +379,15 @@ func TestCheckOverFlowInt128_BoundaryValues(cur realm, t *testing.T) {
 		},
 		// Negative values
 		{
-			name:        "negative MAX_INT128",
-			input:       "-170141183460469231731687303715884105727",
+			name:        "MIN_INT128 exact",
+			input:       MIN_INT128,
 			shouldPanic: false,
 		},
 		{
-			name:        "negative MAX_INT128 - 1",
-			input:       "-170141183460469231731687303715884105728",
-			shouldPanic: false,
+			name:        "MIN_INT128 - 1",
+			input:       "-170141183460469231731687303715884105729",
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-020] overflow: amount(-170141183460469231731687303715884105729) overflows int128 range",
 		},
 		// Q values
 		{
@@ -777,6 +778,17 @@ func TestCheckOverFlowInt128(cur realm, t *testing.T) {
 			errorMsg:    "[GNOSWAP-POOL-020] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
 		},
 		{
+			name:        "min int128",
+			input:       i256.MustFromDecimal(MIN_INT128),
+			shouldPanic: false,
+		},
+		{
+			name:        "min int128 - 1",
+			input:       new(i256.Int).Sub(i256.MustFromDecimal(MIN_INT128), i256.One()),
+			shouldPanic: true,
+			errorMsg:    "[GNOSWAP-POOL-020] overflow: amount(-170141183460469231731687303715884105729) overflows int128 range",
+		},
+		{
 			name:        "very large value",
 			input:       i256.MustFromDecimal("999999999999999999999999999999999999999"),
 			shouldPanic: true,
@@ -969,7 +981,7 @@ func TestIterateTicksBoundary(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			initPoolTest(cur, t)
-			tickSpacing := getMockInstance().GetFeeAmountTickSpacing(fee500)
+			tickSpacing, _ := getMockInstance().GetFeeAmountTickSpacing(fee500)
 			poolParams := newPoolParams(fooPath, barPath, fee500, "79228162514264337593543950336", tickSpacing, 0)
 			pool := newPool(poolParams)
 

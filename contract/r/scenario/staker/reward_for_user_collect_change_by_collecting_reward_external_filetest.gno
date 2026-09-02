@@ -53,7 +53,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
 	poolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
@@ -132,14 +132,14 @@ func createExternalIncentive(cur realm) {
 		poolPath,
 		barPath,
 		90_000_000_000, // 90 billion bar tokens for 90 days
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[INFO] external incentive created - reward per block: ~1000000000\n")
 
 	// Make external incentives start
-	leftHeight := 978 - runtime.ChainHeight()
+	leftHeight := 35538 - runtime.ChainHeight()
 	if leftHeight > 0 {
 		testing.SkipHeights(leftHeight + 5) // skip 5 blocks more
 	}

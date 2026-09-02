@@ -39,7 +39,7 @@ func (t *TestRouter) ExactOutSingleSwapRoute(_ int, rlm realm, inputToken string
 	return t.instance.ExactOutSingleSwapRoute(0, rlm, inputToken, outputToken, amountOut, routeArr, amountInMax, sqrtPriceLimitX96, deadline, referrer)
 }
 
-func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, bool) {
+func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, error) {
 	return t.instance.DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit)
 }
 
@@ -53,4 +53,8 @@ func (t *TestRouter) GetSwapFee() uint64 {
 
 func (t *TestRouter) SetSwapFee(_ int, rlm realm, fee uint64) {
 	t.instance.SetSwapFee(0, rlm, fee)
+}
+
+func (t *TestRouter) GetPendingProtocolFees() map[string]int64 {
+	return t.instance.GetPendingProtocolFees()
 }

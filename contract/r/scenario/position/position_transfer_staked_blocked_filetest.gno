@@ -73,11 +73,7 @@ func main(cur realm) {
 	operatorCannotTransferStaked(cur)
 	println()
 
-	println("[SCENARIO] 4. SafeTransferFrom on staked NFT is also blocked")
-	safeTransferOnStakedBlocked(cur)
-	println()
-
-	println("[SCENARIO] 5. After unstake, owner regains transfer rights")
+	println("[SCENARIO] 4. After unstake, owner regains transfer rights")
 	unstakeAndTransfer(cur)
 	println()
 }
@@ -122,7 +118,7 @@ func setup(cur realm) {
 	gnft.Approve(cross(cur), stakerAddr, tokenIdOf(cur, positionId))
 	staker.StakeToken(cross(cur), positionId, "")
 
-	owner := gnft.MustOwnerOf(tokenIdOf(cur, positionId))
+	owner := mustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Owner after stake is staker:", owner == stakerAddr)
 }
@@ -164,35 +160,30 @@ func operatorCannotTransferStaked(cur realm) {
 	println("[EXPECTED] Operator Bob's TransferFrom on staked NFT was blocked")
 }
 
-func safeTransferOnStakedBlocked(cur realm) {
-	testing.SetRealm(aliceRealm)
-	uassert.AbortsContains(
-		t,
-		cur,
-		"[GNOSWAP-GNFT-009] staked token is locked",
-		func() {
-			gnft.SafeTransferFrom(cross(cur), stakerAddr, bobAddr, tokenIdOf(cur, positionId))
-		},
-	)
-	println("[EXPECTED] SafeTransferFrom on staked NFT was blocked")
-}
-
 func unstakeAndTransfer(cur realm) {
 	// After unstake the NFT returns to the original depositor (Alice), and
 	// the locked-token rule no longer applies. Alice can transfer freely.
 	testing.SetRealm(aliceRealm)
 	staker.UnStakeToken(cross(cur), positionId)
 
-	owner := gnft.MustOwnerOf(tokenIdOf(cur, positionId))
+	owner := mustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Owner after unstake is alice:", owner == aliceAddr)
 
 	gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, positionId))
-	owner = gnft.MustOwnerOf(tokenIdOf(cur, positionId))
+	owner = mustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Owner after transfer is bob:", owner == bobAddr)
 }
 
 func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(id, 10))
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:
@@ -206,9 +197,6 @@ func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 // [SCENARIO] 3. Operator (SetApprovalForAll) cannot transfer staked NFT
 // [EXPECTED] Operator Bob's TransferFrom on staked NFT was blocked
 //
-// [SCENARIO] 4. SafeTransferFrom on staked NFT is also blocked
-// [EXPECTED] SafeTransferFrom on staked NFT was blocked
-//
-// [SCENARIO] 5. After unstake, owner regains transfer rights
+// [SCENARIO] 4. After unstake, owner regains transfer rights
 // [EXPECTED] Owner after unstake is alice: true
 // [EXPECTED] Owner after transfer is bob: true

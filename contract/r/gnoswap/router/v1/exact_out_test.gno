@@ -58,7 +58,7 @@ func TestExactOutSwapOperation(cur realm, t *testing.T) {
 		router := mockRouter()
 
 		uassert.PanicsContains(t, cur, "invalid fee: format", func() {
-			router.ExactOutSwapRoute(0, cur, 
+			router.ExactOutSwapRoute(0, cur,
 				barPath,
 				fooPath,
 				"3",
@@ -75,7 +75,7 @@ func TestExactOutSwapOperation(cur realm, t *testing.T) {
 		router := mockRouter()
 
 		uassert.PanicsContains(t, cur, "[GNOSWAP-ROUTER-003] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)", func() {
-			router.ExactOutSwapRoute(0, cur, 
+			router.ExactOutSwapRoute(0, cur,
 				fooPath,
 				barPath,
 				"3",
@@ -191,7 +191,7 @@ func TestExactOutSwapBoundary(cur realm, t *testing.T) {
 	t.Run("successful exact out swap at boundary", func(cur realm, t *testing.T) {
 		router := mockRouter()
 
-		amountIn, amountOut := router.ExactOutSwapRoute(0, cur, 
+		amountIn, amountOut := router.ExactOutSwapRoute(0, cur,
 			barPath,
 			fooPath,
 			"1000000",
@@ -208,8 +208,8 @@ func TestExactOutSwapBoundary(cur realm, t *testing.T) {
 
 	t.Run("failed exact out swap at boundary", func(cur realm, t *testing.T) {
 		poolPath := pl.GetPoolPath(barPath, fooPath, 3000)
-		balance0 := pl.GetBalanceToken0(poolPath)
-		balance1 := pl.GetBalanceToken1(poolPath)
+		balance0, _ := pl.GetBalanceToken0(poolPath)
+		balance1, _ := pl.GetBalanceToken1(poolPath)
 
 		token0Balance := u256.NewUint(uint64(balance0))
 		token1Balance := u256.NewUint(uint64(balance1))
@@ -228,7 +228,7 @@ func TestExactOutSwapBoundary(cur realm, t *testing.T) {
 		// request amount that slightly exceeds the pool balance
 		router := mockRouter()
 
-		router.ExactOutSwapRoute(0, cur, 
+		router.ExactOutSwapRoute(0, cur,
 			barPath,
 			fooPath,
 			overflowAmount,
@@ -268,7 +268,8 @@ func setupTestPool(cur realm, t *testing.T) {
 	)
 
 	pool := pl.GetPoolPath(barPath, fooPath, FEE_MEDIUM)
-	uassert.Equal(t, pl.GetLiquidity(pool), "1000000")
+	liquidity, _ := pl.GetLiquidity(pool)
+	uassert.Equal(t, liquidity, "1000000")
 }
 
 func TestExactOutAmountValidation(cur realm, t *testing.T) {

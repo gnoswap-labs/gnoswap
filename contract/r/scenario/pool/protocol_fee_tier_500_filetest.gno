@@ -85,8 +85,8 @@ func setupPool(cur realm) {
 	poolPath = pool.GetPoolPath(barPath, fooPath, fee500)
 	println("[INFO] Pool created:", poolPath)
 
-	initFee0 := pool.GetProtocolFeesToken0(poolPath)
-	initFee1 := pool.GetProtocolFeesToken1(poolPath)
+	initFee0, _ := pool.GetProtocolFeesToken0(poolPath)
+	initFee1, _ := pool.GetProtocolFeesToken1(poolPath)
 	println("[INFO] Initial protocol fees - token0:", initFee0, "token1:", initFee1)
 	println()
 }
@@ -125,8 +125,8 @@ func testSwapAndCheckFees(cur realm) {
 	)
 	println("[EXPECTED] Swap result - amount0:", swap0, "amount1:", swap1)
 
-	fee0 := pool.GetProtocolFeesToken0(poolPath)
-	fee1 := pool.GetProtocolFeesToken1(poolPath)
+	fee0, _ := pool.GetProtocolFeesToken0(poolPath)
+	fee1, _ := pool.GetProtocolFeesToken1(poolPath)
 	println("[EXPECTED] Protocol fees after swap1 - token0:", fee0, "token1:", fee1)
 	println()
 
@@ -145,8 +145,8 @@ func testSwapAndCheckFees(cur realm) {
 	)
 	println("[EXPECTED] Swap result - amount0:", swap0_2, "amount1:", swap1_2)
 
-	fee0_2 := pool.GetProtocolFeesToken0(poolPath)
-	fee1_2 := pool.GetProtocolFeesToken1(poolPath)
+	fee0_2, _ := pool.GetProtocolFeesToken0(poolPath)
+	fee1_2, _ := pool.GetProtocolFeesToken1(poolPath)
 	println("[EXPECTED] Protocol fees after swap2 - token0:", fee0_2, "token1:", fee1_2)
 	println()
 }
@@ -154,8 +154,8 @@ func testSwapAndCheckFees(cur realm) {
 func printSummary(cur realm) {
 	println("[SCENARIO] 4. Protocol Fee Summary")
 	testing.SetRealm(adminRealm)
-	finalFee0 := pool.GetProtocolFeesToken0(poolPath)
-	finalFee1 := pool.GetProtocolFeesToken1(poolPath)
+	finalFee0, _ := pool.GetProtocolFeesToken0(poolPath)
+	finalFee1, _ := pool.GetProtocolFeesToken1(poolPath)
 	println("[EXPECTED] Fee tier: 500 (0.05%)")
 	println("[EXPECTED] Total protocol fee token0:", finalFee0)
 	println("[EXPECTED] Total protocol fee token1:", finalFee1)
@@ -167,11 +167,11 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackM
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), barPath, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, barPath, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), fooPath, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, fooPath, poolAddr, amount1Delta)
 	}
 
 	return nil

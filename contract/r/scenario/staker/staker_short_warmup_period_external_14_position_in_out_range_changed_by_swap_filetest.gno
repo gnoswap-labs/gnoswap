@@ -202,8 +202,8 @@ func createExternalIncentiveBar(cur realm) {
 		poolPath,
 		barPath,
 		9_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive BAR created successfully\n")
@@ -241,7 +241,7 @@ func beforeActive(cur realm) {
 
 func after50Blocks(cur realm) {
 	println("[INFO] making external incentive active")
-	testing.SkipHeights(850)
+	testing.SkipHeights(35410)
 
 	println("[INFO] checking rewards after 50 blocks")
 	testing.SetRealm(adminRealm)
@@ -274,7 +274,7 @@ func after50Blocks(cur realm) {
 
 func makePosition1OutRange(cur realm) {
 	testing.SetRealm(adminRealm)
-	poolTick := pl.GetSlot0Tick(poolPath)
+	poolTick, _ := pl.GetSlot0Tick(poolPath)
 	if poolTick != 0 {
 		panic("expected pool tick to be 0")
 	}
@@ -305,7 +305,7 @@ func makePosition1OutRange(cur realm) {
 	}
 
 	testing.SetRealm(adminRealm)
-	poolTick = pl.GetSlot0Tick(poolPath)
+	poolTick, _ = pl.GetSlot0Tick(poolPath)
 	if poolTick != -195 {
 		panic("expected pool tick to be -195")
 	}

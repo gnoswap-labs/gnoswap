@@ -41,46 +41,6 @@ func maxLiquidityPerTickSpacing200FromDec() *u256.Uint {
 	return &u256.Uint{6592429331424883148, 2078974875882965, 0, 0} // 38350317471085141830651933667504588
 }
 
-// GetTickLiquidityGross returns the gross liquidity for the specified tick.
-func GetTickLiquidityGross(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).LiquidityGross()
-}
-
-// GetTickLiquidityNet returns the net liquidity for the specified tick.
-func GetTickLiquidityNet(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).LiquidityNet()
-}
-
-// GetTickFeeGrowthOutside0X128 returns the fee growth outside the tick for token 0.
-func GetTickFeeGrowthOutside0X128(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).FeeGrowthOutside0X128()
-}
-
-// GetTickFeeGrowthOutside1X128 returns the fee growth outside the tick for token 1.
-func GetTickFeeGrowthOutside1X128(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).FeeGrowthOutside1X128()
-}
-
-// GetTickCumulativeOutside returns the cumulative liquidity outside the tick.
-func GetTickCumulativeOutside(p *pl.Pool, tick int32) int64 {
-	return mustGetTick(p, tick).TickCumulativeOutside()
-}
-
-// GetTickSecondsPerLiquidityOutsideX128 returns the seconds per liquidity outside the tick.
-func GetTickSecondsPerLiquidityOutsideX128(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).SecondsPerLiquidityOutsideX128()
-}
-
-// GetTickSecondsOutside returns the seconds outside the tick.
-func GetTickSecondsOutside(p *pl.Pool, tick int32) uint32 {
-	return mustGetTick(p, tick).SecondsOutside()
-}
-
-// GetTickInitialized returns whether the tick is initialized.
-func GetTickInitialized(p *pl.Pool, tick int32) bool {
-	return mustGetTick(p, tick).Initialized()
-}
-
 // getFeeGrowthInside calculates the fee growth within a specified tick range.
 //
 // This function computes the accumulated fee growth for token 0 and token 1 inside a given tick range

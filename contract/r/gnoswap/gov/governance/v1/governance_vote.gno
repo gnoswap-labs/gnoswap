@@ -3,8 +3,9 @@ package governance
 import (
 	"chain"
 	"chain/runtime"
-	"errors"
 	"time"
+
+	"gno.land/r/gnoswap/access"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
@@ -39,9 +40,7 @@ import (
 //
 // Returns voting weight used as string.
 func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) string {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedGovernance()
 

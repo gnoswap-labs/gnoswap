@@ -145,7 +145,7 @@ func upgradePool(cur realm) {
 func decreaseLiquidityWithRevertingCollect(cur realm) {
 	testing.SetRealm(adminRealm)
 	barBefore := bar.BalanceOf(adminAddr)
-	owed0Before := position.GetPositionTokensOwed0(1)
+	owed0Before, _ := position.GetPositionTokensOwed0(1)
 
 	// Internal balance is desynced low (forced to 1 by the test implementation)
 	// while tokensOwed0 is larger. The underlying Collect cannot pay, so the
@@ -163,8 +163,8 @@ func decreaseLiquidityWithRevertingCollect(cur realm) {
 	})
 
 	barAfter := bar.BalanceOf(adminAddr)
-	owed0After := position.GetPositionTokensOwed0(1)
-	poolBalance0 := pool.GetBalanceToken0(poolKey)
+	owed0After, _ := position.GetPositionTokensOwed0(1)
+	poolBalance0, _ := pool.GetBalanceToken0(poolKey)
 
 	if r != nil {
 		ufmt.Printf("[INFO] DecreaseLiquidity aborted: %v\n", r)
@@ -197,10 +197,10 @@ func mockSwapCallback(cur realm, amount0Delta int64, amount1Delta int64) error {
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), barPath, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, barPath, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), fooPath, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, fooPath, poolAddr, amount1Delta)
 	}
 
 	return nil

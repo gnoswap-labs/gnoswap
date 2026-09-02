@@ -3,13 +3,15 @@ package launchpad
 import (
 	"chain"
 	"chain/runtime"
-	"errors"
 	"time"
+
+	"gno.land/r/gnoswap/access"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
@@ -27,15 +29,15 @@ import (
 //
 // Returns deposit ID.
 func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedLaunchpad()
 
 	previousRealm := rlm.Previous()
 
 	assertIsValidAmount(depositAmount)
+
+	emission.MintAndDistributeGns(cross(rlm))
 
 	projectID, tierDuration := parseProjectTierID(targetProjectTierID)
 	caller := previousRealm.Address()

@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"gno.land/p/gnoswap/fuzz"
+	"gno.land/p/gnoswap/utils"
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -30,12 +31,15 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 
-	_, err := position.GetPosition(p.positionId)
-	if err != nil {
+	_, ok := position.GetPositions().Get(utils.Uint64ToString(p.positionId)).(position.Position)
+	if !ok {
 		return false
 	}
 
-	poolPath := position.GetPositionPoolKey(p.positionId)
+	poolPath, err := position.GetPositionPoolKey(p.positionId)
+	if err != nil {
+		return false
+	}
 	if poolPath == "" || !pool.ExistsPoolPath(poolPath) {
 		return false
 	}
@@ -109,7 +113,11 @@ func (p *positionRepositionParams) IsValidLiquidity() (isValid bool) {
 	if err0 != nil || err1 != nil {
 		return false
 	}
-	sqrtPriceX96 := u256.MustFromDecimal(pool.GetSlot0SqrtPriceX96(p.poolPath))
+	sqrtPriceX96String, err := pool.GetSlot0SqrtPriceX96(p.poolPath)
+	if err != nil {
+		return false
+	}
+	sqrtPriceX96 := u256.MustFromDecimal(sqrtPriceX96String)
 	sqrtRatioAX96 := gnsmath.TickMathGetSqrtRatioAtTick(p.tickLower)
 	sqrtRatioBX96 := gnsmath.TickMathGetSqrtRatioAtTick(p.tickUpper)
 
@@ -147,7 +155,7 @@ func NewValidPositionRepositionParams(t *fuzz.T, existingPositionId uint64) *pos
 func newValidPositionRepositionParams(t *fuzz.T, positionId uint64) *positionRepositionParams {
 	token0Path, token1Path, fee := getPoolInfoFromPosition(positionId)
 	poolPath := pool.GetPoolPath(token0Path, token1Path, fee)
-	currentTick := pool.GetSlot0Tick(poolPath)
+	currentTick, _ := pool.GetSlot0Tick(poolPath)
 	tickLower, tickUpper := generateRandomTicks(t, currentTick, fee)
 
 	amount0 := fuzz.Int64Range(1, 1_000_000_000_000).Draw(t, "amount0").(int64)

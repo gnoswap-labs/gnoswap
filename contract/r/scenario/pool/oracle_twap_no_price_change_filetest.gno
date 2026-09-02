@@ -87,7 +87,7 @@ func main(cur realm) {
 		adminAddr,
 	)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println("[INFO] Pool tick:", thisPool.Slot0Tick())
 	println()

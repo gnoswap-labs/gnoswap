@@ -36,7 +36,7 @@ var (
 
 func init(cur realm) {
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6, tokenID, cur)
-	userTeller = token.CallerTeller()
+	userTeller = privateLedger.CallerTeller()
 
 	adminAddr := access.MustGetAddress(prabc.ROLE_ADMIN.String())
 	err := privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
@@ -233,7 +233,7 @@ func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int6
 
 		totalAmountToMint = gnsmath.SafeAddInt64(totalAmountToMint, yearAmountToMint)
 
-		err := state.addHalvingYearAccumulatedAmount(year, yearAmountToMint)
+		err := state.addHalvingYearMintedAmount(year, yearAmountToMint)
 		if err != nil {
 			return 0, err
 		}

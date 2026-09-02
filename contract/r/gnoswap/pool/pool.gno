@@ -55,6 +55,21 @@ func (p *Pool) TickBitmaps() map[int16]string       { return p.tickBitmaps }
 func (p *Pool) Positions() *bptree.BPTree           { return p.positions }
 func (p *Pool) ObservationState() *ObservationState { return p.observationState }
 
+// GetPosition returns the position information for key.
+func (p *Pool) GetPosition(key string) (PositionInfo, error) {
+	iPositionInfo := p.positions.Get(key)
+	if iPositionInfo == nil {
+		return PositionInfo{}, ufmt.Errorf("position %s not found", key)
+	}
+
+	positionInfo, ok := iPositionInfo.(PositionInfo)
+	if !ok {
+		return PositionInfo{}, ufmt.Errorf("position %s has invalid type", key)
+	}
+
+	return positionInfo, nil
+}
+
 // Pool Setters methods
 func (p *Pool) SetToken0Path(token0Path string) {
 	p.token0Path = token0Path
@@ -188,7 +203,21 @@ func (p *Pool) IterateTicks(startTick int32, endTick int32, fn func(tick int32, 
 	})
 }
 
+// Clone copies a pool's own fields and leaves its collections nil: ticks,
+// tickBitmaps, positions, and observationState are not copied.
+//
+// The copy is shallow because the read-only pool view clones every entry a
+// caller reads, so copying the collections would walk the whole tick tree for
+// each entry on a page. Read them through their own lookups instead:
+// GetTickInfo / GetInitializedTicksInRange for ticks, GetTickBitmaps for the
+// bitmaps, GetPoolPositions for positions, and GetObservationState for the
+// oracle state. A caller that needs a working copy of a collection -- DrySwap
+// is the only one -- assembles it from those getters.
 func (p *Pool) Clone() *Pool {
+	if p == nil {
+		return nil
+	}
+
 	return &Pool{
 		token0Path:  p.token0Path,
 		token1Path:  p.token1Path,
@@ -205,10 +234,10 @@ func (p *Pool) Clone() *Pool {
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
 		liquidity:            p.liquidity.Clone(),
-		ticks:                clonePoolTicks(p.ticks),
-		tickBitmaps:          clonePoolTickBitmaps(p.tickBitmaps),
-		positions:            bptree.NewBPTreeN(16),
-		observationState:     NewObservationState(time.Now().Unix()),
+		ticks:                nil,
+		tickBitmaps:          nil,
+		positions:            nil,
+		observationState:     nil,
 	}
 }
 

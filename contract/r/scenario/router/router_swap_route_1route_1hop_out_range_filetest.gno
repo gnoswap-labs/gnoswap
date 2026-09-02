@@ -83,12 +83,12 @@ func main(cur realm) {
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
 
 	// check pool liquidity
-	poolLiquidity := pl.GetLiquidity("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500")
+	poolLiquidity, _ := pl.GetLiquidity("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500")
 	println("[EXPECTED] pool liquidity:", poolLiquidity, "expected: 637408")
 
 	println("[INFO] Executing dry swap to check expected output")
 	_, dryResult, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			bazPath,    // inputToken
 			barPath,    // outputToken
 			"1000",     // amountSpecified
@@ -97,6 +97,7 @@ func main(cur realm) {
 			"100", // quoteArr
 			"1",   // tokenAmountLimit
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 367")

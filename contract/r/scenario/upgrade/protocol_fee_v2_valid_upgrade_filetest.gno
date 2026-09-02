@@ -55,12 +55,6 @@ var (
 	adminRealm     = testing.NewUserRealm(adminAddr)
 	stakerRealm    = testing.NewCodeRealm("gno.land/r/gnoswap/staker")
 	govStakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker")
-
-	// AddToProtocolFee performs SafeGRC20TransferFrom from the *implementation*
-	// realm, so the caller must approve whichever implementation realm is
-	// currently active (v1 before the upgrade, v2_valid after).
-	protocolFeeV1Realm      = testing.NewCodeRealm(protocolFeeV1Path)
-	protocolFeeV2ValidRealm = testing.NewCodeRealm(protocolFeeV2ValidPath)
 )
 
 const (
@@ -120,20 +114,16 @@ func setDataV1(cur realm) {
 	ufmt.Printf("[EXPECTED] DevOpsPct set to: %d\n", protocolFee.GetDevOpsPct())
 }
 
-// fundAndApproveBarFromStaker funds the staker realm with bar and approves both
-// the protocol_fee role address and the given implementation realm (the spender
-// inside AddToProtocolFee's TransferFrom).
-func fundAndApproveBarFromStaker(cur realm, implRealmAddr address, amount int64) {
+func fundAndApproveBarFromStaker(cur realm, amount int64) {
 	testing.SetRealm(adminRealm)
 	bar.Transfer(cross(cur), stakerRealm.Address(), amount)
 
 	testing.SetRealm(stakerRealm)
 	bar.Approve(cross(cur), protocolFeeAddr, amount)
-	bar.Approve(cross(cur), implRealmAddr, amount)
 }
 
 func addProtocolFeeV1(cur realm) {
-	fundAndApproveBarFromStaker(cur, protocolFeeV1Realm.Address(), 1000)
+	fundAndApproveBarFromStaker(cur, 1000)
 
 	testing.SetRealm(stakerRealm)
 	if err := protocolFee.AddToProtocolFee(cross(cur), barPath, 1000); err != nil {
@@ -167,8 +157,7 @@ func updateConfigV2Valid(cur realm) {
 }
 
 func addProtocolFeeV2Valid(cur realm) {
-	// Approve the v2_valid implementation realm this time (the new spender).
-	fundAndApproveBarFromStaker(cur, protocolFeeV2ValidRealm.Address(), 1000)
+	fundAndApproveBarFromStaker(cur, 1000)
 
 	testing.SetRealm(stakerRealm)
 	// Same token as v1: this RMWs the v1-created per-token BPTree entries.

@@ -86,7 +86,7 @@ func main(cur realm) {
 	println("[EXPECTED] Position created with amounts:", amount0, amount1)
 
 	// Check initial pool state
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Initial pool tick:", thisPool.Slot0Tick())
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println()
@@ -141,7 +141,7 @@ func main(cur realm) {
 	println("[EXPECTED] Swap completed with amounts:", amount0Out, amount1Out)
 
 	// Check current pool tick to confirm we crossed testTick
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool tick after swap:", thisPool.Slot0Tick())
 	println()
 
@@ -214,7 +214,7 @@ func main(cur realm) {
 	println("[EXPECTED] Reverse swap completed:", amount0Out2, amount1Out2)
 
 	// Check current pool tick after reverse swap
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool tick after reverse swap:", thisPool.Slot0Tick())
 	println()
 
@@ -242,10 +242,10 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -285,7 +285,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [SCENARIO] 6. Check Tick State After Cross
 // [INFO] Tick -1000 after cross(cur):
 // [INFO] Initialized: true
-// [EXPECTED] TickCumulativeOutside updated: -500
+// [EXPECTED] TickCumulativeOutside updated: 0
 // [EXPECTED] SecondsOutside updated: 500
 // [EXPECTED] SecondsPerLiquidityOutsideX128 is set: 17014118346046923173168730371588410
 // [EXPECTED] Oracle field successfully updated (non-zero)
@@ -303,7 +303,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 //
 // [SCENARIO] 9. Verify Oracle Fields After Second Cross
 // [INFO] Tick -1000 after second cross(cur):
-// [EXPECTED] TickCumulativeOutside changed: -549500
+// [EXPECTED] TickCumulativeOutside changed: -550000
 // [EXPECTED] SecondsOutside changed: 1234568390
 // [EXPECTED] SecondsPerLiquidityOutsideX128 updated again: 170141183460469231731687303715884105728000
 // [EXPECTED] Oracle field values changed on second cross(cur)

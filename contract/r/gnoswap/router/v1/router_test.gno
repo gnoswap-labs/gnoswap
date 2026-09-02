@@ -901,7 +901,7 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(cross(cur), tt.inputToken, routerAddr, math.MaxInt64)
+			common.SafeGRC20Approve(0, cur, tt.inputToken, routerAddr, math.MaxInt64)
 
 			amountSpecified := utils.SafeParseInt64(tt.amountSpecified)
 
@@ -1016,7 +1016,7 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 			toSwapAmount := utils.SafeParseInt64(tt.toSwap)
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(cross(cur), barPath, routerAddr, math.MaxInt64)
+			common.SafeGRC20Approve(0, cur, barPath, routerAddr, math.MaxInt64)
 
 			router := mockRouter()
 			processRouteFn := func(cur realm) (int64, int64, error) {
@@ -1304,7 +1304,7 @@ func TestSwapProcessor_ValidateSwapResults(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			_, _, success := processor.ValidateSwapResults(
+			_, _, err := processor.ValidateSwapResults(
 				tt.swapType,
 				tt.resultAmountIn,
 				tt.resultAmountOut,
@@ -1313,7 +1313,11 @@ func TestSwapProcessor_ValidateSwapResults(cur realm, t *testing.T) {
 				tt.swapCount,
 			)
 
-			uassert.Equal(t, success, tt.expectedSuccess)
+			if tt.expectedSuccess {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
+			}
 		})
 	}
 }
@@ -1627,48 +1631,6 @@ func TestSwapValidator_Amount(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result, err := validator.amount(tt.amount)
-
-			if tt.expectError {
-				uassert.Error(t, err)
-			} else {
-				uassert.NoError(t, err)
-				uassert.Equal(t, result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test SwapValidator amountLimit
-func TestSwapValidator_AmountLimit(cur realm, t *testing.T) {
-	validator := &SwapValidator{}
-
-	tests := []struct {
-		name        string
-		amountLimit int64
-		expectError bool
-		expected    int64
-	}{
-		{
-			name:        "positive limit",
-			amountLimit: 1000,
-			expectError: false,
-			expected:    1000,
-		},
-		{
-			name:        "zero limit",
-			amountLimit: 0,
-			expectError: true,
-		},
-		{
-			name:        "negative limit",
-			amountLimit: -100,
-			expectError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			result, err := validator.amountLimit(tt.amountLimit)
 
 			if tt.expectError {
 				uassert.Error(t, err)

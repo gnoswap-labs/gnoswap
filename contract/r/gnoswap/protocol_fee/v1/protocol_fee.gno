@@ -22,9 +22,7 @@ import (
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
 func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	prev := rlm.Previous()
 	assertIsAdminOrGovStaker(prev.Address())
@@ -51,9 +49,7 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 
 // DistributeProtocolFeeByTokenPath distributes collected protocol fees for one token path.
 func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	prev := rlm.Previous()
 	assertIsAdminOrGovStaker(prev.Address())
@@ -146,9 +142,7 @@ func containsString(values []string, target string) bool {
 // Only callable by admin or governance.
 // Note: GovStaker percentage is automatically adjusted to (10000 - devOpsPct).
 func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -185,9 +179,7 @@ func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
 // Only callable by admin or governance.
 // Note: DevOps percentage is automatically adjusted to (10000 - govStakerPct).
 func (pf *protocolFeeV1) SetGovStakerPct(_ int, rlm realm, pct int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -251,7 +243,7 @@ func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, am
 
 	pf.reserveCollectedProtocolFee(0, rlm, tokenPath, amount)
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20TransferFrom(cross(rlm), tokenPath, caller, protocolFeeAddr, amount)
+	common.SafeGRC20TransferFrom(0, rlm, tokenPath, caller, protocolFeeAddr, amount)
 
 	chain.Emit(
 		"AddToProtocolFee",
@@ -280,4 +272,70 @@ func (pf *protocolFeeV1) reserveCollectedProtocolFee(_ int, rlm realm, tokenPath
 	if err := pfs.store.AddReservedToken(0, rlm, tokenPath); err != nil {
 		panic(err)
 	}
+
+	// Mark the token so gov/staker only walks what actually collected a fee. A split
+	// that leaves gov/staker nothing moves no accumulator, so it is not listed.
+	if toGovStakerAmount > 0 {
+		if err := pfs.store.AddAccrualPendingToken(0, rlm, tokenPath); err != nil {
+			panic(err)
+		}
+	}
+}
+
+// ConsumeAccrualPendingProtocolFees returns the gov/staker share of every token that
+// collected a fee since the last call, and clears the pending list. gov/staker folds
+// these into its accumulator on every stake change, so handing back only the tokens
+// that moved keeps that cost tied to the fees that arrived.
+//
+// Amounts are cumulative totals, matching GetAccuTransfersToGovStaker. Restricted to
+// gov/staker rather than admin as well: clearing the list without folding the fees into
+// an accumulator strands them until that token collects another fee.
+func (pf *protocolFeeV1) ConsumeAccrualPendingProtocolFees(_ int, rlm realm) map[string]int64 {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	prev := rlm.Previous()
+	access.AssertIsGovStaker(prev.Address())
+
+	pfs := pf.getProtocolFeeState()
+	accrualPendingFees := pf.accrualPendingProtocolFees(pfs)
+
+	if len(accrualPendingFees) > 0 {
+		if err := pfs.store.ClearAccrualPendingTokens(0, rlm); err != nil {
+			panic(err)
+		}
+	}
+
+	return accrualPendingFees
+}
+
+// ConsumeAccrualPendingProtocolFeeByTokenPath returns the gov/staker share of tokenPath
+// and drops it from the pending list. It is the single-token counterpart of
+// ConsumeAccrualPendingProtocolFees, used by the per-token claim path so that a token it
+// has already folded into the accumulator is not handed out again by a later consume.
+func (pf *protocolFeeV1) ConsumeAccrualPendingProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) int64 {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	prev := rlm.Previous()
+	access.AssertIsGovStaker(prev.Address())
+
+	pfs := pf.getProtocolFeeState()
+	if err := pfs.store.RemoveAccrualPendingToken(0, rlm, tokenPath); err != nil {
+		panic(err)
+	}
+
+	return pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
+}
+
+// accrualPendingProtocolFees reads the gov/staker share of every pending token.
+func (pf *protocolFeeV1) accrualPendingProtocolFees(pfs *protocolFeeState) map[string]int64 {
+	accrualPendingFees := make(map[string]int64)
+	for _, tokenPath := range pfs.store.GetAccrualPendingTokens() {
+		accrualPendingFees[tokenPath] = pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
+	}
+
+	return accrualPendingFees
 }

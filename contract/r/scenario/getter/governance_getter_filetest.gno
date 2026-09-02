@@ -6,6 +6,7 @@ package main
 
 import (
 	"chain/runtime"
+	"strconv"
 	"testing"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -156,16 +157,16 @@ func testProposalGetters(cur realm, proposalId int64) {
 	// Set realm to governance for getter calls
 	testing.SetRealm(governanceRealm)
 
-	// GetProposalCount
-	proposalCount := governance.GetProposalCount()
-	println("[EXPECTED] Proposal count:", proposalCount)
+	// GetProposals
+	proposals := governance.GetProposals()
+	println("[EXPECTED] Proposal IDs (offset=0, limit=10):", proposals.Size(), "proposals")
 
-	// GetProposalIDs
-	proposalIDs := governance.GetProposalIDs(0, 10)
-	println("[EXPECTED] Proposal IDs (offset=0, limit=10):", len(proposalIDs), "proposals")
-	for i, id := range proposalIDs {
-		ufmt.Printf("[EXPECTED] - Proposal %d: %d\n", i+1, id)
-	}
+	proposalIndex := 0
+	proposals.IterateByOffset(0, 10, func(id string, _ any) bool {
+		proposalIndex++
+		ufmt.Printf("[EXPECTED] - Proposal %d: %s\n", proposalIndex, id)
+		return false
+	})
 
 	// ExistsProposal
 	exists1 := governance.ExistsProposal(proposalId)
@@ -174,15 +175,16 @@ func testProposalGetters(cur realm, proposalId int64) {
 	exists999 := governance.ExistsProposal(999)
 	println("[EXPECTED] Proposal 999 exists:", exists999)
 
-	// GetProposal
-	proposal, err := governance.GetProposal(proposalId)
-	if err != nil {
-		panic(err)
+	// GetProposals entry
+	proposal, ok := governance.GetProposals().Get(strconv.FormatInt(proposalId, 10)).(*governance.Proposal)
+	if !ok {
+		panic("proposal not found")
 	}
 	println("[EXPECTED] Proposal details:")
 	println("[EXPECTED] - ID:", proposal.ID())
 	println("[EXPECTED] - Proposer:", proposal.Proposer())
-	println("[EXPECTED] - Type:", proposal.Type())
+	entryType, _ := governance.GetProposalTypeByProposalId(proposalId)
+	println("[EXPECTED] - Type:", entryType)
 	println("[EXPECTED] - Yes weight:", proposal.VotingYesWeight())
 	println("[EXPECTED] - No weight:", proposal.VotingNoWeight())
 
@@ -281,25 +283,25 @@ func testVoteGetters(cur realm, proposalId int64) {
 	println("[EXPECTED] - Yes weight:", yesWeight)
 	println("[EXPECTED] - No weight:", noWeight)
 
-	// GetVotingInfoCount
-	votingInfoCount := governance.GetVotingInfoCount(proposalId)
-	println("[EXPECTED] Voting info count:", votingInfoCount)
+	// GetVotingInfos
+	votingInfos := governance.GetVotingInfos(proposalId)
+	println("[EXPECTED] Voting info addresses (offset=0, limit=10):", votingInfos.Size(), "voters")
 
-	// GetVotingInfoAddresses
-	votingInfoAddresses := governance.GetVotingInfoAddresses(proposalId, 0, 10)
-	println("[EXPECTED] Voting info addresses (offset=0, limit=10):", len(votingInfoAddresses), "voters")
-	for i, addr := range votingInfoAddresses {
-		ufmt.Printf("[EXPECTED] - Voter %d: %s\n", i+1, addr)
-	}
+	voterIndex := 0
+	votingInfos.IterateByOffset(0, 10, func(addr string, _ any) bool {
+		voterIndex++
+		ufmt.Printf("[EXPECTED] - Voter %d: %s\n", voterIndex, addr)
+		return false
+	})
 
 	// ExistsVotingInfo
 	existsVoting := governance.ExistsVotingInfo(proposalId, adminAddr)
 	println("[EXPECTED] Admin voting info exists:", existsVoting)
 
-	// GetVotingInfo
-	votingInfo, err := governance.GetVotingInfo(proposalId, adminAddr)
-	if err != nil {
-		panic(err)
+	// GetVotingInfos entry
+	votingInfo, ok := governance.GetVotingInfos(proposalId).Get(adminAddr.String()).(*governance.VotingInfo)
+	if !ok {
+		panic("voting info not found")
 	}
 	println("[EXPECTED] Admin voting info:")
 	println("[EXPECTED] - Vote type:", votingInfo.VotingType())
@@ -359,12 +361,11 @@ func testUserProposalGetters(cur realm) {
 	// Set realm to governance for getter calls
 	testing.SetRealm(governanceRealm)
 
-	// GetUserProposalCount
-	userProposalCount := governance.GetUserProposalCount(adminAddr)
-	println("[EXPECTED] Admin proposal count:", userProposalCount)
-
-	// GetUserProposalIDs
-	userProposalIDs := governance.GetUserProposalIDs(adminAddr, 0, 10)
+	// GetUserProposals
+	userProposalIDs := []int64{}
+	if value := governance.GetUserProposals().Get(adminAddr.String()); value != nil {
+		userProposalIDs = value.([]int64)
+	}
 	println("[EXPECTED] Admin proposal IDs (offset=0, limit=10):", len(userProposalIDs), "proposals")
 	for i, id := range userProposalIDs {
 		ufmt.Printf("[EXPECTED] - Proposal %d: %d\n", i+1, id)
@@ -423,7 +424,6 @@ func testActiveProposalAndVotingWeight(cur realm) {
 //
 // [SCENARIO] 4. Test Proposal Getters
 // [INFO] Testing proposal getters
-// [EXPECTED] Proposal count: 1
 // [EXPECTED] Proposal IDs (offset=0, limit=10): 1 proposals
 // [EXPECTED] - Proposal 1: 1
 // [EXPECTED] Proposal exists: true
@@ -453,7 +453,6 @@ func testActiveProposalAndVotingWeight(cur realm) {
 // [EXPECTED] - Max voting weight: 1000000000
 // [EXPECTED] - Yes weight: 1000000000
 // [EXPECTED] - No weight: 0
-// [EXPECTED] Voting info count: 1
 // [EXPECTED] Voting info addresses (offset=0, limit=10): 1 voters
 // [EXPECTED] - Voter 1: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 // [EXPECTED] Admin voting info exists: true
@@ -476,7 +475,6 @@ func testActiveProposalAndVotingWeight(cur realm) {
 //
 // [SCENARIO] 7. Test User Proposal Getters
 // [INFO] Testing user proposal getters
-// [EXPECTED] Admin proposal count: 1
 // [EXPECTED] Admin proposal IDs (offset=0, limit=10): 1 proposals
 // [EXPECTED] - Proposal 1: 1
 //

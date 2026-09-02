@@ -78,6 +78,25 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 	}
 }
 
+func invokeRouterInitializerWithStaleRealm(cur realm, stale realm, initializer func(_ int, rlm realm, store any) any, store any) {
+	initializer(0, stale, store)
+}
+
+func TestRegisterInitializerRejectsSpoofedInitializerRealm(cur realm, t *testing.T) {
+	resetTestState(t)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+	initializer := versionManager.GetInitializers()[versionManager.GetCurrentPackagePath()]
+	stale := cur
+	store := initializeDomainStore(0, cur, kvStore)
+
+	uassert.AbortsContains(t, cur, errSpoofedRealm, func() {
+		invokeRouterInitializerWithStaleRealm(cross(cur), stale, initializer, store)
+	})
+}
+
 // TestUpgradeImpl tests the router upgrade implementation
 func TestUpgradeImpl(cur realm, t *testing.T) {
 	tests := []struct {
@@ -467,7 +486,7 @@ func TestDrySwapRoute(cur realm, t *testing.T) {
 		}
 
 		mockRouter := implementation.(*MockRouter)
-		mockRouter.Response.Set("DrySwapRoute", "1000000", "1000000", true)
+		mockRouter.Response.Set("DrySwapRoute", "1000000", "1000000", nil)
 
 		testing.SetRealm(tt.callerRealm)
 

@@ -213,8 +213,8 @@ func createExternalIncentiveGns(cur realm) {
 		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000",
 		"gno.land/r/gnoswap/gns.GNS",
 		2_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	testing.SkipHeights(1)
@@ -401,7 +401,8 @@ func mintAndStakePos07OutRange(cur realm) {
 	bar.Approve(cross(cur), poolAddr, maxInt64)
 	foo.Approve(cross(cur), poolAddr, maxInt64)
 
-	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100"))
+	poolTick, _ := pl.GetSlot0Tick("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100")
+	ufmt.Printf("[EXPECTED] current pool tick: %d\n", poolTick)
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross(cur),
@@ -468,7 +469,7 @@ func createPoolExternalOnly(cur realm) {
 	baz.Approve(cross(cur), stakerAddr, 2_000_000_000)
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
-	startTime := int64(1244332800)
+	startTime := ((time.Now().Unix() / 86400) + 2) * 86400
 	endTime := startTime + TIMESTAMP_90DAYS
 
 	testing.SetRealm(adminRealm)

@@ -422,11 +422,20 @@ func (self *canonicalRewardState) StakeToken(cur realm, positionId uint64, targe
 	// historical tick must be set regardless of the deposit's range
 	poolResolver.Pool.SetHistoricalTickAt(currentTimestamp, canonicalPool.tick)
 
+	// Mirrors StakeToken's boundary-tick seeding.
+	lowerExisted := pool.Ticks().Get(deposit.TickLower()) != nil
 	lowerTick := poolResolver.GetOrNewTick(deposit.TickLower())
+	if !lowerExisted {
+		poolResolver.initializeNewTickOutsideAccumulation(currentTimestamp, canonicalPool.tick, deposit.TickLower(), lowerTick)
+	}
 	NewTickResolver(lowerTick).modifyDepositLower(currentTimestamp, signedLiquidity)
 	pool.Ticks().SetTick(deposit.TickLower(), lowerTick)
 
+	upperExisted := pool.Ticks().Get(deposit.TickUpper()) != nil
 	upperTick := poolResolver.GetOrNewTick(deposit.TickUpper())
+	if !upperExisted {
+		poolResolver.initializeNewTickOutsideAccumulation(currentTimestamp, canonicalPool.tick, deposit.TickUpper(), upperTick)
+	}
 	NewTickResolver(upperTick).modifyDepositUpper(currentTimestamp, signedLiquidity)
 	pool.Ticks().SetTick(deposit.TickUpper(), upperTick)
 

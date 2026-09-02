@@ -3,9 +3,11 @@ package staker
 import (
 	"testing"
 
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 
 	sr "gno.land/r/gnoswap/staker"
 )
@@ -215,7 +217,8 @@ func TestGetterPoolIncentiveDepositObjects(cur realm, t *testing.T) {
 	pool := state.instance.GetPool(state.poolPath)
 	uassert.Equal(t, state.poolPath, pool.PoolPath())
 
-	incentive := state.instance.GetIncentive(state.poolPath, state.incentiveId)
+	incentive, ok := state.instance.GetPoolIncentives(state.poolPath).Get(state.incentiveId).(*sr.ExternalIncentive)
+	uassert.True(t, ok)
 	uassert.Equal(t, state.incentiveId, incentive.IncentiveId())
 	uassert.Equal(t, barPath, incentive.RewardToken())
 
@@ -252,9 +255,7 @@ func TestGetterPoolIncentiveIdList(cur realm, t *testing.T) {
 	)
 	state.pool.Incentives().SetIncentive("test-incentive-2", incentive2)
 
-	ids := state.instance.GetPoolIncentiveIdList(state.poolPath)
-
-	uassert.Equal(t, 2, len(ids))
+	uassert.Equal(t, 2, state.instance.GetPoolIncentives(state.poolPath).Size())
 }
 
 func TestGetterExternalIncentiveByPoolPath(cur realm, t *testing.T) {
@@ -511,9 +512,11 @@ func TestGetterNonExistentDeposit(cur realm, t *testing.T) {
 func TestGetterNonExistentPool(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
-	uassert.PanicsContains(t, cur, "does not exist", func() {
-		state.instance.GetPoolIncentiveIdList("non-existent-pool")
-	})
+	// The read-only views read a missing pool as nil rather than aborting.
+	uassert.True(t, state.instance.GetPoolIncentives("non-existent-pool") == nil)
+	uassert.True(t, state.instance.GetPoolRewardCaches("non-existent-pool") == nil)
+	uassert.True(t, state.instance.GetPoolGlobalRewardRatioAccumulations("non-existent-pool") == nil)
+	uassert.True(t, state.instance.GetPoolHistoricalTicks("non-existent-pool") == nil)
 }
 
 func TestGetterPoolTierForUntieredPool(cur realm, t *testing.T) {
@@ -625,24 +628,22 @@ func TestGetterPoolRewardCache(cur realm, t *testing.T) {
 	state.pool.SetRewardCacheAt(state.fixedTimestamp+100, int64(2000))
 	state.pool.SetRewardCacheAt(state.fixedTimestamp+200, int64(3000))
 
-	// Test count
-	count := state.instance.GetPoolRewardCacheCount(state.poolPath)
-	uassert.Equal(t, uint64(3), count) // NewPool initializes with fixedTimestamp, which gets overwritten
+	rewardCaches := state.instance.GetPoolRewardCaches(state.poolPath)
 
-	// Test IDs pagination
-	ids := state.instance.GetPoolRewardCacheIDs(state.poolPath, 0, 2)
-	uassert.Equal(t, 2, len(ids))
+	// NewPool initializes with fixedTimestamp, which gets overwritten
+	uassert.Equal(t, 3, rewardCaches.Size())
+
+	// Test pagination through the read-only view
+	keys := collectKeys(rewardCaches, 0, 2)
+	uassert.Equal(t, 2, len(keys))
+	uassert.Equal(t, utils.EncodeUint64(uint64(state.fixedTimestamp)), keys[0])
 
 	// Test get specific cache value
-	cacheValue := state.instance.GetPoolRewardCache(state.poolPath, uint64(state.fixedTimestamp))
-	uassert.Equal(t, int64(1000), cacheValue)
-
-	cacheValue2 := state.instance.GetPoolRewardCache(state.poolPath, uint64(state.fixedTimestamp+200))
-	uassert.Equal(t, int64(3000), cacheValue2)
+	uassert.Equal(t, int64(1000), rewardCaches.Get(utils.EncodeUint64(uint64(state.fixedTimestamp))).(int64))
+	uassert.Equal(t, int64(3000), rewardCaches.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+200))).(int64))
 
 	// Test non-existent timestamp
-	nonExistent := state.instance.GetPoolRewardCache(state.poolPath, uint64(state.fixedTimestamp+9999))
-	uassert.Equal(t, int64(0), nonExistent)
+	uassert.Equal(t, nil, rewardCaches.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+9999))))
 }
 
 func TestGetterPoolIncentive(cur realm, t *testing.T) {
@@ -663,22 +664,24 @@ func TestGetterPoolIncentive(cur realm, t *testing.T) {
 	)
 	state.pool.Incentives().SetIncentive("test-incentive-2", incentive2)
 
-	// Test count
-	count := state.instance.GetPoolIncentiveCount(state.poolPath)
-	uassert.Equal(t, uint64(2), count)
-
-	// Test IDs pagination
-	ids := state.instance.GetPoolIncentiveIDs(state.poolPath, 0, 10)
+	// Test pagination through the read-only view
+	incentives := state.instance.GetPoolIncentives(state.poolPath)
+	uassert.Equal(t, 2, incentives.Size())
+	ids := collectKeys(incentives, 0, 10)
 	uassert.Equal(t, 2, len(ids))
 	uassert.True(t, contains(ids, state.incentiveId))
 	uassert.True(t, contains(ids, "test-incentive-2"))
 
 	// Test pagination with offset
-	idsPage1 := state.instance.GetPoolIncentiveIDs(state.poolPath, 0, 1)
-	uassert.Equal(t, 1, len(idsPage1))
+	uassert.Equal(t, 1, len(collectKeys(incentives, 0, 1)))
+	uassert.Equal(t, 1, len(collectKeys(incentives, 1, 1)))
 
-	idsPage2 := state.instance.GetPoolIncentiveIDs(state.poolPath, 1, 1)
-	uassert.Equal(t, 1, len(idsPage2))
+	// Entries are cloned, so a reader cannot reach the stored incentive.
+	first, ok := incentives.Get(state.incentiveId).(*sr.ExternalIncentive)
+	uassert.True(t, ok)
+	second, ok := incentives.Get(state.incentiveId).(*sr.ExternalIncentive)
+	uassert.True(t, ok)
+	uassert.False(t, first == second)
 }
 
 func TestGetterPoolGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
@@ -693,24 +696,21 @@ func TestGetterPoolGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	state.pool.SetGlobalRewardRatioAccumulationAt(state.fixedTimestamp+200, acc2)
 	state.pool.SetGlobalRewardRatioAccumulationAt(state.fixedTimestamp+300, acc3)
 
-	// Test count
-	count := state.instance.GetPoolGlobalRewardRatioAccumulationCount(state.poolPath)
-	uassert.Equal(t, uint64(4), count) // 3 new entries + 1 initial entry from NewPool
+	accumulations := state.instance.GetPoolGlobalRewardRatioAccumulations(state.poolPath)
 
-	// Test IDs pagination
-	ids := state.instance.GetPoolGlobalRewardRatioAccumulationIDs(state.poolPath, 0, 2)
-	uassert.Equal(t, 2, len(ids))
+	// 3 new entries + 1 initial entry from NewPool
+	uassert.Equal(t, 4, accumulations.Size())
+
+	// Test pagination through the read-only view
+	keys := collectKeys(accumulations, 0, 2)
+	uassert.Equal(t, 2, len(keys))
 
 	// Test get specific accumulation value
-	accValue := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+100))
-	uassert.Equal(t, acc1, accValue)
-
-	accValue2 := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+300))
-	uassert.Equal(t, acc3, accValue2)
+	uassert.Equal(t, acc1, accumulations.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+100))).(string))
+	uassert.Equal(t, acc3, accumulations.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+300))).(string))
 
 	// Test non-existent timestamp
-	nonExistent := state.instance.GetPoolGlobalRewardRatioAccumulation(state.poolPath, uint64(state.fixedTimestamp+9999))
-	uassert.Equal(t, "0", nonExistent)
+	uassert.Equal(t, nil, accumulations.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+9999))))
 }
 
 func TestGetterPoolHistoricalTick(cur realm, t *testing.T) {
@@ -721,22 +721,27 @@ func TestGetterPoolHistoricalTick(cur realm, t *testing.T) {
 	state.pool.SetHistoricalTickAt(state.fixedTimestamp+100, int32(50))
 	state.pool.SetHistoricalTickAt(state.fixedTimestamp+200, int32(200))
 
-	// Test count
-	count := state.instance.GetPoolHistoricalTickCount(state.poolPath)
-	uassert.Equal(t, uint64(3), count)
+	historicalTicks := state.instance.GetPoolHistoricalTicks(state.poolPath)
+	uassert.Equal(t, 3, historicalTicks.Size())
 
-	// Test IDs pagination
-	ticks := state.instance.GetPoolHistoricalTickIDs(state.poolPath, 0, 2)
-	uassert.Equal(t, 2, len(ticks))
+	// Test pagination through the read-only view
+	uassert.Equal(t, 2, len(collectKeys(historicalTicks, 0, 2)))
 
 	// Test get specific tick value
-	tickValue := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp))
-	uassert.Equal(t, int32(-100), tickValue)
-
-	tickValue2 := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp+200))
-	uassert.Equal(t, int32(200), tickValue2)
+	uassert.Equal(t, int32(-100), historicalTicks.Get(utils.EncodeUint64(uint64(state.fixedTimestamp))).(int32))
+	uassert.Equal(t, int32(200), historicalTicks.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+200))).(int32))
 
 	// Test non-existent timestamp
-	nonExistent := state.instance.GetPoolHistoricalTick(state.poolPath, uint64(state.fixedTimestamp+9999))
-	uassert.Equal(t, int32(0), nonExistent)
+	uassert.Equal(t, nil, historicalTicks.Get(utils.EncodeUint64(uint64(state.fixedTimestamp+9999))))
+}
+
+// collectKeys paginates a read-only tree and returns the visited keys.
+func collectKeys(tree *rotree.ReadOnlyTree, offset, count int) []string {
+	keys := make([]string, 0, count)
+	tree.IterateByOffset(offset, count, func(key string, _ any) bool {
+		keys = append(keys, key)
+		return false
+	})
+
+	return keys
 }

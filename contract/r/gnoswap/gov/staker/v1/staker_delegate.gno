@@ -55,9 +55,7 @@ func (gs *govStakerV1) Delegate(
 	amount int64,
 	referrer string,
 ) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedGovStaker()
 
@@ -141,9 +139,7 @@ func (gs *govStakerV1) Undelegate(
 	from address,
 	amount int64,
 ) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -220,9 +216,7 @@ func (gs *govStakerV1) Redelegate(
 	newDelegatee address,
 	amount int64,
 ) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedGovStaker()
 
@@ -284,9 +278,7 @@ func (gs *govStakerV1) Redelegate(
 // Allows users to collect GNS tokens that completed undelegation lockup period.
 // Burns xGNS and returns GNS tokens.
 func (gs *govStakerV1) CollectUndelegatedGns(_ int, rlm realm) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -347,13 +339,19 @@ func (gs *govStakerV1) delegate(
 	delegationResolver := NewDelegationResolver(delegation)
 	delegatedAmount := delegationResolver.DelegatedAmount()
 	if delegatedAmount < 0 {
-		return nil, errors.New("delegated amount cannot be negative")
+		return nil, errors.New(errDelegatedAmountNegative)
 	}
 
-	gs.addDelegation(0, rlm, delegationID, delegation)
+	if err := gs.addDelegation(0, rlm, delegationID, delegation); err != nil {
+		return nil, err
+	}
 	gs.addDelegationRecord(0, rlm, to, delegatedAmount, currentTimestamp)
-	gs.addStakeEmissionReward(0, rlm, from.String(), amount, currentTimestamp)
-	gs.addStakeProtocolFeeReward(0, rlm, from.String(), amount, currentTimestamp)
+	if err := gs.addStakeEmissionReward(0, rlm, from.String(), amount, currentTimestamp); err != nil {
+		return nil, err
+	}
+	if err := gs.addStakeProtocolFeeReward(0, rlm, from.String(), amount, currentTimestamp); err != nil {
+		return nil, err
+	}
 
 	return delegation, nil
 }
@@ -397,7 +395,9 @@ func (gs *govStakerV1) unDelegate(
 	for _, delegation := range delegations {
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
-			gs.removeDelegation(0, rlm, delegation.ID())
+			if err := gs.removeDelegation(0, rlm, delegation.ID()); err != nil {
+				return 0, err
+			}
 			continue
 		}
 
@@ -408,7 +408,11 @@ func (gs *govStakerV1) unDelegate(
 		}
 
 		if currentUnDelegationAmount < 0 {
-			return 0, errors.New("undelegation amount cannot be negative")
+			return 0, errors.New(errUndelegationAmountNegative)
+		}
+
+		if currentUnDelegationAmount == 0 {
+			continue
 		}
 
 		resolver.UnDelegate(
@@ -418,10 +422,16 @@ func (gs *govStakerV1) unDelegate(
 			lockupPeriod,
 		)
 
-		gs.setDelegation(0, rlm, delegation.ID(), delegation)
+		if err := gs.setDelegation(0, rlm, delegation.ID(), delegation); err != nil {
+			return 0, err
+		}
 		gs.addDelegationRecord(0, rlm, delegatee, -currentUnDelegationAmount, currentTimestamp)
-		gs.removeStakeEmissionReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTimestamp)
-		gs.removeStakeProtocolFeeReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTimestamp)
+		if err := gs.removeStakeEmissionReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTimestamp); err != nil {
+			return 0, err
+		}
+		if err := gs.removeStakeProtocolFeeReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTimestamp); err != nil {
+			return 0, err
+		}
 
 		unDelegationAmount = gnsmath.SafeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
@@ -470,7 +480,9 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	for _, delegation := range delegations {
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
-			gs.removeDelegation(0, rlm, delegation.ID())
+			if err := gs.removeDelegation(0, rlm, delegation.ID()); err != nil {
+				return 0, err
+			}
 			continue
 		}
 
@@ -480,6 +492,10 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 			currentUnDelegationAmount = resolver.DelegatedAmount()
 		}
 
+		if currentUnDelegationAmount == 0 {
+			continue
+		}
+
 		resolver.UnDelegateWithoutLockup(
 			currentUnDelegationAmount,
 			currentHeight,
@@ -487,13 +503,19 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 		)
 
 		if resolver.IsEmpty() {
-			gs.removeDelegation(0, rlm, delegation.ID())
-		} else {
-			gs.setDelegation(0, rlm, delegation.ID(), delegation)
+			if err := gs.removeDelegation(0, rlm, delegation.ID()); err != nil {
+				return 0, err
+			}
+		} else if err := gs.setDelegation(0, rlm, delegation.ID(), delegation); err != nil {
+			return 0, err
 		}
 		gs.addDelegationRecord(0, rlm, delegatee, -currentUnDelegationAmount, currentTime)
-		gs.removeStakeEmissionReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTime)
-		gs.removeStakeProtocolFeeReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTime)
+		if err := gs.removeStakeEmissionReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTime); err != nil {
+			return 0, err
+		}
+		if err := gs.removeStakeProtocolFeeReward(0, rlm, delegator.String(), currentUnDelegationAmount, currentTime); err != nil {
+			return 0, err
+		}
 
 		unDelegationAmount = gnsmath.SafeSubInt64(unDelegationAmount, currentUnDelegationAmount)
 		if unDelegationAmount <= 0 {
@@ -598,19 +620,24 @@ func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, curren
 			if resolver.IsEmpty() {
 				idsToRemove = append(idsToRemove, delegation.ID())
 			} else {
-				gs.setDelegation(0, rlm, delegation.ID(), delegation)
+				if iErr := gs.setDelegation(0, rlm, delegation.ID(), delegation); iErr != nil {
+					err = iErr
+					return true
+				}
 			}
 		}
 
 		return false
 	})
 
-	for _, id := range idsToRemove {
-		gs.removeDelegation(0, rlm, id)
-	}
-
 	if err != nil {
 		return totalCollectedAmount, makeErrorWithDetails(errInvalidAmount, err.Error())
+	}
+
+	for _, id := range idsToRemove {
+		if err := gs.removeDelegation(0, rlm, id); err != nil {
+			return totalCollectedAmount, err
+		}
 	}
 
 	return totalCollectedAmount, nil

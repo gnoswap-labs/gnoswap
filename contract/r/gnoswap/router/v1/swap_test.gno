@@ -292,206 +292,9 @@ func TestMinMaxTick_Symmetry(cur realm, t *testing.T) {
 	}
 }
 
-func TestSwapExecutor_Interface(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		executorType string
-	}{
-		{
-			name:         "real swap executor",
-			executorType: "real",
-		},
-		{
-			name:         "dry swap executor",
-			executorType: "dry",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			var executor SwapExecutor
-
-			if tt.executorType == "real" {
-				executor = &RealSwapExecutor{router: &routerV1{}}
-			} else {
-				executor = &DrySwapExecutor{router: &routerV1{}}
-			}
-
-			uassert.NotNil(t, executor)
-		})
-	}
-}
-
-// Test swap_multi.gno functions
-
-func TestSwapDirection(cur realm, t *testing.T) {
-	tests := []struct {
-		name      string
-		direction SwapDirection
-		expected  SwapDirection
-	}{
-		{
-			name:      "forward direction",
-			direction: Forward,
-			expected:  Forward,
-		},
-		{
-			name:      "backward direction",
-			direction: Backward,
-			expected:  Backward,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			uassert.Equal(t, int(tt.expected), int(tt.direction))
-		})
-	}
-}
-
-func TestNewMultiSwapProcessor(cur realm, t *testing.T) {
-	tests := []struct {
-		name          string
-		isSimulate    bool
-		direction     SwapDirection
-		expectDryExec bool
-	}{
-		{
-			name:          "real forward processor",
-			isSimulate:    false,
-			direction:     Forward,
-			expectDryExec: false,
-		},
-		{
-			name:          "dry forward processor",
-			isSimulate:    true,
-			direction:     Forward,
-			expectDryExec: true,
-		},
-		{
-			name:          "real backward processor",
-			isSimulate:    false,
-			direction:     Backward,
-			expectDryExec: false,
-		},
-		{
-			name:          "dry backward processor",
-			isSimulate:    true,
-			direction:     Backward,
-			expectDryExec: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			router := &routerV1{}
-			var processor *MultiSwapProcessor
-			if tt.isSimulate {
-				processor = newDryMultiSwapProcessor(router, tt.direction, adminAddr)
-			} else {
-				processor = newRealMultiSwapProcessor(0, cur, router, tt.direction, adminAddr)
-			}
-
-			uassert.NotNil(t, processor)
-			uassert.Equal(t, tt.isSimulate, processor.isSimulate)
-			uassert.Equal(t, int(tt.direction), int(processor.direction))
-			uassert.NotNil(t, processor.executor)
-
-			if tt.expectDryExec {
-				_, isDry := processor.executor.(*DryMultiSwapExecutor)
-				uassert.True(t, isDry)
-			} else {
-				_, isReal := processor.executor.(*RealMultiSwapExecutor)
-				uassert.True(t, isReal)
-			}
-		})
-	}
-}
-
-func TestMultiSwapExecutor_Interface(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		executorType string
-	}{
-		{
-			name:         "dry multi swap executor",
-			executorType: "dry",
-		},
-		{
-			name:         "real multi swap executor",
-			executorType: "real",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			var executor MultiSwapExecutor
-			router := &routerV1{}
-
-			if tt.executorType == "dry" {
-				executor = &DryMultiSwapExecutor{router: router}
-			} else {
-				executor = &RealMultiSwapExecutor{router: router}
-			}
-
-			uassert.NotNil(t, executor)
-		})
-	}
-}
-
-func TestSwapDirection_Values(cur realm, t *testing.T) {
-	// Test that Forward and Backward have distinct values
-	uassert.NotEqual(t, int(Forward), int(Backward))
-
-	// Forward should be 1 (first non-zero value after iota)
-	uassert.Equal(t, 1, int(Forward))
-
-	// Backward should be 2
-	uassert.Equal(t, 2, int(Backward))
-}
-
-func TestMultiSwapProcessor_Fields(cur realm, t *testing.T) {
-	router := &routerV1{}
-
-	tests := []struct {
-		name       string
-		isSimulate bool
-		direction  SwapDirection
-	}{
-		{
-			name:       "simulate forward",
-			isSimulate: true,
-			direction:  Forward,
-		},
-		{
-			name:       "real backward",
-			isSimulate: false,
-			direction:  Backward,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			var processor *MultiSwapProcessor
-			if tt.isSimulate {
-				processor = newDryMultiSwapProcessor(router, tt.direction, adminAddr)
-			} else {
-				processor = newRealMultiSwapProcessor(0, cur, router, tt.direction, adminAddr)
-			}
-
-			uassert.Equal(t, tt.isSimulate, processor.isSimulate)
-			uassert.Equal(t, int(tt.direction), int(processor.direction))
-			uassert.NotNil(t, processor.router)
-		})
-	}
-}
-
 // Test swap_single.gno functions
 
-func TestExecuteSwap_SameToken(cur realm, t *testing.T) {
-	router := &routerV1{}
-	executor := &DrySwapExecutor{router: router}
-
+func TestAssertSingleSwap_SameToken(cur realm, t *testing.T) {
 	params := &SingleSwapParams{
 		tokenIn:  "gno.land/r/onbloc/foo.FOO",
 		tokenOut: "gno.land/r/onbloc/foo.FOO", // Same token
@@ -502,7 +305,7 @@ func TestExecuteSwap_SameToken(cur realm, t *testing.T) {
 		t, cur,
 		"[GNOSWAP-ROUTER-011] cannot swap same token",
 		func() {
-			router.executeSwap(executor, params)
+			assertSingleSwap(params)
 		},
 	)
 }
@@ -534,54 +337,6 @@ func TestExecuteSwap_DifferentTokens(cur realm, t *testing.T) {
 			uassert.NotEqual(t, tt.tokenIn, tt.tokenOut)
 		})
 	}
-}
-
-func TestSingleSwap_ExecutorType(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		swapType     string
-		expectDryRun bool
-	}{
-		{
-			name:         "real swap",
-			swapType:     "real",
-			expectDryRun: false,
-		},
-		{
-			name:         "dry swap",
-			swapType:     "dry",
-			expectDryRun: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			router := &routerV1{}
-			var executor SwapExecutor
-
-			if tt.expectDryRun {
-				executor = &DrySwapExecutor{router: router}
-			} else {
-				executor = &RealSwapExecutor{router: router}
-			}
-
-			uassert.NotNil(t, executor)
-
-			if tt.expectDryRun {
-				_, isDry := executor.(*DrySwapExecutor)
-				uassert.True(t, isDry)
-			} else {
-				_, isReal := executor.(*RealSwapExecutor)
-				uassert.True(t, isReal)
-			}
-		})
-	}
-}
-
-func TestSwapExecutor_Consistency(cur realm, t *testing.T) {
-	// Verify both RealSwapExecutor and DrySwapExecutor implement SwapExecutor
-	var _ SwapExecutor = (*RealSwapExecutor)(nil)
-	var _ SwapExecutor = (*DrySwapExecutor)(nil)
 }
 
 // Additional edge case tests
@@ -679,40 +434,6 @@ func TestSwapInner_ZeroForOneLogic(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			zeroForOne := tt.tokenIn < tt.tokenOut
 			uassert.Equal(t, tt.zeroForOne, zeroForOne)
-		})
-	}
-}
-
-func TestMultiSwapProcessor_DirectionMatching(cur realm, t *testing.T) {
-	tests := []struct {
-		name            string
-		swapType        string
-		direction       SwapDirection
-		amountSpecified *i256.Int
-	}{
-		{
-			name:            "exactIn uses forward direction",
-			swapType:        "exactIn",
-			direction:       Forward,
-			amountSpecified: i256.NewInt(1000), // positive
-		},
-		{
-			name:            "exactOut uses backward direction",
-			swapType:        "exactOut",
-			direction:       Backward,
-			amountSpecified: i256.NewInt(-1000), // negative
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			if tt.swapType == "exactIn" {
-				uassert.False(t, tt.amountSpecified.IsNeg())
-				uassert.Equal(t, int(Forward), int(tt.direction))
-			} else {
-				uassert.True(t, tt.amountSpecified.IsNeg())
-				uassert.Equal(t, int(Backward), int(tt.direction))
-			}
 		})
 	}
 }

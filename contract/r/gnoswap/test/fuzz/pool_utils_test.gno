@@ -204,8 +204,8 @@ func setupMintPosition(
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
-	common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, amountDesired)
-	common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, amountDesired)
+	common.SafeGRC20Approve(0, cur, token0Path, poolAddr, amountDesired)
+	common.SafeGRC20Approve(0, cur, token1Path, poolAddr, amountDesired)
 
 	return position.Mint(
 		cross(cur),

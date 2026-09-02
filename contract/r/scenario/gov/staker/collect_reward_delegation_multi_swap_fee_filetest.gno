@@ -116,8 +116,8 @@ func createPoolByAdmin(cur realm, token0, token1 string, fee int64) {
 func mintPositionByAdmin(cur realm, token0, token1 string, fee int64) {
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross(cur), token0, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross(cur), token1, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, token0, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, token1, poolAddr, math.MaxInt64)
 
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross(cur),
@@ -150,7 +150,7 @@ func exactInSingleSwapRouteByAdmin(cur realm,
 ) {
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross(cur), inputToken, routerAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, inputToken, routerAddr, math.MaxInt64)
 
 	inputTokenAmount, outputTokenAmount := router.ExactInSingleSwapRoute(
 		cross(cur),
@@ -164,7 +164,8 @@ func exactInSingleSwapRouteByAdmin(cur realm,
 		"",
 	)
 
-	ufmt.Printf("[EXPECTED] pool current tick: %d\n", pool.GetSlot0Tick(routeQueryString))
+	poolTick, _ := pool.GetSlot0Tick(routeQueryString)
+	ufmt.Printf("[EXPECTED] pool current tick: %d\n", poolTick)
 	ufmt.Printf("[EXPECTED] inputTokenAmount(%s): %s\n", inputToken, inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount(%s): %s\n", outputToken, outputTokenAmount)
 }

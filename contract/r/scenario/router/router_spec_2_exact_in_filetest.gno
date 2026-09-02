@@ -67,7 +67,7 @@ func main(cur realm) {
 	println("[INFO] Minting position in bar-foo pool")
 	pn.Mint(cross(cur), barPath, token0Path, 3000, min_tick, max_tick, "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
 
-	pool, _ := pl.GetPool(barPath, token0Path, FEE_MEDIUM)
+	pool, _ := pl.GetPools().Get(pl.GetPoolPath(barPath, token0Path, FEE_MEDIUM)).(*pl.Pool)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 1000000")
 

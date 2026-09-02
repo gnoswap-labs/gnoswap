@@ -203,6 +203,13 @@ func NewProject(
 	}
 }
 
+// Clone copies a project's own fields and leaves its maps nil: conditions,
+// tiers, and tiersRatios are not copied.
+//
+// The copy is shallow because the read-only project view clones every entry a
+// caller reads, so copying the maps would deep-copy every condition and tier
+// for each entry on a page. Read them through their own lookups instead:
+// GetProjectCondition, GetProjectTier, and GetProjectTiersRatios.
 func (p Project) Clone() *Project {
 	conditions := make(map[string]*ProjectCondition)
 	for k, v := range p.conditions {

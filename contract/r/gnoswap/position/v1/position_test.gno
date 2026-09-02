@@ -230,7 +230,7 @@ func TestRemovePosition(cur realm, t *testing.T) {
 
 			mockInstance.store.RemovePosition(0, cur, tt.inputPositionId)
 
-			_, found := mockInstance.GetPosition(tt.inputPositionId)
+			_, found := mockInstance.store.GetPosition(tt.inputPositionId)
 			uassert.False(t, found)
 		})
 	}
@@ -704,8 +704,8 @@ func TestMint(cur realm, t *testing.T) {
 				})
 			} else {
 				testing.SetRealm(adminRealm)
-				common.SafeGRC20Transfer(cross(cur), tc.token0, tc.caller, amount0Int)
-				common.SafeGRC20Transfer(cross(cur), tc.token1, tc.caller, amount1Int)
+				common.SafeGRC20Transfer(0, cur, tc.token0, tc.caller, amount0Int)
+				common.SafeGRC20Transfer(0, cur, tc.token1, tc.caller, amount1Int)
 
 				testing.SetRealm(testing.NewUserRealm(tc.caller))
 
@@ -801,16 +801,16 @@ func TestMint_ParticipantDerivationAndMintToValidation(cur realm, t *testing.T) 
 			}
 
 			testing.SetRealm(adminRealm)
-			common.SafeGRC20Transfer(cross(cur), barPath, caller, 1000000)
-			common.SafeGRC20Transfer(cross(cur), fooPath, caller, 1000000)
+			common.SafeGRC20Transfer(0, cur, barPath, caller, 1000000)
+			common.SafeGRC20Transfer(0, cur, fooPath, caller, 1000000)
 
 			if tt.callerCodePath != "" {
 				testing.SetRealm(testing.NewCodeRealm(tt.callerCodePath))
 			} else {
 				testing.SetRealm(testing.NewUserRealm(caller))
 			}
-			common.SafeGRC20Approve(cross(cur), barPath, poolAddr, 1000000)
-			common.SafeGRC20Approve(cross(cur), fooPath, poolAddr, 1000000)
+			common.SafeGRC20Approve(0, cur, barPath, poolAddr, 1000000)
+			common.SafeGRC20Approve(0, cur, fooPath, poolAddr, 1000000)
 
 			mint := func(cur realm) (uint64, string, string, string) {
 				if tt.callerCodePath != "" {
@@ -1767,7 +1767,7 @@ func TestReposition_DeadlineValidation(cur realm, t *testing.T) {
 			)
 
 			// Step 2: Get position liquidity and decrease 100% to clear for reposition
-			position, _ := mockInstance.GetPosition(1)
+			position, _ := mockInstance.store.GetPosition(1)
 			liquidity := position.Liquidity()
 
 			_, _, _, _, _, _, _ = mockInstanceDecreaseLiquidity(cur,

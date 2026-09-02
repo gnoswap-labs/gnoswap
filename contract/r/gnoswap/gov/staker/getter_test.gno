@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -27,61 +29,6 @@ func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 		mutate    func(result any)
 		assertRaw func(t *testing.T, m *MockGovStaker)
 	}{
-		{
-			name: "GetDelegation",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegation", newDelegation(), nil) },
-			getter: func(cur realm, t *testing.T) any {
-				delegation, err := GetDelegation(1)
-				uassert.NoError(t, err)
-				return delegation
-			},
-			mutate: func(result any) {
-				delegation := result.(*Delegation)
-				delegation.SetUnDelegateAmount(999)
-				delegation.SetCollectedAmount(888)
-				delegation.Withdraws()[0].SetCollected(true)
-				delegation.Withdraws()[0].SetCollectedAt(777)
-				delegation.Withdraws()[0].SetCollectedAmount(666)
-			},
-			assertRaw: func(t *testing.T, m *MockGovStaker) {
-				delegation := m.Response.data["GetDelegation"][0].(*Delegation)
-				uassert.Equal(t, int64(200), delegation.UnDelegatedAmount())
-				uassert.Equal(t, int64(300), delegation.CollectedAmount())
-				uassert.Equal(t, false, delegation.Withdraws()[0].IsCollected())
-				uassert.Equal(t, int64(0), delegation.Withdraws()[0].CollectedAt())
-				uassert.Equal(t, int64(0), delegation.Withdraws()[0].CollectedAmount())
-			},
-		},
-		{
-			name: "GetDelegationIDs",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegationIDs", []int64{1, 2}) },
-			getter: func(cur realm, t *testing.T) any { return GetDelegationIDs(0, 10) },
-			mutate: func(result any) {
-				values := result.([]int64)
-				values[0] = 99
-				_ = append(values, 100)
-			},
-			assertRaw: func(t *testing.T, m *MockGovStaker) {
-				values := m.Response.data["GetDelegationIDs"][0].([]int64)
-				uassert.Equal(t, int64(1), values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
-		{
-			name: "GetDelegatorDelegateeAddresses",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegatorDelegateeAddresses", []address{adminAddr}) },
-			getter: func(cur realm, t *testing.T) any { return GetDelegatorDelegateeAddresses(adminAddr, 0, 10) },
-			mutate: func(result any) {
-				values := result.([]address)
-				values[0] = address("g1test")
-				values = append(values, adminAddr)
-			},
-			assertRaw: func(t *testing.T, m *MockGovStaker) {
-				values := m.Response.data["GetDelegatorDelegateeAddresses"][0].([]address)
-				uassert.Equal(t, adminAddr, values[0])
-				uassert.Equal(t, 1, len(values))
-			},
-		},
 		{
 			name: "GetUserDelegationIDs",
 			setup: func(m *MockGovStaker) { m.Response.Set("GetUserDelegationIDs", []int64{3, 4}) },
@@ -211,4 +158,70 @@ func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 			tt.assertRaw(t, mockGovStaker)
 		})
 	}
+}
+
+func TestReadOnlyTreeGetters(cur realm, t *testing.T) {
+	tests := []struct {
+		name     string
+		method   string
+		getter   func() *rotree.ReadOnlyTree
+		wantKeys []string
+	}{
+		{
+			name:     "GetDelegations",
+			method:   "GetDelegations",
+			getter:   func() *rotree.ReadOnlyTree { return GetDelegations() },
+			wantKeys: []string{"1", "2"},
+		},
+		{
+			name:     "GetDelegatorDelegations",
+			method:   "GetDelegatorDelegations",
+			getter:   func() *rotree.ReadOnlyTree { return GetDelegatorDelegations(adminAddr) },
+			wantKeys: []string{adminAddr.String()},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(t)
+			mockGovStaker := newMockGovStaker("v1")
+			implementation = mockGovStaker
+
+			stored := bptree.NewBPTree32()
+			for i, key := range tt.wantKeys {
+				stored.Set(key, i)
+			}
+			mockGovStaker.Response.Set(tt.method, rotree.Wrap(stored, nil))
+
+			got := tt.getter()
+			uassert.Equal(t, len(tt.wantKeys), got.Size())
+
+			keys := make([]string, 0, got.Size())
+			got.IterateByOffset(0, got.Size(), func(key string, _ any) bool {
+				keys = append(keys, key)
+				return false
+			})
+			for i, want := range tt.wantKeys {
+				uassert.Equal(t, want, keys[i])
+			}
+
+			// The view refuses writes, so the stored tree stays untouched.
+			uassert.PanicsWithMessage(t, cur, "Set operation not supported on ReadOnlyTree", func() {
+				got.Set("mutated", 0)
+			})
+			uassert.PanicsWithMessage(t, cur, "Remove operation not supported on ReadOnlyTree", func() {
+				got.Remove(tt.wantKeys[0])
+			})
+			uassert.Equal(t, len(tt.wantKeys), stored.Size())
+		})
+	}
+}
+
+func TestReadOnlyTreeGetters_NoImplementationResponse(cur realm, t *testing.T) {
+	resetTestState(t)
+	mockGovStaker := newMockGovStaker("v1")
+	implementation = mockGovStaker
+
+	uassert.True(t, GetDelegations() == nil)
+	uassert.True(t, GetDelegatorDelegations(adminAddr) == nil)
 }

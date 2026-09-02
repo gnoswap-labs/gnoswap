@@ -6,6 +6,8 @@ import (
 	"errors"
 	"time"
 
+	"gno.land/r/gnoswap/access"
+
 	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/common"
@@ -40,9 +42,7 @@ import (
 // Returns executed proposal ID.
 // Callable by anyone once proposal is executable.
 func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	// Check if execution is allowed (system not halted for execution)
 	halt.AssertIsNotHaltedGovernance()
@@ -154,9 +154,7 @@ func (gv *governanceV1) executeProposal(
 // Returns cancelled proposal ID.
 // Only callable by original proposer before voting begins.
 func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedGovernance()
 

@@ -139,7 +139,11 @@ func (p *poolSwapParams) isValidPoolExists() bool {
 // isValidPriceLimitDirection checks if price limit direction is correct
 func (p *poolSwapParams) isValidPriceLimitDirection() bool {
 	poolPath := pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
-	currentPrice := u256.MustFromDecimal(pool.GetSlot0SqrtPriceX96(poolPath))
+	currentPriceString, err := pool.GetSlot0SqrtPriceX96(poolPath)
+	if err != nil {
+		return false
+	}
+	currentPrice := u256.MustFromDecimal(currentPriceString)
 
 	priceLimit := u256.MustFromDecimal(p.sqrtPriceLimitX96)
 	minSqrtRatio := u256.MustFromDecimal(MIN_SQRT_RATIO)
@@ -235,8 +239,9 @@ func (p *poolSwapParams) hasEnoughBalance(tokenPath string, requiredAmount *u256
 
 // drySwap calls pool.DrySwap with panic recovery
 func (p *poolSwapParams) drySwap() (amountIn string, amountOut string, success bool) {
+	var err error
 	revive(func() {
-		amountIn, amountOut, success = pool.DrySwap(
+		amountIn, amountOut, err = pool.DrySwap(
 			p.token0Path,
 			p.token1Path,
 			p.fee,
@@ -245,12 +250,15 @@ func (p *poolSwapParams) drySwap() (amountIn string, amountOut string, success b
 			p.sqrtPriceLimitX96,
 		)
 	})
-
-	if amountIn == "0" || amountOut == "0" {
+	if err != nil {
 		return "0", "0", false
 	}
 
-	return amountIn, amountOut, success
+	if amountIn == "" || amountOut == "" || amountIn == "0" || amountOut == "0" {
+		return "0", "0", false
+	}
+
+	return amountIn, amountOut, true
 }
 
 // generatePriceLimitFromCurrent generates a valid price limit based on the current price
@@ -375,6 +383,9 @@ func (p *poolSwapParams) setPriceLimit(t *fuzz.T) {
 		return
 	}
 
-	currentPrice := pool.GetSlot0SqrtPriceX96(poolPath)
+	currentPrice, err := pool.GetSlot0SqrtPriceX96(poolPath)
+	if err != nil {
+		return
+	}
 	p.sqrtPriceLimitX96 = generatePriceLimitFromCurrent(t, currentPrice, p.zeroForOne)
 }

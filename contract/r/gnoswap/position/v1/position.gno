@@ -2,7 +2,6 @@ package position
 
 import (
 	"chain"
-	"errors"
 
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -48,9 +47,7 @@ func (p *positionV1) Mint(
 	mintTo address,
 	referrer string,
 ) (uint64, string, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedPosition()
 	access.AssertIsValidAddress(mintTo)
@@ -96,9 +93,15 @@ func (p *positionV1) Mint(
 	params := newMintParams(processedInput, mintInput)
 	id, liquidity, amount0, amount1 := p.mint(0, rlm, params)
 
-	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(processedInput.poolPath)
-
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(processedInput.poolPath)
+	pool := mustGetPool(processedInput.poolPath)
+	positionLiquidity, err := p.GetPositionLiquidity(id)
+	if err != nil {
+		panic(err)
+	}
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(processedInput.poolPath)
+	if err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"Mint",
@@ -113,11 +116,11 @@ func (p *positionV1) Mint(
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", poolSqrtPriceX96,
-		"positionLiquidity", p.GetPositionLiquidity(id),
-		"poolLiquidity", pl.GetLiquidity(processedInput.poolPath),
-		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(processedInput.poolPath)),
-		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(processedInput.poolPath)),
+		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
+		"positionLiquidity", positionLiquidity,
+		"poolLiquidity", pool.Liquidity().ToString(),
+		"token0Balance", utils.FormatInt(pool.BalanceToken0()),
+		"token1Balance", utils.FormatInt(pool.BalanceToken1()),
 		"tickCumulative", utils.FormatInt(tickCumulative),
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
@@ -161,9 +164,7 @@ func (p *positionV1) IncreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedPosition()
 
@@ -205,8 +206,15 @@ func (p *positionV1) IncreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(poolPath)
-
+	pool := mustGetPool(poolPath)
+	positionLiquidity, err := p.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolPath)
+	if err != nil {
+		panic(err)
+	}
 	chain.Emit(
 		"IncreaseLiquidity",
 		"prevAddr", previousRealm.Address().String(),
@@ -219,11 +227,11 @@ func (p *positionV1) IncreaseLiquidity(
 		"liquidityDelta", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
-		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath),
-		"positionLiquidity", p.GetPositionLiquidity(positionId),
-		"poolLiquidity", pl.GetLiquidity(poolPath),
-		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(poolPath)),
-		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(poolPath)),
+		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
+		"positionLiquidity", positionLiquidity,
+		"poolLiquidity", pool.Liquidity().ToString(),
+		"token0Balance", utils.FormatInt(pool.BalanceToken0()),
+		"token1Balance", utils.FormatInt(pool.BalanceToken1()),
 		"tickCumulative", utils.FormatInt(tickCumulative),
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
@@ -262,9 +270,7 @@ func (p *positionV1) DecreaseLiquidity(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -296,8 +302,15 @@ func (p *positionV1) DecreaseLiquidity(
 		panic(err)
 	}
 
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetLastObservation(poolPath)
-
+	pool := mustGetPool(poolPath)
+	positionLiquidity, err := p.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolPath)
+	if err != nil {
+		panic(err)
+	}
 	chain.Emit(
 		"DecreaseLiquidity",
 		"prevAddr", previousRealm.Address().String(),
@@ -311,11 +324,11 @@ func (p *positionV1) DecreaseLiquidity(
 		"feeAmount1", fee1,
 		"amount0", amount0,
 		"amount1", amount1,
-		"sqrtPriceX96", pl.GetSlot0SqrtPriceX96(poolPath),
-		"positionLiquidity", p.GetPositionLiquidity(positionId),
-		"poolLiquidity", pl.GetLiquidity(poolPath),
-		"token0Balance", utils.FormatInt(pl.GetBalanceToken0(poolPath)),
-		"token1Balance", utils.FormatInt(pl.GetBalanceToken1(poolPath)),
+		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
+		"positionLiquidity", positionLiquidity,
+		"poolLiquidity", pool.Liquidity().ToString(),
+		"token0Balance", utils.FormatInt(pool.BalanceToken0()),
+		"token1Balance", utils.FormatInt(pool.BalanceToken1()),
 		"tickCumulative", utils.FormatInt(tickCumulative),
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
@@ -345,9 +358,7 @@ func (p *positionV1) DecreaseLiquidity(
 //   - Caller must be owner or approved operator
 //   - Position must have accumulated fees
 func (p *positionV1) CollectFee(_ int, rlm realm, positionId uint64) (uint64, string, string, string, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -453,9 +464,7 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 // SetPositionOperator sets an operator for a position.
 // Only staker can call this function.
 func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator address) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	previousRealm := rlm.Previous()
 	access.AssertIsStaker(previousRealm.Address())
@@ -481,7 +490,10 @@ func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator a
 // getCurrentFeeGrowth retrieves current fee growth values for a position.
 func (p *positionV1) getCurrentFeeGrowth(position *pos.Position, owner address) (FeeGrowthInside, error) {
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128, err := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
+	if err != nil {
+		return FeeGrowthInside{}, err
+	}
 
 	feeGrowthInside := FeeGrowthInside{
 		feeGrowthInside0LastX128: u256.MustFromDecimal(feeGrowthInside0LastX128),
@@ -504,8 +516,12 @@ func calculatePositionBalances(position *pos.Position) (int64, int64) {
 		return 0, 0
 	}
 
+	sqrtPriceX96, err := pl.GetSlot0SqrtPriceX96(position.PoolKey())
+	if err != nil {
+		panic(err)
+	}
 	token0Balance, token1Balance := gnsmath.GetAmountsForLiquidity(
-		u256.MustFromDecimal(pl.GetSlot0SqrtPriceX96(position.PoolKey())), // currentSqrtPriceX96
+		u256.MustFromDecimal(sqrtPriceX96), // currentSqrtPriceX96
 		gnsmath.TickMathGetSqrtRatioAtTick(position.TickLower()),
 		gnsmath.TickMathGetSqrtRatioAtTick(position.TickUpper()),
 		liquidity,

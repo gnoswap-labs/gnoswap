@@ -65,7 +65,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
@@ -189,13 +189,13 @@ func createExternalIncentiveGns(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		gnsPath,
 		9000000000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 }
 
 func startExternalIncentive(cur realm) {
-	externalStartTime := int64(1234569600)
+	externalStartTime := int64(1234742400)
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
@@ -216,7 +216,7 @@ func stakePosition(cur realm) {
 }
 
 func endExternalGnsIncentive(cur realm) {
-	externalEndTime := (1234569600 + TIMESTAMP_90DAYS)
+	externalEndTime := (1234742400 + TIMESTAMP_90DAYS)
 	nowTime := time.Now().Unix()
 	timeLeft := externalEndTime - nowTime
 
@@ -302,7 +302,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 //
 // [SCENARIO] 5. Start external incentive
 // [INFO] skip blocks until external incentive starts
-// [INFO] external incentive started at timestamp: 1234569600
+// [INFO] external incentive started at timestamp: 1234742400
 //
 // [SCENARIO] 6. Stake position
 // [INFO] stake position
@@ -310,11 +310,11 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [SCENARIO] 7. End external incentive
 // [INFO] skip blocks until external incentive ends
 // [INFO] end external incentive FIRST TIME and collect remaining GNS
-// [INFO] FIRST END - Staker GNS balance before: 20000000000
+// [INFO] FIRST END - Staker GNS balance before: 119000000000
 // [INFO] FIRST END - Staker GNS balance after: 18999994212
-// [INFO] FIRST END - Creator GNS balance before: 10000000000
-// [INFO] FIRST END - Creator GNS balance after: 11000005788
-// [INFO] FIRST END - Creator received: 1000005788 GNS
+// [INFO] FIRST END - Creator GNS balance before: 109000000000
+// [INFO] FIRST END - Creator GNS balance after: 209000005788
+// [INFO] FIRST END - Creator received: 100000005788 GNS
 //
 // [SCENARIO] 8. FIX VERIFICATION: Verify EndExternalIncentive cannot be called multiple times
 // [FIX VERIFICATION] Attempting to call EndExternalIncentive multiple times
@@ -323,6 +323,6 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [SCENARIO] 9. Final verification
 // [RESULT] Final balances after fix:
 //   - Staker GNS balance: 18999994212
-//   - Creator GNS balance: 11000005788
+//   - Creator GNS balance: 209000005788
 // [VERIFIED] Staker was NOT drained - only one GNS deposit was refunded
 // [VERIFIED] The vulnerability has been successfully fixed

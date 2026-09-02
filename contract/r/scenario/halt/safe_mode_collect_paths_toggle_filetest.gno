@@ -150,16 +150,16 @@ func setupSafeScenario(cur realm) {
 	testing.SetRealm(govStakerRealm3)
 	emission.MintAndDistributeGns(cross(cur))
 	pf.DistributeProtocolFee(cross(cur))
-	_, claimableLaunchpadProtocolFees, claimableLaunchpadErr := govstaker.GetClaimableRewardByLaunchpad(projectAddr3)
-	if claimableLaunchpadErr != nil {
-		panic(claimableLaunchpadErr)
-	}
-	launchpadClaimableBarBeforeSafe = claimableLaunchpadProtocolFees[barPath3]
 	testing.SetRealm(adminRealm3)
 	bar.Transfer(cross(cur), stakerAddr3, pendingProtocolFeeAmount)
 	testing.SetRealm(stakerRealm3)
 	bar.Approve(cross(cur), protocolFeeAddr3, pendingProtocolFeeAmount)
 	pf.AddToProtocolFee(cross(cur), barPath3, pendingProtocolFeeAmount)
+	_, claimableLaunchpadProtocolFees, claimableLaunchpadErr := govstaker.GetClaimableRewardByLaunchpad(projectAddr3)
+	if claimableLaunchpadErr != nil {
+		panic(claimableLaunchpadErr)
+	}
+	launchpadClaimableBarBeforeSafe = claimableLaunchpadProtocolFees[barPath3]
 	protocolFeeBarBeforeSafe = bar.BalanceOf(protocolFeeAddr3)
 	govStakerBarBeforeSafe = bar.BalanceOf(govStakerAddr3)
 	bobBarBeforeSafe = bar.BalanceOf(bobAddr3)
@@ -359,7 +359,7 @@ func positionIdFromSafe(cur realm, positionId any) grc721.TokenID {
 // [INFO] staker collect position id: 2
 // [INFO] pending protocol fee before safe mode: 1000 BAR
 // [INFO] delegated protocol fee stakers: bob=5000000 xGNS, carol=15000000 xGNS
-// [INFO] launchpad claimable BAR before safe mode: 980
+// [INFO] launchpad claimable BAR before safe mode: 1960
 // [INFO] safe mode collect paths prepared
 //
 // [SCENARIO] 2. Enable safe mode

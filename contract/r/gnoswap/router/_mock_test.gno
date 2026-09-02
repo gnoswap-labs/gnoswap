@@ -125,13 +125,17 @@ func (m *MockRouter) DrySwapRoute(
 	swapTypeStr string,
 	strRouteArr, quoteArr string,
 	tokenAmountLimit string,
-) (string, string, bool) {
+) (string, string, error) {
 	res, ok := m.Response.Get("DrySwapRoute")
 	if !ok {
-		return "", "", false
+		return "", "", nil
 	}
 
-	return res[0].(string), res[1].(string), res[2].(bool)
+	if len(res) < 3 || res[2] == nil {
+		return res[0].(string), res[1].(string), nil
+	}
+
+	return res[0].(string), res[1].(string), res[2].(error)
 }
 
 func (m *MockRouter) SwapCallback(
@@ -158,6 +162,15 @@ func (m *MockRouter) GetSwapFee() uint64 {
 
 func (m *MockRouter) SetSwapFee(_ int, rlm realm, fee uint64) {
 	m.Response.Get("SetSwapFee")
+}
+
+func (m *MockRouter) GetPendingProtocolFees() map[string]int64 {
+	res, ok := m.Response.Get("GetPendingProtocolFees")
+	if !ok {
+		return map[string]int64{}
+	}
+
+	return res[0].(map[string]int64)
 }
 
 func newMockRouter(version string) *MockRouter {

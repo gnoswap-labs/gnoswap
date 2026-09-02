@@ -517,17 +517,15 @@ func TestGetHalvingInfoIsolation(cur realm, t *testing.T) {
 	halvingInfo.startTimestamps[0] = -1
 	halvingInfo.endTimestamps[0] = -2
 	halvingInfo.maxAmount[0] = -3
-	halvingInfo.mintedAmount[0] = -4
 	halvingInfo.leftAmount[0] = -5
-	halvingInfo.accumAmount[0] = -6
+	halvingInfo.mintedAmount[0] = -6
 	halvingInfo.amountPerSecond[0] = -7
 
 	reFetched := GetHalvingInfo()
 	uassert.True(t, reFetched.startTimestamps[0] > 0)
 	uassert.True(t, reFetched.endTimestamps[0] > 0)
 	uassert.True(t, reFetched.maxAmount[0] > 0)
-	uassert.Equal(t, int64(0), reFetched.mintedAmount[0])
 	uassert.True(t, reFetched.leftAmount[0] > 0)
-	uassert.Equal(t, int64(0), reFetched.accumAmount[0])
+	uassert.Equal(t, int64(0), reFetched.mintedAmount[0])
 	uassert.True(t, reFetched.amountPerSecond[0] > 0)
 }

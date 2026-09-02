@@ -17,6 +17,7 @@ func TestSwapCallback(cur realm, t *testing.T) {
 		amount1Delta     string
 		callerRealmPath  string
 		shouldError      bool
+		returnsError     bool
 		expectedErrorMsg string
 	}{
 		{
@@ -55,16 +56,17 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			shouldError:     false,
 		},
 		{
-			name: "success with both deltas zero",
+			name: "fail with both deltas zero",
 			setupFunc: func(cur realm, t *testing.T) address {
 				initRouterTest(cur, t)
 				CreatePoolWithoutFee(cur, t)
 				return routerImplAddr
 			},
-			amount0Delta:    "0",
-			amount1Delta:    "0",
-			callerRealmPath: "gno.land/r/gnoswap/router/v1",
-			shouldError:     false,
+			amount0Delta:     "0",
+			amount1Delta:     "0",
+			callerRealmPath:  "gno.land/r/gnoswap/router/v1",
+			returnsError:     true,
+			expectedErrorMsg: "[GNOSWAP-ROUTER-020] insufficient liquidity for swap || swap entirely within 0-liquidity region",
 		},
 		{
 			name: "success with user as payer",
@@ -125,7 +127,17 @@ func TestSwapCallback(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm(tt.callerRealmPath))
 
 			// Execute
-			if tt.shouldError {
+			if tt.returnsError {
+				err := mockInstanceSwapCallback(
+					cross(cur),
+					barPath,
+					bazPath,
+					tt.amount0Delta,
+					tt.amount1Delta,
+					payer,
+				)
+				uassert.ErrorContains(t, err, tt.expectedErrorMsg)
+			} else if tt.shouldError {
 				uassert.AbortsContains(t, cur, tt.expectedErrorMsg, func() {
 					mockInstanceSwapCallback(
 						cross(cur),

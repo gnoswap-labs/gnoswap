@@ -10,6 +10,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -101,7 +102,7 @@ func testIncreaseLiquidityAndBalance(cur realm) {
 
 	barBalanceBefore := bar.BalanceOf(adminAddr)
 	fooBalanceBefore := foo.BalanceOf(adminAddr)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	liquidityBefore := pos.Liquidity()
 
 	ufmt.Printf("[EXPECTED] User BAR balance before increase should be %d\n", barBalanceBefore)
@@ -128,7 +129,7 @@ func testIncreaseLiquidityAndBalance(cur realm) {
 
 	barBalanceAfter := bar.BalanceOf(adminAddr)
 	fooBalanceAfter := foo.BalanceOf(adminAddr)
-	pos, _ = position.GetPosition(1)
+	pos, _ = position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	liquidityAfter := pos.Liquidity()
 
 	ufmt.Printf("[EXPECTED] User BAR balance after increase should be %d\n", barBalanceAfter)
@@ -141,10 +142,12 @@ func testIncreaseLiquidityAndBalance(cur realm) {
 	ufmt.Printf("[EXPECTED] BAR balance decreased by %d\n", barChange)
 	ufmt.Printf("[EXPECTED] FOO balance decreased by %d\n", fooChange)
 
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
+	balance0, _ := position.GetPositionToken0Balance(1)
+	balance1, _ := position.GetPositionToken1Balance(1)
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", balance0)
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", balance1)
 
-	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolInfo.BalanceToken0())
 	ufmt.Printf("[EXPECTED] Pool token1 balance should be %d\n", poolInfo.BalanceToken1())
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", poolInfo.Liquidity().ToString())

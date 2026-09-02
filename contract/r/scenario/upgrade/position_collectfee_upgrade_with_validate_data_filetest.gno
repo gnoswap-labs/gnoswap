@@ -4,10 +4,11 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -39,6 +40,25 @@ var (
 
 	barFoo500PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	positionId        = uint64(1)
+
+	// snapshot of the position / pool getters right after the v1 fee collection
+	v1PositionLiquidity   string
+	v1PositionPoolKey     string
+	v1PositionOwner       address
+	v1PositionTickLower   int32
+	v1PositionTickUpper   int32
+	v1PositionFeeGrowth0  string
+	v1PositionFeeGrowth1  string
+	v1PositionTokensOwed0 int64
+	v1PositionTokensOwed1 int64
+	v1PositionUnclaimed0  string
+	v1PositionUnclaimed1  string
+	v1PoolFeeGrowth0      string
+	v1PoolFeeGrowth1      string
+	v1PoolProtocolFee0    int64
+	v1PoolProtocolFee1    int64
+	v1PoolLiquidity       string
+	v1PoolTick            int32
 )
 
 const (
@@ -68,27 +88,37 @@ func main(cur realm) {
 	collectFee(cur, positionId)
 	println()
 
+	println("[SCENARIO] 5-1. Snapshot the position and pool getters written by v1")
+	captureV1Snapshot()
+	println()
+
 	println("[SCENARIO] 6. Pool Contract Upgrade to v2_invalid")
 	upgradePoolContractToV2Invalid(cur)
 	println()
 
 	println("[SCENARIO] 7. Perform swap to generate fees (should panic)")
-	withAbortsWithMessage(cur, func() {
-		exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1")
-	},
+	withAbortsWithMessage(
+		cur, func() {
+			exactInSwapRouteBy(cur, fooPath, barPath, "1000000", "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/bar.BAR:500", "100", "1")
+		},
 		"[EXPECTED] Perform swap to generate fees panics correctly with v2_invalid",
 	)
 
 	println("[SCENARIO] 8. Collect fee from position with v2_invalid (should panic)")
-	withAbortsWithMessage(cur, func() {
-		collectFee(cur, positionId)
-	},
+	withAbortsWithMessage(
+		cur, func() {
+			collectFee(cur, positionId)
+		},
 		"[EXPECTED] Collect fee from position panics correctly with v2_invalid",
 	)
 	println()
 
 	println("[SCENARIO] 9. Pool Contract Upgrade to v3_valid")
 	upgradePoolContractToV3Valid(cur)
+	println()
+
+	println("[SCENARIO] 9-1. Validate the v1 data exactly, before any post-upgrade activity")
+	validateExactAfterUpgrade()
 	println()
 
 	println("[SCENARIO] 10. Perform swap to generate fees (should panic)")
@@ -98,6 +128,219 @@ func main(cur realm) {
 	println("[SCENARIO] 11. Collect fee from position:", positionId)
 	collectFee(cur, positionId)
 	println()
+
+	println("[SCENARIO] 12. Validate the post-upgrade accrual on top of the v1 data")
+	validateAccrualAfterUpgrade()
+	println()
+}
+
+func captureV1Snapshot() {
+	var err error
+	v1PositionLiquidity, err = position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionPoolKey, err = position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionOwner, err = position.GetPositionOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTickLower, err = position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTickUpper, err = position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionFeeGrowth0, v1PositionFeeGrowth1, err = position.GetPositionFeeGrowthInsideLastX128(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionTokensOwed0, v1PositionTokensOwed1, err = position.GetPositionTokensOwed(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PositionUnclaimed0, v1PositionUnclaimed1, err = position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolFeeGrowth0, v1PoolFeeGrowth1, err = pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolProtocolFee0, v1PoolProtocolFee1, err = pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolLiquidity, err = pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	v1PoolTick, err = pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+
+	println("[EXPECTED] Position liquidity:", v1PositionLiquidity)
+	println("[EXPECTED] Position fee growth inside last:", v1PositionFeeGrowth0, v1PositionFeeGrowth1)
+	println("[EXPECTED] Position tokens owed:", v1PositionTokensOwed0, v1PositionTokensOwed1)
+	println("[EXPECTED] Position unclaimed fee after collect:", v1PositionUnclaimed0, v1PositionUnclaimed1)
+	println("[EXPECTED] Pool fee growth global:", v1PoolFeeGrowth0, v1PoolFeeGrowth1)
+	println("[EXPECTED] Pool protocol fees:", v1PoolProtocolFee0, v1PoolProtocolFee1)
+
+	// everything was just collected, so nothing may be left owed
+	uassert.Equal(t, "0", v1PositionUnclaimed0)
+	uassert.Equal(t, "0", v1PositionUnclaimed1)
+	uassert.Equal(t, int64(0), v1PositionTokensOwed0)
+	uassert.Equal(t, int64(0), v1PositionTokensOwed1)
+	// the swap ran foo -> bar, so only the token1 side accrued protocol fee
+	uassert.True(t, v1PoolProtocolFee1 > 0)
+}
+
+// validateExactAfterUpgrade runs before any post-upgrade transaction, so every
+// snapshot field must match exactly. Checking this only after a new swap would
+// let a wiped-and-rebuilt value pass.
+func validateExactAfterUpgrade() {
+	feeGrowth0, feeGrowth1, err := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	protocolFee0, protocolFee1, err := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolTick, err := pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	positionFeeGrowth0, positionFeeGrowth1, err := position.GetPositionFeeGrowthInsideLastX128(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tokensOwed0, tokensOwed1, err := position.GetPositionTokensOwed(positionId)
+	if err != nil {
+		panic(err)
+	}
+	unclaimed0, unclaimed1, err := position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionLiquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionPoolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionOwner, err := position.GetPositionOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickLower, err := position.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionTickUpper, err := position.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionBurned, err := position.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
+
+	uassert.Equal(t, v1PositionLiquidity, positionLiquidity)
+	uassert.Equal(t, v1PositionPoolKey, positionPoolKey)
+	uassert.Equal(t, v1PositionOwner, positionOwner)
+	uassert.Equal(t, v1PositionTickLower, positionTickLower)
+	uassert.Equal(t, v1PositionTickUpper, positionTickUpper)
+	uassert.Equal(t, v1PositionFeeGrowth0, positionFeeGrowth0)
+	uassert.Equal(t, v1PositionFeeGrowth1, positionFeeGrowth1)
+	uassert.Equal(t, v1PositionTokensOwed0, tokensOwed0)
+	uassert.Equal(t, v1PositionTokensOwed1, tokensOwed1)
+	uassert.Equal(t, v1PositionUnclaimed0, unclaimed0)
+	uassert.Equal(t, v1PositionUnclaimed1, unclaimed1)
+	uassert.Equal(t, v1PoolFeeGrowth0, feeGrowth0)
+	uassert.Equal(t, v1PoolFeeGrowth1, feeGrowth1)
+	uassert.Equal(t, v1PoolProtocolFee0, protocolFee0)
+	uassert.Equal(t, v1PoolProtocolFee1, protocolFee1)
+	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
+	uassert.Equal(t, v1PoolTick, poolTick)
+	uassert.False(t, positionBurned)
+
+	println("[EXPECTED] Every snapshot field matches exactly right after the upgrade")
+	println("[EXPECTED] Position fee growth inside last:", positionFeeGrowth0, positionFeeGrowth1)
+	println("[EXPECTED] Pool fee growth global:", feeGrowth0, feeGrowth1)
+	println("[EXPECTED] Pool protocol fees:", protocolFee0, protocolFee1)
+}
+
+// validateAccrualAfterUpgrade runs after the post-upgrade swap and collect: the
+// identity data still must not move, while the fee ledgers may only grow.
+func validateAccrualAfterUpgrade() {
+	feeGrowth0, feeGrowth1, err := pool.GetFeeGrowthGlobalX128(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolLiquidity, err := pool.GetLiquidity(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	protocolFee1, err := pool.GetProtocolFeesToken1(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	poolTick, err := pool.GetSlot0Tick(barFoo500PoolPath)
+	if err != nil {
+		panic(err)
+	}
+	unclaimed0, unclaimed1, err := position.GetUnclaimedFee(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionLiquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionPoolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionOwner, err := position.GetPositionOwner(positionId)
+	if err != nil {
+		panic(err)
+	}
+	positionBurned, err := position.IsBurned(positionId)
+	if err != nil {
+		panic(err)
+	}
+
+	uassert.Equal(t, v1PositionLiquidity, positionLiquidity)
+	uassert.Equal(t, v1PositionPoolKey, positionPoolKey)
+	uassert.Equal(t, v1PositionOwner, positionOwner)
+	// no mint / burn happened, so the in-range liquidity is unchanged; the tick
+	// may have moved because of the post-upgrade swap
+	uassert.Equal(t, v1PoolLiquidity, poolLiquidity)
+	uassert.False(t, positionBurned)
+
+	uassert.True(t, feeGrowth0 >= v1PoolFeeGrowth0)
+	uassert.True(t, feeGrowth1 >= v1PoolFeeGrowth1)
+	uassert.True(t, protocolFee1 >= v1PoolProtocolFee1)
+	uassert.Equal(t, "0", unclaimed0)
+	uassert.Equal(t, "0", unclaimed1)
+
+	println("[EXPECTED] Position identity data is unchanged after the upgrades")
+	println("[EXPECTED] Pool fee growth global after the post-upgrade swap:", feeGrowth0, feeGrowth1)
+	println("[EXPECTED] Position unclaimed fee after the second collect:", unclaimed0, unclaimed1)
+	println("[EXPECTED] Pool tick before / after the post-upgrade swap:", v1PoolTick, poolTick)
 }
 
 func initialize(cur realm) {
@@ -219,6 +462,14 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] Amount0: 0
 // [EXPECTED] Amount1: 416
 //
+// [SCENARIO] 5-1. Snapshot the position and pool getters written by v1
+// [EXPECTED] Position liquidity: 1066918731
+// [EXPECTED] Position fee growth inside last: 0 132997709087958021110257564030945
+// [EXPECTED] Position tokens owed: 0 0
+// [EXPECTED] Position unclaimed fee after collect: 0 0
+// [EXPECTED] Pool fee growth global: 0 132997709087958021110257564030945
+// [EXPECTED] Pool protocol fees: 0 83
+//
 // [SCENARIO] 6. Pool Contract Upgrade to v2_invalid
 // [INFO] Upgrade pool contract to v2_invalid
 // [EXPECTED] Upgraded pool contract to v2_invalid: gno.land/r/gnoswap/pool/v2_invalid
@@ -233,6 +484,12 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [INFO] Upgrade pool contract to v3_valid
 // [EXPECTED] Upgraded pool contract to v3_valid: gno.land/r/gnoswap/pool/v3_valid
 //
+// [SCENARIO] 9-1. Validate the v1 data exactly, before any post-upgrade activity
+// [EXPECTED] Every snapshot field matches exactly right after the upgrade
+// [EXPECTED] Position fee growth inside last: 0 132997709087958021110257564030945
+// [EXPECTED] Pool fee growth global: 0 132997709087958021110257564030945
+// [EXPECTED] Pool protocol fees: 0 83
+//
 // [SCENARIO] 10. Perform swap to generate fees (should panic)
 // [INFO] Exact-In Swap Route
 // [EXPECTED] Input token amount: 1000000
@@ -245,3 +502,9 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] Pool path: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] Amount0: 0
 // [EXPECTED] Amount1: 416
+//
+// [SCENARIO] 12. Validate the post-upgrade accrual on top of the v1 data
+// [EXPECTED] Position identity data is unchanged after the upgrades
+// [EXPECTED] Pool fee growth global after the post-upgrade swap: 0 265995418175916042220515128061890
+// [EXPECTED] Position unclaimed fee after the second collect: 0 0
+// [EXPECTED] Pool tick before / after the post-upgrade swap: 18 37

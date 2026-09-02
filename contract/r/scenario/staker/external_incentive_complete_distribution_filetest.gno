@@ -71,7 +71,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	// Duration and reward amount carefully chosen so rewardAmount % duration = 0
 	// 90 days = 7776000 seconds
@@ -229,9 +229,9 @@ func createExternalIncentiveNoDust(cur realm) {
 	ufmt.Printf("[INFO] staker QUX balance before: %d\n", stakerQuxBefore)
 	ufmt.Printf("[INFO] creator GNS balance before: %d\n", creatorGnsBefore)
 
-	// External incentive must start at least +1 day midnight
+	// External incentive must start at midnight at least 24 hours from now
 	// Using fixed timestamp for consistent testing
-	startTime := int64(1234569600) // This is the required +1 day midnight timestamp
+	startTime := int64(1234742400) // This is the required +2 day midnight timestamp
 	endTime := startTime + INCENTIVE_DURATION
 
 	testing.SetRealm(adminRealm)
@@ -257,8 +257,8 @@ func createExternalIncentiveNoDust(cur realm) {
 }
 
 func startExternalIncentive(cur realm) {
-	// Skip to start time (1234569600)
-	externalStartTime := int64(1234569600)
+	// Skip to start time (1234742400)
+	externalStartTime := int64(1234742400)
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
@@ -453,10 +453,10 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] incentive ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567905:1
 // [INFO] creator QUX balance before: 7776000000
 // [INFO] staker QUX balance before: 0
-// [INFO] creator GNS balance before: 1000000000
+// [INFO] creator GNS balance before: 100000000000
 // [INFO] creator QUX balance after: 7776000000
 // [INFO] staker QUX balance after: 7776000000
-// [INFO] creator GNS balance after: 1000000000
+// [INFO] creator GNS balance after: 100000000000
 // [INFO] total QUX deposited as reward: 0
 //
 // [SCENARIO] 5. Start external incentive
@@ -496,19 +496,19 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] before ending incentive:
 //   - Creator QUX: 7776000000
 //   - Staker contract QUX: 1512000002
-//   - Creator GNS (deposit): 1000000000
+//   - Creator GNS (deposit): 100000000000
 //   - Admin total rewards collected (QUX): 6263999998
 // [INFO] after ending incentive:
 //   - Creator QUX: 7776000000
 //   - Staker contract QUX: 1512000002
-//   - Creator GNS (deposit): 2000000000
+//   - Creator GNS (deposit): 200000000000
 //   - Admin QUX balances: 99990711998998
 // [RESULT] refund breakdown:
 //   - Total refunded reward token (QUX): 0
 //   - Total reduced from staker QUX: 0
-//   - Refunded GNS deposit: 1000000000
+//   - Refunded GNS deposit: 100000000000
 // [EXPECTED] creator receives all remaining reward token: 1512000002
-// [EXPECTED] creator receives fixed GNS deposit: 1000000000
+// [EXPECTED] creator receives fixed GNS deposit: 100000000000
 // [EXPECTED] Total reward distribution:
 //   - Initial reward amount: 7776000000 QUX
 //   - Rewards collected by staker: 6263999998 QUX

@@ -7,6 +7,17 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
+// mustGetTickSpacing returns the tick spacing for a fee tier or panics if the
+// fee tier is not registered. Test-only helper for callers that rely on a
+// valid fee tier.
+func mustGetTickSpacing(fee uint32) int32 {
+	spacing, err := getMockInstance().GetFeeAmountTickSpacing(fee)
+	if err != nil {
+		panic(err)
+	}
+	return spacing
+}
+
 func TestGetPoolPath(cur realm, t *testing.T) {
 	path := GetPoolPath(barTokenPath, fooTokenPath, 500)
 	expected := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
@@ -32,7 +43,7 @@ func TestTickSpacingMap(cur realm, t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		spacing := getMockInstance().GetFeeAmountTickSpacing(tt.fee)
+		spacing, _ := getMockInstance().GetFeeAmountTickSpacing(tt.fee)
 		if spacing != tt.tickSpacing {
 			t.Errorf("For fee %d, expected tick spacing %d, got %d",
 				tt.fee, tt.tickSpacing, spacing)
@@ -206,7 +217,7 @@ func TestCreatePool(cur realm, t *testing.T) {
 					tt.token1Path,
 					tt.fee,
 					tt.sqrtPrice,
-					getMockInstance().GetFeeAmountTickSpacing(tt.fee),
+					mustGetTickSpacing(tt.fee),
 					getMockInstance().store.GetSlot0FeeProtocol(),
 				)
 				err := expectedPoolInfo.update()
@@ -232,7 +243,7 @@ func TestCreatePool(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetPool(cur realm, t *testing.T) {
+func TestGetPoolsGet(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		setupFn     func(cur realm, t *testing.T)
@@ -280,10 +291,13 @@ func TestGetPool(cur realm, t *testing.T) {
 				tt.setupFn(cur, t)
 			}
 
-			pool, err := getMockInstance().GetPool(barPath, fooPath, fee500)
+			poolPath := GetPoolPath(barPath, fooPath, fee500)
+			value := getMockInstance().GetPools().Get(poolPath)
 			if tt.shouldError {
-				uassert.Error(t, err, "expected error")
+				uassert.True(t, value == nil, "expected missing pool")
 			} else {
+				pool, ok := value.(*pl.Pool)
+				uassert.True(t, ok)
 				if tt.verifyFn != nil {
 					tt.verifyFn(t, pool)
 				}

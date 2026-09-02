@@ -7,6 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/onbloc/foo"
 
 	_ "gno.land/r/gnoswap/rbac"
 
@@ -37,7 +38,7 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 		},
 		{
 			name:          "Standard fee",
-			tokenPath:     gnsPath,
+			tokenPath:     fooPath,
 			amount:        10000,
 			stakerBalance: 100,
 			internal:      false,
@@ -46,7 +47,7 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 		},
 		{
 			name:             "Standard fee but staker balance is insufficient",
-			tokenPath:        gnsPath,
+			tokenPath:        fooPath,
 			amount:           10000,
 			stakerBalance:    0,
 			internal:         false,
@@ -65,10 +66,10 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 
 			if tc.stakerBalance > 0 {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross(cur), stakerAddr, tc.stakerBalance)
+				foo.Transfer(cross(cur), stakerAddr, tc.stakerBalance)
 				// The local mock instance pays the protocol fee from the
 				// staker/v1 realm (the cross(rlm) transfer actor), so fund it too.
-				gns.Transfer(cross(cur), stakerV1Addr, tc.stakerBalance)
+				foo.Transfer(cross(cur), stakerV1Addr, tc.stakerBalance)
 			}
 
 			// Set the caller identity on the test frame's own cur so the
@@ -125,7 +126,8 @@ func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	}
 	instance.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
 
-	instance.addToProtocolFee(0, cur)
+	instance.settleProtocolFee(0, cur, barPath, 0)
+	instance.settleProtocolFee(0, cur, gnsPath, 0)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)

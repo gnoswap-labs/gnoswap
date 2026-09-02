@@ -80,7 +80,7 @@ var (
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	depositGnsAmount int64 = 1_000_000_000
+	depositGnsAmount int64 = 100_000_000_000
 
 	// 1000 reward tokens per second, so unclaimable seconds map 1:1 to wei.
 	INCENTIVE_DURATION int64 = 90 * 24 * 60 * 60 // 90 days
@@ -186,8 +186,8 @@ func createAndStartIncentive(cur realm) {
 
 	createTimestamp := time.Now().Unix()
 
-	// Start at the next UTC midnight to satisfy start-time validation
-	startTime := ((createTimestamp / 86400) + 1) * 86400
+	// Start at the first UTC midnight past the 24h minimum to satisfy start-time validation
+	startTime := ((createTimestamp / 86400) + 2) * 86400
 	endTime := startTime + INCENTIVE_DURATION
 
 	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
@@ -404,7 +404,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [RESULT] distributed >= union of all unclaimable gaps: true (2160004996 >= 1555080000)
 //
 // [SCENARIO] 8. Creator received the refunded reward tokens
-// [INFO] creator GNS balance delta after end: 2555205000
+// [INFO] creator GNS balance delta after end: 101555205000
 // [INFO] refunded reward (excl. GNS deposit): 1555205000
 // [RESULT] refund covers union of all unclaimable gaps: true (1555205000 within [1555080000, 1555320000])
 //

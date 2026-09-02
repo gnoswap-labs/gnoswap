@@ -103,7 +103,7 @@ func setupPool(cur realm) {
 func testZeroAmountSwap(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(barPath, fooPath, fee500)
+	pools, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	tickBefore := pools.Slot0Tick()
 
 	println("[INFO] Attempting swap with amount: 1")
@@ -129,7 +129,7 @@ func testZeroAmountSwap(cur realm) {
 		},
 	)
 
-	pools, _ = pool.GetPool(barPath, fooPath, fee500)
+	pools, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	tickAfter := pools.Slot0Tick()
 
 	println("[INFO] Swap completed successfully")
@@ -164,10 +164,10 @@ func zeroAmountSwapCallback(cur realm, token0Path string, token1Path string, amo
 	callbackAmount1Delta = amount1Delta
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

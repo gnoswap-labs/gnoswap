@@ -10,6 +10,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -112,7 +113,7 @@ func mintAndIncreasePosition(cur realm) {
 
 	ufmt.Printf("[EXPECTED] Liquidity added should be %s\n", liquidityAdded)
 
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	ufmt.Printf("[EXPECTED] Total liquidity should be %s\n", pos.Liquidity())
 }
 
@@ -145,7 +146,7 @@ func testDecreaseLiquidityAndBalance(cur realm) {
 
 	barBalanceBefore := bar.BalanceOf(adminAddr)
 	fooBalanceBefore := foo.BalanceOf(adminAddr)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	liquidityBefore := pos.Liquidity()
 
 	ufmt.Printf("[EXPECTED] User BAR balance before operations should be %d\n", barBalanceBefore)
@@ -179,7 +180,7 @@ func testDecreaseLiquidityAndBalance(cur realm) {
 
 	barBalanceAfter := bar.BalanceOf(adminAddr)
 	fooBalanceAfter := foo.BalanceOf(adminAddr)
-	pos, _ = position.GetPosition(1)
+	pos, _ = position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	liquidityAfter := pos.Liquidity()
 
 	ufmt.Printf("[EXPECTED] User BAR balance after decrease should be %d\n", barBalanceAfter)
@@ -192,10 +193,12 @@ func testDecreaseLiquidityAndBalance(cur realm) {
 	ufmt.Printf("[EXPECTED] BAR balance increased by %d from decrease\n", barChange)
 	ufmt.Printf("[EXPECTED] FOO balance increased by %d from decrease\n", fooChange)
 
-	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
+	balance0, _ := position.GetPositionToken0Balance(1)
+	balance1, _ := position.GetPositionToken1Balance(1)
+	ufmt.Printf("[EXPECTED] Position token0 balance should be %d\n", balance0)
+	ufmt.Printf("[EXPECTED] Position token1 balance should be %d\n", balance1)
 
-	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolInfo.BalanceToken0())
 	ufmt.Printf("[EXPECTED] Pool token1 balance should be %d\n", poolInfo.BalanceToken1())
 	ufmt.Printf("[EXPECTED] Pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
@@ -228,11 +231,11 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

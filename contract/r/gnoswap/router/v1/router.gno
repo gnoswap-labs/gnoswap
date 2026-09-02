@@ -86,14 +86,6 @@ func (v *SwapValidator) amount(amount int64) (int64, error) {
 	return amount, nil
 }
 
-// amountLimit ensures the amount limit is properly formatted and non-zero.
-func (v *SwapValidator) amountLimit(amountLimit int64) (int64, error) {
-	if amountLimit <= 0 {
-		return 0, ufmt.Errorf(ErrInvalidZeroAmountLimit, amountLimit)
-	}
-	return amountLimit, nil
-}
-
 // RouteParser handles parsing and validation of routes and quotes
 type RouteParser struct{}
 

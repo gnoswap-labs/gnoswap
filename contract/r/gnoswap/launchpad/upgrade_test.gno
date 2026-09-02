@@ -63,6 +63,25 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 	}
 }
 
+func invokeLaunchpadInitializerWithStaleRealm(cur realm, stale realm, initializer func(_ int, rlm realm, store any) any, store any) {
+	initializer(0, stale, store)
+}
+
+func TestRegisterInitializerRejectsSpoofedInitializerRealm(cur realm, t *testing.T) {
+	resetTestState(cur, t)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+	initializer := versionManager.GetInitializers()[versionManager.GetCurrentPackagePath()]
+	stale := cur
+	store := initializeDomainStore(0, cur, kvStore)
+
+	uassert.AbortsContains(t, cur, ErrSpoofedRealm, func() {
+		invokeLaunchpadInitializerWithStaleRealm(cross(cur), stale, initializer, store)
+	})
+}
+
 func TestUpgradeImpl(cur realm, t *testing.T) {
 	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
 
@@ -392,35 +411,6 @@ func TestCollectRewardByDepositId(cur realm, t *testing.T) {
 // Getter Tests
 // ==================================
 
-func TestGetProjectCount(cur realm, t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "get project count is success",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(cur, t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-
-			// Action
-			GetProjectCount()
-
-			// Assert
-			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetProjectCount") != 1 {
-				t.Error("GetProjectCount was not called on the implementation")
-			}
-		})
-	}
-}
-
 func TestGetDepositCount(cur realm, t *testing.T) {
 	tests := []struct {
 		name string
@@ -445,37 +435,6 @@ func TestGetDepositCount(cur realm, t *testing.T) {
 			mockLaunchpad := implementation.(*MockLaunchpad)
 			if mockLaunchpad.Response.CallCount("GetDepositCount") != 1 {
 				t.Error("GetDepositCount was not called on the implementation")
-			}
-		})
-	}
-}
-
-func TestGetProject(cur realm, t *testing.T) {
-	tests := []struct {
-		name      string
-		projectId string
-	}{
-		{
-			name:      "get project is success",
-			projectId: "project1",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(cur, t)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad/v1"))
-			RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-
-			// Action
-			GetProject(tt.projectId)
-
-			// Assert
-			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetProject") != 1 {
-				t.Error("GetProject was not called on the implementation")
 			}
 		})
 	}
@@ -576,16 +535,12 @@ func TestGetProjectActiveStatus(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetProjectIDs(cur realm, t *testing.T) {
+func TestGetProjects(cur realm, t *testing.T) {
 	tests := []struct {
-		name   string
-		offset int
-		count  int
+		name string
 	}{
 		{
-			name:   "get projects is success",
-			offset: 0,
-			count:  10,
+			name: "get projects is success",
 		},
 	}
 
@@ -598,31 +553,27 @@ func TestGetProjectIDs(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetProjectIDs(tt.offset, tt.count)
+			GetProjects()
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetProjectIDs") != 1 {
-				t.Error("GetProjectIDs was not called on the implementation")
+			if mockLaunchpad.Response.CallCount("GetProjects") != 1 {
+				t.Error("GetProjects was not called on the implementation")
 			}
 		})
 	}
 }
 
-func TestGetProjectTierDepositIDs(cur realm, t *testing.T) {
+func TestGetProjectTierRewards(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
 		projectId string
 		tier      int64
-		offset    int
-		count     int
 	}{
 		{
-			name:      "get project tier deposits is success",
+			name:      "get project tier rewards is success",
 			projectId: "project1",
 			tier:      30,
-			offset:    0,
-			count:     10,
 		},
 	}
 
@@ -635,12 +586,12 @@ func TestGetProjectTierDepositIDs(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
 
 			// Action
-			GetProjectTierDepositIDs(tt.projectId, tt.tier, tt.offset, tt.count)
+			GetProjectTierRewards(tt.projectId, tt.tier)
 
 			// Assert
 			mockLaunchpad := implementation.(*MockLaunchpad)
-			if mockLaunchpad.Response.CallCount("GetProjectTierDepositIDs") != 1 {
-				t.Error("GetProjectTierDepositIDs was not called on the implementation")
+			if mockLaunchpad.Response.CallCount("GetProjectTierRewards") != 1 {
+				t.Error("GetProjectTierRewards was not called on the implementation")
 			}
 		})
 	}

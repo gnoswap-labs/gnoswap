@@ -140,11 +140,11 @@ func createOBLProject(cur realm) {
 
 	// [INFO] Validate project info
 	testing.SetRealm(launchpadRealm)
-	project, _ := launchpad.GetProject(projectId)
+	project, _ := launchpad.GetProjects().Get(projectId).(*launchpad.Project)
 	println("[EXPECTED] Project name:", project.Name())
 	println("[EXPECTED] Project token path:", project.TokenPath())
 	println("[EXPECTED] Project deposit amount:", project.DepositAmount())
-	tiersRatios := project.TiersRatios()
+	tiersRatios, _ := launchpad.GetProjectTiersRatios(projectId)
 	println("[EXPECTED] Project tier30 ratio:", tiersRatios[30])
 	println("[EXPECTED] Project tier90 ratio:", tiersRatios[90])
 	println("[EXPECTED] Project tier180 ratio:", tiersRatios[180])
@@ -318,13 +318,13 @@ func collectProtocolFeeForOBLProjectRecipient2(cur realm) {
 // [INFO] Admin transferring tokens to staker caller
 // [INFO] Adding tokens to protocol fee
 // [INFO] Validating protocol fee balances
-// [EXPECTED] Bar balance: 1000
-// [EXPECTED] Qux balance: 2500
+// [EXPECTED] Bar balance: 2000
+// [EXPECTED] Qux balance: 5000
 // [EXPECTED] Reserved protocol fee token count: 2
 //
 // [SCENARIO] 6. Collect protocol fee for OBL project recipient
-// [INFO] Bar balance in protocol fee: 1000
-// [INFO] Qux balance in protocol fee: 2500
+// [INFO] Bar balance in protocol fee: 2000
+// [INFO] Qux balance in protocol fee: 5000
 // [EXPECTED] Gov staker bar balance after collection: 1501
 // [EXPECTED] Gov staker qux balance after collection: 3751
 // [EXPECTED] Project bar balance after collection: 499

@@ -103,6 +103,205 @@ func TestCreateExternalIncentiveWithAllowedTokens(cur realm, t *testing.T) {
 	pools.tree.Remove(poolPath)
 }
 
+func TestAssertIsExternalRewardTokenAvailable(cur realm, t *testing.T) {
+	tests := []struct {
+		name             string
+		existingToken    string
+		existingPoolPath string
+		startTimeOffset  int64
+		endTimeOffset    int64
+		shouldAbort      bool
+	}{
+		{
+			name:            "same token with active incentive",
+			existingToken:   barPath,
+			startTimeOffset: -3600,
+			endTimeOffset:   3600,
+			shouldAbort:     true,
+		},
+		{
+			name:            "same token with future incentive",
+			existingToken:   barPath,
+			startTimeOffset: 3600,
+			endTimeOffset:   7200,
+			shouldAbort:     true,
+		},
+		{
+			name:            "same token at exact end time",
+			existingToken:   barPath,
+			startTimeOffset: -3600,
+			endTimeOffset:   0,
+			shouldAbort:     true,
+		},
+		{
+			name:            "same token after incentive ended",
+			existingToken:   barPath,
+			startTimeOffset: -3600,
+			endTimeOffset:   -1,
+			shouldAbort:     false,
+		},
+		{
+			name:            "different token in same pool",
+			existingToken:   bazPath,
+			startTimeOffset: -3600,
+			endTimeOffset:   3600,
+			shouldAbort:     false,
+		},
+		{
+			name:             "same token in different pool",
+			existingToken:    barPath,
+			existingPoolPath: "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000",
+			startTimeOffset:  -3600,
+			endTimeOffset:    3600,
+			shouldAbort:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
+
+			currentTime := time.Now().Unix()
+			poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
+			existingPoolPath := tt.existingPoolPath
+			if existingPoolPath == "" {
+				existingPoolPath = poolPath
+			}
+
+			pool := sr.NewPool(existingPoolPath, currentTime)
+			getMockInstance().getPools().set(existingPoolPath, pool)
+			incentive := sr.NewExternalIncentive(
+				"existing-incentive",
+				existingPoolPath,
+				tt.existingToken,
+				1_000_000,
+				currentTime+tt.startTimeOffset,
+				currentTime+tt.endTimeOffset,
+				testutils.TestAddress("creator"),
+				0,
+				runtime.ChainHeight(),
+				currentTime,
+			)
+			NewPoolResolver(pool).IncentivesResolver().create(incentive)
+			getMockInstance().getExternalIncentives().set("existing-incentive", incentive)
+
+			if tt.shouldAbort {
+				uassert.AbortsContains(t, cur, "incentive already exists", func() {
+					assertIsExternalRewardTokenAvailable(getMockInstance(), poolPath, barPath, currentTime)
+				})
+			} else {
+				uassert.NotPanics(t, cur, func() {
+					assertIsExternalRewardTokenAvailable(getMockInstance(), poolPath, barPath, currentTime)
+				})
+			}
+		})
+	}
+}
+
+func TestCreateExternalIncentive_DuplicateRewardTokenBlocked(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	createDefaultInitialPoolForStakerTest(cur, t)
+
+	poolPath := "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
+	endTimestamp := startTimestamp + incentiveDuration
+
+	CreateExternalIncentiveAsAdmin(cur, t, poolPath, gnsPath, rewardMinimumAmount, startTimestamp, endTimestamp)
+
+	uassert.AbortsContains(t, cur, "incentive already exists", func() {
+		CreateExternalIncentiveAsAdmin(cur, t, poolPath, gnsPath, rewardMinimumAmount, startTimestamp, endTimestamp)
+	})
+}
+
+func TestCreateExternalIncentive_AllowedAfterPreviousIncentiveEnded(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	createDefaultInitialPoolForStakerTest(cur, t)
+
+	poolPath := "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	getMockInstance().getPools().set(poolPath, pool)
+	endedIncentive := sr.NewExternalIncentive(
+		"ended-incentive",
+		poolPath,
+		gnsPath,
+		rewardMinimumAmount,
+		currentTime-incentiveDuration,
+		currentTime-1,
+		adminAddr,
+		0,
+		runtime.ChainHeight(),
+		currentTime-incentiveDuration,
+	)
+	NewPoolResolver(pool).IncentivesResolver().create(endedIncentive)
+	getMockInstance().getExternalIncentives().set("ended-incentive", endedIncentive)
+
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
+	uassert.NotPanics(t, cur, func() {
+		CreateExternalIncentiveAsAdmin(cur, t, poolPath, gnsPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+	})
+}
+
+// TestAssertIsAllowedForExternalReward pins the allowed-reward-token rule at the
+// guard level: a pool's own two tokens are always allowed, any other token is
+// rejected unless it has been added to the allowed-token list.
+func TestAssertIsAllowedForExternalReward(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	instance := getMockInstance()
+
+	// token0 = bar, token1 = foo; neither is in the default allowed list
+	// (which holds only wugnot and gns).
+	poolPath := barPath + ":" + fooPath + ":3000"
+
+	// Pool tokens are always allowed, even without being on the allowed list.
+	uassert.NotPanics(t, cur, func() {
+		assertIsAllowedForExternalReward(instance, poolPath, barPath)
+	})
+	uassert.NotPanics(t, cur, func() {
+		assertIsAllowedForExternalReward(instance, poolPath, fooPath)
+	})
+
+	// A non-pool token that is not on the allowed list is rejected. This is a
+	// local (non-crossing) call, so the guard panics in-frame rather than
+	// aborting across a realm boundary.
+	uassert.PanicsContains(t, cur, "[GNOSWAP-STAKER-017]", func() {
+		assertIsAllowedForExternalReward(instance, poolPath, bazPath)
+	})
+
+	// Once whitelisted, the same non-pool token is accepted.
+	testing.SetRealm(adminRealm)
+	mockInstanceAddToken(cross(cur), bazPath)
+	uassert.NotPanics(t, cur, func() {
+		assertIsAllowedForExternalReward(instance, poolPath, bazPath)
+	})
+}
+
+// TestCreateExternalIncentive_RewardTokenNotAllowedBlocked confirms the
+// allowed-token guard is wired into the public entrypoint: a reward token that
+// is neither a pool token nor whitelisted aborts before any transfer, and the
+// same creation succeeds once the token is whitelisted.
+func TestCreateExternalIncentive_RewardTokenNotAllowedBlocked(cur realm, t *testing.T) {
+	initStakerTest(cur, t)
+	createDefaultInitialPoolForStakerTest(cur, t)
+
+	// Pool is wugnot:gns; bar is neither a pool token nor on the allowed list.
+	poolPath := "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
+	endTimestamp := startTimestamp + incentiveDuration
+
+	uassert.AbortsContains(t, cur, "[GNOSWAP-STAKER-017]", func() {
+		CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, endTimestamp)
+	})
+
+	// Whitelist bar, then the same creation is accepted by the allowed-token guard.
+	testing.SetRealm(adminRealm)
+	mockInstanceAddToken(cross(cur), barPath)
+	uassert.NotPanics(t, cur, func() {
+		CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, endTimestamp)
+	})
+}
+
 // Test ExternalIncentiveRefundAmount through the public entrypoint with full preconditions.
 func TestExternalIncentiveRefundAmount(cur realm, t *testing.T) {
 	creator := testutils.TestAddress("creator")
@@ -200,7 +399,8 @@ func TestExternalIncentiveRefundAmount(cur realm, t *testing.T) {
 				0,
 			)
 
-			t.Logf("refund amount: , legacy: %d, q128: %d",
+			t.Logf(
+				"refund amount: , legacy: %d, q128: %d",
 				calculateLegacyRefundAmount(incentive.TotalRewardAmount(), incentive.StartTimestamp(), incentive.EndTimestamp()),
 				calculateRefundAmount(tt.depositRewardAmount, tt.startTimestamp, tt.endTimestamp),
 			)
@@ -2311,15 +2511,33 @@ func TestEndExternalIncentive_DoesNotStealUncollectedUserReward(cur realm, t *te
 	uassert.Equal(t, totalRewardAmount, sum)
 }
 
-func TestCreateExternalIncentive_NonAdminBlocked(cur realm, t *testing.T) {
+func TestCreateExternalIncentive_NonAdminAllowed(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
-	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
-	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	createDefaultInitialPoolForStakerTest(cur, t)
+	poolPath := "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 
+	gnsTransfer(cur, t, addr01, 101_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	uassert.AbortsContains(t, cur, "is not admin", func() {
-		sr.CreateExternalIncentive(cross(cur), poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
+
+	depositGnsAmount := getMockInstance().GetDepositGnsAmount()
+	balanceBefore := gns.BalanceOf(addr01)
+	sr.CreateExternalIncentive(cross(cur), poolPath, gnsPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+	uassert.Equal(t, balanceBefore-depositGnsAmount-rewardMinimumAmount, gns.BalanceOf(addr01))
+
+	incentives := getMockInstance().getExternalIncentives()
+	incentiveID := ""
+	var incentive *sr.ExternalIncentive
+	incentives.tree.Iterate("", "", func(key string, value any) bool {
+		incentiveID = key
+		incentive = value.(*sr.ExternalIncentive)
+		return true
 	})
+
+	uassert.NotEqual(t, "", incentiveID)
+	uassert.Equal(t, addr01, incentive.Creator())
+	uassert.Equal(t, gnsPath, incentive.RewardToken())
 }
 
 // TestIncentiveIndexKeyedByStartTimestamp verifies discovery is keyed by the

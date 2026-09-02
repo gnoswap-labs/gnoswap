@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 // MockResponse tracks method calls for testing purposes
@@ -139,6 +140,15 @@ func (m *MockPool) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 	m.Response.Get("SetWithdrawalFee")
 }
 
+func (m *MockPool) GetPendingProtocolFees() map[string]int64 {
+	res, ok := m.Response.Get("GetPendingProtocolFees")
+	if !ok {
+		return map[string]int64{}
+	}
+
+	return res[0].(map[string]int64)
+}
+
 func (m *MockPool) HandleWithdrawalFee(
 	_ int,
 	rlm realm,
@@ -218,13 +228,13 @@ func (m *MockPool) DrySwap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-) (string, string, bool) {
+) (string, string, error) {
 	res, ok := m.Response.Get("DrySwap")
 	if !ok {
-		return "", "", false
+		return "", "", nil
 	}
 
-	return res[0].(string), res[1].(string), res[2].(bool)
+	return res[0].(string), res[1].(string), res[2].(error)
 }
 
 func (m *MockPool) ExistsPoolPath(poolPath string) bool {
@@ -236,105 +246,96 @@ func (m *MockPool) ExistsPoolPath(poolPath string) bool {
 	return res[0].(bool)
 }
 
-func (m *MockPool) GetPool(token0Path, token1Path string, fee uint32) (*Pool, error) {
-	res, ok := m.Response.Get("GetPool")
-	if !ok {
-		return nil, errors.New("not found")
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(*Pool), nil
-	}
-	return res[0].(*Pool), res[1].(error)
-}
-
-func (m *MockPool) GetBalanceToken0(poolPath string) int64 {
+func (m *MockPool) GetBalanceToken0(poolPath string) (int64, error) {
 	res, ok := m.Response.Get("GetBalanceToken0")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(int64)
+	return res[0].(int64), nil
 }
 
-func (m *MockPool) GetBalanceToken1(poolPath string) int64 {
+func (m *MockPool) GetBalanceToken1(poolPath string) (int64, error) {
 	res, ok := m.Response.Get("GetBalanceToken1")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(int64)
+	return res[0].(int64), nil
 }
 
-func (m *MockPool) GetFee(poolPath string) uint32 {
+func (m *MockPool) GetFee(poolPath string) (uint32, error) {
 	res, ok := m.Response.Get("GetFee")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(uint32)
+	return res[0].(uint32), nil
 }
 
-func (m *MockPool) GetFeeAmountTickSpacing(fee uint32) (spacing int32) {
+func (m *MockPool) GetFeeAmountTickSpacing(fee uint32) (spacing int32, err error) {
 	res, ok := m.Response.Get("GetFeeAmountTickSpacing")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(int32)
+	return res[0].(int32), nil
 }
 
-func (m *MockPool) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
+func (m *MockPool) GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error) {
 	res, ok := m.Response.Get("GetFeeGrowthGlobal0X128")
 	if !ok {
-		return u256.Zero()
+		return nil, nil
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(*u256.Uint), nil
 }
 
-func (m *MockPool) GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint {
+func (m *MockPool) GetFeeGrowthGlobal1X128(poolPath string) (*u256.Uint, error) {
 	res, ok := m.Response.Get("GetFeeGrowthGlobal1X128")
 	if !ok {
-		return u256.Zero()
+		return nil, nil
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(*u256.Uint), nil
 }
 
-func (m *MockPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
+func (m *MockPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint, error) {
 	res, ok := m.Response.Get("GetFeeGrowthGlobalX128")
 	if !ok {
-		return u256.Zero(), u256.Zero()
+		return nil, nil, nil
 	}
 
-	return res[0].(*u256.Uint), res[1].(*u256.Uint)
+	return res[0].(*u256.Uint), res[1].(*u256.Uint), nil
 }
 
-func (m *MockPool) GetLiquidity(poolPath string) *u256.Uint {
+func (m *MockPool) GetLiquidity(poolPath string) (*u256.Uint, error) {
 	res, ok := m.Response.Get("GetLiquidity")
 	if !ok {
-		return u256.Zero()
+		return nil, nil
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(*u256.Uint), nil
 }
 
-func (m *MockPool) GetMaxLiquidityPerTick(poolPath string) *u256.Uint {
+func (m *MockPool) GetMaxLiquidityPerTick(poolPath string) (*u256.Uint, error) {
 	res, ok := m.Response.Get("GetMaxLiquidityPerTick")
 	if !ok {
-		return u256.Zero()
+		return nil, nil
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(*u256.Uint), nil
 }
 
-func (m *MockPool) GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64) {
+func (m *MockPool) GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64, err error) {
 	res, ok := m.Response.Get("GetLastObservation")
 	if !ok {
-		return 0, "", 0
+		return 0, "", 0, errors.New("not found")
 	}
-
-	return res[0].(int64), res[1].(string), res[2].(int64)
+	if len(res) < 4 || res[3] == nil {
+		return res[0].(int64), res[1].(string), res[2].(int64), nil
+	}
+	return res[0].(int64), res[1].(string), res[2].(int64), res[3].(error)
 }
 
 func (m *MockPool) GetPoolCreationFee() int64 {
@@ -355,220 +356,220 @@ func (m *MockPool) GetPoolPath(token0Path, token1Path string, fee uint32) string
 	return res[0].(string)
 }
 
-func (m *MockPool) GetPositionFeeGrowthInside0LastX128(poolPath, key string) string {
+func (m *MockPool) GetPositionFeeGrowthInside0LastX128(poolPath, key string) (string, error) {
 	res, ok := m.Response.Get("GetPositionFeeGrowthInside0LastX128")
 	if !ok {
-		return ""
+		return "", nil
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
+func (m *MockPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) (string, error) {
 	res, ok := m.Response.Get("GetPositionFeeGrowthInside1LastX128")
 	if !ok {
-		return ""
+		return "", nil
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
+func (m *MockPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string, error) {
 	res, ok := m.Response.Get("GetPositionFeeGrowthInsideLastX128")
 	if !ok {
-		return "", ""
+		return "", "", nil
 	}
 
-	return res[0].(string), res[1].(string)
+	return res[0].(string), res[1].(string), nil
 }
 
-func (m *MockPool) GetPositionLiquidity(poolPath, key string) string {
+func (m *MockPool) GetPositionLiquidity(poolPath, key string) (string, error) {
 	res, ok := m.Response.Get("GetPositionLiquidity")
 	if !ok {
-		return ""
+		return "", nil
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPool) GetPositionTokensOwed0(poolPath, key string) int64 {
+func (m *MockPool) GetPositionTokensOwed0(poolPath, key string) (int64, error) {
 	res, ok := m.Response.Get("GetPositionTokensOwed0")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(int64)
+	return res[0].(int64), nil
 }
 
-func (m *MockPool) GetPositionTokensOwed1(poolPath, key string) int64 {
+func (m *MockPool) GetPositionTokensOwed1(poolPath, key string) (int64, error) {
 	res, ok := m.Response.Get("GetPositionTokensOwed1")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(int64)
+	return res[0].(int64), nil
 }
 
-func (m *MockPool) GetProtocolFeesToken0(poolPath string) int64 {
+func (m *MockPool) GetProtocolFeesToken0(poolPath string) (int64, error) {
 	res, ok := m.Response.Get("GetProtocolFeesToken0")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(int64)
+	return res[0].(int64), nil
 }
 
-func (m *MockPool) GetProtocolFeesToken1(poolPath string) int64 {
+func (m *MockPool) GetProtocolFeesToken1(poolPath string) (int64, error) {
 	res, ok := m.Response.Get("GetProtocolFeesToken1")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(int64)
+	return res[0].(int64), nil
 }
 
-func (m *MockPool) GetSlot0FeeProtocol(poolPath string) uint8 {
+func (m *MockPool) GetSlot0FeeProtocol(poolPath string) (uint8, error) {
 	res, ok := m.Response.Get("GetSlot0FeeProtocol")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(uint8)
+	return res[0].(uint8), nil
 }
 
-func (m *MockPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
+func (m *MockPool) GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error) {
 	res, ok := m.Response.Get("GetSlot0SqrtPriceX96")
 	if !ok {
-		return u256.Zero()
+		return nil, nil
 	}
 
-	return res[0].(*u256.Uint)
+	return res[0].(*u256.Uint), nil
 }
 
-func (m *MockPool) GetSlot0Tick(poolPath string) int32 {
+func (m *MockPool) GetSlot0Tick(poolPath string) (int32, error) {
 	res, ok := m.Response.Get("GetSlot0Tick")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(int32)
+	return res[0].(int32), nil
 }
 
-func (m *MockPool) GetSlot0Unlocked(poolPath string) bool {
+func (m *MockPool) GetSlot0Unlocked(poolPath string) (bool, error) {
 	res, ok := m.Response.Get("GetSlot0Unlocked")
 	if !ok {
-		return false
+		return false, nil
 	}
 
-	return res[0].(bool)
+	return res[0].(bool), nil
 }
 
-func (m *MockPool) GetTickCumulativeOutside(poolPath string, tick int32) int64 {
+func (m *MockPool) GetTickCumulativeOutside(poolPath string, tick int32) (int64, error) {
 	res, ok := m.Response.Get("GetTickCumulativeOutside")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(int64)
+	return res[0].(int64), nil
 }
 
-func (m *MockPool) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) string {
+func (m *MockPool) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) (string, error) {
 	res, ok := m.Response.Get("GetTickFeeGrowthOutside0X128")
 	if !ok {
-		return ""
+		return "", nil
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
+func (m *MockPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) (string, error) {
 	res, ok := m.Response.Get("GetTickFeeGrowthOutside1X128")
 	if !ok {
-		return ""
+		return "", nil
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
+func (m *MockPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string, error) {
 	res, ok := m.Response.Get("GetTickFeeGrowthOutsideX128")
 	if !ok {
-		return "", ""
+		return "", "", nil
 	}
 
-	return res[0].(string), res[1].(string)
+	return res[0].(string), res[1].(string), nil
 }
 
-func (m *MockPool) GetTickInitialized(poolPath string, tick int32) bool {
+func (m *MockPool) GetTickInitialized(poolPath string, tick int32) (bool, error) {
 	res, ok := m.Response.Get("GetTickInitialized")
 	if !ok {
-		return false
+		return false, nil
 	}
 
-	return res[0].(bool)
+	return res[0].(bool), nil
 }
 
-func (m *MockPool) GetTickLiquidityGross(poolPath string, tick int32) string {
+func (m *MockPool) GetTickLiquidityGross(poolPath string, tick int32) (string, error) {
 	res, ok := m.Response.Get("GetTickLiquidityGross")
 	if !ok {
-		return ""
+		return "", nil
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPool) GetTickLiquidityNet(poolPath string, tick int32) string {
+func (m *MockPool) GetTickLiquidityNet(poolPath string, tick int32) (string, error) {
 	res, ok := m.Response.Get("GetTickLiquidityNet")
 	if !ok {
-		return ""
+		return "", nil
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPool) GetTickSecondsOutside(poolPath string, tick int32) uint32 {
+func (m *MockPool) GetTickSecondsOutside(poolPath string, tick int32) (uint32, error) {
 	res, ok := m.Response.Get("GetTickSecondsOutside")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(uint32)
+	return res[0].(uint32), nil
 }
 
-func (m *MockPool) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string {
+func (m *MockPool) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) (string, error) {
 	res, ok := m.Response.Get("GetTickSecondsPerLiquidityOutsideX128")
 	if !ok {
-		return ""
+		return "", nil
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPool) GetTickSpacing(poolPath string) int32 {
+func (m *MockPool) GetTickSpacing(poolPath string) (int32, error) {
 	res, ok := m.Response.Get("GetTickSpacing")
 	if !ok {
-		return 0
+		return 0, nil
 	}
 
-	return res[0].(int32)
+	return res[0].(int32), nil
 }
 
-func (m *MockPool) GetToken0Path(poolPath string) string {
+func (m *MockPool) GetToken0Path(poolPath string) (string, error) {
 	res, ok := m.Response.Get("GetToken0Path")
 	if !ok {
-		return ""
+		return "", nil
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
-func (m *MockPool) GetToken1Path(poolPath string) string {
+func (m *MockPool) GetToken1Path(poolPath string) (string, error) {
 	res, ok := m.Response.Get("GetToken1Path")
 	if !ok {
-		return ""
+		return "", nil
 	}
 
-	return res[0].(string)
+	return res[0].(string), nil
 }
 
 func (m *MockPool) GetWithdrawalFee() uint64 {
@@ -593,23 +594,13 @@ func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uin
 	return res[0].(int32), res[1].(*u256.Uint), res[2].(error)
 }
 
-// Pool enumeration
-func (m *MockPool) GetPoolCount() int {
-	res, ok := m.Response.Get("GetPoolCount")
+func (m *MockPool) GetPools() *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetPools")
 	if !ok {
-		return 0
+		return nil
 	}
 
-	return res[0].(int)
-}
-
-func (m *MockPool) GetPoolPaths(offset, count int) []string {
-	res, ok := m.Response.Get("GetPoolPaths")
-	if !ok {
-		return []string{}
-	}
-
-	return res[0].([]string)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 func (m *MockPool) GetFeeAmountTickSpacings() map[uint32]int32 {
@@ -621,33 +612,23 @@ func (m *MockPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 	return res[0].(map[uint32]int32)
 }
 
-// Position enumeration
-func (m *MockPool) GetPoolPositionCount(poolPath string) int {
-	res, ok := m.Response.Get("GetPoolPositionCount")
+func (m *MockPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
+	res, ok := m.Response.Get("GetPoolPositions")
 	if !ok {
-		return 0
+		return nil
 	}
 
-	return res[0].(int)
-}
-
-func (m *MockPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	res, ok := m.Response.Get("GetPoolPositionKeys")
-	if !ok {
-		return []string{}
-	}
-
-	return res[0].([]string)
+	return res[0].(*rotree.ReadOnlyTree)
 }
 
 // Tick enumeration
-func (m *MockPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32 {
+func (m *MockPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) ([]int32, error) {
 	res, ok := m.Response.Get("GetInitializedTicksInRange")
 	if !ok {
-		return []int32{}
+		return []int32{}, nil
 	}
 
-	return res[0].([]int32)
+	return res[0].([]int32), nil
 }
 
 // Structure getters
@@ -671,17 +652,6 @@ func (m *MockPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 		return res[0].(string), nil
 	}
 	return res[0].(string), res[1].(error)
-}
-
-func (m *MockPool) GetPosition(poolPath, key string) (PositionInfo, error) {
-	res, ok := m.Response.Get("GetPosition")
-	if !ok {
-		return PositionInfo{}, errors.New("not found")
-	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(PositionInfo), nil
-	}
-	return res[0].(PositionInfo), res[1].(error)
 }
 
 func (m *MockPool) GetObservationState(poolPath string) (*ObservationState, error) {

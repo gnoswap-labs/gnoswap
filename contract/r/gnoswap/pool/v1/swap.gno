@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
@@ -39,12 +40,9 @@ var (
 //
 // Only callable by staker contract.
 func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
-	halt.AssertIsNotHaltedPool()
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -65,12 +63,9 @@ func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPat
 //
 // Only callable by staker contract.
 func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
-	halt.AssertIsNotHaltedPool()
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -91,12 +86,9 @@ func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPat
 //
 // Only callable by staker contract.
 func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
-	halt.AssertIsNotHaltedPool()
 
 	caller := rlm.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -166,9 +158,7 @@ func (i *poolV1) Swap(
 	sqrtPriceLimitX96 string,
 	swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
@@ -190,11 +180,6 @@ func (i *poolV1) Swap(
 	i.lockPool(0, rlm)
 	defer i.unlockPool(0, rlm)
 
-	// no liquidity -> no swap, return zero amounts
-	if pool.Liquidity().IsZero() {
-		return "0", "0"
-	}
-
 	blockTimestamp := time.Now().Unix()
 
 	// Call swap start hook if set
@@ -205,19 +190,6 @@ func (i *poolV1) Swap(
 			swapStartHook(cross(rlm), pool.PoolPath(), blockTimestamp)
 		}
 	}
-
-	defer func() {
-		if i.store.HasSwapEndHook() {
-			swapEndHook := i.store.GetSwapEndHook()
-
-			if swapEndHook != nil {
-				err := swapEndHook(cross(rlm), pool.PoolPath())
-				if err != nil {
-					panic(err)
-				}
-			}
-		}
-	}()
 
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
@@ -265,6 +237,16 @@ func (i *poolV1) Swap(
 	}
 
 	applySwapResult(pool, result)
+
+	if i.store.HasSwapEndHook() {
+		swapEndHook := i.store.GetSwapEndHook()
+		if swapEndHook != nil {
+			err := swapEndHook(cross(rlm), pool.PoolPath())
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
 
 	// transfer swap result to recipient then receive input tokens from swap callback
 	if zeroForOne {
@@ -323,8 +305,7 @@ func (i *poolV1) Swap(
 }
 
 // DrySwap simulates a swap without modifying pool state.
-// Returns amount0, amount1 and a success boolean.
-// Returns false if pool has no liquidity or computation fails.
+// Returns amount0, amount1 and an error.
 func (i *poolV1) DrySwap(
 	token0Path string,
 	token1Path string,
@@ -332,19 +313,26 @@ func (i *poolV1) DrySwap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-) (string, string, bool) {
+) (amount0, amount1 string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			amount0 = "0"
+			amount1 = "0"
+			if recoveredErr, ok := r.(error); ok {
+				err = recoveredErr
+			} else {
+				err = ufmt.Errorf("%v", r)
+			}
+		}
+	}()
+
 	amounts := i256.MustFromDecimal(amountSpecified)
 	if amounts.IsZero() {
-		return "0", "0", false
+		return "0", "0", errors.New(errInvalidSwapAmount)
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
-	poolSnapshot := pool.Clone()
-
-	// no liquidity -> simulation fails
-	if poolSnapshot.Liquidity().IsZero() {
-		return "0", "0", false
-	}
+	poolSnapshot := newDrySwapSnapshot(pool)
 
 	slot0Start := poolSnapshot.Slot0()
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
@@ -366,20 +354,20 @@ func (i *poolV1) DrySwap(
 
 	result, err := i.computeSwap(poolSnapshot, comp, nil)
 	if err != nil {
-		return "0", "0", false
+		return "0", "0", err
 	}
 
 	if zeroForOne {
 		if poolSnapshot.BalanceToken1() < gnsmath.SafeConvertToInt64(result.Amount1.Abs()) {
-			return "0", "0", false
+			return "0", "0", errors.New(errInsufficientPoolBalance)
 		}
 	} else {
 		if poolSnapshot.BalanceToken0() < gnsmath.SafeConvertToInt64(result.Amount0.Abs()) {
-			return "0", "0", false
+			return "0", "0", errors.New(errInsufficientPoolBalance)
 		}
 	}
 
-	return result.Amount0.ToString(), result.Amount1.ToString(), true
+	return result.Amount0.ToString(), result.Amount1.ToString(), nil
 }
 
 // tickCrossHookFn is invoked after an initialized tick is crossed. Swap uses it
@@ -398,6 +386,48 @@ type tickCrossHookFn func(pool *pl.Pool, tickId int32, zeroForOne bool, timestam
 // The optional `onTickCross` callback is invoked when an initialized tick is
 // crossed; Swap supplies a hook that performs a cross-realm call into the
 // configured tick-cross hook, while DrySwap passes nil.
+// newDrySwapSnapshot builds the pool DrySwap simulates against.
+//
+// The swap loop writes through the pool it is given -- tickCross rewrites each
+// tick it crosses -- so the simulation must not run against stored state.
+// Pool.Clone copies the pool's own fields and leaves its collections nil, so
+// assemble the two the loop reads: the tick tree (crossed and rewritten) and
+// the tick bitmaps (scanned for the next initialized tick). The oracle state is
+// a fresh one, because the simulation must not extend the stored observations.
+func newDrySwapSnapshot(pool *pl.Pool) *pl.Pool {
+	snapshot := pool.Clone()
+	snapshot.SetTicks(copyPoolTicks(pool.Ticks()))
+	snapshot.SetTickBitmaps(copyPoolTickBitmaps(pool.TickBitmaps()))
+	snapshot.SetObservationState(pl.NewObservationState(time.Now().Unix()))
+
+	return snapshot
+}
+
+// copyPoolTicks copies a tick tree slot by slot. TickInfo is a value type, so
+// the snapshot's writes replace its own slots and leave the source untouched.
+func copyPoolTicks(src *bptree.BPTree) *bptree.BPTree {
+	copied := pl.NewPoolTicksTree()
+	if src == nil {
+		return copied
+	}
+
+	src.Iterate("", "", func(key string, value any) bool {
+		copied.Set(key, value)
+		return false
+	})
+
+	return copied
+}
+
+func copyPoolTickBitmaps(src map[int16]string) map[int16]string {
+	copied := make(map[int16]string, len(src))
+	for wordPos, bitmap := range src {
+		copied[wordPos] = bitmap
+	}
+
+	return copied
+}
+
 func (i *poolV1) computeSwap(pool *pl.Pool, comp SwapComputation, onTickCross tickCrossHookFn) (*SwapResult, error) {
 	state := comp.InitialState
 	var err error
@@ -728,7 +758,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 					observationState,
 					cache.blockTimestamp,
 					0,
-					state.tick,
+					pool.Slot0Tick(),
 					observationState.Index(),
 					cache.liquidityStart,
 					observationState.Cardinality(),

@@ -3,6 +3,7 @@ package staker
 import (
 	"chain/runtime"
 	"math"
+	"strconv"
 	"testing"
 	"time"
 
@@ -118,19 +119,16 @@ func TestStakerDelegate_Delegate_AllowsContractCaller(cur realm, t *testing.T) {
 	result := staker.Delegate(cross(cur), validator, amount, "")
 	uassert.Equal(t, result, amount)
 
-	delegationCount := staker.GetUserDelegationCount(contractCaller, validator)
-	uassert.Equal(t, delegationCount, 1)
-
 	delegationIDs := staker.GetUserDelegationIDs(contractCaller, validator)
 	uassert.Equal(t, len(delegationIDs), 1)
 
-	delegation, err := staker.GetDelegation(delegationIDs[0])
-	uassert.NoError(t, err)
+	delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationIDs[0], 10)).(*staker.Delegation)
+	uassert.True(t, ok)
 	uassert.Equal(t, delegation.DelegateFrom(), contractCaller)
 	uassert.Equal(t, delegation.DelegateTo(), validator)
 	uassert.Equal(t, delegation.TotalDelegatedAmount(), amount)
 
-	uassert.Equal(t, staker.GetUserDelegationCount(originCaller, validator), 0)
+	uassert.Equal(t, len(staker.GetUserDelegationIDs(originCaller, validator)), 0)
 }
 
 // Test Undelegate function
@@ -297,8 +295,8 @@ func TestStakerDelegate_UndelegateMultipleDelegations(cur realm, t *testing.T) {
 				totalUndelegated := int64(0)
 
 				for _, delegationID := range delegationIDs {
-					delegation, err := staker.GetDelegation(delegationID)
-					if err == nil && delegation != nil {
+					delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationID, 10)).(*staker.Delegation)
+					if ok && delegation != nil {
 						totalWithdraws += staker.GetDelegationWithdrawCount(delegationID)
 						totalUndelegated += delegation.UnDelegatedAmount()
 					}
@@ -309,6 +307,27 @@ func TestStakerDelegate_UndelegateMultipleDelegations(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStakerDelegate_UndelegateSkipsZeroAmountWithdrawals(cur realm, t *testing.T) {
+	setupStakerDelegateTestGNSBalance(cur, t)
+
+	user := testutils.TestAddress("alice")
+	validator := testutils.TestAddress("zero_w_val")
+	testing.SetRealm(testing.NewUserRealm(user))
+
+	callStakerDelegate(cur, validator, minimumAmount, "")
+	firstDelegationID := staker.GetUserDelegationIDs(user, validator)[0]
+	callStakerUndelegate(cur, validator, minimumAmount)
+	uassert.Equal(t, staker.GetDelegationWithdrawCount(firstDelegationID), 1)
+
+	callStakerDelegate(cur, validator, minimumAmount, "")
+	callStakerUndelegate(cur, validator, minimumAmount)
+
+	delegationIDs := staker.GetUserDelegationIDs(user, validator)
+	uassert.Equal(t, len(delegationIDs), 2)
+	uassert.Equal(t, staker.GetDelegationWithdrawCount(firstDelegationID), 1)
+	uassert.Equal(t, staker.GetDelegationWithdrawCount(delegationIDs[1]), 1)
 }
 
 // Test Undelegate edge cases with multiple delegations
@@ -473,6 +492,32 @@ func TestStakerDelegate_Redelegate(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStakerDelegate_RedelegateSkipsPendingUndelegation(cur realm, t *testing.T) {
+	setupStakerDelegateTestGNSBalance(cur, t)
+
+	user := testutils.TestAddress("alice")
+	previousValidator := testutils.TestAddress("zero_re_val1")
+	newValidator := testutils.TestAddress("zero_re_val2")
+	testing.SetRealm(testing.NewUserRealm(user))
+
+	callStakerDelegate(cur, previousValidator, minimumAmount, "")
+	firstDelegationID := staker.GetUserDelegationIDs(user, previousValidator)[0]
+	callStakerUndelegate(cur, previousValidator, minimumAmount)
+	uassert.Equal(t, staker.GetDelegationWithdrawCount(firstDelegationID), 1)
+
+	callStakerDelegate(cur, previousValidator, minimumAmount, "")
+	result := callStakerRedelegate(cur, previousValidator, newValidator, minimumAmount)
+
+	uassert.Equal(t, result, int64(minimumAmount))
+	uassert.Equal(t, staker.GetDelegationWithdrawCount(firstDelegationID), 1)
+
+	previousDelegationIDs := staker.GetUserDelegationIDs(user, previousValidator)
+	newDelegationIDs := staker.GetUserDelegationIDs(user, newValidator)
+	uassert.Equal(t, len(previousDelegationIDs), 1)
+	uassert.Equal(t, previousDelegationIDs[0], firstDelegationID)
+	uassert.Equal(t, len(newDelegationIDs), 1)
 }
 
 func TestStakerDelegate_RedelegatePreservesTotalLockedAmount(cur realm, t *testing.T) {
@@ -1053,7 +1098,9 @@ func setupStakerDelegateTestDelegation(cur realm, t *testing.T, gs *govStakerV1,
 
 	testing.SetRealm(testing.NewUserRealm(from))
 	func(cur realm) {
-		gs.addDelegation(0, cur, delegationID, delegation)
+		if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+			panic(err)
+		}
 	}(cross(cur))
 
 	testing.SetRealm(testing.NewUserRealm(from))
@@ -1078,7 +1125,9 @@ func setupStakerDelegateTestCollectableAmount(cur realm, t *testing.T, gs *govSt
 
 	testing.SetRealm(testing.NewUserRealm(user))
 	func(cur realm) {
-		gs.addDelegation(0, cur, delegationID, delegation)
+		if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+			panic(err)
+		}
 	}(cross(cur))
 
 	testing.SetRealm(testing.NewUserRealm(user))
@@ -1189,7 +1238,9 @@ func TestStakerDelegate_collectDelegations_MultipleDelegations(cur realm, t *tes
 
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
-					gs.addDelegation(0, cur, delegationID, delegation)
+					if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+						panic(err)
+					}
 				}(cross(cur))
 
 				mintXgnsForTest(cur, user, totalAmount)
@@ -1239,7 +1290,9 @@ func TestStakerDelegate_collectDelegations_NoCollectableAmount(cur realm, t *tes
 
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
-					gs.addDelegation(0, cur, delegationID, delegation)
+					if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+						panic(err)
+					}
 				}(cross(cur))
 
 				mintXgnsForTest(cur, user, minimumAmount)
@@ -1259,7 +1312,9 @@ func TestStakerDelegate_collectDelegations_NoCollectableAmount(cur realm, t *tes
 
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
-					gs.addDelegation(0, cur, delegationID, delegation)
+					if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+						panic(err)
+					}
 				}(cross(cur))
 
 				return user

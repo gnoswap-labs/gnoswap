@@ -92,7 +92,7 @@ func (t *TestRouter) ExactOutSingleSwapRoute(_ int, rlm realm, inputToken string
 	return result[0].(string), result[1].(string)
 }
 
-func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, bool) {
+func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, error) {
 	result := t.ExecuteFn(
 		"DrySwapRoute",
 		func(args ...any) any {
@@ -101,7 +101,12 @@ func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swap
 		},
 		inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit,
 	).([]any)
-	return result[0].(string), result[1].(string), result[2].(bool)
+
+	if result[2] == nil {
+		return result[0].(string), result[1].(string), nil
+	}
+
+	return result[0].(string), result[1].(string), result[2].(error)
 }
 
 func (t *TestRouter) SwapCallback(_ int, rlm realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, payer address) error {
@@ -131,4 +136,11 @@ func (t *TestRouter) SetSwapFee(_ int, rlm realm, fee uint64) {
 		func(args ...any) any { t.instance.SetSwapFee(0, rlm, args[0].(uint64)); return nil },
 		fee,
 	)
+}
+
+func (t *TestRouter) GetPendingProtocolFees() map[string]int64 {
+	return t.ExecuteFn(
+		"GetPendingProtocolFees",
+		func(args ...any) any { return t.instance.GetPendingProtocolFees() },
+	).(map[string]int64)
 }

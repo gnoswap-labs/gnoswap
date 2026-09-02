@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -179,7 +180,7 @@ func mintAlicePosition(cur realm) {
 
 func checkInitialEmissionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Initial position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Initial emission rewards should be 0\n")
@@ -245,9 +246,9 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if zeroForOne {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	} else {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

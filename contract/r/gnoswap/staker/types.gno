@@ -3,6 +3,7 @@ package staker
 import (
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
 type IStaker interface {
@@ -31,6 +32,7 @@ type IStakerManager interface {
 		endTimestamp int64,
 	)
 	EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address)
+	CancelExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string)
 	CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64
 	AddToken(_ int, rlm realm, tokenPath string)
 	RemoveToken(_ int, rlm realm, tokenPath string)
@@ -44,18 +46,10 @@ type IStakerManager interface {
 
 type IStakerGetter interface {
 	GetPool(poolPath string) *Pool
-	GetPoolRewardCacheCount(poolPath string) uint64
-	GetPoolRewardCacheIDs(poolPath string, offset, count int) []int64
-	GetPoolRewardCache(poolPath string, timestamp uint64) int64
-	GetPoolIncentiveCount(poolPath string) uint64
-	GetPoolIncentiveIDs(poolPath string, offset, count int) []string
-	GetPoolGlobalRewardRatioAccumulationCount(poolPath string) uint64
-	GetPoolGlobalRewardRatioAccumulationIDs(poolPath string, offset, count int) []uint64
-	GetPoolGlobalRewardRatioAccumulation(poolPath string, timestamp uint64) string
-	GetPoolHistoricalTickCount(poolPath string) uint64
-	GetPoolHistoricalTickIDs(poolPath string, offset, count int) []int32
-	GetPoolHistoricalTick(poolPath string, tick uint64) int32
-	GetIncentive(poolPath string, incentiveId string) *ExternalIncentive
+	GetPoolRewardCaches(poolPath string) *rotree.ReadOnlyTree
+	GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree
+	GetPoolGlobalRewardRatioAccumulations(poolPath string) *rotree.ReadOnlyTree
+	GetPoolHistoricalTicks(poolPath string) *rotree.ReadOnlyTree
 	GetDeposit(lpTokenId uint64) *Deposit
 	CollectableEmissionReward(positionId uint64) int64
 	CollectableExternalIncentiveReward(positionId uint64, incentiveId string) int64
@@ -92,7 +86,6 @@ type IStakerGetter interface {
 	GetIncentiveStartTimestamp(poolPath string, incentiveId string) int64
 	GetMinimumRewardAmount() int64
 	GetMinimumRewardAmountForToken(tokenPath string) int64
-	GetPoolIncentiveIdList(poolPath string) []string
 	GetPoolStakedLiquidity(poolPath string) string
 	GetPoolsByTier(tier uint64) []string
 	GetPoolReward(tier uint64) int64
@@ -102,6 +95,7 @@ type IStakerGetter interface {
 	GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool)
 	GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) string
 	GetUnstakingFee() uint64
+	GetPendingProtocolFees() map[string]int64
 	IsStaked(positionId uint64) bool
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string

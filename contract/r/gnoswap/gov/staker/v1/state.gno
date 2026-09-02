@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"errors"
 	"math"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
@@ -55,28 +56,24 @@ func (g *govStakerV1) getDelegation(delegationID int64) *staker.Delegation {
 //   - delegation: delegation instance to store
 //
 // Returns:
-//   - bool: true if successfully stored
-func (g *govStakerV1) setDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) bool {
-	if err := g.store.SetDelegation(0, rlm, delegationID, delegation); err != nil {
-		return false
-	}
-	return true
+//   - error: nil on success, otherwise the storage write error
+func (g *govStakerV1) setDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) error {
+	return g.store.SetDelegation(0, rlm, delegationID, delegation)
 }
 
 // addDelegation adds a new delegation to storage and updates the delegation manager.
 //
 // Parameters:
-//   - delegationID: unique identifier of the delegation
+//   - delegationID: unique identifier of the delegation to add
 //   - delegation: delegation instance to add
 //
 // Returns:
-//   - bool: true if successfully added
-func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) bool {
-	if ok := g.setDelegation(0, rlm, delegationID, delegation); !ok {
-		return false
+//   - error: nil on success, otherwise the delegation or manager storage error
+func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) error {
+	if err := g.setDelegation(0, rlm, delegationID, delegation); err != nil {
+		return err
 	}
 
-	// Update delegation manager
 	delegationManager := g.store.GetDelegationManager()
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	resolvedManager.addDelegation(
@@ -84,11 +81,8 @@ func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delega
 		delegation.DelegateTo(),
 		delegationID,
 	)
-	if err := g.store.SetDelegationManager(0, rlm, delegationManager); err != nil {
-		return false
-	}
 
-	return true
+	return g.store.SetDelegationManager(0, rlm, delegationManager)
 }
 
 // removeDelegation removes a delegation from storage and updates the delegation manager.
@@ -97,19 +91,17 @@ func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delega
 //   - delegationID: unique identifier of the delegation to remove
 //
 // Returns:
-//   - bool: true if successfully removed
-func (g *govStakerV1) removeDelegation(_ int, rlm realm, delegationID int64) bool {
+//   - error: nil on success, otherwise an error when the delegation is absent or storage fails
+func (g *govStakerV1) removeDelegation(_ int, rlm realm, delegationID int64) error {
 	delegation := g.getDelegation(delegationID)
 	if delegation == nil {
-		return false
+		return errors.New(errDelegationNotFound)
 	}
 
-	// Remove from store
 	if err := g.store.RemoveDelegation(0, rlm, delegationID); err != nil {
-		return false
+		return err
 	}
 
-	// Update delegation manager
 	delegationManager := g.store.GetDelegationManager()
 	resolvedManager := NewDelegationManagerResolver(delegationManager)
 	resolvedManager.removeDelegation(
@@ -117,11 +109,8 @@ func (g *govStakerV1) removeDelegation(_ int, rlm realm, delegationID int64) boo
 		delegation.DelegateTo(),
 		delegationID,
 	)
-	if err := g.store.SetDelegationManager(0, rlm, delegationManager); err != nil {
-		return false
-	}
 
-	return true
+	return g.store.SetDelegationManager(0, rlm, delegationManager)
 }
 
 // getUserDelegations retrieves all delegations for a specific user.
@@ -397,14 +386,12 @@ func (g *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
 func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
-	pf.DistributeProtocolFee(cross(rlm))
-
-	distributedAmounts := g.getDistributedProtocolFees()
+	accruedAmounts := pf.ConsumeAccrualPendingProtocolFees(cross(rlm))
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp); err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
 		return err
 	}
 
@@ -418,7 +405,7 @@ func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string
 	}
 
 	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, accruedAmounts)
 
 	return nil
 }
@@ -431,14 +418,12 @@ func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
 func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
-	pf.DistributeProtocolFee(cross(rlm))
-
-	distributedAmounts := g.getDistributedProtocolFees()
+	accruedAmounts := pf.ConsumeAccrualPendingProtocolFees(cross(rlm))
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp); err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
 		return err
 	}
 
@@ -451,7 +436,7 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address str
 	}
 
 	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, accruedAmounts)
 
 	return nil
 }
@@ -467,14 +452,16 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address str
 //   - map[string]int64: protocol fee rewards claimed by token
 //   - error: nil on success, error if claiming fails
 func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address string, currentTimestamp int64) (map[string]int64, error) {
+	// Claiming pays out of gov/staker's own balance, so the reserved fees are pulled in
+	// from the protocol fee realm first. The stake-change paths need no transfer.
 	pf.DistributeProtocolFee(cross(rlm))
 
-	distributedAmounts := g.getDistributedProtocolFees()
+	accruedAmounts := pf.ConsumeAccrualPendingProtocolFees(cross(rlm))
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentTimestamp); err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
 		return nil, err
 	}
 
@@ -488,21 +475,21 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address st
 	}
 
 	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, distributedAmounts)
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, accruedAmounts)
 
 	return rewards, nil
 }
 
-// claimDistributedProtocolFeeRewardByTokenPath processes an observed protocol fee distribution for one token.
-func (g *govStakerV1) claimDistributedProtocolFeeRewardByTokenPath(address string, tokenPath string, distributedAmount int64, currentTimestamp int64) (*staker.ProtocolFeeRewardManager, int64, bool, error) {
-	if distributedAmount == 0 {
+// claimAccruedProtocolFeeRewardByTokenPath processes an observed protocol fee accrual for one token.
+func (g *govStakerV1) claimAccruedProtocolFeeRewardByTokenPath(address string, tokenPath string, accruedAmount int64, currentTimestamp int64) (*staker.ProtocolFeeRewardManager, int64, bool, error) {
+	if accruedAmount == 0 {
 		return nil, 0, false, nil
 	}
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, distributedAmount, currentTimestamp); err != nil {
+	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, accruedAmount, currentTimestamp); err != nil {
 		return nil, 0, false, err
 	}
 
@@ -518,8 +505,8 @@ func (g *govStakerV1) claimDistributedProtocolFeeRewardByTokenPath(address strin
 func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, address string, tokenPath string, currentTimestamp int64) (int64, error) {
 	pf.DistributeProtocolFeeByTokenPath(cross(rlm), tokenPath)
 
-	distributedAmount := pf.GetActualDistributedToGovStakerByTokenPath(tokenPath)
-	protocolFeeRewardManager, reward, processed, err := g.claimDistributedProtocolFeeRewardByTokenPath(address, tokenPath, distributedAmount, currentTimestamp)
+	accruedAmount := pf.ConsumeAccrualPendingProtocolFeeByTokenPath(cross(rlm), tokenPath)
+	protocolFeeRewardManager, reward, processed, err := g.claimAccruedProtocolFeeRewardByTokenPath(address, tokenPath, accruedAmount, currentTimestamp)
 	if err != nil {
 		return 0, err
 	}
@@ -531,18 +518,23 @@ func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, 
 		return 0, err
 	}
 
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, map[string]int64{tokenPath: distributedAmount})
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, map[string]int64{tokenPath: accruedAmount})
 
 	return reward, nil
 }
 
-// getDistributedProtocolFees retrieves the current distributed protocol fee amounts for all tokens.
-// This method queries the protocol fee contract for accumulated distributions.
+// getAccrualPendingProtocolFees retrieves the protocol fee amounts reserved for
+// gov/staker, limited to the tokens that collected a fee since the last accrual.
+//
+// The reserved amount is recorded when a fee reaches the protocol fee realm, before it
+// is transferred out, so accrual does not depend on a transfer happening. This is the
+// read-only counterpart of pf.ConsumeAccrualPendingProtocolFees: a query never advances
+// accrual state.
 //
 // Returns:
-//   - map[string]int64: distributed amounts by token path
-func (g *govStakerV1) getDistributedProtocolFees() map[string]int64 {
-	return pf.GetActualDistributedToGovStaker()
+//   - map[string]int64: accrued amounts by token path
+func (g *govStakerV1) getAccrualPendingProtocolFees() map[string]int64 {
+	return pf.GetAccrualPendingProtocolFees()
 }
 
 // getLaunchpadProjectDeposit retrieves the deposit amount for a launchpad project.
@@ -566,15 +558,13 @@ func (g *govStakerV1) getLaunchpadProjectDeposit(ownerAddress string) (int64, bo
 //   - deposit: deposit amount to set
 //
 // Returns:
-//   - bool: true if successfully set
-func (g *govStakerV1) setLaunchpadProjectDeposit(_ int, rlm realm, ownerAddress string, deposit int64) bool {
+//   - error: nil on success, otherwise the storage write error
+func (g *govStakerV1) setLaunchpadProjectDeposit(_ int, rlm realm, ownerAddress string, deposit int64) error {
 	launchpadDeposits := g.store.GetLaunchpadProjectDeposits()
 	resolvedDeposits := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
 	resolvedDeposits.setLaunchpadProjectDeposit(ownerAddress, deposit)
-	if err := g.store.SetLaunchpadProjectDeposits(0, rlm, launchpadDeposits); err != nil {
-		return false
-	}
-	return true
+
+	return g.store.SetLaunchpadProjectDeposits(0, rlm, launchpadDeposits)
 }
 
 // addStakeFromLaunchpad adds stake for a launchpad project and updates reward tracking.
@@ -602,7 +592,9 @@ func (g *govStakerV1) addStakeFromLaunchpad(_ int, rlm realm, address string, am
 	}
 
 	deposit = gnsmath.SafeAddInt64(deposit, amount)
-	g.setLaunchpadProjectDeposit(0, rlm, launchpadRewardID, deposit)
+	if err := g.setLaunchpadProjectDeposit(0, rlm, launchpadRewardID, deposit); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -636,7 +628,9 @@ func (g *govStakerV1) removeStakeFromLaunchpad(_ int, rlm realm, address string,
 		deposit = 0
 	}
 
-	g.setLaunchpadProjectDeposit(0, rlm, launchpadRewardID, deposit)
+	if err := g.setLaunchpadProjectDeposit(0, rlm, launchpadRewardID, deposit); err != nil {
+		return err
+	}
 
 	return nil
 }

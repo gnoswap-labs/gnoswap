@@ -298,8 +298,8 @@ func createExternalIncentive(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, math.MaxInt64)
 
 	createTimestamp := time.Now().Unix()
-	// Start at the next UTC midnight to satisfy start-time validation.
-	startTime := ((createTimestamp / 86400) + 1) * 86400
+	// Start at the first UTC midnight past the 24h minimum to satisfy start-time validation.
+	startTime := ((createTimestamp / 86400) + 2) * 86400
 	endTime := startTime + incentiveDuration
 	// NextIncentiveID format: "<creator>:<createTimestamp>:<counter>"; counter is 1
 	// for the first incentive on this freshly-initialized staker.
@@ -319,9 +319,9 @@ func createExternalIncentive(cur realm) {
 }
 
 func skipPastIncentiveEnd(cur realm) {
-	// Jump past the full 90-day incentive window plus a 1-day buffer so
+	// Jump past the full 90-day incentive window plus a 2-day buffer so
 	// EndExternalIncentive's end-time precondition is satisfied.
-	blocksToSkip := (incentiveDuration + 24*60*60) / 5
+	blocksToSkip := (incentiveDuration + 2*24*60*60) / 5
 	testing.SkipHeights(blocksToSkip)
 }
 

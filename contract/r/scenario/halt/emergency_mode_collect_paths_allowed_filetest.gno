@@ -311,10 +311,10 @@ func executeEmergencyCollectFeeSwaps(cur realm) {
 func emergencyCollectSwapCallback(cur realm, amount0Delta, amount1Delta int64) error {
 	testing.SetRealm(adminRealm2)
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), barPath2, poolAddr2, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, barPath2, poolAddr2, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), fooPath2, poolAddr2, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, fooPath2, poolAddr2, amount1Delta)
 	}
 	return nil
 }
@@ -722,7 +722,7 @@ func assertPositiveString(cur realm, value string, label string) {
 // [EXPECTED] pool.CollectProtocol succeeded in emergency mode
 //
 // [SCENARIO] 19. staker.EndExternalIncentive remains allowed
-// [EXPECTED] staker.EndExternalIncentive BAR delta: 1000000000, GNS delta: 1000000000
+// [EXPECTED] staker.EndExternalIncentive BAR delta: 1000000000, GNS delta: 100000000000
 // [EXPECTED] staker.EndExternalIncentive succeeded in emergency mode
 //
 // [SCENARIO] 20. staker.CollectExternalIncentivePenalty remains allowed

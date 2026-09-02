@@ -28,7 +28,8 @@ const (
 	StoreKeyDistributedToDevOpsHistory    StoreKey = "distributedToDevOpsHistory"    // tokenPath -> amount
 
 	// reservedTokens tracks token paths collected but not yet distributed.
-	StoreKeyReservedTokens StoreKey = "reservedTokens"
+	StoreKeyReservedTokens       StoreKey = "reservedTokens"
+	StoreKeyAccrualPendingTokens StoreKey = "accrualPendingTokens"
 )
 
 const (
@@ -372,6 +373,99 @@ func (s *protocolFeeStore) RemoveReservedToken(_ int, rlm realm, tokenPath strin
 	}
 
 	return s.SetReservedTokens(0, rlm, filteredReservedTokens)
+}
+
+// handle accrualPendingTokens store data
+//
+// accrualPendingTokens holds the token paths whose gov/staker share was recorded since
+// gov/staker last folded fees into its accumulator, so a stake change only walks the
+// fees that actually arrived in the meantime.
+func (s *protocolFeeStore) HasAccrualPendingTokensStoreKey() bool {
+	return s.kvStore.Has(StoreKeyAccrualPendingTokens.String())
+}
+
+func (s *protocolFeeStore) InitializeAccrualPendingTokens(_ int, rlm realm) error {
+	if !rlm.IsCurrent() {
+		return errors.New(errSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyAccrualPendingTokens.String(), []string{})
+}
+
+func (s *protocolFeeStore) GetAccrualPendingTokens() []string {
+	result, err := s.kvStore.Get(StoreKeyAccrualPendingTokens.String())
+	if err != nil {
+		panic(err)
+	}
+
+	accrualPendingTokens, ok := result.([]string)
+	if !ok {
+		panic(ufmt.Errorf("failed to cast result to []string: %T", result))
+	}
+
+	return accrualPendingTokens
+}
+
+func (s *protocolFeeStore) SetAccrualPendingTokens(_ int, rlm realm, accrualPendingTokens []string) error {
+	if !rlm.IsCurrent() {
+		return errors.New(errSpoofedRealm)
+	}
+
+	if accrualPendingTokens == nil {
+		return errors.New("accrualPendingTokens is nil")
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyAccrualPendingTokens.String(), accrualPendingTokens)
+}
+
+func (s *protocolFeeStore) AddAccrualPendingToken(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return errors.New(errSpoofedRealm)
+	}
+
+	accrualPendingTokens := s.GetAccrualPendingTokens()
+	for _, accrualPendingToken := range accrualPendingTokens {
+		if accrualPendingToken == tokenPath {
+			return nil
+		}
+	}
+
+	accrualPendingTokens = append(accrualPendingTokens, tokenPath)
+	return s.SetAccrualPendingTokens(0, rlm, accrualPendingTokens)
+}
+
+// RemoveAccrualPendingToken drops one token from the list. It writes only when the
+// token was listed, so settling a token that collected no fee costs no store write.
+func (s *protocolFeeStore) RemoveAccrualPendingToken(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return errors.New(errSpoofedRealm)
+	}
+
+	accrualPendingTokens := s.GetAccrualPendingTokens()
+	filteredAccrualPendingTokens := make([]string, 0, len(accrualPendingTokens))
+	listed := false
+	for _, accrualPendingToken := range accrualPendingTokens {
+		if accrualPendingToken == tokenPath {
+			listed = true
+			continue
+		}
+
+		filteredAccrualPendingTokens = append(filteredAccrualPendingTokens, accrualPendingToken)
+	}
+
+	if !listed {
+		return nil
+	}
+
+	return s.SetAccrualPendingTokens(0, rlm, filteredAccrualPendingTokens)
+}
+
+func (s *protocolFeeStore) ClearAccrualPendingTokens(_ int, rlm realm) error {
+	if !rlm.IsCurrent() {
+		return errors.New(errSpoofedRealm)
+	}
+
+	return s.SetAccrualPendingTokens(0, rlm, []string{})
 }
 
 // NewprotocolFeeStore creates a new protocol fee store instance with the provided KV store.

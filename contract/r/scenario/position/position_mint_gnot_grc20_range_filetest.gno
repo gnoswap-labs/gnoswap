@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -169,12 +170,14 @@ func mintInRangePosition(cur realm) {
 
 func checkInRangePosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position should be in range\n")
-	ufmt.Printf("[EXPECTED] Token0 balance should be %d\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Token1 balance should be %d\n", position.GetPositionToken1Balance(1))
+	balance0, _ := position.GetPositionToken0Balance(1)
+	balance1, _ := position.GetPositionToken1Balance(1)
+	ufmt.Printf("[EXPECTED] Token0 balance should be %d\n", balance0)
+	ufmt.Printf("[EXPECTED] Token1 balance should be %d\n", balance1)
 }
 
 func mintOutRangePosition(cur realm) {
@@ -207,12 +210,14 @@ func mintOutRangePosition(cur realm) {
 
 func checkOutRangePosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(2)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(2)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position should be out of range\n")
-	ufmt.Printf("[EXPECTED] Token0 balance should be %d\n", position.GetPositionToken0Balance(2))
-	ufmt.Printf("[EXPECTED] Token1 balance should be %d\n", position.GetPositionToken1Balance(2))
+	balance0, _ := position.GetPositionToken0Balance(2)
+	balance1, _ := position.GetPositionToken1Balance(2)
+	ufmt.Printf("[EXPECTED] Token0 balance should be %d\n", balance0)
+	ufmt.Printf("[EXPECTED] Token1 balance should be %d\n", balance1)
 }
 
 func executeSwap(cur realm) {
@@ -244,8 +249,8 @@ func executeSwap(cur realm) {
 func verifyFinalPositions(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	pos1fee0, pos1fee1 := position.GetUnclaimedFee(1)
-	pos2fee0, pos2fee1 := position.GetUnclaimedFee(2)
+	pos1fee0, pos1fee1, _ := position.GetUnclaimedFee(1)
+	pos2fee0, pos2fee1, _ := position.GetUnclaimedFee(2)
 
 	ufmt.Println("[INFO] Checking final position states")
 	ufmt.Printf("[EXPECTED] Position 1 should still be in range\n")
@@ -260,9 +265,9 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if zeroForOne {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	} else {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

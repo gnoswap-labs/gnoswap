@@ -2,7 +2,8 @@ package router
 
 import (
 	"chain"
-	"errors"
+
+	"gno.land/r/gnoswap/access"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -52,9 +53,7 @@ func (r *routerV1) ExactOutSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedRouter()
 
@@ -119,9 +118,7 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 	deadline int64,
 	referrer string,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedRouter()
 
@@ -181,7 +178,7 @@ func (r *routerV1) exactOutSwapRoute(
 	previousRealm := rlm.Previous()
 	caller := previousRealm.Address()
 
-	common.SafeGRC20Transfer(cross(rlm), params.outputToken, caller, outputAmount)
+	common.SafeGRC20Transfer(0, rlm, params.outputToken, caller, outputAmount)
 
 	// handle referral registration
 	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)

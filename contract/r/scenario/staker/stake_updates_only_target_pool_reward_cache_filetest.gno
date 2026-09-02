@@ -76,8 +76,8 @@ func stakeTargetPoolPosition(cur realm) {
 	bar.Approve(cross(cur), poolAddr, maxInt64)
 	baz.Approve(cross(cur), poolAddr, maxInt64)
 
-	poolACacheCountBefore := sr.GetPoolRewardCacheCount(targetPoolPath)
-	poolBCacheCountBefore := sr.GetPoolRewardCacheCount(unrelatedPoolPath)
+	poolACacheCountBefore := sr.GetPoolRewardCaches(targetPoolPath).Size()
+	poolBCacheCountBefore := sr.GetPoolRewardCaches(unrelatedPoolPath).Size()
 	positionID, _, _, _ := pn.Mint(
 		cross(cur),
 		"gno.land/r/onbloc/bar.BAR",
@@ -101,10 +101,10 @@ func stakeTargetPoolPosition(cur realm) {
 	if owner := gnft.MustOwnerOf(grc721.TokenID(strconv.Itoa(int(positionID)))); owner != stakerAddr {
 		panic("position was not staked")
 	}
-	if got := sr.GetPoolRewardCacheCount(targetPoolPath); got != poolACacheCountBefore+1 {
+	if got := sr.GetPoolRewardCaches(targetPoolPath).Size(); got != poolACacheCountBefore+1 {
 		panic("pool A reward-cache count did not increase")
 	}
-	if got := sr.GetPoolRewardCacheCount(unrelatedPoolPath); got != poolBCacheCountBefore {
+	if got := sr.GetPoolRewardCaches(unrelatedPoolPath).Size(); got != poolBCacheCountBefore {
 		panic("pool B reward-cache count changed")
 	}
 }

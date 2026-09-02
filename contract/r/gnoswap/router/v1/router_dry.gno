@@ -1,10 +1,10 @@
 package router
 
 import (
-	"chain/runtime/unsafe"
+	"errors"
 	"strings"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -20,19 +20,14 @@ const (
 
 // ErrorMessages for DrySwapRoute operations
 const (
-	ErrUnknownSwapType        = "unknown swapType(%s)"
-	ErrInvalidPositiveAmount  = "invalid amount(%s), must be positive"
-	ErrInvalidZeroAmountLimit = "invalid amountLimit(%s), should not be zero"
-	ErrInvalidQuoteRange      = "quote(%d) must be %d~%d"
+	ErrUnknownSwapType       = "unknown swapType(%s)"
+	ErrInvalidPositiveAmount = "invalid amount(%s), must be positive"
+	ErrInvalidQuoteRange     = "quote(%d) must be %d~%d"
 )
 
 // SwapProcessor handles the execution of swap operations
 type SwapProcessor struct {
 	router *routerV1
-	// payer identifies the user for dry-run simulations. It is resolved once at
-	// the entry point via unsafe.PreviousRealm since dry-run paths are
-	// read-only and carry no realm value to thread.
-	payer address
 }
 
 // ProcessSingleSwap handles a single-hop swap simulation.
@@ -54,7 +49,7 @@ func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified int64) (
 		amountSpecified: amountSpecified,
 	}
 
-	amountIn, amountOut = p.router.singleDrySwap(p.payer, &singleParams)
+	amountIn, amountOut = p.router.singleDrySwap(&singleParams)
 	return amountIn, amountOut, nil
 }
 
@@ -76,17 +71,21 @@ func (p *SwapProcessor) ProcessMultiSwap(
 	numHops int,
 	amountSpecified int64,
 ) (int64, int64, error) {
-	recipient := p.payer
 	pathIndex := getPathIndex(swapType, numHops)
 
 	input, output, fee := getDataForMultiPath(route, pathIndex)
-	swapParams := newSwapParams(input, output, fee, recipient, amountSpecified)
+	singleParams := SingleSwapParams{
+		tokenIn:         input,
+		tokenOut:        output,
+		fee:             fee,
+		amountSpecified: amountSpecified,
+	}
 
 	switch swapType {
 	case ExactIn:
-		return p.router.multiDrySwap(p.payer, *swapParams, numHops, route)
+		return p.router.multiDrySwap(singleParams, numHops, route)
 	case ExactOut:
-		return p.router.multiDrySwapNegative(p.payer, *swapParams, numHops, route)
+		return p.router.multiDrySwapNegative(singleParams, numHops, route)
 	default:
 		return 0, 0, ufmt.Errorf(ErrUnknownSwapType, swapType)
 	}
@@ -104,30 +103,33 @@ func (p *SwapProcessor) ProcessMultiSwap(
 // Returns:
 //   - amountIn: Input amount (same as resultAmountIn)
 //   - amountOut: Output amount (same as resultAmountOut)
-//   - success: true if slippage constraints are met, false otherwise
+//   - err: nil on success; non-nil when liquidity is insufficient or
+//     slippage (tokenAmountLimit) constraints are not met
 func (p *SwapProcessor) ValidateSwapResults(
 	swapType SwapType,
 	resultAmountIn, resultAmountOut int64,
 	amountSpecified, amountLimit int64,
 	swapCount int64,
-) (amountIn, amountOut int64, success bool) {
+) (amountIn, amountOut int64, err error) {
 	if resultAmountIn == 0 || resultAmountOut == 0 {
-		return 0, 0, false
+		return 0, 0, errors.New(errInsufficientLiquidity)
 	}
 
 	validator := &SwapValidator{}
 
 	if swapType == ExactOut {
-		if err := validator.exactOutAmount(resultAmountOut, gnsmath.SafeAbsInt64(amountSpecified), swapCount); err != nil {
-			return resultAmountIn, resultAmountOut, false
+		absSpecified := gnsmath.SafeAbsInt64(amountSpecified)
+
+		if err := validator.exactOutAmount(resultAmountOut, absSpecified, swapCount); err != nil {
+			return resultAmountIn, resultAmountOut, err
 		}
 	}
 
 	if err := validator.slippage(swapType, resultAmountIn, resultAmountOut, amountLimit); err != nil {
-		return resultAmountIn, resultAmountOut, false
+		return resultAmountIn, resultAmountOut, err
 	}
 
-	return resultAmountIn, resultAmountOut, true
+	return resultAmountIn, resultAmountOut, nil
 }
 
 // AddSwapResults safely adds swap result amounts, checking for overflow.
@@ -165,17 +167,36 @@ func (p *SwapProcessor) AddSwapResults(
 // Returns:
 //   - amountIn: Expected input amount as string
 //   - amountOut: Expected output amount as string
-//   - success: true if swap would succeed, false if slippage/validation fails
+//   - err: nil on success; non-nil for any failure, including invalid
+//     input, invalid routes, missing pools, insufficient liquidity, or
+//     slippage (tokenAmountLimit) constraints not being met. Amounts remain
+//     available when a failure occurs after simulation. Unlike real swaps,
+//     DrySwapRoute reports failures as errors instead of reverting.
 //
 // Note: Does not validate deadline or execute actual transfers.
+// Route paths are validated the same way as real swaps: every route must
+// start with inputToken, end with outputToken, remain hop-connected, and
+// reference existing pools.
 func (r *routerV1) DrySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount string,
 	swapTypeStr string,
 	strRouteArr, quoteArr string,
 	tokenAmountLimit string,
-) (string, string, bool) {
-	inputAmount, outputAmount, success := r.drySwapRoute(
+) (amountIn, amountOut string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			amountIn = "0"
+			amountOut = "0"
+			if recoveredErr, ok := r.(error); ok {
+				err = recoveredErr
+			} else {
+				err = ufmt.Errorf("%v", r)
+			}
+		}
+	}()
+
+	inputAmount, outputAmount, err := r.drySwapRoute(
 		inputToken,
 		outputToken,
 		utils.SafeParseInt64(specifiedAmount),
@@ -184,42 +205,43 @@ func (r *routerV1) DrySwapRoute(
 		quoteArr,
 		utils.SafeParseInt64(tokenAmountLimit),
 	)
-
-	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount), success
+	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount), err
 }
 
-// drySwapRoute is a function for applying cross realm.
+// drySwapRoute is the internal dry-run swap simulation that returns errors
+// instead of panicking on validation or liquidity failures.
 func (r *routerV1) drySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount int64,
 	swapTypeStr string,
 	strRouteArr, quoteArr string,
 	tokenAmountLimit int64,
-) (int64, int64, bool) {
-	common.MustRegistered(inputToken, outputToken)
+) (int64, int64, error) {
+	if err := common.ValidateRegistered(inputToken, outputToken); err != nil {
+		return 0, 0, err
+	}
+
+	assertIsValidRoutePaths(strRouteArr, inputToken, outputToken)
+	assertIsExistsPools(strRouteArr)
+
 	// initialize components
 	validator := &SwapValidator{}
-	processor := &SwapProcessor{router: r, payer: unsafe.PreviousRealm().Address()}
+	processor := &SwapProcessor{router: r}
 
 	// validate and parse inputs
 	swapType, err := validator.swapType(swapTypeStr)
 	if err != nil {
-		panic(addDetailToError(errInvalidSwapType, err.Error()))
+		return 0, 0, makeErrorWithDetails(errInvalidSwapType, err.Error())
 	}
 
 	amountSpecified, err := validator.amount(specifiedAmount)
 	if err != nil {
-		panic(addDetailToError(errInvalidInput, err.Error()))
-	}
-
-	amountLimit, err := validator.amountLimit(tokenAmountLimit)
-	if err != nil {
-		panic(addDetailToError(errInvalidInput, err.Error()))
+		return 0, 0, makeErrorWithDetails(errInvalidInput, err.Error())
 	}
 
 	routes, quotes, err := NewRouteParser().ParseRoutes(strRouteArr, quoteArr)
 	if err != nil {
-		panic(addDetailToError(errInvalidRoutesAndQuotes, err.Error()))
+		return 0, 0, makeErrorWithDetails(errInvalidRoutesAndQuotes, err.Error())
 	}
 
 	swapFee := r.store.GetSwapFee()
@@ -229,7 +251,8 @@ func (r *routerV1) drySwapRoute(
 
 	// adjust amount sign for exact out swaps
 	if swapType == ExactOut {
-		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(gnsmath.SafeAbsInt64(amountSpecified), swapFee)
+		absSpecified := gnsmath.SafeAbsInt64(amountSpecified)
+		amountSpecifiedWithRouterFee := calculateExactOutWithRouterFee(absSpecified, swapFee)
 		amountSpecified = -amountSpecifiedWithRouterFee
 	}
 
@@ -248,7 +271,7 @@ func (r *routerV1) drySwapRoute(
 			// calculate the amount to swap for this route
 			swapAmount, err := calculateSwapAmountByQuote(amountSpecified, quotes[i])
 			if err != nil {
-				return 0, 0, false
+				return 0, 0, err
 			}
 
 			// update the remaining amount
@@ -276,17 +299,17 @@ func (r *routerV1) drySwapRoute(
 		}
 
 		if err != nil {
-			panic(addDetailToError(errInvalidSwapType, err.Error()))
+			return 0, 0, err
 		}
 
 		if amountIn == 0 || amountOut == 0 {
-			return 0, 0, false
+			return 0, 0, errors.New(errInsufficientLiquidity)
 		}
 
 		// update accumulated results
 		resultAmountIn, resultAmountOut, err = processor.AddSwapResults(resultAmountIn, resultAmountOut, amountIn, amountOut)
 		if err != nil {
-			panic(addDetailToError(errInvalidInput, err.Error()))
+			return 0, 0, err
 		}
 	}
 
@@ -295,7 +318,7 @@ func (r *routerV1) drySwapRoute(
 
 	resultAmountOut = gnsmath.SafeSubInt64(resultAmountOut, feeAmountInt64)
 
-	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, amountLimit, swapCount)
+	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, tokenAmountLimit, swapCount)
 }
 
 // getPathIndex returns the path index based on swap type and number of hops.

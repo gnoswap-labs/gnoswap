@@ -64,7 +64,7 @@ func (t *TestRouter) ExactOutSingleSwapRoute(_ int, rlm realm, inputToken string
 	return t.instance.ExactOutSingleSwapRoute(0, rlm, inputToken, outputToken, amountOut, routeArr, amountInMax, sqrtPriceLimitX96, deadline, referrer)
 }
 
-func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, bool) {
+func (t *TestRouter) DrySwapRoute(inputToken, outputToken, specifiedAmount, swapTypeStr, strRouteArr, quoteArr, tokenAmountLimit string) (string, string, error) {
 	if !t.isActive("DrySwapRoute") {
 		panic("test implementation: DrySwapRoute not supported")
 	}
@@ -90,4 +90,11 @@ func (t *TestRouter) SetSwapFee(_ int, rlm realm, fee uint64) {
 		panic("test implementation: SetSwapFee not supported")
 	}
 	t.instance.SetSwapFee(0, rlm, fee)
+}
+
+func (t *TestRouter) GetPendingProtocolFees() map[string]int64 {
+	if !t.isActive("GetPendingProtocolFees") {
+		panic("test implementation: GetPendingProtocolFees not supported")
+	}
+	return t.instance.GetPendingProtocolFees()
 }

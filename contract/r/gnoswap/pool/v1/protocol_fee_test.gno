@@ -13,6 +13,7 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -282,11 +283,63 @@ func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	}
 	instance.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
 
-	instance.addToProtocolFee(0, cur)
+	instance.settleProtocolFee(0, cur, barPath, 0)
+	instance.settleProtocolFee(0, cur, gnsPath, 0)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)
 	uassert.Equal(t, len(originalPendingProtocolFees), 2)
+}
+
+func TestSettleProtocolFee_HaltedFeeIsSettledByLaterActivity(cur realm, t *testing.T) {
+	initPoolTest(cur, t)
+	instance := getMockInstance()
+
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross(cur), poolAddr, 300)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
+
+	// Impersonate the pool realm: forwarding a fee crosses into protocol_fee, which
+	// only accepts pool, position, router and staker as callers.
+	testing.SetRealm(testing.NewCodeRealm(poolPath))
+
+	// While collection is halted the fee is only recorded, not forwarded.
+	protocolFeeBalanceBefore := TokenBalance(t, barPath, protocolFeeAddr)
+	instance.settleProtocolFee(0, cur, barPath, 100)
+
+	uassert.Equal(t, instance.store.GetPendingProtocolFees()[barPath], int64(100))
+	uassert.Equal(t, TokenBalance(t, barPath, protocolFeeAddr), protocolFeeBalanceBefore)
+
+	// A second fee while still halted accumulates on the same entry.
+	instance.settleProtocolFee(0, cur, barPath, 50)
+	uassert.Equal(t, instance.store.GetPendingProtocolFees()[barPath], int64(150))
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	testing.SetRealm(testing.NewCodeRealm(poolPath))
+
+	// The next activity on that token settles the backlog together with its own fee,
+	// even though every fee path also calls this with a zero amount.
+	instance.settleProtocolFee(0, cur, barPath, 0)
+
+	uassert.Equal(t, len(instance.store.GetPendingProtocolFees()), 0)
+	uassert.Equal(t, TokenBalance(t, barPath, protocolFeeAddr), protocolFeeBalanceBefore+150)
+}
+
+func TestSettleProtocolFee_NoBacklogWritesNothing(cur realm, t *testing.T) {
+	initPoolTest(cur, t)
+	instance := getMockInstance()
+
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross(cur), poolAddr, 100)
+	testing.SetRealm(testing.NewCodeRealm(poolPath))
+
+	protocolFeeBalanceBefore := TokenBalance(t, barPath, protocolFeeAddr)
+	instance.settleProtocolFee(0, cur, barPath, 100)
+
+	// The fee is forwarded without ever being staged as a pending entry.
+	uassert.Equal(t, len(instance.store.GetPendingProtocolFees()), 0)
+	uassert.Equal(t, TokenBalance(t, barPath, protocolFeeAddr), protocolFeeBalanceBefore+100)
 }
 
 func TestSetWithdrawalFee(cur realm, t *testing.T) {
@@ -641,10 +694,10 @@ func TestProtocolFeesDisabledWhenNotConfigured(cur realm, t *testing.T) {
 		testing.SetRealm(adminRealm)
 
 		if amount0Delta > 0 {
-			common.SafeGRC20Transfer(cross(cur), barPath, poolAddr, amount0Delta)
+			common.SafeGRC20Transfer(0, cur, barPath, poolAddr, amount0Delta)
 		}
 		if amount1Delta > 0 {
-			common.SafeGRC20Transfer(cross(cur), fooPath, poolAddr, amount1Delta)
+			common.SafeGRC20Transfer(0, cur, fooPath, poolAddr, amount1Delta)
 		}
 
 		return nil

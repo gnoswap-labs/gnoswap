@@ -40,12 +40,25 @@ func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmounts(
 		return make(map[string]int64), nil
 	}
 
-	accumulatedRewardX128PerStake, _, err := self.calculateAccumulatedRewardX128PerStake(
+	recalculatedRewardX128PerStake, _, err := self.calculateAccumulatedRewardX128PerStake(
 		protocolFeeAmounts,
 		currentTimestamp,
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	// protocolFeeAmounts only covers the tokens that collected a fee since the last
+	// accrual, so the recalculated rates are layered on the stored ones: reporting them
+	// alone would hide every token already accrued but without a new fee. The merge
+	// builds its own map because GetAll... hands back the stored one, and a query must
+	// not write to the accumulator.
+	accumulatedRewardX128PerStake := make(map[string]*u256.Uint)
+	for token, rate := range self.GetAllAccumulatedProtocolFeeX128PerStake() {
+		accumulatedRewardX128PerStake[token] = rate
+	}
+	for token, rate := range recalculatedRewardX128PerStake {
+		accumulatedRewardX128PerStake[token] = rate
 	}
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
@@ -97,7 +110,9 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 		protocolFeeDeltaX128PerStake := u256.Zero()
 
-		// Calculate fee per stake if there are staked tokens
+		// Calculate fee per stake if there are staked tokens. With no stake the delta is
+		// dropped while the cursor below still advances past it, the same policy the
+		// emission accumulator applies.
 		if self.GetTotalStakedAmount() > 0 {
 			feePerStake := u256.Zero().Div(protocolFeeDeltaX128, u256.NewUintFromInt64(self.GetTotalStakedAmount()))
 			protocolFeeDeltaX128PerStake = feePerStake
@@ -179,9 +194,10 @@ func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128Pe
 	// every registered token on every add/remove/claim, growing storage and gas linearly in the number of
 	// registered tokens regardless of how many actually earned fees (gas report issue 1 / §1.2).
 	//
-	// Registered protocol-fee tokens are monotonic (never removed) and distributedAmounts always covers the
-	// full registered set, so the stored token set never shrinks; skipping unchanged entries therefore yields
-	// the same persisted state as the previous full-replace, only without the redundant re-writes.
+	// Registered protocol-fee tokens are monotonic (never removed) and the stored maps are
+	// updated per token rather than replaced, so a token missing from protocolFeeAmounts keeps
+	// its stored value; skipping unchanged entries therefore yields the same persisted state
+	// as the previous full-replace, only without the redundant re-writes.
 	for token, newAcc := range accumulatedProtocolFeeX128PerStake {
 		existing := self.GetAccumulatedProtocolFeeX128PerStake(token)
 		if existing == nil || !existing.Eq(newAcc) {
@@ -213,8 +229,15 @@ func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128Pe
 		return err
 	}
 
-	self.SetAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, accumulatedProtocolFeeX128PerStake)
-	self.SetProtocolFeeAmountForToken(tokenPath, changedProtocolFeeAmount)
+	// Write only what changed, as the all-token path does (gas report issue 1 / §1.2).
+	existing := self.GetAccumulatedProtocolFeeX128PerStake(tokenPath)
+	if existing == nil || !existing.Eq(accumulatedProtocolFeeX128PerStake) {
+		self.SetAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, accumulatedProtocolFeeX128PerStake)
+	}
+
+	if self.GetProtocolFeeAmount(tokenPath) != changedProtocolFeeAmount {
+		self.SetProtocolFeeAmountForToken(tokenPath, changedProtocolFeeAmount)
+	}
 
 	return nil
 }
@@ -228,7 +251,7 @@ func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128Pe
 //   - currentTimestamp: current timestamp
 func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
 	if amount <= 0 {
-		return errors.New("amount must be positive")
+		return errors.New(errAmountMustBePositive)
 	}
 
 	rewardState, ok, err := self.GetRewardState(address)
@@ -243,7 +266,7 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 
 	currentTotal := self.GetTotalStakedAmount()
 	if currentTotal > math.MaxInt64-amount {
-		return errors.New("total staked amount would overflow")
+		return errors.New(errTotalStakedAmountOverflow)
 	}
 	updatedTotalStakedAmount := gnsmath.SafeAddInt64(currentTotal, amount)
 
@@ -267,7 +290,12 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount in
 //   - currentTimestamp: current timestamp
 func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
 	if amount < 0 {
-		return errors.New("amount must be non-negative")
+		return errors.New(errAmountMustBeNonNegative)
+	}
+
+	updatedTotalStakedAmount := gnsmath.SafeSubInt64(self.GetTotalStakedAmount(), amount)
+	if updatedTotalStakedAmount < 0 {
+		return errors.New(errRemoveAmountExceedsTotalStaked)
 	}
 
 	rewardState, ok, err := self.GetRewardState(address)
@@ -279,6 +307,7 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount
 	}
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
+
 	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, self.GetAllAccumulatedProtocolFeeX128PerStake(), currentTimestamp)
 	if err != nil {
 		return err
@@ -286,10 +315,6 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount
 
 	self.setRewardState(address, rewardState)
 
-	updatedTotalStakedAmount := gnsmath.SafeSubInt64(self.GetTotalStakedAmount(), amount)
-	if updatedTotalStakedAmount < 0 {
-		updatedTotalStakedAmount = 0
-	}
 	self.SetTotalStakedAmount(updatedTotalStakedAmount)
 
 	return nil

@@ -16,6 +16,7 @@ import (
 
 	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -51,6 +52,19 @@ var (
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")
 )
+
+// mustGetPositionByPool returns the position info for a given key.
+func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
+	positionInfo, err := p.GetPosition(positionKey)
+	if err != nil {
+		panic(newErrorWithDetail(
+			errDataNotFound,
+			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
+		))
+	}
+
+	return &positionInfo
+}
 
 var (
 	fooToken = common.GetToken(fooPath)
@@ -436,10 +450,10 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

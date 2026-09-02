@@ -4,6 +4,8 @@ import (
 	"chain/runtime"
 	"testing"
 
+	"gno.land/r/gnoswap/access"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -86,14 +88,31 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 	}
 }
 
+func invokePositionInitializerWithStaleRealm(cur realm, stale realm, initializer func(_ int, rlm realm, store any) any, store any) {
+	initializer(0, stale, store)
+}
+
+func TestRegisterInitializerRejectsSpoofedInitializerRealm(cur realm, t *testing.T) {
+	resetTestState(t)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+	initializer := versionManager.GetInitializers()[versionManager.GetCurrentPackagePath()]
+	stale := cur
+	store := initializeDomainStore(0, cur, kvStore)
+
+	uassert.AbortsContains(t, cur, ErrSpoofedRealm, func() {
+		invokePositionInitializerWithStaleRealm(cross(cur), stale, initializer, store)
+	})
+}
+
 func TestRegisterInitializerLiveRealmBootstrap(cur realm, t *testing.T) {
 	resetTestState(t)
 
 	initializerCalls := 0
 	initializer := func(_ int, rlm realm, s IPositionStore) IPosition {
-		if !rlm.IsCurrent() {
-			panic(ErrSpoofedRealm)
-		}
+		access.AssertIsRlmCurrent(0, rlm)
 
 		initializerCalls++
 		err := s.SetPositionNextID(0, rlm, uint64(initializerCalls))
@@ -550,51 +569,6 @@ func TestSetPositionOperator(cur realm, t *testing.T) {
 	}
 }
 
-// TestGetPosition tests the GetPosition proxy function
-func TestGetPosition(cur realm, t *testing.T) {
-	tests := []struct {
-		name            string
-		setup           func(cur realm, t *testing.T)
-		positionId      uint64
-		callerRealmPath string
-		callerAddress   address
-	}{
-		{
-			name: "get position is success",
-			setup: func(cur realm, t *testing.T) {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/position/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/position/v1")
-			},
-			positionId:      1,
-			callerRealmPath: "gno.land/r/gnoswap/position",
-		},
-	}
-
-	for _, tt := range tests {
-		// Setup
-		resetTestState(t)
-
-		if tt.setup != nil {
-			tt.setup(cur, t)
-		}
-
-		mockPosition := implementation.(*MockPosition)
-		mockPosition.Response.Set("GetPosition", Position{}, false)
-
-		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
-
-		// Action
-		GetPosition(tt.positionId)
-
-		// Assert
-		if mockPosition.Response.CallCount("GetPosition") != 1 {
-			t.Error("GetPosition was not called on the implementation")
-		}
-	}
-}
-
 // TestIsBurned tests the IsBurned proxy function
 func TestIsBurned(cur realm, t *testing.T) {
 	tests := []struct {
@@ -633,7 +607,7 @@ func TestIsBurned(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := IsBurned(tt.positionId)
+		result, _ := IsBurned(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("IsBurned") != 1 {
@@ -683,7 +657,7 @@ func TestIsInRange(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := IsInRange(tt.positionId)
+		result, _ := IsInRange(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("IsInRange") != 1 {
@@ -733,7 +707,7 @@ func TestGetPositionFeeGrowthInside0LastX128(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := GetPositionFeeGrowthInside0LastX128(tt.positionId)
+		result, _ := GetPositionFeeGrowthInside0LastX128(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetPositionFeeGrowthInside0LastX128") != 1 {
@@ -783,7 +757,7 @@ func TestGetPositionFeeGrowthInside1LastX128(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := GetPositionFeeGrowthInside1LastX128(tt.positionId)
+		result, _ := GetPositionFeeGrowthInside1LastX128(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetPositionFeeGrowthInside1LastX128") != 1 {
@@ -833,7 +807,7 @@ func TestGetPositionLiquidity(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := GetPositionLiquidity(tt.positionId)
+		result, _ := GetPositionLiquidity(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetPositionLiquidity") != 1 {
@@ -883,7 +857,7 @@ func TestGetPositionOperator(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := GetPositionOperator(tt.positionId)
+		result, _ := GetPositionOperator(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetPositionOperator") != 1 {
@@ -933,7 +907,7 @@ func TestGetPositionPoolKey(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := GetPositionPoolKey(tt.positionId)
+		result, _ := GetPositionPoolKey(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetPositionPoolKey") != 1 {
@@ -983,7 +957,7 @@ func TestGetPositionTickLower(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := GetPositionTickLower(tt.positionId)
+		result, _ := GetPositionTickLower(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetPositionTickLower") != 1 {
@@ -1033,7 +1007,7 @@ func TestGetPositionTickUpper(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := GetPositionTickUpper(tt.positionId)
+		result, _ := GetPositionTickUpper(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetPositionTickUpper") != 1 {
@@ -1083,7 +1057,7 @@ func TestGetPositionTokensOwed0(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := GetPositionTokensOwed0(tt.positionId)
+		result, _ := GetPositionTokensOwed0(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetPositionTokensOwed0") != 1 {
@@ -1133,7 +1107,7 @@ func TestGetPositionTokensOwed1(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := GetPositionTokensOwed1(tt.positionId)
+		result, _ := GetPositionTokensOwed1(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetPositionTokensOwed1") != 1 {
@@ -1185,7 +1159,7 @@ func TestGetUnclaimedFee(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		fee0, fee1 := GetUnclaimedFee(tt.positionId)
+		fee0, fee1, _ := GetUnclaimedFee(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetUnclaimedFee") != 1 {
@@ -1235,7 +1209,7 @@ func TestGetPositionOwner(cur realm, t *testing.T) {
 		setCallerRealm(tt.callerRealmPath, tt.callerAddress)
 
 		// Action
-		result := GetPositionOwner(tt.positionId)
+		result, _ := GetPositionOwner(tt.positionId)
 
 		// Assert
 		if mockPosition.Response.CallCount("GetPositionOwner") != 1 {

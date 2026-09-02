@@ -71,12 +71,8 @@ func main(cur realm) {
 
 	println("[SCENARIO] 2. Getter Methods")
 
-	println("[SCENARIO] 2.1. GetPoolCount")
-	getPoolCount(cur)
-	println()
-
-	println("[SCENARIO] 2.2. GetPoolPaths")
-	getPoolPaths(cur)
+	println("[SCENARIO] 2.2. GetPools")
+	getPools(cur)
 	println()
 
 	println("[SCENARIO] 2.3. ExistsPoolPath")
@@ -151,12 +147,8 @@ func main(cur realm) {
 	getPositionFeeGrowthInsideLasts(cur)
 	println()
 
-	println("[SCENARIO] 2.22. GetPoolPositionCount")
-	getPoolPositionCount(cur)
-	println()
-
-	println("[SCENARIO] 2.23. GetPoolPositionKeys")
-	getPoolPositionKeys(cur)
+	println("[SCENARIO] 2.23. GetPoolPositions")
+	getPoolPositions(cur)
 	println()
 
 	println("[SCENARIO] 2.24. GetPositionLiquidity")
@@ -321,7 +313,7 @@ func mintPosition(cur realm) {
 
 	pn.Mint(cross(cur), barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
-	pool, _ := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
+	pool, _ := pl.GetPools().Get(pl.GetPoolPath(barPath, fooPath, FEE_MEDIUM)).(*pl.Pool)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 }
@@ -371,23 +363,19 @@ func exactInSwapRoute(cur realm) {
 
 // Getter Methods Tests
 
-func getPoolCount(cur realm) {
-	println("[INFO] Check GetPoolCount method")
+func getPools(cur realm) {
+	println("[INFO] Check GetPools method")
 	testing.SetRealm(adminRealm)
 
-	poolCount := pl.GetPoolCount()
-	ufmt.Printf("[EXPECTED] pool count: %d\n", poolCount)
-}
+	pools := pl.GetPools()
+	ufmt.Printf("[EXPECTED] pool paths count: %d\n", pools.Size())
 
-func getPoolPaths(cur realm) {
-	println("[INFO] Check GetPoolPaths method")
-	testing.SetRealm(adminRealm)
-
-	poolPaths := pl.GetPoolPaths(0, 10)
-	ufmt.Printf("[EXPECTED] pool paths count: %d\n", len(poolPaths))
-	for i, path := range poolPaths {
-		ufmt.Printf("[EXPECTED] pool path[%d]: %s\n", i, path)
-	}
+	index := 0
+	pools.IterateByOffset(0, 10, func(path string, _ any) bool {
+		ufmt.Printf("[EXPECTED] pool path[%d]: %s\n", index, path)
+		index++
+		return false
+	})
 }
 
 func existsPoolPath(cur realm) {
@@ -405,7 +393,7 @@ func getBalances(cur realm) {
 	println("[INFO] Check GetBalances method")
 	testing.SetRealm(adminRealm)
 
-	balance0, balance1 := pl.GetBalances(poolPath)
+	balance0, balance1, _ := pl.GetBalances(poolPath)
 	println("[EXPECTED] balance0:", balance0)
 	println("[EXPECTED] balance1:", balance1)
 }
@@ -414,7 +402,7 @@ func getBalanceToken0(cur realm) {
 	println("[INFO] Check GetBalanceToken0 method")
 	testing.SetRealm(adminRealm)
 
-	balance0 := pl.GetBalanceToken0(poolPath)
+	balance0, _ := pl.GetBalanceToken0(poolPath)
 	println("[EXPECTED] balance token0:", balance0)
 }
 
@@ -422,7 +410,7 @@ func getBalanceToken1(cur realm) {
 	println("[INFO] Check GetBalanceToken1 method")
 	testing.SetRealm(adminRealm)
 
-	balance1 := pl.GetBalanceToken1(poolPath)
+	balance1, _ := pl.GetBalanceToken1(poolPath)
 	println("[EXPECTED] balance token1:", balance1)
 }
 
@@ -430,7 +418,7 @@ func getFee(cur realm) {
 	println("[INFO] Check GetFee method")
 	testing.SetRealm(adminRealm)
 
-	fee := pl.GetFee(poolPath)
+	fee, _ := pl.GetFee(poolPath)
 	ufmt.Printf("[EXPECTED] fee: %d\n", fee)
 }
 
@@ -448,7 +436,7 @@ func getFeeAmountTickSpacing(cur realm) {
 	println("[INFO] Check GetFeeAmountTickSpacing method")
 	testing.SetRealm(adminRealm)
 
-	tickSpacing := pl.GetFeeAmountTickSpacing(FEE_MEDIUM)
+	tickSpacing, _ := pl.GetFeeAmountTickSpacing(FEE_MEDIUM)
 	ufmt.Printf("[EXPECTED] tickSpacing for fee 3000: %d\n", tickSpacing)
 }
 
@@ -456,7 +444,7 @@ func getFeeGrowthGlobal0X128(cur realm) {
 	println("[INFO] Check GetFeeGrowthGlobal0X128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth := pl.GetFeeGrowthGlobal0X128(poolPath)
+	feeGrowth, _ := pl.GetFeeGrowthGlobal0X128(poolPath)
 	println("[EXPECTED] feeGrowthGlobal0X128:", feeGrowth)
 }
 
@@ -464,7 +452,7 @@ func getFeeGrowthGlobal1X128(cur realm) {
 	println("[INFO] Check GetFeeGrowthGlobal1X128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth := pl.GetFeeGrowthGlobal1X128(poolPath)
+	feeGrowth, _ := pl.GetFeeGrowthGlobal1X128(poolPath)
 	println("[EXPECTED] feeGrowthGlobal1X128:", feeGrowth)
 }
 
@@ -472,7 +460,7 @@ func getFeeGrowthGlobalX128(cur realm) {
 	println("[INFO] Check GetFeeGrowthGlobalX128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth0, feeGrowth1 := pl.GetFeeGrowthGlobalX128(poolPath)
+	feeGrowth0, feeGrowth1, _ := pl.GetFeeGrowthGlobalX128(poolPath)
 	println("[EXPECTED] feeGrowthGlobal0X128:", feeGrowth0)
 	println("[EXPECTED] feeGrowthGlobal1X128:", feeGrowth1)
 }
@@ -481,7 +469,7 @@ func getFeeGrowthGlobals(cur realm) {
 	println("[INFO] Check GetFeeGrowthGlobals method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth0, feeGrowth1 := pl.GetFeeGrowthGlobalX128(poolPath)
+	feeGrowth0, feeGrowth1, _ := pl.GetFeeGrowthGlobalX128(poolPath)
 	println("[EXPECTED] feeGrowthGlobal0:", feeGrowth0)
 	println("[EXPECTED] feeGrowthGlobal1:", feeGrowth1)
 }
@@ -490,7 +478,7 @@ func getLiquidity(cur realm) {
 	println("[INFO] Check GetLiquidity method")
 	testing.SetRealm(adminRealm)
 
-	liquidity := pl.GetLiquidity(poolPath)
+	liquidity, _ := pl.GetLiquidity(poolPath)
 	println("[EXPECTED] liquidity:", liquidity)
 }
 
@@ -498,7 +486,7 @@ func getLastObservation(cur realm) {
 	println("[INFO] Check GetLastObservation method")
 	testing.SetRealm(adminRealm)
 
-	tickCumulative, secondsPerLiquidityCumulativeX128, blockTimestamp := pl.GetLastObservation(poolPath)
+	tickCumulative, secondsPerLiquidityCumulativeX128, blockTimestamp, _ := pl.GetLastObservation(poolPath)
 	ufmt.Printf("[EXPECTED] tickCumulative: %d\n", tickCumulative)
 	println("[EXPECTED] secondsPerLiquidityCumulativeX128:", secondsPerLiquidityCumulativeX128)
 	ufmt.Printf("[EXPECTED] blockTimestamp: %d\n", blockTimestamp)
@@ -516,7 +504,7 @@ func getPositionFeeGrowthInside0LastX128(cur realm) {
 	println("[INFO] Check GetPositionFeeGrowthInside0LastX128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth := pl.GetPositionFeeGrowthInside0LastX128(poolPath, positionKey)
+	feeGrowth, _ := pl.GetPositionFeeGrowthInside0LastX128(poolPath, positionKey)
 	println("[EXPECTED] positionFeeGrowthInside0LastX128:", feeGrowth)
 }
 
@@ -524,7 +512,7 @@ func getPositionFeeGrowthInside1LastX128(cur realm) {
 	println("[INFO] Check GetPositionFeeGrowthInside1LastX128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth := pl.GetPositionFeeGrowthInside1LastX128(poolPath, positionKey)
+	feeGrowth, _ := pl.GetPositionFeeGrowthInside1LastX128(poolPath, positionKey)
 	println("[EXPECTED] positionFeeGrowthInside1LastX128:", feeGrowth)
 }
 
@@ -532,7 +520,7 @@ func getPositionFeeGrowthInsideLastX128(cur realm) {
 	println("[INFO] Check GetPositionFeeGrowthInsideLastX128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth0, feeGrowth1 := pl.GetPositionFeeGrowthInsideLastX128(poolPath, positionKey)
+	feeGrowth0, feeGrowth1, _ := pl.GetPositionFeeGrowthInsideLastX128(poolPath, positionKey)
 	println("[EXPECTED] positionFeeGrowthInside0LastX128:", feeGrowth0)
 	println("[EXPECTED] positionFeeGrowthInside1LastX128:", feeGrowth1)
 }
@@ -541,35 +529,31 @@ func getPositionFeeGrowthInsideLasts(cur realm) {
 	println("[INFO] Check GetPositionFeeGrowthInsideLasts method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth0, feeGrowth1 := pl.GetPositionFeeGrowthInsideLastX128(poolPath, positionKey)
+	feeGrowth0, feeGrowth1, _ := pl.GetPositionFeeGrowthInsideLastX128(poolPath, positionKey)
 	println("[EXPECTED] positionFeeGrowthInside0Last:", feeGrowth0)
 	println("[EXPECTED] positionFeeGrowthInside1Last:", feeGrowth1)
 }
 
-func getPoolPositionCount(cur realm) {
-	println("[INFO] Check GetPoolPositionCount method")
+func getPoolPositions(cur realm) {
+	println("[INFO] Check GetPoolPositions method")
 	testing.SetRealm(adminRealm)
 
-	positionCount := pl.GetPoolPositionCount(poolPath)
-	ufmt.Printf("[EXPECTED] position count: %d\n", positionCount)
-}
+	positions := pl.GetPoolPositions(poolPath)
+	ufmt.Printf("[EXPECTED] position keys count: %d\n", positions.Size())
 
-func getPoolPositionKeys(cur realm) {
-	println("[INFO] Check GetPoolPositionKeys method")
-	testing.SetRealm(adminRealm)
-
-	positionKeys := pl.GetPoolPositionKeys(poolPath, 0, 10)
-	ufmt.Printf("[EXPECTED] position keys count: %d\n", len(positionKeys))
-	for i, key := range positionKeys {
-		ufmt.Printf("[EXPECTED] position key[%d]: %s\n", i, key)
-	}
+	index := 0
+	positions.IterateByOffset(0, 10, func(key string, _ any) bool {
+		ufmt.Printf("[EXPECTED] position key[%d]: %s\n", index, key)
+		index++
+		return false
+	})
 }
 
 func getPositionLiquidity(cur realm) {
 	println("[INFO] Check GetPositionLiquidity method")
 	testing.SetRealm(adminRealm)
 
-	liquidity := pl.GetPositionLiquidity(poolPath, positionKey)
+	liquidity, _ := pl.GetPositionLiquidity(poolPath, positionKey)
 	println("[EXPECTED] position liquidity:", liquidity)
 }
 
@@ -577,7 +561,7 @@ func getPositionTokensOwed0(cur realm) {
 	println("[INFO] Check GetPositionTokensOwed0 method")
 	testing.SetRealm(adminRealm)
 
-	tokensOwed0 := pl.GetPositionTokensOwed0(poolPath, positionKey)
+	tokensOwed0, _ := pl.GetPositionTokensOwed0(poolPath, positionKey)
 	println("[EXPECTED] position tokensOwed0:", tokensOwed0)
 }
 
@@ -585,7 +569,7 @@ func getPositionTokensOwed1(cur realm) {
 	println("[INFO] Check GetPositionTokensOwed1 method")
 	testing.SetRealm(adminRealm)
 
-	tokensOwed1 := pl.GetPositionTokensOwed1(poolPath, positionKey)
+	tokensOwed1, _ := pl.GetPositionTokensOwed1(poolPath, positionKey)
 	println("[EXPECTED] position tokensOwed1:", tokensOwed1)
 }
 
@@ -593,7 +577,7 @@ func getPositionTokensOwed(cur realm) {
 	println("[INFO] Check GetPositionTokensOwed method")
 	testing.SetRealm(adminRealm)
 
-	tokensOwed0, tokensOwed1 := pl.GetPositionTokensOwed(poolPath, positionKey)
+	tokensOwed0, tokensOwed1, _ := pl.GetPositionTokensOwed(poolPath, positionKey)
 	println("[EXPECTED] position tokensOwed0:", tokensOwed0)
 	println("[EXPECTED] position tokensOwed1:", tokensOwed1)
 }
@@ -602,7 +586,7 @@ func getProtocolFeesToken0(cur realm) {
 	println("[INFO] Check GetProtocolFeesToken0 method")
 	testing.SetRealm(adminRealm)
 
-	protocolFee0 := pl.GetProtocolFeesToken0(poolPath)
+	protocolFee0, _ := pl.GetProtocolFeesToken0(poolPath)
 	println("[EXPECTED] protocol fee token0:", protocolFee0)
 }
 
@@ -610,7 +594,7 @@ func getProtocolFeesToken1(cur realm) {
 	println("[INFO] Check GetProtocolFeesToken1 method")
 	testing.SetRealm(adminRealm)
 
-	protocolFee1 := pl.GetProtocolFeesToken1(poolPath)
+	protocolFee1, _ := pl.GetProtocolFeesToken1(poolPath)
 	println("[EXPECTED] protocol fee token1:", protocolFee1)
 }
 
@@ -618,7 +602,7 @@ func getProtocolFeesTokens(cur realm) {
 	println("[INFO] Check GetProtocolFeesTokens method")
 	testing.SetRealm(adminRealm)
 
-	protocolFee0, protocolFee1 := pl.GetProtocolFeesTokens(poolPath)
+	protocolFee0, protocolFee1, _ := pl.GetProtocolFeesTokens(poolPath)
 	println("[EXPECTED] protocol fee token0:", protocolFee0)
 	println("[EXPECTED] protocol fee token1:", protocolFee1)
 }
@@ -627,7 +611,7 @@ func getSlot0FeeProtocol(cur realm) {
 	println("[INFO] Check GetSlot0FeeProtocol method")
 	testing.SetRealm(adminRealm)
 
-	feeProtocol := pl.GetSlot0FeeProtocol(poolPath)
+	feeProtocol, _ := pl.GetSlot0FeeProtocol(poolPath)
 	ufmt.Printf("[EXPECTED] slot0 feeProtocol: %d\n", feeProtocol)
 }
 
@@ -635,7 +619,7 @@ func getSlot0SqrtPriceX96(cur realm) {
 	println("[INFO] Check GetSlot0SqrtPriceX96 method")
 	testing.SetRealm(adminRealm)
 
-	sqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceX96, _ := pl.GetSlot0SqrtPriceX96(poolPath)
 	println("[EXPECTED] slot0 sqrtPriceX96:", sqrtPriceX96)
 }
 
@@ -643,7 +627,7 @@ func getSlot0Tick(cur realm) {
 	println("[INFO] Check GetSlot0Tick method")
 	testing.SetRealm(adminRealm)
 
-	tick := pl.GetSlot0Tick(poolPath)
+	tick, _ := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[EXPECTED] slot0 tick: %d\n", tick)
 }
 
@@ -651,7 +635,7 @@ func getSlot0Unlocked(cur realm) {
 	println("[INFO] Check GetSlot0Unlocked method")
 	testing.SetRealm(adminRealm)
 
-	unlocked := pl.GetSlot0Unlocked(poolPath)
+	unlocked, _ := pl.GetSlot0Unlocked(poolPath)
 	ufmt.Printf("[EXPECTED] slot0 unlocked: %t\n", unlocked)
 }
 
@@ -659,7 +643,7 @@ func getTickCumulativeOutside(cur realm) {
 	println("[INFO] Check GetTickCumulativeOutside method")
 	testing.SetRealm(adminRealm)
 
-	tickCumulative := pl.GetTickCumulativeOutside(poolPath, min_tick)
+	tickCumulative, _ := pl.GetTickCumulativeOutside(poolPath, min_tick)
 	ufmt.Printf("[EXPECTED] tick cumulative outside at min_tick: %d\n", tickCumulative)
 }
 
@@ -667,7 +651,7 @@ func getTickFeeGrowthOutside0X128(cur realm) {
 	println("[INFO] Check GetTickFeeGrowthOutside0X128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth := pl.GetTickFeeGrowthOutside0X128(poolPath, min_tick)
+	feeGrowth, _ := pl.GetTickFeeGrowthOutside0X128(poolPath, min_tick)
 	println("[EXPECTED] tick feeGrowthOutside0X128 at min_tick:", feeGrowth)
 }
 
@@ -675,7 +659,7 @@ func getTickFeeGrowthOutside1X128(cur realm) {
 	println("[INFO] Check GetTickFeeGrowthOutside1X128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth := pl.GetTickFeeGrowthOutside1X128(poolPath, min_tick)
+	feeGrowth, _ := pl.GetTickFeeGrowthOutside1X128(poolPath, min_tick)
 	println("[EXPECTED] tick feeGrowthOutside1X128 at min_tick:", feeGrowth)
 }
 
@@ -683,7 +667,7 @@ func getTickFeeGrowthOutsideX128(cur realm) {
 	println("[INFO] Check GetTickFeeGrowthOutsideX128 method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth0, feeGrowth1 := pl.GetTickFeeGrowthOutsideX128(poolPath, min_tick)
+	feeGrowth0, feeGrowth1, _ := pl.GetTickFeeGrowthOutsideX128(poolPath, min_tick)
 	println("[EXPECTED] tick feeGrowthOutside0X128 at min_tick:", feeGrowth0)
 	println("[EXPECTED] tick feeGrowthOutside1X128 at min_tick:", feeGrowth1)
 }
@@ -692,7 +676,7 @@ func getTickFeeGrowthOutsides(cur realm) {
 	println("[INFO] Check GetTickFeeGrowthOutsides method")
 	testing.SetRealm(adminRealm)
 
-	feeGrowth0, feeGrowth1 := pl.GetTickFeeGrowthOutsideX128(poolPath, min_tick)
+	feeGrowth0, feeGrowth1, _ := pl.GetTickFeeGrowthOutsideX128(poolPath, min_tick)
 	println("[EXPECTED] tick feeGrowthOutside0 at min_tick:", feeGrowth0)
 	println("[EXPECTED] tick feeGrowthOutside1 at min_tick:", feeGrowth1)
 }
@@ -701,7 +685,7 @@ func getTickInitialized(cur realm) {
 	println("[INFO] Check GetTickInitialized method")
 	testing.SetRealm(adminRealm)
 
-	initialized := pl.GetTickInitialized(poolPath, max_tick)
+	initialized, _ := pl.GetTickInitialized(poolPath, max_tick)
 	ufmt.Printf("[EXPECTED] tick initialized at min_tick: %t\n", initialized)
 }
 
@@ -709,7 +693,7 @@ func getInitializedTicksInRange(cur realm) {
 	println("[INFO] Check GetInitializedTicksInRange method")
 	testing.SetRealm(adminRealm)
 
-	initializedTicks := pl.GetInitializedTicksInRange(poolPath, min_tick, max_tick)
+	initializedTicks, _ := pl.GetInitializedTicksInRange(poolPath, min_tick, max_tick)
 	ufmt.Printf("[EXPECTED] initialized ticks count: %d\n", len(initializedTicks))
 	for i, tick := range initializedTicks {
 		ufmt.Printf("[EXPECTED] initialized tick[%d]: %d\n", i, tick)
@@ -720,7 +704,7 @@ func getTickLiquidityGross(cur realm) {
 	println("[INFO] Check GetTickLiquidityGross method")
 	testing.SetRealm(adminRealm)
 
-	liquidityGross := pl.GetTickLiquidityGross(poolPath, min_tick)
+	liquidityGross, _ := pl.GetTickLiquidityGross(poolPath, min_tick)
 	println("[EXPECTED] tick liquidityGross at min_tick:", liquidityGross)
 }
 
@@ -728,7 +712,7 @@ func getTickLiquidityNet(cur realm) {
 	println("[INFO] Check GetTickLiquidityNet method")
 	testing.SetRealm(adminRealm)
 
-	liquidityNet := pl.GetTickLiquidityNet(poolPath, min_tick)
+	liquidityNet, _ := pl.GetTickLiquidityNet(poolPath, min_tick)
 	println("[EXPECTED] tick liquidityNet at min_tick:", liquidityNet)
 }
 
@@ -736,7 +720,7 @@ func getTickSecondsOutside(cur realm) {
 	println("[INFO] Check GetTickSecondsOutside method")
 	testing.SetRealm(adminRealm)
 
-	secondsOutside := pl.GetTickSecondsOutside(poolPath, min_tick)
+	secondsOutside, _ := pl.GetTickSecondsOutside(poolPath, min_tick)
 	ufmt.Printf("[EXPECTED] tick secondsOutside at min_tick: %d\n", secondsOutside)
 }
 
@@ -744,7 +728,7 @@ func getTickSecondsPerLiquidityOutsideX128(cur realm) {
 	println("[INFO] Check GetTickSecondsPerLiquidityOutsideX128 method")
 	testing.SetRealm(adminRealm)
 
-	secondsPerLiquidity := pl.GetTickSecondsPerLiquidityOutsideX128(poolPath, min_tick)
+	secondsPerLiquidity, _ := pl.GetTickSecondsPerLiquidityOutsideX128(poolPath, min_tick)
 	println("[EXPECTED] tick secondsPerLiquidityOutsideX128 at min_tick:", secondsPerLiquidity)
 }
 
@@ -752,7 +736,7 @@ func getTickSpacing(cur realm) {
 	println("[INFO] Check GetTickSpacing method")
 	testing.SetRealm(adminRealm)
 
-	tickSpacing := pl.GetTickSpacing(poolPath)
+	tickSpacing, _ := pl.GetTickSpacing(poolPath)
 	ufmt.Printf("[EXPECTED] tick spacing: %d\n", tickSpacing)
 }
 
@@ -760,7 +744,7 @@ func getToken0Path(cur realm) {
 	println("[INFO] Check GetToken0Path method")
 	testing.SetRealm(adminRealm)
 
-	token0Path := pl.GetToken0Path(poolPath)
+	token0Path, _ := pl.GetToken0Path(poolPath)
 	println("[EXPECTED] token0 path:", token0Path)
 }
 
@@ -768,7 +752,7 @@ func getToken1Path(cur realm) {
 	println("[INFO] Check GetToken1Path method")
 	testing.SetRealm(adminRealm)
 
-	token1Path := pl.GetToken1Path(poolPath)
+	token1Path, _ := pl.GetToken1Path(poolPath)
 	println("[EXPECTED] token1 path:", token1Path)
 }
 
@@ -794,12 +778,12 @@ func getTWAP(cur realm) {
 }
 
 func getPool(cur realm) {
-	println("[INFO] Check GetPool method")
+	println("[INFO] Check GetPools entry")
 	testing.SetRealm(adminRealm)
 
-	pool, err := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
-	if err != nil {
-		println("[EXPECTED] GetPool error:", err.Error())
+	pool, ok := pl.GetPools().Get(pl.GetPoolPath(barPath, fooPath, FEE_MEDIUM)).(*pl.Pool)
+	if !ok {
+		println("[EXPECTED] pool not found")
 	} else {
 		println("[EXPECTED] pool token0Path:", pool.Token0Path())
 		println("[EXPECTED] pool token1Path:", pool.Token1Path())
@@ -840,12 +824,12 @@ func getTickBitmaps(cur realm) {
 }
 
 func getPosition(cur realm) {
-	println("[INFO] Check GetPosition method")
+	println("[INFO] Check GetPoolPositions entry")
 	testing.SetRealm(adminRealm)
 
-	position, err := pl.GetPosition(poolPath, positionKey)
-	if err != nil {
-		println("[EXPECTED] GetPosition error:", err.Error())
+	position, ok := pl.GetPoolPositions(poolPath).Get(positionKey).(pl.PositionInfo)
+	if !ok {
+		println("[EXPECTED] position not found:", positionKey)
 	} else {
 		println("[EXPECTED] position liquidity:", position.Liquidity())
 		println("[EXPECTED] position feeGrowthInside0LastX128:", position.FeeGrowthInside0LastX128())
@@ -895,12 +879,8 @@ func getObservationState(cur realm) {
 // [EXPECTED] protocol fee foo balance change: 0
 //
 // [SCENARIO] 2. Getter Methods
-// [SCENARIO] 2.1. GetPoolCount
-// [INFO] Check GetPoolCount method
-// [EXPECTED] pool count: 1
-//
-// [SCENARIO] 2.2. GetPoolPaths
-// [INFO] Check GetPoolPaths method
+// [SCENARIO] 2.2. GetPools
+// [INFO] Check GetPools method
 // [EXPECTED] pool paths count: 1
 // [EXPECTED] pool path[0]: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000
 //
@@ -987,12 +967,8 @@ func getObservationState(cur realm) {
 // [EXPECTED] positionFeeGrowthInside0Last: 0
 // [EXPECTED] positionFeeGrowthInside1Last: 0
 //
-// [SCENARIO] 2.22. GetPoolPositionCount
-// [INFO] Check GetPoolPositionCount method
-// [EXPECTED] position count: 1
-//
-// [SCENARIO] 2.23. GetPoolPositionKeys
-// [INFO] Check GetPoolPositionKeys method
+// [SCENARIO] 2.23. GetPoolPositions
+// [INFO] Check GetPoolPositions method
 // [EXPECTED] position keys count: 1
 // [EXPECTED] position key[0]: 00000000520001774492
 //
@@ -1111,7 +1087,7 @@ func getObservationState(cur realm) {
 // [EXPECTED] GetTWAP error: secondsAgo must be greater than 0
 //
 // [SCENARIO] 2.51. GetPool
-// [INFO] Check GetPool method
+// [INFO] Check GetPools entry
 // [EXPECTED] pool token0Path: gno.land/r/onbloc/bar.BAR
 // [EXPECTED] pool token1Path: gno.land/r/onbloc/foo.FOO
 // [EXPECTED] pool fee: 3000
@@ -1130,7 +1106,7 @@ func getObservationState(cur realm) {
 // [EXPECTED] GetTickBitmaps error: tick bitmap -57 not found
 //
 // [SCENARIO] 2.54. GetPosition
-// [INFO] Check GetPosition method
+// [INFO] Check GetPoolPositions entry
 // [EXPECTED] position liquidity: 100000000
 // [EXPECTED] position feeGrowthInside0LastX128: 0
 // [EXPECTED] position feeGrowthInside1LastX128: 0

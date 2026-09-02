@@ -12,6 +12,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -53,9 +54,7 @@ func (i *poolV1) Mint(
 	liquidityAmount string,
 	positionCaller address,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
@@ -134,9 +133,7 @@ func (i *poolV1) Burn(
 	liquidityAmount string, // uint128
 	positionCaller address,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
@@ -215,9 +212,7 @@ func (i *poolV1) Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
@@ -241,7 +236,13 @@ func (i *poolV1) Collect(
 	// The key is composed of the position contract's address and the tick boundaries,
 	// allowing the pool to uniquely identify and access position data.
 	positionKey := getPositionKey(tickLower, tickUpper)
-	position := mustGetPositionByPool(pool, positionKey)
+	position, err := pool.GetPosition(positionKey)
+	if err != nil {
+		panic(newErrorWithDetail(
+			errDataNotFound,
+			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
+		))
+	}
 
 	amount0 := minRequestedAmount(amount0Req, position.TokensOwed0())
 	amount1 := minRequestedAmount(amount1Req, position.TokensOwed1())
@@ -257,7 +258,7 @@ func (i *poolV1) Collect(
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
-		common.SafeGRC20Approve(cross(rlm), pool.Token0Path(), positionAddr, amount0)
+		common.SafeGRC20Approve(0, rlm, pool.Token0Path(), positionAddr, amount0)
 	}
 	if amount1 > 0 {
 		tokenOwed1 := gnsmath.SafeSubInt64(position.TokensOwed1(), amount1)
@@ -268,10 +269,10 @@ func (i *poolV1) Collect(
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
-		common.SafeGRC20Approve(cross(rlm), pool.Token1Path(), positionAddr, amount1)
+		common.SafeGRC20Approve(0, rlm, pool.Token1Path(), positionAddr, amount1)
 	}
 
-	setPosition(pool, positionKey, *position)
+	setPosition(pool, positionKey, position)
 
 	if err := i.savePool(0, rlm, pool); err != nil {
 		panic(err)
@@ -293,9 +294,7 @@ func (i *poolV1) CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
@@ -379,8 +378,8 @@ func (i *poolV1) collectProtocol(
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(cross(rlm), pool.Token0Path(), recipient, amount0)
-	common.SafeGRC20Transfer(cross(rlm), pool.Token1Path(), recipient, amount1)
+	common.SafeGRC20Transfer(0, rlm, pool.Token0Path(), recipient, amount0)
+	common.SafeGRC20Transfer(0, rlm, pool.Token1Path(), recipient, amount1)
 
 	return utils.FormatInt(amount0), utils.FormatInt(amount1)
 }
@@ -417,9 +416,7 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	fee uint32,
 	cardinalityNext uint16,
 ) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()

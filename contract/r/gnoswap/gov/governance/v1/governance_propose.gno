@@ -6,6 +6,8 @@ import (
 	"errors"
 	"time"
 
+	"gno.land/r/gnoswap/access"
+
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
 
@@ -42,9 +44,7 @@ func (gv *governanceV1) ProposeText(
 	title string,
 	description string,
 ) (newProposalId int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedGovernance()
 
@@ -155,9 +155,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 	tokenPath string,
 	amount int64,
 ) (newProposalId int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedGovernance()
 
@@ -272,9 +270,7 @@ func (gv *governanceV1) ProposeParameterChange(
 	numToExecute int64,
 	executions string,
 ) (newProposalId int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedGovernance()
 

@@ -2,7 +2,6 @@ package access
 
 import (
 	"chain"
-	"chain/runtime"
 	"testing"
 
 	testutils "gno.land/p/nt/testutils/v0"
@@ -11,6 +10,21 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 )
+
+func TestAssertIsRlmCurrent(cur realm, t *testing.T) {
+	uassert.NotPanics(t, cur, func() {
+		func(cur realm) {
+			AssertIsRlmCurrent(0, cur)
+		}(cross(cur))
+	})
+
+	stale := cur
+	uassert.AbortsContains(t, cur, errSpoofedRealm, func() {
+		func(cur realm) {
+			AssertIsRlmCurrent(0, stale)
+		}(cross(cur))
+	})
+}
 
 func TestAssertIsAdminOrGovernance(cur realm, t *testing.T) {
 	// Save original state
@@ -731,43 +745,6 @@ func TestAssertIsValidAddress(cur realm, t *testing.T) {
 			} else {
 				uassert.NotPanics(t, cur, func() {
 					AssertIsValidAddress(tt.addr)
-				})
-			}
-		})
-	}
-}
-
-func TestAssertIsUser(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		currentRealm runtime.Realm
-		shouldPanic  bool
-		expectedMsg  string
-	}{
-		{
-			name:         "user realm",
-			currentRealm: testing.NewUserRealm(testutils.TestAddress("user")),
-			shouldPanic:  false,
-		},
-		{
-			name:         "code realm",
-			currentRealm: testing.NewCodeRealm("gno.land/r/demo/example"),
-			shouldPanic:  true,
-			expectedMsg:  "caller is not user",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			testing.SetRealm(tt.currentRealm)
-
-			if tt.shouldPanic {
-				uassert.PanicsWithMessage(t, cur, tt.expectedMsg, func() {
-					AssertIsUser(0, cur)
-				})
-			} else {
-				uassert.NotPanics(t, cur, func() {
-					AssertIsUser(0, cur)
 				})
 			}
 		})

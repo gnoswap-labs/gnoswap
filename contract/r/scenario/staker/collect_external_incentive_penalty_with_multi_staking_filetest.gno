@@ -165,7 +165,7 @@ func createExternalIncentive(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	createTimestamp := time.Now().Unix()
-	startTime := int64(1234569600) // Fixed start time
+	startTime := int64(1234742400) // Fixed start time
 	endTime := startTime + INCENTIVE_DURATION
 	incentiveStartTime = startTime
 	incentiveEndTime = endTime

@@ -24,7 +24,8 @@ func setupInternalIncentivePoolAndPosition(cur realm, ft *fuzz.T) (string, uint6
 func setupInternalIncentivePoolAndPositionByRange(cur realm, ft *fuzz.T, minTier uint64, maxTier uint64) (string, uint64, uint64) {
 	poolPath, internalIncentiveTier := setupInternalIncentivePoolByRange(cur, ft, minTier, maxTier)
 	token0Path, token1Path, feeTier := parsePoolPathAlign(poolPath)
-	tickLower, tickUpper := generateInRangeTick(ft, pool.GetSlot0Tick(poolPath), feeTier)
+	currentTick, _ := pool.GetSlot0Tick(poolPath)
+	tickLower, tickUpper := generateInRangeTick(ft, currentTick, feeTier)
 	amountDesired := int64(1_000_000_000_000)
 	positionID, _, _, _ := setupMintPosition(cur, ft, token0Path, token1Path, feeTier, tickLower, tickUpper, amountDesired)
 
@@ -47,7 +48,8 @@ func setupInternalIncentivePoolByRange(cur realm, ft *fuzz.T, minTier uint64, ma
 func setupExternalRewardPoolAndPosition(cur realm, ft *fuzz.T) (string, string, uint64) {
 	poolPath, incentiveID := setupExternalRewardPool(cur, ft)
 	token0Path, token1Path, feeTier := parsePoolPathAlign(poolPath)
-	tickLower, tickUpper := generateInRangeTick(ft, pool.GetSlot0Tick(poolPath), feeTier)
+	currentTick, _ := pool.GetSlot0Tick(poolPath)
+	tickLower, tickUpper := generateInRangeTick(ft, currentTick, feeTier)
 	amountDesired := int64(1_000_000)
 	positionID, _, _, _ := setupMintPosition(cur, ft, token0Path, token1Path, feeTier, tickLower, tickUpper, amountDesired)
 
@@ -66,7 +68,7 @@ func setupExternalRewardPool(cur realm, ft *fuzz.T) (string, string) {
 
 	stakerAddr := access.MustGetAddress(prabc.ROLE_STAKER.String())
 	obl.Approve(cross(cur), stakerAddr, incentivizeAmount)
-	incentiveStartTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	incentiveStartTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	incentiveEndTimestamp := incentiveStartTimestamp + 180*24*60*60
 
 	staker.CreateExternalIncentive(

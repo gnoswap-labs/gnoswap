@@ -1,6 +1,8 @@
 package staker
 
 import (
+	"errors"
+
 	"gno.land/p/gnoswap/consts"
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -96,8 +98,12 @@ func (self *EmissionRewardStateResolver) calculateClaimableRewards(
 //
 // Parameters:
 //   - amount: amount of stake to add
-func (self *EmissionRewardStateResolver) addStake(amount int64) {
-	self.adjustStake(amount)
+func (self *EmissionRewardStateResolver) addStake(amount int64) error {
+	if amount < 0 {
+		return errors.New(errAmountMustBeNonNegative)
+	}
+	self.SetStakedAmount(gnsmath.SafeAddInt64(self.GetStakedAmount(), amount))
+	return nil
 }
 
 // removeStake decreases the staked amount for this address.
@@ -105,21 +111,15 @@ func (self *EmissionRewardStateResolver) addStake(amount int64) {
 //
 // Parameters:
 //   - amount: amount of stake to remove
-func (self *EmissionRewardStateResolver) removeStake(amount int64) {
-	self.adjustStake(-amount)
-}
-
-// adjustStake is a small internal helper to centralize bound checks and math.
-func (self *EmissionRewardStateResolver) adjustStake(delta int64) {
-	if delta == 0 {
-		return
+func (self *EmissionRewardStateResolver) removeStake(amount int64) error {
+	if amount < 0 {
+		return errors.New(errAmountMustBeNonNegative)
 	}
-	// clamp at zero on underflow
-	newAmt := gnsmath.SafeAddInt64(self.GetStakedAmount(), delta)
-	if newAmt < 0 {
-		newAmt = 0
+	if amount > self.GetStakedAmount() {
+		return errors.New(errRemoveAmountExceedsStaked)
 	}
-	self.SetStakedAmount(newAmt)
+	self.SetStakedAmount(gnsmath.SafeSubInt64(self.GetStakedAmount(), amount))
+	return nil
 }
 
 // claimRewards processes reward claiming and updates the claim state.
@@ -187,8 +187,7 @@ func (self *EmissionRewardStateResolver) addStakeWithUpdateRewardDebtX128(
 	if err := self.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp); err != nil {
 		return err
 	}
-	self.addStake(amount)
-	return nil
+	return self.addStake(amount)
 }
 
 // removeStakeWithUpdateRewardDebtX128 removes stake and updates reward debt in one operation.
@@ -206,8 +205,7 @@ func (self *EmissionRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 	if err := self.updateRewardDebtX128(accumulatedRewardX128PerStake, currentTimestamp); err != nil {
 		return err
 	}
-	self.removeStake(amount)
-	return nil
+	return self.removeStake(amount)
 }
 
 // claimRewardsWithUpdateRewardDebtX128 claims rewards and updates reward debt in one operation.

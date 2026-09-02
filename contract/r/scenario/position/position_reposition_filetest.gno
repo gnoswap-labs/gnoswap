@@ -10,6 +10,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -128,7 +129,7 @@ func mintInitialPosition(cur realm) {
 
 func checkInitialPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be %d\n", pos.TickLower())
@@ -139,7 +140,7 @@ func executeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross(cur), poolAddr, INT64_MAX)
 
-	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[DEBUG] Tick before swap:", p.Slot0Tick())
 
 	// set current realm and origin caller
@@ -160,7 +161,7 @@ func executeSwap(cur realm) {
 	)
 
 	testing.SetRealm(adminRealm)
-	p, _ = pool.GetPool(barPath, fooPath, fee500)
+	p, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[DEBUG] Tick after swap:", p.Slot0Tick())
 
 	ufmt.Printf("[EXPECTED] Swap amount0 should be %s\n", amount0)
@@ -208,7 +209,7 @@ func repositionToNewRange(cur realm) {
 
 func checkRepositionedState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be %d\n", pos.TickLower())
@@ -217,7 +218,7 @@ func checkRepositionedState(cur realm) {
 
 func executeSwapInNewRange(cur realm) {
 	testing.SetRealm(adminRealm)
-	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[DEBUG] Tick before second swap:", p.Slot0Tick())
 	println("[DEBUG] Pool liquidity:", p.Liquidity().ToString())
 
@@ -247,7 +248,7 @@ func executeSwapInNewRange(cur realm) {
 
 func checkFinalPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Final position tickLower should be %d\n", pos.TickLower())
@@ -262,11 +263,11 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

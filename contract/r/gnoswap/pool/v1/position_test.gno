@@ -88,7 +88,7 @@ func setupTestPool(cur realm, t *testing.T, token0, token1 string, fee uint32, s
 	t.Helper()
 	initPoolTest(cur, t)
 
-	tickSpacing := getMockInstance().GetFeeAmountTickSpacing(fee)
+	tickSpacing, _ := getMockInstance().GetFeeAmountTickSpacing(fee)
 	poolParams := newPoolParams(token0, token1, fee, sqrtPrice, tickSpacing, 0)
 	return newPool(poolParams)
 }
@@ -652,7 +652,7 @@ func TestModifyPositionEdgeCases(cur realm, t *testing.T) {
 			fooPath,
 			FeeTier500,
 			sqrtPrice,
-			getMockInstance().GetFeeAmountTickSpacing(fee500),
+			mustGetTickSpacing(fee500),
 			0,
 		)
 		pool := newPool(poolParams)
@@ -673,7 +673,7 @@ func TestModifyPositionEdgeCases(cur realm, t *testing.T) {
 			fooPath,
 			FeeTier500,
 			sqrtPrice,
-			getMockInstance().GetFeeAmountTickSpacing(fee500),
+			mustGetTickSpacing(fee500),
 			0,
 		)
 		pool := newPool(poolParams)
@@ -1099,260 +1099,6 @@ func TestPositionSecurity_EdgeCases(cur realm, t *testing.T) {
 
 		t.Logf("✓ Concurrent updates: Multiple positions coexist successfully")
 	})
-}
-
-// Test public getter functions for position info
-func TestPositionLiquidity(cur realm, t *testing.T) {
-	tests := []struct {
-		name                 string
-		setupFn              func(cur realm, t *testing.T) (*pl.Pool, string)
-		expectedResult       string
-		expectedPanic        bool
-		expectedPanicMessage string
-	}{
-		{
-			name: "success - get liquidity of position with non-zero liquidity",
-			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(cur, t, 0)
-				key := getPositionKey(-60, 60)
-
-				params := ModifyPositionParams{
-					tickLower:      -60,
-					tickUpper:      60,
-					liquidityDelta: i256.MustFromDecimal("1000000"),
-				}
-
-				modifyPosition(pool, params)
-				return pool, key
-			},
-			expectedResult: "1000000",
-		},
-		{
-			name: "fail - get liquidity of non-existent position (returns zero)",
-			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(cur, t, 0)
-				key := getPositionKey(-120, 120)
-				return pool, key
-			},
-			expectedResult:       "0",
-			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-POOL-005] requested data not found || positionKey(00008871520000887392) does not exist",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(cur, t)
-
-			liquidity := "0"
-
-			if tt.expectedPanic {
-				uassert.PanicsWithMessage(t, cur, tt.expectedPanicMessage, func() {
-					liquidity = PositionLiquidity(pool, key)
-				})
-			} else {
-				liquidity = PositionLiquidity(pool, key)
-			}
-
-			uassert.Equal(t, tt.expectedResult, liquidity)
-		})
-	}
-}
-
-func TestPositionFeeGrowthInside0LastX128(cur realm, t *testing.T) {
-	tests := []struct {
-		name     string
-		setupFn  func(cur realm, t *testing.T) (*pl.Pool, string)
-		verifyFn func(t *testing.T, feeGrowth string)
-	}{
-		{
-			name: "success - get fee growth for position",
-			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(cur, t, 0)
-				key := getPositionKey(-60, 60)
-
-				params := ModifyPositionParams{
-					tickLower:      -60,
-					tickUpper:      60,
-					liquidityDelta: i256.MustFromDecimal("1000000"),
-				}
-
-				modifyPosition(pool, params)
-				return pool, key
-			},
-			verifyFn: func(t *testing.T, feeGrowth string) {
-				uassert.NotEmpty(t, feeGrowth)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(cur, t)
-			feeGrowth := PositionFeeGrowthInside0LastX128(pool, key)
-			tt.verifyFn(t, feeGrowth)
-		})
-	}
-}
-
-func TestPositionFeeGrowthInside1LastX128(cur realm, t *testing.T) {
-	tests := []struct {
-		name     string
-		setupFn  func(cur realm, t *testing.T) (*pl.Pool, string)
-		verifyFn func(t *testing.T, feeGrowth string)
-	}{
-		{
-			name: "success - get fee growth for position",
-			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(cur, t, 0)
-				key := getPositionKey(-60, 60)
-
-				params := ModifyPositionParams{
-					tickLower:      -60,
-					tickUpper:      60,
-					liquidityDelta: i256.MustFromDecimal("1000000"),
-				}
-
-				modifyPosition(pool, params)
-				return pool, key
-			},
-			verifyFn: func(t *testing.T, feeGrowth string) {
-				uassert.NotEmpty(t, feeGrowth)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(cur, t)
-			feeGrowth := PositionFeeGrowthInside1LastX128(pool, key)
-			tt.verifyFn(t, feeGrowth)
-		})
-	}
-}
-
-func TestPositionTokensOwed0(cur realm, t *testing.T) {
-	tests := []struct {
-		name     string
-		setupFn  func(cur realm, t *testing.T) (*pl.Pool, string)
-		verifyFn func(t *testing.T, tokensOwed int64)
-	}{
-		{
-			name: "success - get tokens owed for position",
-			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(cur, t, 0)
-				key := getPositionKey(-60, 60)
-
-				params := ModifyPositionParams{
-					tickLower:      -60,
-					tickUpper:      60,
-					liquidityDelta: i256.MustFromDecimal("1000000"),
-				}
-
-				modifyPosition(pool, params)
-				return pool, key
-			},
-			verifyFn: func(t *testing.T, tokensOwed int64) {
-				uassert.True(t, tokensOwed >= 0)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(cur, t)
-			tokensOwed := PositionTokensOwed0(pool, key)
-			tt.verifyFn(t, tokensOwed)
-		})
-	}
-}
-
-func TestPositionTokensOwed1(cur realm, t *testing.T) {
-	tests := []struct {
-		name     string
-		setupFn  func(cur realm, t *testing.T) (*pl.Pool, string)
-		verifyFn func(t *testing.T, tokensOwed int64)
-	}{
-		{
-			name: "success - get tokens owed for position",
-			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(cur, t, 0)
-				key := getPositionKey(-60, 60)
-
-				params := ModifyPositionParams{
-					tickLower:      -60,
-					tickUpper:      60,
-					liquidityDelta: i256.MustFromDecimal("1000000"),
-				}
-
-				modifyPosition(pool, params)
-				return pool, key
-			},
-			verifyFn: func(t *testing.T, tokensOwed int64) {
-				uassert.True(t, tokensOwed >= 0)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(cur, t)
-			tokensOwed := PositionTokensOwed1(pool, key)
-			tt.verifyFn(t, tokensOwed)
-		})
-	}
-}
-
-func TestGetPositionByPool(cur realm, t *testing.T) {
-	tests := []struct {
-		name        string
-		setupFn     func(cur realm, t *testing.T) (*pl.Pool, string)
-		shouldExist bool
-		verifyFn    func(t *testing.T, position pl.PositionInfo, exists bool)
-	}{
-		{
-			name: "success - get existing position",
-			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(cur, t, 0)
-				key := getPositionKey(-60, 60)
-
-				params := ModifyPositionParams{
-					tickLower:      -60,
-					tickUpper:      60,
-					liquidityDelta: i256.MustFromDecimal("1000000"),
-				}
-
-				modifyPosition(pool, params)
-				return pool, key
-			},
-			shouldExist: true,
-			verifyFn: func(t *testing.T, position pl.PositionInfo, exists bool) {
-				uassert.True(t, exists)
-				uassert.Equal(t, "1000000", position.Liquidity())
-			},
-		},
-		{
-			name: "success - get non-existent position returns zero position",
-			setupFn: func(cur realm, t *testing.T) (*pl.Pool, string) {
-				pool := setupPoolAtPrice(cur, t, 0)
-				key := getPositionKey(-120, 120)
-				return pool, key
-			},
-			shouldExist: false,
-			verifyFn: func(t *testing.T, position pl.PositionInfo, exists bool) {
-				uassert.False(t, exists)
-				uassert.Equal(t, "0", position.Liquidity())
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool, key := tt.setupFn(cur, t)
-			position, exists := GetPositionByPool(pool, key)
-			tt.verifyFn(t, position, exists)
-		})
-	}
 }
 
 func TestPosition_TickBoundaryEdgeCases(cur realm, t *testing.T) {

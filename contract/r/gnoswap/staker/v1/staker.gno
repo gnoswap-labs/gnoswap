@@ -3,7 +3,6 @@ package staker
 import (
 	"chain"
 	"chain/runtime"
-	"errors"
 	"time"
 
 	bptree "gno.land/p/nt/bptree/v0"
@@ -47,25 +46,25 @@ func NewDeposits() *Deposits {
 
 // Has checks if a position ID exists in deposits.
 func (self *Deposits) Has(positionId uint64) bool {
-	return self.tree.Has(EncodeUint(positionId))
+	return self.tree.Has(utils.EncodeUint64(positionId))
 }
 
 // Iterate traverses deposits within the specified range.
 func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *sr.Deposit) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
+	self.tree.Iterate(utils.EncodeUint64(start), utils.EncodeUint64(end), func(positionId string, depositI any) bool {
 		dpst := retrieveDeposit(depositI)
-		return fn(DecodeUint(positionId), dpst)
+		return fn(utils.DecodeUint64(positionId), dpst)
 	})
 }
 
 func (self *Deposits) IterateByPoolPath(start, end uint64, poolPath string, fn func(positionId uint64, deposit *sr.Deposit) bool) {
-	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(positionId string, depositI any) bool {
+	self.tree.Iterate(utils.EncodeUint64(start), utils.EncodeUint64(end), func(positionId string, depositI any) bool {
 		deposit := retrieveDeposit(depositI)
 		if deposit.TargetPoolPath() != poolPath {
 			return false
 		}
 
-		return fn(DecodeUint(positionId), deposit)
+		return fn(utils.DecodeUint64(positionId), deposit)
 	})
 }
 
@@ -76,7 +75,7 @@ func (self *Deposits) Size() int {
 
 // get retrieves a deposit by position ID.
 func (self *Deposits) get(positionId uint64) *sr.Deposit {
-	depositI := self.tree.Get(EncodeUint(positionId))
+	depositI := self.tree.Get(utils.EncodeUint64(positionId))
 	if depositI == nil {
 		panic(makeErrorWithDetails(
 			errDataNotFound,
@@ -97,12 +96,12 @@ func retrieveDeposit(data any) *sr.Deposit {
 
 // set stores a deposit for a position ID.
 func (self *Deposits) set(positionId uint64, deposit *sr.Deposit) {
-	self.tree.Set(EncodeUint(positionId), deposit)
+	self.tree.Set(utils.EncodeUint64(positionId), deposit)
 }
 
 // remove deletes a deposit by position ID.
 func (self *Deposits) remove(positionId uint64) {
-	self.tree.Remove(EncodeUint(positionId))
+	self.tree.Remove(utils.EncodeUint64(positionId))
 }
 
 // ExternalIncentives manages external incentive programs.
@@ -203,9 +202,7 @@ func stakeScanLowerBound(currentTime int64) int64 {
 //
 // Note: Out-of-range positions earn no rewards but can be staked.
 func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer string) string {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 
@@ -217,7 +214,10 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	caller := previousRealm.Address()
 	currentTime := time.Now().Unix()
 
-	owner := s.nftAccessor.MustOwnerOf(positionIdFrom(positionId))
+	owner, err := s.nftAccessor.OwnerOf(positionIdFrom(positionId))
+	if err != nil {
+		panic(err.Error())
+	}
 	assertIsPositionOwner(owner, caller)
 
 	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)
@@ -227,7 +227,10 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	}
 
 	// check pool path from positionId
-	poolPath := pn.GetPositionPoolKey(positionId)
+	poolPath, err := pn.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
 	pools := s.getPools()
 
 	pool, ok := pools.Get(poolPath)
@@ -238,7 +241,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 		))
 	}
 
-	err := s.poolHasIncentives(pool)
+	err = s.poolHasIncentives(pool)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -303,7 +306,11 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	poolResolver := NewPoolResolver(pool)
 
 	isInRange := false
-	if pn.IsInRange(positionId) {
+	inRange, err := pn.IsInRange(positionId)
+	if err != nil {
+		panic(err)
+	}
+	if inRange {
 		isInRange = true
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
@@ -314,23 +321,35 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 
 	// This could happen because of how position stores the ticks.
 	// Ticks are negated if the token1 < token0.
-	upperTick := poolResolver.GetOrNewTick(tickUpper)
-	NewTickResolver(upperTick).modifyDepositUpper(currentTime, signedLiquidity)
-	pool.Ticks().SetTick(tickUpper, upperTick)
+	// A tick this stake creates must be seeded before it is persisted.
+	upperTick := pool.Ticks().Get(tickUpper)
+	if upperTick == nil {
+		upperTick = sr.NewTick(tickUpper)
+		poolResolver.initializeNewTickOutsideAccumulation(currentTime, currentTick, tickUpper, upperTick)
+	}
 
-	lowerTick := poolResolver.GetOrNewTick(tickLower)
-	NewTickResolver(lowerTick).modifyDepositLower(currentTime, signedLiquidity)
-	pool.Ticks().SetTick(tickLower, lowerTick)
-	s.getPools().set(poolPath, pool)
+	lowerTick := pool.Ticks().Get(tickLower)
+	if lowerTick == nil {
+		lowerTick = sr.NewTick(tickLower)
+		poolResolver.initializeNewTickOutsideAccumulation(currentTime, currentTick, tickLower, lowerTick)
+	}
+
+	upperTickResolver := NewTickResolver(upperTick)
+	lowerTickResolver := NewTickResolver(lowerTick)
+
+	upperTickResolver.modifyDepositUpper(currentTime, signedLiquidity)
+	lowerTickResolver.modifyDepositLower(currentTime, signedLiquidity)
 
 	amount0, amount1 := s.calculateAmounts(poolPath, tickLower, tickUpper, liquidity)
 
 	// Get accumulator values for reward calculation tracking
 	globalAccX128, stakedLiquidity := poolResolver.globalRewardRatioAccumulationAt(currentTime)
-	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(tickLower))
-	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(tickUpper))
 	lowerOutsideAccX128 := lowerTickResolver.CurrentOutsideAccumulation(currentTime)
 	upperOutsideAccX128 := upperTickResolver.CurrentOutsideAccumulation(currentTime)
+
+	pool.Ticks().SetTick(tickUpper, upperTick)
+	pool.Ticks().SetTick(tickLower, lowerTick)
+	s.getPools().set(poolPath, pool)
 
 	chain.Emit(
 		"StakeToken",
@@ -407,6 +426,28 @@ type collectContext struct {
 	positionId      uint64
 	deposit         *sr.Deposit
 	depositResolver *DepositResolver
+}
+
+// State Transition:
+//  1. Warm-up amounts are clears for both internal and external rewards
+//  2. Reward tokens are transferred to the owner
+//  3. Penalty fees are transferred to protocol/community addresses
+//  4. GNS balance is recalculated
+//
+// Requirements:
+//   - Contract must not be halted
+//   - Caller must be the position owner
+//   - Position must be staked (have a deposit record)
+//
+// Parameters:
+// CollectReward claims accumulated rewards without unstaking.
+//
+// Parameters:
+//   - positionId: LP position NFT token ID
+//
+// Returns poolPath, gnsAmount, externalRewards map, externalPenalties map.
+func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
+	access.AssertIsRlmCurrent(0, rlm)
 
 	currentTime int64
 	blockHeight int64
@@ -890,9 +931,7 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 //   - Caller must be the depositor
 //   - Position must be currently staked
 func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { // poolPath
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	caller := rlm.Previous().Address()
 	halt.AssertIsNotHaltedWithdraw()
@@ -967,7 +1006,11 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 	currentTime := time.Now().Unix()
 	currentTick := s.poolAccessor.GetSlot0Tick(depositResolver.TargetPoolPath())
 	signedLiquidity := i256.Zero().Neg(i256.FromUint256(depositResolver.Liquidity()))
-	if pn.IsInRange(positionId) {
+	inRange, err := pn.IsInRange(positionId)
+	if err != nil {
+		return err
+	}
+	if inRange {
 		poolResolver.modifyDeposit(signedLiquidity, currentTime, currentTick)
 	}
 
@@ -1013,12 +1056,23 @@ func tokenHasLiquidity(positionId uint64) error {
 }
 
 func getLiquidity(positionId uint64) *u256.Uint {
-	return u256.MustFromDecimal(pn.GetPositionLiquidity(positionId))
+	liquidity, err := pn.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+
+	return u256.MustFromDecimal(liquidity)
 }
 
 func getTickOf(positionId uint64) (int32, int32) {
-	tickLower := pn.GetPositionTickLower(positionId)
-	tickUpper := pn.GetPositionTickUpper(positionId)
+	tickLower, err := pn.GetPositionTickLower(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tickUpper, err := pn.GetPositionTickUpper(positionId)
+	if err != nil {
+		panic(err)
+	}
 	if tickUpper < tickLower {
 		panic(ufmt.Sprintf("tickUpper(%d) is less than tickLower(%d)", tickUpper, tickLower))
 	}

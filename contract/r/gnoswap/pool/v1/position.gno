@@ -110,47 +110,6 @@ func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityD
 	return gnsmath.GetAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
-// PositionLiquidity returns the liquidity of a position.
-func PositionLiquidity(p *pl.Pool, key string) string {
-	return mustGetPositionByPool(p, key).Liquidity()
-}
-
-// PositionFeeGrowthInside0LastX128 returns the fee growth of token0 inside a position.
-func PositionFeeGrowthInside0LastX128(p *pl.Pool, key string) string {
-	return mustGetPositionByPool(p, key).FeeGrowthInside0LastX128()
-}
-
-// PositionFeeGrowthInside1LastX128 returns the fee growth of token1 inside a position.
-func PositionFeeGrowthInside1LastX128(p *pl.Pool, key string) string {
-	return mustGetPositionByPool(p, key).FeeGrowthInside1LastX128()
-}
-
-// PositionTokensOwed0 returns the amount of token0 owed by a position.
-func PositionTokensOwed0(p *pl.Pool, key string) int64 {
-	return mustGetPositionByPool(p, key).TokensOwed0()
-}
-
-// PositionTokensOwed1 returns the amount of token1 owed by a position.
-func PositionTokensOwed1(p *pl.Pool, key string) int64 {
-	return mustGetPositionByPool(p, key).TokensOwed1()
-}
-
-// GetPosition returns the position info for a given key.
-func GetPositionByPool(p *pl.Pool, key string) (pl.PositionInfo, bool) {
-	iPositionInfo := p.Positions().Get(key)
-	if iPositionInfo == nil {
-		newPosition := pl.NewDefaultPositionInfo()
-		return newPosition, false
-	}
-
-	positionInfo, ok := iPositionInfo.(pl.PositionInfo)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast iPositionInfo to PositionInfo: %T", iPositionInfo))
-	}
-
-	return positionInfo, true
-}
-
 // positionUpdateWithKey updates a position in the pool and returns the updated position.
 func positionUpdateWithKey(
 	p *pl.Pool,
@@ -162,7 +121,11 @@ func positionUpdateWithKey(
 	//
 	// Note: The positionUpdate function is designed to handle both new positions and existing positions,
 	// so there's no need to check for existence in GetPosition.
-	positionToUpdate, _ := GetPositionByPool(p, positionKey)
+	positionToUpdate, err := p.GetPosition(positionKey)
+	if err != nil {
+		positionToUpdate = pl.NewDefaultPositionInfo()
+	}
+
 	positionAfterUpdate, err := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	if err != nil {
 		return pl.NewDefaultPositionInfo(), err
@@ -176,19 +139,6 @@ func positionUpdateWithKey(
 // setPosition sets the position info for a given key.
 func setPosition(p *pl.Pool, posKey string, positionInfo pl.PositionInfo) {
 	p.SetPosition(posKey, positionInfo)
-}
-
-// mustGetPosition returns the position info for a given key.
-func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
-	positionInfo, exist := GetPositionByPool(p, positionKey)
-	if !exist {
-		panic(newErrorWithDetail(
-			errDataNotFound,
-			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
-		))
-	}
-
-	return &positionInfo
 }
 
 // modifyPosition updates a position in the pool and calculates the amount of tokens

@@ -47,9 +47,7 @@ func (lp *launchpadV1) CreateProject(
 	tier180Ratio int64,
 	startTime int64,
 ) string {
-	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedLaunchpad()
 
@@ -93,7 +91,7 @@ func (lp *launchpadV1) CreateProject(
 	}
 
 	common.SafeGRC20TransferFrom(
-		cross(rlm),
+		0, rlm,
 		tokenPath,
 		caller,
 		launchpadAddr,
@@ -223,9 +221,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 // TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
 // Only admin can call this function. Returns the amount of rewards transferred.
 func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64 {
-	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedLaunchpad()
 
@@ -310,7 +306,7 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, projectID strin
 	projectLeftReward := getProjectRemainingAmount(project)
 
 	if projectLeftReward > 0 {
-		common.SafeGRC20Transfer(cross(rlm), project.TokenPath(), recipient, projectLeftReward)
+		common.SafeGRC20Transfer(0, rlm, project.TokenPath(), recipient, projectLeftReward)
 	}
 
 	return projectLeftReward, nil

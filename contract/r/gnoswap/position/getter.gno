@@ -1,137 +1,120 @@
 package position
 
 import (
-	ufmt "gno.land/p/nt/ufmt/v0"
+	rotree "gno.land/p/nt/bptree/v0/rotree"
 )
 
-// GetPositionCount returns the total number of positions.
-func GetPositionCount() int {
-	return getImplementation().GetPositionCount()
-}
-
-// GetPositionIDs returns a paginated list of position IDs.
-func GetPositionIDs(offset, count int) []uint64 {
-	return cloneUint64Slice(getImplementation().GetPositionIDs(offset, count))
-}
-
-// GetPosition returns the position data for a given position ID.
-func GetPosition(positionId uint64) (Position, error) {
-	position, ok := getImplementation().GetPosition(positionId)
-	if !ok {
-		return Position{}, ufmt.Errorf("position %d not found", positionId)
-	}
-
-	return clonePosition(position), nil
+// GetPositions returns a read-only view of every position, keyed by the decimal
+// string form of the position ID. Callers paginate it themselves through
+// IterateByOffset.
+func GetPositions() *rotree.ReadOnlyTree {
+	return getImplementation().GetPositions()
 }
 
 // IsBurned returns whether a position has been burned.
-func IsBurned(positionId uint64) bool {
+func IsBurned(positionId uint64) (bool, error) {
 	return getImplementation().IsBurned(positionId)
 }
 
 // IsInRange returns whether a position's ticks are within the current price range.
-func IsInRange(positionId uint64) bool {
+func IsInRange(positionId uint64) (bool, error) {
 	return getImplementation().IsInRange(positionId)
 }
 
 // GetPositionTokenBalances returns the token0 balance of a position.
-func GetPositionTokenBalances(positionId uint64) (int64, int64) {
-	balance0, balance1 := getImplementation().GetPositionTokenBalances(positionId)
-	return balance0, balance1
+func GetPositionTokenBalances(positionId uint64) (int64, int64, error) {
+	return getImplementation().GetPositionTokenBalances(positionId)
 }
 
-func GetPositionToken0Balance(positionId uint64) int64 {
-	balance0, _ := GetPositionTokenBalances(positionId)
-	return balance0
+func GetPositionToken0Balance(positionId uint64) (int64, error) {
+	balance0, _, err := GetPositionTokenBalances(positionId)
+	if err != nil {
+		return 0, err
+	}
+
+	return balance0, nil
 }
 
-func GetPositionToken1Balance(positionId uint64) int64 {
-	_, balance1 := GetPositionTokenBalances(positionId)
-	return balance1
+func GetPositionToken1Balance(positionId uint64) (int64, error) {
+	_, balance1, err := GetPositionTokenBalances(positionId)
+	if err != nil {
+		return 0, err
+	}
+
+	return balance1, nil
 }
 
 // GetPositionFeeGrowthInside0LastX128 returns the last recorded fee growth inside for token0.
-func GetPositionFeeGrowthInside0LastX128(positionId uint64) string {
+func GetPositionFeeGrowthInside0LastX128(positionId uint64) (string, error) {
 	return getImplementation().GetPositionFeeGrowthInside0LastX128(positionId)
 }
 
 // GetPositionFeeGrowthInside1LastX128 returns the last recorded fee growth inside for token1.
-func GetPositionFeeGrowthInside1LastX128(positionId uint64) string {
+func GetPositionFeeGrowthInside1LastX128(positionId uint64) (string, error) {
 	return getImplementation().GetPositionFeeGrowthInside1LastX128(positionId)
 }
 
 // GetPositionFeeGrowthInsideLastX128 returns the last recorded fee growth inside for both tokens.
-func GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string) {
-	position, err := GetPosition(positionId)
-	if err != nil {
-		return "0", "0"
-	}
-
-	return position.FeeGrowthInside0LastX128(), position.FeeGrowthInside1LastX128()
+func GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string, error) {
+	return getImplementation().GetPositionFeeGrowthInsideLastX128(positionId)
 }
 
 // GetPositionLiquidity returns the liquidity amount of a position.
-func GetPositionLiquidity(positionId uint64) string {
+func GetPositionLiquidity(positionId uint64) (string, error) {
 	return getImplementation().GetPositionLiquidity(positionId)
 }
 
 // GetPositionOperator returns the operator address of a position.
-func GetPositionOperator(positionId uint64) address {
+func GetPositionOperator(positionId uint64) (address, error) {
 	return getImplementation().GetPositionOperator(positionId)
 }
 
 // GetPositionPoolKey returns the pool key of a position.
-func GetPositionPoolKey(positionId uint64) string {
+func GetPositionPoolKey(positionId uint64) (string, error) {
 	return getImplementation().GetPositionPoolKey(positionId)
 }
 
 // GetPositionTickLower returns the lower tick of a position.
-func GetPositionTickLower(positionId uint64) int32 {
+func GetPositionTickLower(positionId uint64) (int32, error) {
 	return getImplementation().GetPositionTickLower(positionId)
 }
 
 // GetPositionTickUpper returns the upper tick of a position.
-func GetPositionTickUpper(positionId uint64) int32 {
+func GetPositionTickUpper(positionId uint64) (int32, error) {
 	return getImplementation().GetPositionTickUpper(positionId)
 }
 
 // GetPositionTicks returns the lower and upper ticks of a position.
-func GetPositionTicks(positionId uint64) (int32, int32) {
-	position, err := GetPosition(positionId)
-	if err != nil {
-		return 0, 0
-	}
-
-	return position.TickLower(), position.TickUpper()
+func GetPositionTicks(positionId uint64) (int32, int32, error) {
+	return getImplementation().GetPositionTicks(positionId)
 }
 
 // GetPositionTokensOwed0 returns the amount of token0 owed to a position.
-func GetPositionTokensOwed0(positionId uint64) int64 {
+func GetPositionTokensOwed0(positionId uint64) (int64, error) {
 	return getImplementation().GetPositionTokensOwed0(positionId)
 }
 
 // GetPositionTokensOwed1 returns the amount of token1 owed to a position.
-func GetPositionTokensOwed1(positionId uint64) int64 {
+func GetPositionTokensOwed1(positionId uint64) (int64, error) {
 	return getImplementation().GetPositionTokensOwed1(positionId)
 }
 
 // GetPositionTokensOwed returns the amount of tokens owed to a position.
-func GetPositionTokensOwed(positionId uint64) (int64, int64) {
-	position, err := GetPosition(positionId)
-	if err != nil {
-		return 0, 0
-	}
-
-	return position.TokensOwed0(), position.TokensOwed1()
+func GetPositionTokensOwed(positionId uint64) (int64, int64, error) {
+	return getImplementation().GetPositionTokensOwed(positionId)
 }
 
 // GetUnclaimedFee returns the unclaimed fees for both tokens of a position.
-func GetUnclaimedFee(positionId uint64) (string, string) {
-	fee0, fee1 := getImplementation().GetUnclaimedFee(positionId)
-	return fee0.ToString(), fee1.ToString()
+func GetUnclaimedFee(positionId uint64) (string, string, error) {
+	fee0, fee1, err := getImplementation().GetUnclaimedFee(positionId)
+	if err != nil {
+		return "", "", err
+	}
+
+	return fee0.ToString(), fee1.ToString(), nil
 }
 
 // GetPositionOwner returns the owner address of a position NFT.
-func GetPositionOwner(positionId uint64) address {
+func GetPositionOwner(positionId uint64) (address, error) {
 	return getImplementation().GetPositionOwner(positionId)
 }

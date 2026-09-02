@@ -10,6 +10,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -74,7 +75,7 @@ func initPool(cur realm) {
 		"130621891405341611593710811006",
 	)
 
-	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	ufmt.Printf("[EXPECTED] Current tick should be %d\n", poolInfo.Slot0Tick())
 }
 
@@ -110,7 +111,7 @@ func executeSwapForFees(cur realm) {
 	testing.SetRealm(adminRealm)
 	bar.Approve(cross(cur), poolAddr, INT64_MAX)
 
-	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	tickBefore := poolInfo.Slot0Tick()
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -130,7 +131,7 @@ func executeSwapForFees(cur realm) {
 	)
 
 	testing.SetRealm(adminRealm)
-	poolInfo, _ = pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	tickAfter := poolInfo.Slot0Tick()
 
 	ufmt.Printf("[EXPECTED] Tick before swap should be %d\n", tickBefore)
@@ -142,7 +143,7 @@ func executeSwapForFees(cur realm) {
 func testRepositionAndBalance(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	pos, _ := position.GetPosition(1)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	currentLiquidity := pos.Liquidity()
 	currentTickLower := pos.TickLower()
 	currentTickUpper := pos.TickUpper()
@@ -177,7 +178,7 @@ func testRepositionAndBalance(cur realm) {
 	ufmt.Printf("[EXPECTED] Amount0 withdrawn should be %s\n", decreaseAmount0)
 	ufmt.Printf("[EXPECTED] Amount1 withdrawn should be %s\n", decreaseAmount1)
 
-	pos, _ = position.GetPosition(1)
+	pos, _ = position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	ufmt.Printf("[EXPECTED] Position liquidity after decrease should be %s\n", pos.Liquidity())
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -232,15 +233,17 @@ func testRepositionAndBalance(cur realm) {
 	ufmt.Printf("[EXPECTED] User BAR balance after reposition should be %d\n", barBalanceFinal)
 	ufmt.Printf("[EXPECTED] User FOO balance after reposition should be %d\n", fooBalanceFinal)
 
-	pos, _ = position.GetPosition(1)
+	pos, _ = position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Final position tick range should be [%d, %d]\n", pos.TickLower(), pos.TickUpper())
-	ufmt.Printf("[EXPECTED] Final position token0 balance should be %d\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Final position token1 balance should be %d\n", position.GetPositionToken1Balance(1))
+	balance0, _ := position.GetPositionToken0Balance(1)
+	balance1, _ := position.GetPositionToken1Balance(1)
+	ufmt.Printf("[EXPECTED] Final position token0 balance should be %d\n", balance0)
+	ufmt.Printf("[EXPECTED] Final position token1 balance should be %d\n", balance1)
 	ufmt.Printf("[EXPECTED] Final pool balance change should be %d\n", afterToken0PoolBalance-beforeToken0PoolBalance)
 	ufmt.Printf("[EXPECTED] Final pool balance change should be %d\n", afterToken1PoolBalance-beforeToken1PoolBalance)
 
-	poolInfo, _ := pool.GetPool(barPath, fooPath, fee500)
+	poolInfo, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	ufmt.Printf("[EXPECTED] Final pool token0 balance should be %d\n", poolInfo.BalanceToken0())
 	ufmt.Printf("[EXPECTED] Final pool token1 balance should be %d\n", poolInfo.BalanceToken1())
 	ufmt.Printf("[EXPECTED] Final pool liquidity should be %s\n", poolInfo.Liquidity().ToString())
@@ -275,11 +278,11 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -320,20 +323,20 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [EXPECTED] Swap amount0 should be 0
 // [EXPECTED] Swap amount1 should be 0
 // [INFO] Repositioning to new range (9000~13000)
-// [EXPECTED] New liquidity should be 432601712
+// [EXPECTED] New liquidity should be 144008520
 // [EXPECTED] New tick range should be [9000, 13000]
-// [EXPECTED] User BAR balance after reposition should be 99999949999899
-// [EXPECTED] User FOO balance after reposition should be 99999999999999
-// [EXPECTED] Final position liquidity should be 432601712
+// [EXPECTED] User BAR balance after reposition should be 99999999999899
+// [EXPECTED] User FOO balance after reposition should be 99999949999999
+// [EXPECTED] Final position liquidity should be 144008520
 // [EXPECTED] Final position tick range should be [9000, 13000]
-// [EXPECTED] Final position token0 balance should be 49999999
-// [EXPECTED] Final position token1 balance should be 0
-// [EXPECTED] Final pool balance change should be 50000000
+// [EXPECTED] Final position token0 balance should be 0
+// [EXPECTED] Final position token1 balance should be 49999999
 // [EXPECTED] Final pool balance change should be 0
-// [EXPECTED] Final pool token0 balance should be 50000002
-// [EXPECTED] Final pool token1 balance should be 1
+// [EXPECTED] Final pool balance change should be 50000000
+// [EXPECTED] Final pool token0 balance should be 2
+// [EXPECTED] Final pool token1 balance should be 50000001
 // [EXPECTED] Final pool liquidity should be 0
-// [EXPECTED] Final pool tick should be 8031
-// [EXPECTED] Total BAR change during reposition: 11605209
-// [EXPECTED] Total FOO change during reposition: -756515
+// [EXPECTED] Final pool tick should be 887271
+// [EXPECTED] Total BAR change during reposition: -38394791
+// [EXPECTED] Total FOO change during reposition: 49243485
 // [EXPECTED] Reposition balance validation passed

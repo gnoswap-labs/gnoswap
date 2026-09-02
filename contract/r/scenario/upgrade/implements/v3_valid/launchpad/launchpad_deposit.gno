@@ -5,6 +5,8 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/r/gnoswap/access"
+
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
@@ -23,9 +25,7 @@ import (
 //
 // Returns deposit ID.
 func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string {
-	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedLaunchpad()
 
