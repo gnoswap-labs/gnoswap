@@ -89,7 +89,11 @@ func setup(cur realm) {
 
 	stake(cur, referencePositionID)
 	stake(cur, honestPositionID)
-	if got := sr.GetPoolStakedLiquidity(poolPath); got != referenceLiquidity {
+	got, err := sr.GetPoolStakedLiquidity(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	if got != referenceLiquidity {
 		panic(ufmt.Sprintf("expected initial CurrentStakedLiquidity %s, got %s", referenceLiquidity, got))
 	}
 	println("[EXPECTED] Initial staked liquidity matches the [0, 10] reference position")
@@ -117,12 +121,20 @@ func stakeAndSettleSwap(cur realm, amount0Delta, amount1Delta int64, _ *pl.Callb
 	if currentTick != 100 {
 		return ufmt.Errorf("expected pool tick 100 before callback stake, got %d", currentTick)
 	}
-	if got := sr.GetPoolStakedLiquidity(poolPath); got != honestLiquidity {
+	got, err := sr.GetPoolStakedLiquidity(poolPath)
+	if err != nil {
+		return err
+	}
+	if got != honestLiquidity {
 		return ufmt.Errorf("expected CurrentStakedLiquidity %s at tick 100, got %s", honestLiquidity, got)
 	}
 
 	stake(cur, callbackPositionID)
-	if got := sr.GetPoolStakedLiquidity(poolPath); got != honestLiquidity {
+	got, err = sr.GetPoolStakedLiquidity(poolPath)
+	if err != nil {
+		return err
+	}
+	if got != honestLiquidity {
 		return ufmt.Errorf("expected out-of-range callback position to stay excluded from CurrentStakedLiquidity %s, got %s", honestLiquidity, got)
 	}
 	println("[EXPECTED] Callback position remains excluded from CurrentStakedLiquidity at tick 100")
@@ -149,13 +161,21 @@ func verifyFinalAccounting(cur realm) {
 	if !sr.IsStaked(callbackPositionID) {
 		panic("callback position must be staked")
 	}
-	if got := sr.GetPoolStakedLiquidity(poolPath); got != honestLiquidity {
+	got, err := sr.GetPoolStakedLiquidity(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	if got != honestLiquidity {
 		panic(ufmt.Sprintf("expected final CurrentStakedLiquidity %s, got %s", honestLiquidity, got))
 	}
 	println("[EXPECTED] Historical tick and CurrentStakedLiquidity match tick 100")
 
 	testing.SkipHeights(10)
-	if reward := sr.CollectableEmissionReward(callbackPositionID); reward != 0 {
+	reward, err := sr.CollectableEmissionReward(callbackPositionID)
+	if err != nil {
+		panic(err)
+	}
+	if reward != 0 {
 		panic(ufmt.Sprintf("out-of-range callback position must have zero collectable reward, got %d", reward))
 	}
 	before := gns.BalanceOf(adminAddr)
