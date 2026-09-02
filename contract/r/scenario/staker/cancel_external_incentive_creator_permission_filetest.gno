@@ -84,7 +84,11 @@ func main(cur realm) {
 	println("[SCENARIO] 1. A non-admin user creates a pending incentive")
 	initialize(cur)
 	firstIncentiveID = createIncentiveAs(cur, creatorAddr, 1)
-	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(incentives))
 	println()
 
 	println("[SCENARIO] 2. An unrelated stranger cannot cancel it")
@@ -148,7 +152,11 @@ func strangerCannotCancel(cur realm) {
 		sr.CancelExternalIncentive(cross(cur), poolPath, firstIncentiveID)
 	})
 	println("[EXPECTED] stranger rejected: not admin, governance, or creator")
-	ufmt.Printf("[EXPECTED] incentive untouched: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] incentive untouched: %d\n", len(incentives))
 }
 
 func creatorCancelsOwn(cur realm) {
@@ -160,7 +168,11 @@ func creatorCancelsOwn(cur realm) {
 
 	ufmt.Printf("[EXPECTED] creator BAR refund delta: %d\n", bar.BalanceOf(creatorAddr)-barBefore)
 	ufmt.Printf("[EXPECTED] creator GNS refund delta: %d\n", gns.BalanceOf(creatorAddr)-gnsBefore)
-	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(incentives))
 }
 
 func adminCancelsRefundsCreator(cur realm) {
@@ -174,7 +186,11 @@ func adminCancelsRefundsCreator(cur realm) {
 	ufmt.Printf("[EXPECTED] user2 (creator) BAR refund delta: %d\n", bar.BalanceOf(user2Addr)-creatorBarBefore)
 	ufmt.Printf("[EXPECTED] user2 (creator) GNS refund delta: %d\n", gns.BalanceOf(user2Addr)-creatorGnsBefore)
 	ufmt.Printf("[EXPECTED] admin BAR delta (receives nothing): %d\n", bar.BalanceOf(adminAddr)-adminBarBefore)
-	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(incentives))
 }
 
 // Output:

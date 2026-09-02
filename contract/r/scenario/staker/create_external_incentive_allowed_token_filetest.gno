@@ -131,7 +131,11 @@ func rejectNonAllowedToken(cur realm) {
 		sr.CreateExternalIncentive(cross(cur), poolPath, bazPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 	})
 	println("[EXPECTED] baz rejected: not allowed for external reward")
-	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(incentives))
 }
 
 func acceptPoolToken(cur realm) {
@@ -139,7 +143,11 @@ func acceptPoolToken(cur realm) {
 
 	// bar is token0 of the pool, so it is allowed even though it is not whitelisted.
 	sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
-	ufmt.Printf("[EXPECTED] bar (pool token) accepted; incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] bar (pool token) accepted; incentives for pool: %d\n", len(incentives))
 }
 
 func acceptWhitelistedToken(cur realm) {
@@ -147,7 +155,11 @@ func acceptWhitelistedToken(cur realm) {
 
 	// gns is not a token of bar:qux, but it is on the default whitelist.
 	sr.CreateExternalIncentive(cross(cur), poolPath, gnsPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
-	ufmt.Printf("[EXPECTED] gns (whitelisted token) accepted; incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] gns (whitelisted token) accepted; incentives for pool: %d\n", len(incentives))
 }
 
 func acceptAfterWhitelisting(cur realm) {
@@ -155,7 +167,11 @@ func acceptAfterWhitelisting(cur realm) {
 
 	sr.AddToken(cross(cur), bazPath)
 	sr.CreateExternalIncentive(cross(cur), poolPath, bazPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
-	ufmt.Printf("[EXPECTED] baz accepted after AddToken; incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] baz accepted after AddToken; incentives for pool: %d\n", len(incentives))
 }
 
 // Output:

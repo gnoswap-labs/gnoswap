@@ -278,7 +278,7 @@ func stakePosition(cur realm) {
 	println("[INFO] stake position")
 	sr.StakeToken(cross(cur), 1, "")
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	owner := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[INFO] position owner after staking: %s\n", owner)
 }
 
@@ -352,7 +352,7 @@ func unstakePosition(cur realm) {
 	ufmt.Printf("[INFO] total rewards collected so far: %d QUX\n", totalRewardsCollected)
 
 	// Verify NFT ownership returned
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	owner := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[INFO] position owner after unstaking: %s\n", owner)
 }
 
@@ -422,6 +422,14 @@ func endExternalIncentiveAndVerifyNoDust(cur realm) {
 
 func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(positionId))
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

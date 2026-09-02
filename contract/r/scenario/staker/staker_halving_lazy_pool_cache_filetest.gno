@@ -149,7 +149,7 @@ func collectAndAssertLatestCache(cur realm, label string) int64 {
 
 func assertLatestPoolRewardCacheMatchesCurrentPoolReward(label string) int64 {
 	latestCache := latestPoolRewardCache()
-	currentPoolReward := sr.GetPoolReward(1)
+	currentPoolReward, _ := sr.GetPoolReward(1)
 	println("[INFO]", label, "pool reward cache:", latestCache)
 	println("[INFO]", label, "current pool reward:", currentPoolReward)
 	if latestCache != currentPoolReward {

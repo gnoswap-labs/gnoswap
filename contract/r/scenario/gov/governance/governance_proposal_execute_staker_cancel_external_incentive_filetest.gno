@@ -148,7 +148,11 @@ func createPoolAndIncentive(cur realm) {
 	incentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
 	sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 
-	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(incentives))
 }
 
 func proposeShortVotingSchedule(cur realm) int64 {
@@ -206,7 +210,11 @@ func voteAndExecute(cur realm, proposalID int64, config governance.Config) {
 func verifyCancelled(cur realm) {
 	ufmt.Printf("[EXPECTED] creator BAR refund delta: %d\n", bar.BalanceOf(adminAddr)-creatorBarBeforeExecute)
 	ufmt.Printf("[EXPECTED] creator GNS refund delta: %d\n", gns.BalanceOf(adminAddr)-creatorGnsBeforeExecute)
-	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(incentives))
 }
 
 // Output:

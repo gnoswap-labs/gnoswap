@@ -137,7 +137,11 @@ func createWrongIncentive(cur realm) {
 	wrongIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
 	sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 
-	ufmt.Printf("[INFO] reward token: %s\n", sr.GetIncentiveRewardToken(poolPath, wrongIncentiveID))
+	rewardToken, err := sr.GetIncentiveRewardToken(poolPath, wrongIncentiveID)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[INFO] reward token: %s\n", rewardToken)
 }
 
 func cancelWrongIncentive(cur realm) {
@@ -150,7 +154,11 @@ func cancelWrongIncentive(cur realm) {
 
 	ufmt.Printf("[EXPECTED] creator BAR delta: %d\n", bar.BalanceOf(adminAddr)-barBefore)
 	ufmt.Printf("[EXPECTED] creator GNS delta: %d\n", gns.BalanceOf(adminAddr)-gnsBefore)
-	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(incentives))
 }
 
 func createCorrectIncentive(cur realm) {
@@ -161,8 +169,16 @@ func createCorrectIncentive(cur realm) {
 	sr.CreateExternalIncentive(cross(cur), poolPath, quxPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 
 	ufmt.Printf("[EXPECTED] replacement id differs from the cancelled one: %t\n", correctIncentiveID != wrongIncentiveID)
-	ufmt.Printf("[EXPECTED] reward token: %s\n", sr.GetIncentiveRewardToken(poolPath, correctIncentiveID))
-	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	rewardToken, err := sr.GetIncentiveRewardToken(poolPath, correctIncentiveID)
+	if err != nil {
+		panic(err)
+	}
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] reward token: %s\n", rewardToken)
+	ufmt.Printf("[EXPECTED] incentives for pool: %d\n", len(incentives))
 }
 
 func stakeAndCollect(cur realm) {
