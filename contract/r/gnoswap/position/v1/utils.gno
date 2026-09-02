@@ -127,12 +127,12 @@ func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) boo
 
 // currentPoolObservation derives the latest stored observation from the
 // Uniswap-V3-aligned Slot0 and observations surfaces.
-func currentPoolObservation(poolPath string) (int64, string, int64) {
+func currentPoolObservation(poolPath string) (int64, string, int64, error) {
 	slot0 := pl.GetSlot0(poolPath)
 	observation, err := pl.GetObservationAt(poolPath, slot0.ObservationIndex())
 	if err != nil {
-		return 0, "0", 0
+		return 0, "", 0, err
 	}
 
-	return observation.TickCumulative(), observation.SecondsPerLiquidityCumulativeX128(), observation.BlockTimestamp()
+	return observation.TickCumulative(), observation.SecondsPerLiquidityCumulativeX128(), observation.BlockTimestamp(), nil
 }
