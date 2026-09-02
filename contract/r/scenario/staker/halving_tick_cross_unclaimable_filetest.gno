@@ -44,11 +44,12 @@ const (
 )
 
 func main(cur realm) {
-	println("[SCENARIO] halving tick-cross unclaimable")
+	println("[SCENARIO] two-halving tick-cross unclaimable")
 	setupHalvingTickScenario(cur)
 	mintHalvingTickPositions(cur)
 	stakeOutOfRangePosition(cur)
 	skipFirstHalving(cur)
+	skipSecondHalving(cur)
 	crossIntoRangeBySwap(cur)
 	collectAfterCross(cur)
 }
@@ -94,6 +95,17 @@ func skipFirstHalving(cur realm) {
 		panic("expected first halving")
 	}
 	println("[EXPECTED] first halving crossed")
+}
+
+func skipSecondHalving(cur realm) {
+	testing.SetRealm(halvingTickAdminRealm)
+	boundary := gns.GetHalvingYearStartTimestamp(4)
+	blocks := (boundary-time.Now().Unix())/5 + 2
+	testing.SkipHeights(blocks)
+	if gns.GetCurrentYear() != 4 {
+		panic("expected second halving")
+	}
+	println("[EXPECTED] second halving crossed")
 }
 
 func crossIntoRangeBySwap(cur realm) {
@@ -146,12 +158,13 @@ func collectAfterCross(cur realm) {
 }
 
 // Output:
-// [SCENARIO] halving tick-cross unclaimable
+// [SCENARIO] two-halving tick-cross unclaimable
 // [EXPECTED] first halving crossed
+// [EXPECTED] second halving crossed
 // [EXPECTED] swap crossed into staked range
 // [RESULT] internal GNS distribution:
 //   - Staker reward: 6688779
-//   - Community unclaimable/penalty: 168749957273752
+//   - Community unclaimable/penalty: 210937430489752
 //   - Protocol fee: 0
-//   - Total emission delta: 168749963962531
+//   - Total emission delta: 210937437178531
 // [EXPECTED] recipients match emission accounting: true
