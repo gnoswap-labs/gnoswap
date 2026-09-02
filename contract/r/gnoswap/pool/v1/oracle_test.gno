@@ -407,14 +407,14 @@ func TestOracleConsult_ErrorCases(cur realm, t *testing.T) {
 			expectedError: "secondsAgo must be greater than 0",
 		},
 		{
-			name: "observation state not initialized",
+			name: "observations not initialized",
 			setupPool: func() *pl.Pool {
 				pool := createTestPool()
 				setObservationsForTest(pool, nil)
 				return pool
 			},
 			secondsAgo:    3600,
-			expectedError: "observation state not initialized",
+			expectedError: "observations not initialized",
 		},
 	}
 
@@ -422,7 +422,7 @@ func TestOracleConsult_ErrorCases(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := tt.setupPool()
 			var observations *pl.ObservationTree
-			if tt.name != "observation state not initialized" {
+			if tt.name != "observations not initialized" {
 				observations = observationsForTest(pool)
 			}
 			_, _, err := oracleConsult(pool, observations, tt.secondsAgo)

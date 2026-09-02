@@ -435,8 +435,8 @@ func TestSwap_TickTransitionPropagatesOracleError(cur realm, t *testing.T) {
 	state := newSwapState(i256.Zero(), u256.Zero(), u256.NewUint(100), slot0)
 	step := StepComputations{initialized: true, tickNext: 20}
 
-	_, err := getMockInstance().tickTransition(step, false, state, pool, observationsForTest(pool), cache, nil)
-	uassert.ErrorContains(t, err, "observation state not initialized")
+	_, err := getMockInstance().tickTransition(step, false, state, pool, nil, cache, nil)
+	uassert.ErrorContains(t, err, "observations not initialized")
 }
 
 func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
