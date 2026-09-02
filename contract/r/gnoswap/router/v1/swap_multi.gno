@@ -44,20 +44,19 @@ func (r *routerV1) multiSwap(_ int, rlm realm, sp SwapParams, numPools int, swap
 // multiSwapNegative performs a multi-hop exact-output swap. It first quotes
 // every hop backward, then executes the collected swaps forward.
 func (r *routerV1) multiSwapNegative(_ int, rlm realm, sp SwapParams, numPools int, swapPath string) (int64, int64) {
-	swapInfo := r.collectBackwardDrySwapInfo(rlm.Previous().Address(), sp.SingleSwapParams, numPools, swapPath)
+	swapInfo := r.collectBackwardDrySwapInfo(sp.SingleSwapParams, numPools, swapPath)
 	return r.executeCollectedSwaps(0, rlm, swapInfo, sp.recipient)
 }
 
 // multiDrySwap simulates a multi-hop exact-input swap in forward order.
-func (r *routerV1) multiDrySwap(payer address, sp SingleSwapParams, numPools int, swapPath string) (int64, int64, error) {
-	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
+func (r *routerV1) multiDrySwap(sp SingleSwapParams, numPools int, swapPath string) (int64, int64, error) {
 	firstAmountIn := int64(0)
 
 	for currentPoolIndex := 0; ; currentPoolIndex++ {
 		amountIn, amountOut := r.swapDryInner(
 			sp.amountSpecified,
 			u256.Zero(),
-			newSwapCallbackData(sp, payer),
+			newDrySwapCallbackData(sp),
 		)
 
 		if currentPoolIndex == 0 {
@@ -69,7 +68,6 @@ func (r *routerV1) multiDrySwap(payer address, sp SingleSwapParams, numPools int
 			return firstAmountIn, amountOut, nil
 		}
 
-		payer = routerAddr
 		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, nextPoolIndex)
 		sp.tokenIn = nextInput
 		sp.tokenOut = nextOutput
@@ -78,38 +76,19 @@ func (r *routerV1) multiDrySwap(payer address, sp SingleSwapParams, numPools int
 	}
 }
 
-// multiDrySwapNegative simulates a multi-hop exact-output swap in backward order.
+// multiDrySwapNegative simulates a multi-hop exact-output swap.
+// It first quotes every hop backward, then simulates the collected swaps forward.
 func (r *routerV1) multiDrySwapNegative(sp SingleSwapParams, numPools int, swapPath string) (int64, int64, error) {
-	firstAmountIn := int64(0)
-	payer := access.MustGetAddress(prbac.ROLE_ROUTER.String())
-
-	for currentPoolIndex := numPools - 1; ; currentPoolIndex-- {
-		amountIn, amountOut := r.swapDryInner(
-			sp.amountSpecified,
-			u256.Zero(),
-			newSwapCallbackData(sp, payer),
-		)
-
-		if currentPoolIndex == 0 {
-			firstAmountIn = amountIn
-			return firstAmountIn, amountOut, nil
-		}
-
-		nextPoolIndex := currentPoolIndex - 1
-		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, nextPoolIndex)
-		sp.amountSpecified = -amountIn
-		sp.tokenIn = nextInput
-		sp.tokenOut = nextOutput
-		sp.fee = nextFee
-	}
+	swapInfo := r.collectBackwardDrySwapInfo(sp, numPools, swapPath)
+	return r.executeCollectedDrySwaps(swapInfo)
 }
 
 // collectBackwardDrySwapInfo quotes an exact-output route backward before real execution.
-func (r *routerV1) collectBackwardDrySwapInfo(payer address, sp SingleSwapParams, numPools int, swapPath string) []SingleSwapParams {
+func (r *routerV1) collectBackwardDrySwapInfo(sp SingleSwapParams, numPools int, swapPath string) []SingleSwapParams {
 	swapInfo := make([]SingleSwapParams, 0, numPools)
 
 	for currentPoolIndex := numPools - 1; currentPoolIndex >= 0; currentPoolIndex-- {
-		amountIn, _ := r.singleDrySwap(payer, &sp)
+		amountIn, _ := r.singleDrySwap(&sp)
 		swapInfo = append(swapInfo, sp)
 
 		if currentPoolIndex == 0 {
@@ -157,4 +136,29 @@ func (r *routerV1) executeCollectedSwaps(_ int, rlm realm, swapInfo []SingleSwap
 	}
 
 	return firstAmountIn, 0
+}
+
+func (r *routerV1) executeCollectedDrySwaps(swapInfo []SingleSwapParams) (int64, int64, error) {
+	firstAmountIn := int64(0)
+
+	for currentPoolIndex := len(swapInfo) - 1; currentPoolIndex >= 0; currentPoolIndex-- {
+		amountIn, amountOut := r.swapDryInner(
+			swapInfo[currentPoolIndex].amountSpecified,
+			u256.Zero(),
+			newDrySwapCallbackData(swapInfo[currentPoolIndex]),
+		)
+
+		if currentPoolIndex == len(swapInfo)-1 {
+			firstAmountIn = amountIn
+		}
+
+		if currentPoolIndex == 0 {
+			return firstAmountIn, amountOut, nil
+		}
+
+		nextPoolIndex := currentPoolIndex - 1
+		swapInfo[nextPoolIndex].amountSpecified = amountOut
+	}
+
+	return firstAmountIn, 0, nil
 }

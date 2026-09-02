@@ -27,15 +27,12 @@ func (r *routerV1) singleSwap(_ int, rlm realm, p *SingleSwapParams) (int64, int
 }
 
 // singleDrySwap simulates a single-token swap operation without executing it.
-// It performs a dry run simulation and does not alter the state. The payer is
-// the address resolved at the entry point (DrySwapRoute) since dry-run paths
-// do not have realm context.
-func (r *routerV1) singleDrySwap(payer address, p *SingleSwapParams) (int64, int64) {
+func (r *routerV1) singleDrySwap(p *SingleSwapParams) (int64, int64) {
 	assertSingleSwap(p)
 
 	return r.swapDryInner(
 		p.amountSpecified,
 		u256.Zero(),
-		newSwapCallbackData(p, payer),
+		newDrySwapCallbackData(p),
 	)
 }

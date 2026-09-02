@@ -256,7 +256,7 @@ func collectTestReward(cur realm, t *testing.T, lp *launchpadV1, userAddr addres
 	// Transfer reward to the depositor, mirroring CollectRewardByDepositId.
 	if rewardAmount > 0 {
 		testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
-		common.SafeGRC20Transfer(cross(cur), rewardTokenPath, deposit.Depositor(), rewardAmount)
+		common.SafeGRC20Transfer(0, cur, rewardTokenPath, deposit.Depositor(), rewardAmount)
 	}
 
 	return rewardAmount

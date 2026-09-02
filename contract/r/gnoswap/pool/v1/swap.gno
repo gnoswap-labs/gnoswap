@@ -191,19 +191,6 @@ func (i *poolV1) Swap(
 		}
 	}
 
-	defer func() {
-		if i.store.HasSwapEndHook() {
-			swapEndHook := i.store.GetSwapEndHook()
-
-			if swapEndHook != nil {
-				err := swapEndHook(cross(rlm), pool.PoolPath())
-				if err != nil {
-					panic(err)
-				}
-			}
-		}
-	}()
-
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
 
@@ -250,6 +237,16 @@ func (i *poolV1) Swap(
 	}
 
 	applySwapResult(pool, result)
+
+	if i.store.HasSwapEndHook() {
+		swapEndHook := i.store.GetSwapEndHook()
+		if swapEndHook != nil {
+			err := swapEndHook(cross(rlm), pool.PoolPath())
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
 
 	// transfer swap result to recipient then receive input tokens from swap callback
 	if zeroForOne {

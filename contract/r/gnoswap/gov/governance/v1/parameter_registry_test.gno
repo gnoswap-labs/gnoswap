@@ -263,6 +263,134 @@ func TestParseBool(cur realm, t *testing.T) {
 	}
 }
 
+func TestParameterValidators_Boundaries(cur realm, t *testing.T) {
+	tests := []struct {
+		name                  string
+		validate              func() error
+		expectedErrorContains string
+	}{
+		{
+			name:     "non-negative int64 accepts zero",
+			validate: func() error { return nonNegativeInt64Validator("amount")("0") },
+		},
+		{
+			name:     "non-negative int64 accepts max int64",
+			validate: func() error { return nonNegativeInt64Validator("amount")("9223372036854775807") },
+		},
+		{
+			name:                  "non-negative int64 rejects negative one",
+			validate:              func() error { return nonNegativeInt64Validator("amount")("-1") },
+			expectedErrorContains: "amount must be non-negative: -1",
+		},
+		{
+			name:     "positive int64 accepts one",
+			validate: func() error { return positiveInt64Validator("amount")("1") },
+		},
+		{
+			name:                  "positive int64 rejects zero",
+			validate:              func() error { return positiveInt64Validator("amount")("0") },
+			expectedErrorContains: "amount must be positive: 0",
+		},
+		{
+			name:     "int64 range accepts lower boundary",
+			validate: func() error { return int64RangeValidator("pct", 0, 10000)("0") },
+		},
+		{
+			name:     "int64 range accepts upper boundary",
+			validate: func() error { return int64RangeValidator("pct", 0, 10000)("10000") },
+		},
+		{
+			name:                  "int64 range rejects just below lower boundary",
+			validate:              func() error { return int64RangeValidator("pct", 0, 10000)("-1") },
+			expectedErrorContains: "pct must be in range 0 to 10000: -1",
+		},
+		{
+			name:                  "int64 range rejects just above upper boundary",
+			validate:              func() error { return int64RangeValidator("pct", 0, 10000)("10001") },
+			expectedErrorContains: "pct must be in range 0 to 10000: 10001",
+		},
+		{
+			name:     "uint64 range accepts zero",
+			validate: func() error { return uint64RangeValidator("fee", 1000)("0") },
+		},
+		{
+			name:     "uint64 range accepts upper boundary",
+			validate: func() error { return uint64RangeValidator("fee", 1000)("1000") },
+		},
+		{
+			name:                  "uint64 range rejects just above upper boundary",
+			validate:              func() error { return uint64RangeValidator("fee", 1000)("1001") },
+			expectedErrorContains: "fee must be in range 0 to 1000: 1001",
+		},
+		{
+			name:     "halt level accepts valid level",
+			validate: func() error { return haltLevelValidator("COMPLETE") },
+		},
+		{
+			name:                  "halt level rejects invalid level",
+			validate:              func() error { return haltLevelValidator("complete") },
+			expectedErrorContains: "invalid halt level: complete",
+		},
+		{
+			name:     "halt operation type accepts valid operation",
+			validate: func() error { return haltOperationTypeValidator("withdraw") },
+		},
+		{
+			name:                  "halt operation type rejects invalid operation",
+			validate:              func() error { return haltOperationTypeValidator("WITHDRAW") },
+			expectedErrorContains: "invalid operation type: WITHDRAW",
+		},
+		{
+			name:     "token minimum reward accepts zero",
+			validate: func() error { return tokenMinimumRewardAmountValidator("gno.land/r/gnoswap/gns.GNS:0") },
+		},
+		{
+			name: "token minimum reward accepts max int64",
+			validate: func() error {
+				return tokenMinimumRewardAmountValidator("gno.land/r/gnoswap/gns.GNS:9223372036854775807")
+			},
+		},
+		{
+			name:                  "token minimum reward rejects negative amount",
+			validate:              func() error { return tokenMinimumRewardAmountValidator("gno.land/r/gnoswap/gns.GNS:-1") },
+			expectedErrorContains: "minimum reward amount must be non-negative: -1",
+		},
+		{
+			name:                  "token minimum reward rejects missing token path",
+			validate:              func() error { return tokenMinimumRewardAmountValidator(":0") },
+			expectedErrorContains: "token minimum reward amount must be tokenPath:amount",
+		},
+		{
+			name:     "distribution percentages accept exact total at boundaries",
+			validate: func() error { return distributionPctCompositeValidator([]string{"10000", "0", "0", "0"}) },
+		},
+		{
+			name:                  "distribution percentages reject value below lower boundary",
+			validate:              func() error { return distributionPctCompositeValidator([]string{"9999", "-1", "1", "1"}) },
+			expectedErrorContains: "percentage 2 must be in range 0 to 10000: -1",
+		},
+		{
+			name:                  "distribution percentages reject value above upper boundary",
+			validate:              func() error { return distributionPctCompositeValidator([]string{"10001", "0", "0", "0"}) },
+			expectedErrorContains: "percentage 1 must be in range 0 to 10000: 10001",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			err := tc.validate()
+
+			if tc.expectedErrorContains == "" {
+				uassert.Nil(t, err)
+				return
+			}
+
+			uassert.NotNil(t, err)
+			uassert.ErrorContains(t, err, tc.expectedErrorContains)
+		})
+	}
+}
+
 func TestValidateExecutions(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
@@ -309,7 +437,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - halt SetOperationStatus",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*POOL,true",
+			executions:    "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*pool,true",
 			expectedError: false,
 		},
 		// pool
@@ -565,7 +693,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - halt SetOperationStatus invalid bool type",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*POOL,not_bool",
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*pool,not_bool",
 			expectedError:         true,
 			expectedErrorContains: "invalid bool value: not_bool",
 		},
@@ -645,6 +773,48 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 			executions:            "gno.land/r/gnoswap/launchpad*EXE*CreateProject*EXE*proj,gno.land/r/gnoswap/gns.GNS,,1000000,,,10,20,70,1000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
+		},
+		{
+			name:                  "Failure - community_pool TransferToken non-positive amount",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("recipient").String() + ",-1",
+			expectedError:         true,
+			expectedErrorContains: "amount must be positive",
+		},
+		{
+			name:                  "Failure - emission ChangeDistributionPct invalid sum",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/emission*EXE*ChangeDistributionPct*EXE*5000,5000,5000,5000",
+			expectedError:         true,
+			expectedErrorContains: "sum of percentages must be 10000",
+		},
+		{
+			name:                  "Failure - pool SetWithdrawalFee too large",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/pool*EXE*SetWithdrawalFee*EXE*1001",
+			expectedError:         true,
+			expectedErrorContains: "fee must be in range 0 to 1000",
+		},
+		{
+			name:                  "Failure - protocol_fee SetDevOpsPct too large",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/protocol_fee*EXE*SetDevOpsPct*EXE*10001",
+			expectedError:         true,
+			expectedErrorContains: "pct must be in range 0 to 10000",
+		},
+		{
+			name:                  "Failure - staker SetPoolTier invalid tier",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/staker*EXE*SetPoolTier*EXE*pool,4",
+			expectedError:         true,
+			expectedErrorContains: "tier must be in range 0 to 3",
+		},
+		{
+			name:                  "Failure - halt SetHaltLevel invalid level",
+			numToExecute:          1,
+			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*INVALID",
+			expectedError:         true,
+			expectedErrorContains: "invalid halt level",
 		},
 	}
 

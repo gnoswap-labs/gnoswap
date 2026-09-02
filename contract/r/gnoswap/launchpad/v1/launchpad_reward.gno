@@ -44,7 +44,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 
 	// Transfer reward token to depositor
 	if rewardAmount > 0 {
-		common.SafeGRC20Transfer(cross(rlm), rewardTokenPath, deposit.Depositor(), rewardAmount)
+		common.SafeGRC20Transfer(0, rlm, rewardTokenPath, deposit.Depositor(), rewardAmount)
 	}
 
 	chain.Emit(

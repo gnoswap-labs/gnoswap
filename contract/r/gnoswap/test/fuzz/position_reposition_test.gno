@@ -58,8 +58,8 @@ func TestFuzzPositionReposition_ValidParams_Stateless(cur realm, t *testing.T) {
 		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 		// when - reposition
 		newTokenId, liquidityStr, tickLower, tickUpper, amount0, amount1 := position.Reposition(
@@ -138,8 +138,8 @@ func TestFuzzPositionReposition_RandomizedParams_Stateless(cur realm, t *testing
 		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 		// when - reposition (may panic with invalid params)
 		position.Reposition(
@@ -214,8 +214,8 @@ func TestFuzzPositionReposition_ValidParams_Stateful(cur realm, t *testing.T) {
 		mintTestToken(cur, token1Path, amount1Int64)
 
 		// Approve tokens
-		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 		// when - reposition
 		returnedTokenId, liquidityStr, tickLower, tickUpper, amount0, amount1 := position.Reposition(
@@ -300,8 +300,8 @@ func TestFuzzPositionReposition_RandomizedParams_Stateful(cur realm, t *testing.
 			mintTestToken(cur, token1Path, amount1Int64)
 		}
 
-		common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, math.MaxInt64)
-		common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token0Path, poolAddr, math.MaxInt64)
+		common.SafeGRC20Approve(0, cur, token1Path, poolAddr, math.MaxInt64)
 
 		position.Reposition(
 			cross(cur),

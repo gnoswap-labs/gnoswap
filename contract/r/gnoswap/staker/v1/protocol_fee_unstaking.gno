@@ -93,7 +93,7 @@ func (s *stakerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount 
 
 	if totalAmount > 0 {
 		protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, totalAmount)
+		common.SafeGRC20Approve(0, rlm, tokenPath, protocolFeeAddr, totalAmount)
 
 		// AddToProtocolFee only reports an error for a halted realm, which is handled
 		// above. The branch keeps the amount pending should that ever change, and

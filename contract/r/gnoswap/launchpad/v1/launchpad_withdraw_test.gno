@@ -10,6 +10,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
+	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/onbloc/obl"
@@ -1063,12 +1064,13 @@ func initLaunchpadWithdrawTestWithTier(cur realm, t *testing.T, depositor addres
 	testing.SetOriginCaller(depositor)
 	lp.depositGns(0, cur, project, tierDuration, depositAmount, depositor)
 
-	govStakerAddr, _ := access.GetAddress(prbac.ROLE_GOV_STAKER.String())
-	govStakerRealm := testing.NewUserRealm(govStakerAddr)
-	testing.SetRealm(govStakerRealm)
-
-	launchpadAddr, _ := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
-	xgns.Mint(cross(cur), launchpadAddr, depositAmount)
+	// depositGns is an internal helper and intentionally does not stake the
+	// corresponding governance amount. Mirror the public DepositGns path so
+	// withdrawal removes an existing reward stake.
+	func(cur realm) {
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
+		gov_staker.SetAmountByProjectWallet(cross(cur), project.Recipient(), depositAmount, true)
+	}(cross(cur))
 
 	projectTier, _ := getProjectTier(project, tierDuration)
 	testing.SetHeight(projectTier.EndTime() + 1)
