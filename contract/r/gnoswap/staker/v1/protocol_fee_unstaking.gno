@@ -24,12 +24,12 @@ func (s *stakerV1) handleStakingRewardFee(
 	tokenPath string,
 	amount int64,
 	internal bool,
+	unstakingFee uint64,
 ) (int64, int64, error) {
 	if internal {
 		tokenPath = GNS_TOKEN_KEY
 	}
 
-	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
 		s.settleProtocolFee(0, rlm, tokenPath, 0)
 		return amount, 0, nil

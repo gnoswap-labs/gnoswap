@@ -23,6 +23,10 @@ type UnstakedPosition struct {
 	tierRatio uint64
 	tierCount uint64
 
+	// unstakingFee is the staking-reward fee rate in force at exitTime. The window closed under
+	// it, so a later rate change must not apply retroactively at collect time.
+	unstakingFee uint64
+
 	emissionCollected   bool
 	pendingIncentiveIds map[string]bool
 }
@@ -39,6 +43,7 @@ func NewUnstakedPosition(
 	tier uint64,
 	tierRatio uint64,
 	tierCount uint64,
+	unstakingFee uint64,
 	pendingIncentiveIds []string,
 ) *UnstakedPosition {
 	// Allocated here so this realm owns it; a map built by the caller is readonly tainted.
@@ -58,6 +63,7 @@ func NewUnstakedPosition(
 		tier:                tier,
 		tierRatio:           tierRatio,
 		tierCount:           tierCount,
+		unstakingFee:        unstakingFee,
 		pendingIncentiveIds: pending,
 	}
 }
@@ -91,6 +97,9 @@ func (u *UnstakedPosition) TierRatio() uint64 { return u.tierRatio }
 
 // TierCount returns how many pools shared the tier at ExitTime.
 func (u *UnstakedPosition) TierCount() uint64 { return u.tierCount }
+
+// UnstakingFee returns the staking-reward fee rate in force at ExitTime.
+func (u *UnstakedPosition) UnstakingFee() uint64 { return u.unstakingFee }
 
 // MarkEmissionCollected records that the emission reward has been collected.
 func (u *UnstakedPosition) MarkEmissionCollected() { u.emissionCollected = true }

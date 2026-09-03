@@ -19,7 +19,7 @@ func TestMarkIncentiveCollectedForfeitsUncoverableIncentive(cur realm, t *testin
 	const incentiveId = "creator:1:1"
 
 	deposit := sr.NewDeposit(addr01, "pool", u256.Zero(), 0, 0, 0, nil)
-	position := sr.NewUnstakedPosition(deposit, 100, 0, nil, nil, "0", "0", 0, 0, 0, []string{incentiveId})
+	position := sr.NewUnstakedPosition(deposit, 100, 0, nil, nil, "0", "0", 0, 0, 0, 0, []string{incentiveId})
 	position.MarkEmissionCollected()
 
 	instance.getUnstakedPositions().set(1, position)
@@ -50,7 +50,7 @@ func TestMarkIncentiveCollectedOnDelivery(cur realm, t *testing.T) {
 	const incentiveId = "creator:1:2"
 
 	deposit := sr.NewDeposit(addr01, "pool", u256.Zero(), 0, 0, 0, nil)
-	position := sr.NewUnstakedPosition(deposit, 100, 0, nil, nil, "0", "0", 0, 0, 0, []string{incentiveId})
+	position := sr.NewUnstakedPosition(deposit, 100, 0, nil, nil, "0", "0", 0, 0, 0, 0, []string{incentiveId})
 
 	instance.getUnstakedPositions().set(2, position)
 	instance.addUncollectedIncentiveCount(incentiveId, 1)

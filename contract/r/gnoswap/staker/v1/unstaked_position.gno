@@ -139,6 +139,7 @@ func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, d
 		tier,
 		tierRatio,
 		tierCount,
+		s.GetUnstakingFee(),
 		deposit.GetExternalIncentiveIdList(),
 	)
 

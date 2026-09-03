@@ -79,7 +79,7 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 			testing.SetRealm(stakerRealm)
 
 			handleStakingRewardFeeFn := func() (int64, int64, error) {
-				return getMockInstance().handleStakingRewardFee(0, cur, tc.tokenPath, tc.amount, tc.internal)
+				return getMockInstance().handleStakingRewardFee(0, cur, tc.tokenPath, tc.amount, tc.internal, getMockInstance().GetUnstakingFee())
 			}
 
 			if tc.expectedHasPanic {
@@ -394,7 +394,7 @@ func TestHandleStakingRewardFeeEdgeCases(cur realm, t *testing.T) {
 			}
 
 			testing.SetRealm(stakerRealm)
-			netAmount, feeAmount, err := instance.handleStakingRewardFee(0, cur, tt.tokenPath, tt.amount, tt.internal)
+			netAmount, feeAmount, err := instance.handleStakingRewardFee(0, cur, tt.tokenPath, tt.amount, tt.internal, instance.GetUnstakingFee())
 
 			if tt.expectError {
 				uassert.Error(t, err)

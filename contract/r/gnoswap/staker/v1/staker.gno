@@ -475,6 +475,16 @@ func (s *stakerV1) newCollectContext(_ int, rlm realm, target *collectTarget, cu
 	}
 }
 
+// unstakingFee returns the fee rate this collect settles under: the live rate while staked,
+// and the rate pinned at exit for a checkpoint, whose window closed under it.
+func (self *collectContext) unstakingFee(s *stakerV1) uint64 {
+	if self.checkpoint != nil {
+		return self.checkpoint.UnstakingFee()
+	}
+
+	return s.GetUnstakingFee()
+}
+
 // persistDeposit writes the deposit back, unless it belongs to a checkpoint and is not there.
 func (self *collectContext) persistDeposit(s *stakerV1) {
 	if self.checkpoint != nil {
@@ -868,7 +878,7 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	// update
 	s.getExternalIncentives().set(incentiveId, incentive)
 
-	toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, rewardToken, rewardAmount, false)
+	toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, rewardToken, rewardAmount, false, ctx.unstakingFee(s))
 	if err != nil {
 		panic(err.Error())
 	}
@@ -947,7 +957,7 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 
 	// internal reward to user
 	if !skipInternalUpdate {
-		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, GNS_TOKEN_KEY, reward.Internal, true)
+		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, GNS_TOKEN_KEY, reward.Internal, true, ctx.unstakingFee(s))
 		if err != nil {
 			panic(err.Error())
 		}
