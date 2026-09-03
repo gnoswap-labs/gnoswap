@@ -27,7 +27,8 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 - `UnStakeToken` only records an exit checkpoint. It must never calculate or pay a reward, or a long unclaimed window would make a position unwithdrawable.
 - The checkpoint pins the exit tick, the two boundary ticks (the unstake prunes them) and the tier context (a later tier change would re-rate the closed window). `PoolResolver` reads through that pin only on the checkpoint path.
 - `Collect*` accept a checkpoint and collect per source; the checkpoint is dropped when every source is done. A checkpoint collect is permissionless, since it can only pay the position's owner.
-- `EndExternalIncentive` refuses while an unstaked position of the pool still owes an incentive: its share has not been drawn down yet, so refunding would pay it to the creator.
+- A checkpoint's window is final: a zero user reward is left to accrue only while the position is staked, so delivery must still pay the penalty and advance the cursor for a checkpoint.
+- `EndExternalIncentive` refuses while an unstaked position still owes a reward from **that** incentive: its share has not been drawn down yet, so refunding would pay it to the creator. The count is keyed by incentive id, never by pool - an incentive whose reward amount can no longer cover what it owes stays blocked for good, and a pool-wide guard would take every other incentive in the pool down with it.
 
 ### External Incentives
 - Active window: `startTimestamp <= now < endTimestamp`. Both bounds required.

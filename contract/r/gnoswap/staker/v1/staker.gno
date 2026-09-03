@@ -509,12 +509,7 @@ func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarge
 	}
 
 	target.checkpoint.MarkIncentiveCollected(incentiveId)
-
-	// The pool's incentives become refundable again once no checkpoint owes one.
-	if !target.checkpoint.HasPendingIncentives() {
-		s.addUnsettledIncentiveCount(0, rlm, target.deposit.TargetPoolPath(), -1)
-	}
-
+	s.addUncollectedIncentiveCounts(0, rlm, map[string]int64{incentiveId: -1})
 	s.dropUnstakedPositionIfCollected(target)
 }
 

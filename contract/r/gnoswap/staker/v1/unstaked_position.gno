@@ -57,29 +57,39 @@ func (s *stakerV1) getUnstakedPositions() *UnstakedPositions {
 	return &UnstakedPositions{tree: s.store.GetUnstakedPositions()}
 }
 
-// unsettledIncentiveCountOf returns how many checkpoints of poolPath still owe an incentive.
-func (s *stakerV1) unsettledIncentiveCountOf(poolPath string) int64 {
-	return s.store.GetUnsettledIncentiveCounts()[poolPath]
+// uncollectedIncentiveCountOf returns how many checkpoints still owe the incentive.
+//
+// The count is per incentive, not per pool: one checkpoint that can never be funded would
+// otherwise lock the refunds of every other incentive in the same pool.
+func (s *stakerV1) uncollectedIncentiveCountOf(incentiveId string) int64 {
+	return s.store.GetUncollectedIncentiveCounts()[incentiveId]
 }
 
-// addUnsettledIncentiveCount moves poolPath's count by delta, dropping the entry at zero.
-func (s *stakerV1) addUnsettledIncentiveCount(_ int, rlm realm, poolPath string, delta int64) {
-	next := gnsmath.SafeAddInt64(s.unsettledIncentiveCountOf(poolPath), delta)
-	if next < 0 {
-		panic(makeErrorWithDetails(
-			errCalculationError,
-			ufmt.Sprintf("unsettled incentive count of pool(%s) went negative", poolPath),
-		))
+// addUncollectedIncentiveCounts applies one delta per incentive in a single store write.
+func (s *stakerV1) addUncollectedIncentiveCounts(_ int, rlm realm, deltas map[string]int64) {
+	counts := make(map[string]int64)
+	for incentiveId, count := range s.store.GetUncollectedIncentiveCounts() {
+		counts[incentiveId] = count
 	}
 
-	var err error
-	if next == 0 {
-		err = s.store.RemoveUnsettledIncentiveCountItem(0, rlm, poolPath)
-	} else {
-		err = s.store.SetUnsettledIncentiveCountItem(0, rlm, poolPath, next)
+	for incentiveId, delta := range deltas {
+		next := gnsmath.SafeAddInt64(counts[incentiveId], delta)
+		if next < 0 {
+			panic(makeErrorWithDetails(
+				errCalculationError,
+				ufmt.Sprintf("uncollected count of incentive(%s) went negative", incentiveId),
+			))
+		}
+
+		if next == 0 {
+			delete(counts, incentiveId)
+			continue
+		}
+
+		counts[incentiveId] = next
 	}
 
-	if err != nil {
+	if err := s.store.SetUncollectedIncentiveCounts(0, rlm, counts); err != nil {
 		panic(err)
 	}
 }
@@ -134,9 +144,15 @@ func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, d
 
 	s.getUnstakedPositions().set(positionId, position)
 
-	if position.HasPendingIncentives() {
-		s.addUnsettledIncentiveCount(0, rlm, poolPath, 1)
+	if !position.HasPendingIncentives() {
+		return
 	}
+
+	deltas := make(map[string]int64)
+	for _, incentiveId := range deposit.GetExternalIncentiveIdList() {
+		deltas[incentiveId] = 1
+	}
+	s.addUncollectedIncentiveCounts(0, rlm, deltas)
 }
 
 // dropUnstakedPositionIfCollected removes the checkpoint once every reward source is collected.

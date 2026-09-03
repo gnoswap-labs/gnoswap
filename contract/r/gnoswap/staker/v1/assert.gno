@@ -93,14 +93,14 @@ func assertHasNoExitCheckpoint(s *stakerV1, positionId uint64) {
 	}
 }
 
-// assertHasNoUnsettledIncentive ensures no unstaked position of the pool still owes an
-// incentive reward, which has not been drawn down from the incentive yet.
-func assertHasNoUnsettledIncentive(s *stakerV1, poolPath string) {
-	count := s.unsettledIncentiveCountOf(poolPath)
+// assertHasNoUncollectedIncentive ensures no unstaked position still owes a reward from this
+// incentive, which has not been drawn down from it yet.
+func assertHasNoUncollectedIncentive(s *stakerV1, incentiveId string) {
+	count := s.uncollectedIncentiveCountOf(incentiveId)
 	if count > 0 {
 		panic(makeErrorWithDetails(
 			errUncollectedPosition,
-			ufmt.Sprintf("pool(%s) has %d unstaked position(s) with uncollected incentive rewards", poolPath, count),
+			ufmt.Sprintf("incentive(%s) is owed to %d unstaked position(s)", incentiveId, count),
 		))
 	}
 }

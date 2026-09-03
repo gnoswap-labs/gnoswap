@@ -122,8 +122,8 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		}
 	}
 
-	if !stakerStore.HasUnsettledIncentiveCountsStoreKey() {
-		err := stakerStore.SetUnsettledIncentiveCounts(0, rlm, make(map[string]int64))
+	if !stakerStore.HasUncollectedIncentiveCountsStoreKey() {
+		err := stakerStore.SetUncollectedIncentiveCounts(0, rlm, make(map[string]int64))
 		if err != nil {
 			return err
 		}

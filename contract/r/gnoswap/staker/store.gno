@@ -25,7 +25,7 @@ const (
 	StoreKeyUnstakingFee                     StoreKey = "unstakingFee"
 	StoreKeyPendingProtocolFees              StoreKey = "pendingProtocolFees"
 	StoreKeyUnstakedPositions                StoreKey = "unstakedPositions"
-	StoreKeyUnsettledIncentiveCounts         StoreKey = "unsettledIncentiveCounts"
+	StoreKeyUncollectedIncentiveCounts       StoreKey = "uncollectedIncentiveCounts"
 	StoreKeyPools                            StoreKey = "pools"
 	StoreKeyPoolTierMemberships              StoreKey = "poolTierMemberships"
 	StoreKeyPoolTierRatio                    StoreKey = "poolTierRatio"
@@ -414,13 +414,13 @@ func (s *stakerStore) SetUnstakedPositions(_ int, rlm realm, positions *bptree.B
 	return s.kvStore.Set(0, rlm, StoreKeyUnstakedPositions.String(), positions)
 }
 
-// UnsettledIncentiveCounts
-func (s *stakerStore) HasUnsettledIncentiveCountsStoreKey() bool {
-	return s.kvStore.Has(StoreKeyUnsettledIncentiveCounts.String())
+// UncollectedIncentiveCounts
+func (s *stakerStore) HasUncollectedIncentiveCountsStoreKey() bool {
+	return s.kvStore.Has(StoreKeyUncollectedIncentiveCounts.String())
 }
 
-func (s *stakerStore) GetUnsettledIncentiveCounts() map[string]int64 {
-	result, err := s.kvStore.Get(StoreKeyUnsettledIncentiveCounts.String())
+func (s *stakerStore) GetUncollectedIncentiveCounts() map[string]int64 {
+	result, err := s.kvStore.Get(StoreKeyUncollectedIncentiveCounts.String())
 	if err != nil {
 		panic(err)
 	}
@@ -433,50 +433,12 @@ func (s *stakerStore) GetUnsettledIncentiveCounts() map[string]int64 {
 	return counts
 }
 
-func (s *stakerStore) SetUnsettledIncentiveCounts(_ int, rlm realm, counts map[string]int64) error {
+func (s *stakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts map[string]int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
 	}
 
-	return s.kvStore.Set(0, rlm, StoreKeyUnsettledIncentiveCounts.String(), counts)
-}
-
-// SetUnsettledIncentiveCountItem sets a single pool's unsettled position count.
-func (s *stakerStore) SetUnsettledIncentiveCountItem(_ int, rlm realm, poolPath string, count int64) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
-
-	counts := s.GetUnsettledIncentiveCounts()
-
-	owned := make(map[string]int64)
-	for k, v := range counts {
-		owned[k] = v
-	}
-
-	owned[poolPath] = count
-
-	return s.kvStore.Set(0, rlm, StoreKeyUnsettledIncentiveCounts.String(), owned)
-}
-
-// RemoveUnsettledIncentiveCountItem removes a single pool's unsettled position count.
-func (s *stakerStore) RemoveUnsettledIncentiveCountItem(_ int, rlm realm, poolPath string) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
-
-	counts := s.GetUnsettledIncentiveCounts()
-
-	owned := make(map[string]int64)
-	for k, v := range counts {
-		if k == poolPath {
-			continue
-		}
-
-		owned[k] = v
-	}
-
-	return s.kvStore.Set(0, rlm, StoreKeyUnsettledIncentiveCounts.String(), owned)
+	return s.kvStore.Set(0, rlm, StoreKeyUncollectedIncentiveCounts.String(), counts)
 }
 
 // Pools
