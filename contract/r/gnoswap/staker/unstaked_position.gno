@@ -76,9 +76,6 @@ func (u *UnstakedPosition) TierRatio() uint64 { return u.tierRatio }
 // TierCount returns how many pools shared the tier at ExitTime.
 func (u *UnstakedPosition) TierCount() uint64 { return u.tierCount }
 
-// EmissionCollected reports whether the emission reward has been collected.
-func (u *UnstakedPosition) EmissionCollected() bool { return u.emissionCollected }
-
 // MarkEmissionCollected records that the emission reward has been collected.
 func (u *UnstakedPosition) MarkEmissionCollected() { u.emissionCollected = true }
 
@@ -94,16 +91,6 @@ func (u *UnstakedPosition) HasPendingIncentiveId(incentiveId string) bool {
 // HasPendingIncentives reports whether any incentive is still to be collected.
 func (u *UnstakedPosition) HasPendingIncentives() bool {
 	return len(u.pendingIncentiveIds) > 0
-}
-
-// PendingIncentiveIdList returns the incentives still to be collected.
-func (u *UnstakedPosition) PendingIncentiveIdList() []string {
-	incentiveIds := make([]string, 0, len(u.pendingIncentiveIds))
-	for incentiveId := range u.pendingIncentiveIds {
-		incentiveIds = append(incentiveIds, incentiveId)
-	}
-
-	return incentiveIds
 }
 
 // MarkIncentiveCollected records that the incentive has been collected.

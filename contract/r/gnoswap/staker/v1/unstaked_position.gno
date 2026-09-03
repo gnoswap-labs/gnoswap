@@ -134,15 +134,10 @@ func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, d
 	}
 }
 
-// dropUnstakedPositionIfCollected releases the pool's incentive hold once the last incentive
-// is collected, and removes the checkpoint once every source is.
-func (s *stakerV1) dropUnstakedPositionIfCollected(_ int, rlm realm, positionId uint64, position *sr.UnstakedPosition, hadPendingIncentives bool) {
-	if hadPendingIncentives && !position.HasPendingIncentives() {
-		s.addUnsettledIncentiveCount(0, rlm, position.Deposit().TargetPoolPath(), -1)
-	}
-
-	if position.FullyCollected() {
-		s.getUnstakedPositions().remove(positionId)
+// dropUnstakedPositionIfCollected removes the checkpoint once every reward source is collected.
+func (s *stakerV1) dropUnstakedPositionIfCollected(target *collectTarget) {
+	if target.checkpoint.FullyCollected() {
+		s.getUnstakedPositions().remove(target.positionId)
 	}
 }
 

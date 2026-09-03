@@ -488,21 +488,20 @@ func (self *collectContext) persistDeposit(s *stakerV1) {
 }
 
 // markEmissionCollected records the emission collect on the checkpoint.
-func (s *stakerV1) markEmissionCollected(_ int, rlm realm, target *collectTarget) {
+func (s *stakerV1) markEmissionCollected(target *collectTarget) {
 	if !target.isCheckpoint() {
 		return
 	}
 
-	hadPendingIncentives := target.checkpoint.HasPendingIncentives()
 	target.checkpoint.MarkEmissionCollected()
-	s.dropUnstakedPositionIfCollected(0, rlm, target.positionId, target.checkpoint, hadPendingIncentives)
+	s.dropUnstakedPositionIfCollected(target)
 }
 
 // markIncentiveCollected records the incentive collect on the checkpoint. An incentive that
 // could not be funded stays pending, the same way it stays collectible while staked; delivery
 // reports that as an empty reward token against a non-zero amount.
 func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarget, incentiveId string, rewardAmount int64, rewardToken string) {
-	if !target.isCheckpoint() {
+	if !target.isCheckpoint() || !target.checkpoint.HasPendingIncentiveId(incentiveId) {
 		return
 	}
 
@@ -510,9 +509,14 @@ func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarge
 		return
 	}
 
-	hadPendingIncentives := target.checkpoint.HasPendingIncentives()
 	target.checkpoint.MarkIncentiveCollected(incentiveId)
-	s.dropUnstakedPositionIfCollected(0, rlm, target.positionId, target.checkpoint, hadPendingIncentives)
+
+	// The pool's incentives become refundable again once no checkpoint owes one.
+	if !target.checkpoint.HasPendingIncentives() {
+		s.addUnsettledIncentiveCount(0, rlm, target.deposit.TargetPoolPath(), -1)
+	}
+
+	s.dropUnstakedPositionIfCollected(target)
 }
 
 // collectTarget is the record a collect runs against: the live deposit while staked, or the
@@ -625,7 +629,7 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 
 	rewardToUser, rewardPenalty := s.deliverEmissionReward(0, rlm, ctx, reward)
 
-	s.markEmissionCollected(0, rlm, target)
+	s.markEmissionCollected(target)
 
 	return rewardToUser, rewardPenalty
 }
@@ -749,7 +753,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 	internalRewardToUser, internalRewardPenalty := s.deliverEmissionReward(0, rlm, ctx, reward)
 
-	s.markEmissionCollected(0, rlm, target)
+	s.markEmissionCollected(target)
 
 	return utils.FormatInt(internalRewardToUser), utils.FormatInt(internalRewardPenalty), toUserExternalReward, toUserExternalPenalty
 }
