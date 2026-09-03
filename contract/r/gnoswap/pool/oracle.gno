@@ -52,7 +52,7 @@ func NewDefaultObservation() *Observation {
 	)
 }
 
-// ObservationTree is a pool-local, sparse oracle ring buffer keyed by index.
+// ObservationTree is a pool-local oracle ring buffer keyed by index.
 // It owns the B+tree key encoding so oracle code works with uint16 indices.
 type ObservationTree struct {
 	tree *bptree.BPTree
