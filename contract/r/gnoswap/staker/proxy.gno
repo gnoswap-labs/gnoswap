@@ -23,19 +23,49 @@ func UnStakeToken(cur realm, positionId uint64) string {
 	return getImplementation().UnStakeToken(0, cur, positionId)
 }
 
-// CollectReward collects accumulated rewards from a staked position.
+// CollectReward collects both the GNS emission and the external incentive rewards of a staked position.
 //
 // Parameters:
 //   - positionId: ID of the staked position
 //
 // Returns:
-//   - string: pool path
-//   - string: staking details
-//   - map[string]int64: internal rewards
-//   - map[string]int64: external rewards
+//   - string: GNS emission amount sent to the user
+//   - string: GNS emission penalty amount sent to the community pool
+//   - map[string]int64: external reward amount per reward token
+//   - map[string]int64: external penalty amount per reward token
 func CollectReward(cur realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
-	poolPath, stakingDetails, internalRewards, externalRewards := getImplementation().CollectReward(0, cur, positionId)
-	return poolPath, stakingDetails, cloneStringInt64Map(internalRewards), cloneStringInt64Map(externalRewards)
+	emissionToUser, emissionPenalty, externalRewards, externalPenalties := getImplementation().CollectReward(0, cur, positionId)
+	return emissionToUser, emissionPenalty, cloneStringInt64Map(externalRewards), cloneStringInt64Map(externalPenalties)
+}
+
+// CollectEmissionReward collects only the GNS emission reward of a staked position.
+//
+// External incentive rewards keep accruing; collect them with CollectExternalIncentiveReward.
+//
+// Parameters:
+//   - positionId: ID of the staked position
+//
+// Returns:
+//   - int64: GNS emission amount sent to the user
+//   - int64: GNS emission penalty amount sent to the community pool
+func CollectEmissionReward(cur realm, positionId uint64) (int64, int64) {
+	return getImplementation().CollectEmissionReward(0, cur, positionId)
+}
+
+// CollectExternalIncentiveReward collects one external incentive reward of a staked position.
+//
+// The GNS emission reward and every other incentive keep accruing; collect the emission reward with
+// CollectEmissionReward and the other incentives by calling this with their own incentive id.
+//
+// Parameters:
+//   - positionId: ID of the staked position
+//   - incentiveId: ID of the external incentive to collect
+//
+// Returns:
+//   - int64: reward amount sent to the user
+//   - int64: penalty amount kept by the incentive
+func CollectExternalIncentiveReward(cur realm, positionId uint64, incentiveId string) (int64, int64) {
+	return getImplementation().CollectExternalIncentiveReward(0, cur, positionId, incentiveId)
 }
 
 // SetPoolTier sets the reward tier for a pool.
