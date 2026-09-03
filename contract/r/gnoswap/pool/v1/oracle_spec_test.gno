@@ -61,7 +61,7 @@ func TestOracleGrow(cur realm, t *testing.T) {
 		{"increases the cardinality next for the first call", testGrowIncreasesCardinalityNext},
 		{"does not touch the first slot", testGrowDoesNotTouchFirstSlot},
 		{"is no op if oracle is already gte that size", testGrowNoOpIfAlreadyLarge},
-		{"adds data to all the slots", testGrowAddsDataToSlots},
+		{"does not allocate uninitialized slots", testGrowDoesNotAllocateUninitializedSlots},
 	}
 
 	for _, tt := range tests {
@@ -109,17 +109,14 @@ func testGrowNoOpIfAlreadyLarge(t *testing.T) {
 	uassert.Equal(t, uint16(5), newCard)
 }
 
-func testGrowAddsDataToSlots(t *testing.T) {
+func testGrowDoesNotAllocateUninitializedSlots(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewPoolObservationsTree(currentTime)
 	_, err := grow(os, 1, 5)
 	uassert.NoError(t, err)
 
 	for i := uint16(1); i < 5; i++ {
-		obs := mustObservation(os, i)
-		uassert.Equal(t, "0", obs.SecondsPerLiquidityCumulativeX128())
-		uassert.Equal(t, int64(0), obs.TickCumulative())
-		uassert.False(t, obs.Initialized())
+		uassert.False(t, os.Has(i))
 	}
 }
 
@@ -313,10 +310,7 @@ func testAccumulatesLiquidity(t *testing.T) {
 	uassert.Equal(t, "1984980473705474370203018543351981233493", obs3.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, currentTime+12, obs3.BlockTimestamp())
 
-	obs4, ok := os.Get(4)
-	if ok {
-		uassert.False(t, obs4.Initialized())
-	}
+	uassert.False(t, os.Has(4))
 }
 
 func TestOracleObserve(cur realm, t *testing.T) {

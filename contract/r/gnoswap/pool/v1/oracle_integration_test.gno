@@ -260,7 +260,7 @@ func TestObservationTree_BoundaryConditions(cur realm, t *testing.T) {
 	})
 }
 
-// After grow, all slots in [currentCardinality, nextCardinality) should exist but have initialized==false
+// Grow reserves logical capacity without allocating sparse tree entries.
 func TestObservationTree_GrowInvariants(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewPoolObservationsTree(currentTime)
@@ -273,19 +273,10 @@ func TestObservationTree_GrowInvariants(cur realm, t *testing.T) {
 	uassert.NoError(t, err, "Should grow successfully")
 	uassert.Equal(t, nextCard, newCardinality, "Should return new cardinality")
 
-	// Verify all slots are created
-	for i := uint16(0); i < nextCard; i++ {
-		obs := mustObservation(os, i)
-		uassert.NotNil(t, obs, "Observation slot should exist")
-
-		// Check initialization status
-		if i == 0 {
-			// First slot should be initialized from newObservationTree
-			uassert.True(t, obs.Initialized(), "Slot 0 should be initialized")
-		} else if i >= currentCard && i < nextCard {
-			// New slots should NOT be initialized by grow
-			uassert.False(t, obs.Initialized(), "New slot should not be initialized")
-		}
+	obs0 := mustObservation(os, 0)
+	uassert.True(t, obs0.Initialized(), "Slot 0 should remain initialized")
+	for i := currentCard; i < nextCard; i++ {
+		uassert.False(t, os.Has(i), "Grow must not allocate an uninitialized slot")
 	}
 
 	// Test growing again
@@ -294,11 +285,9 @@ func TestObservationTree_GrowInvariants(cur realm, t *testing.T) {
 	uassert.NoError(t, err, "Should grow successfully again")
 	uassert.Equal(t, newCard2, newCardinality2, "Should return new cardinality")
 
-	// Verify new slots
+	// Verify the additional logical slots remain absent.
 	for i := nextCard; i < newCard2; i++ {
-		obs := mustObservation(os, i)
-		uassert.NotNil(t, obs, "Observation slot should exist")
-		uassert.False(t, obs.Initialized(), "New slot should not be initialized")
+		uassert.False(t, os.Has(i), "Grow must not allocate an uninitialized slot")
 	}
 }
 
@@ -428,15 +417,12 @@ func TestObservationTree_ObservationAt(cur realm, t *testing.T) {
 	})
 
 	t.Run("Uninitialized observation", func(cur realm, t *testing.T) {
-		// Grow to create slots (new slots are created with initialized=false)
+		// Grow reserves capacity but leaves uninitialized slots absent.
 		_, err := grow(os, 1, 5)
 		uassert.NoError(t, err, "Should grow successfully")
 
-		// observationAt should return uninitialized observation (without error)
-		obs, err := observationAt(os, 3)
-		uassert.NoError(t, err, "Should return observation even if uninitialized")
-		uassert.NotNil(t, obs, "Observation should not be nil")
-		uassert.False(t, obs.Initialized(), "Observation should be uninitialized")
+		_, err = observationAt(os, 3)
+		uassert.Error(t, err, "Should error for an absent uninitialized observation")
 	})
 }
 

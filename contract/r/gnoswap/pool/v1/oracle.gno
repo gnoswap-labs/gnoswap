@@ -187,13 +187,9 @@ func grow(observations *pl.ObservationTree, current, next uint16) (uint16, error
 		return current, errors.New("next exceeds maximum")
 	}
 
-	// This is more efficient than checking all slots from 0
-	for i := current; i < next; i++ {
-		observation := pl.NewDefaultObservation()
-		observation.SetBlockTimestamp(1)
-		observations.Set(i, observation)
-	}
-
+	// ObservationTree is sparse: an absent index is an uninitialized
+	// observation. Reserve the logical capacity in Slot0 without creating
+	// placeholder tree entries; writeObservation creates entries on demand.
 	return next, nil
 }
 
