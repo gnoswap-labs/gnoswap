@@ -14,7 +14,7 @@ Core AMM. All pools live in a single singleton realm.
 
 ## Rules
 
-- **Slot0**: holds `sqrtPriceX96`, `tick`, `unlocked`. Persist reentrancy lock via `SetSlot0(...)` — local copy mutation has no effect.
+- **Slot0**: holds `sqrtPriceX96`, `tick`, `unlocked`, and the oracle's `observationIndex`, `observationCardinality`, and `observationCardinalityNext`. `ObservationState` stores only the observation buffer. Persist changes via `SetSlot0(...)` — local copy mutation has no effect.
 - **Oracle**: write with **pre-swap** tick and liquidity. Post-swap values produce wrong TWAP.
 - **feeGrowthOutside** on ticks: invert correctly at every `tickCross`.
 - **Protocol fee**: capped at 25% of swap fees per token. Validate upper bound on any change.

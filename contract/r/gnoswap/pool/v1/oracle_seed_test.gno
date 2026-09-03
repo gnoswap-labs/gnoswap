@@ -30,7 +30,7 @@ func TestTickTransitionSeedsOracleFromSwapStartTick(cur realm, t *testing.T) {
 		liquidity:           u256.One(),
 		feeGrowthGlobalX128: u256.Zero(),
 	}
-	cache := newSwapCache(0, u256.One(), currentTime)
+	cache := newSwapCache(0, u256.One(), currentTime, pool.Slot0())
 	step := StepComputations{tickNext: crossedTick, initialized: true}
 
 	getMockInstance().tickTransition(step, false, state, pool, cache, nil)

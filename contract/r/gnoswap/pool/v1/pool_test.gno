@@ -139,15 +139,17 @@ func addLiquidityWithValidation(cur realm, t *testing.T, pool *pl.Pool, scenario
 func verifyPriceCumulativeAccuracy(t *testing.T, pool *pl.Pool, timeElapsed int64, expectedTick int32) {
 	t.Helper()
 
-	lastObs, _ := lastObservation(pool.ObservationState())
+	slot0 := pool.Slot0()
+	lastObs, _ := observationAt(pool.ObservationState(), slot0.ObservationIndex())
 	beforeCumulative := lastObs.TickCumulative()
 	beforeTime := lastObs.BlockTimestamp()
 
 	// Update price cumulative
 	observationState := pool.ObservationState()
-	writeObservation(observationState, beforeTime+timeElapsed, expectedTick, pool.Liquidity())
+	writeObservationWithSlot0(observationState, &slot0, beforeTime+timeElapsed, expectedTick, pool.Liquidity())
+	pool.SetSlot0(slot0)
 
-	afterObservation, _ := lastObservation(pool.ObservationState())
+	afterObservation, _ := observationAt(pool.ObservationState(), slot0.ObservationIndex())
 	afterCumulative := afterObservation.TickCumulative()
 	actualIncrease := afterCumulative - beforeCumulative
 	expectedIncrease := int64(expectedTick) * timeElapsed
@@ -488,9 +490,6 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 			pool.SetSlot0(slot0)
 
 			observationState := pl.NewObservationState(100)
-			observationState.SetIndex(0)
-			observationState.SetCardinality(1)
-			observationState.SetCardinalityNext(1)
 			obs := pl.NewObservation(
 				100,
 				5000000000,
@@ -501,19 +500,22 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 			pool.SetObservationState(observationState)
 			pool.SetLiquidity(u256.MustFromDecimal(tt.liquidity))
 
-			lastObs, _ := lastObservation(pool.ObservationState())
+			slot0 = pool.Slot0()
+			lastObs, _ := observationAt(pool.ObservationState(), slot0.ObservationIndex())
 			beforeTickCumulative := lastObs.TickCumulative()
 
 			observationState = pool.ObservationState()
-			lastObs, err := lastObservation(observationState)
+			lastObs, err := observationAt(observationState, slot0.ObservationIndex())
 
 			uassert.NoError(t, err, "Last observation should succeed")
 			currentTime := lastObs.BlockTimestamp() + tt.timeElapsed
 
 			// When: Execute accumulation calculation
 			observationState2 := pool.ObservationState()
-			writeObservation(observationState2, currentTime, tt.initialTick, pool.Liquidity())
-			lastObs, _ = lastObservation(observationState2)
+			slot0 = pool.Slot0()
+			writeObservationWithSlot0(observationState2, &slot0, currentTime, tt.initialTick, pool.Liquidity())
+			pool.SetSlot0(slot0)
+			lastObs, _ = observationAt(observationState2, slot0.ObservationIndex())
 			tickCumulative := lastObs.TickCumulative()
 			lastUpdateTime := lastObs.BlockTimestamp()
 
