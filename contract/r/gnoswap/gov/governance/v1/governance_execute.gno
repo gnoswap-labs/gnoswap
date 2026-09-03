@@ -68,6 +68,10 @@ func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 		panic(err)
 	}
 
+	if err := gv.removeActiveProposal(0, rlm, proposal); err != nil {
+		panic(err)
+	}
+
 	// Emit execution event for tracking and auditing
 	chain.Emit(
 		"Execute",
@@ -172,6 +176,10 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 	// Attempt to cancel the proposal
 	proposal, err := gv.cancel(proposalID, currentAt, currentHeight, caller)
 	if err != nil {
+		panic(err)
+	}
+
+	if err := gv.removeActiveProposal(0, rlm, proposal); err != nil {
 		panic(err)
 	}
 

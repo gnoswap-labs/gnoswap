@@ -48,9 +48,8 @@ func setupGetterTestWithProposal(cur realm, t *testing.T) *governanceV1 {
 		runtime.ChainHeight(),
 	)
 
-	gv.store.SetProposal(0, cur, 1, proposal)
+	uassert.True(t, gv.addProposal(0, cur, proposal))
 	gv.store.GetProposalCounter().Next()
-	gv.store.AddUserProposal(0, cur, "g1proposer", 1)
 
 	return gv
 }
@@ -928,6 +927,43 @@ func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPruneInactiveProposals_RemovesTerminalIndexEntries(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	expired := governance.NewProposal(
+		1,
+		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000, 1000),
+		governance.NewProposalMetadata("expired", "expired"),
+		governance.NewProposalData(governance.Text, nil, nil),
+		address("g1expired"),
+		1,
+		now-1000,
+		runtime.ChainHeight(),
+	)
+	active := governance.NewProposal(
+		2,
+		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now, 1000),
+		governance.NewProposalMetadata("active", "active"),
+		governance.NewProposalData(governance.Text, nil, nil),
+		address("g1active"),
+		1,
+		now,
+		runtime.ChainHeight(),
+	)
+	uassert.True(t, gv.addProposal(0, cur, expired))
+	uassert.True(t, gv.addProposal(0, cur, active))
+
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now) == nil)
+
+	uassert.Equal(t, 1, store.GetActiveProposalsBySnapshot().Size())
+	snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
+	uassert.True(t, hasActive)
+	uassert.Equal(t, active.SnapshotTime(), snapshotTime)
 }
 
 // ==================================
