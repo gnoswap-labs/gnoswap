@@ -5,7 +5,7 @@
 
 set -e
 
-OLD_ADDRESS="g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"
+OLD_ADDRESS="g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz"
 
 # Static list of files to process (from commit 90bfb4852a2fc9b8de45918050ff2d826ddb5ec2)
 TARGET_FILES=(
