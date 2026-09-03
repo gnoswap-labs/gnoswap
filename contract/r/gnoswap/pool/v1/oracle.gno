@@ -162,11 +162,6 @@ func writeObservation(
 
 	indexUpdated = (index + 1) % cardinalityUpdated
 
-	// Ensure the slot exists before writing
-	if _, ok := os.ObservationAt(indexUpdated); !ok {
-		os.SetObservation(indexUpdated, pl.NewDefaultObservation())
-	}
-
 	observation, err := transform(last, blockTimestamp, tick, liquidity)
 	if err != nil {
 		return 0, 0, err
