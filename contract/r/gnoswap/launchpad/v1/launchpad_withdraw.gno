@@ -146,10 +146,10 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Depo
 	// Finalize withdrawal
 	withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
 
-	// Remove reward state from BPTree after withdrawal
-	// This improves iteration performance for calculateClaimableRewardsForActiveDeposits
-	// and prevents accessing reward state for already withdrawn deposits
-	removeRewardState(rewardManager, deposit.ID())
+	// Remove the reward state and its reserved active claim after withdrawal.
+	if err := removeRewardState(rewardManager, deposit.ID()); err != nil {
+		return "", 0, err
+	}
 
 	// Store updated deposit in state
 	deposits := lp.store.GetDeposits()

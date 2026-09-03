@@ -241,8 +241,8 @@ func collectReward(cur realm, username string, depositId string, addr address) {
 //
 // [SCENARIO] 8. Admin calls TransferLeftFromProjectByAdmin
 // [INFO] Admin transferring remaining rewards to project recipient
-// [INFO] Launchpad OBL changed: -900000002
-// [INFO] Recipient OBL changed: 900000002
+// [INFO] Launchpad OBL changed: -900000001
+// [INFO] Recipient OBL changed: 900000001
 //
 // [SCENARIO] 9. Collect reward for Alice
 // [INFO] Collecting reward for Alice address: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh
