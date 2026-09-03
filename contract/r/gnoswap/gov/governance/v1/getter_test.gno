@@ -954,7 +954,7 @@ func TestPruneInactiveProposals_RemovesTerminalIndexEntries(cur realm, t *testin
 
 	uassert.True(t, gv.pruneInactiveProposals(0, cur, now) == nil)
 
-	uassert.Equal(t, 2, store.GetActiveProposals().Size())
+	uassert.Equal(t, 1, store.GetActiveProposalsBySnapshot().Size())
 	snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
 	uassert.True(t, hasActive)
 	uassert.Equal(t, active.SnapshotTime(), snapshotTime)

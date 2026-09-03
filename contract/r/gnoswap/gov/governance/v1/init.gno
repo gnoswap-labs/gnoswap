@@ -2,7 +2,6 @@ package governance
 
 import (
 	"strconv"
-	"time"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -67,24 +66,14 @@ func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore
 		}
 	}
 
-	if !governanceStore.HasActiveProposalsStoreKey() {
-		activeProposals := governance.NewActiveProposalTree()
-		current := time.Now().Unix()
-		for id := int64(1); id <= governanceStore.GetProposalCounter().Get(); id++ {
-			proposal, exists := governanceStore.GetProposal(id)
-			if !exists || !NewProposalResolver(proposal).IsActive(current) {
-				continue
-			}
-			activeProposals.Set(activeProposalSnapshotKey(proposal), proposal.ID())
-			deadline := proposal.Status().Schedule().VotingEndTime()
-			if deadline <= current {
-				deadline = proposal.Status().Schedule().ExpiredTime()
-			}
-			activeProposals.Set(activeProposalDeadlineKey(proposal, deadline), proposal.ID())
-		}
 
-		err := governanceStore.SetActiveProposals(0, rlm, activeProposals)
-		if err != nil {
+	if !governanceStore.HasActiveProposalsBySnapshotStoreKey() {
+		if err := governanceStore.SetActiveProposalsBySnapshot(0, rlm, governance.NewActiveProposalTree()); err != nil {
+			return err
+		}
+	}
+	if !governanceStore.HasActiveProposalsByDeadlineStoreKey() {
+		if err := governanceStore.SetActiveProposalsByDeadline(0, rlm, governance.NewActiveProposalTree()); err != nil {
 			return err
 		}
 	}

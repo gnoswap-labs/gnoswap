@@ -21,8 +21,9 @@ const (
 
 	StoreKeyConfigs StoreKey = "configs" // Configurations BPTree
 
-	StoreKeyProposals       StoreKey = "proposals"       // Proposals BPTree
-	StoreKeyActiveProposals StoreKey = "activeProposals" // Active proposals by snapshot time BPTree
+	StoreKeyProposals                  StoreKey = "proposals"
+	StoreKeyActiveProposalsBySnapshot  StoreKey = "activeProposalsBySnapshot"
+	StoreKeyActiveProposalsByDeadline  StoreKey = "activeProposalsByDeadline"
 
 	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos BPTree
 
@@ -203,31 +204,33 @@ func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, propos
 	return s.kvStore.Set(0, rlm, StoreKeyProposals.String(), proposals)
 }
 
-// Active proposal methods
-func (s *governanceStore) HasActiveProposalsStoreKey() bool {
-	return s.kvStore.Has(StoreKeyActiveProposals.String())
+func (s *governanceStore) HasActiveProposalsBySnapshotStoreKey() bool {
+	return s.kvStore.Has(StoreKeyActiveProposalsBySnapshot.String())
 }
-
-func (s *governanceStore) GetActiveProposals() *bptree.BPTree {
-	result, err := s.kvStore.Get(StoreKeyActiveProposals.String())
-	if err != nil {
-		panic(err)
-	}
-
-	proposals, ok := result.(*bptree.BPTree)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
-	}
-
-	return proposals
+func (s *governanceStore) GetActiveProposalsBySnapshot() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyActiveProposalsBySnapshot.String())
+	if err != nil { panic(err) }
+	tree, ok := result.(*bptree.BPTree)
+	if !ok { panic(ufmt.Sprintf("failed to cast active proposal snapshot index: %T", result)) }
+	return tree
 }
-
-func (s *governanceStore) SetActiveProposals(_ int, rlm realm, proposals *bptree.BPTree) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
-
-	return s.kvStore.Set(0, rlm, StoreKeyActiveProposals.String(), proposals)
+func (s *governanceStore) SetActiveProposalsBySnapshot(_ int, rlm realm, tree *bptree.BPTree) error {
+	if !rlm.IsCurrent() { return errors.New(ErrSpoofedRealm) }
+	return s.kvStore.Set(0, rlm, StoreKeyActiveProposalsBySnapshot.String(), tree)
+}
+func (s *governanceStore) HasActiveProposalsByDeadlineStoreKey() bool {
+	return s.kvStore.Has(StoreKeyActiveProposalsByDeadline.String())
+}
+func (s *governanceStore) GetActiveProposalsByDeadline() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyActiveProposalsByDeadline.String())
+	if err != nil { panic(err) }
+	tree, ok := result.(*bptree.BPTree)
+	if !ok { panic(ufmt.Sprintf("failed to cast active proposal deadline index: %T", result)) }
+	return tree
+}
+func (s *governanceStore) SetActiveProposalsByDeadline(_ int, rlm realm, tree *bptree.BPTree) error {
+	if !rlm.IsCurrent() { return errors.New(ErrSpoofedRealm) }
+	return s.kvStore.Set(0, rlm, StoreKeyActiveProposalsByDeadline.String(), tree)
 }
 
 // Proposal User Voting Infos methods

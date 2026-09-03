@@ -136,10 +136,12 @@ type IGovernanceStore interface {
 	SetProposal(_ int, rlm realm, proposalID int64, proposal *Proposal) error
 	SetProposals(_ int, rlm realm, proposals *bptree.BPTree) error
 
-	// Active proposal index methods
-	HasActiveProposalsStoreKey() bool
-	GetActiveProposals() *bptree.BPTree
-	SetActiveProposals(_ int, rlm realm, proposals *bptree.BPTree) error
+	HasActiveProposalsBySnapshotStoreKey() bool
+	GetActiveProposalsBySnapshot() *bptree.BPTree
+	SetActiveProposalsBySnapshot(_ int, rlm realm, tree *bptree.BPTree) error
+	HasActiveProposalsByDeadlineStoreKey() bool
+	GetActiveProposalsByDeadline() *bptree.BPTree
+	SetActiveProposalsByDeadline(_ int, rlm realm, tree *bptree.BPTree) error
 
 	// Proposal voting info methods
 	HasProposalUserVotingInfosStoreKey() bool
