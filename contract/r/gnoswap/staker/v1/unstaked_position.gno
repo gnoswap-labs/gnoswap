@@ -77,7 +77,20 @@ func (s *stakerV1) uncollectedIncentiveCountOf(incentiveId string) int64 {
 
 // addUncollectedIncentiveCount moves the incentive's count by delta, dropping the entry at zero.
 func (s *stakerV1) addUncollectedIncentiveCount(incentiveId string, delta int64) {
-	next := gnsmath.SafeAddInt64(s.uncollectedIncentiveCountOf(incentiveId), delta)
+	addUncollectedIncentiveCountTo(s.store.GetUncollectedIncentiveCounts(), incentiveId, delta)
+}
+
+func addUncollectedIncentiveCountTo(counts *bptree.BPTree, incentiveId string, delta int64) {
+	count := int64(0)
+	if value := counts.Get(incentiveId); value != nil {
+		casted, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("failed to cast uncollected incentive count to int64: %T", value))
+		}
+		count = casted
+	}
+
+	next := gnsmath.SafeAddInt64(count, delta)
 	if next < 0 {
 		panic(makeErrorWithDetails(
 			errCalculationError,
@@ -85,7 +98,6 @@ func (s *stakerV1) addUncollectedIncentiveCount(incentiveId string, delta int64)
 		))
 	}
 
-	counts := s.store.GetUncollectedIncentiveCounts()
 	if next == 0 {
 		counts.Remove(incentiveId)
 		return
@@ -127,6 +139,7 @@ func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, d
 
 	lowerTick := poolResolver.GetOrNewTick(deposit.TickLower())
 	upperTick := poolResolver.GetOrNewTick(deposit.TickUpper())
+	incentiveIds := deposit.GetExternalIncentiveIdList()
 
 	position := sr.NewUnstakedPosition(
 		deposit,
@@ -140,13 +153,14 @@ func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, d
 		tierRatio,
 		tierCount,
 		s.GetUnstakingFee(),
-		deposit.GetExternalIncentiveIdList(),
+		incentiveIds,
 	)
 
 	s.getUnstakedPositions().set(positionId, position)
 
-	for _, incentiveId := range deposit.GetExternalIncentiveIdList() {
-		s.addUncollectedIncentiveCount(incentiveId, 1)
+	counts := s.store.GetUncollectedIncentiveCounts()
+	for _, incentiveId := range incentiveIds {
+		addUncollectedIncentiveCountTo(counts, incentiveId, 1)
 	}
 }
 
