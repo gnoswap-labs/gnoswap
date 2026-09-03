@@ -224,17 +224,13 @@ func newTwapConsistencyPool(tt twapConsistencyCase) *pl.Pool {
 func newTwapConsistencyObservationTree(observations []twapConsistencyObservation) *pl.ObservationTree {
 	os := pl.NewPoolObservationsTree(observations[0].timestamp)
 
-	seeded := make(map[uint16]*pl.Observation)
 	for i, observation := range observations {
-		seeded[uint16(i)] = pl.NewObservation(
+		os.Set(uint16(i), pl.NewObservation(
 			observation.timestamp,
 			observation.tickCumulative,
 			"0",
 			true,
-		)
-	}
-	for index, observation := range seeded {
-		os.Set(index, observation)
+		))
 	}
 
 	return os
