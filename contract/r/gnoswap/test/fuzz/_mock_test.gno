@@ -18,6 +18,7 @@ import (
 
 type mockPoolStore struct {
 	pools                *bptree.BPTree
+	observations         *bptree.BPTree
 	feeAmountTickSpacing map[uint32]int32
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
@@ -42,6 +43,19 @@ func (s *mockPoolStore) GetPools() *bptree.BPTree {
 // SetPools stores the map containing all pool data.
 func (s *mockPoolStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
 	s.pools = pools
+	return nil
+}
+
+func (s *mockPoolStore) HasObservations() bool {
+	return s.observations != nil
+}
+
+func (s *mockPoolStore) GetObservations() *bptree.BPTree {
+	return s.observations
+}
+
+func (s *mockPoolStore) SetObservations(_ int, rlm realm, observations *bptree.BPTree) error {
+	s.observations = observations
 	return nil
 }
 
@@ -194,6 +208,7 @@ func NewMockPoolStoreWithHook(
 
 	return &mockPoolStore{
 		pools:                pool.NewPoolsTree(),
+		observations:         pool.NewObservationsTree(),
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,
@@ -749,8 +764,8 @@ func newMockStakerStore() *MockStakerStore {
 		poolTierGetHalvingBlocksInRange: func(start, end int64) ([]int64, []int64, error) {
 			return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 		},
-		warmupTemplate:                   sr.DefaultWarmupTemplate(),
-		currentSwapBatch:                 swapBatch,
+		warmupTemplate:   sr.DefaultWarmupTemplate(),
+		currentSwapBatch: swapBatch,
 	}
 }
 

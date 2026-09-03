@@ -2,7 +2,6 @@ package pool
 
 import (
 	"chain"
-	"errors"
 	"testing"
 
 	"gno.land/r/gnoswap/gns"
@@ -52,6 +51,8 @@ var (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")
+
+	testObservationTrees = make(map[string]*pl.ObservationTree)
 )
 
 // mustGetPositionByPool returns the position info for a given key.
@@ -464,6 +465,11 @@ func initPoolTest(cur realm, t *testing.T) {
 	t.Helper()
 	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
 
+	// Observation trees are stored independently from pools. Reset the
+	// test-only fixture registry with the mock implementation so no tree from
+	// an earlier test can be reused for a pool path in a new fixture.
+	testObservationTrees = make(map[string]*pl.ObservationTree)
+
 	if !initializedPool {
 		initializedPool = true
 		testing.SetRealm(testing.NewCodeRealm(mockPoolPath))
@@ -505,7 +511,7 @@ type createMockPoolParams struct {
 	ticks                *bptree.BPTree
 	tickBitmaps          map[int16]string
 	positions            *bptree.BPTree
-	observationState     *pl.ObservationState
+	observations         *pl.ObservationTree
 }
 
 func makeMockPool(params createMockPoolParams) *pl.Pool {
@@ -566,8 +572,10 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 	if params.positions != nil {
 		pool.SetPositions(params.positions)
 	}
-	if params.observationState != nil {
-		pool.SetObservationState(params.observationState)
+	if params.observations != nil {
+		setObservationsForTest(pool, params.observations)
+	} else {
+		setObservationsForTest(pool, pl.NewPoolObservationsTree(0))
 	}
 
 	return pool
@@ -584,7 +592,7 @@ func testObservationSlot0(index, cardinality, cardinalityNext uint16) pl.Slot0 {
 // writeObservationWithSlot0 keeps unit-test setup concise while production
 // callers use writeObservation's Uniswap-shaped cursor input/output directly.
 func writeObservationWithSlot0(
-	observations *pl.ObservationState,
+	observations *pl.ObservationTree,
 	slot0 *pl.Slot0,
 	currentTime int64,
 	tick int32,
@@ -608,10 +616,7 @@ func writeObservationWithSlot0(
 }
 
 func increaseObservationCardinalityNextForTest(p *pl.Pool, cardinalityNext uint16) error {
-	observations := p.ObservationState()
-	if observations == nil {
-		return errors.New("observation state not initialized")
-	}
+	observations := observationsForTest(p)
 	slot0 := p.Slot0()
 	cardinalityNextNew, err := grow(observations, slot0.ObservationCardinalityNext(), cardinalityNext)
 	if err != nil {
@@ -622,13 +627,53 @@ func increaseObservationCardinalityNextForTest(p *pl.Pool, cardinalityNext uint1
 	return nil
 }
 
+func observationsForTest(pool *pl.Pool) *pl.ObservationTree {
+	observations, ok := testObservationTrees[pool.PoolPath()]
+	if ok && observations != nil {
+		return observations
+	}
+
+	if mockInstance != nil {
+		value := mockInstance.store.GetObservations().Get(pool.PoolPath())
+		if observations, ok := value.(*pl.ObservationTree); ok && observations != nil {
+			testObservationTrees[pool.PoolPath()] = observations
+			return observations
+		}
+	}
+
+	observations = pl.NewPoolObservationsTree(0)
+	setObservationsForTest(pool, observations)
+	return observations
+}
+
+func mustObservation(observations *pl.ObservationTree, index uint16) *pl.Observation {
+	observation, ok := observations.Get(index)
+	if !ok {
+		panic("missing observation test fixture")
+	}
+	return observation
+}
+
+func setObservationsForTest(pool *pl.Pool, observations *pl.ObservationTree) {
+	if observations == nil {
+		delete(testObservationTrees, pool.PoolPath())
+		if mockInstance != nil {
+			mockInstance.store.GetObservations().Remove(pool.PoolPath())
+		}
+		return
+	}
+	testObservationTrees[pool.PoolPath()] = observations
+	if mockInstance != nil {
+		mockInstance.store.GetObservations().Set(pool.PoolPath(), observations)
+	}
+}
+
 func getMockInstance() *poolV1 {
 	if mockInstance == nil {
 		mockInstance = &poolV1{
 			store: mock.NewMockPoolStore(),
 		}
 	}
-
 	return mockInstance
 }
 

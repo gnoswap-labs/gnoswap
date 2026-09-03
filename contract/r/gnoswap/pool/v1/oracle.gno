@@ -14,14 +14,13 @@ const maxObservationCardinality uint16 = 65535
 
 // oracleConsult calculates the time-weighted average price between two points in time.
 // It returns the arithmetic mean tick and harmonic mean liquidity over the time period.
-func oracleConsult(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
+func oracleConsult(p *pl.Pool, observations *pl.ObservationTree, secondsAgo uint32) (int32, *u256.Uint, error) {
 	if secondsAgo == 0 {
 		return 0, nil, errors.New("secondsAgo must be greater than 0")
 	}
 
-	observationState := p.ObservationState()
-	if observationState == nil {
-		return 0, nil, errors.New("observation state not initialized")
+	if observations == nil {
+		return 0, nil, errors.New("observations not initialized")
 	}
 	slot0 := p.Slot0()
 
@@ -30,7 +29,7 @@ func oracleConsult(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 	blockTimestamp := time.Now().Unix()
 
 	tickCumulatives, secondsPerLiquidityCumulativeX128s, err := observe(
-		observationState,
+		observations,
 		blockTimestamp,
 		secondsAgos,
 		slot0.Tick(),
@@ -70,6 +69,7 @@ func oracleConsult(p *pl.Pool, secondsAgo uint32) (int32, *u256.Uint, error) {
 // snapshotCumulativesInside flow.
 func snapshotCumulativesInside(
 	p *pl.Pool,
+	observations *pl.ObservationTree,
 	tickLower int32,
 	tickUpper int32,
 ) (int64, *u256.Uint, uint32, error) {
@@ -98,14 +98,13 @@ func snapshotCumulativesInside(
 	}
 
 	if slot0.Tick() < tickUpper {
-		observationState := p.ObservationState()
-		if observationState == nil {
-			return 0, nil, 0, errors.New("observation state not initialized")
+		if observations == nil {
+			return 0, nil, 0, errors.New("observations not initialized")
 		}
 
 		currentTime := time.Now().Unix()
 		tickCumulative, secondsPerLiquidityCumulativeX128, err := observeSingle(
-			observationState,
+			observations,
 			currentTime,
 			0,
 			slot0.Tick(),
@@ -171,9 +170,9 @@ func transform(last *pl.Observation, blockTimestamp int64, tick int32, liquidity
 	), nil
 }
 
-func grow(os *pl.ObservationState, current, next uint16) (uint16, error) {
-	if os == nil {
-		return current, errors.New("observation state not initialized")
+func grow(observations *pl.ObservationTree, current, next uint16) (uint16, error) {
+	if observations == nil {
+		return current, errors.New("observations not initialized")
 	}
 
 	if current <= 0 {
@@ -188,18 +187,18 @@ func grow(os *pl.ObservationState, current, next uint16) (uint16, error) {
 		return current, errors.New("next exceeds maximum")
 	}
 
-	// This is more efficient than checking all slots from 0
+	// Reserve every new slot now so the caller that increases capacity pays for
+	// its storage. This matches Uniswap's Oracle.grow behavior and prevents an
+	// unrestricted reservation from shifting allocation cost to later swappers.
 	for i := current; i < next; i++ {
-		observation := pl.NewDefaultObservation()
-		observation.SetBlockTimestamp(1)
-		os.SetObservation(i, observation)
+		observations.Set(i, pl.NewObservation(1, 0, "0", false))
 	}
 
 	return next, nil
 }
 
 func writeObservation(
-	os *pl.ObservationState,
+	observations *pl.ObservationTree,
 	index uint16,
 	blockTimestamp int64,
 	tick int32,
@@ -207,14 +206,14 @@ func writeObservation(
 	cardinality uint16,
 	cardinalityNext uint16,
 ) (indexUpdated uint16, cardinalityUpdated uint16, err error) {
-	if os == nil {
-		return 0, 0, errors.New("observation state not initialized")
+	if observations == nil {
+		return 0, 0, errors.New("observations not initialized")
 	}
 	if cardinality == 0 {
 		return 0, 0, errors.New("observation cardinality must be greater than 0")
 	}
 
-	last, err := observationAt(os, index)
+	last, err := observationAt(observations, index)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -231,20 +230,22 @@ func writeObservation(
 	}
 
 	indexUpdated = (index + 1) % cardinalityUpdated
-
 	observation, err := transform(last, blockTimestamp, tick, liquidity)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	os.SetObservation(indexUpdated, observation)
+	observations.Set(indexUpdated, observation)
 	return indexUpdated, cardinalityUpdated, nil
 }
 
 // observationAt returns the observation at a specific index
 // Returns error if the observation doesn't exist
-func observationAt(os *pl.ObservationState, index uint16) (*pl.Observation, error) {
-	obs, ok := os.ObservationAt(index)
+func observationAt(observations *pl.ObservationTree, index uint16) (*pl.Observation, error) {
+	if observations == nil {
+		return nil, errors.New("observations not initialized")
+	}
+	obs, ok := observations.Get(index)
 	if !ok || obs == nil {
 		return nil, errors.New(errNotInitializedObservation)
 	}
@@ -254,7 +255,7 @@ func observationAt(os *pl.ObservationState, index uint16) (*pl.Observation, erro
 
 // observeSingle returns the data for a single observation at a specific time ago
 func observeSingle(
-	os *pl.ObservationState,
+	observations *pl.ObservationTree,
 	time int64,
 	secondsAgo uint32,
 	tick int32,
@@ -264,7 +265,7 @@ func observeSingle(
 ) (int64, string, error) {
 	if secondsAgo == 0 {
 		// if secondsAgo is 0, return current values
-		last, err := observationAt(os, index)
+		last, err := observationAt(observations, index)
 		if err != nil {
 			return 0, "", err
 		}
@@ -291,7 +292,7 @@ func observeSingle(
 
 	// find the observations before and after the target
 	beforeOrAt, atOrAfter, err := getSurroundingObservations(
-		os,
+		observations,
 		target,
 		tick,
 		index,
@@ -340,7 +341,7 @@ func observeSingle(
 // It uses binary search over the logical time-ordered view of the circular buffer.
 // Logical order starts at (index+1) % cardinality (oldest) and ends at index (latest).
 func getSurroundingObservations(
-	os *pl.ObservationState,
+	observations *pl.ObservationTree,
 	target int64,
 	tick int32,
 	index uint16,
@@ -348,7 +349,7 @@ func getSurroundingObservations(
 	cardinality uint16,
 ) (*pl.Observation, *pl.Observation, error) {
 	// Optimistically set before to the newest observation
-	beforeOrAt, err := observationAt(os, index)
+	beforeOrAt, err := observationAt(observations, index)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -371,9 +372,9 @@ func getSurroundingObservations(
 
 	// Now, set before to the oldest observation
 	start := (index + 1) % cardinality
-	beforeOrAt, err = observationAt(os, start)
+	beforeOrAt, err = observationAt(observations, start)
 	if err != nil || !beforeOrAt.Initialized() {
-		beforeOrAt, err = observationAt(os, 0)
+		beforeOrAt, err = observationAt(observations, 0)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -385,11 +386,11 @@ func getSurroundingObservations(
 	}
 
 	// If we've reached this point, we have to binary search
-	return binarySearch(os, target, index, cardinality)
+	return binarySearch(observations, target, index, cardinality)
 }
 
 func binarySearch(
-	os *pl.ObservationState,
+	observations *pl.ObservationTree,
 	target int64,
 	index uint16,
 	cardinality uint16,
@@ -404,7 +405,7 @@ func binarySearch(
 		i = (l + r) / 2
 
 		beforeIndex := uint16(i % uint64(cardinality))
-		beforeOrAt, err = observationAt(os, beforeIndex)
+		beforeOrAt, err = observationAt(observations, beforeIndex)
 		if err != nil || !beforeOrAt.Initialized() {
 			// we've landed on an uninitialized tick, keep searching higher (more recently)
 			l = i + 1
@@ -412,7 +413,7 @@ func binarySearch(
 		}
 
 		afterIndex := uint16((i + 1) % uint64(cardinality))
-		atOrAfter, err = observationAt(os, afterIndex)
+		atOrAfter, err = observationAt(observations, afterIndex)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -436,7 +437,7 @@ func binarySearch(
 
 // observe returns the cumulative tick and liquidity as of each timestamp secondsAgo from the current time.
 func observe(
-	os *pl.ObservationState,
+	observations *pl.ObservationTree,
 	time int64,
 	secondsAgos []uint32,
 	tick int32,
@@ -454,7 +455,7 @@ func observe(
 
 	for i, secondsAgo := range secondsAgos {
 		tickCumulative, secondsPerLiquidity, err := observeSingle(
-			os,
+			observations,
 			time,
 			secondsAgo,
 			tick,

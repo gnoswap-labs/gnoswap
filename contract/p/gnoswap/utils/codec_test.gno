@@ -7,6 +7,36 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
+func TestUint16Codec(cur realm, t *testing.T) {
+	tests := []struct {
+		value uint16
+		want  [2]byte
+	}{
+		{0, [2]byte{0, 0}},
+		{1, [2]byte{0, 1}},
+		{255, [2]byte{0, 255}},
+		{256, [2]byte{1, 0}},
+		{65535, [2]byte{255, 255}},
+	}
+
+	previous := ""
+	for _, tt := range tests {
+		encoded := EncodeUint16(tt.value)
+		uassert.Equal(t, 2, len(encoded))
+		uassert.Equal(t, tt.want[0], encoded[0])
+		uassert.Equal(t, tt.want[1], encoded[1])
+		uassert.Equal(t, tt.value, DecodeUint16(encoded))
+		if previous != "" && !(previous < encoded) {
+			t.Errorf("encoded keys are not lexicographically ordered: %d", tt.value)
+		}
+		previous = encoded
+	}
+
+	uassert.PanicsWithMessage(t, cur, "invalid uint16 key length: 1", func() {
+		DecodeUint16("x")
+	})
+}
+
 func TestEncodeUint64(t *testing.T) {
 	tests := []struct {
 		name  string

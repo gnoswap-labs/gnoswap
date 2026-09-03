@@ -3,6 +3,7 @@ package pool
 import (
 	"chain"
 	"errors"
+	"time"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/p/gnoswap/utils"
@@ -113,6 +114,12 @@ func (i *poolV1) CreatePool(
 		panic(err)
 	}
 
+	observations := i.store.GetObservations()
+	observations.Set(poolPath, pl.NewPoolObservationsTree(time.Now().Unix()))
+	if err := i.store.SetObservations(0, rlm, observations); err != nil {
+		panic(err)
+	}
+
 	poolCreationFee := i.store.GetPoolCreationFee()
 
 	if poolCreationFee > 0 {
@@ -209,6 +216,29 @@ func (i *poolV1) mustGetPool(poolPath string) (pool *pl.Pool) {
 func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	return i.mustGetPool(poolPath)
+}
+
+func (i *poolV1) getObservations(poolPath string) (*pl.ObservationTree, error) {
+	observations := i.store.GetObservations()
+	value := observations.Get(poolPath)
+	if value == nil {
+		return nil, ufmt.Errorf("expected observations for poolPath(%s) to exist", poolPath)
+	}
+
+	tree, ok := value.(*pl.ObservationTree)
+	if !ok {
+		return nil, ufmt.Errorf("failed to cast observations for poolPath(%s): %T", poolPath, value)
+	}
+
+	return tree, nil
+}
+
+func (i *poolV1) mustGetObservations(poolPath string) *pl.ObservationTree {
+	tree, err := i.getObservations(poolPath)
+	if err != nil {
+		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
+	}
+	return tree
 }
 
 // savePool updates a pool in the pools map and persists to storage.
