@@ -1034,65 +1034,6 @@ func TestGetPositionFeeGrowthInsideLastX128(cur realm, t *testing.T) {
 	}
 }
 
-// TestGetLastObservation tests the GetLastObservation proxy function
-func TestGetLastObservation(cur realm, t *testing.T) {
-	tests := []struct {
-		name              string
-		setup             func(cur realm, t *testing.T)
-		poolPath          string
-		callerRealm       runtime.Realm
-		expectedTick      int64
-		expectedSqrt      string
-		expectedTimestamp int64
-	}{
-		{
-			name: "get last observation is success",
-			setup: func(cur realm, t *testing.T) {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/pool/v1")
-			},
-			poolPath:          "mock_pool_path",
-			callerRealm:       testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedTick:      0,
-			expectedSqrt:      "0",
-			expectedTimestamp: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		// Setup
-		resetTestState(t)
-
-		if tt.setup != nil {
-			tt.setup(cur, t)
-		}
-
-		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetLastObservation", tt.expectedTick, tt.expectedSqrt, tt.expectedTimestamp)
-
-		testing.SetRealm(tt.callerRealm)
-
-		// Action
-		tick, sqrt, timestamp, _ := GetLastObservation(tt.poolPath)
-
-		// Assert
-		if mockPool.Response.CallCount("GetLastObservation") != 1 {
-			t.Error("GetLastObservation was not called on the implementation")
-		}
-		if tick != tt.expectedTick {
-			t.Errorf("GetLastObservation() tick = %v, want %v", tick, tt.expectedTick)
-		}
-		if sqrt != tt.expectedSqrt {
-			t.Errorf("GetLastObservation() sqrt = %v, want %v", sqrt, tt.expectedSqrt)
-		}
-		if timestamp != tt.expectedTimestamp {
-			t.Errorf("GetLastObservation() timestamp = %v, want %v", timestamp, tt.expectedTimestamp)
-		}
-	}
-}
-
 // TestExistsPoolPath tests the ExistsPoolPath proxy function
 func TestExistsPoolPath(cur realm, t *testing.T) {
 	tests := []struct {
@@ -1142,15 +1083,55 @@ func TestExistsPoolPath(cur realm, t *testing.T) {
 	}
 }
 
-// TestGetTWAP tests the GetTWAP proxy function
-func TestGetTWAP(cur realm, t *testing.T) {
+// TestSnapshotCumulativesInside tests the SnapshotCumulativesInside proxy function.
+func TestSnapshotCumulativesInside(cur realm, t *testing.T) {
+	resetTestState(t)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	UpgradeImpl(cross(cur), "gno.land/r/gnoswap/pool/v1")
+
+	mockPool := implementation.(*MockPool)
+	mockPool.Response.Set(
+		"SnapshotCumulativesInside",
+		int64(7),
+		u256.MustFromDecimal("8000"),
+		uint32(9),
+		nil,
+	)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool"))
+
+	// Action
+	tickCumulativeInside, secondsPerLiquidityInsideX128, secondsInside, err := SnapshotCumulativesInside("mock_pool_path", -100, 100)
+	// Assert
+	if err != nil {
+		t.Fatalf("SnapshotCumulativesInside() error = %v", err)
+	}
+	if mockPool.Response.CallCount("SnapshotCumulativesInside") != 1 {
+		t.Error("SnapshotCumulativesInside was not called on the implementation")
+	}
+	if tickCumulativeInside != 7 {
+		t.Errorf("SnapshotCumulativesInside() tick = %v, want %v", tickCumulativeInside, int64(7))
+	}
+	if secondsPerLiquidityInsideX128 != "8000" {
+		t.Errorf("SnapshotCumulativesInside() secondsPerLiquidity = %v, want %v", secondsPerLiquidityInsideX128, "8000")
+	}
+	if secondsInside != 9 {
+		t.Errorf("SnapshotCumulativesInside() seconds = %v, want %v", secondsInside, uint32(9))
+	}
+}
+
+// TestOracleConsult tests the OracleConsult proxy function.
+func TestOracleConsult(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		setup        func(cur realm, t *testing.T)
 		poolPath     string
 		secondsAgo   uint32
 		callerRealm  runtime.Realm
-		expectedTWAP int32
+		expectedTick int32
 	}{
 		{
 			name: "api get twap is success",
@@ -1163,7 +1144,7 @@ func TestGetTWAP(cur realm, t *testing.T) {
 			poolPath:     "mock_pool_path",
 			secondsAgo:   3600,
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedTWAP: 0,
+			expectedTick: 0,
 		},
 	}
 
@@ -1176,19 +1157,19 @@ func TestGetTWAP(cur realm, t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, u256.Zero(), errors.New(""))
+		mockPool.Response.Set("OracleConsult", tt.expectedTick, u256.Zero(), errors.New(""))
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		twap, _, _ := GetTWAP(tt.poolPath, tt.secondsAgo)
+		arithmeticMeanTick, _, _ := OracleConsult(tt.poolPath, tt.secondsAgo)
 
 		// Assert
-		if mockPool.Response.CallCount("GetTWAP") != 1 {
-			t.Error("GetTWAP was not called on the implementation")
+		if mockPool.Response.CallCount("OracleConsult") != 1 {
+			t.Error("OracleConsult was not called on the implementation")
 		}
-		if twap != tt.expectedTWAP {
-			t.Errorf("GetTWAP() = %v, want %v", twap, tt.expectedTWAP)
+		if arithmeticMeanTick != tt.expectedTick {
+			t.Errorf("OracleConsult() = %v, want %v", arithmeticMeanTick, tt.expectedTick)
 		}
 	}
 }

@@ -12,7 +12,6 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
-	pl "gno.land/r/gnoswap/pool"
 )
 
 // Reposition adjusts the price range and liquidity of an existing position.
@@ -118,7 +117,7 @@ func (p *positionV1) Reposition(
 	if err != nil {
 		panic(err)
 	}
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolKey)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := currentPoolObservation(poolKey)
 	if err != nil {
 		panic(err)
 	}

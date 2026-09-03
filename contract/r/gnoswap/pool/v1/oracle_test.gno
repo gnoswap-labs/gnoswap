@@ -250,7 +250,7 @@ func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 }
 
 // Verify TWAP rounding for a variety of tickDelta/secondsAgo combinations
-func TestGetTWAP_RoundingTable(cur realm, t *testing.T) {
+func TestOracleConsult_RoundingTable(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		tickDelta  int64
@@ -300,16 +300,16 @@ func TestGetTWAP_RoundingTable(cur realm, t *testing.T) {
 			slot0.SetObservationCardinalityNext(2)
 			pool.SetSlot0(slot0)
 
-			twapTick, _, err := getTWAP(pool, tt.secondsAgo)
-			uassert.NoError(t, err, "getTWAP should succeed for configured observations")
+			twapTick, _, err := oracleConsult(pool, tt.secondsAgo)
+			uassert.NoError(t, err, "oracleConsult should succeed for configured observations")
 			uassert.Equal(t, tt.expected, twapTick, "unexpected TWAP tick")
 		})
 	}
 }
 
-// TestGetTWAP_HarmonicMeanLiquidity tests harmonic mean liquidity calculation
+// TestOracleConsult_HarmonicMeanLiquidity tests harmonic mean liquidity calculation.
 // Test cases from Uniswap V3 OracleLibrary.spec.ts
-func TestGetTWAP_HarmonicMeanLiquidity(cur realm, t *testing.T) {
+func TestOracleConsult_HarmonicMeanLiquidity(cur realm, t *testing.T) {
 	// Helper function to calculate expected harmonic mean liquidity
 	// Matches Uniswap's calculateHarmonicAvgLiq function
 	calculateHarmonicAvgLiq := func(period uint32, secondsPerLiq0, secondsPerLiq1 *u256.Uint) *u256.Uint {
@@ -368,8 +368,8 @@ func TestGetTWAP_HarmonicMeanLiquidity(cur realm, t *testing.T) {
 			slot0.SetObservationCardinalityNext(2)
 			pool.SetSlot0(slot0)
 
-			arithmeticMeanTick, harmonicMeanLiquidity, err := getTWAP(pool, tt.secondsAgo)
-			uassert.NoError(t, err, "getTWAP should succeed")
+			arithmeticMeanTick, harmonicMeanLiquidity, err := oracleConsult(pool, tt.secondsAgo)
+			uassert.NoError(t, err, "oracleConsult should succeed")
 
 			// Check arithmetic mean tick
 			uassert.Equal(t, tt.expectedArithmeticMeanTick, arithmeticMeanTick, "unexpected arithmetic mean tick")
@@ -388,8 +388,8 @@ func TestGetTWAP_HarmonicMeanLiquidity(cur realm, t *testing.T) {
 	}
 }
 
-// TestGetTWAP_ErrorCases tests error scenarios for TWAP calculation
-func TestGetTWAP_ErrorCases(cur realm, t *testing.T) {
+// TestOracleConsult_ErrorCases tests error scenarios for TWAP calculation.
+func TestOracleConsult_ErrorCases(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		setupPool     func() *pl.Pool
@@ -421,7 +421,7 @@ func TestGetTWAP_ErrorCases(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			pool := tt.setupPool()
-			_, _, err := getTWAP(pool, tt.secondsAgo)
+			_, _, err := oracleConsult(pool, tt.secondsAgo)
 			uassert.ErrorContains(t, err, tt.expectedError)
 		})
 	}

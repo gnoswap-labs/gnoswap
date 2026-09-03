@@ -2,6 +2,7 @@ package pool
 
 import (
 	"errors"
+	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	rotree "gno.land/p/nt/bptree/v0/rotree"
@@ -99,6 +100,77 @@ func (i *poolV1) GetSlot0Unlocked(poolPath string) (bool, error) {
 		return false, err
 	}
 	return pool.Slot0Unlocked(), nil
+}
+
+func (i *poolV1) GetSlot0(poolPath string) pl.Slot0 {
+	return i.mustGetPool(poolPath).Slot0()
+}
+
+func (i *poolV1) GetObservationAt(poolPath string, index uint16) (pl.Observation, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return *pl.NewDefaultObservation(), err
+	}
+
+	// Uniswap's observations(uint256) getter is backed by a fixed-size array:
+	// an in-range but never-written slot returns the zero observation, while an
+	// out-of-range index reverts.
+	if index >= maxObservationCardinality {
+		return *pl.NewDefaultObservation(), makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("observation index %d out of range", index))
+	}
+
+	observationState := pool.ObservationState()
+	if observationState == nil {
+		return *pl.NewDefaultObservation(), nil
+	}
+
+	observation, ok := observationState.ObservationAt(index)
+	if !ok || observation == nil {
+		return *pl.NewDefaultObservation(), nil
+	}
+
+	return *observation.Clone(), nil
+}
+
+// Observe returns the tick and seconds-per-liquidity cumulatives for each
+// requested lookback. It reads the current block timestamp once and never
+// writes an observation, matching Uniswap V3's view-only observe call.
+func (i *poolV1) Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	observationState := pool.ObservationState()
+	if observationState == nil {
+		return nil, nil, errors.New("observation state not initialized")
+	}
+
+	slot0 := pool.Slot0()
+	return observe(
+		observationState,
+		time.Now().Unix(),
+		secondsAgos,
+		slot0.Tick(),
+		slot0.ObservationIndex(),
+		pool.Liquidity(),
+		slot0.ObservationCardinality(),
+	)
+}
+
+// SnapshotCumulativesInside returns the oracle accumulators that accrued while
+// the pool price was inside [tickLower, tickUpper).
+func (i *poolV1) SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, *u256.Uint, uint32, error) {
+	pool, err := i.getPool(poolPath)
+	if err != nil {
+		return 0, nil, 0, err
+	}
+
+	return snapshotCumulativesInside(pool, tickLower, tickUpper)
 }
 
 func (i *poolV1) GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error) {
@@ -382,35 +454,6 @@ func (i *poolV1) ExistsPoolPath(poolPath string) bool {
 	return pools.Has(poolPath)
 }
 
-func (i *poolV1) GetLastObservation(poolPath string) (
-	tickCumulative int64,
-	secondsPerLiquidityCumulativeX128 string,
-	blockTimestamp int64,
-	err error,
-) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return 0, "", 0, err
-	}
-	observationState := pool.ObservationState()
-
-	if observationState == nil {
-		return 0, "0", 0, nil
-	}
-
-	slot0 := pool.Slot0()
-	lastObservation, err := observationAt(observationState, slot0.ObservationIndex())
-	if err != nil {
-		return 0, "0", 0, nil
-	}
-
-	tickCumulative = lastObservation.TickCumulative()
-	secondsPerLiquidityCumulativeX128 = lastObservation.SecondsPerLiquidityCumulativeX128()
-	blockTimestamp = lastObservation.BlockTimestamp()
-
-	return tickCumulative, secondsPerLiquidityCumulativeX128, blockTimestamp, nil
-}
-
 func (i *poolV1) GetPoolCreationFee() int64 {
 	return i.store.GetPoolCreationFee()
 }
@@ -419,20 +462,20 @@ func (i *poolV1) GetWithdrawalFee() uint64 {
 	return i.store.GetWithdrawalFeeBPS()
 }
 
-// GetTWAP returns the time-weighted average price for a pool over a specified period
+// OracleConsult returns the time-weighted average price for a pool over a specified period.
 //
 // Parameters:
 //   - poolPath: The path of the pool (e.g., "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 //   - secondsAgo: Number of seconds ago to calculate TWAP from
 //
-// Returns TWAP tick and error
-func (i *poolV1) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+// Returns the arithmetic mean tick and harmonic mean liquidity.
+func (i *poolV1) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	pool, err := i.getPool(poolPath)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	tick, liquidity, err := getTWAP(pool, secondsAgo)
+	tick, liquidity, err := oracleConsult(pool, secondsAgo)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -509,19 +552,4 @@ func (i *poolV1) GetTickBitmaps(poolPath string, wordPos int16) (string, error) 
 	}
 
 	return tickBitmap, nil
-}
-
-// GetObservationState returns the observation state for a pool.
-func (i *poolV1) GetObservationState(poolPath string) (*pl.ObservationState, error) {
-	pool, err := i.getPool(poolPath)
-	if err != nil {
-		return nil, err
-	}
-
-	observationState := pool.ObservationState()
-	if observationState == nil {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("observation state not found for pool %s", poolPath))
-	}
-
-	return observationState, nil
 }

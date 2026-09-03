@@ -18,6 +18,7 @@ type IPool interface {
 	IPoolManager
 	IPoolPosition
 	IPoolSwap
+	IPoolOracle
 	IPoolGetter
 }
 
@@ -36,15 +37,6 @@ type IPoolManager interface {
 
 	// SetPoolCreationFee sets the pool creation fee.
 	SetPoolCreationFee(_ int, rlm realm, fee int64)
-
-	IncreaseObservationCardinalityNext(
-		_ int,
-		rlm realm,
-		token0Path string,
-		token1Path string,
-		fee uint32,
-		cardinalityNext uint16,
-	)
 }
 
 // IPoolPosition interface defines position management operations.
@@ -151,6 +143,67 @@ type IPoolSwap interface {
 	SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8)
 }
 
+// IPoolOracle defines the pool's Uniswap V3-aligned oracle surface.
+//
+// Its public methods mirror the relevant Uniswap V3 pool-state, derived-state,
+// and action specifications, adapted for GnoSwap's singleton pool realm: every
+// operation identifies its pool with poolPath, and uint values cross the public
+// boundary using GnoSwap types or decimal strings rather than the EVM ABI.
+//
+// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L21-L32
+// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L18-L39
+type IPoolOracle interface {
+	// GetSlot0 returns a safe copy of a pool's price, tick, protocol-fee, lock,
+	// and oracle cursor/capacity state, corresponding to Uniswap V3 slot0().
+	//
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L21-L32
+	GetSlot0(poolPath string) Slot0
+
+	// GetObservationAt returns the observation stored at index, corresponding to
+	// Uniswap V3 observations(uint256). An in-range uninitialized slot returns a
+	// zero observation; an out-of-range index returns an error.
+	//
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L99-L115
+	GetObservationAt(poolPath string, index uint16) (Observation, error)
+
+	// Observe returns tick and seconds-per-liquidity cumulatives for every
+	// requested lookback, corresponding to Uniswap V3 observe(uint32[]).
+	//
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L18-L21
+	Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error)
+
+	// SnapshotCumulativesInside returns accumulators accrued while the pool price
+	// was inside [tickLower, tickUpper), corresponding to Uniswap V3
+	// snapshotCumulativesInside(int24,int24).
+	//
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L23-L39
+	SnapshotCumulativesInside(
+		poolPath string,
+		tickLower int32,
+		tickUpper int32,
+	) (int64, *u256.Uint, uint32, error)
+
+	// OracleConsult returns the arithmetic mean tick and harmonic mean liquidity
+	// over secondsAgo, following Uniswap V3 periphery's OracleLibrary.consult.
+	//
+	// ref: https://github.com/Uniswap/v3-periphery/blob/0682387198a24c7cd63566a2c58398533860a5d1/contracts/libraries/OracleLibrary.sol#L16-L41
+	OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
+
+	// IncreaseObservationCardinalityNext schedules growth of the circular
+	// observation buffer, corresponding to Uniswap V3
+	// increaseObservationCardinalityNext(uint16).
+	//
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolActions.sol#L98-L102
+	IncreaseObservationCardinalityNext(
+		_ int,
+		rlm realm,
+		token0Path string,
+		token1Path string,
+		fee uint32,
+		cardinalityNext uint16,
+	)
+}
+
 // IPoolGetter interface defines data retrieval operations.
 // These methods provide read-only access to pool state and data.
 type IPoolGetter interface {
@@ -171,8 +224,6 @@ type IPoolGetter interface {
 	GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint, error)
 
 	GetLiquidity(poolPath string) (*u256.Uint, error)
-
-	GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64, err error)
 
 	GetPendingProtocolFees() map[string]int64
 
@@ -228,8 +279,6 @@ type IPoolGetter interface {
 
 	GetWithdrawalFee() uint64
 
-	GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
-
 	GetPools() *rotree.ReadOnlyTree
 	GetFeeAmountTickSpacings() map[uint32]int32
 
@@ -239,7 +288,6 @@ type IPoolGetter interface {
 
 	GetTickInfo(poolPath string, tick int32) (TickInfo, error)
 	GetTickBitmaps(poolPath string, wordPos int16) (string, error)
-	GetObservationState(poolPath string) (*ObservationState, error)
 }
 
 // IPoolStore interface defines the storage abstraction for pool data.

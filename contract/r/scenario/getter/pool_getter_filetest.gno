@@ -123,10 +123,6 @@ func main(cur realm) {
 	getLiquidity(cur)
 	println()
 
-	println("[SCENARIO] 2.16. GetLastObservation")
-	getLastObservation(cur)
-	println()
-
 	println("[SCENARIO] 2.17. GetPoolCreationFee")
 	getPoolCreationFee(cur)
 	println()
@@ -255,8 +251,8 @@ func main(cur realm) {
 	getWithdrawalFee(cur)
 	println()
 
-	println("[SCENARIO] 2.50. GetTWAP")
-	getTWAP(cur)
+	println("[SCENARIO] 2.50. OracleConsult")
+	oracleConsult(cur)
 	println()
 
 	println("[SCENARIO] 2.51. GetPool")
@@ -275,8 +271,8 @@ func main(cur realm) {
 	getPosition(cur)
 	println()
 
-	println("[SCENARIO] 2.55. GetObservationState")
-	getObservationState(cur)
+	println("[SCENARIO] 2.55. Observe")
+	observe(cur)
 	println()
 }
 
@@ -480,16 +476,6 @@ func getLiquidity(cur realm) {
 
 	liquidity, _ := pl.GetLiquidity(poolPath)
 	println("[EXPECTED] liquidity:", liquidity)
-}
-
-func getLastObservation(cur realm) {
-	println("[INFO] Check GetLastObservation method")
-	testing.SetRealm(adminRealm)
-
-	tickCumulative, secondsPerLiquidityCumulativeX128, blockTimestamp, _ := pl.GetLastObservation(poolPath)
-	ufmt.Printf("[EXPECTED] tickCumulative: %d\n", tickCumulative)
-	println("[EXPECTED] secondsPerLiquidityCumulativeX128:", secondsPerLiquidityCumulativeX128)
-	ufmt.Printf("[EXPECTED] blockTimestamp: %d\n", blockTimestamp)
 }
 
 func getPoolCreationFee(cur realm) {
@@ -764,13 +750,13 @@ func getWithdrawalFee(cur realm) {
 	ufmt.Printf("[EXPECTED] withdrawal fee: %d\n", withdrawalFee)
 }
 
-func getTWAP(cur realm) {
-	println("[INFO] Check GetTWAP method")
+func oracleConsult(cur realm) {
+	println("[INFO] Check OracleConsult method")
 	testing.SetRealm(adminRealm)
 
-	arithmeticMeanTick, harmonicMeanLiquidity, err := pl.GetTWAP(poolPath, 0)
+	arithmeticMeanTick, harmonicMeanLiquidity, err := pl.OracleConsult(poolPath, 0)
 	if err != nil {
-		println("[EXPECTED] GetTWAP error:", err.Error())
+		println("[EXPECTED] OracleConsult error:", err.Error())
 	} else {
 		ufmt.Printf("[EXPECTED] arithmeticMeanTick: %d\n", arithmeticMeanTick)
 		println("[EXPECTED] harmonicMeanLiquidity:", harmonicMeanLiquidity)
@@ -839,20 +825,18 @@ func getPosition(cur realm) {
 	}
 }
 
-func getObservationState(cur realm) {
-	println("[INFO] Check GetObservationState method")
+func observe(cur realm) {
+	println("[INFO] Check Observe method")
 	testing.SetRealm(adminRealm)
 
-	observationState, err := pl.GetObservationState(poolPath)
+	tickCumulatives, secondsPerLiquidityCumulativeX128s, err := pl.Observe(poolPath, []uint32{0})
 	if err != nil {
-		println("[EXPECTED] GetObservationState error:", err.Error())
+		println("[EXPECTED] Observe error:", err.Error())
 		return
 	}
 
-	slot0 := pl.GetPools().Get(poolPath).(*pl.Pool).Slot0()
-	ufmt.Printf("[EXPECTED] observationState observations: %d\n", len(observationState.Observations()))
-	ufmt.Printf("[EXPECTED] slot0 observationIndex: %d\n", slot0.ObservationIndex())
-	ufmt.Printf("[EXPECTED] slot0 observationCardinality: %d\n", slot0.ObservationCardinality())
+	ufmt.Printf("[EXPECTED] tick cumulatives: %d\n", len(tickCumulatives))
+	ufmt.Printf("[EXPECTED] seconds per liquidity cumulatives: %d\n", len(secondsPerLiquidityCumulativeX128s))
 }
 
 // Output:
@@ -941,12 +925,6 @@ func getObservationState(cur realm) {
 // [SCENARIO] 2.14. GetLiquidity
 // [INFO] Check GetLiquidity method
 // [EXPECTED] liquidity: 100000000
-//
-// [SCENARIO] 2.16. GetLastObservation
-// [INFO] Check GetLastObservation method
-// [EXPECTED] tickCumulative: 0
-// [EXPECTED] secondsPerLiquidityCumulativeX128: 0
-// [EXPECTED] blockTimestamp: 1234567890
 //
 // [SCENARIO] 2.17. GetPoolCreationFee
 // [INFO] Check GetPoolCreationFee method
@@ -1085,9 +1063,9 @@ func getObservationState(cur realm) {
 // [INFO] Check GetWithdrawalFee method
 // [EXPECTED] withdrawal fee: 100
 //
-// [SCENARIO] 2.50. GetTWAP
-// [INFO] Check GetTWAP method
-// [EXPECTED] GetTWAP error: secondsAgo must be greater than 0
+// [SCENARIO] 2.50. OracleConsult
+// [INFO] Check OracleConsult method
+// [EXPECTED] OracleConsult error: secondsAgo must be greater than 0
 //
 // [SCENARIO] 2.51. GetPool
 // [INFO] Check GetPools entry
@@ -1116,8 +1094,8 @@ func getObservationState(cur realm) {
 // [EXPECTED] position tokensOwed0: 0
 // [EXPECTED] position tokensOwed1: 0
 //
-// [SCENARIO] 2.55. GetObservationState
-// [INFO] Check GetObservationState method
-// [EXPECTED] observationState observations: 1
-// [EXPECTED] slot0 observationIndex: 0
-// [EXPECTED] slot0 observationCardinality: 1
+// [SCENARIO] 2.55. Observe
+// [INFO] Check Observe method
+// [EXPECTED] tick cumulatives: 1
+// [EXPECTED] seconds per liquidity cumulatives: 1
+//
