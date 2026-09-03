@@ -16,7 +16,7 @@
 //   - CreatePool                          (pools BPTree insert: second pool)
 //   - Mint                                (positions/ticks BPTree + slot0 RMW)
 //   - Swap                                (slot0 + fee growth + bitmaps RMW)
-//   - Burn / Collect / HandleWithdrawalFee (driven via position.DecreaseLiquidity,
+//   - Burn / CollectSwapFee / Collect (driven via position.DecreaseLiquidity,
 //     which is the only legitimate caller of
 //     the position-role-gated pool entry points)
 //   - CollectProtocol                     (protocol fee accounting RMW)
@@ -109,9 +109,9 @@ func main(cur realm) {
 	createSecondPoolV2Valid(cur)
 	println()
 
-	println("[SCENARIO] 7. Burn + Collect + HandleWithdrawalFee through v2_valid")
+	println("[SCENARIO] 7. Burn + Collect through v2_valid")
 	// position.DecreaseLiquidity is the legitimate caller of the position-role-gated
-	// pool entry points Burn, Collect and HandleWithdrawalFee. It drives all three
+	// pool entry points Burn, CollectSwapFee and Collect. It drives all three
 	// in a single call against the v1-created position 1, RMWing the v1 ticks /
 	// positions BPTrees and the protocol-fee accounting.
 	decreaseLiquidityV2Valid(cur)
@@ -220,12 +220,12 @@ func createSecondPoolV2Valid(cur realm) {
 // position.DecreaseLiquidity. That higher-level call legitimately drives the
 // position-role-gated pool entry points Burn (removes liquidity from the v1
 // ticks/positions BPTrees), Collect (transfers owed tokens) and
-// HandleWithdrawalFee (protocol-fee accounting), all against v1-created data.
+// the collect entry points (protocol-fee accounting), all against v1-created data.
 func decreaseLiquidityV2Valid(cur realm) {
 	testing.SetRealm(adminRealm)
 	_, removedLiq, _, _, _, _, _ := position.DecreaseLiquidity(cross(cur), uint64(1), "100000000", "0", "0", time.Now().Unix()+3600)
 	poolLiquidity, _ := pool.GetLiquidity(barFoo500PoolPath)
-	ufmt.Printf("[EXPECTED] v2_valid decreased position 1 (Burn+Collect+HandleWithdrawalFee) removedLiq=%s poolLiq=%s\n",
+	ufmt.Printf("[EXPECTED] v2_valid decreased position 1 (Burn+Collect) removedLiq=%s poolLiq=%s\n",
 		removedLiq, poolLiquidity)
 }
 
@@ -307,8 +307,8 @@ func printPoolData(cur realm) {
 // [SCENARIO] 6. CreatePool through v2_valid (pools BPTree RMW)
 // [EXPECTED] v2_valid created second pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000 (total pools=2)
 //
-// [SCENARIO] 7. Burn + Collect + HandleWithdrawalFee through v2_valid
-// [EXPECTED] v2_valid decreased position 1 (Burn+Collect+HandleWithdrawalFee) removedLiq=100000000 poolLiq=1594524137
+// [SCENARIO] 7. Burn + Collect through v2_valid
+// [EXPECTED] v2_valid decreased position 1 (Burn+Collect) removedLiq=100000000 poolLiq=1594524137
 //
 // [SCENARIO] 8. SetFeeProtocol + CollectProtocol through v2_valid
 // [EXPECTED] v2_valid set fee protocol, slot0FeeProtocol=102

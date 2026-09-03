@@ -19,6 +19,22 @@ func init(cur realm) {
 	})
 }
 
+func (t *testPool) CollectSwapFee(
+	_ int,
+	rlm realm,
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient address,
+	tickLower int32,
+	tickUpper int32,
+	amount0Requested string,
+	amount1Requested string,
+) (string, string, string, string) {
+	t.capToken0Balance(0, rlm, token0Path, token1Path, fee)
+	return t.IPool.CollectSwapFee(0, rlm, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+}
+
 func (t *testPool) Collect(
 	_ int,
 	rlm realm,

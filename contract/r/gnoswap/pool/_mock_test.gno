@@ -115,18 +115,20 @@ func (m *MockPool) Burn(
 	return res[0].(string), res[1].(string)
 }
 
-// Collect transfers owed tokens from a position to recipient.
+// CollectSwapFee and Collect pay owed tokens out to recipient.
+func (m *MockPool) CollectSwapFee(
+	_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string,
+) (string, string, string, string) {
+	res, ok := m.Response.Get("CollectSwapFee")
+	if !ok {
+		return "", "", "", ""
+	}
+
+	return res[0].(string), res[1].(string), res[2].(string), res[3].(string)
+}
+
 func (m *MockPool) Collect(
-	_ int,
-	rlm realm,
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	recipient address,
-	tickLower int32,
-	tickUpper int32,
-	amount0Requested string,
-	amount1Requested string,
+	_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string,
 ) (string, string) {
 	res, ok := m.Response.Get("Collect")
 	if !ok {
@@ -147,23 +149,6 @@ func (m *MockPool) GetPendingProtocolFees() map[string]int64 {
 	}
 
 	return res[0].(map[string]int64)
-}
-
-func (m *MockPool) HandleWithdrawalFee(
-	_ int,
-	rlm realm,
-	token0Path string,
-	amount0 string,
-	token1Path string,
-	amount1 string,
-	positionCaller address,
-) (string, string, string, string) {
-	res, ok := m.Response.Get("HandleWithdrawalFee")
-	if !ok {
-		return "", "", "", ""
-	}
-
-	return res[0].(string), res[1].(string), res[2].(string), res[3].(string)
 }
 
 func (m *MockPool) Swap(

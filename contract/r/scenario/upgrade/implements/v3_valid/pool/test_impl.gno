@@ -48,16 +48,16 @@ func (t *TestPool) Burn(_ int, rlm realm, token0Path string, token1Path string, 
 	return t.instance.Burn(0, rlm, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
+func (t *TestPool) CollectSwapFee(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string, string, string) {
+	return t.instance.CollectSwapFee(0, rlm, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+}
+
 func (t *TestPool) Collect(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
 	return t.instance.Collect(0, rlm, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
 }
 
 func (t *TestPool) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 	t.instance.SetWithdrawalFee(0, rlm, fee)
-}
-
-func (t *TestPool) HandleWithdrawalFee(_ int, rlm realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
-	return t.instance.HandleWithdrawalFee(0, rlm, token0Path, amount0, token1Path, amount1, positionCaller)
 }
 
 // IPoolSwap interface

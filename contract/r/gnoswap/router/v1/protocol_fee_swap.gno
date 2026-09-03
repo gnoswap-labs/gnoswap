@@ -149,8 +149,10 @@ func (r *routerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount 
 		common.SafeGRC20Approve(0, rlm, tokenPath, protocolFeeAddr, totalAmount)
 
 		// AddToProtocolFee only reports an error for a halted realm, which is handled
-		// above. The branch keeps the amount pending should that ever change.
+		// above. The branch keeps the amount pending should that ever change, and
+		// withdraws the approval so no unspent allowance outlives the call.
 		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, totalAmount); err != nil {
+			common.SafeGRC20Approve(0, rlm, tokenPath, protocolFeeAddr, 0)
 			r.addPendingProtocolFee(0, rlm, tokenPath, amount)
 			return
 		}

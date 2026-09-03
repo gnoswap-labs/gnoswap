@@ -397,8 +397,9 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 	position.SetFeeGrowthInside0LastX128(currentFeeGrowth.feeGrowthInside0LastX128.ToString())
 	position.SetFeeGrowthInside1LastX128(currentFeeGrowth.feeGrowthInside1LastX128.ToString())
 
-	// collect fee
-	amount0, amount1 := pl.Collect(
+	// Collect the fee. The pool withholds the withdrawal fee and pays the
+	// remainder straight to the caller.
+	amount0, amount1, fee0Str, fee1Str := pl.CollectSwapFee(
 		cross(rlm),
 		token0, token1, fee,
 		caller,
@@ -423,12 +424,10 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 	position.SetTokensOwed1(gnsmath.SafeSubInt64(tokensOwed1, amount1Int64))
 	p.mustUpdatePosition(0, rlm, positionId, *position)
 
-	fee0Str, fee1Str, amount0WithoutFeeStr, amount1WithoutFeeStr := pl.HandleWithdrawalFee(
-		cross(rlm),
-		token0, amount0,
-		token1, amount1,
-		caller,
-	)
+	// The pool already paid these out; recomputing them here only feeds the
+	// events and the return value.
+	amount0WithoutFeeStr := utils.FormatInt(gnsmath.SafeSubInt64(amount0Int64, utils.SafeParseInt64(fee0Str)))
+	amount1WithoutFeeStr := utils.FormatInt(gnsmath.SafeSubInt64(amount1Int64, utils.SafeParseInt64(fee1Str)))
 
 	poolPath := position.PoolKey()
 

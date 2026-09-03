@@ -99,6 +99,18 @@ func (t *TestPool) Burn(_ int, rlm realm, token0Path string, token1Path string, 
 	return result[0].(string), result[1].(string)
 }
 
+func (t *TestPool) CollectSwapFee(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string, string, string) {
+	result := t.ExecuteFn(
+		"CollectSwapFee",
+		func(args ...any) any {
+			r1, r2, r3, r4 := t.instance.CollectSwapFee(0, rlm, args[0].(string), args[1].(string), args[2].(uint32), args[3].(address), args[4].(int32), args[5].(int32), args[6].(string), args[7].(string))
+			return []any{r1, r2, r3, r4}
+		},
+		token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested,
+	).([]any)
+	return result[0].(string), result[1].(string), result[2].(string), result[3].(string)
+}
+
 func (t *TestPool) Collect(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
 	result := t.ExecuteFn(
 		"Collect",
@@ -117,18 +129,6 @@ func (t *TestPool) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 		func(args ...any) any { t.instance.SetWithdrawalFee(0, rlm, args[0].(uint64)); return nil },
 		fee,
 	)
-}
-
-func (t *TestPool) HandleWithdrawalFee(_ int, rlm realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
-	result := t.ExecuteFn(
-		"HandleWithdrawalFee",
-		func(args ...any) any {
-			r1, r2, r3, r4 := t.instance.HandleWithdrawalFee(0, rlm, args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(address))
-			return []any{r1, r2, r3, r4}
-		},
-		token0Path, amount0, token1Path, amount1, positionCaller,
-	).([]any)
-	return result[0].(string), result[1].(string), result[2].(string), result[3].(string)
 }
 
 // IPoolSwap interface

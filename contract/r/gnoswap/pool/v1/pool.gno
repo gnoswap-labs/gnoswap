@@ -177,10 +177,12 @@ func (i *poolV1) Burn(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Collect transfers owed tokens from a position to recipient.
+// CollectSwapFee pays out accrued swap fees for a position.
 //
-// Claims tokens from burned liquidity and accumulated fees.
-// Supports partial collection via amount limits.
+// The withdrawal fee is deducted from the collected amount and settled to the
+// protocol fee realm; the remainder is transferred to recipient. Only accrued
+// swap fees belong on this path - principal returned by Burn is not fee
+// bearing and must go through Collect.
 //
 // Parameters:
 //   - token0Path, token1Path: Token contract paths
@@ -190,15 +192,51 @@ func (i *poolV1) Burn(
 //   - amount0Requested, amount1Requested: Max amounts to collect (use MAX_UINT128 for all)
 //
 // Returns:
-//   - amount0: Token0 amount transferred (before any withdrawal fees)
-//   - amount1: Token1 amount transferred (before any withdrawal fees)
+//   - amount0, amount1: Collected amounts, before the withdrawal fee
+//   - fee0, fee1: Withdrawal fee withheld from each amount
 //
-// The collected amount is capped by the position's tokensOwed. It is NOT
-// capped by the pool's internal balance: a balance short of the owed amount
-// means the internal ledger has drifted, so Collect reverts rather than
-// silently paying out less.
+// Only callable by position contract.
+func (i *poolV1) CollectSwapFee(
+	_ int,
+	rlm realm,
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient address,
+	tickLower int32,
+	tickUpper int32,
+	amount0Requested string,
+	amount1Requested string,
+) (amount0, amount1, fee0, fee1 string) {
+	collected0, collected1, withheld0, withheld1 := i.collect(
+		0, rlm,
+		token0Path, token1Path, fee,
+		recipient,
+		tickLower, tickUpper,
+		amount0Requested, amount1Requested,
+		true,
+	)
+
+	return utils.FormatInt(collected0), utils.FormatInt(collected1),
+		utils.FormatInt(withheld0), utils.FormatInt(withheld1)
+}
+
+// Collect pays out tokens owed to a position, transferring the full amount to
+// recipient.
 //
-// Note: Withdrawal fees are applied by the position contract, not here.
+// No withdrawal fee is charged: this path carries principal credited by Burn,
+// which the protocol does not tax. Accrued swap fees belong on CollectSwapFee.
+//
+// Parameters:
+//   - token0Path, token1Path: Token contract paths
+//   - fee: Fee tier of the pool
+//   - recipient: Address to receive tokens
+//   - tickLower, tickUpper: Position's price range
+//   - amount0Requested, amount1Requested: Max amounts to collect (use MAX_UINT128 for all)
+//
+// Returns:
+//   - amount0, amount1: Amounts transferred to recipient
+//
 // Only callable by position contract.
 func (i *poolV1) Collect(
 	_ int,
@@ -211,7 +249,47 @@ func (i *poolV1) Collect(
 	tickUpper int32,
 	amount0Requested string,
 	amount1Requested string,
-) (string, string) {
+) (amount0, amount1 string) {
+	collected0, collected1, _, _ := i.collect(
+		0, rlm,
+		token0Path, token1Path, fee,
+		recipient,
+		tickLower, tickUpper,
+		amount0Requested, amount1Requested,
+		false,
+	)
+
+	return utils.FormatInt(collected0), utils.FormatInt(collected1)
+}
+
+// collect settles the pool ledger for a position and pays the recipient.
+//
+// The payout is capped by the position's tokensOwed, never by a caller
+// supplied number, and the ledger is written before any token leaves the
+// realm. Both happen under a single pool lock, so the pool's accounting and
+// its token balance are never observably out of step.
+//
+// The collected amount is NOT capped by the pool's internal balance: a balance
+// short of the owed amount means the internal ledger has drifted, so the call
+// reverts rather than silently paying out less.
+//
+// applyWithdrawalFee selects the fee policy; pass false for a fee-free payout.
+// It is the entry point, not the configured rate, that decides whether the
+// protocol fee is settled: a rate of zero must still flush a backlog left
+// pending by an earlier halted settlement.
+func (i *poolV1) collect(
+	_ int,
+	rlm realm,
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient address,
+	tickLower int32,
+	tickUpper int32,
+	amount0Requested string,
+	amount1Requested string,
+	applyWithdrawalFee bool,
+) (amount0, amount1, fee0, fee1 int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
@@ -244,10 +322,8 @@ func (i *poolV1) Collect(
 		))
 	}
 
-	amount0 := minRequestedAmount(amount0Req, position.TokensOwed0())
-	amount1 := minRequestedAmount(amount1Req, position.TokensOwed1())
-
-	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
+	amount0 = minRequestedAmount(amount0Req, position.TokensOwed0())
+	amount1 = minRequestedAmount(amount1Req, position.TokensOwed1())
 
 	if amount0 > 0 {
 		tokenOwed0 := gnsmath.SafeSubInt64(position.TokensOwed0(), amount0)
@@ -258,7 +334,6 @@ func (i *poolV1) Collect(
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
-		common.SafeGRC20Approve(0, rlm, pool.Token0Path(), positionAddr, amount0)
 	}
 	if amount1 > 0 {
 		tokenOwed1 := gnsmath.SafeSubInt64(position.TokensOwed1(), amount1)
@@ -269,7 +344,6 @@ func (i *poolV1) Collect(
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
-		common.SafeGRC20Approve(0, rlm, pool.Token1Path(), positionAddr, amount1)
 	}
 
 	setPosition(pool, positionKey, position)
@@ -278,7 +352,31 @@ func (i *poolV1) Collect(
 		panic(err)
 	}
 
-	return utils.FormatInt(amount0), utils.FormatInt(amount1)
+	withdrawalFeeBPS := ZeroBps
+	if applyWithdrawalFee {
+		withdrawalFeeBPS = i.store.GetWithdrawalFeeBPS()
+	}
+
+	// Effects are persisted above; everything below leaves the realm.
+	fee0, amount0AfterFee := deductWithdrawalFee(amount0, withdrawalFeeBPS)
+	fee1, amount1AfterFee := deductWithdrawalFee(amount1, withdrawalFeeBPS)
+
+	if applyWithdrawalFee {
+		// Called even for a zero fee, and for a zero withdrawal fee rate, so that
+		// anything left pending for these tokens by an earlier halted settlement
+		// is flushed.
+		i.settleProtocolFee(0, rlm, token0Path, fee0)
+		i.settleProtocolFee(0, rlm, token1Path, fee1)
+	}
+
+	if amount0AfterFee > 0 {
+		common.SafeGRC20Transfer(0, rlm, token0Path, recipient, amount0AfterFee)
+	}
+	if amount1AfterFee > 0 {
+		common.SafeGRC20Transfer(0, rlm, token1Path, recipient, amount1AfterFee)
+	}
+
+	return amount0, amount1, fee0, fee1
 }
 
 // CollectProtocol collects accumulated protocol fees from swap operations.

@@ -2,7 +2,6 @@ package pool
 
 import (
 	"strconv"
-	"strings"
 	"testing"
 
 	testutils "gno.land/p/nt/testutils/v0"
@@ -18,7 +17,6 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 )
 
@@ -140,73 +138,35 @@ func TestSetPoolCreationFeeByAdmin(cur realm, t *testing.T) {
 	}
 }
 
-func TestHandleWithdrawalFee(cur realm, t *testing.T) {
+func TestCollectAccessControl(cur realm, t *testing.T) {
 	tests := []struct {
-		name        string
-		action      func(cur realm, t *testing.T)
-		verify      func(cur realm, t *testing.T) (string, string, string, string)
-		expected    string
-		shouldPanic bool
+		name     string
+		action   func(cur realm, t *testing.T)
+		expected string
 	}{
 		{
 			name: "Panic if caller is not position contract",
 			action: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("unauthorized")))
-				mockInstanceHandleWithdrawalFee(0, cur, "gno.land/r/onbloc/foo.FOO", "0", "gno.land/r/onbloc/foo.FOO", "0", adminAddr)
+				mockInstanceCollectSwapFee(0, cur, barPath, bazPath, fee3000, adminAddr, int32(1020), int32(5040), "0", "0")
 			},
-			verify:      nil,
-			expected:    "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not position",
-			shouldPanic: true,
+			expected: "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not position",
 		},
 		{
-			name: "Panic if pkgPath is not registered",
+			name: "Panic if caller is admin rather than position contract",
 			action: func(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				mockInstanceHandleWithdrawalFee(0, cur, "pkgPath", "1000", "pkgPath", "1000", adminAddr)
+				mockInstanceCollectSwapFee(0, cur, barPath, bazPath, fee3000, adminAddr, int32(1020), int32(5040), "1000", "1000")
 			},
-			verify:      nil,
-			expected:    "unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not position",
-			shouldPanic: true,
+			expected: "unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not position",
 		},
 		{
-			name: "Success call by position contract",
+			name: "Panic if caller is not position contract on the principal path",
 			action: func(cur realm, t *testing.T) {
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				TokenApprove(cur, t, barPath, adminAddr, poolAddr, 1000)
-				TokenApprove(cur, t, bazPath, adminAddr, poolAddr, 1000)
-
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				baz.Approve(cross(cur), poolAddr, 100000000000)
-				bar.Approve(cross(cur), poolAddr, 100000000000)
-				gns.Approve(cross(cur), poolAddr, 100000000000)
-
-				mockInstanceCreatePool(0, cur, barPath, bazPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
-
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				bar.Transfer(cross(cur), poolAddr, 1000000000)
-				baz.Transfer(cross(cur), poolAddr, 1000000000)
-
-				testing.SetRealm(posRealm)
-				mockInstanceMint(
-					0, cur,
-					barPath,
-					bazPath,
-					fee3000,
-					int32(1020),
-					int32(5040),
-					"1000",
-					adminAddr,
-				)
+				testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("unauthorized")))
+				mockInstanceCollect(0, cur, barPath, bazPath, fee3000, adminAddr, int32(1020), int32(5040), "0", "0")
 			},
-			verify: func(cur realm, t *testing.T) (string, string, string, string) {
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				TokenApprove(cur, t, barPath, adminAddr, poolAddr, 10000000000)
-				TokenApprove(cur, t, bazPath, adminAddr, poolAddr, 1000000000)
-				testing.SetRealm(posRealm)
-				return mockInstanceHandleWithdrawalFee(0, cur, barPath, "1000", bazPath, "1000", adminAddr)
-			},
-			expected:    "10,10,990,990",
-			shouldPanic: false,
+			expected: "unauthorized: caller g1w4hxzat5dphhy6t6v4j97h6lta047h6l0wjddg is not position",
 		},
 	}
 
@@ -214,49 +174,41 @@ func TestHandleWithdrawalFee(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			initPoolTest(cur, t)
 
-			if tc.shouldPanic {
-				uassert.AbortsWithMessage(t, cur, tc.expected, func() {
-					tc.action(cur, t)
-				})
-			} else {
+			uassert.AbortsWithMessage(t, cur, tc.expected, func() {
 				tc.action(cur, t)
-				if tc.verify != nil {
-					gotFee0, gotFee1, gotAfterAmount0, gotAfterAmount1 := tc.verify(cur, t)
-					expected := strings.Split(tc.expected, ",")
-					uassert.Equal(t, gotFee0, expected[0])
-					uassert.Equal(t, gotFee1, expected[1])
-					uassert.Equal(t, gotAfterAmount0, expected[2])
-					uassert.Equal(t, gotAfterAmount1, expected[3])
-				}
-			}
+			})
 		})
 	}
 }
 
-func TestHandleWithdrawalFee_ZeroFeeTransfersAll(cur realm, t *testing.T) {
-	initPoolTest(cur, t)
+// TestDeductWithdrawalFee pins the fee arithmetic that CollectSwapFee applies.
+// Rounding must favour the collector, and the two parts must sum back to the
+// original amount so the pool never pays out more than it debited.
+func TestDeductWithdrawalFee(t *testing.T) {
+	tests := []struct {
+		name        string
+		amount      int64
+		bps         uint64
+		expectedFee int64
+		expectedNet int64
+	}{
+		{name: "one percent of 1000", amount: 1000, bps: 100, expectedFee: 10, expectedNet: 990},
+		{name: "zero bps keeps everything", amount: 1000, bps: ZeroBps, expectedFee: 0, expectedNet: 1000},
+		{name: "zero amount", amount: 0, bps: 100, expectedFee: 0, expectedNet: 0},
+		{name: "fee truncates down", amount: 99, bps: 100, expectedFee: 0, expectedNet: 99},
+		{name: "max bps", amount: 1000, bps: MaxBpsValue, expectedFee: 100, expectedNet: 900},
+		{name: "rounding leaves remainder with collector", amount: 12345, bps: 333, expectedFee: 411, expectedNet: 11934},
+	}
 
-	testing.SetRealm(adminRealm)
-	mockInstanceSetWithdrawalFee(0, cur, 0)
-	bar.Transfer(cross(cur), poolAddr, 1000)
-	baz.Transfer(cross(cur), poolAddr, 1000)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fee, net := deductWithdrawalFee(tc.amount, tc.bps)
 
-	testing.SetRealm(testing.NewCodeRealm(poolPath))
-	bar.Approve(cross(cur), positionAddr, 1000)
-	baz.Approve(cross(cur), positionAddr, 1000)
-
-	barBalanceBefore := TokenBalance(t, barPath, adminAddr)
-	bazBalanceBefore := TokenBalance(t, bazPath, adminAddr)
-
-	testing.SetRealm(posRealm)
-	fee0, fee1, afterAmount0, afterAmount1 := mockInstanceHandleWithdrawalFee(0, cur, barPath, "1000", bazPath, "1000", adminAddr)
-
-	uassert.Equal(t, fee0, "0")
-	uassert.Equal(t, fee1, "0")
-	uassert.Equal(t, afterAmount0, "1000")
-	uassert.Equal(t, afterAmount1, "1000")
-	uassert.Equal(t, TokenBalance(t, barPath, adminAddr), barBalanceBefore+1000)
-	uassert.Equal(t, TokenBalance(t, bazPath, adminAddr), bazBalanceBefore+1000)
+			uassert.Equal(t, tc.expectedFee, fee)
+			uassert.Equal(t, tc.expectedNet, net)
+			uassert.Equal(t, tc.amount, fee+net, "fee and net must sum back to amount")
+		})
+	}
 }
 
 func TestAddPendingProtocolFee(cur realm, t *testing.T) {
@@ -734,6 +686,106 @@ func TestProtocolFeesDisabledWhenNotConfigured(cur realm, t *testing.T) {
 	thisPool := getMockInstance().mustGetPoolBy(barPath, fooPath, fee500)
 	uassert.Equal(t, thisPool.ProtocolFeesToken0(), int64(0))
 	uassert.Equal(t, thisPool.ProtocolFeesToken1(), int64(0))
+
+	resetObject(cur, t)
+}
+
+// TestCollectSwapFee_ZeroRateStillSettlesPendingProtocolFee pins the boundary
+// between the two collect entry points: settlement follows the entry point, not
+// the configured rate. A backlog staged while protocol fee collection was halted
+// must still be flushed once collection resumes, even if the withdrawal fee has
+// been set to zero in the meantime.
+func TestCollectSwapFee_ZeroRateStillSettlesPendingProtocolFee(cur realm, t *testing.T) {
+	pool := setupStablecoinPool(cur, t)
+	approveTokensForPool(cur, t, pool)
+
+	token0Path, token1Path, feeTier := pool.Token0Path(), pool.Token1Path(), pool.Fee()
+	instance := getMockInstance()
+
+	// Mint then burn so the position carries tokensOwed the pool can pay out.
+	testing.SetRealm(posRealm)
+	mockInstanceMint(0, cur, token0Path, token1Path, feeTier,
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+	mockInstanceBurn(0, cur, token0Path, token1Path, feeTier,
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MEDIUM_LIQUIDITY, adminAddr)
+
+	testing.SetRealm(adminRealm)
+	mockInstanceSetWithdrawalFee(0, cur, 100) // 1%
+
+	// Emergency mode leaves withdrawals open but halts protocol fee collection,
+	// so the withheld fee is only staged as pending.
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
+
+	protocolFeeBalance0Before := TokenBalance(t, token0Path, protocolFeeAddr)
+	protocolFeeBalance1Before := TokenBalance(t, token1Path, protocolFeeAddr)
+
+	testing.SetRealm(posRealm)
+	_, _, fee0Str, fee1Str := mockInstanceCollectSwapFee(0, cur, token0Path, token1Path, feeTier,
+		adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, "50000", "50000")
+
+	uassert.Equal(t, fee0Str, "500", "1% of 50000 must be withheld")
+	uassert.Equal(t, fee1Str, "500", "1% of 50000 must be withheld")
+	uassert.Equal(t, instance.store.GetPendingProtocolFees()[token0Path], int64(500))
+	uassert.Equal(t, instance.store.GetPendingProtocolFees()[token1Path], int64(500))
+	uassert.Equal(t, TokenBalance(t, token0Path, protocolFeeAddr), protocolFeeBalance0Before)
+	uassert.Equal(t, TokenBalance(t, token1Path, protocolFeeAddr), protocolFeeBalance1Before)
+
+	// Collection resumes, but the rate is dropped to zero before the next collect.
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	mockInstanceSetWithdrawalFee(0, cur, ZeroBps)
+
+	testing.SetRealm(posRealm)
+	_, _, fee0Str, fee1Str = mockInstanceCollectSwapFee(0, cur, token0Path, token1Path, feeTier,
+		adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MAX_INT64, MAX_INT64)
+
+	// Nothing new is withheld at a zero rate, but the backlog is drained.
+	uassert.Equal(t, fee0Str, "0")
+	uassert.Equal(t, fee1Str, "0")
+	uassert.Equal(t, len(instance.store.GetPendingProtocolFees()), 0,
+		"a zero withdrawal fee rate must not strand a pending protocol fee")
+	uassert.Equal(t, TokenBalance(t, token0Path, protocolFeeAddr), protocolFeeBalance0Before+500)
+	uassert.Equal(t, TokenBalance(t, token1Path, protocolFeeAddr), protocolFeeBalance1Before+500)
+
+	resetObject(cur, t)
+}
+
+// TestCollect_FeeFreePathNeverSettlesProtocolFee is the other side of the same
+// boundary: the principal path carries no withdrawal fee and must leave an
+// existing backlog untouched rather than settling it as a side effect.
+func TestCollect_FeeFreePathNeverSettlesProtocolFee(cur realm, t *testing.T) {
+	pool := setupStablecoinPool(cur, t)
+	approveTokensForPool(cur, t, pool)
+
+	token0Path, token1Path, feeTier := pool.Token0Path(), pool.Token1Path(), pool.Fee()
+	instance := getMockInstance()
+
+	testing.SetRealm(posRealm)
+	mockInstanceMint(0, cur, token0Path, token1Path, feeTier,
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+	mockInstanceBurn(0, cur, token0Path, token1Path, feeTier,
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MEDIUM_LIQUIDITY, adminAddr)
+
+	// A non-zero rate is configured; the principal path must still ignore it.
+	testing.SetRealm(adminRealm)
+	mockInstanceSetWithdrawalFee(0, cur, 100) // 1%
+
+	testing.SetRealm(testing.NewCodeRealm(poolPath))
+	instance.addPendingProtocolFee(0, cur, token0Path, 500)
+
+	protocolFeeBalanceBefore := TokenBalance(t, token0Path, protocolFeeAddr)
+	collectorBalanceBefore := TokenBalance(t, token0Path, adminAddr)
+
+	testing.SetRealm(posRealm)
+	amount0, _ := mockInstanceCollect(0, cur, token0Path, token1Path, feeTier,
+		adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, "50000", "0")
+
+	uassert.Equal(t, amount0, "50000")
+	uassert.Equal(t, TokenBalance(t, token0Path, adminAddr), collectorBalanceBefore+50000,
+		"the principal path pays the full amount, no withdrawal fee")
+	uassert.Equal(t, instance.store.GetPendingProtocolFees()[token0Path], int64(500),
+		"the fee-free path must not settle the backlog")
+	uassert.Equal(t, TokenBalance(t, token0Path, protocolFeeAddr), protocolFeeBalanceBefore)
 
 	resetObject(cur, t)
 }
