@@ -403,6 +403,7 @@ func TestCurrentReward(cur realm, t *testing.T) {
 		emission       int64
 		expectedReward int64
 		shouldBeZero   bool
+		errMsg         string
 	}{
 		{
 			name:           "tier 1 with single pool",
@@ -444,6 +445,20 @@ func TestCurrentReward(cur realm, t *testing.T) {
 			expectedReward: 9223372036854775807,
 			shouldBeZero:   false,
 		},
+		{
+			name:       "returns calculation error for negative emission",
+			tier:       1,
+			tierCounts: [AllTierCount]uint64{0, 1, 0, 0},
+			emission:   -1,
+			errMsg:     errCalculationError,
+		},
+		{
+			name:       "returns tier error for unsupported tier",
+			tier:       AllTierCount,
+			tierCounts: [AllTierCount]uint64{0, 1, 0, 0},
+			emission:   1_000_000,
+			errMsg:     "unsupported tier",
+		},
 	}
 
 	for _, tt := range tests {
@@ -455,6 +470,10 @@ func TestCurrentReward(cur realm, t *testing.T) {
 			}
 
 			reward, err := poolTier.CurrentReward(tt.tier)
+			if tt.errMsg != "" {
+				uassert.ErrorContains(t, err, tt.errMsg)
+				return
+			}
 			uassert.NoError(t, err)
 
 			if tt.shouldBeZero {
@@ -834,7 +853,7 @@ func TestCalculatePoolReward(cur realm, t *testing.T) {
 		tierRatio   int64
 		tierCount   int64
 		expected    int64
-		shouldPanic bool
+		shouldError bool
 	}{
 		// Normal cases
 		{
@@ -985,50 +1004,56 @@ func TestCalculatePoolReward(cur realm, t *testing.T) {
 			emission:    -1000000,
 			tierRatio:   50,
 			tierCount:   1,
-			shouldPanic: true,
+			shouldError: true,
 		},
 		{
 			name:        "negative tier ratio",
 			emission:    1000000,
 			tierRatio:   -50,
 			tierCount:   1,
-			shouldPanic: true,
+			shouldError: true,
 		},
 		{
 			name:        "negative tier count",
 			emission:    1000000,
 			tierRatio:   50,
 			tierCount:   -1,
-			shouldPanic: true,
+			shouldError: true,
 		},
 		{
 			name:        "both emission and ratio negative",
 			emission:    -1000000,
 			tierRatio:   -50,
 			tierCount:   1,
-			shouldPanic: true,
+			shouldError: true,
 		},
 		{
 			name:        "all negative",
 			emission:    -1000000,
 			tierRatio:   -50,
 			tierCount:   -1,
-			shouldPanic: true,
+			shouldError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			if tt.shouldPanic {
-				uassert.PanicsContains(t, cur, "unexpected calculation error", func() {
-					calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
-				})
-			} else {
-				result := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
-				uassert.Equal(t, tt.expected, result)
+			result, err := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+			if tt.shouldError {
+				uassert.ErrorContains(t, err, errCalculationError)
+				return
 			}
+
+			uassert.NoError(t, err)
+			uassert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestMustCalculatePoolRewardPanicsOnInvalidInput(cur realm, t *testing.T) {
+	uassert.PanicsContains(t, cur, errCalculationError, func() {
+		mustCalculatePoolReward(-1, 50, 1)
+	})
 }
 
 func TestCalculatePoolReward_Boundary(cur realm, t *testing.T) {
@@ -1093,11 +1118,11 @@ func TestCalculatePoolReward_Boundary(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
 				uassert.PanicsContains(t, cur, "overflow", func() {
-					result := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
-					t.Logf("result: %d", result)
+					calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
 				})
 			} else {
-				result := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+				result, err := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+				uassert.NoError(t, err)
 				uassert.Equal(t, tt.expected, result)
 			}
 		})
@@ -1131,7 +1156,8 @@ func TestCalculatePoolReward_I256Overflow(cur realm, t *testing.T) {
 					calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
 				})
 			} else {
-				result := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+				result, err := calculatePoolReward(tt.emission, tt.tierRatio, tt.tierCount)
+				uassert.NoError(t, err)
 				t.Logf("result: %d", result)
 			}
 		})

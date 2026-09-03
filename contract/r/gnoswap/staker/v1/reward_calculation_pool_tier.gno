@@ -133,13 +133,13 @@ func (self *PoolTier) CurrentReward(tier uint64) (int64, error) {
 	}
 	tierRatio, err := self.tierRatio.Get(tier)
 	if err != nil {
-		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
+		return 0, makeErrorWithDetails(errInvalidPoolTier, err.Error())
 	}
 
 	tierRatioInt64 := int64(tierRatio)
 	count := int64(self.CurrentCount(tier))
 
-	return calculatePoolReward(currentEmission, tierRatioInt64, count), nil
+	return calculatePoolReward(currentEmission, tierRatioInt64, count)
 }
 
 // CurrentCount returns the current count of pools in the given tier.
@@ -416,7 +416,7 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 		panic(err)
 	}
 
-	return calculatePoolReward(currentEmission, tierRatioInt64, tierCount)
+	return mustCalculatePoolReward(currentEmission, tierRatioInt64, tierCount)
 }
 
 // calculatePoolReward calculates the reward for a pool based on the emission, tier ratio, and tier count.
@@ -428,18 +428,29 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 //
 // Returns:
 // - int64: The reward for the pool.
-func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) int64 {
+// - error: An invalid calculation input.
+func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) (int64, error) {
 	if emission < 0 || tierRatio < 0 || tierCount < 0 {
-		panic(errors.New(errCalculationError))
+		return 0, errors.New(errCalculationError)
 	}
 
 	if emission == 0 || tierRatio == 0 || tierCount == 0 {
-		return 0
+		return 0, nil
 	}
 
 	tierReward := gnsmath.SafeMulDivInt64(emission, tierRatio, 100)
 
-	return tierReward / tierCount
+	return tierReward / tierCount, nil
+}
+
+// mustCalculatePoolReward preserves panic semantics for state-mutating cache paths.
+func mustCalculatePoolReward(emission int64, tierRatio int64, tierCount int64) int64 {
+	reward, err := calculatePoolReward(emission, tierRatio, tierCount)
+	if err != nil {
+		panic(err)
+	}
+
+	return reward
 }
 
 // computeTierRewards caches per-tier pool rewards to avoid recalculating for each pool iteration.
@@ -457,7 +468,7 @@ func (self *PoolTier) computeTierRewards(emission int64) map[uint64]int64 {
 			panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
 		}
 
-		tierRewards[tierNum] = calculatePoolReward(emission, int64(tierRatio), tierCount)
+		tierRewards[tierNum] = mustCalculatePoolReward(emission, int64(tierRatio), tierCount)
 	}
 
 	return tierRewards

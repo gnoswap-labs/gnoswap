@@ -295,7 +295,7 @@ func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier
 
 	tierRatio, err := poolTier.tierRatio.Get(tier)
 	if err != nil {
-		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
+		return nil, makeErrorWithDetails(errInvalidPoolTier, err.Error())
 	}
 	tierRatioInt64 := int64(tierRatio)
 	tierCount := int64(poolTier.counts[tier])
@@ -310,7 +310,10 @@ func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier
 	for i, hv := range halvingTimestamps {
 		if hv <= segStart {
 			// Halving effective at/before the segment start: only switch the rate.
-			rate = calculatePoolReward(halvingEmissions[i], tierRatioInt64, tierCount)
+			rate, err = calculatePoolReward(halvingEmissions[i], tierRatioInt64, tierCount)
+			if err != nil {
+				return nil, err
+			}
 			continue
 		}
 		if hv >= endTime {
@@ -318,7 +321,10 @@ func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier
 		}
 
 		segments = append(segments, internalRewardSegment{start: segStart, end: hv, rewardPerSecond: rate})
-		rate = calculatePoolReward(halvingEmissions[i], tierRatioInt64, tierCount)
+		rate, err = calculatePoolReward(halvingEmissions[i], tierRatioInt64, tierCount)
+		if err != nil {
+			return nil, err
+		}
 		segStart = hv
 	}
 
