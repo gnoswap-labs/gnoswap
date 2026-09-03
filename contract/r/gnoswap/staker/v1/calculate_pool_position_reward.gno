@@ -1,6 +1,8 @@
 package staker
 
 import (
+	"time"
+
 	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -62,7 +64,7 @@ type calculatePositionRewardParam struct {
 	// Deposit overrides the Deposits lookup for a deposit that is no longer in the tree.
 	Deposit *sr.Deposit
 	// Exit pins the pool state to the moment the position left the pool; nil while staked.
-	Exit *exitPin
+	Exit *sr.UnstakedPosition
 }
 
 // deposit resolves the deposit the calculation runs against.
@@ -333,7 +335,10 @@ func (s *stakerV1) persistLazyPool(param *calculatePositionRewardParam, updatePa
 // calculation itself no longer needs this, but downstream unclaimable processing (which reads
 // CurrentReward) and off-chain history rely on the cache, so it is advanced on the emission collect path.
 func (s *stakerV1) updateInternalRewardCache(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
-	param.PoolTier.cacheRewardForPool(param.CurrentTime, param.Pools, updateParams.poolPath)
+	// Always at the current time, never at param.CurrentTime: the cache and the unclaimable
+	// tracking it drives are pool-global, and a checkpoint collect would rewind them to its exit
+	// timestamp, where the pool may have had no staked liquidity.
+	param.PoolTier.cacheRewardForPool(time.Now().Unix(), param.Pools, updateParams.poolPath)
 }
 
 // applyExternalIncentiveIndex persists the deposit incentive-index updates discovered during calculation.
@@ -423,14 +428,14 @@ func (self *PoolResolver) resolveInternalRewardSegments(poolTier *PoolTier, pool
 // appendInternalRewardTailSegments appends the schedule for the tail [startTime, endTime], where no
 // persisted cache entry exists beyond startTime. Over this span tier/count are constant, so the rate
 // changes only at halving boundaries.
-func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier *PoolTier, poolPath string, startTime, endTime, baseReward int64, exit *exitPin) ([]internalRewardSegment, error) {
+func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier *PoolTier, poolPath string, startTime, endTime, baseReward int64, exit *sr.UnstakedPosition) ([]internalRewardSegment, error) {
 	// A checkpoint reads the tier context it exited under: this window closed at the exit.
 	tier, ratio, count, err := poolTier.tierContextOf(poolPath)
 	if err != nil {
 		return nil, err
 	}
 	if exit != nil {
-		tier, ratio, count = exit.tier, exit.tierRatio, exit.tierCount
+		tier, ratio, count = exit.Tier(), exit.TierRatio(), exit.TierCount()
 	}
 
 	if tier == 0 || tier >= AllTierCount {

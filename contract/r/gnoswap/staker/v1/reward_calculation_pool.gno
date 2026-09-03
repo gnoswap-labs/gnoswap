@@ -71,8 +71,9 @@ func (self *Pools) IterateAll(fn func(key string, pool *sr.Pool) bool) {
 type PoolResolver struct {
 	*sr.Pool
 
-	// exit is set only when collecting an exit checkpoint; see exitPin.
-	exit *exitPin
+	// exit is set only when collecting an exit checkpoint, and overrides the pool reads that
+	// would otherwise come from state the position no longer takes part in.
+	exit *sr.UnstakedPosition
 }
 
 func (self *PoolResolver) IncentivesResolver() *IncentivesResolver {
@@ -103,8 +104,8 @@ func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64
 // Get the latest tick in [0, currentTime] range.
 // Returns the tick.
 func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
-	if self.exit != nil && currentTime >= self.exit.time {
-		return self.exit.tick
+	if self.exit != nil && currentTime >= self.exit.ExitTime() {
+		return self.exit.ExitTick()
 	}
 
 	self.HistoricalTick().ReverseIterate(0, currentTime, func(key int64, value any) bool {
@@ -139,11 +140,11 @@ func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *
 // removes the last deposit referencing them.
 func (self *PoolResolver) GetOrNewTick(tickId int32) *sr.Tick {
 	if self.exit != nil {
-		if self.exit.lowerTick != nil && self.exit.lowerTick.Id() == tickId {
-			return self.exit.lowerTick
+		if lowerTick := self.exit.LowerTick(); lowerTick != nil && lowerTick.Id() == tickId {
+			return lowerTick
 		}
-		if self.exit.upperTick != nil && self.exit.upperTick.Id() == tickId {
-			return self.exit.upperTick
+		if upperTick := self.exit.UpperTick(); upperTick != nil && upperTick.Id() == tickId {
+			return upperTick
 		}
 	}
 
@@ -319,7 +320,7 @@ func NewPoolResolver(pool *sr.Pool) *PoolResolver {
 }
 
 // newPoolResolverWithExit builds a resolver that reads the pool through an exit checkpoint.
-func newPoolResolverWithExit(pool *sr.Pool, exit *exitPin) *PoolResolver {
+func newPoolResolverWithExit(pool *sr.Pool, exit *sr.UnstakedPosition) *PoolResolver {
 	return &PoolResolver{
 		Pool: pool,
 		exit: exit,

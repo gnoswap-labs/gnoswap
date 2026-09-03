@@ -1,8 +1,6 @@
 package staker
 
 import (
-	"time"
-
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -11,31 +9,6 @@ import (
 
 	sr "gno.land/r/gnoswap/staker"
 )
-
-// exitPin overrides the pool reads a checkpoint collect would otherwise take from live state:
-// CurrentTick at and after time, GetOrNewTick for the boundary ticks, and the tier context of
-// the internal reward-rate schedule.
-type exitPin struct {
-	time      int64
-	tick      int32
-	lowerTick *sr.Tick
-	upperTick *sr.Tick
-	tier      uint64
-	tierRatio uint64
-	tierCount uint64
-}
-
-func newExitPin(position *sr.UnstakedPosition) *exitPin {
-	return &exitPin{
-		time:      position.ExitTime(),
-		tick:      position.ExitTick(),
-		lowerTick: position.LowerTick(),
-		upperTick: position.UpperTick(),
-		tier:      position.Tier(),
-		tierRatio: position.TierRatio(),
-		tierCount: position.TierCount(),
-	}
-}
 
 // UnstakedPositions manages exit checkpoints.
 type UnstakedPositions struct {
@@ -186,91 +159,4 @@ func (s *stakerV1) GetUnstakedPositionExitTime(positionId uint64) (int64, error)
 	}
 
 	return position.ExitTime(), nil
-}
-
-// persistDeposit writes the deposit back, unless it belongs to a checkpoint and is not there.
-func (self *collectContext) persistDeposit(s *stakerV1) {
-	if self.checkpoint != nil {
-		return
-	}
-
-	s.getDeposits().set(self.positionId, self.deposit)
-}
-
-// markEmissionCollected records the emission collect on the checkpoint.
-func (s *stakerV1) markEmissionCollected(_ int, rlm realm, target *collectTarget) {
-	if !target.isCheckpoint() {
-		return
-	}
-
-	hadPendingIncentives := target.checkpoint.HasPendingIncentives()
-	target.checkpoint.MarkEmissionCollected()
-	s.dropUnstakedPositionIfCollected(0, rlm, target.positionId, target.checkpoint, hadPendingIncentives)
-}
-
-// markIncentiveCollected records the incentive collect on the checkpoint. An incentive that
-// could not be funded stays pending, the same way it stays collectible while staked; delivery
-// reports that as an empty reward token against a non-zero amount.
-func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarget, incentiveId string, rewardAmount int64, rewardToken string) {
-	if !target.isCheckpoint() {
-		return
-	}
-
-	if rewardToken == "" && rewardAmount > 0 {
-		return
-	}
-
-	hadPendingIncentives := target.checkpoint.HasPendingIncentives()
-	target.checkpoint.MarkIncentiveCollected(incentiveId)
-	s.dropUnstakedPositionIfCollected(0, rlm, target.positionId, target.checkpoint, hadPendingIncentives)
-}
-
-// collectTarget is the record a collect runs against: the live deposit while staked, or the
-// exit checkpoint an unstake left behind.
-type collectTarget struct {
-	positionId uint64
-	deposit    *sr.Deposit
-	// currentTime is now while staked, and the exit time for a checkpoint.
-	currentTime int64
-	exit        *exitPin
-	checkpoint  *sr.UnstakedPosition
-}
-
-// checkpointDeposit returns the deposit to calculate against when it is not in the tree.
-func (self *collectTarget) checkpointDeposit() *sr.Deposit {
-	if self.checkpoint == nil {
-		return nil
-	}
-
-	return self.deposit
-}
-
-// isCheckpoint reports whether the collect runs against an exit checkpoint.
-func (self *collectTarget) isCheckpoint() bool {
-	return self.checkpoint != nil
-}
-
-// resolveCollectTarget resolves what a collect runs against and asserts the caller may.
-func (s *stakerV1) resolveCollectTarget(positionId uint64, caller address) *collectTarget {
-	position := s.getUnstakedPositions().get(positionId)
-	if position == nil {
-		assertIsDepositor(s, caller, positionId)
-
-		return &collectTarget{
-			positionId:  positionId,
-			deposit:     s.getDeposits().get(positionId),
-			currentTime: time.Now().Unix(),
-		}
-	}
-
-	// A checkpoint collect is permissionless: it can only ever deliver to the position's owner,
-	// and an open entry point is what lets anyone clear the checkpoints that hold up
-	// EndExternalIncentive on the pool.
-	return &collectTarget{
-		positionId:  positionId,
-		deposit:     position.Deposit(),
-		currentTime: position.ExitTime(),
-		exit:        newExitPin(position),
-		checkpoint:  position,
-	}
 }
