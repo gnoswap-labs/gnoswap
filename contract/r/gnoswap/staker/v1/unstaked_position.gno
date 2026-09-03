@@ -62,36 +62,36 @@ func (s *stakerV1) getUnstakedPositions() *UnstakedPositions {
 // The count is per incentive, not per pool: one checkpoint that can never be funded would
 // otherwise lock the refunds of every other incentive in the same pool.
 func (s *stakerV1) uncollectedIncentiveCountOf(incentiveId string) int64 {
-	return s.store.GetUncollectedIncentiveCounts()[incentiveId]
+	value := s.store.GetUncollectedIncentiveCounts().Get(incentiveId)
+	if value == nil {
+		return 0
+	}
+
+	count, ok := value.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast uncollected incentive count to int64: %T", value))
+	}
+
+	return count
 }
 
-// addUncollectedIncentiveCounts applies one delta per incentive in a single store write.
-func (s *stakerV1) addUncollectedIncentiveCounts(_ int, rlm realm, deltas map[string]int64) {
-	counts := make(map[string]int64)
-	for incentiveId, count := range s.store.GetUncollectedIncentiveCounts() {
-		counts[incentiveId] = count
+// addUncollectedIncentiveCount moves the incentive's count by delta, dropping the entry at zero.
+func (s *stakerV1) addUncollectedIncentiveCount(incentiveId string, delta int64) {
+	next := gnsmath.SafeAddInt64(s.uncollectedIncentiveCountOf(incentiveId), delta)
+	if next < 0 {
+		panic(makeErrorWithDetails(
+			errCalculationError,
+			ufmt.Sprintf("uncollected count of incentive(%s) went negative", incentiveId),
+		))
 	}
 
-	for incentiveId, delta := range deltas {
-		next := gnsmath.SafeAddInt64(counts[incentiveId], delta)
-		if next < 0 {
-			panic(makeErrorWithDetails(
-				errCalculationError,
-				ufmt.Sprintf("uncollected count of incentive(%s) went negative", incentiveId),
-			))
-		}
-
-		if next == 0 {
-			delete(counts, incentiveId)
-			continue
-		}
-
-		counts[incentiveId] = next
+	counts := s.store.GetUncollectedIncentiveCounts()
+	if next == 0 {
+		counts.Remove(incentiveId)
+		return
 	}
 
-	if err := s.store.SetUncollectedIncentiveCounts(0, rlm, counts); err != nil {
-		panic(err)
-	}
+	counts.Set(incentiveId, next)
 }
 
 // recordUnstakedPosition writes the exit checkpoint before the teardown touches the pool.
@@ -144,15 +144,9 @@ func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, d
 
 	s.getUnstakedPositions().set(positionId, position)
 
-	if !position.HasPendingIncentives() {
-		return
-	}
-
-	deltas := make(map[string]int64)
 	for _, incentiveId := range deposit.GetExternalIncentiveIdList() {
-		deltas[incentiveId] = 1
+		s.addUncollectedIncentiveCount(incentiveId, 1)
 	}
-	s.addUncollectedIncentiveCounts(0, rlm, deltas)
 }
 
 // dropUnstakedPositionIfCollected removes the checkpoint once every reward source is collected.

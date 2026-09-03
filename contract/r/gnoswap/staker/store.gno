@@ -419,21 +419,21 @@ func (s *stakerStore) HasUncollectedIncentiveCountsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyUncollectedIncentiveCounts.String())
 }
 
-func (s *stakerStore) GetUncollectedIncentiveCounts() map[string]int64 {
+func (s *stakerStore) GetUncollectedIncentiveCounts() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyUncollectedIncentiveCounts.String())
 	if err != nil {
 		panic(err)
 	}
 
-	counts, ok := result.(map[string]int64)
+	counts, ok := result.(*bptree.BPTree)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
 	}
 
 	return counts
 }
 
-func (s *stakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts map[string]int64) error {
+func (s *stakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
 	}

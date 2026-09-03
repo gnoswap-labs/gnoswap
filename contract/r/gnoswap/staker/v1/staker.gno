@@ -509,7 +509,7 @@ func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarge
 	}
 
 	target.checkpoint.MarkIncentiveCollected(incentiveId)
-	s.addUncollectedIncentiveCounts(0, rlm, map[string]int64{incentiveId: -1})
+	s.addUncollectedIncentiveCount(incentiveId, -1)
 	s.dropUnstakedPositionIfCollected(target)
 }
 

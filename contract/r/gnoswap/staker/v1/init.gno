@@ -123,7 +123,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	}
 
 	if !stakerStore.HasUncollectedIncentiveCountsStoreKey() {
-		err := stakerStore.SetUncollectedIncentiveCounts(0, rlm, make(map[string]int64))
+		err := stakerStore.SetUncollectedIncentiveCounts(0, rlm, sr.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}

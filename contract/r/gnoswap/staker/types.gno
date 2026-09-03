@@ -166,8 +166,8 @@ type IStakerStore interface {
 
 	// UncollectedIncentiveCounts
 	HasUncollectedIncentiveCountsStoreKey() bool
-	GetUncollectedIncentiveCounts() map[string]int64
-	SetUncollectedIncentiveCounts(_ int, rlm realm, counts map[string]int64) error
+	GetUncollectedIncentiveCounts() *bptree.BPTree
+	SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error
 
 	// Pools
 	HasPoolsStoreKey() bool

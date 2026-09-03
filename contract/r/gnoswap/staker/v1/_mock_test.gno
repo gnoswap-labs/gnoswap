@@ -25,7 +25,7 @@ type MockStakerStore struct {
 	unstakingFee                     uint64
 	pendingProtocolFees              map[string]int64
 	unstakedPositions                *bptree.BPTree
-	uncollectedIncentiveCounts       map[string]int64
+	uncollectedIncentiveCounts       *bptree.BPTree
 	pools                            *bptree.BPTree
 	poolTierMemberships              *bptree.BPTree
 	poolTierRatio                    sr.TierRatio
@@ -234,11 +234,11 @@ func (s *MockStakerStore) HasUncollectedIncentiveCountsStoreKey() bool {
 	return s.uncollectedIncentiveCounts != nil
 }
 
-func (s *MockStakerStore) GetUncollectedIncentiveCounts() map[string]int64 {
+func (s *MockStakerStore) GetUncollectedIncentiveCounts() *bptree.BPTree {
 	return s.uncollectedIncentiveCounts
 }
 
-func (s *MockStakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts map[string]int64) error {
+func (s *MockStakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error {
 	s.uncollectedIncentiveCounts = counts
 	return nil
 }
@@ -398,7 +398,7 @@ func newMockStakerStore() *MockStakerStore {
 		unstakingFee:                     0,
 		pendingProtocolFees:              make(map[string]int64),
 		unstakedPositions:                sr.NewBPTreeN(16),
-		uncollectedIncentiveCounts:       make(map[string]int64),
+		uncollectedIncentiveCounts:       sr.NewBPTreeN(16),
 		pools:                            sr.NewBPTreeN(16),
 		poolTierMemberships:              sr.NewBPTreeN(16),
 		poolTierRatio:                    sr.NewTierRatio(0, 0, 0),
