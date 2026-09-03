@@ -27,28 +27,28 @@ type Pool struct {
 }
 
 // Pool Getters methods
-func (p *Pool) PoolPath() string                    { return GetPoolPath(p.token0Path, p.token1Path, p.fee) }
-func (p *Pool) Token0Path() string                  { return p.token0Path }
-func (p *Pool) Token1Path() string                  { return p.token1Path }
-func (p *Pool) Fee() uint32                         { return p.fee }
-func (p *Pool) Balances() TokenPair                 { return p.balances }
-func (p *Pool) BalanceToken0() int64                { return p.balances.token0 }
-func (p *Pool) BalanceToken1() int64                { return p.balances.token1 }
-func (p *Pool) TickSpacing() int32                  { return p.tickSpacing }
-func (p *Pool) Slot0() Slot0                        { return p.slot0 }
-func (p *Pool) Slot0SqrtPriceX96() *u256.Uint       { return p.slot0.sqrtPriceX96 }
-func (p *Pool) Slot0Tick() int32                    { return p.slot0.tick }
-func (p *Pool) Slot0FeeProtocol() uint8             { return p.slot0.feeProtocol }
-func (p *Pool) Slot0Unlocked() bool                 { return p.slot0.unlocked }
-func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint    { return p.feeGrowthGlobal0X128 }
-func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint    { return p.feeGrowthGlobal1X128 }
-func (p *Pool) ProtocolFees() TokenPair             { return p.protocolFees }
-func (p *Pool) ProtocolFeesToken0() int64           { return p.protocolFees.token0 }
-func (p *Pool) ProtocolFeesToken1() int64           { return p.protocolFees.token1 }
-func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
-func (p *Pool) Ticks() *bptree.BPTree               { return p.ticks }
-func (p *Pool) TickBitmaps() map[int16]string       { return p.tickBitmaps }
-func (p *Pool) Positions() *bptree.BPTree           { return p.positions }
+func (p *Pool) PoolPath() string                 { return GetPoolPath(p.token0Path, p.token1Path, p.fee) }
+func (p *Pool) Token0Path() string               { return p.token0Path }
+func (p *Pool) Token1Path() string               { return p.token1Path }
+func (p *Pool) Fee() uint32                      { return p.fee }
+func (p *Pool) Balances() TokenPair              { return p.balances }
+func (p *Pool) BalanceToken0() int64             { return p.balances.token0 }
+func (p *Pool) BalanceToken1() int64             { return p.balances.token1 }
+func (p *Pool) TickSpacing() int32               { return p.tickSpacing }
+func (p *Pool) Slot0() Slot0                     { return p.slot0 }
+func (p *Pool) Slot0SqrtPriceX96() *u256.Uint    { return p.slot0.sqrtPriceX96 }
+func (p *Pool) Slot0Tick() int32                 { return p.slot0.tick }
+func (p *Pool) Slot0FeeProtocol() uint8          { return p.slot0.feeProtocol }
+func (p *Pool) Slot0Unlocked() bool              { return p.slot0.unlocked }
+func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint { return p.feeGrowthGlobal0X128 }
+func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint { return p.feeGrowthGlobal1X128 }
+func (p *Pool) ProtocolFees() TokenPair          { return p.protocolFees }
+func (p *Pool) ProtocolFeesToken0() int64        { return p.protocolFees.token0 }
+func (p *Pool) ProtocolFeesToken1() int64        { return p.protocolFees.token1 }
+func (p *Pool) Liquidity() *u256.Uint            { return p.liquidity }
+func (p *Pool) Ticks() *bptree.BPTree            { return p.ticks }
+func (p *Pool) TickBitmaps() map[int16]string    { return p.tickBitmaps }
+func (p *Pool) Positions() *bptree.BPTree        { return p.positions }
 
 // GetPosition returns the position information for key.
 func (p *Pool) GetPosition(key string) (PositionInfo, error) {
@@ -195,7 +195,8 @@ func (p *Pool) IterateTicks(startTick int32, endTick int32, fn func(tick int32, 
 }
 
 // Clone copies a pool's own fields and leaves its collections nil: ticks,
-// tickBitmaps, positions, and observations are not copied.
+// tickBitmaps, and positions are not copied. Oracle observations are stored
+// separately from Pool.
 //
 // The copy is shallow because the read-only pool view clones every entry a
 // caller reads, so copying the collections would walk the whole tick tree for

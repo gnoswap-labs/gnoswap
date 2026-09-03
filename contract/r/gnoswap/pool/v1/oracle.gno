@@ -187,9 +187,13 @@ func grow(observations *pl.ObservationTree, current, next uint16) (uint16, error
 		return current, errors.New("next exceeds maximum")
 	}
 
-	// ObservationTree is sparse: an absent index is an uninitialized
-	// observation. Reserve the logical capacity in Slot0 without creating
-	// placeholder tree entries; writeObservation creates entries on demand.
+	// Reserve every new slot now so the caller that increases capacity pays for
+	// its storage. This matches Uniswap's Oracle.grow behavior and prevents an
+	// unrestricted reservation from shifting allocation cost to later swappers.
+	for i := current; i < next; i++ {
+		observations.Set(i, pl.NewObservation(1, 0, "0", false))
+	}
+
 	return next, nil
 }
 

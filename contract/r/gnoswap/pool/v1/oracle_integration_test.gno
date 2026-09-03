@@ -260,7 +260,7 @@ func TestObservationTree_BoundaryConditions(cur realm, t *testing.T) {
 	})
 }
 
-// Grow reserves logical capacity without allocating sparse tree entries.
+// Grow reserves capacity by allocating uninitialized placeholder observations.
 func TestObservationTree_GrowInvariants(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewPoolObservationsTree(currentTime)
@@ -276,7 +276,9 @@ func TestObservationTree_GrowInvariants(cur realm, t *testing.T) {
 	obs0 := mustObservation(os, 0)
 	uassert.True(t, obs0.Initialized(), "Slot 0 should remain initialized")
 	for i := currentCard; i < nextCard; i++ {
-		uassert.False(t, os.Has(i), "Grow must not allocate an uninitialized slot")
+		obs := mustObservation(os, i)
+		uassert.False(t, obs.Initialized(), "Grow must allocate an uninitialized slot")
+		uassert.Equal(t, int64(1), obs.BlockTimestamp())
 	}
 
 	// Test growing again
@@ -285,9 +287,10 @@ func TestObservationTree_GrowInvariants(cur realm, t *testing.T) {
 	uassert.NoError(t, err, "Should grow successfully again")
 	uassert.Equal(t, newCard2, newCardinality2, "Should return new cardinality")
 
-	// Verify the additional logical slots remain absent.
+	// Verify the additional slots are allocated but uninitialized.
 	for i := nextCard; i < newCard2; i++ {
-		uassert.False(t, os.Has(i), "Grow must not allocate an uninitialized slot")
+		obs := mustObservation(os, i)
+		uassert.False(t, obs.Initialized(), "Grow must allocate an uninitialized slot")
 	}
 }
 
@@ -417,12 +420,13 @@ func TestObservationTree_ObservationAt(cur realm, t *testing.T) {
 	})
 
 	t.Run("Uninitialized observation", func(cur realm, t *testing.T) {
-		// Grow reserves capacity but leaves uninitialized slots absent.
+		// Grow creates uninitialized placeholder slots.
 		_, err := grow(os, 1, 5)
 		uassert.NoError(t, err, "Should grow successfully")
 
-		_, err = observationAt(os, 3)
-		uassert.Error(t, err, "Should error for an absent uninitialized observation")
+		obs, err := observationAt(os, 3)
+		uassert.NoError(t, err, "Should return an uninitialized placeholder")
+		uassert.False(t, obs.Initialized())
 	})
 }
 
@@ -493,7 +497,7 @@ func createTestPoolWithLiquidity() *pl.Pool {
 			tick:         0,
 			unlocked:     true,
 		},
-		liquidity:        u256.MustFromDecimal("5000000"),
+		liquidity:    u256.MustFromDecimal("5000000"),
 		observations: pl.NewPoolObservationsTree(baseTime),
 	})
 	return mockPool

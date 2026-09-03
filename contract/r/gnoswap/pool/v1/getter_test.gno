@@ -313,6 +313,18 @@ func TestGetObservationAtReturnsDefaultForUninitializedSlot(cur realm, t *testin
 	uassert.ErrorContains(t, err, "out of range")
 }
 
+func TestGetLastObservationPropagatesLookupError(cur realm, t *testing.T) {
+	testInitData(cur, t)
+
+	observations := getMockInstance().store.GetObservations()
+	observations.Remove("token0:token1:3000")
+	uassert.NoError(t, getMockInstance().store.SetObservations(0, cur, observations))
+
+	_, secondsPerLiquidity, _, err := getMockInstance().GetLastObservation("token0:token1:3000")
+	uassert.Error(t, err)
+	uassert.Equal(t, "0", secondsPerLiquidity)
+}
+
 func TestObserve(cur realm, t *testing.T) {
 	testInitData(cur, t)
 

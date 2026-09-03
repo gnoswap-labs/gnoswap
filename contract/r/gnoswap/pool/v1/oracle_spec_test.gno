@@ -61,7 +61,7 @@ func TestOracleGrow(cur realm, t *testing.T) {
 		{"increases the cardinality next for the first call", testGrowIncreasesCardinalityNext},
 		{"does not touch the first slot", testGrowDoesNotTouchFirstSlot},
 		{"is no op if oracle is already gte that size", testGrowNoOpIfAlreadyLarge},
-		{"does not allocate uninitialized slots", testGrowDoesNotAllocateUninitializedSlots},
+		{"adds uninitialized placeholder slots", testGrowAddsUninitializedSlots},
 	}
 
 	for _, tt := range tests {
@@ -109,14 +109,18 @@ func testGrowNoOpIfAlreadyLarge(t *testing.T) {
 	uassert.Equal(t, uint16(5), newCard)
 }
 
-func testGrowDoesNotAllocateUninitializedSlots(t *testing.T) {
+func testGrowAddsUninitializedSlots(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewPoolObservationsTree(currentTime)
 	_, err := grow(os, 1, 5)
 	uassert.NoError(t, err)
 
 	for i := uint16(1); i < 5; i++ {
-		uassert.False(t, os.Has(i))
+		obs := mustObservation(os, i)
+		uassert.Equal(t, int64(1), obs.BlockTimestamp())
+		uassert.Equal(t, "0", obs.SecondsPerLiquidityCumulativeX128())
+		uassert.Equal(t, int64(0), obs.TickCumulative())
+		uassert.False(t, obs.Initialized())
 	}
 }
 

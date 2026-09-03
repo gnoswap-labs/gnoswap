@@ -20,23 +20,6 @@ func (o *Observation) SecondsPerLiquidityCumulativeX128() string {
 }
 func (o *Observation) Initialized() bool { return o.initialized }
 
-// Observation Setters methods
-func (o *Observation) SetBlockTimestamp(blockTimestamp int64) {
-	o.blockTimestamp = blockTimestamp
-}
-
-func (o *Observation) SetTickCumulative(tickCumulative int64) {
-	o.tickCumulative = tickCumulative
-}
-
-func (o *Observation) SetSecondsPerLiquidityCumulativeX128(secondsPerLiquidityCumulativeX128 string) {
-	o.secondsPerLiquidityCumulativeX128 = secondsPerLiquidityCumulativeX128
-}
-
-func (o *Observation) SetInitialized(initialized bool) {
-	o.initialized = initialized
-}
-
 func (o *Observation) Clone() *Observation {
 	return &Observation{
 		blockTimestamp:                    o.blockTimestamp,
@@ -80,6 +63,9 @@ func NewObservationTree() *ObservationTree {
 }
 
 func (t *ObservationTree) Get(index uint16) (*Observation, bool) {
+	if t == nil || t.tree == nil {
+		return nil, false
+	}
 	value := t.tree.Get(utils.EncodeUint16(index))
 	if value == nil {
 		return nil, false
@@ -89,10 +75,16 @@ func (t *ObservationTree) Get(index uint16) (*Observation, bool) {
 }
 
 func (t *ObservationTree) Set(index uint16, observation *Observation) {
+	if t == nil || t.tree == nil {
+		panic("observation tree is not initialized")
+	}
 	t.tree.Set(utils.EncodeUint16(index), observation)
 }
 
 func (t *ObservationTree) Has(index uint16) bool {
+	if t == nil || t.tree == nil {
+		return false
+	}
 	return t.tree.Has(utils.EncodeUint16(index))
 }
 
