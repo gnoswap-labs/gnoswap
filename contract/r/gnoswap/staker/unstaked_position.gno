@@ -13,6 +13,12 @@ type UnstakedPosition struct {
 	lowerTick *Tick
 	upperTick *Tick
 
+	// Outside accumulations of the two boundary ticks at exitTime, as decimal strings. Entries
+	// before exitTime can no longer change, but the one at exitTime can be overwritten by a tick
+	// cross later in the same block, so it is pinned rather than read back.
+	lowerOutsideAcc string
+	upperOutsideAcc string
+
 	tier      uint64
 	tierRatio uint64
 	tierCount uint64
@@ -28,6 +34,8 @@ func NewUnstakedPosition(
 	exitTick int32,
 	lowerTick *Tick,
 	upperTick *Tick,
+	lowerOutsideAcc string,
+	upperOutsideAcc string,
 	tier uint64,
 	tierRatio uint64,
 	tierCount uint64,
@@ -45,6 +53,8 @@ func NewUnstakedPosition(
 		exitTick:            exitTick,
 		lowerTick:           lowerTick,
 		upperTick:           upperTick,
+		lowerOutsideAcc:     lowerOutsideAcc,
+		upperOutsideAcc:     upperOutsideAcc,
 		tier:                tier,
 		tierRatio:           tierRatio,
 		tierCount:           tierCount,
@@ -66,6 +76,12 @@ func (u *UnstakedPosition) LowerTick() *Tick { return u.lowerTick }
 
 // UpperTick returns the position's upper boundary tick.
 func (u *UnstakedPosition) UpperTick() *Tick { return u.upperTick }
+
+// LowerOutsideAcc returns the lower boundary tick's outside accumulation at ExitTime.
+func (u *UnstakedPosition) LowerOutsideAcc() string { return u.lowerOutsideAcc }
+
+// UpperOutsideAcc returns the upper boundary tick's outside accumulation at ExitTime.
+func (u *UnstakedPosition) UpperOutsideAcc() string { return u.upperOutsideAcc }
 
 // Tier returns the pool's emission tier at ExitTime, or 0 when it was not tiered.
 func (u *UnstakedPosition) Tier() uint64 { return u.tier }

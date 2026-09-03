@@ -157,6 +157,24 @@ func (self *PoolResolver) GetOrNewTick(tickId int32) *sr.Tick {
 
 // initializeNewTickOutsideAccumulation seeds a just-created boundary tick so
 // that below(tick) == globalAccumulation holds, keeping the three branches of
+// outsideAccumulationAt returns a boundary tick's outside accumulation at currentTime.
+//
+// An exit checkpoint answers for its own exit timestamp from the value pinned when it was
+// written: a tick cross later in the same block overwrites the entry at that timestamp, while
+// earlier entries can no longer change.
+func (self *PoolResolver) outsideAccumulationAt(tickId int32, currentTime int64) *u256.Uint {
+	if self.exit != nil && currentTime == self.exit.ExitTime() {
+		switch tickId {
+		case self.exit.Deposit().TickLower():
+			return u256.MustFromDecimal(self.exit.LowerOutsideAcc())
+		case self.exit.Deposit().TickUpper():
+			return u256.MustFromDecimal(self.exit.UpperOutsideAcc())
+		}
+	}
+
+	return NewTickResolver(self.GetOrNewTick(tickId)).CurrentOutsideAccumulation(currentTime)
+}
+
 // CalculateRawRewardForPosition consistent.
 func (self *PoolResolver) initializeNewTickOutsideAccumulation(currentTime int64, currentTick, tickId int32, tick *sr.Tick) {
 	if tickId > currentTick {
@@ -665,8 +683,8 @@ func (self *PoolResolver) CalculateRawRewardForPosition(currentTime int64, curre
 
 	globalAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, self.CurrentStakedLiquidity(currentTime))
 
-	lowerAcc := NewTickResolver(self.GetOrNewTick(deposit.TickLower())).CurrentOutsideAccumulation(currentTime)
-	upperAcc := NewTickResolver(self.GetOrNewTick(deposit.TickUpper())).CurrentOutsideAccumulation(currentTime)
+	lowerAcc := self.outsideAccumulationAt(deposit.TickLower(), currentTime)
+	upperAcc := self.outsideAccumulationAt(deposit.TickUpper(), currentTime)
 	if currentTick < deposit.TickLower() {
 		rewardAcc = u256.Zero().Sub(lowerAcc, upperAcc)
 	} else if currentTick >= deposit.TickUpper() {

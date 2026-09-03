@@ -454,9 +454,6 @@ func (s *stakerV1) newCollectContext(_ int, rlm realm, target *collectTarget, cu
 	poolResolver := newPoolResolverWithExit(pool, target.checkpoint)
 	globalAccX128, stakedLiquidity := poolResolver.globalRewardRatioAccumulationAt(currentTime)
 
-	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickLower()))
-	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickUpper()))
-
 	previousRealm := rlm.Previous()
 
 	return &collectContext{
@@ -473,8 +470,8 @@ func (s *stakerV1) newCollectContext(_ int, rlm realm, target *collectTarget, cu
 
 		stakedLiquidity:     stakedLiquidity,
 		globalAccX128:       globalAccX128,
-		lowerOutsideAccX128: lowerTickResolver.CurrentOutsideAccumulation(currentTime),
-		upperOutsideAccX128: upperTickResolver.CurrentOutsideAccumulation(currentTime),
+		lowerOutsideAccX128: poolResolver.outsideAccumulationAt(deposit.TickLower(), currentTime),
+		upperOutsideAccX128: poolResolver.outsideAccumulationAt(deposit.TickUpper(), currentTime),
 	}
 }
 
@@ -500,12 +497,14 @@ func (s *stakerV1) markEmissionCollected(target *collectTarget) {
 // markIncentiveCollected records the incentive collect on the checkpoint. An incentive that
 // could not be funded stays pending, the same way it stays collectible while staked; delivery
 // reports that as an empty reward token against a non-zero amount.
-func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarget, incentiveId string, rewardAmount int64, rewardToken string) {
+func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarget, incentiveId string, rewardAmount, rewardPenalty int64, rewardToken string) {
 	if !target.isCheckpoint() || !target.checkpoint.HasPendingIncentiveId(incentiveId) {
 		return
 	}
 
-	if rewardToken == "" && rewardAmount > 0 {
+	// Delivery reports a skip with an empty reward token. Leave the incentive pending whenever
+	// there was something to deliver, so an underfunded one stays collectible.
+	if rewardToken == "" && (rewardAmount > 0 || rewardPenalty > 0) {
 		return
 	}
 
@@ -686,7 +685,7 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 	// Persist the deposit even when nothing was delivered: the incentive-index update above still ran.
 	ctx.persistDeposit(s)
 
-	s.markIncentiveCollected(0, rlm, target, incentiveId, reward.External[incentiveId], rewardToken)
+	s.markIncentiveCollected(0, rlm, target, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId], rewardToken)
 
 	return rewardAmount, rewardPenalty
 }
@@ -740,7 +739,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 			0, rlm, ctx, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId],
 		)
 
-		s.markIncentiveCollected(0, rlm, target, incentiveId, reward.External[incentiveId], rewardToken)
+		s.markIncentiveCollected(0, rlm, target, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId], rewardToken)
 
 		// An empty reward token means the incentive delivered nothing and stays collectible.
 		if rewardToken == "" {
@@ -784,7 +783,10 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	// Skip when user reward is zero.
 	// Do not update last collect time so the reward accrues until
 	// the next collection where a non-zero amount can be delivered.
-	if rewardAmount == 0 {
+	//
+	// An exit checkpoint has no next collection: it stopped accruing, so a penalty left here
+	// would never be booked and would be dropped with the checkpoint.
+	if rewardAmount == 0 && (ctx.checkpoint == nil || externalPenalty == 0) {
 		return "", 0, 0
 	}
 
@@ -909,7 +911,11 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 	// Skip internal reward state update when user reward is zero (only penalty).
 	// Do not update last collect time so the reward accrues until the next
 	// collection where a non-zero amount can be delivered.
-	skipInternalUpdate := reward.Internal == 0
+	//
+	// An exit checkpoint has no next collection: it stopped accruing, so a penalty left here
+	// would never be delivered and would be dropped with the checkpoint.
+	skipInternalUpdate := reward.Internal == 0 &&
+		(ctx.checkpoint == nil || reward.InternalPenalty == 0)
 
 	// internal reward to user
 	if !skipInternalUpdate {

@@ -115,12 +115,17 @@ func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, d
 		panic(err)
 	}
 
+	lowerTick := poolResolver.GetOrNewTick(deposit.TickLower())
+	upperTick := poolResolver.GetOrNewTick(deposit.TickUpper())
+
 	position := sr.NewUnstakedPosition(
 		deposit,
 		exitTime,
 		poolResolver.CurrentTick(exitTime),
-		poolResolver.GetOrNewTick(deposit.TickLower()),
-		poolResolver.GetOrNewTick(deposit.TickUpper()),
+		lowerTick,
+		upperTick,
+		NewTickResolver(lowerTick).CurrentOutsideAccumulation(exitTime).ToString(),
+		NewTickResolver(upperTick).CurrentOutsideAccumulation(exitTime).ToString(),
 		tier,
 		tierRatio,
 		tierCount,
