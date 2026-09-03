@@ -764,8 +764,8 @@ func newMockStakerStore() *MockStakerStore {
 		poolTierGetHalvingBlocksInRange: func(start, end int64) ([]int64, []int64, error) {
 			return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 		},
-		warmupTemplate:                   sr.DefaultWarmupTemplate(),
-		currentSwapBatch:                 swapBatch,
+		warmupTemplate:   sr.DefaultWarmupTemplate(),
+		currentSwapBatch: swapBatch,
 	}
 }
 
