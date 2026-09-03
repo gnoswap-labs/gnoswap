@@ -10,6 +10,11 @@ OLD_ADDRESS="g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz"
 # Static list of files to process (from commit 90bfb4852a2fc9b8de45918050ff2d826ddb5ec2)
 TARGET_FILES=(
     "contract/r/gnoswap/rbac/consts.gno"
+    "contract/r/gnoswap/test_token/bar/bar.gno"
+    "contract/r/gnoswap/test_token/baz/baz.gno"
+    "contract/r/gnoswap/test_token/foo/foo.gno"
+    "contract/r/gnoswap/test_token/obl/obl.gno"
+    "contract/r/gnoswap/test_token/qux/qux.gno"
     "contract/r/gnoswap/test_token/test_atom/atom.gno"
     "contract/r/gnoswap/test_token/test_atone/atone.gno"
     "contract/r/gnoswap/test_token/test_btc/btc.gno"
