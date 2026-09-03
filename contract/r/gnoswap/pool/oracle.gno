@@ -1,8 +1,8 @@
 package pool
 
 import (
-	utils "gno.land/p/gnoswap/utils"
-	bptree "gno.land/p/nt/bptree/v0"
+	"gno.land/p/gnoswap/utils"
+	"gno.land/p/nt/bptree/v0"
 )
 
 type Observation struct {

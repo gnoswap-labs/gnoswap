@@ -511,7 +511,7 @@ type createMockPoolParams struct {
 	ticks                *bptree.BPTree
 	tickBitmaps          map[int16]string
 	positions            *bptree.BPTree
-	observations     *pl.ObservationTree
+	observations         *pl.ObservationTree
 }
 
 func makeMockPool(params createMockPoolParams) *pl.Pool {

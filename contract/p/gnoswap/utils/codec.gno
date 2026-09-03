@@ -1,6 +1,6 @@
 package utils
 
-import ufmt "gno.land/p/nt/ufmt/v0"
+import "gno.land/p/nt/ufmt/v0"
 
 // EncodeUint16 converts a uint16 into a fixed-width 2-byte big-endian string.
 func EncodeUint16(value uint16) string {
