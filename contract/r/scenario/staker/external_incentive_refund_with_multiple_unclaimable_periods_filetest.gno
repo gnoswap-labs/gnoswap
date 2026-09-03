@@ -298,10 +298,10 @@ func endExternalIncentive(cur realm) {
 }
 
 func verifyRefundAccounting(cur realm) {
-	total := sr.GetIncentiveTotalRewardAmount(targetPoolPath, actualIncentiveID)
-	remaining := sr.GetIncentiveRemainingRewardAmount(targetPoolPath, actualIncentiveID)
-	distributed := sr.GetIncentiveDistributedRewardAmount(targetPoolPath, actualIncentiveID)
-	penalty := sr.GetIncentiveAccumulatedPenaltyAmount(targetPoolPath, actualIncentiveID)
+	total, _ := sr.GetIncentiveTotalRewardAmount(targetPoolPath, actualIncentiveID)
+	remaining, _ := sr.GetIncentiveRemainingRewardAmount(targetPoolPath, actualIncentiveID)
+	distributed, _ := sr.GetIncentiveDistributedRewardAmount(targetPoolPath, actualIncentiveID)
+	penalty, _ := sr.GetIncentiveAccumulatedPenaltyAmount(targetPoolPath, actualIncentiveID)
 
 	sum := remaining + distributed + penalty
 

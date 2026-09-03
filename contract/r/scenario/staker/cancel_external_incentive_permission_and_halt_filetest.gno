@@ -116,7 +116,11 @@ func initialize(cur realm) {
 	incentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
 	sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 
-	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(incentives))
 }
 
 func checkStrangerBlocked(cur realm) {
@@ -127,7 +131,11 @@ func checkStrangerBlocked(cur realm) {
 	})
 	println("[EXPECTED] stranger rejected: caller is not admin, governance, or creator")
 
-	ufmt.Printf("[EXPECTED] incentive untouched: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] incentive untouched: %d\n", len(incentives))
 }
 
 func checkSafeModeBlocked(cur realm) {
@@ -154,7 +162,11 @@ func cancelInEmergencyMode(cur realm) {
 
 	ufmt.Printf("[EXPECTED] creator BAR delta: %d\n", bar.BalanceOf(adminAddr)-barBefore)
 	ufmt.Printf("[EXPECTED] creator GNS delta: %d\n", gns.BalanceOf(adminAddr)-gnsBefore)
-	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(incentives))
 }
 
 // Output:

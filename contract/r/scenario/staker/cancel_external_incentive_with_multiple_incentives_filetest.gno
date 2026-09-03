@@ -144,9 +144,20 @@ func createPendingIncentives(cur realm) {
 	sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 	sr.CreateExternalIncentive(cross(cur), poolPath, quxPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 
-	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
-	ufmt.Printf("[INFO] both start at the same timestamp: %t\n",
-		sr.GetIncentiveStartTimestamp(poolPath, cancelledIncentiveID) == sr.GetIncentiveStartTimestamp(poolPath, survivingIncentiveID))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	cancelledStart, err := sr.GetIncentiveStartTimestamp(poolPath, cancelledIncentiveID)
+	if err != nil {
+		panic(err)
+	}
+	survivingStart, err := sr.GetIncentiveStartTimestamp(poolPath, survivingIncentiveID)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(incentives))
+	ufmt.Printf("[INFO] both start at the same timestamp: %t\n", cancelledStart == survivingStart)
 }
 
 func userMintThenStake(cur realm) {
@@ -169,18 +180,32 @@ func cancelBarIncentive(cur realm) {
 
 	ufmt.Printf("[EXPECTED] creator BAR delta: %d\n", bar.BalanceOf(adminAddr)-barBefore)
 	ufmt.Printf("[EXPECTED] creator GNS delta: %d\n", gns.BalanceOf(adminAddr)-gnsBefore)
-	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
-	ufmt.Printf("[EXPECTED] surviving incentive reward token: %s\n", sr.GetIncentiveRewardToken(poolPath, survivingIncentiveID))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	rewardToken, err := sr.GetIncentiveRewardToken(poolPath, survivingIncentiveID)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(incentives))
+	ufmt.Printf("[EXPECTED] surviving incentive reward token: %s\n", rewardToken)
 }
 
 func collectAfterStart(cur realm) {
 	// Run one third of the incentive window so a non-trivial reward accrues.
 	skipToTimestamp(startTimestamp + INCENTIVE_DURATION/3)
 
-	ufmt.Printf("[EXPECTED] collectable from surviving incentive > 0: %t\n",
-		sr.CollectableExternalIncentiveReward(1, survivingIncentiveID) > 0)
-	ufmt.Printf("[EXPECTED] collectable from cancelled incentive: %d\n",
-		sr.CollectableExternalIncentiveReward(1, cancelledIncentiveID))
+	collectableSurviving, err := sr.CollectableExternalIncentiveReward(1, survivingIncentiveID)
+	if err != nil {
+		panic(err)
+	}
+	collectableCancelled, err := sr.CollectableExternalIncentiveReward(1, cancelledIncentiveID)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] collectable from surviving incentive > 0: %t\n", collectableSurviving > 0)
+	ufmt.Printf("[EXPECTED] collectable from cancelled incentive: %d\n", collectableCancelled)
 
 	testing.SetRealm(userRealm)
 	barBefore := bar.BalanceOf(userAddr)

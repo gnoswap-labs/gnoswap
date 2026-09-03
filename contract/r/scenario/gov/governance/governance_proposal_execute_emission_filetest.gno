@@ -35,7 +35,10 @@ var (
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	println("[SCENARIO] 1. Delegate gns to admin")
 	delegateGnsToAdmin(cur)
@@ -104,21 +107,29 @@ func vote(cur realm, proposalID int64, yea bool) {
 func executeChangeEmissionDistributionPct(cur realm, proposalID int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
-	prevEmissionDistributionPct1 := emission.GetDistributionBpsPct(1)
-	prevEmissionDistributionPct2 := emission.GetDistributionBpsPct(2)
-	prevEmissionDistributionPct3 := emission.GetDistributionBpsPct(3)
-	prevEmissionDistributionPct4 := emission.GetDistributionBpsPct(4)
+	prevEmissionDistributionPct1 := mustGetDistributionBpsPct(1)
+	prevEmissionDistributionPct2 := mustGetDistributionBpsPct(2)
+	prevEmissionDistributionPct3 := mustGetDistributionBpsPct(3)
+	prevEmissionDistributionPct4 := mustGetDistributionBpsPct(4)
 
 	governance.Execute(cross(cur), proposalID)
 
-	afterEmissionDistributionPct1 := emission.GetDistributionBpsPct(1)
-	afterEmissionDistributionPct2 := emission.GetDistributionBpsPct(2)
-	afterEmissionDistributionPct3 := emission.GetDistributionBpsPct(3)
-	afterEmissionDistributionPct4 := emission.GetDistributionBpsPct(4)
+	afterEmissionDistributionPct1 := mustGetDistributionBpsPct(1)
+	afterEmissionDistributionPct2 := mustGetDistributionBpsPct(2)
+	afterEmissionDistributionPct3 := mustGetDistributionBpsPct(3)
+	afterEmissionDistributionPct4 := mustGetDistributionBpsPct(4)
 
 	ufmt.Printf("[INFO] Change Emission Distribution Percentages Proposal ID: %d\n", proposalID)
 	ufmt.Printf("[EXPECTED] before proposal %d executing - pct 1: %d, pct 2: %d, pct 3: %d, pct 4: %d\n", proposalID, prevEmissionDistributionPct1, prevEmissionDistributionPct2, prevEmissionDistributionPct3, prevEmissionDistributionPct4)
 	ufmt.Printf("[EXPECTED] after proposal %d executing - pct 1: %d, pct 2: %d, pct 3: %d, pct 4: %d\n", proposalID, afterEmissionDistributionPct1, afterEmissionDistributionPct2, afterEmissionDistributionPct3, afterEmissionDistributionPct4)
+}
+
+func mustGetDistributionBpsPct(target int) int64 {
+	pct, err := emission.GetDistributionBpsPct(target)
+	if err != nil {
+		panic(err)
+	}
+	return pct
 }
 
 // Output:

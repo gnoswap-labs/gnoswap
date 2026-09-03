@@ -148,7 +148,11 @@ func createPendingIncentive(cur realm) {
 	incentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
 	sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 
-	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(incentives))
 }
 
 func stakeWhilePending(cur realm) {
@@ -160,7 +164,10 @@ func stakeWhilePending(cur realm) {
 
 	// The incentive is still pending (start > now), so StakeToken does not add it
 	// to the deposit's incentive-id list.
-	ids := sr.GetDepositExternalIncentiveIdList(stakedPosition)
+	ids, err := sr.GetDepositExternalIncentiveIdList(stakedPosition)
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[INFO] staked position %d\n", stakedPosition)
 	ufmt.Printf("[EXPECTED] deposit references the pending incentive: %t\n", len(ids) != 0)
 }
@@ -169,7 +176,11 @@ func cancelIncentive(cur realm) {
 	testing.SetRealm(adminRealm)
 	sr.CancelExternalIncentive(cross(cur), poolPath, incentiveID)
 
-	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(incentives))
 }
 
 func collectAfterCancel(cur realm) {
@@ -178,7 +189,10 @@ func collectAfterCancel(cur realm) {
 
 	// The deposit never referenced the pending incentive, so collecting is a
 	// clean no-op and must not panic on a removed incentive id.
-	ids := sr.GetDepositExternalIncentiveIdList(stakedPosition)
+	ids, err := sr.GetDepositExternalIncentiveIdList(stakedPosition)
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[EXPECTED] deposit incentive-id count after cancel: %d\n", len(ids))
 
 	testing.SetRealm(userRealm)

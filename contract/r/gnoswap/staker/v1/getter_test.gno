@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"errors"
 	"testing"
 
 	rotree "gno.land/p/nt/bptree/v0/rotree"
@@ -11,6 +12,38 @@ import (
 
 	sr "gno.land/r/gnoswap/staker"
 )
+
+func TestCollectableRewards_PropagateHalvingLookupError(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
+	mockStore := state.instance.store.(*MockStakerStore)
+	mockStore.poolTierGetHalvingBlocksInRange = func(start, end int64) ([]int64, []int64, error) {
+		return nil, nil, errors.New("halving lookup failed")
+	}
+
+	_, err := state.instance.CollectableEmissionReward(state.positionId)
+	uassert.ErrorContains(t, err, "halving lookup failed")
+
+	_, err = state.instance.CollectableExternalIncentiveReward(state.positionId, state.incentiveId)
+	uassert.ErrorContains(t, err, "halving lookup failed")
+}
+
+func TestCollectReward_PanicsOnHalvingLookupErrorBeforeRewardUpdates(cur realm, t *testing.T) {
+	state := setupBasicTestState(cur, t)
+	mockStore := state.instance.store.(*MockStakerStore)
+	mockStore.poolTierGetHalvingBlocksInRange = func(start, end int64) ([]int64, []int64, error) {
+		return nil, nil, errors.New("halving lookup failed")
+	}
+	lastCollectTime := state.deposit.InternalRewardLastCollectTime()
+	rewardCacheSize := state.pool.RewardCache().Size()
+
+	testing.SetRealm(testing.NewUserRealm(state.owner))
+	uassert.AbortsWithMessage(t, cur, "halving lookup failed", func() {
+		sr.CollectReward(cross(cur), state.positionId)
+	})
+
+	uassert.Equal(t, lastCollectTime, state.deposit.InternalRewardLastCollectTime())
+	uassert.Equal(t, rewardCacheSize, state.pool.RewardCache().Size())
+}
 
 // testState holds a complete test state setup for getter tests.
 // This allows setting up state once and verifying multiple getters.
@@ -120,48 +153,84 @@ func TestGetterIncentiveBasicProperties(cur realm, t *testing.T) {
 		expected any
 	}{
 		{
-			name:     "GetIncentiveStartTimestamp",
-			getter:   func() any { return state.instance.GetIncentiveStartTimestamp(state.poolPath, state.incentiveId) },
+			name: "GetIncentiveStartTimestamp",
+			getter: func() any {
+				v, err := state.instance.GetIncentiveStartTimestamp(state.poolPath, state.incentiveId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: state.fixedTimestamp,
 		},
 		{
-			name:     "GetIncentiveEndTimestamp",
-			getter:   func() any { return state.instance.GetIncentiveEndTimestamp(state.poolPath, state.incentiveId) },
+			name: "GetIncentiveEndTimestamp",
+			getter: func() any {
+				v, err := state.instance.GetIncentiveEndTimestamp(state.poolPath, state.incentiveId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: state.fixedTimestamp + 3600,
 		},
 		{
-			name:     "GetTargetPoolPathByIncentiveId",
-			getter:   func() any { return state.instance.GetTargetPoolPathByIncentiveId(state.poolPath, state.incentiveId) },
+			name: "GetTargetPoolPathByIncentiveId",
+			getter: func() any {
+				v, err := state.instance.GetTargetPoolPathByIncentiveId(state.poolPath, state.incentiveId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: state.poolPath,
 		},
 		{
-			name:     "GetCreatedHeightOfIncentive",
-			getter:   func() any { return state.instance.GetCreatedHeightOfIncentive(state.poolPath, state.incentiveId) },
+			name: "GetCreatedHeightOfIncentive",
+			getter: func() any {
+				v, err := state.instance.GetCreatedHeightOfIncentive(state.poolPath, state.incentiveId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: state.fixedBlockHeight,
 		},
 		{
-			name:     "GetIncentiveCreatedTimestamp",
-			getter:   func() any { return state.instance.GetIncentiveCreatedTimestamp(state.poolPath, state.incentiveId) },
+			name: "GetIncentiveCreatedTimestamp",
+			getter: func() any {
+				v, err := state.instance.GetIncentiveCreatedTimestamp(state.poolPath, state.incentiveId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: state.fixedTimestamp,
 		},
 		{
-			name:     "GetIncentiveDepositGnsAmount",
-			getter:   func() any { return state.instance.GetIncentiveDepositGnsAmount(state.poolPath, state.incentiveId) },
+			name: "GetIncentiveDepositGnsAmount",
+			getter: func() any {
+				v, err := state.instance.GetIncentiveDepositGnsAmount(state.poolPath, state.incentiveId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: int64(1_000_000_000),
 		},
 		{
-			name:     "GetIncentiveRefunded",
-			getter:   func() any { return state.instance.GetIncentiveRefunded(state.poolPath, state.incentiveId) },
+			name: "GetIncentiveRefunded",
+			getter: func() any {
+				v, err := state.instance.GetIncentiveRefunded(state.poolPath, state.incentiveId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: false,
 		},
 		{
-			name:     "GetIncentiveRewardToken",
-			getter:   func() any { return state.instance.GetIncentiveRewardToken(state.poolPath, state.incentiveId) },
+			name: "GetIncentiveRewardToken",
+			getter: func() any {
+				v, err := state.instance.GetIncentiveRewardToken(state.poolPath, state.incentiveId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: barPath,
 		},
 		{
-			name:     "GetIncentiveCreator",
-			getter:   func() any { return state.instance.GetIncentiveCreator(state.poolPath, state.incentiveId) },
+			name: "GetIncentiveCreator",
+			getter: func() any {
+				v, err := state.instance.GetIncentiveCreator(state.poolPath, state.incentiveId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: state.owner,
 		},
 	}
@@ -182,9 +251,13 @@ func TestGetterIncentiveRewardAmounts(cur realm, t *testing.T) {
 	// Set distributed amount to create derived relationship
 	state.incentive.SetDistributedRewardAmount(3_000_000)
 
-	totalReward := state.instance.GetIncentiveTotalRewardAmount(state.poolPath, state.incentiveId)
-	distributedReward := state.instance.GetIncentiveDistributedRewardAmount(state.poolPath, state.incentiveId)
-	remainingReward := state.instance.GetIncentiveRemainingRewardAmount(state.poolPath, state.incentiveId)
+	totalReward, err := state.instance.GetIncentiveTotalRewardAmount(state.poolPath, state.incentiveId)
+
+	uassert.NoError(t, err)
+	distributedReward, err := state.instance.GetIncentiveDistributedRewardAmount(state.poolPath, state.incentiveId)
+	uassert.NoError(t, err)
+	remainingReward, err := state.instance.GetIncentiveRemainingRewardAmount(state.poolPath, state.incentiveId)
+	uassert.NoError(t, err)
 
 	// Verify individual values
 	uassert.Equal(t, int64(10_000_000), totalReward)
@@ -200,13 +273,16 @@ func TestGetterIncentiveRewardAmounts(cur realm, t *testing.T) {
 	// sub-integer rates (here 10_000_000 / 3600 = 2777.77...) survive without
 	// the truncation that the previous int64 representation forced. Floor of
 	// rewardPerSecondX128 >> 128 should still equal the legacy value 2777.
-	rewardPerSecondX128 := state.instance.GetIncentiveRewardPerSecondX128(state.poolPath, state.incentiveId)
+	rewardPerSecondX128, err := state.instance.GetIncentiveRewardPerSecondX128(state.poolPath, state.incentiveId)
+	uassert.NoError(t, err)
 	floor := u256.Zero().Rsh(rewardPerSecondX128, 128)
 	uassert.Equal(t, "2777", floor.ToString())
 
 	// Test u256 variants
-	rewardAmount := state.instance.GetIncentiveRewardAmount(state.poolPath, state.incentiveId)
-	rewardAmountStr := state.instance.GetIncentiveRewardAmountAsString(state.poolPath, state.incentiveId)
+	rewardAmount, err := state.instance.GetIncentiveRewardAmount(state.poolPath, state.incentiveId)
+	uassert.NoError(t, err)
+	rewardAmountStr, err := state.instance.GetIncentiveRewardAmountAsString(state.poolPath, state.incentiveId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, "10000000", rewardAmount.ToString())
 	uassert.Equal(t, "10000000", rewardAmountStr)
 }
@@ -214,7 +290,9 @@ func TestGetterIncentiveRewardAmounts(cur realm, t *testing.T) {
 func TestGetterPoolIncentiveDepositObjects(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
-	pool := state.instance.GetPool(state.poolPath)
+	pool, err := state.instance.GetPool(state.poolPath)
+
+	uassert.NoError(t, err)
 	uassert.Equal(t, state.poolPath, pool.PoolPath())
 
 	incentive, ok := state.instance.GetPoolIncentives(state.poolPath).Get(state.incentiveId).(*sr.ExternalIncentive)
@@ -222,7 +300,9 @@ func TestGetterPoolIncentiveDepositObjects(cur realm, t *testing.T) {
 	uassert.Equal(t, state.incentiveId, incentive.IncentiveId())
 	uassert.Equal(t, barPath, incentive.RewardToken())
 
-	deposit := state.instance.GetDeposit(state.positionId)
+	deposit, err := state.instance.GetDeposit(state.positionId)
+
+	uassert.NoError(t, err)
 	uassert.Equal(t, state.owner, deposit.Owner())
 	uassert.Equal(t, state.poolPath, deposit.TargetPoolPath())
 }
@@ -230,10 +310,14 @@ func TestGetterPoolIncentiveDepositObjects(cur realm, t *testing.T) {
 func TestGetterCollectableRewards(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
-	internal := state.instance.CollectableEmissionReward(state.positionId)
+	internal, err := state.instance.CollectableEmissionReward(state.positionId)
+
+	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), internal)
 
-	external := state.instance.CollectableExternalIncentiveReward(state.positionId, state.incentiveId)
+	external, err := state.instance.CollectableExternalIncentiveReward(state.positionId, state.incentiveId)
+
+	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), external)
 }
 
@@ -261,7 +345,9 @@ func TestGetterPoolIncentiveIdList(cur realm, t *testing.T) {
 func TestGetterExternalIncentiveByPoolPath(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
-	incentives := state.instance.GetExternalIncentiveByPoolPath(state.poolPath)
+	incentives, err := state.instance.GetExternalIncentiveByPoolPath(state.poolPath)
+
+	uassert.NoError(t, err)
 
 	uassert.Equal(t, 1, len(incentives))
 	uassert.Equal(t, state.incentiveId, incentives[0].IncentiveId())
@@ -276,38 +362,66 @@ func TestGetterDepositBasicProperties(cur realm, t *testing.T) {
 		expected any
 	}{
 		{
-			name:     "GetDepositOwner",
-			getter:   func() any { return state.instance.GetDepositOwner(state.positionId) },
+			name: "GetDepositOwner",
+			getter: func() any {
+				v, err := state.instance.GetDepositOwner(state.positionId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: state.owner,
 		},
 		{
-			name:     "GetDepositStakeTime",
-			getter:   func() any { return state.instance.GetDepositStakeTime(state.positionId) },
+			name: "GetDepositStakeTime",
+			getter: func() any {
+				v, err := state.instance.GetDepositStakeTime(state.positionId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: state.fixedTimestamp,
 		},
 		{
-			name:     "GetDepositTargetPoolPath",
-			getter:   func() any { return state.instance.GetDepositTargetPoolPath(state.positionId) },
+			name: "GetDepositTargetPoolPath",
+			getter: func() any {
+				v, err := state.instance.GetDepositTargetPoolPath(state.positionId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: state.poolPath,
 		},
 		{
-			name:     "GetDepositTickLower",
-			getter:   func() any { return state.instance.GetDepositTickLower(state.positionId) },
+			name: "GetDepositTickLower",
+			getter: func() any {
+				v, err := state.instance.GetDepositTickLower(state.positionId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: int32(-100),
 		},
 		{
-			name:     "GetDepositTickUpper",
-			getter:   func() any { return state.instance.GetDepositTickUpper(state.positionId) },
+			name: "GetDepositTickUpper",
+			getter: func() any {
+				v, err := state.instance.GetDepositTickUpper(state.positionId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: int32(100),
 		},
 		{
-			name:     "GetDepositInternalRewardLastCollectTimestamp",
-			getter:   func() any { return state.instance.GetDepositInternalRewardLastCollectTimestamp(state.positionId) },
+			name: "GetDepositInternalRewardLastCollectTimestamp",
+			getter: func() any {
+				v, err := state.instance.GetDepositInternalRewardLastCollectTimestamp(state.positionId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: state.fixedTimestamp,
 		},
 		{
-			name:     "GetDepositCollectedInternalReward",
-			getter:   func() any { return state.instance.GetDepositCollectedInternalReward(state.positionId) },
+			name: "GetDepositCollectedInternalReward",
+			getter: func() any {
+				v, err := state.instance.GetDepositCollectedInternalReward(state.positionId)
+				uassert.NoError(t, err)
+				return v
+			},
 			expected: int64(5000),
 		},
 	}
@@ -323,8 +437,11 @@ func TestGetterDepositBasicProperties(cur realm, t *testing.T) {
 func TestGetterDepositLiquidity(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
-	liquidity := state.instance.GetDepositLiquidity(state.positionId)
-	liquidityStr := state.instance.GetDepositLiquidityAsString(state.positionId)
+	liquidity, err := state.instance.GetDepositLiquidity(state.positionId)
+
+	uassert.NoError(t, err)
+	liquidityStr, err := state.instance.GetDepositLiquidityAsString(state.positionId)
+	uassert.NoError(t, err)
 
 	uassert.Equal(t, "1000000", liquidity.ToString())
 	uassert.Equal(t, "1000000", liquidityStr)
@@ -334,15 +451,18 @@ func TestGetterDepositExternalRewards(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
 	// Test collected external reward
-	collectedReward := state.instance.GetDepositCollectedExternalReward(state.positionId, state.incentiveId)
+	collectedReward, err := state.instance.GetDepositCollectedExternalReward(state.positionId, state.incentiveId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, int64(2500), collectedReward)
 
 	// Test last collect timestamp
-	lastCollectTime := state.instance.GetDepositExternalRewardLastCollectTimestamp(state.positionId, state.incentiveId)
+	lastCollectTime, err := state.instance.GetDepositExternalRewardLastCollectTimestamp(state.positionId, state.incentiveId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, state.fixedTimestamp+100, lastCollectTime)
 
 	// Test external incentive id list
-	incentiveIds := state.instance.GetDepositExternalIncentiveIdList(state.positionId)
+	incentiveIds, err := state.instance.GetDepositExternalIncentiveIdList(state.positionId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, 1, len(incentiveIds))
 	uassert.Equal(t, state.incentiveId, incentiveIds[0])
 }
@@ -350,7 +470,9 @@ func TestGetterDepositExternalRewards(cur realm, t *testing.T) {
 func TestGetterDepositWarmUp(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
-	warmups := state.instance.GetDepositWarmUp(state.positionId)
+	warmups, err := state.instance.GetDepositWarmUp(state.positionId)
+
+	uassert.NoError(t, err)
 
 	uassert.Equal(t, 3, len(warmups))
 	uassert.Equal(t, uint64(30), warmups[0].WarmupRatio)
@@ -394,7 +516,8 @@ func TestGetterPoolTierProperties(cur realm, t *testing.T) {
 	uassert.Equal(t, uint64(1), tier)
 
 	// Test pool tier ratio
-	ratio := state.instance.GetPoolTierRatio(state.poolPath)
+	ratio, err := state.instance.GetPoolTierRatio(state.poolPath)
+	uassert.NoError(t, err)
 	uassert.Equal(t, uint64(50), ratio)
 
 	// Test pool tier count
@@ -413,15 +536,19 @@ func TestGetterPoolsByTier(cur realm, t *testing.T) {
 	pool2Path := "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:500"
 	state.instance.setPoolTier(0, cur, pool2Path, 1, state.fixedTimestamp)
 
-	pools := state.instance.GetPoolsByTier(1)
+	pools, err := state.instance.GetPoolsByTier(1)
+
+	uassert.NoError(t, err)
 	uassert.Equal(t, 2, len(pools))
 
 	// Test tier 0 returns empty
-	poolsTier0 := state.instance.GetPoolsByTier(0)
+	poolsTier0, err := state.instance.GetPoolsByTier(0)
+	uassert.NoError(t, err)
 	uassert.Equal(t, 0, len(poolsTier0))
 
 	// Test non-existent tier
-	poolsTier99 := state.instance.GetPoolsByTier(99)
+	poolsTier99, err := state.instance.GetPoolsByTier(99)
+	uassert.NoError(t, err)
 	uassert.Equal(t, 0, len(poolsTier99))
 }
 
@@ -496,17 +623,15 @@ func TestGetterWarmupTemplate(cur realm, t *testing.T) {
 func TestGetterNonExistentIncentive(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
-	uassert.PanicsContains(t, cur, "incentive does not exist", func() {
-		state.instance.GetIncentiveStartTimestamp(state.poolPath, "non-existent-incentive")
-	})
+	_, err := state.instance.GetIncentiveStartTimestamp(state.poolPath, "non-existent-incentive")
+	uassert.ErrorContains(t, err, "incentive does not exist")
 }
 
 func TestGetterNonExistentDeposit(cur realm, t *testing.T) {
 	state := setupBasicTestState(cur, t)
 
-	uassert.PanicsContains(t, cur, "not found", func() {
-		state.instance.GetDepositOwner(uint64(999))
-	})
+	_, err := state.instance.GetDepositOwner(uint64(999))
+	uassert.ErrorContains(t, err, "not found")
 }
 
 func TestGetterNonExistentPool(cur realm, t *testing.T) {
@@ -548,8 +673,11 @@ func TestGetterMultipleDepositsForSameOwner(cur realm, t *testing.T) {
 	positionId2 := uint64(2)
 	state.instance.getDeposits().set(positionId2, deposit2)
 
-	owner1 := state.instance.GetDepositOwner(state.positionId)
-	owner2 := state.instance.GetDepositOwner(positionId2)
+	owner1, err := state.instance.GetDepositOwner(state.positionId)
+
+	uassert.NoError(t, err)
+	owner2, err := state.instance.GetDepositOwner(positionId2)
+	uassert.NoError(t, err)
 	uassert.Equal(t, state.owner, owner1)
 	uassert.Equal(t, state.owner, owner2)
 }
@@ -614,8 +742,9 @@ func TestGetterIncentiveActiveStatus(cur realm, t *testing.T) {
 			}
 			pool.Incentives().SetIncentive(tt.incentiveId, incentive)
 
-			// IsIncentiveActive uses time.Now(), so we just verify it doesn't panic
-			_ = instance.IsIncentiveActive(poolPath, tt.incentiveId)
+			// IsIncentiveActive uses time.Now(), so we just verify it doesn't error
+			_, err := instance.IsIncentiveActive(poolPath, tt.incentiveId)
+			uassert.NoError(t, err)
 		})
 	}
 }

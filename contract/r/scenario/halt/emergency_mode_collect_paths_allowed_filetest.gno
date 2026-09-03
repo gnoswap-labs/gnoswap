@@ -359,7 +359,10 @@ func setEmergencyModeForCollect(cur realm) {
 }
 
 func prepareGovernanceQuorumForEmergencyExecution(cur realm) {
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SetRealm(adminRealm2)
 	governance.Reconfigure(cross(cur), config.VotingStartDelay, config.VotingPeriod, config.VotingWeightSmoothingDuration, 40, config.ProposalCreationThreshold, config.ExecutionDelay, config.ExecutionWindow)
 }
@@ -577,7 +580,10 @@ func testGovernanceProposeCommunityPoolSpendAllowed(cur realm) {
 }
 
 func testGovernanceProposeParameterChangeAllowed(cur realm) {
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	executions := ufmt.Sprintf(
 		"gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*%d,%d,%d,%d,%d,%d,%d",
 		config.VotingStartDelay,
@@ -596,7 +602,10 @@ func testGovernanceProposeParameterChangeAllowed(cur realm) {
 }
 
 func testGovernanceVoteAllowed(cur realm) {
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingStartDelay) / collectCurrentBlockTime)
 	testing.SetRealm(aliceRealm2)
 	aliceVote := governance.Vote(cross(cur), parameterChangeProposalID, true)
@@ -611,7 +620,10 @@ func testGovernanceVoteAllowed(cur realm) {
 }
 
 func testGovernanceExecuteAllowed(cur realm) {
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingPeriod) / collectCurrentBlockTime)
 	testing.SetRealm(bobRealm2)
 	executedID := governance.Execute(cross(cur), parameterChangeProposalID)
@@ -620,7 +632,10 @@ func testGovernanceExecuteAllowed(cur realm) {
 }
 
 func testGovernanceReconfigureAllowed(cur realm) {
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SetRealm(adminRealm2)
 	version := governance.Reconfigure(cross(cur), config.VotingStartDelay, config.VotingPeriod, config.VotingWeightSmoothingDuration, config.Quorum, config.ProposalCreationThreshold, config.ExecutionDelay, config.ExecutionWindow+100)
 	ufmt.Printf("[EXPECTED] governance.Reconfigure version: %d\n", version)

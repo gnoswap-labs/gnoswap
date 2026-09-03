@@ -157,7 +157,7 @@ func mintBarQux100Position1(cur realm) {
 		panic("position ID should be 1")
 	}
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
+	owner := mustOwnerOf(positionIdFrom(cur, positionId))
 	if owner != adminAddr {
 		panic("position should be owned by admin")
 	}
@@ -294,6 +294,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 
 func milliToSec(cur realm, ms int64) int64 {
 	return ms / int64(1000)
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

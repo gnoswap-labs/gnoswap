@@ -8,12 +8,12 @@ import (
 	"chain"
 	"chain/banker"
 	"chain/runtime"
+	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/demo/tokens/grc721"
@@ -173,7 +173,7 @@ func mintWugnotGnsPos01(cur realm) {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
+	owner := mustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
@@ -238,6 +238,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

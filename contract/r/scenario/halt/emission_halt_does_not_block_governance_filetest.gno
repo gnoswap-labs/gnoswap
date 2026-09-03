@@ -52,7 +52,10 @@ var (
 
 func main(cur realm) {
 	testing.SetRealm(adminRealm)
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	println("[SCENARIO] 1. Initialize governance and tokens")
 	initGovernanceAndTokens(cur)
@@ -114,7 +117,11 @@ func initGovernanceAndTokens(cur realm) {
 }
 
 func setupProposalCreationXGns(cur realm) {
-	threshold := governance.GetLatestConfig().ProposalCreationThreshold
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
+	threshold := config.ProposalCreationThreshold
 	missingAmount := threshold - xgns.BalanceOf(aliceAddr)
 	if missingAmount <= 0 {
 		return
@@ -140,7 +147,10 @@ func createAndVoteProposalWithEmissionEnabled(cur realm) {
 	ufmt.Printf("[EXPECTED] Proposal created successfully with ID: %d\n", proposalId)
 
 	// Skip to voting start
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
 
 	// Vote on proposal
@@ -178,7 +188,10 @@ func setEmissionHalt(cur realm) {
 
 func createProposalWithEmissionHalted(cur realm) {
 	// Build a reconfigure execution with modified values to test parameter changes during emission halt
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	// Modify ExecutionWindow to verify the parameter change actually takes effect
 	newExecutionWindow := config.ExecutionWindow + 100
@@ -219,7 +232,10 @@ func voteOnProposalWithEmissionHalted(cur realm) {
 	println("[INFO] Voting on proposal with emission HALTED...")
 
 	// Wait for voting to start on the new proposal
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
 
 	// Alice votes
@@ -241,19 +257,28 @@ func voteOnProposalWithEmissionHalted(cur realm) {
 
 func executeProposalWithEmissionHalted(cur realm) {
 	// Skip to voting end time by advancing blocks
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
 
 	ufmt.Println("[INFO] Executing proposal with emission HALTED...")
 
 	// Log config BEFORE Execute
-	configBefore := governance.GetLatestConfig()
+	configBefore, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[INFO] Config BEFORE Execute - ExecutionWindow: %d\n", configBefore.ExecutionWindow)
 
 	testing.SetRealm(adminRealm)
 	governance.Execute(cross(cur), proposalId)
 
-	configAfter := governance.GetLatestConfig()
+	configAfter, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[INFO] Config AFTER Execute - ExecutionWindow: %d\n", configAfter.ExecutionWindow)
 
 	// Verify the parameter change took effect
@@ -278,7 +303,10 @@ func resetProposalVotesWithEmissionHalted(cur realm) {
 	)
 
 	// Wait for voting start on the new proposal
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
 
 	// Vote on it
