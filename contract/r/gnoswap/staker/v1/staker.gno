@@ -494,18 +494,36 @@ func (s *stakerV1) markEmissionCollected(target *collectTarget) {
 	s.dropUnstakedPositionIfCollected(target)
 }
 
-// markIncentiveCollected records the incentive collect on the checkpoint. An incentive that
-// could not be funded stays pending, the same way it stays collectible while staked; delivery
-// reports that as an empty reward token against a non-zero amount.
+// markIncentiveCollected records the incentive collect on the checkpoint. Delivery reports a
+// skip with an empty reward token; a skipped incentive that could still cover the owed amount
+// stays pending, while one that no longer can is forfeited - its reward amount only ever
+// decreases, so waiting cannot help, and a checkpoint pending it forever would lock both this
+// position's re-staking and the incentive's own refund.
 func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarget, incentiveId string, rewardAmount, rewardPenalty int64, rewardToken string) {
 	if !target.isCheckpoint() || !target.checkpoint.HasPendingIncentiveId(incentiveId) {
 		return
 	}
 
-	// Delivery reports a skip with an empty reward token. Leave the incentive pending whenever
-	// there was something to deliver, so an underfunded one stays collectible.
 	if rewardToken == "" && (rewardAmount > 0 || rewardPenalty > 0) {
-		return
+		incentiveResolver := NewExternalIncentiveResolver(s.getExternalIncentives().get(incentiveId))
+		if incentiveResolver.RewardAmount() >= gnsmath.SafeAddInt64(rewardAmount, rewardPenalty) {
+			return
+		}
+
+		previousRealm := rlm.Previous()
+		chain.Emit(
+			"ForfeitUncollectedIncentiveReward",
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"positionId", utils.FormatUint(target.positionId),
+			"incentiveId", incentiveId,
+			"rewardToken", incentiveResolver.RewardToken(),
+			"forfeitedAmount", utils.FormatInt(rewardAmount),
+			"forfeitedPenalty", utils.FormatInt(rewardPenalty),
+			"availableAmount", utils.FormatInt(incentiveResolver.RewardAmount()),
+			"currentTime", utils.FormatInt(time.Now().Unix()),
+			"currentHeight", utils.FormatInt(runtime.ChainHeight()),
+		)
 	}
 
 	target.checkpoint.MarkIncentiveCollected(incentiveId)
