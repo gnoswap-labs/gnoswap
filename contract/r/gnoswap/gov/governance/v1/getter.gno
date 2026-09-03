@@ -278,7 +278,6 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 		return true
 	})
 	return oldestSnapshotTime, hasActiveProposal
-
 }
 
 // GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.

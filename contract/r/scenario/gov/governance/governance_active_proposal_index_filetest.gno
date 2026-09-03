@@ -14,11 +14,11 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
+	gns "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/governance"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
 	gs "gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
-	gns "gno.land/r/gnoswap/gns"
 )
 
 const archivedProposalCount = 1000

@@ -176,7 +176,6 @@ func (g *governanceV1) pruneInactiveProposals(_ int, rlm realm, current int64) e
 	return g.store.SetActiveProposalsByDeadline(0, rlm, deadlineIndex)
 }
 
-
 // User proposals methods
 func (g *governanceV1) getUserProposals(user string) []*governance.Proposal {
 	proposalIDs, exists := g.store.GetUserProposalIDs(user)

@@ -922,7 +922,6 @@ func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
 	}
 }
 
-
 func TestPruneInactiveProposals_RemovesTerminalIndexEntries(cur realm, t *testing.T) {
 	gv := setupGetterTest(cur, t)
 	store := gv.store.(*mockGovernanceStore)
