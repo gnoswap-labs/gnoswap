@@ -228,6 +228,11 @@ func TestCreatePool(cur realm, t *testing.T) {
 				// verify pool was created correctly
 				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
 				pool := getMockInstance().mustGetPool(poolPath)
+				observations, err := getMockInstance().getObservations(poolPath)
+				uassert.NoError(t, err)
+				initialObservation, ok := observations.Get(0)
+				uassert.True(t, ok)
+				uassert.True(t, initialObservation.Initialized())
 
 				if pool.Token0Path() != expectedPoolInfo.Token0Path() || pool.Token1Path() != expectedPoolInfo.Token1Path() {
 					t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",

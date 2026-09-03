@@ -1,6 +1,22 @@
 package utils
 
-import ufmt "gno.land/p/nt/ufmt/v0"
+import "gno.land/p/nt/ufmt/v0"
+
+// EncodeUint16 converts a uint16 into a fixed-width 2-byte big-endian string.
+func EncodeUint16(value uint16) string {
+	var buf [2]byte
+	buf[0] = byte(value >> 8)
+	buf[1] = byte(value)
+	return string(buf[:])
+}
+
+// DecodeUint16 converts a fixed-width 2-byte big-endian string into a uint16.
+func DecodeUint16(key string) uint16 {
+	if len(key) != 2 {
+		panic(ufmt.Sprintf("invalid uint16 key length: %d", len(key)))
+	}
+	return uint16(key[0])<<8 | uint16(key[1])
+}
 
 // EncodeUint64 converts a uint64 into a fixed-width 8-byte big-endian string.
 func EncodeUint64(value uint64) string {

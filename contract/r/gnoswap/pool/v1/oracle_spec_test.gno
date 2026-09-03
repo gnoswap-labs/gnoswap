@@ -45,8 +45,8 @@ func testInitializeCardinalityNextIsOne(t *testing.T) {
 
 func testInitializeSetsFirstSlot(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
-	obs0 := os.Observations()[0]
+	os := pl.NewPoolObservationsTree(currentTime)
+	obs0 := mustObservation(os, 0)
 	uassert.True(t, obs0.Initialized())
 	uassert.Equal(t, currentTime, obs0.BlockTimestamp())
 	uassert.Equal(t, int64(0), obs0.TickCumulative())
@@ -61,7 +61,7 @@ func TestOracleGrow(cur realm, t *testing.T) {
 		{"increases the cardinality next for the first call", testGrowIncreasesCardinalityNext},
 		{"does not touch the first slot", testGrowDoesNotTouchFirstSlot},
 		{"is no op if oracle is already gte that size", testGrowNoOpIfAlreadyLarge},
-		{"adds data to all the slots", testGrowAddsDataToSlots},
+		{"adds uninitialized placeholder slots", testGrowAddsUninitializedSlots},
 	}
 
 	for _, tt := range tests {
@@ -73,7 +73,7 @@ func TestOracleGrow(cur realm, t *testing.T) {
 
 func testGrowIncreasesCardinalityNext(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 5)
 	uassert.NoError(t, err)
@@ -86,11 +86,11 @@ func testGrowIncreasesCardinalityNext(t *testing.T) {
 
 func testGrowDoesNotTouchFirstSlot(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	_, err := grow(os, 1, 5)
 	uassert.NoError(t, err)
 
-	obs0 := os.Observations()[0]
+	obs0 := mustObservation(os, 0)
 	uassert.Equal(t, "0", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(0), obs0.TickCumulative())
 	uassert.Equal(t, currentTime, obs0.BlockTimestamp())
@@ -99,7 +99,7 @@ func testGrowDoesNotTouchFirstSlot(t *testing.T) {
 
 func testGrowNoOpIfAlreadyLarge(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	newCard, err := grow(os, 1, 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, uint16(5), newCard)
@@ -109,14 +109,15 @@ func testGrowNoOpIfAlreadyLarge(t *testing.T) {
 	uassert.Equal(t, uint16(5), newCard)
 }
 
-func testGrowAddsDataToSlots(t *testing.T) {
+func testGrowAddsUninitializedSlots(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	_, err := grow(os, 1, 5)
 	uassert.NoError(t, err)
 
 	for i := uint16(1); i < 5; i++ {
-		obs := os.Observations()[i]
+		obs := mustObservation(os, i)
+		uassert.Equal(t, int64(1), obs.BlockTimestamp())
 		uassert.Equal(t, "0", obs.SecondsPerLiquidityCumulativeX128())
 		uassert.Equal(t, int64(0), obs.TickCumulative())
 		uassert.False(t, obs.Initialized())
@@ -145,13 +146,13 @@ func TestOracleWrite(cur realm, t *testing.T) {
 
 func testSingleElementOverwrite(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	err := writeObservationWithSlot0(os, &slot0, currentTime+1, 0, u256.Zero())
 	uassert.NoError(t, err)
 	uassert.Equal(t, uint16(0), slot0.ObservationIndex())
 
-	obs0 := os.Observations()[0]
+	obs0 := mustObservation(os, 0)
 	uassert.True(t, obs0.Initialized())
 	uassert.Equal(t, "340282366920938463463374607431768211456", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(0), obs0.TickCumulative())
@@ -161,7 +162,7 @@ func testSingleElementOverwrite(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, uint16(0), slot0.ObservationIndex())
 
-	obs0 = os.Observations()[0]
+	obs0 = mustObservation(os, 0)
 	uassert.Equal(t, "680564733841876926926749214863536422912", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(10), obs0.TickCumulative())
 	uassert.Equal(t, currentTime+6, obs0.BlockTimestamp())
@@ -170,7 +171,7 @@ func testSingleElementOverwrite(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, uint16(0), slot0.ObservationIndex())
 
-	obs0 = os.Observations()[0]
+	obs0 = mustObservation(os, 0)
 	uassert.Equal(t, "808170621437228850725514692650449502208", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(7), obs0.TickCumulative())
 	uassert.Equal(t, currentTime+9, obs0.BlockTimestamp())
@@ -178,7 +179,7 @@ func testSingleElementOverwrite(t *testing.T) {
 
 func testDoesNothingIfTimeUnchanged(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -196,7 +197,7 @@ func testDoesNothingIfTimeUnchanged(t *testing.T) {
 
 func testWritesIndexOnTimeChange(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 3)
 	uassert.NoError(t, err)
@@ -211,7 +212,7 @@ func testWritesIndexOnTimeChange(t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, uint16(2), slot0.ObservationIndex())
 
-	obs1 := os.Observations()[1]
+	obs1 := mustObservation(os, 1)
 	uassert.Equal(t, int64(0), obs1.TickCumulative())
 	uassert.Equal(t, "2041694201525630780780247644590609268736", obs1.SecondsPerLiquidityCumulativeX128())
 	uassert.True(t, obs1.Initialized())
@@ -220,7 +221,7 @@ func testWritesIndexOnTimeChange(t *testing.T) {
 
 func testGrowsCardinalityWhenWritingPast(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -241,7 +242,7 @@ func testGrowsCardinalityWhenWritingPast(t *testing.T) {
 	uassert.Equal(t, uint16(4), slot0.ObservationCardinality())
 	uassert.Equal(t, uint16(2), slot0.ObservationIndex())
 
-	obs2 := os.Observations()[2]
+	obs2 := mustObservation(os, 2)
 	uassert.Equal(t, "1247702012043441032699040227249816775338", obs2.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(20), obs2.TickCumulative())
 	uassert.True(t, obs2.Initialized())
@@ -250,7 +251,7 @@ func testGrowsCardinalityWhenWritingPast(t *testing.T) {
 
 func testWrapsAround(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 3)
 	uassert.NoError(t, err)
@@ -268,7 +269,7 @@ func testWrapsAround(t *testing.T) {
 
 	uassert.Equal(t, uint16(0), slot0.ObservationIndex())
 
-	obs0 := os.Observations()[0]
+	obs0 := mustObservation(os, 0)
 	uassert.Equal(t, "2268549112806256423089164049545121409706", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(14), obs0.TickCumulative())
 	uassert.True(t, obs0.Initialized())
@@ -277,7 +278,7 @@ func testWrapsAround(t *testing.T) {
 
 func testAccumulatesLiquidity(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 4)
 	uassert.NoError(t, err)
@@ -295,28 +296,25 @@ func testAccumulatesLiquidity(t *testing.T) {
 
 	uassert.Equal(t, uint16(3), slot0.ObservationIndex())
 
-	obs1 := os.Observations()[1]
+	obs1 := mustObservation(os, 1)
 	uassert.True(t, obs1.Initialized())
 	uassert.Equal(t, int64(0), obs1.TickCumulative())
 	uassert.Equal(t, "1020847100762815390390123822295304634368", obs1.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, currentTime+3, obs1.BlockTimestamp())
 
-	obs2 := os.Observations()[2]
+	obs2 := mustObservation(os, 2)
 	uassert.True(t, obs2.Initialized())
 	uassert.Equal(t, int64(12), obs2.TickCumulative())
 	uassert.Equal(t, "1701411834604692317316873037158841057280", obs2.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, currentTime+7, obs2.BlockTimestamp())
 
-	obs3 := os.Observations()[3]
+	obs3 := mustObservation(os, 3)
 	uassert.True(t, obs3.Initialized())
 	uassert.Equal(t, int64(-23), obs3.TickCumulative())
 	uassert.Equal(t, "1984980473705474370203018543351981233493", obs3.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, currentTime+12, obs3.BlockTimestamp())
 
-	obs4, ok := os.Observations()[4]
-	if ok {
-		uassert.False(t, obs4.Initialized())
-	}
+	uassert.False(t, os.Has(4))
 }
 
 func TestOracleObserve(cur realm, t *testing.T) {
@@ -353,13 +351,13 @@ func TestOracleObserve(cur realm, t *testing.T) {
 
 func testObserveFailsIfOlderNotExist(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	_, _, err := observeSingle(os, currentTime+5, 1, 2, 0, u256.NewUint(4), 1)
 	uassert.Error(t, err)
 }
 
 func testObserveFailsIfSecondsAgoExceedsCurrentTime(t *testing.T) {
-	os := pl.NewObservationState(0)
+	os := pl.NewPoolObservationsTree(0)
 	_, _, err := observeSingle(os, 10, 11, 2, 0, u256.NewUint(4), 1)
 	uassert.ErrorContains(t, err, "[GNOSWAP-POOL-026]")
 }
@@ -367,7 +365,7 @@ func testObserveFailsIfSecondsAgoExceedsCurrentTime(t *testing.T) {
 // TestOracleLookbackErrorsAreDistinct pins the two rejection reasons to separate error codes.
 func TestOracleLookbackErrorsAreDistinct(cur realm, t *testing.T) {
 	// Retention failure: oldest observation (t=100) is newer than target (t=99).
-	tooOld := pl.NewObservationState(100)
+	tooOld := pl.NewPoolObservationsTree(100)
 	_, _, errTooOld := observeSingle(tooOld, 150, 51, 12, 0, u256.NewUint(4), 1)
 	uassert.ErrorContains(t, errTooOld, "[GNOSWAP-POOL-025]")
 	if errTooOld != nil && strings.Contains(errTooOld.Error(), "[GNOSWAP-POOL-026]") {
@@ -375,7 +373,7 @@ func TestOracleLookbackErrorsAreDistinct(cur realm, t *testing.T) {
 	}
 
 	// Malformed request: secondsAgo exceeds the chain's own age.
-	beforeEpoch := pl.NewObservationState(0)
+	beforeEpoch := pl.NewPoolObservationsTree(0)
 	_, _, errEpoch := observeSingle(beforeEpoch, 10, 11, 12, 0, u256.NewUint(4), 1)
 	uassert.ErrorContains(t, errEpoch, "[GNOSWAP-POOL-026]")
 	if errEpoch != nil && strings.Contains(errEpoch.Error(), "[GNOSWAP-POOL-025]") {
@@ -388,11 +386,11 @@ func testObserveInterpolatesMaxLiquidity(t *testing.T) {
 	maxLiquidity := u256.MustFromDecimal("340282366920938463463374607431768211455")
 
 	// initialize({ liquidity: MaxUint128, tick: 0, time: 0 })
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	// Manually set first observation with MaxUint128 liquidity
-	firstObs := os.Observations()[0]
-	os.SetObservation(0, pl.NewObservation(
+	firstObs := mustObservation(os, 0)
+	os.Set(0, pl.NewObservation(
 		currentTime,
 		firstObs.TickCumulative(),
 		"0", // secondsPerLiquidityCumulativeX128
@@ -422,7 +420,7 @@ func testObserveInterpolatesMinLiquidity(t *testing.T) {
 	maxLiquidity := u256.MustFromDecimal("340282366920938463463374607431768211455")
 
 	// initialize({ liquidity: 0, tick: 0, time: 0 })
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -471,7 +469,7 @@ func testObserveInterpolatesSameAs0For1(t *testing.T) {
 	maxLiquidity := u256.MustFromDecimal("340282366920938463463374607431768211455")
 
 	// initialize({ liquidity: 1, tick: 0, time: 0 })
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -514,7 +512,7 @@ func testObserveInterpolatesSameAs0For1(t *testing.T) {
 
 func testObserveSingleAtCurrentTime(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+5, 0, 2, 0, u256.NewUint(4), 1)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
@@ -524,7 +522,7 @@ func testObserveSingleAtCurrentTime(t *testing.T) {
 func testObserveSinglePastExact(t *testing.T) {
 	// initialize({ liquidity: 4, tick: 2, time: 5 })
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	// advanceTime(3) - time is now 8, but no update() called
 	// Only one observation at time=5
 
@@ -539,7 +537,7 @@ func testObserveSinglePastExact(t *testing.T) {
 func testObserveSinglePastCounterfactualPast(t *testing.T) {
 	// initialize({ liquidity: 4, tick: 2, time: 5 })
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	// advanceTime(3) - time is now 8, no update() called
 	// Only one observation at time=5
 
@@ -556,7 +554,7 @@ func testObserveSinglePastCounterfactualPast(t *testing.T) {
 func testObserveSinglePastCounterfactualNow(t *testing.T) {
 	// initialize({ liquidity: 4, tick: 2, time: 5 })
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	// advanceTime(3) - time is now 8, no update() called
 	// Only one observation at time=5
 
@@ -572,7 +570,7 @@ func testObserveSinglePastCounterfactualNow(t *testing.T) {
 
 func testObserveTwoChronological0Exact(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -590,7 +588,7 @@ func testObserveTwoChronological0Exact(t *testing.T) {
 
 func testObserveTwoChronological0Counterfactual(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -608,7 +606,7 @@ func testObserveTwoChronological0Counterfactual(t *testing.T) {
 
 func testObserveTwoChronologicalExactFirst(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -626,7 +624,7 @@ func testObserveTwoChronologicalExactFirst(t *testing.T) {
 
 func testObserveTwoChronologicalBetween(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -645,7 +643,7 @@ func testObserveTwoChronologicalBetween(t *testing.T) {
 func testObserveTwoReverse0Exact(t *testing.T) {
 	// initialize({ liquidity: 5, tick: -5, time: 5 })
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -675,7 +673,7 @@ func testObserveTwoReverse0Exact(t *testing.T) {
 func testObserveTwoReverse0Counterfactual(t *testing.T) {
 	// initialize({ liquidity: 5, tick: -5, time: 5 })
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -703,7 +701,7 @@ func testObserveTwoReverse0Counterfactual(t *testing.T) {
 func testObserveTwoReverseExactFirst(t *testing.T) {
 	// initialize({ liquidity: 5, tick: -5, time: 5 })
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -731,7 +729,7 @@ func testObserveTwoReverseExactFirst(t *testing.T) {
 func testObserveTwoReverseBetween(t *testing.T) {
 	// initialize({ liquidity: 5, tick: -5, time: 5 })
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
@@ -758,7 +756,7 @@ func testObserveTwoReverseBetween(t *testing.T) {
 
 func testObserveFetchMultiple(t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime + 5)
+	os := pl.NewPoolObservationsTree(currentTime + 5)
 	slot0 := testObservationSlot0(0, 1, 1)
 	liquidity := u256.NewUint(1 << 15)
 
@@ -823,8 +821,8 @@ func TestOracleFiveObservations(cur realm, t *testing.T) {
 	}
 }
 
-func setupFiveObservations(startTime int64) (*pl.ObservationState, pl.Slot0) {
-	os := pl.NewObservationState(startTime)
+func setupFiveObservations(startTime int64) (*pl.ObservationTree, pl.Slot0) {
+	os := pl.NewPoolObservationsTree(startTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	grow(os, 1, 5)
 	slot0.SetObservationCardinality(1)

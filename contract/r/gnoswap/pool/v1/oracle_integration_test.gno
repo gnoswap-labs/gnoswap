@@ -32,11 +32,11 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 				// Now calculate TWAP from the beginning
 				// We can't use OracleConsult directly because it uses time.Now()
 				// Instead, we'll test the observation data directly
-				observationState := pool.ObservationState()
+				observations := observationsForTest(pool)
 				slot0 := pool.Slot0()
-				obs, err := observationAt(observationState, slot0.ObservationIndex())
+				obs, err := observationAt(observations, slot0.ObservationIndex())
 				uassert.NoError(t, err, "Last observation should succeed")
-				firstObs := observationState.Observations()[0]
+				firstObs := mustObservation(observations, 0)
 
 				// Calculate TWAP manually
 				tickDelta := obs.TickCumulative() - firstObs.TickCumulative()
@@ -58,10 +58,10 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 			verifyFn: func(t *testing.T, pool *pl.Pool, scenarios []swapScenario) {
 				// Query observations to verify seconds per liquidity accumulation
 				secondsAgos := []uint32{0, 300, 600, 900}
-				observationState := pool.ObservationState()
+				observations := observationsForTest(pool)
 				slot0 := pool.Slot0()
 				_, secondsPerLiquidityCumulatives, err := observe(
-					observationState,
+					observations,
 					baseTime+900,
 					secondsAgos,
 					pool.Slot0Tick(),
@@ -86,9 +86,9 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 				{time: baseTime + 300, tick: 1500, liquidity: "0", description: "tick remains same with zero liquidity"},
 			},
 			verifyFn: func(t *testing.T, pool *pl.Pool, scenarios []swapScenario) {
-				observationState := pool.ObservationState()
+				observations := observationsForTest(pool)
 				slot0 := pool.Slot0()
-				obs, err := observationAt(observationState, slot0.ObservationIndex())
+				obs, err := observationAt(observations, slot0.ObservationIndex())
 				uassert.NoError(t, err, "Last observation should succeed")
 
 				expectedTickCumulative := int64(1500 * 300) // 450000
@@ -103,12 +103,12 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 			pool := createTestPoolWithLiquidity()
 
 			// Gradually increase cardinality as needed
-			observationState := pool.ObservationState()
+			observations := observationsForTest(pool)
 			slot0 := pool.Slot0()
 			currentCard := slot0.ObservationCardinality()
 			neededCard := uint16(len(tt.scenarios) + 1) // +1 for initial observation
 			if neededCard > currentCard {
-				_, err := grow(observationState, currentCard, neededCard)
+				_, err := grow(observations, currentCard, neededCard)
 				uassert.NoError(t, err, "Should grow cardinality")
 				slot0.SetObservationCardinalityNext(neededCard)
 			}
@@ -120,8 +120,8 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 				}
 
 				// writeObservation will initialize observation state if needed
-				observationState := pool.ObservationState()
-				err := writeObservationWithSlot0(observationState, &slot0, scenario.time, scenario.tick, pool.Liquidity())
+				observations := observationsForTest(pool)
+				err := writeObservationWithSlot0(observations, &slot0, scenario.time, scenario.tick, pool.Liquidity())
 				uassert.NoError(t, err, ufmt.Sprintf("Observation at %s should succeed", scenario.description))
 			}
 			pool.SetSlot0(slot0)
@@ -133,11 +133,11 @@ func TestOracle_SwapScenarios(cur realm, t *testing.T) {
 }
 
 // Query with secondsAgo=0 immediately after initialization should return valid virtual observation
-func TestObservationState_InitializeAndQuerySecondsAgoZero(cur realm, t *testing.T) {
+func TestObservationTree_InitializeAndQuerySecondsAgoZero(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	// Create new observation state
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 
 	// Test immediate query with secondsAgo=0
@@ -176,11 +176,11 @@ func TestObservationState_InitializeAndQuerySecondsAgoZero(cur realm, t *testing
 }
 
 // Verify before/after observations are accurate when target is at boundaries (<, =, >) with cardinality 1 and N
-func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
+func TestObservationTree_BoundaryConditions(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
 
 	t.Run("Cardinality=1", func(cur realm, t *testing.T) {
-		os := pl.NewObservationState(currentTime)
+		os := pl.NewPoolObservationsTree(currentTime)
 
 		// Test target < observation timestamp (should error with OLD)
 		_, _, err := getSurroundingObservations(
@@ -227,7 +227,7 @@ func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 	})
 
 	t.Run("Cardinality=N", func(cur realm, t *testing.T) {
-		os := pl.NewObservationState(currentTime)
+		os := pl.NewPoolObservationsTree(currentTime)
 		slot0 := testObservationSlot0(0, 5, 5)
 
 		// Grow to cardinality 5
@@ -260,10 +260,10 @@ func TestObservationState_BoundaryConditions(cur realm, t *testing.T) {
 	})
 }
 
-// After grow, all slots in [currentCardinality, nextCardinality) should exist but have initialized==false
-func TestObservationState_GrowInvariants(cur realm, t *testing.T) {
+// Grow reserves capacity by allocating uninitialized placeholder observations.
+func TestObservationTree_GrowInvariants(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 
 	// Test growing from 1 to 10
 	currentCard := uint16(1)
@@ -273,19 +273,12 @@ func TestObservationState_GrowInvariants(cur realm, t *testing.T) {
 	uassert.NoError(t, err, "Should grow successfully")
 	uassert.Equal(t, nextCard, newCardinality, "Should return new cardinality")
 
-	// Verify all slots are created
-	for i := uint16(0); i < nextCard; i++ {
-		obs := os.Observations()[i]
-		uassert.NotNil(t, obs, "Observation slot should exist")
-
-		// Check initialization status
-		if i == 0 {
-			// First slot should be initialized from newObservationState
-			uassert.True(t, obs.Initialized(), "Slot 0 should be initialized")
-		} else if i >= currentCard && i < nextCard {
-			// New slots should NOT be initialized by grow
-			uassert.False(t, obs.Initialized(), "New slot should not be initialized")
-		}
+	obs0 := mustObservation(os, 0)
+	uassert.True(t, obs0.Initialized(), "Slot 0 should remain initialized")
+	for i := currentCard; i < nextCard; i++ {
+		obs := mustObservation(os, i)
+		uassert.False(t, obs.Initialized(), "Grow must allocate an uninitialized slot")
+		uassert.Equal(t, int64(1), obs.BlockTimestamp())
 	}
 
 	// Test growing again
@@ -294,18 +287,17 @@ func TestObservationState_GrowInvariants(cur realm, t *testing.T) {
 	uassert.NoError(t, err, "Should grow successfully again")
 	uassert.Equal(t, newCard2, newCardinality2, "Should return new cardinality")
 
-	// Verify new slots
+	// Verify the additional slots are allocated but uninitialized.
 	for i := nextCard; i < newCard2; i++ {
-		obs := os.Observations()[i]
-		uassert.NotNil(t, obs, "Observation slot should exist")
-		uassert.False(t, obs.Initialized(), "New slot should not be initialized")
+		obs := mustObservation(os, i)
+		uassert.False(t, obs.Initialized(), "Grow must allocate an uninitialized slot")
 	}
 }
 
 // Binary search and interpolation should work correctly after index wrapping
-func TestObservationState_IndexWrapping(cur realm, t *testing.T) {
+func TestObservationTree_IndexWrapping(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 
 	// Grow to small cardinality for easy testing
 	cardinality := uint16(5)
@@ -362,9 +354,9 @@ func TestObservationState_IndexWrapping(cur realm, t *testing.T) {
 }
 
 // Reject cardinalityNext > max, allow cardinalityNext == max
-func TestObservationState_CardinalityNexts(cur realm, t *testing.T) {
+func TestObservationTree_CardinalityNexts(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 
 	t.Run("Reject cardinalityNext > max", func(cur realm, t *testing.T) {
 		// Since maxObservationCardinality is 65535 (max uint16),
@@ -411,9 +403,9 @@ func TestObservationState_CardinalityNexts(cur realm, t *testing.T) {
 }
 
 // ObservationAt with various states
-func TestObservationState_ObservationAt(cur realm, t *testing.T) {
+func TestObservationTree_ObservationAt(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 
 	t.Run("Valid observation", func(cur realm, t *testing.T) {
 		obs, err := observationAt(os, 0)
@@ -428,22 +420,20 @@ func TestObservationState_ObservationAt(cur realm, t *testing.T) {
 	})
 
 	t.Run("Uninitialized observation", func(cur realm, t *testing.T) {
-		// Grow to create slots (new slots are created with initialized=false)
+		// Grow creates uninitialized placeholder slots.
 		_, err := grow(os, 1, 5)
 		uassert.NoError(t, err, "Should grow successfully")
 
-		// observationAt should return uninitialized observation (without error)
 		obs, err := observationAt(os, 3)
-		uassert.NoError(t, err, "Should return observation even if uninitialized")
-		uassert.NotNil(t, obs, "Observation should not be nil")
-		uassert.False(t, obs.Initialized(), "Observation should be uninitialized")
+		uassert.NoError(t, err, "Should return an uninitialized placeholder")
+		uassert.False(t, obs.Initialized())
 	})
 }
 
 // Transform edge cases
-func TestObservationState_Transform(cur realm, t *testing.T) {
+func TestObservationTree_Transform(cur realm, t *testing.T) {
 	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
+	os := pl.NewPoolObservationsTree(currentTime)
 	slot0 := testObservationSlot0(0, 1, 1)
 	lastObs, _ := observationAt(os, slot0.ObservationIndex())
 
@@ -507,8 +497,8 @@ func createTestPoolWithLiquidity() *pl.Pool {
 			tick:         0,
 			unlocked:     true,
 		},
-		liquidity:        u256.MustFromDecimal("5000000"),
-		observationState: pl.NewObservationState(baseTime),
+		liquidity:    u256.MustFromDecimal("5000000"),
+		observations: pl.NewPoolObservationsTree(baseTime),
 	})
 	return mockPool
 }

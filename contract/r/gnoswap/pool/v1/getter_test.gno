@@ -318,7 +318,7 @@ func TestObserve(cur realm, t *testing.T) {
 
 	pool := getMockInstance().mustGetPool("token0:token1:3000")
 	slot0Before := pool.Slot0()
-	observationBefore, err := observationAt(pool.ObservationState(), slot0Before.ObservationIndex())
+	observationBefore, err := observationAt(observationsForTest(pool), slot0Before.ObservationIndex())
 	uassert.NoError(t, err)
 	observationTimestampBefore := observationBefore.BlockTimestamp()
 	observationTickCumulativeBefore := observationBefore.TickCumulative()
@@ -335,7 +335,7 @@ func TestObserve(cur realm, t *testing.T) {
 	uassert.Equal(t, secondsPerLiquidityCumulativeX128s[0], secondsPerLiquidityCumulativeX128s[1])
 
 	slot0After := pool.Slot0()
-	observationAfter, err := observationAt(pool.ObservationState(), slot0After.ObservationIndex())
+	observationAfter, err := observationAt(observationsForTest(pool), slot0After.ObservationIndex())
 	uassert.NoError(t, err)
 	uassert.Equal(t, slot0Before.ObservationIndex(), slot0After.ObservationIndex())
 	uassert.Equal(t, slot0Before.ObservationCardinality(), slot0After.ObservationCardinality())
