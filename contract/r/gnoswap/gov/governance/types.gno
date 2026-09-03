@@ -74,7 +74,7 @@ type IGovernanceGetter interface {
 	GetMaxSmoothingPeriod() int64
 
 	// Config getters
-	GetLatestConfig() Config
+	GetLatestConfig() (Config, error)
 	GetConfig(configVersion int64) (Config, error)
 
 	GetProposals() *rotree.ReadOnlyTree

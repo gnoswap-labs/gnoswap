@@ -189,13 +189,13 @@ type IStakerStore interface {
 
 	// PoolTierGetEmission
 	HasPoolTierGetEmissionStoreKey() bool
-	GetPoolTierGetEmission() func() int64
-	SetPoolTierGetEmission(_ int, rlm realm, fn func() int64) error
+	GetPoolTierGetEmission() func() (int64, error)
+	SetPoolTierGetEmission(_ int, rlm realm, fn func() (int64, error)) error
 
 	// PoolTierGetHalvingBlocksInRange
 	HasPoolTierGetHalvingBlocksInRangeStoreKey() bool
-	GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64)
-	SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64)) error
+	GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64, error)
+	SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64, error)) error
 
 	HasWarmupTemplateStoreKey() bool
 	GetWarmupTemplate() []Warmup

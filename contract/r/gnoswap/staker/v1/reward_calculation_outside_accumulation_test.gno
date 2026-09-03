@@ -452,7 +452,11 @@ func mustGetPool(t *testing.T, poolPath string) *sr.Pool {
 
 // rewardOf returns the deposit's collectable internal reward.
 func rewardOf(positionId uint64, currentTime int64) int64 {
-	return getMockInstance().calculateCollectablePositionReward(currentTime, currentTime, positionId).Internal
+	reward, err := getMockInstance().calculateCollectablePositionReward(currentTime, currentTime, positionId)
+	if err != nil {
+		panic(err)
+	}
+	return reward.Internal
 }
 
 // collectPanics runs the shared read-only reward calculation - the same code
@@ -476,13 +480,19 @@ func collectPanics(positionId uint64, currentTime int64) (panicked bool, message
 		message = "unknown panic"
 	}()
 
-	getMockInstance().calculateCollectablePositionReward(currentTime, currentTime, positionId)
+	_, err := getMockInstance().calculateCollectablePositionReward(currentTime, currentTime, positionId)
+	if err != nil {
+		return true, err.Error()
+	}
 	return false, ""
 }
 
 // externalRewardOf returns the deposit's collectable reward for one incentive.
 func externalRewardOf(positionId uint64, incentiveId string, currentTime int64) int64 {
-	reward := getMockInstance().calculateCollectablePositionReward(currentTime, currentTime, positionId)
+	reward, err := getMockInstance().calculateCollectablePositionReward(currentTime, currentTime, positionId)
+	if err != nil {
+		panic(err)
+	}
 	return reward.External[incentiveId]
 }
 
@@ -491,7 +501,10 @@ func externalRewardOf(positionId uint64, incentiveId string, currentTime int64) 
 func totalExternalDistributed(incentiveId string, currentTime int64) int64 {
 	total := int64(0)
 	getMockInstance().getDeposits().Iterate(0, math.MaxUint64, func(positionId uint64, _ *sr.Deposit) bool {
-		reward := getMockInstance().calculateCollectablePositionReward(currentTime, currentTime, positionId)
+		reward, err := getMockInstance().calculateCollectablePositionReward(currentTime, currentTime, positionId)
+		if err != nil {
+			panic(err)
+		}
 		total += reward.External[incentiveId] + reward.ExternalPenalty[incentiveId]
 		return false
 	})

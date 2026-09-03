@@ -79,7 +79,10 @@ var (
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	println("[SCENARIO] 1. Delegate gns to admin")
 	delegateGnsToAdmin(cur)
@@ -93,7 +96,10 @@ func main(cur realm) {
 	println("[SCENARIO] 3. Adopt a short governance schedule")
 	proposalID := proposeShortVotingSchedule(cur)
 	voteAndExecuteShortSchedule(cur, proposalID, config)
-	config = governance.GetLatestConfig()
+	config, err = governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	println()
 
 	println("[SCENARIO] 4. Create pool and a pending external incentive")

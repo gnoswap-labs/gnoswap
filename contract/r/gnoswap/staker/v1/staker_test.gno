@@ -476,7 +476,8 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur 
 	}
 
 	blockHeight := runtime.ChainHeight()
-	reward := getMockInstance().calculateCollectablePositionReward(blockHeight, time.Now().Unix(), positionId)
+	reward, err := getMockInstance().calculateCollectablePositionReward(blockHeight, time.Now().Unix(), positionId)
+	uassert.NoError(t, err)
 	rewardAmount := reward.External[incentiveId]
 	externalPenalty := reward.ExternalPenalty[incentiveId]
 	if rewardAmount <= 0 {

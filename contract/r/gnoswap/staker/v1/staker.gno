@@ -520,7 +520,10 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 	// are applied via updateInternalPositionReward, which is the collect-only counterpart to the
 	// calculation shared with the Collectable* view getters.
 	rewardParam := s.newRewardCollectParam(positionId, currentTime, blockHeight)
-	rewards, rewardUpdate := s.calculateInternalPositionReward(rewardParam)
+	rewards, rewardUpdate, err := s.calculateInternalPositionReward(rewardParam)
+	if err != nil {
+		panic(err)
+	}
 	reward := aggregateRewards(rewards)
 	s.updateInternalPositionReward(rewardParam, rewardUpdate)
 
@@ -613,7 +616,10 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 	// One calculation and one state update cover both reward sources.
 	rewardParam := s.newRewardCollectParam(positionId, currentTime, blockHeight)
-	rewards, rewardUpdate := s.calculatePositionReward(rewardParam)
+	rewards, rewardUpdate, err := s.calculatePositionReward(rewardParam)
+	if err != nil {
+		panic(err)
+	}
 	reward := aggregateRewards(rewards)
 	s.updatePositionReward(rewardParam, rewardUpdate)
 
@@ -840,15 +846,13 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
 
-	err := s.store.SetTotalEmissionSent(0, rlm, totalEmissionSent)
-	if err != nil {
+	if err := s.store.SetTotalEmissionSent(0, rlm, totalEmissionSent); err != nil {
 		panic(err)
 	}
 
 	if !skipInternalUpdate {
 		// Update lastCollectTime for internal rewards (GNS emissions)
-		err = ctx.depositResolver.updateInternalRewardLastCollectTime(ctx.currentTime)
-		if err != nil {
+		if err := ctx.depositResolver.updateInternalRewardLastCollectTime(ctx.currentTime); err != nil {
 			panic(err)
 		}
 	}

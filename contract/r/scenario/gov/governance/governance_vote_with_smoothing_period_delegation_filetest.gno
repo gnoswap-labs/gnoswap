@@ -47,7 +47,10 @@ var (
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	// Calculate timing for delegation changes within smoothing period
 	smoothingPeriodBlocks := int64(config.VotingWeightSmoothingDuration) / currentBlockTime

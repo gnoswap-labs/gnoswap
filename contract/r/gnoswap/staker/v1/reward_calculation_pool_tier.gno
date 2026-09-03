@@ -67,11 +67,11 @@ type PoolTier struct {
 	currentEmission int64
 
 	// returns current emission.
-	getEmission func() int64
+	getEmission func() (int64, error)
 	// Returns a list of halving timestamps and their emission amounts within the interval [start, end) in ascending order.
 	// The first return value is a list of timestamps where halving occurs.
 	// The second return value is a list of emission amounts corresponding to each halving timestamp.
-	getHalvingBlocksInRange func(start, end int64) ([]int64, []int64)
+	getHalvingBlocksInRange func(start, end int64) ([]int64, []int64, error)
 }
 
 // NewPoolTier creates a new PoolTier instance with single initial 1 tier pool.
@@ -85,14 +85,19 @@ type PoolTier struct {
 //
 // Returns:
 // - *PoolTier: The new PoolTier instance.
-func NewPoolTier(pools *Pools, currentTime int64, initialPoolPath string, getEmission func() int64, getHalvingBlocksInRange func(start, end int64) ([]int64, []int64)) *PoolTier {
+func NewPoolTier(pools *Pools, currentTime int64, initialPoolPath string, getEmission func() (int64, error), getHalvingBlocksInRange func(start, end int64) ([]int64, []int64, error)) *PoolTier {
+	currentEmission, err := getEmission()
+	if err != nil {
+		panic(err)
+	}
+
 	result := &PoolTier{
 		membership:               sr.NewBPTreeN(16),
 		tierRatio:                TierRatioFromCounts(1, 0, 0),
 		lastRewardCacheTimestamp: gnsmath.SafeAddInt64(currentTime, 1),
 		getEmission:              getEmission,
 		getHalvingBlocksInRange:  getHalvingBlocksInRange,
-		currentEmission:          getEmission(),
+		currentEmission:          currentEmission,
 	}
 
 	pools.set(initialPoolPath, sr.NewPool(initialPoolPath, currentTime+1))
@@ -106,8 +111,8 @@ func NewPoolTierBy(
 	counts [AllTierCount]uint64,
 	lastRewardCacheTimestamp int64,
 	currentEmission int64,
-	getEmission func() int64,
-	getHalvingBlocksInRange func(start, end int64) ([]int64, []int64),
+	getEmission func() (int64, error),
+	getHalvingBlocksInRange func(start, end int64) ([]int64, []int64, error),
 ) *PoolTier {
 	return &PoolTier{
 		membership:               membership,
@@ -121,11 +126,14 @@ func NewPoolTierBy(
 }
 
 // CurrentReward returns the current per-pool reward for the given tier.
-func (self *PoolTier) CurrentReward(tier uint64) int64 {
-	currentEmission := self.getEmission()
+func (self *PoolTier) CurrentReward(tier uint64) (int64, error) {
+	currentEmission, err := self.getEmission()
+	if err != nil {
+		return 0, err
+	}
 	tierRatio, err := self.tierRatio.Get(tier)
 	if err != nil {
-		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
+		return 0, makeErrorWithDetails(errInvalidPoolTier, err.Error())
 	}
 
 	tierRatioInt64 := int64(tierRatio)
@@ -200,7 +208,10 @@ func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath strin
 	}
 
 	self.tierRatio = TierRatioFromCounts(self.counts[Tier1], self.counts[Tier2], self.counts[Tier3])
-	currentEmission := self.getEmission()
+	currentEmission, err := self.getEmission()
+	if err != nil {
+		panic(err)
+	}
 	tierRewards := self.computeTierRewards(currentEmission)
 
 	// Cache updated reward for each tiered pool
@@ -242,7 +253,10 @@ func (self *PoolTier) cacheReward(currentTimestamp int64, pools *Pools) {
 	}
 
 	// find halving blocks in range
-	halvingTimestamps, halvingEmissions := self.getHalvingBlocksInRange(lastTimestamp, currentTimestamp)
+	halvingTimestamps, halvingEmissions, err := self.getHalvingBlocksInRange(lastTimestamp, currentTimestamp)
+	if err != nil {
+		panic(err)
+	}
 
 	if len(halvingTimestamps) == 0 {
 		self.applyCacheToAllPools(pools, currentTimestamp, self.currentEmission)
@@ -298,12 +312,19 @@ func (self *PoolTier) cacheRewardForPool(currentTimestamp int64, pools *Pools, p
 	}
 
 	// Determine halving boundaries since the pool's last cached reward timestamp.
-	halvingTimestamps, halvingEmissions := self.getHalvingBlocksInRange(lastTimestamp, currentTimestamp)
+	halvingTimestamps, halvingEmissions, err := self.getHalvingBlocksInRange(lastTimestamp, currentTimestamp)
+	if err != nil {
+		panic(err)
+	}
 	poolResolver := NewPoolResolver(pool)
 
 	if len(halvingTimestamps) == 0 {
 		// No emission change within the range => use the live emission.
-		self.applyCacheToPool(poolResolver, tierNum, currentTimestamp, self.getEmission())
+		currentEmission, err := self.getEmission()
+		if err != nil {
+			panic(err)
+		}
+		self.applyCacheToPool(poolResolver, tierNum, currentTimestamp, currentEmission)
 		return
 	}
 
@@ -372,26 +393,7 @@ func (self *PoolTier) IsInternallyIncentivizedPool(poolPath string) bool {
 	return self.CurrentTier(poolPath) > 0
 }
 
-func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
-	tierNum := self.CurrentTier(poolPath)
-	if tierNum == 0 {
-		return 0 // Pool not in any tier
-	}
 
-	tierRatio, err := self.tierRatio.Get(tierNum)
-	if err != nil {
-		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
-	}
-	tierRatioInt64 := int64(tierRatio)
-
-	counts := self.CurrentAllTierCounts()
-	tierCount := int64(counts[tierNum])
-	if tierCount == 0 {
-		return 0 // No pools in tier
-	}
-
-	return calculatePoolReward(self.getEmission(), tierRatioInt64, tierCount)
-}
 
 // calculatePoolReward calculates the reward for a pool based on the emission, tier ratio, and tier count.
 //
@@ -402,19 +404,21 @@ func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
 //
 // Returns:
 // - int64: The reward for the pool.
-func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) int64 {
+// - error: An invalid calculation input.
+func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) (int64, error) {
 	if emission < 0 || tierRatio < 0 || tierCount < 0 {
-		panic(errors.New(errCalculationError))
+		return 0, errors.New(errCalculationError)
 	}
 
 	if emission == 0 || tierRatio == 0 || tierCount == 0 {
-		return 0
+		return 0, nil
 	}
 
 	tierReward := gnsmath.SafeMulDivInt64(emission, tierRatio, 100)
 
-	return tierReward / tierCount
+	return tierReward / tierCount, nil
 }
+
 
 // computeTierRewards caches per-tier pool rewards to avoid recalculating for each pool iteration.
 func (self *PoolTier) computeTierRewards(emission int64) map[uint64]int64 {
@@ -431,7 +435,11 @@ func (self *PoolTier) computeTierRewards(emission int64) map[uint64]int64 {
 			panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
 		}
 
-		tierRewards[tierNum] = calculatePoolReward(emission, int64(tierRatio), tierCount)
+		reward, err := calculatePoolReward(emission, int64(tierRatio), tierCount)
+		if err != nil {
+			panic(err)
+		}
+		tierRewards[tierNum] = reward
 	}
 
 	return tierRewards
