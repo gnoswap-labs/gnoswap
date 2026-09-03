@@ -644,9 +644,16 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 // deliverExternalIncentiveReward pays out one incentive's already-calculated reward: it debits the
 // incentive, advances its lastCollectTime, takes the staking reward fee and transfers the rest.
 //
-// The incentive is skipped WITHOUT advancing its lastCollectTime when it yields no user reward, has not
-// started, or does not hold enough reward token, so the amount stays collectible later. A skipped
-// incentive is reported by an empty reward token.
+// The incentive is skipped WITHOUT advancing its lastCollectTime when it yields no user reward or does
+// not hold enough reward token, so the amount stays collectible later. A skipped incentive is reported
+// by an empty reward token.
+//
+// A warmup ratio below 100% floors the user reward, so a small accrual can yield rewardAmount == 0 while
+// externalPenalty > 0. Such a call is skipped as a whole: the penalty is NOT booked and the cursor is NOT
+// advanced, which leaves the untouched accrual to be recalculated over the wider window of the next
+// collect. Nothing is lost either way, because an unbooked penalty stays in the incentive's reward
+// amount, and endExternalIncentive refunds the reward amount and the accumulated penalty to the same
+// address.
 //
 // Returns the reward token, the collected reward amount before the staking reward fee, and the penalty.
 func (s *stakerV1) deliverExternalIncentiveReward(
@@ -668,6 +675,11 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	incentive := s.getExternalIncentives().get(incentiveId)
 
 	incentiveResolver := NewExternalIncentiveResolver(incentive)
+
+	// Defensive backstop, unreachable through the current callers: computeExternalReward already drops a
+	// not-yet-started incentive at the same currentTime, so its reward is zero and the check above
+	// returns first. Kept so a future caller that supplies a non-zero amount cannot pay out of an
+	// incentive whose distribution window has not opened.
 	if !incentiveResolver.IsStarted(ctx.currentTime) {
 		return "", 0, 0
 	}

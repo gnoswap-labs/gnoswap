@@ -6,6 +6,7 @@
 package staker
 
 import (
+	"chain/runtime"
 	"testing"
 	"time"
 
@@ -277,4 +278,147 @@ func TestCollectExternalIncentiveReward_RejectsIncentiveOfAnotherPool(cur realm,
 		func() {
 			sr.CollectExternalIncentiveReward(cross(cur), positionId, otherIncentiveId)
 		})
+}
+
+// newTestCollectContext mirrors stakerV1.newCollectContext for tests. It exists because
+// newCollectContext derives the event fields from rlm.Previous(), which a test cannot reach once
+// testing.SetRealm has installed an origin-caller override.
+func newTestCollectContext(t *testing.T, s *stakerV1, positionId uint64) *collectContext {
+	t.Helper()
+
+	deposit := s.getDeposits().get(positionId)
+
+	pool, ok := s.getPools().Get(deposit.TargetPoolPath())
+	if !ok {
+		t.Fatal("expected the staked pool to exist")
+	}
+
+	currentTime := time.Now().Unix()
+	poolResolver := NewPoolResolver(pool)
+	globalAccX128, stakedLiquidity := poolResolver.globalRewardRatioAccumulationAt(currentTime)
+
+	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickLower()))
+	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickUpper()))
+
+	return &collectContext{
+		positionId:      positionId,
+		deposit:         deposit,
+		depositResolver: NewDepositResolver(deposit),
+
+		currentTime: currentTime,
+		blockHeight: runtime.ChainHeight(),
+
+		prevAddr:  addr01.String(),
+		prevRealm: "",
+
+		stakedLiquidity:     stakedLiquidity,
+		globalAccX128:       globalAccX128,
+		lowerOutsideAccX128: lowerTickResolver.CurrentOutsideAccumulation(currentTime),
+		upperOutsideAccX128: upperTickResolver.CurrentOutsideAccumulation(currentTime),
+	}
+}
+
+// A warmup ratio below 100% floors the user reward, so a small accrual produces a zero user reward
+// together with a non-zero penalty. This is the input state deliverExternalIncentiveReward's zero-reward
+// early return has to cope with, so pin it down before asserting what that early return does.
+func TestApplyWarmup_SmallRewardFloorsToZeroWithPenalty(cur realm, t *testing.T) {
+	positionId, _, _ := setupSplitCollectDeposit(cur, t)
+
+	s := getMockInstance()
+	deposit := s.getDeposits().get(positionId)
+
+	pool, ok := s.getPools().Get(deposit.TargetPoolPath())
+	if !ok {
+		t.Fatal("expected the staked pool to exist")
+	}
+
+	// Any warmup that does not pay out the full accrual floors a one-unit reward to zero.
+	warmupIndex := -1
+	for i, warmup := range deposit.Warmups() {
+		if warmup.WarmupRatio < 100 {
+			warmupIndex = i
+			break
+		}
+	}
+
+	if warmupIndex == -1 {
+		t.Fatal("expected the deposit to have a warmup that withholds part of the reward")
+	}
+
+	rewardState := NewPoolResolver(pool).RewardStateOf(deposit)
+	rewardState.rewards[warmupIndex] = 1
+	rewardState.applyWarmup()
+
+	uassert.Equal(t, int64(0), rewardState.rewards[warmupIndex])
+	uassert.Equal(t, int64(1), rewardState.penalties[warmupIndex])
+}
+
+// Regression test for the zero-reward early return of deliverExternalIncentiveReward.
+//
+// When the warmup floors the user reward to zero while leaving a penalty, the whole delivery is skipped:
+// the penalty is NOT booked on the incentive and the per-incentive lastCollectTime is NOT advanced. That
+// is deliberate rather than a dropped penalty - the untouched accrual is recalculated over the wider
+// window of the next collect, which is asserted here by collecting for real afterwards.
+func TestDeliverExternalIncentiveReward_ZeroRewardWithPenaltyIsDeferred(cur realm, t *testing.T) {
+	positionId, barIncentiveId, _ := setupSplitCollectDeposit(cur, t)
+
+	s := getMockInstance()
+	incentiveResolver := NewExternalIncentiveResolver(s.getExternalIncentives().get(barIncentiveId))
+
+	rewardAmountBefore := incentiveResolver.RewardAmount()
+	distributedBefore := incentiveResolver.DistributedRewardAmount()
+	penaltyBefore := incentiveResolver.AccumulatedPenaltyAmount()
+
+	depositResolver, err := s.getDepositResolver(positionId)
+	uassert.NoError(t, err)
+	lastCollectBefore := depositResolver.ExternalRewardLastCollectTime(barIncentiveId)
+	collectedBefore := depositResolver.CollectedExternalReward(barIncentiveId)
+
+	collectableBefore, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
+	uassert.NoError(t, err)
+	if collectableBefore == 0 {
+		t.Fatal("expected an external reward to be collectable before the skipped delivery")
+	}
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	barBefore := TokenBalance(t, barPath, addr01)
+
+	ctx := newTestCollectContext(t, s, positionId)
+	rewardToken, rewardAmount, rewardPenalty := s.deliverExternalIncentiveReward(0, cur, ctx, barIncentiveId, 0, 1000)
+
+	// A skipped incentive is reported by an empty reward token and zero amounts.
+	uassert.Equal(t, "", rewardToken)
+	uassert.Equal(t, int64(0), rewardAmount)
+	uassert.Equal(t, int64(0), rewardPenalty)
+
+	// Neither the incentive nor the deposit was touched, so nothing was consumed by the skipped call.
+	incentiveResolver = NewExternalIncentiveResolver(s.getExternalIncentives().get(barIncentiveId))
+	uassert.Equal(t, rewardAmountBefore, incentiveResolver.RewardAmount())
+	uassert.Equal(t, distributedBefore, incentiveResolver.DistributedRewardAmount())
+	uassert.Equal(t, penaltyBefore, incentiveResolver.AccumulatedPenaltyAmount())
+
+	depositResolver, err = s.getDepositResolver(positionId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, lastCollectBefore, depositResolver.ExternalRewardLastCollectTime(barIncentiveId))
+	uassert.Equal(t, collectedBefore, depositResolver.CollectedExternalReward(barIncentiveId))
+	uassert.Equal(t, barBefore, TokenBalance(t, barPath, addr01))
+
+	collectableAfter, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, collectableBefore, collectableAfter)
+
+	// The deferred accrual is still deliverable: the reward and the penalty are recalculated from the
+	// untouched lastCollectTime and booked by the next collect.
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	toUser, penalty := sr.CollectExternalIncentiveReward(cross(cur), positionId, barIncentiveId)
+	if toUser == 0 {
+		t.Fatal("expected the deferred external reward to remain collectable")
+	}
+
+	uassert.Equal(t, barBefore+toUser, TokenBalance(t, barPath, addr01))
+
+	incentiveResolver = NewExternalIncentiveResolver(s.getExternalIncentives().get(barIncentiveId))
+	uassert.Equal(t, distributedBefore+toUser, incentiveResolver.DistributedRewardAmount())
+	uassert.Equal(t, penaltyBefore+penalty, incentiveResolver.AccumulatedPenaltyAmount())
+	uassert.Equal(t, rewardAmountBefore-toUser-penalty, incentiveResolver.RewardAmount())
 }
