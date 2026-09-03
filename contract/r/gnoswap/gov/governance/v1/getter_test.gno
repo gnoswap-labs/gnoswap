@@ -131,10 +131,17 @@ func TestGetLatestConfig(cur realm, t *testing.T) {
 	gv := setupGetterTest(cur, t)
 
 	t.Run("returns latest config", func(cur realm, t *testing.T) {
-		config := gv.GetLatestConfig()
+		config, err := gv.GetLatestConfig()
+		uassert.NoError(t, err)
 		uassert.Equal(t, int64(100), config.VotingStartDelay)
 		uassert.Equal(t, int64(200), config.VotingPeriod)
 		uassert.Equal(t, int64(50), config.Quorum)
+	})
+
+	t.Run("returns error when no config exists", func(cur realm, t *testing.T) {
+		emptyGV := newMockGovernance()
+		_, err := emptyGV.GetLatestConfig()
+		uassert.ErrorContains(t, err, errDataNotFound)
 	})
 }
 

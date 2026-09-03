@@ -205,9 +205,9 @@ func checkStakingInfo(cur realm, positionId uint64) {
 	println("[EXPECTED] Is staked:", isStaked)
 
 	if isStaked {
-		targetPoolPath := staker.GetDepositTargetPoolPath(positionId)
-		liquidity := staker.GetDepositLiquidityAsString(positionId)
-		stakeTime := staker.GetDepositStakeTime(positionId)
+		targetPoolPath, _ := staker.GetDepositTargetPoolPath(positionId)
+		liquidity, _ := staker.GetDepositLiquidityAsString(positionId)
+		stakeTime, _ := staker.GetDepositStakeTime(positionId)
 
 		println("[EXPECTED] Target pool path:", targetPoolPath)
 		println("[EXPECTED] Staked liquidity:", liquidity)

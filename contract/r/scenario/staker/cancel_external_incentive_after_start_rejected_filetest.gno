@@ -135,7 +135,11 @@ func createPendingIncentives(cur realm) {
 	sr.CreateExternalIncentive(cross(cur), poolPath, barPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 	sr.CreateExternalIncentive(cross(cur), poolPath, quxPath, REWARD_AMOUNT, startTimestamp, endTimestamp)
 
-	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[INFO] pending incentives for pool: %d\n", len(incentives))
 }
 
 func cancelJustBeforeStart(cur realm) {
@@ -150,7 +154,11 @@ func cancelJustBeforeStart(cur realm) {
 	sr.CancelExternalIncentive(cross(cur), poolPath, spareIncentiveID)
 
 	ufmt.Printf("[EXPECTED] creator QUX delta: %d\n", qux.BalanceOf(adminAddr)-quxBefore)
-	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] remaining incentives for pool: %d\n", len(incentives))
 }
 
 func checkCancelRejectedAfterStart(cur realm) {
@@ -185,8 +193,16 @@ func endStartedIncentive(cur realm) {
 
 	ufmt.Printf("[EXPECTED] refundee BAR delta: %d\n", bar.BalanceOf(refundeeAddr)-barBefore)
 	ufmt.Printf("[EXPECTED] refundee GNS delta: %d\n", gns.BalanceOf(refundeeAddr)-gnsBefore)
-	ufmt.Printf("[EXPECTED] ended incentive refunded flag: %t\n", sr.GetIncentiveRefunded(poolPath, liveIncentiveID))
-	ufmt.Printf("[EXPECTED] ended incentive still recorded: %d\n", len(sr.GetExternalIncentiveByPoolPath(poolPath)))
+	refunded, err := sr.GetIncentiveRefunded(poolPath, liveIncentiveID)
+	if err != nil {
+		panic(err)
+	}
+	incentives, err := sr.GetExternalIncentiveByPoolPath(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] ended incentive refunded flag: %t\n", refunded)
+	ufmt.Printf("[EXPECTED] ended incentive still recorded: %d\n", len(incentives))
 }
 
 // skipToTimestamp advances the chain to the last block at or before the given
