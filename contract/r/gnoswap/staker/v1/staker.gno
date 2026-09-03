@@ -793,6 +793,14 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	rewardAmount int64,
 	externalPenalty int64,
 ) (string, int64, int64) {
+	// A checkpoint's window closes at ctx.currentTime, so a cursor already there means this
+	// incentive was delivered. The checkpoint entry points are permissionless, and rewardAmount
+	// was computed before the deliveries ran: without this, a reentrant collect between them
+	// would let the stale amount be paid a second time.
+	if ctx.checkpoint != nil && ctx.depositResolver.ExternalRewardLastCollectTime(incentiveId) >= ctx.currentTime {
+		return "", 0, 0
+	}
+
 	// Skip when user reward is zero.
 	// Do not update last collect time so the reward accrues until
 	// the next collection where a non-zero amount can be delivered.
@@ -914,6 +922,13 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 //
 // Returns the GNS amount sent to the user and the penalty amount sent to the community pool.
 func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, reward Reward) (int64, int64) {
+	// Same reentrancy backstop as deliverExternalIncentiveReward: a checkpoint whose internal
+	// cursor already reached its window's close has had this delivery, and reward was computed
+	// before the external deliveries ran.
+	if ctx.checkpoint != nil && ctx.depositResolver.InternalRewardLastCollectTime() >= ctx.currentTime {
+		return 0, 0
+	}
+
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
 	internalReward := int64(0)
