@@ -214,7 +214,7 @@ func (i *poolV1) CollectSwapFee(
 		recipient,
 		tickLower, tickUpper,
 		amount0Requested, amount1Requested,
-		i.store.GetWithdrawalFeeBPS(),
+		true,
 	)
 
 	return utils.FormatInt(collected0), utils.FormatInt(collected1),
@@ -256,7 +256,7 @@ func (i *poolV1) Collect(
 		recipient,
 		tickLower, tickUpper,
 		amount0Requested, amount1Requested,
-		ZeroBps,
+		false,
 	)
 
 	return utils.FormatInt(collected0), utils.FormatInt(collected1)
@@ -273,7 +273,10 @@ func (i *poolV1) Collect(
 // short of the owed amount means the internal ledger has drifted, so the call
 // reverts rather than silently paying out less.
 //
-// withdrawalFeeBPS selects the fee policy; pass ZeroBps for a fee-free payout.
+// applyWithdrawalFee selects the fee policy; pass false for a fee-free payout.
+// It is the entry point, not the configured rate, that decides whether the
+// protocol fee is settled: a rate of zero must still flush a backlog left
+// pending by an earlier halted settlement.
 func (i *poolV1) collect(
 	_ int,
 	rlm realm,
@@ -285,7 +288,7 @@ func (i *poolV1) collect(
 	tickUpper int32,
 	amount0Requested string,
 	amount1Requested string,
-	withdrawalFeeBPS uint64,
+	applyWithdrawalFee bool,
 ) (amount0, amount1, fee0, fee1 int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -349,13 +352,19 @@ func (i *poolV1) collect(
 		panic(err)
 	}
 
+	withdrawalFeeBPS := ZeroBps
+	if applyWithdrawalFee {
+		withdrawalFeeBPS = i.store.GetWithdrawalFeeBPS()
+	}
+
 	// Effects are persisted above; everything below leaves the realm.
 	fee0, amount0AfterFee := deductWithdrawalFee(amount0, withdrawalFeeBPS)
 	fee1, amount1AfterFee := deductWithdrawalFee(amount1, withdrawalFeeBPS)
 
-	if withdrawalFeeBPS != ZeroBps {
-		// Called even for a zero fee so that anything left pending for these
-		// tokens by an earlier halted settlement is flushed.
+	if applyWithdrawalFee {
+		// Called even for a zero fee, and for a zero withdrawal fee rate, so that
+		// anything left pending for these tokens by an earlier halted settlement
+		// is flushed.
 		i.settleProtocolFee(0, rlm, token0Path, fee0)
 		i.settleProtocolFee(0, rlm, token1Path, fee1)
 	}

@@ -689,3 +689,103 @@ func TestProtocolFeesDisabledWhenNotConfigured(cur realm, t *testing.T) {
 
 	resetObject(cur, t)
 }
+
+// TestCollectSwapFee_ZeroRateStillSettlesPendingProtocolFee pins the boundary
+// between the two collect entry points: settlement follows the entry point, not
+// the configured rate. A backlog staged while protocol fee collection was halted
+// must still be flushed once collection resumes, even if the withdrawal fee has
+// been set to zero in the meantime.
+func TestCollectSwapFee_ZeroRateStillSettlesPendingProtocolFee(cur realm, t *testing.T) {
+	pool := setupStablecoinPool(cur, t)
+	approveTokensForPool(cur, t, pool)
+
+	token0Path, token1Path, feeTier := pool.Token0Path(), pool.Token1Path(), pool.Fee()
+	instance := getMockInstance()
+
+	// Mint then burn so the position carries tokensOwed the pool can pay out.
+	testing.SetRealm(posRealm)
+	mockInstanceMint(0, cur, token0Path, token1Path, feeTier,
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+	mockInstanceBurn(0, cur, token0Path, token1Path, feeTier,
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MEDIUM_LIQUIDITY, adminAddr)
+
+	testing.SetRealm(adminRealm)
+	mockInstanceSetWithdrawalFee(0, cur, 100) // 1%
+
+	// Emergency mode leaves withdrawals open but halts protocol fee collection,
+	// so the withheld fee is only staged as pending.
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
+
+	protocolFeeBalance0Before := TokenBalance(t, token0Path, protocolFeeAddr)
+	protocolFeeBalance1Before := TokenBalance(t, token1Path, protocolFeeAddr)
+
+	testing.SetRealm(posRealm)
+	_, _, fee0Str, fee1Str := mockInstanceCollectSwapFee(0, cur, token0Path, token1Path, feeTier,
+		adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, "50000", "50000")
+
+	uassert.Equal(t, fee0Str, "500", "1% of 50000 must be withheld")
+	uassert.Equal(t, fee1Str, "500", "1% of 50000 must be withheld")
+	uassert.Equal(t, instance.store.GetPendingProtocolFees()[token0Path], int64(500))
+	uassert.Equal(t, instance.store.GetPendingProtocolFees()[token1Path], int64(500))
+	uassert.Equal(t, TokenBalance(t, token0Path, protocolFeeAddr), protocolFeeBalance0Before)
+	uassert.Equal(t, TokenBalance(t, token1Path, protocolFeeAddr), protocolFeeBalance1Before)
+
+	// Collection resumes, but the rate is dropped to zero before the next collect.
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	mockInstanceSetWithdrawalFee(0, cur, ZeroBps)
+
+	testing.SetRealm(posRealm)
+	_, _, fee0Str, fee1Str = mockInstanceCollectSwapFee(0, cur, token0Path, token1Path, feeTier,
+		adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MAX_INT64, MAX_INT64)
+
+	// Nothing new is withheld at a zero rate, but the backlog is drained.
+	uassert.Equal(t, fee0Str, "0")
+	uassert.Equal(t, fee1Str, "0")
+	uassert.Equal(t, len(instance.store.GetPendingProtocolFees()), 0,
+		"a zero withdrawal fee rate must not strand a pending protocol fee")
+	uassert.Equal(t, TokenBalance(t, token0Path, protocolFeeAddr), protocolFeeBalance0Before+500)
+	uassert.Equal(t, TokenBalance(t, token1Path, protocolFeeAddr), protocolFeeBalance1Before+500)
+
+	resetObject(cur, t)
+}
+
+// TestCollect_FeeFreePathNeverSettlesProtocolFee is the other side of the same
+// boundary: the principal path carries no withdrawal fee and must leave an
+// existing backlog untouched rather than settling it as a side effect.
+func TestCollect_FeeFreePathNeverSettlesProtocolFee(cur realm, t *testing.T) {
+	pool := setupStablecoinPool(cur, t)
+	approveTokensForPool(cur, t, pool)
+
+	token0Path, token1Path, feeTier := pool.Token0Path(), pool.Token1Path(), pool.Fee()
+	instance := getMockInstance()
+
+	testing.SetRealm(posRealm)
+	mockInstanceMint(0, cur, token0Path, token1Path, feeTier,
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+	mockInstanceBurn(0, cur, token0Path, token1Path, feeTier,
+		WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MEDIUM_LIQUIDITY, adminAddr)
+
+	// A non-zero rate is configured; the principal path must still ignore it.
+	testing.SetRealm(adminRealm)
+	mockInstanceSetWithdrawalFee(0, cur, 100) // 1%
+
+	testing.SetRealm(testing.NewCodeRealm(poolPath))
+	instance.addPendingProtocolFee(0, cur, token0Path, 500)
+
+	protocolFeeBalanceBefore := TokenBalance(t, token0Path, protocolFeeAddr)
+	collectorBalanceBefore := TokenBalance(t, token0Path, adminAddr)
+
+	testing.SetRealm(posRealm)
+	amount0, _ := mockInstanceCollect(0, cur, token0Path, token1Path, feeTier,
+		adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, "50000", "0")
+
+	uassert.Equal(t, amount0, "50000")
+	uassert.Equal(t, TokenBalance(t, token0Path, adminAddr), collectorBalanceBefore+50000,
+		"the principal path pays the full amount, no withdrawal fee")
+	uassert.Equal(t, instance.store.GetPendingProtocolFees()[token0Path], int64(500),
+		"the fee-free path must not settle the backlog")
+	uassert.Equal(t, TokenBalance(t, token0Path, protocolFeeAddr), protocolFeeBalanceBefore)
+
+	resetObject(cur, t)
+}
