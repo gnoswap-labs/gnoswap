@@ -124,16 +124,18 @@ func collectCheckpoint(cur realm) {
 func comparePair(cur realm) {
 	testing.SetRealm(adminRealm)
 
+	// Bring emission up to date first. The community pool is also an emission target, so the
+	// first collect of a block would otherwise fold that distribution into its own delta.
+	emission.MintAndDistributeGns(cross(cur))
+
 	ownerFirst, communityFirst := collectDeltas(cur, 2)
 	ownerSecond, communitySecond := collectDeltas(cur, 3)
 
 	ufmt.Printf("[EXPECTED] both were paid a reward: %t\n", ownerFirst > 0 && ownerSecond > 0)
-	ufmt.Printf("[EXPECTED] the owner amounts match: %t\n", ownerFirst == ownerSecond)
 	// The pool always had liquidity over their window, so neither may be charged an unclaimable
-	// amount on top of its own warmup penalty. The rewind paid the first collector more than six
-	// times its owner amount; the penalty alone is a little over twice it.
-	ufmt.Printf("[EXPECTED] neither was charged a rewound unclaimable amount: %t\n",
-		communityFirst < ownerFirst*4 && communitySecond < ownerSecond*4)
+	// amount on top of its own warmup penalty, and the two must be paid alike.
+	ufmt.Printf("[EXPECTED] the owner amounts match: %t\n", ownerFirst == ownerSecond)
+	ufmt.Printf("[EXPECTED] the community amounts match: %t\n", communityFirst == communitySecond)
 }
 
 // collectDeltas collects one position and reports what the owner and the community pool got.
@@ -165,4 +167,4 @@ func stake(cur realm, positionId uint64) {
 // [SCENARIO] 3. The identical pair must collect identical amounts
 // [EXPECTED] both were paid a reward: true
 // [EXPECTED] the owner amounts match: true
-// [EXPECTED] neither was charged a rewound unclaimable amount: true
+// [EXPECTED] the community amounts match: true
