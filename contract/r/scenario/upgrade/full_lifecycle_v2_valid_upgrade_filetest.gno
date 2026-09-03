@@ -1874,8 +1874,8 @@ func finalInvariants(cur realm) {
 // [EXPECTED] minted position: 2 liquidity: 327755575
 // [EXPECTED] increased liquidity: 213383746 amount0: 10000000 amount1: 10000000
 // [EXPECTED] position liquidity now: 1280302477
-// [EXPECTED] fee-accrual swap bar->foo in/out: 2000000 -1976553
-// [EXPECTED] fee-accrual swap foo->bar in/out: 2000000 -1981465
+// [EXPECTED] fee-accrual swap bar->foo in/out: 2000000 1976553
+// [EXPECTED] fee-accrual swap foo->bar in/out: 2000000 1981465
 // [EXPECTED] pool tick after the fee-accrual swaps: 0
 // [EXPECTED] fees accrued before decrease (gross): 597 597
 // [EXPECTED] removed liquidity: 640151238 from pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
@@ -1887,10 +1887,10 @@ func finalInvariants(cur realm) {
 // [EXPECTED] withdrawal fee expected from the gross fee: 5 5
 //
 // [SCENARIO] 6. Router: exact-in / exact-out, single and multi-hop
-// [EXPECTED] exact-in-single in/out: 1000000 -988486
-// [EXPECTED] exact-in in/out: 1000000 -990520
-// [EXPECTED] exact-out-single in/out: 505567 -500000
-// [EXPECTED] exact-out in/out: 505045 -500000
+// [EXPECTED] exact-in-single in/out: 1000000 988486
+// [EXPECTED] exact-in in/out: 1000000 990520
+// [EXPECTED] exact-out-single in/out: 505567 500000
+// [EXPECTED] exact-out in/out: 505045 500000
 // [EXPECTED] pool tick after swaps: 0
 // [EXPECTED] pool liquidity: 967906814
 // [EXPECTED] fee growth global: 358045537627336065200174822438606 358257148375155596322091915147789
@@ -2041,7 +2041,7 @@ func finalInvariants(cur realm) {
 // [SCENARIO] 18. Re-run the same operations through v2_valid
 // [EXPECTED] v2_valid minted position: 3 liquidity: 1066865580
 // [EXPECTED] v2_valid mint amounts: 49995019 50000000
-// [EXPECTED] v2_valid swap in/out: 1000000 -989093
+// [EXPECTED] v2_valid swap in/out: 1000000 989093
 // [EXPECTED] v2_valid staking reward to user/penalty: 42692363335 101132501977
 // [EXPECTED] v2_valid distributed FOO to gov staker: 27001
 // [EXPECTED] v2_valid delegated amount: 1000000000

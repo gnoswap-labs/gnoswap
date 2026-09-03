@@ -507,7 +507,7 @@ func getPositionOwner(cur realm) {
 // [SCENARIO] 1.4 ExactIn Swap Route for fee accumulation
 // [INFO] Executing ExactIn swap for fee accumulation
 // [EXPECTED] amountIn: 1000000
-// [EXPECTED] amountOut: -985678
+// [EXPECTED] amountOut: 985678
 // [EXPECTED] admin bar balance change: 985678
 // [EXPECTED] admin foo balance change: -1000000
 // [EXPECTED] pool bar balance change: -987158

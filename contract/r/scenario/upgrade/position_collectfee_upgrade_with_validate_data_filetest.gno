@@ -452,7 +452,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 4. Perform swap to generate fees
 // [INFO] Exact-In Swap Route
 // [EXPECTED] Input token amount: 1000000
-// [EXPECTED] Output token amount: -997067
+// [EXPECTED] Output token amount: 997067
 //
 // [SCENARIO] 5. Collect fee from position before upgrade
 // [EXPECTED] Position ID: 1
@@ -493,7 +493,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [SCENARIO] 10. Perform swap to generate fees (should panic)
 // [INFO] Exact-In Swap Route
 // [EXPECTED] Input token amount: 1000000
-// [EXPECTED] Output token amount: -995202
+// [EXPECTED] Output token amount: 995202
 //
 // [SCENARIO] 11. Collect fee from position: 1
 // [EXPECTED] Position ID: 1

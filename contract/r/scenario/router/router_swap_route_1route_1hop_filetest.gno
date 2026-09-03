@@ -117,7 +117,7 @@ func main(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 1000")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -2707")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 2707")
 
 	println("[INFO] Test 2: ExactOut swap (bar → baz)")
 	println("[INFO] Approving tokens for swap")
@@ -137,7 +137,7 @@ func main(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 371")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -999")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 999")
 
 	println("[INFO] Test 3: ExactIn swap (baz → bar)")
 	println("[INFO] Approving tokens for swap")
@@ -157,7 +157,7 @@ func main(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 1000")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -368")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 368")
 
 	println("[INFO] Test 4: ExactOut swap (baz → bar)")
 	println("[INFO] Approving tokens for swap")
@@ -177,7 +177,7 @@ func main(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 8171")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -2996")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 2996")
 
 	println("[INFO] Scenario completed")
 }
@@ -202,17 +202,17 @@ func main(cur realm) {
 // [INFO] Test 1: ExactIn swap (bar → baz)
 // [INFO] Approving tokens for swap
 // [EXPECTED] amountIn: 1000 expected: 1000
-// [EXPECTED] amountOut: -2707 expected: -2707
+// [EXPECTED] amountOut: 2707 expected: 2707
 // [INFO] Test 2: ExactOut swap (bar → baz)
 // [INFO] Approving tokens for swap
 // [EXPECTED] amountIn: 371 expected: 371
-// [EXPECTED] amountOut: -1000 expected: -999
+// [EXPECTED] amountOut: 1000 expected: 999
 // [INFO] Test 3: ExactIn swap (baz → bar)
 // [INFO] Approving tokens for swap
 // [EXPECTED] amountIn: 1000 expected: 1000
-// [EXPECTED] amountOut: -368 expected: -368
+// [EXPECTED] amountOut: 368 expected: 368
 // [INFO] Test 4: ExactOut swap (baz → bar)
 // [INFO] Approving tokens for swap
 // [EXPECTED] amountIn: 8182 expected: 8171
-// [EXPECTED] amountOut: -3000 expected: -2996
+// [EXPECTED] amountOut: 3000 expected: 2996
 // [INFO] Scenario completed

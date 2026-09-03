@@ -545,7 +545,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 9. Perform swaps
 // [INFO] perform exact-in swaps
-// [EXPECTED] swap result - tokenIn: 500, tokenOut: -497
+// [EXPECTED] swap result - tokenIn: 500, tokenOut: 497
 // [INFO] check reward for position 01 after swap
 // [EXPECTED] position 01 reward after swap: 18729875
 //

@@ -394,7 +394,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 3. Extreme Case 1: Very Large Swap (90% of liquidity)
 // [INFO] Extreme Swap: Swapping 450000000000 FOO -> BAR (90% of liquidity)
-// [INFO] Large Swap - In: 450000000000 Out: -245987862163
+// [INFO] Large Swap - In: 450000000000 Out: 245987862163
 // [INFO] Expected: Massive price impact and slippage
 // [INFO] After Large Swap
 // [EXPECTED] User BAR balance: 745987862163
@@ -416,7 +416,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 4. Extreme Case 2: Swap Back with High Slippage
 // [INFO] Reverse Swap: Getting 200000000000 FOO back
-// [INFO] Reverse Swap - In: 75286230276 Out: -200000000000
+// [INFO] Reverse Swap - In: 75286230276 Out: 200000000000
 // [INFO] After Reverse Swap
 // [EXPECTED] User BAR balance: 670701631887
 // [EXPECTED] User FOO balance: 250000000000
@@ -437,7 +437,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 5. Extreme Case 3: Small Swap After Large Price Movement
 // [INFO] Small Swap: Swapping 1000000 FOO -> BAR (after extreme movement)
-// [INFO] Small Swap - In: 1000000 Out: -469486
+// [INFO] Small Swap - In: 1000000 Out: 469486
 // [INFO] After Small Swap
 // [EXPECTED] User BAR balance: 670702101373
 // [EXPECTED] User FOO balance: 249999000000

@@ -200,7 +200,7 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [SCENARIO] 3. First swap (before alice delegation)
 // [EXPECTED] pool current tick: -1
 // [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 10000
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -9955
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): 9955
 //
 // [SCENARIO] 4. Alice delegates in the middle
 // [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
@@ -208,7 +208,7 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [SCENARIO] 5. Second swap (after alice delegation)
 // [EXPECTED] pool current tick: -2
 // [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 10000
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -9954
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): 9954
 //
 // [SCENARIO] 6. Check and collect protocol fee reward for admin
 // [INFO] collected protocol fee reward for g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5

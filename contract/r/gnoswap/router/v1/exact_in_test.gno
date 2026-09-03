@@ -251,7 +251,7 @@ func TestExactInZeroForOneFalse(cur realm, t *testing.T) {
 			quoteArr:         "100",
 			amountOutMin:     "85",
 			expectedAmount0:  "100",
-			expectedAmount1:  "-98",
+			expectedAmount1:  "98",
 			expectPanic:      false,
 		},
 	}

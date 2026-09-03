@@ -114,7 +114,7 @@ func main(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 140000")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -105765")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 105765")
 
 	println("[INFO] Checking pool state after swap")
 	pool, _ = pl.GetPools().Get(pl.GetPoolPath(barPath, bazPath, fee500)).(*pl.Pool)
@@ -215,7 +215,7 @@ func bazApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 // [INFO] Approving tokens for swap
 // [INFO] Executing ExactIn swap (140000 bar → baz)
 // [EXPECTED] amountIn: 140000 expected: 140000
-// [EXPECTED] amountOut: -105765 expected: -105765
+// [EXPECTED] amountOut: 105765 expected: 105765
 // [INFO] Checking pool state after swap
 // [EXPECTED] pool liquidity after swap: 435768 expected: 435768
 // [EXPECTED] pool tick after swap: -5569 expected: -5569

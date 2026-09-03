@@ -208,6 +208,6 @@ func exactInSwapRoute(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount(WUGNOT): 10000000
-// [EXPECTED] outputTokenAmount(BAR): -9421648
+// [EXPECTED] outputTokenAmount(BAR): 9421648
 // [EXPECTED] WUGNOT balance changed: -10000000
 // [EXPECTED] BAR balance changed: 9421648

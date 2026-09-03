@@ -299,37 +299,37 @@ func singleHopLowFeePool(cur realm) {
 // [INFO] all pools at 1:1 price with 20T liquidity each
 //
 // [SCENARIO] 2. 1-route 1-hop: ExactOut 1,000,000 bar (baz→bar:3000)
-// [INFO] amountIn=1004517 amountOut=-1000000
+// [INFO] amountIn=1004517 amountOut=1000000
 // [EXPECTED] user received: 1000000 (want: 1000000)
 // [EXPECTED] protocol fee: 1502 = pool(1001502) - user(1000000)
 //
 // [SCENARIO] 3. 1-route 2-hop: ExactOut 1,000,000 foo (bar→baz→foo)
-// [INFO] amountIn=1007543 amountOut=-1000000
+// [INFO] amountIn=1007543 amountOut=1000000
 // [EXPECTED] user received: 1000000 (want: 1000000)
 // [EXPECTED] protocol fee (foo): 1502
 //
 // [SCENARIO] 4. 1-route 3-hop: ExactOut 100,000 qux (bar→baz→foo→qux)
-// [INFO] amountIn=101062 amountOut=-100000
+// [INFO] amountIn=101062 amountOut=100000
 // [EXPECTED] user received: 100000 (want: 100000)
 // [EXPECTED] protocol fee (qux): 150
 //
 // [SCENARIO] 5. 2-route split (50/50): ExactOut 1,000,000 bar (baz→bar:3000, baz→bar:500)
-// [INFO] amountIn=1003262 amountOut=-1000000
+// [INFO] amountIn=1003262 amountOut=1000000
 // [EXPECTED] user received: 1000000 (want: 1000000)
 // [EXPECTED] protocol fee (bar): 1502
 //
 // [SCENARIO] 6. 1-route 1-hop minimum: ExactOut 1 bar
-// [INFO] amountIn=3 amountOut=-1
+// [INFO] amountIn=3 amountOut=1
 // [EXPECTED] user received: 1 (want: 1)
 // [EXPECTED] protocol fee: 0 (want: 0, truncated)
 //
 // [SCENARIO] 7. 1-route 1-hop large: ExactOut 9,000,000,000,000 bar
-// [INFO] amountIn=16457760709370 amountOut=-9000000000000
+// [INFO] amountIn=16457760709370 amountOut=9000000000000
 // [EXPECTED] user received: 9000000000000 (want: 9000000000000)
 // [EXPECTED] protocol fee: 13520280420 = pool(9013520280420) - user(9000000000000)
 //
 // [SCENARIO] 8. 1-route 1-hop low-fee pool (500): ExactOut 1,000,000 bar
-// [INFO] amountIn=1002005 amountOut=-1000000
+// [INFO] amountIn=1002005 amountOut=1000000
 // [EXPECTED] user received: 1000000 (want: 1000000)
 // [EXPECTED] protocol fee (bar): 1502
 

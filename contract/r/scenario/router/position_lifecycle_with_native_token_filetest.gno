@@ -264,7 +264,7 @@ func testBurnPositionWithUnwrap(cur realm, removedLiquidity string) {
 //
 // [SCENARIO] 3. Execute Swaps (Generate Fees)
 // [INFO] Executing swaps to generate fees
-// [INFO] Swap 1 - GNS in: 10000000 WUGNOT out: -9695218
+// [INFO] Swap 1 - GNS in: 10000000 WUGNOT out: 9695218
 // [INFO] Protocol fee balance WUGNOT: 115880
 // [INFO] Protocol fee balance GNS: 0
 // [EXPECTED] Pool fee (0.5%) accumulated correctly
