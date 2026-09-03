@@ -63,6 +63,24 @@ func assertIsDepositor(s *stakerV1, caller address, positionId uint64) {
 	}
 }
 
+// assertIsIncentiveOfDeposit ensures the incentive exists and targets the pool the position is staked
+// in, so a caller cannot ask a deposit to collect an incentive that can never pay it.
+func assertIsIncentiveOfDeposit(s *stakerV1, positionId uint64, incentiveId string) {
+	deposit := s.getDeposits().get(positionId)
+	// get panics with errDataNotFound when the incentive does not exist.
+	incentive := s.getExternalIncentives().get(incentiveId)
+
+	if incentive.TargetPoolPath() != deposit.TargetPoolPath() {
+		panic(makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf(
+				"incentiveId(%s) targets pool(%s), but positionId(%d) is staked in pool(%s)",
+				incentiveId, incentive.TargetPoolPath(), positionId, deposit.TargetPoolPath(),
+			),
+		))
+	}
+}
+
 // assertIsNotStaked ensures the position is not already staked.
 func assertIsNotStaked(s *stakerV1, positionId uint64) {
 	if s.getDeposits().Has(positionId) {

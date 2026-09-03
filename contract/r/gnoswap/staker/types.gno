@@ -15,6 +15,8 @@ type IStakerManager interface {
 	StakeToken(_ int, rlm realm, positionId uint64, referrer string) string
 	UnStakeToken(_ int, rlm realm, positionId uint64) string
 	CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64)
+	CollectEmissionReward(_ int, rlm realm, positionId uint64) (int64, int64)
+	CollectExternalIncentiveReward(_ int, rlm realm, positionId uint64, incentiveId string) (int64, int64)
 
 	SetPoolTier(_ int, rlm realm, poolPath string, tier uint64)
 	ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64)
