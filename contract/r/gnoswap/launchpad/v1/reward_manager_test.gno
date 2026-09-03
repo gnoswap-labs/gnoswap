@@ -1831,8 +1831,8 @@ func TestRewardManager_addRewardPerDepositX128(cur realm, t *testing.T) {
 				result := u256.Zero().Sub(maxUint128, u256.NewUint(500))
 				return result.ToString()
 			}(),
-			expectedAccumulatedTime:   1100,
-			expectNoUpdate:            false,
+			expectedAccumulatedTime: 1100,
+			expectNoUpdate:          false,
 		},
 		{
 			name: "very small reward addition",
@@ -1968,6 +1968,68 @@ func TestRewardManager_addRewardState(cur realm, t *testing.T) {
 			storedState, ok := stored.(*launchpad.RewardState)
 			uassert.True(t, ok)
 			uassert.Equal(t, tt.rewardAmount, storedState.DepositAmount())
+
+			expectedDebt := u256.Zero().Mul(
+				u256.NewUint(1000),
+				u256.NewUintFromInt64(tt.rewardAmount),
+			)
+			uassert.Equal(t, tt.rewardAmount, manager.ActiveDepositAmount())
+			uassert.Equal(t, expectedDebt.ToString(), manager.ActivePriceDebtX128().ToString())
+
+			if err := removeRewardState(manager, tt.depositId); err != nil {
+				t.Fatal(err)
+			}
+			uassert.Equal(t, int64(0), manager.ActiveDepositAmount())
+			uassert.Equal(t, "0", manager.ActivePriceDebtX128().ToString())
+		})
+	}
+}
+
+func TestCalculateMaximumClaimableRewardsForActiveDeposits(cur realm, t *testing.T) {
+	manager := launchpad.NewRewardManager(0, 0, 0, 0)
+	q128One := u256.Zero().Lsh(u256.NewUintFromInt64(1), 128)
+	manager.SetAccumulatedRewardPerDepositX128(q128One)
+
+	first := launchpad.NewRewardState(u256.Zero(), 3, 0, 0, 0)
+	second := launchpad.NewRewardState(q128One, 2, 0, 0, 0)
+	addActiveRewardState(manager, first)
+	addActiveRewardState(manager, second)
+
+	uassert.Equal(t, int64(3), calculateMaximumClaimableRewardsForActiveDeposits(manager))
+
+	first.SetClaimedAmount(1)
+	manager.SetActiveClaimedAmount(1)
+	uassert.Equal(t, int64(2), calculateMaximumClaimableRewardsForActiveDeposits(manager))
+
+	removeActiveRewardState(manager, second)
+	uassert.Equal(t, int64(2), calculateMaximumClaimableRewardsForActiveDeposits(manager))
+}
+
+func TestCalculateMaximumClaimableRewardsForActiveDeposits_RoundingDustByDepositCount(cur realm, t *testing.T) {
+	q128One := u256.Zero().Lsh(u256.NewUintFromInt64(1), 128)
+	q128Half := u256.Zero().Rsh(q128One, 1)
+	tests := []struct {
+		name            string
+		depositCount    int64
+		expectedReserve int64
+	}{
+		{name: "one deposit", depositCount: 1, expectedReserve: 0},
+		{name: "ten deposits", depositCount: 10, expectedReserve: 5},
+		{name: "one hundred deposits", depositCount: 100, expectedReserve: 50},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			manager := launchpad.NewRewardManager(0, 0, 0, 0)
+			manager.SetAccumulatedRewardPerDepositX128(q128One)
+
+			for i := int64(0); i < tt.depositCount; i++ {
+				state := launchpad.NewRewardState(q128Half, 1, 0, 0, 0)
+				uassert.Equal(t, int64(0), calculateClaimableReward(state, q128One))
+				addActiveRewardState(manager, state)
+			}
+
+			uassert.Equal(t, tt.expectedReserve, calculateMaximumClaimableRewardsForActiveDeposits(manager))
 		})
 	}
 }

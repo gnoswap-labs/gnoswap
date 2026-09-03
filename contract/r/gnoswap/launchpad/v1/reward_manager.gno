@@ -1,6 +1,8 @@
 package launchpad
 
 import (
+	"errors"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/launchpad"
 
@@ -98,15 +100,48 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit *launchpad.Depo
 }
 
 func addRewardState(r *launchpad.RewardManager, deposit *launchpad.Deposit, rewardState *launchpad.RewardState) *launchpad.RewardState {
+	addActiveRewardState(r, rewardState)
 	r.SetReward(deposit.ID(), rewardState)
 
 	return rewardState
 }
 
-// removeRewardState removes a reward state from the reward manager when a deposit is withdrawn.
-// This improves iteration performance and ensures accurate pending reward calculations.
-func removeRewardState(r *launchpad.RewardManager, depositId string) {
+func removeRewardState(r *launchpad.RewardManager, depositId string) error {
+	rewardState, err := getDepositRewardState(r, depositId)
+	if err != nil {
+		return err
+	}
+
+	removeActiveRewardState(r, rewardState)
 	r.RemoveReward(depositId)
+	return nil
+}
+
+func addActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.RewardState) {
+	debt, overflow := u256.Zero().MulOverflow(
+		rewardState.PriceDebtX128(),
+		u256.NewUintFromInt64(rewardState.DepositAmount()),
+	)
+	if overflow {
+		panic(errors.New(errOverflow))
+	}
+
+	r.SetActiveDepositAmount(gnsmath.SafeAddInt64(r.ActiveDepositAmount(), rewardState.DepositAmount()))
+	r.SetActivePriceDebtX128(u256.Zero().Add(r.ActivePriceDebtX128(), debt))
+}
+
+func removeActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.RewardState) {
+	debt, overflow := u256.Zero().MulOverflow(
+		rewardState.PriceDebtX128(),
+		u256.NewUintFromInt64(rewardState.DepositAmount()),
+	)
+	if overflow {
+		panic(errors.New(errOverflow))
+	}
+
+	r.SetActiveDepositAmount(gnsmath.SafeSubInt64(r.ActiveDepositAmount(), rewardState.DepositAmount()))
+	r.SetActiveClaimedAmount(gnsmath.SafeSubInt64(r.ActiveClaimedAmount(), rewardState.ClaimedAmount()))
+	r.SetActivePriceDebtX128(u256.Zero().Sub(r.ActivePriceDebtX128(), debt))
 }
 
 func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u256.Uint, currentTime int64) error {
@@ -234,6 +269,7 @@ func collectReward(r *launchpad.RewardManager, depositId string, currentTime int
 	rewards.Set(depositId, rewardState)
 	r.SetRewards(rewards)
 	r.SetTotalClaimedAmount(r.TotalClaimedAmount() + claimableReward)
+	r.SetActiveClaimedAmount(gnsmath.SafeAddInt64(r.ActiveClaimedAmount(), claimableReward))
 
 	return claimableReward, nil
 }
@@ -252,25 +288,23 @@ func newRewardManager(
 	return manager
 }
 
-// calculateClaimableRewardsForActiveDeposits calculates the total claimable rewards
-// for all active deposits in the reward manager.
-// This is used when admin wants to reclaim undistributed rewards while some deposits remain.
-func calculateClaimableRewardsForActiveDeposits(r *launchpad.RewardManager) int64 {
-	totalClaimable := int64(0)
-	accumulatedReward := r.AccumulatedRewardPerDepositX128()
+// calculateMaximumClaimableRewardsForActiveDeposits reserves every active
+// claim without traversing the attacker-controlled reward tree. Aggregating
+// before Q128 truncation retains rounding dust but cannot under-reserve claims.
+func calculateMaximumClaimableRewardsForActiveDeposits(r *launchpad.RewardManager) int64 {
+	reward, overflow := u256.Zero().MulOverflow(
+		r.AccumulatedRewardPerDepositX128(),
+		u256.NewUintFromInt64(r.ActiveDepositAmount()),
+	)
+	if overflow {
+		panic(errors.New(errOverflow))
+	}
 
-	r.Rewards().Iterate("", "", func(depositId string, value any) bool {
-		rewardState, ok := value.(*launchpad.RewardState)
-		if !ok {
-			return false
-		}
+	reward = reward.Sub(reward, r.ActivePriceDebtX128()).Rsh(reward, 128)
+	totalReward := gnsmath.SafeConvertToInt64(reward)
+	if totalReward <= r.ActiveClaimedAmount() {
+		return 0
+	}
 
-		// Calculate claimable reward for this deposit
-		claimable := calculateClaimableReward(rewardState, accumulatedReward)
-		totalClaimable = gnsmath.SafeAddInt64(totalClaimable, claimable)
-
-		return false
-	})
-
-	return totalClaimable
+	return gnsmath.SafeSubInt64(totalReward, r.ActiveClaimedAmount())
 }
