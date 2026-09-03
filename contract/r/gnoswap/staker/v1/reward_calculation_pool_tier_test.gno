@@ -358,48 +358,6 @@ func TestIsInternallyIncentivizedPool(cur realm, t *testing.T) {
 	}
 }
 
-func TestCurrentRewardPerPool(cur realm, t *testing.T) {
-	pools := NewPools()
-	currentTime := int64(100000)
-	emission := int64(1000000)
-	testPool1 := pl.GetPoolPath("gno.land/r/onbloc/bar.BAR", "gno.land/r/onbloc/baz.BAZ", 3000)
-	testPool2 := pl.GetPoolPath("gno.land/r/onbloc/foo.FOO", "gno.land/r/onbloc/qux.QUX", 3000)
-
-	poolTier := NewPoolTier(pools, currentTime, testPool1,
-		func() (int64, error) { return emission, nil },
-		func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil })
-
-	// With only tier 1 pool, it should get 100% of emission
-	reward1, err := poolTier.CurrentRewardPerPool(testPool1)
-	uassert.NoError(t, err)
-	expectedReward1 := emission * 100 / 100 / 1 // 100% ratio, 1 pool
-	if reward1 != expectedReward1 {
-		t.Errorf("Expected reward %d, got %d", expectedReward1, reward1)
-	}
-
-	// Add pool to tier 2
-	pools.set(testPool2, sr.NewPool(testPool2, currentTime+1))
-	poolTier.changeTier(currentTime+1, pools, testPool2, 2)
-
-	// Now tier1 gets 70%, tier2 gets 30%
-	reward1After, err := poolTier.CurrentRewardPerPool(testPool1)
-	uassert.NoError(t, err)
-	expectedReward1After := emission * 70 / 100 / 1 // 70% ratio, 1 pool
-	if reward1After != expectedReward1After {
-		t.Errorf("Expected tier1 reward %d, got %d", expectedReward1After, reward1After)
-	}
-
-	reward2, err := poolTier.CurrentRewardPerPool(testPool2)
-	uassert.NoError(t, err)
-	expectedReward2 := emission * 30 / 100 / 1 // 30% ratio, 1 pool
-	if reward2 != expectedReward2 {
-		t.Errorf("Expected tier2 reward %d, got %d", expectedReward2, reward2)
-	}
-
-	emission = -1
-	_, err = poolTier.CurrentRewardPerPool(testPool1)
-	uassert.ErrorContains(t, err, errCalculationError)
-}
 
 // Test CurrentReward for different tiers
 func TestCurrentReward(cur realm, t *testing.T) {

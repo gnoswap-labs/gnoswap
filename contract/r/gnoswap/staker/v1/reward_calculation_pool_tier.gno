@@ -394,30 +394,6 @@ func (self *PoolTier) IsInternallyIncentivizedPool(poolPath string) bool {
 }
 
 
-// CurrentRewardPerPool returns the current reward rate for a pool, if tiered.
-func (self *PoolTier) CurrentRewardPerPool(poolPath string) (int64, error) {
-	tierNum := self.CurrentTier(poolPath)
-	if tierNum == 0 {
-		return 0, nil
-	}
-
-	tierRatio, err := self.tierRatio.Get(tierNum)
-	if err != nil {
-		return 0, makeErrorWithDetails(errInvalidPoolTier, err.Error())
-	}
-
-	tierCount := int64(self.counts[tierNum])
-	if tierCount == 0 {
-		return 0, nil
-	}
-
-	currentEmission, err := self.getEmission()
-	if err != nil {
-		return 0, err
-	}
-
-	return calculatePoolReward(currentEmission, int64(tierRatio), tierCount)
-}
 
 // calculatePoolReward calculates the reward for a pool based on the emission, tier ratio, and tier count.
 //
