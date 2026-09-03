@@ -34,8 +34,10 @@ setup_tests() {
 
     cd /app
 
-    # Run setup.py to create symlinks
-    python3 setup.py --exclude-tests -w /app
+    # Generate isolated test sources with the deterministic integration accounts.
+    python3 setup.py --exclude-tests -w /app \
+        --test-admin-address g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 \
+        --test-devops-address g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9
 
     echo -e "${GREEN}Setup completed!${NC}"
 }

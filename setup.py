@@ -248,7 +248,11 @@ def get_integration_tests(
 ### Module Linking
 
 
-def link_module(module_info: ModuleInfo, exclude_tests: bool = False) -> None:
+def link_module(
+    module_info: ModuleInfo,
+    exclude_tests: bool = False,
+    replacements: Optional[dict[str, str]] = None,
+) -> None:
     """Link a module's files to destination directory."""
     print(
         f"Linking module from {module_info.source_dir} to {module_info.destination_dir}"
@@ -265,6 +269,15 @@ def link_module(module_info: ModuleInfo, exclude_tests: bool = False) -> None:
 
         relative = source_file.relative_to(module_info.source_dir)
         destination = module_info.destination_dir / relative
+        if replacements:
+            original = source_file.read_text()
+            content = original
+            for old, new in replacements.items():
+                content = content.replace(old, new)
+            if content != original:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_text(content)
+                continue
         create_symlink(source_file, destination)
 
 
@@ -317,12 +330,17 @@ def clone_repository(workdir: Path) -> None:
     os.chdir("gnoswap")
 
 
-def setup_contracts(config: PathConfig, exclude_tests: bool = False) -> None:
+def setup_contracts(
+    config: PathConfig,
+    exclude_tests: bool = False,
+    replacements: Optional[dict[str, str]] = None,
+) -> None:
     """Set up all contracts by linking modules.
 
     Args:
         config: Path configuration.
         exclude_tests: If True, exclude test files.
+        replacements: Source literal substitutions for an isolated test setup.
     """
     search_dirs = [CONTRACT_DIR, SCENARIO_DIR]
 
@@ -331,7 +349,11 @@ def setup_contracts(config: PathConfig, exclude_tests: bool = False) -> None:
             continue
 
         for module_info in discover_modules(search_dir, config):
-            link_module(module_info, exclude_tests=exclude_tests)
+            link_module(
+                module_info,
+                exclude_tests=exclude_tests,
+                replacements=replacements,
+            )
 
 
 def copy_integration_tests(config: PathConfig, skip: bool = False) -> None:
@@ -402,6 +424,14 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="Exclude tests listed in testdata-skip.txt",
     )
+    parser.add_argument(
+        "--test-admin-address",
+        help="Override the initial admin address in the generated test setup",
+    )
+    parser.add_argument(
+        "--test-devops-address",
+        help="Override the initial DevOps address in the generated test setup",
+    )
 
     return parser.parse_args(argv)
 
@@ -426,7 +456,20 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     config = PathConfig.from_workdir(args.workdir)
 
-    setup_contracts(config, exclude_tests=args.exclude_tests)
+    replacements = {
+        old: new
+        for old, new in (
+            ("g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz", args.test_admin_address),
+            ("g1kg87wr06tmw7uvlyk4yrj3r2pzmt2j83d47nu7", args.test_devops_address),
+        )
+        if new
+    }
+
+    setup_contracts(
+        config,
+        exclude_tests=args.exclude_tests,
+        replacements=replacements or None,
+    )
     copy_integration_tests(config, skip=args.skip)
 
     print("Setup completed successfully!")
