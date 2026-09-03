@@ -133,7 +133,11 @@ func main(cur realm) {
 func initialize(cur realm) {
 	testing.SetRealm(adminRealm)
 	govGovernance.UpgradeImpl(cross(cur), governanceV1Path)
-	config = govGovernance.GetLatestConfig()
+	var err error
+	config, err = govGovernance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	println("[EXPECTED] implementation:", govGovernance.GetImplementationPackagePath())
 	println("[EXPECTED] config version:", govGovernance.GetLatestConfigVersion())
@@ -232,7 +236,9 @@ func captureV1Snapshot() {
 	v1AdminVotedAt, _ = govGovernance.GetVotedAt(paramProposalId, adminAddr)
 	v1UserProposalCount = userProposalCount(adminAddr)
 	v1LatestConfigVer = govGovernance.GetLatestConfigVersion()
-	v1VotingPeriod = govGovernance.GetLatestConfig().VotingPeriod
+	config, err := govGovernance.GetLatestConfig()
+	uassert.NoError(t, err)
+	v1VotingPeriod = config.VotingPeriod
 
 	println("[EXPECTED] snapshot proposal count:", v1ProposalCount)
 	println("[EXPECTED] snapshot proposal ids:", len(v1ProposalIDs))
@@ -282,6 +288,8 @@ func validateSnapshot() {
 	uassert.NoError(t, err)
 	textStatus, err := govGovernance.GetProposalStatusByProposalId(textProposalId)
 	uassert.NoError(t, err)
+	latestConfig, err := govGovernance.GetLatestConfig()
+	uassert.NoError(t, err)
 	_, err = govGovernance.GetConfig(v1LatestConfigVer)
 	uassert.NoError(t, err)
 
@@ -306,7 +314,7 @@ func validateSnapshot() {
 	uassert.Equal(t, v1AdminVotedAt, votedAt)
 	uassert.Equal(t, v1UserProposalCount, userProposalCount(adminAddr))
 	uassert.Equal(t, v1LatestConfigVer, govGovernance.GetLatestConfigVersion())
-	uassert.Equal(t, v1VotingPeriod, govGovernance.GetLatestConfig().VotingPeriod)
+	uassert.Equal(t, v1VotingPeriod, latestConfig.VotingPeriod)
 	uassert.True(t, govGovernance.ExistsProposal(paramProposalId))
 	uassert.True(t, govGovernance.ExistsVotingInfo(paramProposalId, adminAddr))
 	uassert.False(t, govGovernance.ExistsVotingInfo(paramProposalId, aliceAddr))
@@ -351,12 +359,14 @@ func executeAndReconfigure(cur realm) {
 		config.ExecutionWindow,
 	)
 	testing.SkipHeights(1)
+	latestConfig, err := govGovernance.GetLatestConfig()
+	uassert.NoError(t, err)
 
 	println("[EXPECTED] config version after reconfigure:", newVersion)
-	println("[EXPECTED] latest config voting period:", govGovernance.GetLatestConfig().VotingPeriod)
+	println("[EXPECTED] latest config voting period:", latestConfig.VotingPeriod)
 
 	uassert.Equal(t, v1LatestConfigVer+1, newVersion)
-	uassert.Equal(t, v1VotingPeriod, govGovernance.GetLatestConfig().VotingPeriod)
+	uassert.Equal(t, v1VotingPeriod, latestConfig.VotingPeriod)
 }
 
 func assertAborts(cur realm, callback func(), logMessage string) {

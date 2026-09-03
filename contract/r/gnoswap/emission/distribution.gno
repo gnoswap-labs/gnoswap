@@ -223,21 +223,27 @@ func transferToTarget(_ int, rlm realm, targets map[address]int64) error {
 }
 
 // GetDistributionBpsPct returns the distribution percentage in basis points for a specific target.
-func GetDistributionBpsPct(target int) int64 {
-	assertValidDistributionTarget(target)
+func GetDistributionBpsPct(target int) (int64, error) {
+	if err := validateDistributionTarget(target); err != nil {
+		return 0, err
+	}
+
 	if distributionBpsPct == nil {
-		panic("distributionBpsPct is nil")
+		return 0, makeErrorWithDetails(
+			errInvalidEmissionTarget,
+			ufmt.Sprintf("distributionBpsPct is nil"),
+		)
 	}
 
 	pct, exist := distributionBpsPct[target]
 	if !exist {
-		panic(makeErrorWithDetails(
+		return 0, makeErrorWithDetails(
 			errInvalidEmissionTarget,
 			ufmt.Sprintf("invalid target(%d)", target),
-		))
+		)
 	}
 
-	return pct
+	return pct, nil
 }
 
 // GetDistributedToStaker returns pending GNS for liquidity stakers.
@@ -294,24 +300,33 @@ func GetEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
 }
 
 // GetStakerEmissionAmountPerSecond returns the current per-second emission amount allocated to liquidity stakers.
-func GetStakerEmissionAmountPerSecond() int64 {
+func GetStakerEmissionAmountPerSecond() (int64, error) {
 	currentTimestamp := time.Now().Unix()
-	return GetEmissionAmountPerSecondBy(currentTimestamp, GetDistributionBpsPct(LIQUIDITY_STAKER))
+	pct, err := GetDistributionBpsPct(LIQUIDITY_STAKER)
+	if err != nil {
+		return 0, err
+	}
+	return GetEmissionAmountPerSecondBy(currentTimestamp, pct), nil
 }
 
 // GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
-func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
+func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64, error) {
 	gnsHalvingBlocks, gnsHalvingEmissions := gns.GetEmissionAmountPerSecondInRange(start, end)
 	halvingBlocks := make([]int64, len(gnsHalvingBlocks))
 	halvingEmissions := make([]int64, len(gnsHalvingEmissions))
 
+	pct, err := GetDistributionBpsPct(LIQUIDITY_STAKER)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	for i := range halvingBlocks {
 		halvingBlocks[i] = gnsHalvingBlocks[i]
 		// Applying staker ratio for past halving blocks
-		halvingEmissions[i] = calculateAmount(gnsHalvingEmissions[i], GetDistributionBpsPct(LIQUIDITY_STAKER))
+		halvingEmissions[i] = calculateAmount(gnsHalvingEmissions[i], pct)
 	}
 
-	return halvingBlocks, halvingEmissions
+	return halvingBlocks, halvingEmissions, nil
 }
 
 // ClearDistributedToStaker resets the pending distribution amount for liquidity stakers.

@@ -87,7 +87,10 @@ func setupTestData(cur realm) int64 {
 	println("[INFO] GNS delegated to admin:", delegatedAmount)
 
 	// Skip smoothing period
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
 	println("[INFO] Skipped smoothing period, current height:", runtime.ChainHeight())
 
@@ -132,7 +135,10 @@ func testConfigGetters(cur realm) {
 	testing.SetRealm(governanceRealm)
 
 	// GetLatestConfig
-	latestConfig := governance.GetLatestConfig()
+	latestConfig, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] Latest config:")
 	println("[EXPECTED] - Proposal creation threshold:", latestConfig.ProposalCreationThreshold)
 	println("[EXPECTED] - Voting period:", latestConfig.VotingPeriod)

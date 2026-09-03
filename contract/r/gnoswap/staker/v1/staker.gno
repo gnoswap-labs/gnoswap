@@ -466,7 +466,10 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		PoolTier:      s.getPoolTier(),
 		PositionId:    positionId,
 	}
-	rewards, rewardUpdate := s.calculatePositionReward(rewardParam)
+	rewards, rewardUpdate, err := s.calculatePositionReward(rewardParam)
+	if err != nil {
+		panic(err)
+	}
 
 	// aggregate the reward of internal and external rewards
 	reward := aggregateRewards(rewards)
@@ -651,7 +654,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
 
-	err := s.store.SetTotalEmissionSent(0, rlm, totalEmissionSent)
+	err = s.store.SetTotalEmissionSent(0, rlm, totalEmissionSent)
 	if err != nil {
 		panic(err)
 	}
