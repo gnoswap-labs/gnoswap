@@ -477,7 +477,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 3. Single Hop Swap (BAR -> FOO)
 // [INFO] Single Hop: Swapping 10000000000 BAR -> FOO
-// [INFO] Single Hop - In: 10000000000 Out: -9602386497
+// [INFO] Single Hop - In: 10000000000 Out: 9602386497
 // [BALANCE] After Single Hop
 //   User - BAR: 390000000000 FOO: 309602386497 BAZ: 300000000000 QUX: 400000000000
 //   Pools - BAR: 110000000000 FOO: 190383188286 BAZ: 200000000000 QUX: 100000000000
@@ -495,7 +495,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 4. Two Hop Swap (BAR -> FOO -> BAZ)
 // [INFO] Two Hop: Swapping 5000000000 BAR -> FOO -> BAZ
-// [INFO] Two Hop - In: 5000000000 Out: -4451991291
+// [INFO] Two Hop - In: 5000000000 Out: 4451991291
 // [INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2)
 // [BALANCE] After Two Hop
 //   User - BAR: 385000000000 FOO: 309602386497 BAZ: 304451991291 QUX: 400000000000
@@ -516,7 +516,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 5. Three Hop Swap (BAR -> FOO -> BAZ -> QUX)
 // [INFO] Three Hop: Swapping 3000000000 BAR -> FOO -> BAZ -> QUX
-// [INFO] Three Hop - In: 3000000000 Out: -2495426539
+// [INFO] Three Hop - In: 3000000000 Out: 2495426539
 // [INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2) -> QUX (pool 3)
 // [BALANCE] After Three Hop
 //   User - BAR: 382000000000 FOO: 309602386497 BAZ: 304451991291 QUX: 402495426539
@@ -537,7 +537,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 6. Reverse Three Hop Swap (QUX -> BAZ -> FOO -> BAR)
 // [INFO] Reverse Three Hop: Swapping 2000000000 QUX -> BAZ -> FOO -> BAR
-// [INFO] Reverse Three Hop - In: 2000000000 Out: -2404819407
+// [INFO] Reverse Three Hop - In: 2000000000 Out: 2404819407
 // [INFO] Route: QUX -> BAZ (pool 3) -> FOO (pool 2) -> BAR (pool 1)
 // [BALANCE] After Reverse Three Hop
 //   User - BAR: 384404819407 FOO: 309602386497 BAZ: 304451991291 QUX: 400495426539

@@ -328,7 +328,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [EXPECTED] positions staked and rewards cleared
 //
 // [SCENARIO] 5. Cross the shared boundary tick
-// [INFO] swapped 100000 BAR for -99962 BAZ
+// [INFO] swapped 100000 BAR for 99962 BAZ
 // [INFO] tick moved 15 -> 9
 // [INFO] cleared transition rewards after boundary cross
 //

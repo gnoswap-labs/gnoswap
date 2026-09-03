@@ -213,4 +213,4 @@ func exactOutSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] amountInMax: 10000000
 // [EXPECTED] wugnot balance of admin: 1001502
-// [EXPECTED] outputTokenAmount: -1001502
+// [EXPECTED] outputTokenAmount: 1001502

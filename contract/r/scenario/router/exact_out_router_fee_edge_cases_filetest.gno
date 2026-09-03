@@ -168,14 +168,14 @@ func exactOutLargeAmount(cur realm) {
 // [INFO] created bar:baz:3000 pool with 50T liquidity
 //
 // [SCENARIO] 2. ExactOut very small amount (1 token)
-// [INFO] amountIn: 3, amountOut: -1
+// [INFO] amountIn: 3, amountOut: 1
 // [INFO] user bar received: 1
 // [INFO] protocol fee (bar): 0
 // [EXPECTED] user receives exactly 1 bar: 1
 // [EXPECTED] protocol fee is 0 (truncated): 0
 //
 // [SCENARIO] 3. ExactOut large amount (9,000,000,000,000 tokens)
-// [INFO] amountIn: 11028810316105, amountOut: -9000000000000
+// [INFO] amountIn: 11028810316105, amountOut: 9000000000000
 // [INFO] user bar received: 9000000000000
 // [INFO] pool bar output: 9013520280420
 // [INFO] protocol fee (bar): 13520280420

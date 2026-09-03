@@ -354,9 +354,9 @@ func testMultiHopUsdcToGnot(cur realm) {
 // [INFO] WUGNOT deducted: 1000000
 // [INFO] GNS received: 995078
 // [INFO] Pool fee (0.05%): 500
-// [INFO] Router fee (0.15%): 1492
+// [INFO] Router fee (0.15%): -1492
 // [INFO] AmountIn reported: 1000000
-// [INFO] AmountOut reported: -995078
+// [INFO] AmountOut reported: 995078
 // [EXPECTED] WUGNOT deducted = 1000000
 // [EXPECTED] Wrap happens internally
 // [EXPECTED] Pool fee accumulated correctly
@@ -370,7 +370,7 @@ func testMultiHopUsdcToGnot(cur realm) {
 // [INFO] Pool fee (0.05%): 499
 // [INFO] Router fee (0.15%): 1500
 // [INFO] AmountIn reported: 999077
-// [INFO] AmountOut reported: -1000000
+// [INFO] AmountOut reported: 1000000
 // [EXPECTED] User receives 1,000,000 WUGNOT
 // [EXPECTED] Router fee charged on output side
 // [EXPECTED] Unwrap happens internally
@@ -381,7 +381,7 @@ func testMultiHopUsdcToGnot(cur realm) {
 // [INFO] WUGNOT spent: 1000000
 // [INFO] USDC received: 991686
 // [INFO] AmountIn reported: 1000000
-// [INFO] AmountOut reported: -991686
+// [INFO] AmountOut reported: 991686
 // [EXPECTED] Only first hop wraps GNOT
 // [EXPECTED] Correct fee accumulation across hops
 // [EXPECTED] Router fee applied on final output
@@ -391,7 +391,7 @@ func testMultiHopUsdcToGnot(cur realm) {
 // [INFO] USDC spent: 996682
 // [INFO] WUGNOT received: 1000000
 // [INFO] AmountIn reported: 996682
-// [INFO] AmountOut reported: -1000000
+// [INFO] AmountOut reported: 1000000
 // [EXPECTED] Only last hop unwraps to WUGNOT
 // [EXPECTED] User receives exactly 1,000,000 WUGNOT
 // [EXPECTED] Correct fee distribution across hops

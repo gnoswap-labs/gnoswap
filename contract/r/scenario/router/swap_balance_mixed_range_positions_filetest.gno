@@ -421,7 +421,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 5. Exact In Swap (FOO -> BAR) - Uses only in-range liquidity
 // [INFO] Swapping 10000000000 FOO -> BAR
-// [INFO] Exact In - In: 10000000000 Out: -9557418797
+// [INFO] Exact In - In: 10000000000 Out: 9557418797
 // [INFO] After Exact In Swap
 // [EXPECTED] User BAR balance: 129557418797
 // [EXPECTED] User FOO balance: 140000000000
@@ -442,7 +442,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 6. Exact Out Swap (BAR -> FOO) - Uses only in-range liquidity
 // [INFO] Swapping BAR -> 5000000000 FOO
-// [INFO] Exact Out - In: 4694301331 Out: -5000000000
+// [INFO] Exact Out - In: 4694301331 Out: 5000000000
 // [INFO] After Exact Out Swap
 // [EXPECTED] User BAR balance: 124863117466
 // [EXPECTED] User FOO balance: 145000000000

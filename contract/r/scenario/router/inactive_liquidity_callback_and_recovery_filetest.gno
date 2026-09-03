@@ -194,12 +194,12 @@ func assertActiveLiquidity(wantZero bool, label string) {
 //
 // [STEP 5] Cross remaining [100, 200] liquidity and reach the upper terminal
 // [ACTION] Execute baz -> bar ExactIn swap with input=100000
-// [RESULT] Forward swap: in=10154 out=-9985
+// [RESULT] Forward swap: in=10154 out=9985
 // [EXPECTED] tick after crossing out-of-range liquidity: 887270
 //
 // [STEP 6] Recover from the upper terminal
 // [ACTION] Execute bar -> baz ExactIn swap with input=1000
-// [RESULT] Recovery swap: in=1000 out=-1017
+// [RESULT] Recovery swap: in=1000 out=1017
 // [EXPECTED] tick after recovery swap: 189
 // [EXPECTED] Active liquidity is zero after re-entering the out-of-range position: false
 // [SUCCESS] Re-entered and reactivated the [100, 200] position

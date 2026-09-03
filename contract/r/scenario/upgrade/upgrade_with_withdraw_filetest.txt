@@ -531,7 +531,7 @@ func collectLaunchpadDeposit() {
 //
 // [SCENARIO] 5. Swap for fee distribution
 // [EXPECTED] AmountIn should be 10000000
-// [EXPECTED] AmountOut should be -9862880
+// [EXPECTED] AmountOut should be 9862880
 //
 // [SCENARIO] 6. Create launchpad project
 // [EXPECTED] Project created: gno.land/r/onbloc/bar.BAR:124

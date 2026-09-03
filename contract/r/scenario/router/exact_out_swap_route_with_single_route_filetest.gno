@@ -204,4 +204,4 @@ func exactOutSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] amountInMax: 10000000
 // [EXPECTED] inputTokenAmount: 1004496
-// [EXPECTED] outputTokenAmount: -1001502
+// [EXPECTED] outputTokenAmount: 1001502

@@ -186,7 +186,7 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [SCENARIO] 3. Swap route by swap route fee
 // [EXPECTED] pool current tick: -1
 // [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 10000
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -9955
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): 9955
 //
 // [SCENARIO] 4. Check and collect protocol fee reward for alice
 // [INFO] collected protocol fee reward for g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh

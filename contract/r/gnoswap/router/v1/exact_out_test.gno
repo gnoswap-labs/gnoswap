@@ -204,6 +204,7 @@ func TestExactOutSwapBoundary(cur realm, t *testing.T) {
 
 		uassert.NotEqual(t, amountIn, "0")
 		uassert.NotEqual(t, amountOut, "0")
+		uassert.False(t, strings.HasPrefix(amountOut, "-"))
 	})
 
 	t.Run("failed exact out swap at boundary", func(cur realm, t *testing.T) {

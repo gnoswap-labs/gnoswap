@@ -170,7 +170,7 @@ func swapRouteWithBalanceCheck(cur realm) {
 // [INFO] protocol fee foo balance: 0
 // [INFO] Executing ExactIn swap
 // [EXPECTED] amountIn: 1000000
-// [EXPECTED] amountOut: -985678
+// [EXPECTED] amountOut: 985678
 // [EXPECTED] admin bar balance change: 985678
 // [EXPECTED] admin foo balance change: -1000000
 // [EXPECTED] pool bar balance change: -987158

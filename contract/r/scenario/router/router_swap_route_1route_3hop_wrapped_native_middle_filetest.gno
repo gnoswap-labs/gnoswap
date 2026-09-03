@@ -179,7 +179,7 @@ func testSwapRouteGnsBarExactIn(cur realm) {
 	println("[INFO] amountOut:", amountOut)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 1000")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -7317")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 7317")
 	println()
 }
 
@@ -225,8 +225,8 @@ func testSwapRouteGnsBarExactIn(cur realm) {
 // [INFO] Approving tokens for swap
 // [INFO] Executing ExactIn swap (1000 gns → wugnot → bar)
 // [INFO] amountIn: 1000
-// [INFO] amountOut: -7317
+// [INFO] amountOut: 7317
 // [EXPECTED] amountIn: 1000 expected: 1000
-// [EXPECTED] amountOut: -7317 expected: -7317
+// [EXPECTED] amountOut: 7317 expected: 7317
 //
 // [INFO] Scenario completed

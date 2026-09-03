@@ -96,7 +96,7 @@ func main(cur realm) {
 	token1After := baz.BalanceOf(adminAddr)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 3")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -1")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 1")
 
 	println("[EXPECTED] admin bar balance change:", token0After, "expected:", token0Before-3)
 	println("[EXPECTED] admin baz balance change:", token1After, "expected:", token1Before+1)
@@ -119,7 +119,7 @@ func main(cur realm) {
 // [INFO] Executing ExactOut swap (bar → 1 baz)
 // [INFO] Checking balances after swap
 // [EXPECTED] amountIn: 3 expected: 3
-// [EXPECTED] amountOut: -1 expected: -1
+// [EXPECTED] amountOut: 1 expected: 1
 // [EXPECTED] admin bar balance change: 99999998999997 expected: 99999998999997
 // [EXPECTED] admin baz balance change: 99999999000001 expected: 99999999000001
 // [INFO] Scenario completed

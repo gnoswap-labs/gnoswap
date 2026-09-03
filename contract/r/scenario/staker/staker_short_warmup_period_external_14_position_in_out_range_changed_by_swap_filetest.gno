@@ -300,7 +300,7 @@ func makePosition1OutRange(cur realm) {
 		"",
 	)
 
-	if tokenIn != "100000" || tokenOut != "-98873" {
+	if tokenIn != "100000" || tokenOut != "98873" {
 		panic("unexpected swap result")
 	}
 

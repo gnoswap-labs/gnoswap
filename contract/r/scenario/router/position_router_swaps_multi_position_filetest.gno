@@ -250,7 +250,7 @@ func executeExactOutRouterSwaps(cur realm) {
 // [INFO] Pool balance of BAR: 10907007633
 // [INFO] Pool balance of FOO: 11000000000
 // [EXPECTED] Swap amountIn should be 1000000000000
-// [EXPECTED] Swap amountOut should be -10804908355
+// [EXPECTED] Swap amountOut should be 10804908355
 // [SCENARIO] 4. Execute exact out swap with almost all
 // [INFO] Executing first swap FOO -> BAR
 // [EXPECTED] Dry swap amountIn should be 0

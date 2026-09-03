@@ -147,7 +147,7 @@ func testExactInputSinglePool(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 3")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -1")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 1")
 
 	println("[INFO] Checking balances after swap")
 	poolToken0After := bar.BalanceOf(poolAddr)
@@ -194,7 +194,7 @@ func testExactInputSinglePool(cur realm) {
 // [INFO] user1 baz balance: 0
 // [INFO] Executing ExactIn swap (3 bar → baz)
 // [EXPECTED] amountIn: 3 expected: 3
-// [EXPECTED] amountOut: -1 expected: -1
+// [EXPECTED] amountOut: 1 expected: 1
 // [INFO] Checking balances after swap
 // [EXPECTED] user1 bar balance change: 9997 expected: 9997
 // [EXPECTED] user1 baz balance change: 1 expected: 1

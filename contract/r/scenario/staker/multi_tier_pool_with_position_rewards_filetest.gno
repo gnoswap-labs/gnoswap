@@ -471,7 +471,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 2000
-// [EXPECTED] outputTokenAmount: -1980
+// [EXPECTED] outputTokenAmount: 1980
 // [EXPECTED] BAR balance changed: -2000
 // [EXPECTED] BAZ balance changed: 1980
 // [EXPECTED] pool tick changed: 0 to -197
@@ -489,7 +489,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 2000
-// [EXPECTED] outputTokenAmount: -2006
+// [EXPECTED] outputTokenAmount: 2006
 // [EXPECTED] BAR balance changed: 2006
 // [EXPECTED] BAZ balance changed: -2000
 // [EXPECTED] pool tick changed: -197 to 0

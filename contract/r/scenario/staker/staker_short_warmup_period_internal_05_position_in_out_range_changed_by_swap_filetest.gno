@@ -261,7 +261,7 @@ func makePosition1OutRange(cur realm) {
 		"", // referrer
 	)
 
-	if tokenIn != "10000" || tokenOut != "-9884" {
+	if tokenIn != "10000" || tokenOut != "9884" {
 		panic("unexpected swap result")
 	}
 
@@ -336,7 +336,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [EXPECTED] position 02 (in-range) reward: 3886800 GNS
 //
 // [SCENARIO] 6. Make position 01 out of range via swap
-// [EXPECTED] swap executed: 10000 BAR -> -9884 QUX
+// [EXPECTED] swap executed: 10000 BAR -> 9884 QUX
 //
 // [SCENARIO] 7. Check rewards after position goes out of range
 // [INFO] checking reward for position 01 (now out-range)

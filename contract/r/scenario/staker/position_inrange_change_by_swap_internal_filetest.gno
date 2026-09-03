@@ -422,7 +422,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] tick before swap: 0
 // [INFO] perform large swap to move price out of range
 // [INFO] swap bar for baz to move tick up
-// [INFO] swapped 100000 bar for -9985 baz
+// [INFO] swapped 100000 bar for 9985 baz
 // [EXPECTED] tick after swap: -887271
 //
 // [SCENARIO] 7. Collect reward while out-of-range
@@ -435,7 +435,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] tick before reverse swap: -887271
 // [INFO] perform reverse swap to move price back into range
 // [INFO] swap baz for bar to move tick down
-// [INFO] swapped 1000 baz for -1002 bar
+// [INFO] swapped 1000 baz for 1002 bar
 // [EXPECTED] tick after reverse swap: -45
 // [INFO] position is back in-range
 //

@@ -437,9 +437,9 @@ func validateFinalReconciliation(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 4. Perform Swaps (Both Directions)
 // [INFO] Swap 1: 10,000,000 GNOT → GNS
-// [INFO] Swap 1 - In: 10000000 Out: -9426232
+// [INFO] Swap 1 - In: 10000000 Out: 9426232
 // [INFO] Swap 2: GNS → 5,000,000 GNOT
-// [INFO] Swap 2 - In: 4597249 Out: -5000000
+// [INFO] Swap 2 - In: 4597249 Out: 5000000
 // [BALANCE] After Swaps
 //   User - WGNOT: 945000000 GNS: 954828983
 //   Position - WUGNOT: 0 GNS: 0
