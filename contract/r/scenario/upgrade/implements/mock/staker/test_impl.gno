@@ -400,6 +400,25 @@ func (t *TestStaker) GetUnstakingFee() uint64 {
 	return t.instance.GetUnstakingFee()
 }
 
+func (t *TestStaker) HasUnstakedPosition(positionId uint64) bool {
+	return t.ExecuteFn(
+		"HasUnstakedPosition",
+		func(args ...any) any { return t.instance.HasUnstakedPosition(args[0].(uint64)) },
+		positionId,
+	).(bool)
+}
+
+func (t *TestStaker) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
+	return t.ExecuteFn(
+		"GetUnstakedPositionExitTime",
+		func(args ...any) any {
+			exitTime, _ := t.instance.GetUnstakedPositionExitTime(args[0].(uint64))
+			return exitTime
+		},
+		positionId,
+	).(int64), nil
+}
+
 func (t *TestStaker) IsStaked(positionId uint64) bool {
 	return t.instance.IsStaked(positionId)
 }

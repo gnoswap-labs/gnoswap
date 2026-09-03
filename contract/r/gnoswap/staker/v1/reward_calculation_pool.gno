@@ -70,6 +70,9 @@ func (self *Pools) IterateAll(fn func(key string, pool *sr.Pool) bool) {
 
 type PoolResolver struct {
 	*sr.Pool
+
+	// exit is set only when collecting an exit checkpoint; see exitPin.
+	exit *exitPin
 }
 
 func (self *PoolResolver) IncentivesResolver() *IncentivesResolver {
@@ -100,6 +103,10 @@ func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64
 // Get the latest tick in [0, currentTime] range.
 // Returns the tick.
 func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
+	if self.exit != nil && currentTime >= self.exit.time {
+		return self.exit.tick
+	}
+
 	self.HistoricalTick().ReverseIterate(0, currentTime, func(key int64, value any) bool {
 		res, ok := value.(int32)
 		if !ok {
@@ -131,6 +138,15 @@ func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *
 // only when their staked gross liquidity reaches zero, in the same call that
 // removes the last deposit referencing them.
 func (self *PoolResolver) GetOrNewTick(tickId int32) *sr.Tick {
+	if self.exit != nil {
+		if self.exit.lowerTick != nil && self.exit.lowerTick.Id() == tickId {
+			return self.exit.lowerTick
+		}
+		if self.exit.upperTick != nil && self.exit.upperTick.Id() == tickId {
+			return self.exit.upperTick
+		}
+	}
+
 	tick := self.Ticks().Get(tickId)
 	if tick == nil {
 		return sr.NewTick(tickId)
@@ -299,6 +315,14 @@ func (self *RewardState) reset() {
 func NewPoolResolver(pool *sr.Pool) *PoolResolver {
 	return &PoolResolver{
 		Pool: pool,
+	}
+}
+
+// newPoolResolverWithExit builds a resolver that reads the pool through an exit checkpoint.
+func newPoolResolverWithExit(pool *sr.Pool, exit *exitPin) *PoolResolver {
+	return &PoolResolver{
+		Pool: pool,
+		exit: exit,
 	}
 }
 

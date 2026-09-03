@@ -573,6 +573,24 @@ func (m *MockStaker) GetUnstakingFee() uint64 {
 	return res[0].(uint64)
 }
 
+func (m *MockStaker) HasUnstakedPosition(positionId uint64) bool {
+	res, ok := m.Response.Get("HasUnstakedPosition")
+	if !ok {
+		return false
+	}
+
+	return res[0].(bool)
+}
+
+func (m *MockStaker) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
+	res, ok := m.Response.Get("GetUnstakedPositionExitTime")
+	if !ok {
+		return 0, nil
+	}
+
+	return res[0].(int64), nil
+}
+
 func (m *MockStaker) IsStaked(lpTokenId uint64) bool {
 	res, ok := m.Response.Get("IsStaked")
 	if !ok {

@@ -28,6 +28,7 @@ const (
 	errInvalidAddress                = "[GNOSWAP-STAKER-021] invalid address"
 	errIsNotEndedIncentive           = "[GNOSWAP-STAKER-022] incentive is not ended yet"
 	errCannotCancelIncentive         = "[GNOSWAP-STAKER-023] cannot cancel incentive"
+	errUncollectedPosition           = "[GNOSWAP-STAKER-024] position has uncollected rewards"
 )
 
 func makeErrorWithDetails(message string, details string) error {

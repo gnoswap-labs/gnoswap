@@ -1716,6 +1716,7 @@ func windDown(cur realm) {
 	println("[EXPECTED] collected incentive penalty:", penalty)
 
 	staker.UnStakeToken(cross(cur), 1)
+	staker.CollectReward(cross(cur), 1)
 	testing.SkipHeights(1)
 	println("[EXPECTED] position 1 staked after unstake:", staker.IsStaked(1))
 	positionOwner, err := position.GetPositionOwner(1)

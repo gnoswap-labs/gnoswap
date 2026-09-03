@@ -67,16 +67,45 @@ func assertIsDepositor(s *stakerV1, caller address, positionId uint64) {
 // in, so a caller cannot ask a deposit to collect an incentive that can never pay it.
 func assertIsIncentiveOfDeposit(s *stakerV1, positionId uint64, incentiveId string) {
 	deposit := s.getDeposits().get(positionId)
+	assertIsIncentiveOfPool(s, deposit.TargetPoolPath(), positionId, incentiveId)
+}
+
+// assertIsIncentiveOfPool ensures the incentive targets the pool the position is staked in.
+func assertIsIncentiveOfPool(s *stakerV1, poolPath string, positionId uint64, incentiveId string) {
 	// get panics with errDataNotFound when the incentive does not exist.
 	incentive := s.getExternalIncentives().get(incentiveId)
 
-	if incentive.TargetPoolPath() != deposit.TargetPoolPath() {
+	if incentive.TargetPoolPath() != poolPath {
 		panic(makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf(
 				"incentiveId(%s) targets pool(%s), but positionId(%d) is staked in pool(%s)",
-				incentiveId, incentive.TargetPoolPath(), positionId, deposit.TargetPoolPath(),
+				incentiveId, incentive.TargetPoolPath(), positionId, poolPath,
 			),
+		))
+	}
+}
+
+// assertHasNoExitCheckpoint ensures the position carries no reward from a previous stake.
+// Collecting it here would smuggle an unbounded calculation into staking, and leaving it would
+// let the next unstake overwrite the checkpoint.
+func assertHasNoExitCheckpoint(s *stakerV1, positionId uint64) {
+	if s.HasUnstakedPosition(positionId) {
+		panic(makeErrorWithDetails(
+			errUncollectedPosition,
+			ufmt.Sprintf("positionId(%d) still owes rewards from its previous stake; collect it first", positionId),
+		))
+	}
+}
+
+// assertHasNoUnsettledIncentive ensures no unstaked position of the pool still owes an
+// incentive reward, which has not been drawn down from the incentive yet.
+func assertHasNoUnsettledIncentive(s *stakerV1, poolPath string) {
+	count := s.unsettledIncentiveCountOf(poolPath)
+	if count > 0 {
+		panic(makeErrorWithDetails(
+			errUncollectedPosition,
+			ufmt.Sprintf("pool(%s) has %d unstaked position(s) with uncollected incentive rewards", poolPath, count),
 		))
 	}
 }

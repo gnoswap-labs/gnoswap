@@ -500,6 +500,20 @@ func (t *TestStaker) GetUnstakingFee() uint64 {
 	return t.instance.GetUnstakingFee()
 }
 
+func (t *TestStaker) HasUnstakedPosition(positionId uint64) bool {
+	if !t.isActive("HasUnstakedPosition") {
+		panic("test implementation: HasUnstakedPosition not supported")
+	}
+	return t.instance.HasUnstakedPosition(positionId)
+}
+
+func (t *TestStaker) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
+	if !t.isActive("GetUnstakedPositionExitTime") {
+		panic("test implementation: GetUnstakedPositionExitTime not supported")
+	}
+	return t.instance.GetUnstakedPositionExitTime(positionId)
+}
+
 func (t *TestStaker) IsStaked(positionId uint64) bool {
 	if !t.isActive("IsStaked") {
 		panic("test implementation: IsStaked not supported")

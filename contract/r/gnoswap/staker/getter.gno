@@ -282,6 +282,16 @@ func GetUnstakingFee() uint64 {
 	return getImplementation().GetUnstakingFee()
 }
 
+// HasUnstakedPosition returns whether a position was unstaked with rewards left to collect.
+func HasUnstakedPosition(positionId uint64) bool {
+	return getImplementation().HasUnstakedPosition(positionId)
+}
+
+// GetUnstakedPositionExitTime returns the timestamp at which an unstaked position stopped accruing rewards.
+func GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
+	return getImplementation().GetUnstakedPositionExitTime(positionId)
+}
+
 // IsStaked returns whether a position is staked.
 func IsStaked(positionId uint64) bool {
 	return getImplementation().IsStaked(positionId)
