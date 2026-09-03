@@ -87,9 +87,9 @@ func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Propos
 	snapshotIndex := g.store.GetActiveProposalsBySnapshot()
 	deadlineIndex := g.store.GetActiveProposalsByDeadline()
 
-	snapshotIndex.Set(activeProposalSnapshotKey(proposal), proposal.ID())
+	snapshotIndex.Set(proposal.ActiveProposalSnapshotKey(), proposal.ID())
 	deadlineIndex.Set(
-		activeProposalDeadlineKey(proposal, proposal.Status().Schedule().VotingEndTime()),
+		proposal.ActiveProposalDeadlineKey(proposal.Status().Schedule().VotingEndTime()),
 		proposal.ID(),
 	)
 
@@ -113,9 +113,9 @@ func (g *governanceV1) removeActiveProposal(_ int, rlm realm, proposal *governan
 	snapshotIndex := g.store.GetActiveProposalsBySnapshot()
 	deadlineIndex := g.store.GetActiveProposalsByDeadline()
 
-	snapshotIndex.Remove(activeProposalSnapshotKey(proposal))
-	deadlineIndex.Remove(activeProposalDeadlineKey(proposal, proposal.Status().Schedule().VotingEndTime()))
-	deadlineIndex.Remove(activeProposalDeadlineKey(proposal, proposal.Status().Schedule().ExpiredTime()))
+	snapshotIndex.Remove(proposal.ActiveProposalSnapshotKey())
+	deadlineIndex.Remove(proposal.ActiveProposalDeadlineKey(proposal.Status().Schedule().VotingEndTime()))
+	deadlineIndex.Remove(proposal.ActiveProposalDeadlineKey(proposal.Status().Schedule().ExpiredTime()))
 
 	if err := g.store.SetActiveProposalsBySnapshot(0, rlm, snapshotIndex); err != nil {
 		return err
@@ -141,7 +141,7 @@ func (g *governanceV1) pruneInactiveProposals(_ int, rlm realm, current int64) e
 		}
 
 		deadline := proposal.Status().Schedule().VotingEndTime()
-		if key == activeProposalDeadlineKey(proposal, proposal.Status().Schedule().ExpiredTime()) {
+		if key == proposal.ActiveProposalDeadlineKey(proposal.Status().Schedule().ExpiredTime()) {
 			deadline = proposal.Status().Schedule().ExpiredTime()
 		}
 		if deadline > current {
@@ -152,7 +152,7 @@ func (g *governanceV1) pruneInactiveProposals(_ int, rlm realm, current int64) e
 		if NewProposalResolver(proposal).IsActive(current) {
 			proposalsToReschedule = append(proposalsToReschedule, proposal)
 		} else {
-			snapshotKeysToRemove = append(snapshotKeysToRemove, activeProposalSnapshotKey(proposal))
+			snapshotKeysToRemove = append(snapshotKeysToRemove, proposal.ActiveProposalSnapshotKey())
 		}
 		return false
 	})
@@ -165,7 +165,7 @@ func (g *governanceV1) pruneInactiveProposals(_ int, rlm realm, current int64) e
 	}
 	for _, proposal := range proposalsToReschedule {
 		deadlineIndex.Set(
-			activeProposalDeadlineKey(proposal, proposal.Status().Schedule().ExpiredTime()),
+			proposal.ActiveProposalDeadlineKey(proposal.Status().Schedule().ExpiredTime()),
 			proposal.ID(),
 		)
 	}
@@ -176,13 +176,6 @@ func (g *governanceV1) pruneInactiveProposals(_ int, rlm realm, current int64) e
 	return g.store.SetActiveProposalsByDeadline(0, rlm, deadlineIndex)
 }
 
-func activeProposalSnapshotKey(proposal *governance.Proposal) string {
-	return ufmt.Sprintf("%020d:%020d", proposal.SnapshotTime(), proposal.ID())
-}
-
-func activeProposalDeadlineKey(proposal *governance.Proposal, deadline int64) string {
-	return ufmt.Sprintf("%020d:%020d", deadline, proposal.ID())
-}
 
 // User proposals methods
 func (g *governanceV1) getUserProposals(user string) []*governance.Proposal {

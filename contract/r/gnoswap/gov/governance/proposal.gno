@@ -1,6 +1,10 @@
 package governance
 
-import bptree "gno.land/p/nt/bptree/v0"
+import (
+	"strconv"
+
+	bptree "gno.land/p/nt/bptree/v0"
+)
 
 // Proposal represents a governance proposal with all its associated data and state.
 // This is the core structure that tracks proposal lifecycle from creation to execution.
@@ -78,6 +82,27 @@ func (p *Proposal) ConfigVersion() int64 {
 // SnapshotTime returns the snapshot time for voting weight lookup.
 func (p *Proposal) SnapshotTime() int64 {
 	return p.snapshotTime
+}
+
+const activeProposalIndexKeyPadding = "00000000000000000000"
+
+// ActiveProposalSnapshotKey returns this proposal's chronological snapshot index key.
+func (p *Proposal) ActiveProposalSnapshotKey() string {
+	return activeProposalIndexKey(p.snapshotTime, p.id)
+}
+
+// ActiveProposalDeadlineKey returns this proposal's chronological lifecycle deadline index key.
+func (p *Proposal) ActiveProposalDeadlineKey(deadline int64) string {
+	return activeProposalIndexKey(deadline, p.id)
+}
+
+func activeProposalIndexKey(timestamp int64, proposalID int64) string {
+	timestampKey := strconv.FormatInt(timestamp, 10)
+	proposalIDKey := strconv.FormatInt(proposalID, 10)
+
+	return activeProposalIndexKeyPadding[:20-len(timestampKey)] + timestampKey +
+		":" +
+		activeProposalIndexKeyPadding[:20-len(proposalIDKey)] + proposalIDKey
 }
 
 // Data returns the proposal data.
