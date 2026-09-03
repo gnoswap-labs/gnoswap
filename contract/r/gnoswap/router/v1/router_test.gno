@@ -230,7 +230,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(cur realm, t *testing.T)
 			quoteArr:         "100",
 			amountOutMin:     "85000000",
 			expectedAmount0:  "100000000",
-			expectedAmount1:  "-98817367",
+			expectedAmount1:  "98817367",
 			expectPanic:      true,
 		},
 	}
@@ -429,7 +429,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(cur realm, t *testing.T)
 			quoteArr:         "100",
 			amountOutMin:     "20000000",
 			expectedAmount0:  "50000000",
-			expectedAmount1:  "-49776285",
+			expectedAmount1:  "49776285",
 			expectPanic:      true,
 		},
 	}
@@ -626,7 +626,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(cur realm, t *testing
 			quoteArr:         "100",
 			amountOutMin:     "850000",
 			expectedAmount0:  "10000000",
-			expectedAmount1:  "-9875422",
+			expectedAmount1:  "9875422",
 			expectPanic:      true,
 		},
 	}

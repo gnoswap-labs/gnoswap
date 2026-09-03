@@ -84,8 +84,8 @@ func main(cur realm) {
 	pool.IncreaseObservationCardinalityNext(cross(cur), barPath, fooPath, fee500, 100)
 
 	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
-	observationState, _ := pool.GetObservationState(pool.GetPoolPath(barPath, fooPath, fee500))
-	println("[INFO] Observation cardinality limit:", observationState.CardinalityNext())
+	slot0 := thisPool.Slot0()
+	println("[INFO] Observation cardinality limit:", slot0.ObservationCardinalityNext())
 	println()
 
 	// Add liquidity
@@ -176,15 +176,15 @@ func main(cur realm) {
 	println("[SCENARIO] 9. TWAP Queries at Different Intervals")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
 
-	twapTick1h, twapLiquidity1h, _ := pool.GetTWAP(poolPath, quarterSeconds)
+	twapTick1h, twapLiquidity1h, _ := pool.OracleConsult(poolPath, quarterSeconds)
 	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h)
 	println()
 
-	twapTick2h, twapLiquidity2h, _ := pool.GetTWAP(poolPath, halfSeconds)
+	twapTick2h, twapLiquidity2h, _ := pool.OracleConsult(poolPath, halfSeconds)
 	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago) - tick: %d, liquidity: %s\n", twapTick2h, twapLiquidity2h)
 	println()
 
-	twapTick4h, twapLiquidity4h, _ := pool.GetTWAP(poolPath, totalSeconds)
+	twapTick4h, twapLiquidity4h, _ := pool.OracleConsult(poolPath, totalSeconds)
 	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago) - tick: %d, liquidity: %s\n", twapTick4h, twapLiquidity4h)
 	println()
 

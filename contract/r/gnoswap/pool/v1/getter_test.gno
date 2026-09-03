@@ -299,6 +299,54 @@ func TestGetters(cur realm, t *testing.T) {
 	})
 }
 
+func TestGetObservationAtReturnsDefaultForUninitializedSlot(cur realm, t *testing.T) {
+	testInitData(cur, t)
+
+	observation, err := getMockInstance().GetObservationAt("token0:token1:3000", 2)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), observation.BlockTimestamp())
+	uassert.Equal(t, int64(0), observation.TickCumulative())
+	uassert.Equal(t, "0", observation.SecondsPerLiquidityCumulativeX128())
+	uassert.Equal(t, false, observation.Initialized())
+
+	_, err = getMockInstance().GetObservationAt("token0:token1:3000", maxObservationCardinality)
+	uassert.ErrorContains(t, err, "out of range")
+}
+
+func TestObserve(cur realm, t *testing.T) {
+	testInitData(cur, t)
+
+	pool := getMockInstance().mustGetPool("token0:token1:3000")
+	slot0Before := pool.Slot0()
+	observationBefore, err := observationAt(pool.ObservationState(), slot0Before.ObservationIndex())
+	uassert.NoError(t, err)
+	observationTimestampBefore := observationBefore.BlockTimestamp()
+	observationTickCumulativeBefore := observationBefore.TickCumulative()
+	observationSecondsPerLiquidityBefore := observationBefore.SecondsPerLiquidityCumulativeX128()
+
+	tickCumulatives, secondsPerLiquidityCumulativeX128s, err := getMockInstance().Observe(
+		"token0:token1:3000",
+		[]uint32{0, 0},
+	)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 2, len(tickCumulatives))
+	uassert.Equal(t, 2, len(secondsPerLiquidityCumulativeX128s))
+	uassert.Equal(t, tickCumulatives[0], tickCumulatives[1])
+	uassert.Equal(t, secondsPerLiquidityCumulativeX128s[0], secondsPerLiquidityCumulativeX128s[1])
+
+	slot0After := pool.Slot0()
+	observationAfter, err := observationAt(pool.ObservationState(), slot0After.ObservationIndex())
+	uassert.NoError(t, err)
+	uassert.Equal(t, slot0Before.ObservationIndex(), slot0After.ObservationIndex())
+	uassert.Equal(t, slot0Before.ObservationCardinality(), slot0After.ObservationCardinality())
+	uassert.Equal(t, observationTimestampBefore, observationAfter.BlockTimestamp())
+	uassert.Equal(t, observationTickCumulativeBefore, observationAfter.TickCumulative())
+	uassert.Equal(t, observationSecondsPerLiquidityBefore, observationAfter.SecondsPerLiquidityCumulativeX128())
+
+	_, _, err = getMockInstance().Observe("missing:pool:3000", []uint32{0})
+	uassert.Error(t, err)
+}
+
 func TestPositionGetters(cur realm, t *testing.T) {
 	tests := []struct {
 		name                             string

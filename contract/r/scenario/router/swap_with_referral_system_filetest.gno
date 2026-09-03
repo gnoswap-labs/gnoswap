@@ -274,7 +274,7 @@ func swapWithReferrer(cur realm, userAddr address, referrer string) {
 // [INFO] User1 referral before swap: ''
 // [INFO] Swapping with referrer: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
 // [EXPECTED] inputAmount: 1000000
-// [EXPECTED] outputAmount: -995078
+// [EXPECTED] outputAmount: 995078
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNS balance changed: 995078
 // [EXPECTED] User1 referral after first swap: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
@@ -282,7 +282,7 @@ func swapWithReferrer(cur realm, userAddr address, referrer string) {
 // [SCENARIO] 4. Same User Swap with referral contract address (should delete existing referrer)
 // [INFO] Swapping with referrer: 'g1u0p5ld4aq6sk5l26ys27wk8nftj080l3era4wn'
 // [EXPECTED] inputAmount: 1000000
-// [EXPECTED] outputAmount: -989266
+// [EXPECTED] outputAmount: 989266
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNS balance changed: 989266
 // [EXPECTED] User1 referral after swap with empty referrer: ''
@@ -290,13 +290,13 @@ func swapWithReferrer(cur realm, userAddr address, referrer string) {
 // [SCENARIO] 5. Register Referrer Again and Swap with Different Referrer
 // [INFO] Swapping with referrer: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
 // [EXPECTED] inputAmount: 1000000
-// [EXPECTED] outputAmount: -983505
+// [EXPECTED] outputAmount: 983505
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNS balance changed: 983505
 // [INFO] User1 referral after re-registration: ''
 // [INFO] Swapping with referrer: 'g1wfjkvetjwfjhyvjlta047h6lta047h6l2tdl74'
 // [EXPECTED] inputAmount: 1000000
-// [EXPECTED] outputAmount: -977795
+// [EXPECTED] outputAmount: 977795
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNS balance changed: 977795
 // [EXPECTED] User1 referral after swap with different referrer: ''
@@ -306,7 +306,7 @@ func swapWithReferrer(cur realm, userAddr address, referrer string) {
 // [INFO] User2 referral before swap: ''
 // [INFO] Swapping with referrer: 'g1wfjkvetjwfjhyv6lta047h6lta047h6ltsn9xk'
 // [EXPECTED] inputAmount: 1000000
-// [EXPECTED] outputAmount: -972133
+// [EXPECTED] outputAmount: 972133
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNS balance changed: 972133
 // [EXPECTED] User2 referral after swap: 'g1wfjkvetjwfjhyv6lta047h6lta047h6ltsn9xk'
@@ -316,7 +316,7 @@ func swapWithReferrer(cur realm, userAddr address, referrer string) {
 // [INFO] User1 referral before re-registration: ''
 // [INFO] Swapping with referrer: 'g1wfjkvetjwfjhydzlta047h6lta047h6lk48j6m'
 // [EXPECTED] inputAmount: 1000000
-// [EXPECTED] outputAmount: -966521
+// [EXPECTED] outputAmount: 966521
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNS balance changed: 966521
 // [EXPECTED] User1 referral after 24h and re-registration: 'g1wfjkvetjwfjhydzlta047h6lta047h6lk48j6m'

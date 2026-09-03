@@ -270,7 +270,7 @@ func exactInSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -986743
+// [EXPECTED] outputTokenAmount: 986743
 // [EXPECTED] WUGNOT balance changed: 986743
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
@@ -285,7 +285,7 @@ func exactInSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -975329
+// [EXPECTED] outputTokenAmount: 975329
 // [EXPECTED] WUGNOT balance changed: 975329
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
@@ -300,7 +300,7 @@ func exactInSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -998223
+// [EXPECTED] outputTokenAmount: 998223
 // [EXPECTED] WUGNOT balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 998223
@@ -315,7 +315,7 @@ func exactInSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -1004036
+// [EXPECTED] outputTokenAmount: 1004036
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0

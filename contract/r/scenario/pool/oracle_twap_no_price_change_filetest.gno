@@ -3,8 +3,9 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -95,7 +96,7 @@ func main(cur realm) {
 	// Get initial TWAP (should be current tick since no time has passed)
 	println("[SCENARIO] 3. Initial TWAP Query (0 seconds ago)")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
-	twapTick, twapLiquidity, _ := pool.GetTWAP(poolPath, 0)
+	twapTick, twapLiquidity, _ := pool.OracleConsult(poolPath, 0)
 	ufmt.Printf("[EXPECTED] TWAP at 0 seconds ago - tick: %d, liquidity: %s\n", twapTick, twapLiquidity)
 	println()
 
@@ -108,15 +109,15 @@ func main(cur realm) {
 	// Query TWAP for different periods
 	println("[SCENARIO] 5. TWAP Queries After Time Passed")
 
-	twapTick1h, twapLiquidity1h, _ := pool.GetTWAP(poolPath, hourSeconds)
+	twapTick1h, twapLiquidity1h, _ := pool.OracleConsult(poolPath, hourSeconds)
 	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h)
 	println()
 
-	twapTick2h, twapLiquidity2h, _ := pool.GetTWAP(poolPath, halfSeconds)
+	twapTick2h, twapLiquidity2h, _ := pool.OracleConsult(poolPath, halfSeconds)
 	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago) - tick: %d, liquidity: %s\n", twapTick2h, twapLiquidity2h)
 	println()
 
-	twapTick4h, twapLiquidity4h, _ := pool.GetTWAP(poolPath, totalSeconds)
+	twapTick4h, twapLiquidity4h, _ := pool.OracleConsult(poolPath, totalSeconds)
 	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago) - tick: %d, liquidity: %s\n", twapTick4h, twapLiquidity4h)
 	println()
 

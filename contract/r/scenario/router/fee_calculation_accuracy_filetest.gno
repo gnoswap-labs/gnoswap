@@ -271,36 +271,36 @@ func testExactOutFeeCalculation(cur realm) {
 // [SCENARIO] 1. Fee Calculation for Different Tiers
 // [INFO] Testing 0.01% fee tier
 // [EXPECTED] Input: 1000000000
-// [EXPECTED] Output: -994487688
+// [EXPECTED] Output: 994487688
 // [EXPECTED] Fee should be ~100,000 units (0.01% of input)
 // [INFO] Testing 0.05% fee tier
 // [EXPECTED] Input: 1000000000
-// [EXPECTED] Output: -994091411
+// [EXPECTED] Output: 994091411
 // [EXPECTED] Fee should be ~500,000 units (0.05% of input)
 // [INFO] Testing 0.30% fee tier
 // [EXPECTED] Input: 1000000000
-// [EXPECTED] Output: -991626613
+// [EXPECTED] Output: 991626613
 // [EXPECTED] Fee should be ~3,000,000 units (0.30% of input)
 // [INFO] Testing 1.00% fee tier
 // [EXPECTED] Input: 1000000000
-// [EXPECTED] Output: -984679480
+// [EXPECTED] Output: 984679480
 // [EXPECTED] Fee should be ~10,000,000 units (1.00% of input)
 //
 // [SCENARIO] 2. Fee Accumulation Over Multiple Swaps
 // [INFO] Testing fee accumulation over multiple swaps
-// [INFO] SWAP 1 - In: 100000000, Out: -98980966
-// [INFO] SWAP 2 - In: 100000000, Out: -98903481
-// [INFO] SWAP 3 - In: 100000000, Out: -98826089
+// [INFO] SWAP 1 - In: 100000000, Out: 98980966
+// [INFO] SWAP 2 - In: 100000000, Out: 98903481
+// [INFO] SWAP 3 - In: 100000000, Out: 98826089
 // [EXPECTED] Each swap should deduct 0.05% fee consistently
 //
 // [SCENARIO] 3. Fee Precision for Small Amounts
 // [INFO] Testing fee precision for small amounts
 // [EXPECTED] Small amount in: 1337
-// [EXPECTED] Small amount out: -1321
+// [EXPECTED] Small amount out: 1321
 // [EXPECTED] Fee calculation should handle rounding correctly
 //
 // [SCENARIO] 4. Fee Calculation in Exact Out Swaps
 // [INFO] Testing fee calculation in exact out swaps
 // [EXPECTED] Input required: 995739810
-// [EXPECTED] Output received: -1000000000
+// [EXPECTED] Output received: 1000000000
 // [EXPECTED] Input should be ~1,000,500,250 (accounting for 0.05% fee)

@@ -303,7 +303,7 @@ func exactOutSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 10000 (gno.land/r/gnoland/wugnot.wugnot)
-// [EXPECTED] outputTokenAmount: -9975 (gno.land/r/gnoland/wugnot.wugnot)
+// [EXPECTED] outputTokenAmount: 9975 (gno.land/r/gnoland/wugnot.wugnot)
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -25
@@ -317,7 +317,7 @@ func exactOutSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000
 // [EXPECTED] inputTokenAmount: 10029 (gno.land/r/gnoland/wugnot.wugnot)
-// [EXPECTED] outputTokenAmount: -10001 (gno.land/r/gnoland/wugnot.wugnot)
+// [EXPECTED] outputTokenAmount: 10001 (gno.land/r/gnoland/wugnot.wugnot)
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -28
@@ -331,7 +331,7 @@ func exactOutSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 10000 (gno.land/r/gnoland/wugnot.wugnot)
-// [EXPECTED] outputTokenAmount: -9975 (gno.land/r/gnoland/wugnot.wugnot)
+// [EXPECTED] outputTokenAmount: 9975 (gno.land/r/gnoland/wugnot.wugnot)
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -25
@@ -345,7 +345,7 @@ func exactOutSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000
 // [EXPECTED] inputTokenAmount: 10029 (gno.land/r/gnoland/wugnot.wugnot)
-// [EXPECTED] outputTokenAmount: -10001 (gno.land/r/gnoland/wugnot.wugnot)
+// [EXPECTED] outputTokenAmount: 10001 (gno.land/r/gnoland/wugnot.wugnot)
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -28
@@ -359,7 +359,7 @@ func exactOutSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 10000 (gno.land/r/gnoland/wugnot.wugnot)
-// [EXPECTED] outputTokenAmount: -9975 (gno.land/r/gnoland/wugnot.wugnot)
+// [EXPECTED] outputTokenAmount: 9975 (gno.land/r/gnoland/wugnot.wugnot)
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -25
@@ -373,7 +373,7 @@ func exactOutSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] maxAmountIn: 100000
 // [EXPECTED] inputTokenAmount: 10029 (gno.land/r/gnoland/wugnot.wugnot)
-// [EXPECTED] outputTokenAmount: -10001 (gno.land/r/gnoland/wugnot.wugnot)
+// [EXPECTED] outputTokenAmount: 10001 (gno.land/r/gnoland/wugnot.wugnot)
 // [EXPECTED] GNS balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] WUGNOT balance changed: -28

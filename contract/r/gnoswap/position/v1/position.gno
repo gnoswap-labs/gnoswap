@@ -98,7 +98,7 @@ func (p *positionV1) Mint(
 	if err != nil {
 		panic(err)
 	}
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(processedInput.poolPath)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := currentPoolObservation(processedInput.poolPath)
 	if err != nil {
 		panic(err)
 	}
@@ -211,7 +211,7 @@ func (p *positionV1) IncreaseLiquidity(
 	if err != nil {
 		panic(err)
 	}
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolPath)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := currentPoolObservation(poolPath)
 	if err != nil {
 		panic(err)
 	}
@@ -307,7 +307,7 @@ func (p *positionV1) DecreaseLiquidity(
 	if err != nil {
 		panic(err)
 	}
-	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := pl.GetLastObservation(poolPath)
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := currentPoolObservation(poolPath)
 	if err != nil {
 		panic(err)
 	}

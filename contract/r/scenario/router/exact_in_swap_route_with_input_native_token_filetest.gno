@@ -192,6 +192,6 @@ func exactInSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount(GNS): 1000
-// [EXPECTED] outputTokenAmount(GNOT): -997
+// [EXPECTED] outputTokenAmount(GNOT): 997
 // [EXPECTED] GNS balance changed: 997
 // [EXPECTED] WUGNOT balance changed: -1000

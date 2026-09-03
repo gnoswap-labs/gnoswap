@@ -250,7 +250,7 @@ func setSwapFeeV2Valid(cur realm) {
 //
 // [SCENARIO] 3. v1: set swap fee and perform swap (RMW pending protocol fees)
 // [EXPECTED] v1 swap fee set to: 20
-// [EXPECTED] v1 swap in=1000000 out=-996959
+// [EXPECTED] v1 swap in=1000000 out=996959
 //
 // [SCENARIO] 4. Read v1-created router data via getters
 // [EXPECTED] router impl=gno.land/r/gnoswap/router/v1 swapFee=20
@@ -262,16 +262,16 @@ func setSwapFeeV2Valid(cur realm) {
 // [EXPECTED] router impl=gno.land/r/gnoswap/router/v2_valid swapFee=20
 //
 // [SCENARIO] 7. ExactInSwapRoute through v2_valid (RMW pendingProtocolFees + pool)
-// [EXPECTED] v2_valid ExactInSwapRoute in=1000000 out=-995877
+// [EXPECTED] v2_valid ExactInSwapRoute in=1000000 out=995877
 //
 // [SCENARIO] 8. ExactInSingleSwapRoute through v2_valid
-// [EXPECTED] v2_valid ExactInSingleSwapRoute in=1000000 out=-994795
+// [EXPECTED] v2_valid ExactInSingleSwapRoute in=1000000 out=994795
 //
 // [SCENARIO] 9. ExactOutSwapRoute through v2_valid
-// [EXPECTED] v2_valid ExactOutSwapRoute in=1006328 out=-1000000
+// [EXPECTED] v2_valid ExactOutSwapRoute in=1006328 out=1000000
 //
 // [SCENARIO] 10. ExactOutSingleSwapRoute through v2_valid
-// [EXPECTED] v2_valid ExactOutSingleSwapRoute in=1007428 out=-1000000
+// [EXPECTED] v2_valid ExactOutSingleSwapRoute in=1007428 out=1000000
 //
 // [SCENARIO] 11. Mutate v1 data through v2_valid (SetSwapFee scalar RMW)
 // [EXPECTED] v2_valid swap fee set to: 35

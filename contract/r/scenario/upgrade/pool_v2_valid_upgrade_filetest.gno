@@ -291,7 +291,7 @@ func printPoolData(cur realm) {
 // [SCENARIO] 2. Create v1 data: pool + position + swap
 // [EXPECTED] Created pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] v1 minted position id=1 liquidity=1066918731
-// [EXPECTED] v1 swap in=1000000 out=-997067
+// [EXPECTED] v1 swap in=1000000 out=997067
 //
 // [SCENARIO] 3. Read v1-created data via getters
 // [EXPECTED] pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500 tick=18 liquidity=1066918731 positions=1
@@ -301,7 +301,7 @@ func printPoolData(cur realm) {
 //
 // [SCENARIO] 5. Mutate v1 data through v2_valid (taint-prone RMW)
 // [EXPECTED] v2_valid minted position id=2 liquidity=627605406
-// [EXPECTED] v2_valid swap in=1000000 out=-995547
+// [EXPECTED] v2_valid swap in=1000000 out=995547
 // [EXPECTED] v2_valid increased observation cardinality
 //
 // [SCENARIO] 6. CreatePool through v2_valid (pools BPTree RMW)
@@ -312,7 +312,7 @@ func printPoolData(cur realm) {
 //
 // [SCENARIO] 8. SetFeeProtocol + CollectProtocol through v2_valid
 // [EXPECTED] v2_valid set fee protocol, slot0FeeProtocol=102
-// [EXPECTED] v2_valid swap in=1000000 out=-994338
+// [EXPECTED] v2_valid swap in=1000000 out=994338
 // [EXPECTED] v2_valid collected protocol fees collected0=0 collected1=83 feesBefore=(0,83) feesAfter=(0,0)
 //
 // [SCENARIO] 9. Scalar fee setters through v2_valid

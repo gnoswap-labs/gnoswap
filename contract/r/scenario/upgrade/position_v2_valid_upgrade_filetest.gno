@@ -293,7 +293,7 @@ func printNewPositionData(cur realm) {
 // [SCENARIO] 2. Create v1 data: pool + position + swap
 // [EXPECTED] Created pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] v1 minted position id=1 liquidity=1066918731
-// [EXPECTED] v1 swap in=1000000 out=-997067
+// [EXPECTED] v1 swap in=1000000 out=997067
 //
 // [SCENARIO] 3. Read v1-created position data via getters
 // [EXPECTED] position id=1 liquidity=1066918731 tickLower=-960 tickUpper=960 pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500

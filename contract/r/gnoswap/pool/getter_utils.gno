@@ -10,6 +10,36 @@ func cloneInt32Slice(src []int32) []int32 {
 	return cloned
 }
 
+func cloneInt64Slice(src []int64) []int64 {
+	if src == nil {
+		return nil
+	}
+
+	cloned := make([]int64, len(src))
+	copy(cloned, src)
+	return cloned
+}
+
+func cloneStringSlice(src []string) []string {
+	if src == nil {
+		return nil
+	}
+
+	cloned := make([]string, len(src))
+	copy(cloned, src)
+	return cloned
+}
+
+func cloneUint32Slice(src []uint32) []uint32 {
+	if src == nil {
+		return nil
+	}
+
+	cloned := make([]uint32, len(src))
+	copy(cloned, src)
+	return cloned
+}
+
 func cloneFeeAmountTickSpacings(src map[uint32]int32) map[uint32]int32 {
 	if src == nil {
 		return nil

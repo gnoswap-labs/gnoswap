@@ -89,7 +89,7 @@ func main(cur realm) {
 	token2After := foo.BalanceOf(adminAddr)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 5")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -1")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 1")
 
 	println("[EXPECTED] admin bar balance change:", token0After, "expected:", token0Before-5)
 	println("[EXPECTED] admin foo balance change:", token2After, "expected:", token2Before+1)
@@ -108,7 +108,7 @@ func main(cur realm) {
 // [INFO] Minting position in bar-baz pool
 // [INFO] Minting position in baz-foo pool
 // [EXPECTED] amountIn: 5 expected: 5
-// [EXPECTED] amountOut: -1 expected: -1
+// [EXPECTED] amountOut: 1 expected: 1
 // [EXPECTED] admin bar balance change: 99999998999995 expected: 99999998999995
 // [EXPECTED] admin foo balance change: 99999999000001 expected: 99999999000001
 // [INFO] Scenario completed

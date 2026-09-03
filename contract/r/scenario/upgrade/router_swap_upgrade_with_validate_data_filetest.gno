@@ -409,7 +409,7 @@ func upgradeRouterContractToV2Mock(cur realm) {
 // [SCENARIO] 4. Perform swap to generate fees
 // [INFO] Exact-In Swap Route
 // [EXPECTED] Input token amount: 1000000
-// [EXPECTED] Output token amount: -997067
+// [EXPECTED] Output token amount: 997067
 //
 // [SCENARIO] 5. Check pool data by v1 version
 // [INFO] Check pool data
@@ -445,7 +445,7 @@ func upgradeRouterContractToV2Mock(cur realm) {
 // [INFO] Exact-In Swap Route
 // [INFO] ExactInSwapRoute called by v2_mock contract
 // [EXPECTED] Input token amount: 1000000
-// [EXPECTED] Output token amount: -995202
+// [EXPECTED] Output token amount: 995202
 //
 // [SCENARIO] 8. Check pool data by v2_mock version
 // [INFO] Check pool data

@@ -125,23 +125,23 @@ func assertTickInRange(path string, lower, upper int32, terminal string) {
 // [SUCCESS] Minted the only position in range [-50, 50]
 // [STEP 2] Move the pool to the lower terminal tick
 // [ACTION] Execute bar -> baz ExactIn swap with input=100000
-// [RESULT] Forward swap: in=10028 out=-9985
+// [RESULT] Forward swap: in=10028 out=9985
 // [EXPECTED] Tick after lower terminal swap: -887271
 //
 // [STEP 3] Recover from the lower terminal tick
 // [ACTION] Execute baz -> bar ExactIn swap with input=1000
-// [RESULT] Recovery swap: in=1000 out=-1002
+// [RESULT] Recovery swap: in=1000 out=1002
 // [EXPECTED] Tick after lower recovery swap: -45
 // [SUCCESS] Returned to the active [-50, 50] range
 //
 // [STEP 4] Move the pool to the upper terminal tick
 // [ACTION] Execute baz -> bar ExactIn swap with input=100000
-// [RESULT] Forward swap: in=19030 out=-18993
+// [RESULT] Forward swap: in=19030 out=18993
 // [EXPECTED] Tick after upper terminal swap: 887270
 //
 // [STEP 5] Recover from the upper terminal tick
 // [ACTION] Execute bar -> baz ExactIn swap with input=1000
-// [RESULT] Recovery swap: in=1000 out=-1002
+// [RESULT] Recovery swap: in=1000 out=1002
 // [EXPECTED] Tick after upper recovery swap: 44
 // [SUCCESS] Returned to the active [-50, 50] range
 // [RESULT] Router returned from both terminal ticks to active liquidity

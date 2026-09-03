@@ -360,7 +360,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 4. Exact In Swap (FOO -> BAR)
 // [INFO] Swapping 10000000000 FOO -> BAR
-// [INFO] Exact In - In: 10000000000 Out: -9252300294
+// [INFO] Exact In - In: 10000000000 Out: 9252300294
 // [INFO] After Exact In Swap
 // [EXPECTED] User BAR balance: 59252300294
 // [EXPECTED] User FOO balance: 40000000000
@@ -381,7 +381,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 5. Exact Out Swap (BAR -> FOO)
 // [INFO] Swapping BAR -> 5000000000 FOO
-// [INFO] Exact Out - In: 4469297080 Out: -5000000000
+// [INFO] Exact Out - In: 4469297080 Out: 5000000000
 // [INFO] After Exact Out Swap
 // [EXPECTED] User BAR balance: 54783003214
 // [EXPECTED] User FOO balance: 45000000000

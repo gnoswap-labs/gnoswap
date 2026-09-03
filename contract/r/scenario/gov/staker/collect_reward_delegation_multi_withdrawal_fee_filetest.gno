@@ -216,7 +216,7 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [SCENARIO] 3. Swap to generate fees
 // [EXPECTED] pool current tick: -914
 // [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 1000000000
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -951067458
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): 951067458
 //
 // [SCENARIO] 4. First withdrawal fee collection (before alice delegation)
 // [INFO] collected position fee for position 1
@@ -227,7 +227,7 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [SCENARIO] 6. Second swap to generate more fees
 // [EXPECTED] pool current tick: -1000
 // [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 52325114
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -47432542
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): 47432542
 //
 // [SCENARIO] 7. Second withdrawal fee collection (after alice delegation)
 // [INFO] collected position fee for position 1

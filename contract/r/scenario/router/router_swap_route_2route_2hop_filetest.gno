@@ -136,7 +136,7 @@ func testSwapRouteBarQuxExactIn(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 1000")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -7318")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 7318")
 	println()
 }
 
@@ -158,7 +158,7 @@ func testSwapRouteBarQuxExactOut(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 140")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -1001")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 1001")
 	println()
 }
 
@@ -180,7 +180,7 @@ func testSwapRouteQuxBarExactIn(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 1000")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -135")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 135")
 	println()
 }
 
@@ -206,7 +206,7 @@ func testwapRouteQuxBarExactOut(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 7373")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -1000")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 1000")
 	println()
 }
 
@@ -231,22 +231,22 @@ func testwapRouteQuxBarExactOut(cur realm) {
 // [INFO] Approving tokens for swap
 // [INFO] Executing ExactIn swap with 2 routes (1000 bar → baz → qux)
 // [EXPECTED] amountIn: 1000 expected: 1000
-// [EXPECTED] amountOut: -7318 expected: -7318
+// [EXPECTED] amountOut: 7318 expected: 7318
 //
 // [SCENARIO] Given: Swap route bar to qux exact out preparation
 // [INFO] Executing ExactOut swap with 2 routes (bar → baz → 1000 qux)
 // [EXPECTED] amountIn: 140 expected: 140
-// [EXPECTED] amountOut: -1001 expected: -1001
+// [EXPECTED] amountOut: 1001 expected: 1001
 //
 // [SCENARIO] Given: Swap route qux to bar exact in preparation
 // [INFO] Executing ExactIn swap with 2 routes (1000 qux → baz → bar)
 // [EXPECTED] amountIn: 1000 expected: 1000
-// [EXPECTED] amountOut: -135 expected: -135
+// [EXPECTED] amountOut: 135 expected: 135
 //
 // [SCENARIO] Given: Swap route qux to bar exact out preparation
 // [INFO] Approving tokens for swap
 // [INFO] Executing ExactOut swap with 2 routes (qux → baz → 1000 bar)
 // [EXPECTED] amountIn: 7373 expected: 7373
-// [EXPECTED] amountOut: -1000 expected: -1000
+// [EXPECTED] amountOut: 1000 expected: 1000
 //
 // [INFO] Scenario completed

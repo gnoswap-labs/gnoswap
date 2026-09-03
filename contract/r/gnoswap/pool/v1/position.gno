@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"errors"
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
@@ -196,12 +197,27 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 		// case 2: Current price is within the position range
 		liquidityBefore := p.Liquidity()
 		currentTime := time.Now().Unix()
-
 		// Update oracle BEFORE liquidity changes
-		err := writeObservationByPool(p, currentTime, tick, liquidityBefore)
+		observationState := p.ObservationState()
+		if observationState == nil {
+			return pl.NewDefaultPositionInfo(), zero, zero, errors.New("observation state not initialized")
+		}
+		slot0 := p.Slot0()
+		observationIndex, observationCardinality, err := writeObservation(
+			observationState,
+			slot0.ObservationIndex(),
+			currentTime,
+			tick,
+			liquidityBefore,
+			slot0.ObservationCardinality(),
+			slot0.ObservationCardinalityNext(),
+		)
 		if err != nil {
 			return pl.NewDefaultPositionInfo(), zero, zero, err
 		}
+		slot0.SetObservationIndex(observationIndex)
+		slot0.SetObservationCardinality(observationCardinality)
+		p.SetSlot0(slot0)
 
 		// token0 used from current price to upper tick
 		amount0 = calculateToken0Amount(sqrtPriceX96, sqrtRatioUpper, liqDelta)
@@ -268,14 +284,15 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 	if !liquidityDelta.IsZero() {
 		blockTimestamp := time.Now().Unix()
 		observationState := p.ObservationState()
+		slot0 := p.Slot0()
 		tickCumulative, secondsPerLiquidityStr, err := observeSingle(
 			observationState,
 			blockTimestamp,
 			0,
-			tick,
-			observationState.Index(),
+			slot0.Tick(),
+			slot0.ObservationIndex(),
 			p.Liquidity(),
-			observationState.Cardinality(),
+			slot0.ObservationCardinality(),
 		)
 		if err != nil {
 			return pl.NewDefaultPositionInfo(), err

@@ -29,27 +29,23 @@ func TestOracleInitialize(cur realm, t *testing.T) {
 }
 
 func testInitializeIndexIsZero(t *testing.T) {
-	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
-	uassert.Equal(t, uint16(0), os.Index())
+	slot0 := testObservationSlot0(0, 1, 1)
+	uassert.Equal(t, uint16(0), slot0.ObservationIndex())
 }
 
 func testInitializeCardinalityIsOne(t *testing.T) {
-	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
-	uassert.Equal(t, uint16(1), os.Cardinality())
+	slot0 := testObservationSlot0(0, 1, 1)
+	uassert.Equal(t, uint16(1), slot0.ObservationCardinality())
 }
 
 func testInitializeCardinalityNextIsOne(t *testing.T) {
-	currentTime := time.Now().Unix()
-	os := pl.NewObservationState(currentTime)
-	uassert.Equal(t, uint16(1), os.CardinalityNext())
+	slot0 := testObservationSlot0(0, 1, 1)
+	uassert.Equal(t, uint16(1), slot0.ObservationCardinalityNext())
 }
 
 func testInitializeSetsFirstSlot(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
 	obs0 := os.Observations()[0]
 	uassert.True(t, obs0.Initialized())
 	uassert.Equal(t, currentTime, obs0.BlockTimestamp())
@@ -78,20 +74,19 @@ func TestOracleGrow(cur realm, t *testing.T) {
 func testGrowIncreasesCardinalityNext(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 5)
 	uassert.NoError(t, err)
-	os.SetCardinalityNext(5)
+	slot0.SetObservationCardinalityNext(5)
 
-	uassert.Equal(t, uint16(0), os.Index())
-	uassert.Equal(t, uint16(1), os.Cardinality())
-	uassert.Equal(t, uint16(5), os.CardinalityNext())
+	uassert.Equal(t, uint16(0), slot0.ObservationIndex())
+	uassert.Equal(t, uint16(1), slot0.ObservationCardinality())
+	uassert.Equal(t, uint16(5), slot0.ObservationCardinalityNext())
 }
 
 func testGrowDoesNotTouchFirstSlot(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
 	_, err := grow(os, 1, 5)
 	uassert.NoError(t, err)
 
@@ -105,7 +100,6 @@ func testGrowDoesNotTouchFirstSlot(t *testing.T) {
 func testGrowNoOpIfAlreadyLarge(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
 	newCard, err := grow(os, 1, 5)
 	uassert.NoError(t, err)
 	uassert.Equal(t, uint16(5), newCard)
@@ -118,7 +112,6 @@ func testGrowNoOpIfAlreadyLarge(t *testing.T) {
 func testGrowAddsDataToSlots(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
 	_, err := grow(os, 1, 5)
 	uassert.NoError(t, err)
 
@@ -153,10 +146,10 @@ func TestOracleWrite(cur realm, t *testing.T) {
 func testSingleElementOverwrite(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
-	err := writeObservation(os, currentTime+1, 0, u256.Zero())
+	slot0 := testObservationSlot0(0, 1, 1)
+	err := writeObservationWithSlot0(os, &slot0, currentTime+1, 0, u256.Zero())
 	uassert.NoError(t, err)
-	uassert.Equal(t, uint16(0), os.Index())
+	uassert.Equal(t, uint16(0), slot0.ObservationIndex())
 
 	obs0 := os.Observations()[0]
 	uassert.True(t, obs0.Initialized())
@@ -164,18 +157,18 @@ func testSingleElementOverwrite(t *testing.T) {
 	uassert.Equal(t, int64(0), obs0.TickCumulative())
 	uassert.Equal(t, currentTime+1, obs0.BlockTimestamp())
 
-	err = writeObservation(os, currentTime+6, 2, u256.NewUint(5))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+6, 2, u256.NewUint(5))
 	uassert.NoError(t, err)
-	uassert.Equal(t, uint16(0), os.Index())
+	uassert.Equal(t, uint16(0), slot0.ObservationIndex())
 
 	obs0 = os.Observations()[0]
 	uassert.Equal(t, "680564733841876926926749214863536422912", obs0.SecondsPerLiquidityCumulativeX128())
 	uassert.Equal(t, int64(10), obs0.TickCumulative())
 	uassert.Equal(t, currentTime+6, obs0.BlockTimestamp())
 
-	err = writeObservation(os, currentTime+9, -1, u256.NewUint(8))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+9, -1, u256.NewUint(8))
 	uassert.NoError(t, err)
-	uassert.Equal(t, uint16(0), os.Index())
+	uassert.Equal(t, uint16(0), slot0.ObservationIndex())
 
 	obs0 = os.Observations()[0]
 	uassert.Equal(t, "808170621437228850725514692650449502208", obs0.SecondsPerLiquidityCumulativeX128())
@@ -186,37 +179,37 @@ func testSingleElementOverwrite(t *testing.T) {
 func testDoesNothingIfTimeUnchanged(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
-	err = writeObservation(os, currentTime+1, 0, u256.Zero())
+	err = writeObservationWithSlot0(os, &slot0, currentTime+1, 0, u256.Zero())
 	uassert.NoError(t, err)
-	uassert.Equal(t, uint16(1), os.Index())
+	uassert.Equal(t, uint16(1), slot0.ObservationIndex())
 
-	err = writeObservation(os, currentTime+1, 3, u256.NewUint(2))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+1, 3, u256.NewUint(2))
 	uassert.NoError(t, err)
-	uassert.Equal(t, uint16(1), os.Index())
+	uassert.Equal(t, uint16(1), slot0.ObservationIndex())
 }
 
 func testWritesIndexOnTimeChange(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 3)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(3)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(3)
 
-	err = writeObservation(os, currentTime+6, 0, u256.Zero())
+	err = writeObservationWithSlot0(os, &slot0, currentTime+6, 0, u256.Zero())
 	uassert.NoError(t, err)
-	uassert.Equal(t, uint16(1), os.Index())
+	uassert.Equal(t, uint16(1), slot0.ObservationIndex())
 
-	err = writeObservation(os, currentTime+10, 3, u256.NewUint(2))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+10, 3, u256.NewUint(2))
 	uassert.NoError(t, err)
-	uassert.Equal(t, uint16(2), os.Index())
+	uassert.Equal(t, uint16(2), slot0.ObservationIndex())
 
 	obs1 := os.Observations()[1]
 	uassert.Equal(t, int64(0), obs1.TickCumulative())
@@ -228,25 +221,25 @@ func testWritesIndexOnTimeChange(t *testing.T) {
 func testGrowsCardinalityWhenWritingPast(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
 	_, err = grow(os, 2, 4)
 	uassert.NoError(t, err)
-	os.SetCardinalityNext(4)
-	uassert.Equal(t, uint16(1), os.Cardinality())
+	slot0.SetObservationCardinalityNext(4)
+	uassert.Equal(t, uint16(1), slot0.ObservationCardinality())
 
-	err = writeObservation(os, currentTime+3, 0, u256.Zero())
+	err = writeObservationWithSlot0(os, &slot0, currentTime+3, 0, u256.Zero())
 	uassert.NoError(t, err)
-	uassert.Equal(t, uint16(4), os.Cardinality())
+	uassert.Equal(t, uint16(4), slot0.ObservationCardinality())
 
-	err = writeObservation(os, currentTime+7, 5, u256.NewUint(6))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+7, 5, u256.NewUint(6))
 	uassert.NoError(t, err)
-	uassert.Equal(t, uint16(4), os.Cardinality())
-	uassert.Equal(t, uint16(2), os.Index())
+	uassert.Equal(t, uint16(4), slot0.ObservationCardinality())
+	uassert.Equal(t, uint16(2), slot0.ObservationIndex())
 
 	obs2 := os.Observations()[2]
 	uassert.Equal(t, "1247702012043441032699040227249816775338", obs2.SecondsPerLiquidityCumulativeX128())
@@ -258,22 +251,22 @@ func testGrowsCardinalityWhenWritingPast(t *testing.T) {
 func testWrapsAround(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 3)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(3)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(3)
 
-	err = writeObservation(os, currentTime+3, 0, u256.Zero())
+	err = writeObservationWithSlot0(os, &slot0, currentTime+3, 0, u256.Zero())
 	uassert.NoError(t, err)
 
-	err = writeObservation(os, currentTime+7, 1, u256.NewUint(2))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+7, 1, u256.NewUint(2))
 	uassert.NoError(t, err)
 
-	err = writeObservation(os, currentTime+12, 2, u256.NewUint(3))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+12, 2, u256.NewUint(3))
 	uassert.NoError(t, err)
 
-	uassert.Equal(t, uint16(0), os.Index())
+	uassert.Equal(t, uint16(0), slot0.ObservationIndex())
 
 	obs0 := os.Observations()[0]
 	uassert.Equal(t, "2268549112806256423089164049545121409706", obs0.SecondsPerLiquidityCumulativeX128())
@@ -285,22 +278,22 @@ func testWrapsAround(t *testing.T) {
 func testAccumulatesLiquidity(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 4)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(4)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(4)
 
-	err = writeObservation(os, currentTime+3, 0, u256.Zero())
+	err = writeObservationWithSlot0(os, &slot0, currentTime+3, 0, u256.Zero())
 	uassert.NoError(t, err)
 
-	err = writeObservation(os, currentTime+7, 3, u256.NewUint(2))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+7, 3, u256.NewUint(2))
 	uassert.NoError(t, err)
 
-	err = writeObservation(os, currentTime+12, -7, u256.NewUint(6))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+12, -7, u256.NewUint(6))
 	uassert.NoError(t, err)
 
-	uassert.Equal(t, uint16(3), os.Index())
+	uassert.Equal(t, uint16(3), slot0.ObservationIndex())
 
 	obs1 := os.Observations()[1]
 	uassert.True(t, obs1.Initialized())
@@ -361,14 +354,12 @@ func TestOracleObserve(cur realm, t *testing.T) {
 func testObserveFailsIfOlderNotExist(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
 	_, _, err := observeSingle(os, currentTime+5, 1, 2, 0, u256.NewUint(4), 1)
 	uassert.Error(t, err)
 }
 
 func testObserveFailsIfSecondsAgoExceedsCurrentTime(t *testing.T) {
 	os := pl.NewObservationState(0)
-
 	_, _, err := observeSingle(os, 10, 11, 2, 0, u256.NewUint(4), 1)
 	uassert.ErrorContains(t, err, "[GNOSWAP-POOL-026]")
 }
@@ -398,6 +389,7 @@ func testObserveInterpolatesMaxLiquidity(t *testing.T) {
 
 	// initialize({ liquidity: MaxUint128, tick: 0, time: 0 })
 	os := pl.NewObservationState(currentTime)
+	slot0 := testObservationSlot0(0, 1, 1)
 	// Manually set first observation with MaxUint128 liquidity
 	firstObs := os.Observations()[0]
 	os.SetObservation(0, pl.NewObservation(
@@ -409,12 +401,12 @@ func testObserveInterpolatesMaxLiquidity(t *testing.T) {
 
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
 	// update({ advanceTimeBy: 13, tick: 0, liquidity: 0 })
 	// Writes with OLD liquidity (MaxUint128)
-	err = writeObservation(os, currentTime+13, 0, maxLiquidity)
+	err = writeObservationWithSlot0(os, &slot0, currentTime+13, 0, maxLiquidity)
 	uassert.NoError(t, err)
 
 	// observeSingle(0) at time=13
@@ -431,15 +423,15 @@ func testObserveInterpolatesMinLiquidity(t *testing.T) {
 
 	// initialize({ liquidity: 0, tick: 0, time: 0 })
 	os := pl.NewObservationState(currentTime)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
 	// update({ advanceTimeBy: 13, tick: 0, liquidity: MaxUint128 })
 	// Writes with OLD liquidity (0, uses max(1,0)=1)
-	err = writeObservation(os, currentTime+13, 0, u256.Zero())
+	err = writeObservationWithSlot0(os, &slot0, currentTime+13, 0, u256.Zero())
 	uassert.NoError(t, err)
 
 	// observeSingle(0) - current time
@@ -480,15 +472,15 @@ func testObserveInterpolatesSameAs0For1(t *testing.T) {
 
 	// initialize({ liquidity: 1, tick: 0, time: 0 })
 	os := pl.NewObservationState(currentTime)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
 	// update({ advanceTimeBy: 13, tick: 0, liquidity: MaxUint128 })
 	// Writes with OLD liquidity (1)
-	err = writeObservation(os, currentTime+13, 0, u256.One())
+	err = writeObservationWithSlot0(os, &slot0, currentTime+13, 0, u256.One())
 	uassert.NoError(t, err)
 
 	// Same expectations as min liquidity test (both use max(1, liquidity) = 1)
@@ -523,7 +515,6 @@ func testObserveInterpolatesSameAs0For1(t *testing.T) {
 func testObserveSingleAtCurrentTime(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+5, 0, 2, 0, u256.NewUint(4), 1)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), tickCum)
@@ -534,7 +525,6 @@ func testObserveSinglePastExact(t *testing.T) {
 	// initialize({ liquidity: 4, tick: 2, time: 5 })
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
 	// advanceTime(3) - time is now 8, but no update() called
 	// Only one observation at time=5
 
@@ -550,7 +540,6 @@ func testObserveSinglePastCounterfactualPast(t *testing.T) {
 	// initialize({ liquidity: 4, tick: 2, time: 5 })
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
 	// advanceTime(3) - time is now 8, no update() called
 	// Only one observation at time=5
 
@@ -568,7 +557,6 @@ func testObserveSinglePastCounterfactualNow(t *testing.T) {
 	// initialize({ liquidity: 4, tick: 2, time: 5 })
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
 	// advanceTime(3) - time is now 8, no update() called
 	// Only one observation at time=5
 
@@ -585,13 +573,13 @@ func testObserveSinglePastCounterfactualNow(t *testing.T) {
 func testObserveTwoChronological0Exact(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
-	err = writeObservation(os, currentTime+9, -5, u256.NewUint(5))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+9, -5, u256.NewUint(5))
 	uassert.NoError(t, err)
 
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+9, 0, 1, 1, u256.NewUint(2), 2)
@@ -603,13 +591,13 @@ func testObserveTwoChronological0Exact(t *testing.T) {
 func testObserveTwoChronological0Counterfactual(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
-	err = writeObservation(os, currentTime+9, -5, u256.NewUint(5))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+9, -5, u256.NewUint(5))
 	uassert.NoError(t, err)
 
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+16, 0, 1, 1, u256.NewUint(2), 2)
@@ -621,13 +609,13 @@ func testObserveTwoChronological0Counterfactual(t *testing.T) {
 func testObserveTwoChronologicalExactFirst(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
-	err = writeObservation(os, currentTime+9, -5, u256.NewUint(5))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+9, -5, u256.NewUint(5))
 	uassert.NoError(t, err)
 
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+16, 11, 1, 1, u256.NewUint(2), 2)
@@ -639,13 +627,13 @@ func testObserveTwoChronologicalExactFirst(t *testing.T) {
 func testObserveTwoChronologicalBetween(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
-	err = writeObservation(os, currentTime+9, -5, u256.NewUint(5))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+9, -5, u256.NewUint(5))
 	uassert.NoError(t, err)
 
 	tickCum, secondsPerLiq, err := observeSingle(os, currentTime+16, 9, 1, 1, u256.NewUint(2), 2)
@@ -658,23 +646,23 @@ func testObserveTwoReverse0Exact(t *testing.T) {
 	// initialize({ liquidity: 5, tick: -5, time: 5 })
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
 	// update({ advanceTimeBy: 4, tick: 1, liquidity: 2 })
 	// Writes with OLD (tick=-5, liq=5)
-	err = writeObservation(os, currentTime+9, -5, u256.NewUint(5))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+9, -5, u256.NewUint(5))
 	uassert.NoError(t, err)
 
 	// After first update, cardinality grows to 2
-	os.SetCardinality(2)
+	slot0.SetObservationCardinality(2)
 
 	// update({ advanceTimeBy: 3, tick: -5, liquidity: 4 })
 	// Writes with OLD (tick=1, liq=2)
-	err = writeObservation(os, currentTime+12, 1, u256.NewUint(2))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+12, 1, u256.NewUint(2))
 	uassert.NoError(t, err)
 
 	// observeSingle(0) at time=12
@@ -688,20 +676,20 @@ func testObserveTwoReverse0Counterfactual(t *testing.T) {
 	// initialize({ liquidity: 5, tick: -5, time: 5 })
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
 	// update({ advanceTimeBy: 4, tick: 1, liquidity: 2 })
-	err = writeObservation(os, currentTime+9, -5, u256.NewUint(5))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+9, -5, u256.NewUint(5))
 	uassert.NoError(t, err)
 
-	os.SetCardinality(2)
+	slot0.SetObservationCardinality(2)
 
 	// update({ advanceTimeBy: 3, tick: -5, liquidity: 4 })
-	err = writeObservation(os, currentTime+12, 1, u256.NewUint(2))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+12, 1, u256.NewUint(2))
 	uassert.NoError(t, err)
 
 	// advanceTime(7) - time is now 19
@@ -716,20 +704,20 @@ func testObserveTwoReverseExactFirst(t *testing.T) {
 	// initialize({ liquidity: 5, tick: -5, time: 5 })
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
 	// update({ advanceTimeBy: 4, tick: 1, liquidity: 2 })
-	err = writeObservation(os, currentTime+9, -5, u256.NewUint(5))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+9, -5, u256.NewUint(5))
 	uassert.NoError(t, err)
 
-	os.SetCardinality(2)
+	slot0.SetObservationCardinality(2)
 
 	// update({ advanceTimeBy: 3, tick: -5, liquidity: 4 })
-	err = writeObservation(os, currentTime+12, 1, u256.NewUint(2))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+12, 1, u256.NewUint(2))
 	uassert.NoError(t, err)
 
 	// advanceTime(7) - time is now 19
@@ -744,20 +732,20 @@ func testObserveTwoReverseBetween(t *testing.T) {
 	// initialize({ liquidity: 5, tick: -5, time: 5 })
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	_, err := grow(os, 1, 2)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(2)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(2)
 
 	// update({ advanceTimeBy: 4, tick: 1, liquidity: 2 })
-	err = writeObservation(os, currentTime+9, -5, u256.NewUint(5))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+9, -5, u256.NewUint(5))
 	uassert.NoError(t, err)
 
-	os.SetCardinality(2)
+	slot0.SetObservationCardinality(2)
 
 	// update({ advanceTimeBy: 3, tick: -5, liquidity: 4 })
-	err = writeObservation(os, currentTime+12, 1, u256.NewUint(2))
+	err = writeObservationWithSlot0(os, &slot0, currentTime+12, 1, u256.NewUint(2))
 	uassert.NoError(t, err)
 
 	// advanceTime(7) - time is now 19
@@ -771,15 +759,15 @@ func testObserveTwoReverseBetween(t *testing.T) {
 func testObserveFetchMultiple(t *testing.T) {
 	currentTime := time.Now().Unix()
 	os := pl.NewObservationState(currentTime + 5)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	liquidity := u256.NewUint(1 << 15)
 
 	_, err := grow(os, 1, 4)
 	uassert.NoError(t, err)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(4)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(4)
 
-	err = writeObservation(os, currentTime+18, 2, liquidity)
+	err = writeObservationWithSlot0(os, &slot0, currentTime+18, 2, liquidity)
 	uassert.NoError(t, err)
 
 	secondsAgos := []uint32{0, 3, 8, 13, 15, 18}
@@ -835,37 +823,37 @@ func TestOracleFiveObservations(cur realm, t *testing.T) {
 	}
 }
 
-func setupFiveObservations(startTime int64) *pl.ObservationState {
+func setupFiveObservations(startTime int64) (*pl.ObservationState, pl.Slot0) {
 	os := pl.NewObservationState(startTime)
-
+	slot0 := testObservationSlot0(0, 1, 1)
 	grow(os, 1, 5)
-	os.SetCardinality(1)
-	os.SetCardinalityNext(5)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(5)
 
-	writeObservation(os, startTime+3, -5, u256.NewUint(5))
-	writeObservation(os, startTime+5, 1, u256.NewUint(2))
-	writeObservation(os, startTime+9, -6, u256.NewUint(4))
-	writeObservation(os, startTime+10, -2, u256.NewUint(4))
-	writeObservation(os, startTime+13, -2, u256.NewUint(9))
-	writeObservation(os, startTime+19, 4, u256.NewUint(2))
+	writeObservationWithSlot0(os, &slot0, startTime+3, -5, u256.NewUint(5))
+	writeObservationWithSlot0(os, &slot0, startTime+5, 1, u256.NewUint(2))
+	writeObservationWithSlot0(os, &slot0, startTime+9, -6, u256.NewUint(4))
+	writeObservationWithSlot0(os, &slot0, startTime+10, -2, u256.NewUint(4))
+	writeObservationWithSlot0(os, &slot0, startTime+13, -2, u256.NewUint(9))
+	writeObservationWithSlot0(os, &slot0, startTime+19, 4, u256.NewUint(2))
 
-	return os
+	return os, slot0
 }
 
 func testFiveObservationsIndexCardinality(t *testing.T) {
 	startTime := time.Now().Unix()
-	os := setupFiveObservations(startTime)
+	_, slot0 := setupFiveObservations(startTime)
 
-	uassert.Equal(t, uint16(1), os.Index())
-	uassert.Equal(t, uint16(5), os.Cardinality())
-	uassert.Equal(t, uint16(5), os.CardinalityNext())
+	uassert.Equal(t, uint16(1), slot0.ObservationIndex())
+	uassert.Equal(t, uint16(5), slot0.ObservationCardinality())
+	uassert.Equal(t, uint16(5), slot0.ObservationCardinalityNext())
 }
 
 func testFiveObservationsLatestSameTime(t *testing.T) {
 	startTime := time.Now().Unix()
-	os := setupFiveObservations(startTime)
+	os, slot0 := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(os, startTime+19, 0, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os, startTime+19, 0, 6, slot0.ObservationIndex(), u256.NewUint(7), slot0.ObservationCardinality())
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-21), tickCum)
 	uassert.Equal(t, "2104079302127802832415199655953100107502", secondsPerLiq)
@@ -873,9 +861,9 @@ func testFiveObservationsLatestSameTime(t *testing.T) {
 
 func testFiveObservationsLatest5SecondsAfter(t *testing.T) {
 	startTime := time.Now().Unix()
-	os := setupFiveObservations(startTime)
+	os, slot0 := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(os, startTime+24, 5, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os, startTime+24, 5, 6, slot0.ObservationIndex(), u256.NewUint(7), slot0.ObservationCardinality())
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-21), tickCum)
 	uassert.Equal(t, "2104079302127802832415199655953100107502", secondsPerLiq)
@@ -883,9 +871,9 @@ func testFiveObservationsLatest5SecondsAfter(t *testing.T) {
 
 func testFiveObservationsCurrent5SecondsAfter(t *testing.T) {
 	startTime := time.Now().Unix()
-	os := setupFiveObservations(startTime)
+	os, slot0 := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(os, startTime+24, 0, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os, startTime+24, 0, 6, slot0.ObservationIndex(), u256.NewUint(7), slot0.ObservationCardinality())
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(9), tickCum)
 	uassert.Equal(t, "2347138135642758877746181518404363115684", secondsPerLiq)
@@ -893,9 +881,9 @@ func testFiveObservationsCurrent5SecondsAfter(t *testing.T) {
 
 func testFiveObservationsBetweenLatestSameTime(t *testing.T) {
 	startTime := time.Now().Unix()
-	os := setupFiveObservations(startTime)
+	os, slot0 := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(os, startTime+19, 3, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os, startTime+19, 3, 6, slot0.ObservationIndex(), u256.NewUint(7), slot0.ObservationCardinality())
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-33), tickCum)
 	uassert.Equal(t, "1593655751746395137220137744805447790318", secondsPerLiq)
@@ -903,9 +891,9 @@ func testFiveObservationsBetweenLatestSameTime(t *testing.T) {
 
 func testFiveObservationsBetweenLatestAfter(t *testing.T) {
 	startTime := time.Now().Unix()
-	os := setupFiveObservations(startTime)
+	os, slot0 := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(os, startTime+24, 8, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os, startTime+24, 8, 6, slot0.ObservationIndex(), u256.NewUint(7), slot0.ObservationCardinality())
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-33), tickCum)
 	uassert.Equal(t, "1593655751746395137220137744805447790318", secondsPerLiq)
@@ -913,9 +901,9 @@ func testFiveObservationsBetweenLatestAfter(t *testing.T) {
 
 func testFiveObservationsOldest(t *testing.T) {
 	startTime := time.Now().Unix()
-	os := setupFiveObservations(startTime)
+	os, slot0 := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(os, startTime+19, 14, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os, startTime+19, 14, 6, slot0.ObservationIndex(), u256.NewUint(7), slot0.ObservationCardinality())
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-13), tickCum)
 	uassert.Equal(t, "544451787073501541541399371890829138329", secondsPerLiq)
@@ -923,9 +911,9 @@ func testFiveObservationsOldest(t *testing.T) {
 
 func testFiveObservationsOldestAfterTime(t *testing.T) {
 	startTime := time.Now().Unix()
-	os := setupFiveObservations(startTime)
+	os, slot0 := setupFiveObservations(startTime)
 
-	tickCum, secondsPerLiq, err := observeSingle(os, startTime+25, 20, 6, 1, u256.NewUint(7), 5)
+	tickCum, secondsPerLiq, err := observeSingle(os, startTime+25, 20, 6, slot0.ObservationIndex(), u256.NewUint(7), slot0.ObservationCardinality())
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(-13), tickCum)
 	uassert.Equal(t, "544451787073501541541399371890829138329", secondsPerLiq)

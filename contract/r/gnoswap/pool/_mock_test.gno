@@ -312,17 +312,6 @@ func (m *MockPool) GetMaxLiquidityPerTick(poolPath string) (*u256.Uint, error) {
 	return res[0].(*u256.Uint), nil
 }
 
-func (m *MockPool) GetLastObservation(poolPath string) (tickCumulative int64, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64, err error) {
-	res, ok := m.Response.Get("GetLastObservation")
-	if !ok {
-		return 0, "", 0, errors.New("not found")
-	}
-	if len(res) < 4 || res[3] == nil {
-		return res[0].(int64), res[1].(string), res[2].(int64), nil
-	}
-	return res[0].(int64), res[1].(string), res[2].(int64), res[3].(error)
-}
-
 func (m *MockPool) GetPoolCreationFee() int64 {
 	res, ok := m.Response.Get("GetPoolCreationFee")
 	if !ok {
@@ -449,6 +438,58 @@ func (m *MockPool) GetSlot0Unlocked(poolPath string) (bool, error) {
 	return res[0].(bool), nil
 }
 
+func (m *MockPool) GetSlot0(poolPath string) Slot0 {
+	res, ok := m.Response.Get("GetSlot0")
+	if !ok {
+		return NewSlot0(u256.Zero(), 0, 0, false)
+	}
+
+	return res[0].(Slot0)
+}
+
+func (m *MockPool) GetObservationAt(poolPath string, index uint16) (Observation, error) {
+	res, ok := m.Response.Get("GetObservationAt")
+	if !ok {
+		return Observation{}, errors.New("not found")
+	}
+
+	if len(res) < 2 || res[1] == nil {
+		return res[0].(Observation), nil
+	}
+
+	return res[0].(Observation), res[1].(error)
+}
+
+func (m *MockPool) Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	res, ok := m.Response.Get("Observe")
+	if !ok {
+		return nil, nil, errors.New("not found")
+	}
+
+	if len(res) < 3 || res[2] == nil {
+		return res[0].([]int64), res[1].([]string), nil
+	}
+
+	return res[0].([]int64), res[1].([]string), res[2].(error)
+}
+
+func (m *MockPool) SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, *u256.Uint, uint32, error) {
+	res, ok := m.Response.Get("SnapshotCumulativesInside")
+	if !ok {
+		return 0, nil, 0, errors.New("not found")
+	}
+
+	if len(res) < 4 || res[3] == nil {
+		return res[0].(int64), res[1].(*u256.Uint), res[2].(uint32), nil
+	}
+
+	return res[0].(int64), res[1].(*u256.Uint), res[2].(uint32), res[3].(error)
+}
+
 func (m *MockPool) GetTickCumulativeOutside(poolPath string, tick int32) (int64, error) {
 	res, ok := m.Response.Get("GetTickCumulativeOutside")
 	if !ok {
@@ -566,8 +607,8 @@ func (m *MockPool) GetWithdrawalFee() uint64 {
 	return res[0].(uint64)
 }
 
-func (m *MockPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	res, ok := m.Response.Get("GetTWAP")
+func (m *MockPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+	res, ok := m.Response.Get("OracleConsult")
 	if !ok {
 		return 0, nil, errors.New("not found")
 	}
@@ -637,19 +678,6 @@ func (m *MockPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 		return res[0].(string), nil
 	}
 	return res[0].(string), res[1].(error)
-}
-
-func (m *MockPool) GetObservationState(poolPath string) (*ObservationState, error) {
-	res, ok := m.Response.Get("GetObservationState")
-	if !ok {
-		return nil, errors.New("not found")
-	}
-
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(*ObservationState), nil
-	}
-
-	return res[0].(*ObservationState), res[1].(error)
 }
 
 func newMockPool(version string) *MockPool {

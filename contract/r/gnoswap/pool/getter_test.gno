@@ -112,6 +112,80 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
+			name: "GetSlot0",
+			setup: func(m *MockPool) {
+				slot0 := NewSlot0(u256.MustFromDecimal("3000"), 12, 34, true)
+				slot0.SetObservationIndex(7)
+				slot0.SetObservationCardinality(8)
+				slot0.SetObservationCardinalityNext(9)
+				m.Response.Set("GetSlot0", slot0)
+			},
+			getter: func() any { return GetSlot0("foo:bar:500") },
+			assertGot: func(t *testing.T, result any) {
+				slot0 := result.(Slot0)
+				uassert.Equal(t, "3000", slot0.SqrtPriceX96().ToString())
+				uassert.Equal(t, int32(12), slot0.Tick())
+				uassert.Equal(t, uint8(34), slot0.FeeProtocol())
+				uassert.Equal(t, true, slot0.Unlocked())
+				uassert.Equal(t, uint16(7), slot0.ObservationIndex())
+				uassert.Equal(t, uint16(8), slot0.ObservationCardinality())
+				uassert.Equal(t, uint16(9), slot0.ObservationCardinalityNext())
+			},
+			mutate: func(result any) {
+				slot0 := result.(Slot0)
+				slot0.SetSqrtPriceX96(u256.MustFromDecimal("9000"))
+				slot0.SetObservationIndex(70)
+				slot0.SetObservationCardinality(80)
+				slot0.SetObservationCardinalityNext(90)
+			},
+			assertRaw: func(cur realm, t *testing.T) {
+				slot0 := implementation.(*MockPool).Response.responses["GetSlot0"][0].(Slot0)
+				uassert.Equal(t, "3000", slot0.SqrtPriceX96().ToString())
+				uassert.Equal(t, uint16(7), slot0.ObservationIndex())
+				uassert.Equal(t, uint16(8), slot0.ObservationCardinality())
+				uassert.Equal(t, uint16(9), slot0.ObservationCardinalityNext())
+			},
+		},
+		{
+			name: "Observe",
+			setup: func(m *MockPool) {
+				m.Response.Set("Observe", []int64{10, 20}, []string{"30", "40"}, error(nil))
+			},
+			getter: func() any {
+				tickCumulatives, secondsPerLiquidityCumulativeX128s, err := Observe(
+					"foo:bar:500",
+					[]uint32{60, 0},
+				)
+				uassert.NoError(t, err)
+				return []any{tickCumulatives, secondsPerLiquidityCumulativeX128s}
+			},
+			assertGot: func(t *testing.T, result any) {
+				values := result.([]any)
+				tickCumulatives := values[0].([]int64)
+				secondsPerLiquidityCumulativeX128s := values[1].([]string)
+				uassert.Equal(t, 2, len(tickCumulatives))
+				uassert.Equal(t, int64(10), tickCumulatives[0])
+				uassert.Equal(t, int64(20), tickCumulatives[1])
+				uassert.Equal(t, 2, len(secondsPerLiquidityCumulativeX128s))
+				uassert.Equal(t, "30", secondsPerLiquidityCumulativeX128s[0])
+				uassert.Equal(t, "40", secondsPerLiquidityCumulativeX128s[1])
+			},
+			mutate: func(result any) {
+				values := result.([]any)
+				values[0].([]int64)[0] = 100
+				values[1].([]string)[0] = "300"
+			},
+			assertRaw: func(cur realm, t *testing.T) {
+				values := implementation.(*MockPool).Response.responses["Observe"]
+				tickCumulatives := values[0].([]int64)
+				secondsPerLiquidityCumulativeX128s := values[1].([]string)
+				uassert.Equal(t, int64(10), tickCumulatives[0])
+				uassert.Equal(t, int64(20), tickCumulatives[1])
+				uassert.Equal(t, "30", secondsPerLiquidityCumulativeX128s[0])
+				uassert.Equal(t, "40", secondsPerLiquidityCumulativeX128s[1])
+			},
+		},
+		{
 			name:  "GetTickInfo",
 			setup: func(m *MockPool) { m.Response.Set("GetTickInfo", newTickInfoFixture(), nil) },
 			getter: func() any {
@@ -175,59 +249,17 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:  "GetTWAP",
-			setup: func(m *MockPool) { m.Response.Set("GetTWAP", int32(5), u256.MustFromDecimal("5000"), error(nil)) },
+			name:  "OracleConsult",
+			setup: func(m *MockPool) { m.Response.Set("OracleConsult", int32(5), u256.MustFromDecimal("5000"), error(nil)) },
 			getter: func() any {
-				_, liquidity, err := GetTWAP("foo:bar:500", 10)
+				_, liquidity, err := OracleConsult("foo:bar:500", 10)
 				uassert.NoError(t, err)
 				return liquidity
 			},
 			mutate: func(result any) {},
 			assertRaw: func(cur realm, t *testing.T) {
-				value := implementation.(*MockPool).Response.responses["GetTWAP"][1].(*u256.Uint)
+				value := implementation.(*MockPool).Response.responses["OracleConsult"][1].(*u256.Uint)
 				uassert.Equal(t, "5000", value.ToString())
-			},
-		},
-		{
-			name: "GetObservationState",
-			setup: func(m *MockPool) {
-				state := NewObservationState(100)
-				state.SetIndex(3)
-				state.SetCardinality(4)
-				state.SetCardinalityNext(5)
-				obs := NewObservation(123, 77, "2000", true)
-				state.Observations()[7] = obs
-				m.Response.Set("GetObservationState", state, error(nil))
-			},
-			getter: func() any {
-				state, err := GetObservationState("foo:bar:500")
-				uassert.NoError(t, err)
-				return state
-			},
-			assertGot: func(t *testing.T, result any) {
-				state := result.(*ObservationState)
-				uassert.Equal(t, 2, len(state.Observations()))
-				uassert.Equal(t, int64(100), state.Observations()[0].BlockTimestamp())
-				uassert.Equal(t, int64(123), state.Observations()[7].BlockTimestamp())
-			},
-			mutate: func(result any) {
-				state := result.(*ObservationState)
-				state.SetIndex(8)
-				state.SetCardinality(9)
-				state.SetCardinalityNext(10)
-				state.Observations()[8] = NewObservation(1, 2, "4", true)
-			},
-			assertRaw: func(cur realm, t *testing.T) {
-				state := implementation.(*MockPool).Response.responses["GetObservationState"][0].(*ObservationState)
-				uassert.Equal(t, uint16(3), state.Index())
-				uassert.Equal(t, uint16(4), state.Cardinality())
-				uassert.Equal(t, uint16(5), state.CardinalityNext())
-				uassert.Equal(t, int64(123), state.Observations()[7].BlockTimestamp())
-				uassert.Equal(t, int64(77), state.Observations()[7].TickCumulative())
-				uassert.Equal(t, "2000", state.Observations()[7].SecondsPerLiquidityCumulativeX128())
-				uassert.Equal(t, true, state.Observations()[7].Initialized())
-				_, ok := state.Observations()[8]
-				uassert.Equal(t, false, ok)
 			},
 		},
 	}

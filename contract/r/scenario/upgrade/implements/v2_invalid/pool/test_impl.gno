@@ -211,13 +211,6 @@ func (t *TestPool) GetLiquidity(poolPath string) (*u256.Uint, error) {
 	return t.instance.GetLiquidity(poolPath)
 }
 
-func (t *TestPool) GetLastObservation(poolPath string) (int64, string, int64, error) {
-	if !t.isActive("GetLastObservation") {
-		panic("test implementation: GetLastObservation not supported")
-	}
-	return t.instance.GetLastObservation(poolPath)
-}
-
 func (t *TestPool) GetPoolCreationFee() int64 {
 	if !t.isActive("GetPoolCreationFee") {
 		panic("test implementation: GetPoolCreationFee not supported")
@@ -286,6 +279,20 @@ func (t *TestPool) GetSlot0FeeProtocol(poolPath string) (uint8, error) {
 		panic("test implementation: GetSlot0FeeProtocol not supported")
 	}
 	return t.instance.GetSlot0FeeProtocol(poolPath)
+}
+
+func (t *TestPool) GetSlot0(poolPath string) pool.Slot0 {
+	if !t.isActive("GetSlot0") {
+		panic("test implementation: GetSlot0 not supported")
+	}
+	return t.instance.GetSlot0(poolPath)
+}
+
+func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
+	if !t.isActive("GetObservationAt") {
+		panic("test implementation: GetObservationAt not supported")
+	}
+	return t.instance.GetObservationAt(poolPath, index)
 }
 
 func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error) {
@@ -400,11 +407,22 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	if !t.isActive("GetTWAP") {
-		panic("test implementation: GetTWAP not supported")
+func (t *TestPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+	if !t.isActive("OracleConsult") {
+		panic("test implementation: OracleConsult not supported")
 	}
-	return t.instance.GetTWAP(poolPath, secondsAgo)
+	return t.instance.OracleConsult(poolPath, secondsAgo)
+}
+
+func (t *TestPool) SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, *u256.Uint, uint32, error) {
+	if !t.isActive("SnapshotCumulativesInside") {
+		panic("test implementation: SnapshotCumulativesInside not supported")
+	}
+	return t.instance.SnapshotCumulativesInside(poolPath, tickLower, tickUpper)
 }
 
 func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
@@ -451,11 +469,11 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
 }
 
-func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
-	if !t.isActive("GetObservationState") {
-		panic("test implementation: GetObservationState not supported")
+func (t *TestPool) Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	if !t.isActive("Observe") {
+		panic("test implementation: Observe not supported")
 	}
-	return t.instance.GetObservationState(poolPath)
+	return t.instance.Observe(poolPath, secondsAgos)
 }
 
 func (t *TestPool) GetPendingProtocolFees() map[string]int64 {

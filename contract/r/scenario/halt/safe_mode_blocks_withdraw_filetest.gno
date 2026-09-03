@@ -317,7 +317,7 @@ func disableSafeModeAndVerify(cur realm) {
 //
 // [STEP 7] Test: Router swap works in Safe Mode
 // [INFO] Attempting router swap in Safe Mode...
-// [SUCCESS] Router swap works in Safe Mode! AmountIn: 100000, AmountOut: -99513
+// [SUCCESS] Router swap works in Safe Mode! AmountIn: 100000, AmountOut: 99513
 //
 // [STEP 8] Disable Safe Mode and verify withdraw works
 // [INFO] Safe Mode disabled. Withdraw halted: false (should be false)

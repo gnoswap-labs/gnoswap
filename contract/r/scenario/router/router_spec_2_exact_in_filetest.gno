@@ -100,7 +100,7 @@ func main(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 3")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -1")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 1")
 
 	println("[INFO] Checking balances after swap")
 	poolToken0After := bar.BalanceOf(poolAddr)
@@ -132,7 +132,7 @@ func main(cur realm) {
 // [INFO] admin foo balance: 99999999000000
 // [INFO] Executing ExactIn swap (3 bar → foo)
 // [EXPECTED] amountIn: 3 expected: 3
-// [EXPECTED] amountOut: -1 expected: -1
+// [EXPECTED] amountOut: 1 expected: 1
 // [INFO] Checking balances after swap
 // [EXPECTED] admin bar balance change: 99999999000001 expected: 99999999000001
 // [EXPECTED] admin foo balance change: 99999998999997 expected: 99999998999997

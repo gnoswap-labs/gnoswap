@@ -77,7 +77,7 @@ func main(cur realm) {
 		cross(cur), bazPath, barPath, amountIn, route, "100", "1",
 		time.Now().Add(time.Hour).Unix(), "",
 	)
-	if actualIn != dryIn || actualOut != "-"+dryOut {
+	if actualIn != dryIn || actualOut != dryOut {
 		panic("expected router DrySwapRoute and ExactInSwapRoute amounts to match")
 	}
 
@@ -94,6 +94,6 @@ func main(cur realm) {
 // [SCENARIO] Router DrySwap crosses into an initially inactive liquidity range
 // [INFO] Active liquidity before quote: 0
 // [INFO] Router DrySwap amounts: 6000000 5893260
-// [INFO] Router Swap amounts: 6000000 -5893260
+// [INFO] Router Swap amounts: 6000000 5893260
 // [INFO] Tick after router swap: 218
 // [RESULT] Router quote and swap crossed into inactive liquidity

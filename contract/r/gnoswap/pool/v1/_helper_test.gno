@@ -2,6 +2,7 @@ package pool
 
 import (
 	"chain"
+	"errors"
 	"testing"
 
 	"gno.land/r/gnoswap/gns"
@@ -570,6 +571,55 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 	}
 
 	return pool
+}
+
+func testObservationSlot0(index, cardinality, cardinalityNext uint16) pl.Slot0 {
+	slot0 := pl.NewSlot0(u256.One(), 0, 0, true)
+	slot0.SetObservationIndex(index)
+	slot0.SetObservationCardinality(cardinality)
+	slot0.SetObservationCardinalityNext(cardinalityNext)
+	return slot0
+}
+
+// writeObservationWithSlot0 keeps unit-test setup concise while production
+// callers use writeObservation's Uniswap-shaped cursor input/output directly.
+func writeObservationWithSlot0(
+	observations *pl.ObservationState,
+	slot0 *pl.Slot0,
+	currentTime int64,
+	tick int32,
+	liquidity *u256.Uint,
+) error {
+	observationIndex, observationCardinality, err := writeObservation(
+		observations,
+		slot0.ObservationIndex(),
+		currentTime,
+		tick,
+		liquidity,
+		slot0.ObservationCardinality(),
+		slot0.ObservationCardinalityNext(),
+	)
+	if err != nil {
+		return err
+	}
+	slot0.SetObservationIndex(observationIndex)
+	slot0.SetObservationCardinality(observationCardinality)
+	return nil
+}
+
+func increaseObservationCardinalityNextForTest(p *pl.Pool, cardinalityNext uint16) error {
+	observations := p.ObservationState()
+	if observations == nil {
+		return errors.New("observation state not initialized")
+	}
+	slot0 := p.Slot0()
+	cardinalityNextNew, err := grow(observations, slot0.ObservationCardinalityNext(), cardinalityNext)
+	if err != nil {
+		return err
+	}
+	slot0.SetObservationCardinalityNext(cardinalityNextNew)
+	p.SetSlot0(slot0)
+	return nil
 }
 
 func getMockInstance() *poolV1 {

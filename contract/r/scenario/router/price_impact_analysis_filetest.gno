@@ -361,38 +361,38 @@ func calculatePriceImpact(cur realm, initialPriceStr, finalPriceStr string) stri
 // [INFO] Testing small trade (0.01% of liquidity)
 // [INFO] Initial sqrt price: 79228162514264337593543950336
 // [INFO] Final sqrt price: 79227921418862449018200183058
-// [EXPECTED] Small trade amountOut: -9979977
+// [EXPECTED] Small trade amountOut: 9979977
 // [EXPECTED] Price impact should be < 0.01%, actual: 0.00%
 //
 // [INFO] Testing medium trade (1% of liquidity)
 // [INFO] Initial sqrt price: 79227921418862449018200183058
 // [INFO] Final sqrt price: 79203819286443894850535749976
-// [EXPECTED] Medium trade amountOut: -997691074
+// [EXPECTED] Medium trade amountOut: 997691074
 // [EXPECTED] Price impact should be 0.01~0.1%, actual: 0.03%
 //
 // [INFO] Testing large trade (10% of liquidity)
 // [INFO] Initial sqrt price: 79203819286443894850535749976
 // [INFO] Final sqrt price: 78963602055082262766367635762
-// [EXPECTED] Large trade amountOut: -9943625870
+// [EXPECTED] Large trade amountOut: 9943625870
 // [EXPECTED] Price impact should be > 0.1%, actual: 0.30%
 //
 // [SCENARIO] 2. Price Impact Across Different Fee Tiers
 // [INFO] Comparing price impact across fee tiers
-// [EXPECTED] 0.05% fee pool output: -991046211
-// [EXPECTED] 0.3% fee pool output: -990386319
-// [EXPECTED] 0.05% fee pool output: -991046211
-// [EXPECTED] 0.3% fee pool output: -990386319
+// [EXPECTED] 0.05% fee pool output: 991046211
+// [EXPECTED] 0.3% fee pool output: 990386319
+// [EXPECTED] 0.05% fee pool output: 991046211
+// [EXPECTED] 0.3% fee pool output: 990386319
 // [EXPECTED] Lower fee tier should give better output (less price impact)
 // [EXPECTED] Price impact actual: 0.03%
 // [EXPECTED] Price impact actual: 0.51%
 //
 // [SCENARIO] 3. Multi-hop Price Impact Analysis
 // [INFO] Testing multi-hop price impact
-// [EXPECTED] Single hop output: -990445427
+// [EXPECTED] Single hop output: 990445427
 // [INFO] Multi-hop swaps aggregate price impact from each hop
 //
 // [SCENARIO] 4. Price Impact at Tick Boundaries
 // [INFO] Testing price impact at tick boundaries
-// [EXPECTED] Within tick output: -990145
-// [EXPECTED] Cross-tick output: -47801658638
+// [EXPECTED] Within tick output: 990145
+// [EXPECTED] Cross-tick output: 47801658638
 // [INFO] Crossing tick boundaries increases price impact non-linearly

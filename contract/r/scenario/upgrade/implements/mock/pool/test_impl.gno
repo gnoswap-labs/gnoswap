@@ -317,18 +317,6 @@ func (t *TestPool) GetLiquidity(poolPath string) (*u256.Uint, error) {
 	return result[0].(*u256.Uint), result[1].(error)
 }
 
-func (t *TestPool) GetLastObservation(poolPath string) (int64, string, int64, error) {
-	result := t.ExecuteFn(
-		"GetLastObservation",
-		func(args ...any) any {
-			r1, r2, r3, r4 := t.instance.GetLastObservation(args[0].(string))
-			return []any{r1, r2, r3, r4}
-		},
-		poolPath,
-	).([]any)
-	return result[0].(int64), result[1].(string), result[2].(int64), result[3].(error)
-}
-
 func (t *TestPool) GetPoolCreationFee() int64 {
 	return t.ExecuteFn(
 		"GetPoolCreationFee",
@@ -442,6 +430,26 @@ func (t *TestPool) GetSlot0FeeProtocol(poolPath string) (uint8, error) {
 		poolPath,
 	).([]any)
 	return result[0].(uint8), result[1].(error)
+}
+
+func (t *TestPool) GetSlot0(poolPath string) pool.Slot0 {
+	return t.ExecuteFn(
+		"GetSlot0",
+		func(args ...any) any { return t.instance.GetSlot0(args[0].(string)) },
+		poolPath,
+	).(pool.Slot0)
+}
+
+func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
+	result := t.ExecuteFn(
+		"GetObservationAt",
+		func(args ...any) any {
+			observation, err := t.instance.GetObservationAt(args[0].(string), args[1].(uint16))
+			return []any{observation, err}
+		},
+		poolPath, index,
+	).([]any)
+	return result[0].(pool.Observation), result[1].(error)
 }
 
 func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error) {
@@ -631,16 +639,36 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	).(uint64)
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+func (t *TestPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
 	result := t.ExecuteFn(
-		"GetTWAP",
+		"OracleConsult",
 		func(args ...any) any {
-			r1, r2, r3 := t.instance.GetTWAP(args[0].(string), args[1].(uint32))
+			r1, r2, r3 := t.instance.OracleConsult(args[0].(string), args[1].(uint32))
 			return []any{r1, r2, r3}
 		},
 		poolPath, secondsAgo,
 	).([]any)
 	return result[0].(int32), result[1].(*u256.Uint), result[2].(error)
+}
+
+func (t *TestPool) SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, *u256.Uint, uint32, error) {
+	result := t.ExecuteFn(
+		"SnapshotCumulativesInside",
+		func(args ...any) any {
+			r1, r2, r3, r4 := t.instance.SnapshotCumulativesInside(args[0].(string), args[1].(int32), args[2].(int32))
+			return []any{r1, r2, r3, r4}
+		},
+		poolPath, tickLower, tickUpper,
+	).([]any)
+	if result[3] == nil {
+		return result[0].(int64), result[1].(*u256.Uint), result[2].(uint32), nil
+	}
+
+	return result[0].(int64), result[1].(*u256.Uint), result[2].(uint32), result[3].(error)
 }
 
 func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
@@ -705,16 +733,20 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 	return result[0].(string), result[1].(error)
 }
 
-func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
+func (t *TestPool) Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
 	result := t.ExecuteFn(
-		"GetObservationState",
+		"Observe",
 		func(args ...any) any {
-			r1, r2 := t.instance.GetObservationState(args[0].(string))
-			return []any{r1, r2}
+			r1, r2, r3 := t.instance.Observe(args[0].(string), args[1].([]uint32))
+			return []any{r1, r2, r3}
 		},
-		poolPath,
+		poolPath, secondsAgos,
 	).([]any)
-	return result[0].(*pool.ObservationState), result[1].(error)
+	if result[2] == nil {
+		return result[0].([]int64), result[1].([]string), nil
+	}
+
+	return result[0].([]int64), result[1].([]string), result[2].(error)
 }
 
 func (t *TestPool) GetPendingProtocolFees() map[string]int64 {
