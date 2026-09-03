@@ -237,9 +237,9 @@ func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 				setObservationsForTest(pool, nil)
 			}
 
-		if tt.expectError {
-			_, err := grow(nil, tt.initialCardinalityNext, tt.newCardinalityNext)
-			uassert.ErrorContains(t, err, tt.errorContains)
+			if tt.expectError {
+				_, err := grow(nil, tt.initialCardinalityNext, tt.newCardinalityNext)
+				uassert.ErrorContains(t, err, tt.errorContains)
 			} else {
 				increaseObservationCardinalityNextForTest(pool, tt.newCardinalityNext)
 				slot0 := pool.Slot0()
@@ -247,6 +247,23 @@ func TestPool_IncreaseObservationCardinalityNext(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPool_IncreaseObservationCardinalityNextFailsWithoutStoredObservations(cur realm, t *testing.T) {
+	initPoolTest(cur, t)
+	testing.SetRealm(adminRealm)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
+	mockInstanceCreatePool(0, cur, barPath, bazPath, fee3000, "79228162514264337593543950336")
+
+	poolPath := GetPoolPath(barPath, bazPath, fee3000)
+	observations := getMockInstance().store.GetObservations()
+	observations.Remove(poolPath)
+	uassert.NoError(t, getMockInstance().store.SetObservations(0, cur, observations))
+
+	testing.SetRealm(rouRealm)
+	uassert.AbortsWithMessage(t, cur, "[GNOSWAP-POOL-005] requested data not found || expected observations for poolPath(gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000) to exist", func(cur realm) {
+		mockInstanceIncreaseObservationCardinalityNext(0, cur, barPath, bazPath, fee3000, 2)
+	})
 }
 
 // Verify TWAP rounding for a variety of tickDelta/secondsAgo combinations
