@@ -264,23 +264,21 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 	var oldestSnapshotTime int64
 	hasActiveProposal := false
 
-	activeProposals.Iterate("", "", func(_ string, value any) bool {
+	activeProposals.Iterate("s:", "t", func(_ string, value any) bool {
 		proposalID, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast active proposal ID to int64: %T", value))
 		}
-
 		proposal, exists := gv.getProposal(proposalID)
 		if !exists || !NewProposalResolver(proposal).IsActive(current) {
 			return false
 		}
-
 		oldestSnapshotTime = proposal.SnapshotTime()
 		hasActiveProposal = true
 		return true
 	})
-
 	return oldestSnapshotTime, hasActiveProposal
+
 }
 
 // GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.

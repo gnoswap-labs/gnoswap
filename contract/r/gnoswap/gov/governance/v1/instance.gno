@@ -85,7 +85,8 @@ func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Propos
 	}
 
 	activeProposals := g.store.GetActiveProposals()
-	activeProposals.Set(activeProposalKey(proposal), proposal.ID())
+	activeProposals.Set(activeProposalSnapshotKey(proposal), proposal.ID())
+	activeProposals.Set(activeProposalDeadlineKey(proposal, proposal.Status().Schedule().VotingEndTime()), proposal.ID())
 	if err := g.store.SetActiveProposals(0, rlm, activeProposals); err != nil {
 		return false
 	}
@@ -101,38 +102,63 @@ func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Propos
 
 func (g *governanceV1) removeActiveProposal(_ int, rlm realm, proposal *governance.Proposal) error {
 	activeProposals := g.store.GetActiveProposals()
-	activeProposals.Remove(activeProposalKey(proposal))
+	activeProposals.Remove(activeProposalSnapshotKey(proposal))
+	activeProposals.Remove(activeProposalDeadlineKey(proposal, proposal.Status().Schedule().VotingEndTime()))
+	activeProposals.Remove(activeProposalDeadlineKey(proposal, proposal.Status().Schedule().ExpiredTime()))
 	return g.store.SetActiveProposals(0, rlm, activeProposals)
 }
 
-// pruneInactiveProposals removes terminal proposals from the active-only index.
-// It deliberately preserves proposal records and voting data as governance history.
+// pruneInactiveProposals processes only proposals whose next lifecycle deadline
+// has elapsed. It never scans the snapshot-ordered active index.
 func (g *governanceV1) pruneInactiveProposals(_ int, rlm realm, current int64) error {
 	activeProposals := g.store.GetActiveProposals()
 	keysToRemove := make([]string, 0)
+	snapshotKeysToRemove := make([]string, 0)
+	proposalsToReschedule := make([]*governance.Proposal, 0)
 
-	activeProposals.Iterate("", "", func(key string, value any) bool {
+	activeProposals.Iterate("d:", "e", func(key string, value any) bool {
 		proposalID, ok := value.(int64)
 		if !ok {
 			panic(ufmt.Sprintf("failed to cast active proposal ID to int64: %T", value))
 		}
-
 		proposal, exists := g.getProposal(proposalID)
-		if !exists || !NewProposalResolver(proposal).IsActive(current) {
+		if !exists {
 			keysToRemove = append(keysToRemove, key)
+			return false
+		}
+		deadline := proposal.Status().Schedule().VotingEndTime()
+		if key == activeProposalDeadlineKey(proposal, proposal.Status().Schedule().ExpiredTime()) {
+			deadline = proposal.Status().Schedule().ExpiredTime()
+		}
+		if deadline > current {
+			return true
+		}
+		keysToRemove = append(keysToRemove, key)
+		if NewProposalResolver(proposal).IsActive(current) {
+			proposalsToReschedule = append(proposalsToReschedule, proposal)
+		} else {
+			snapshotKeysToRemove = append(snapshotKeysToRemove, activeProposalSnapshotKey(proposal))
 		}
 		return false
 	})
-
 	for _, key := range keysToRemove {
 		activeProposals.Remove(key)
 	}
-
+	for _, key := range snapshotKeysToRemove {
+		activeProposals.Remove(key)
+	}
+	for _, proposal := range proposalsToReschedule {
+		activeProposals.Set(activeProposalDeadlineKey(proposal, proposal.Status().Schedule().ExpiredTime()), proposal.ID())
+	}
 	return g.store.SetActiveProposals(0, rlm, activeProposals)
 }
 
-func activeProposalKey(proposal *governance.Proposal) string {
-	return ufmt.Sprintf("%020d:%020d", proposal.SnapshotTime(), proposal.ID())
+func activeProposalSnapshotKey(proposal *governance.Proposal) string {
+	return ufmt.Sprintf("s:%020d:%020d", proposal.SnapshotTime(), proposal.ID())
+}
+
+func activeProposalDeadlineKey(proposal *governance.Proposal, deadline int64) string {
+	return ufmt.Sprintf("d:%020d:%020d", deadline, proposal.ID())
 }
 
 // User proposals methods

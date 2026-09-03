@@ -75,7 +75,12 @@ func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore
 			if !exists || !NewProposalResolver(proposal).IsActive(current) {
 				continue
 			}
-			activeProposals.Set(activeProposalKey(proposal), proposal.ID())
+			activeProposals.Set(activeProposalSnapshotKey(proposal), proposal.ID())
+			deadline := proposal.Status().Schedule().VotingEndTime()
+			if deadline <= current {
+				deadline = proposal.Status().Schedule().ExpiredTime()
+			}
+			activeProposals.Set(activeProposalDeadlineKey(proposal, deadline), proposal.ID())
 		}
 
 		err := governanceStore.SetActiveProposals(0, rlm, activeProposals)
