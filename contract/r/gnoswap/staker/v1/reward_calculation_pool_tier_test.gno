@@ -370,7 +370,8 @@ func TestCurrentRewardPerPool(cur realm, t *testing.T) {
 		func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil })
 
 	// With only tier 1 pool, it should get 100% of emission
-	reward1 := poolTier.CurrentRewardPerPool(testPool1)
+	reward1, err := poolTier.CurrentRewardPerPool(testPool1)
+	uassert.NoError(t, err)
 	expectedReward1 := emission * 100 / 100 / 1 // 100% ratio, 1 pool
 	if reward1 != expectedReward1 {
 		t.Errorf("Expected reward %d, got %d", expectedReward1, reward1)
@@ -381,17 +382,23 @@ func TestCurrentRewardPerPool(cur realm, t *testing.T) {
 	poolTier.changeTier(currentTime+1, pools, testPool2, 2)
 
 	// Now tier1 gets 70%, tier2 gets 30%
-	reward1After := poolTier.CurrentRewardPerPool(testPool1)
+	reward1After, err := poolTier.CurrentRewardPerPool(testPool1)
+	uassert.NoError(t, err)
 	expectedReward1After := emission * 70 / 100 / 1 // 70% ratio, 1 pool
 	if reward1After != expectedReward1After {
 		t.Errorf("Expected tier1 reward %d, got %d", expectedReward1After, reward1After)
 	}
 
-	reward2 := poolTier.CurrentRewardPerPool(testPool2)
+	reward2, err := poolTier.CurrentRewardPerPool(testPool2)
+	uassert.NoError(t, err)
 	expectedReward2 := emission * 30 / 100 / 1 // 30% ratio, 1 pool
 	if reward2 != expectedReward2 {
 		t.Errorf("Expected tier2 reward %d, got %d", expectedReward2, reward2)
 	}
+
+	emission = -1
+	_, err = poolTier.CurrentRewardPerPool(testPool1)
+	uassert.ErrorContains(t, err, errCalculationError)
 }
 
 // Test CurrentReward for different tiers
@@ -1050,9 +1057,14 @@ func TestCalculatePoolReward(cur realm, t *testing.T) {
 	}
 }
 
-func TestMustCalculatePoolRewardPanicsOnInvalidInput(cur realm, t *testing.T) {
+func TestComputeTierRewardsPanicsOnInvalidInput(cur realm, t *testing.T) {
+	poolTier := &PoolTier{
+		tierRatio: TierRatioFromCounts(1, 0, 0),
+		counts:    [AllTierCount]uint64{0, 1, 0, 0},
+	}
+
 	uassert.PanicsContains(t, cur, errCalculationError, func() {
-		mustCalculatePoolReward(-1, 50, 1)
+		poolTier.computeTierRewards(-1)
 	})
 }
 

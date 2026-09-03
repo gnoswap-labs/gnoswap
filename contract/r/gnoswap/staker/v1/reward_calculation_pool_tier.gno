@@ -393,30 +393,30 @@ func (self *PoolTier) IsInternallyIncentivizedPool(poolPath string) bool {
 	return self.CurrentTier(poolPath) > 0
 }
 
-func (self *PoolTier) CurrentRewardPerPool(poolPath string) int64 {
+
+// CurrentRewardPerPool returns the current reward rate for a pool, if tiered.
+func (self *PoolTier) CurrentRewardPerPool(poolPath string) (int64, error) {
 	tierNum := self.CurrentTier(poolPath)
 	if tierNum == 0 {
-		return 0 // Pool not in any tier
+		return 0, nil
 	}
 
 	tierRatio, err := self.tierRatio.Get(tierNum)
 	if err != nil {
-		panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
+		return 0, makeErrorWithDetails(errInvalidPoolTier, err.Error())
 	}
-	tierRatioInt64 := int64(tierRatio)
 
-	counts := self.CurrentAllTierCounts()
-	tierCount := int64(counts[tierNum])
+	tierCount := int64(self.counts[tierNum])
 	if tierCount == 0 {
-		return 0 // No pools in tier
+		return 0, nil
 	}
 
 	currentEmission, err := self.getEmission()
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 
-	return mustCalculatePoolReward(currentEmission, tierRatioInt64, tierCount)
+	return calculatePoolReward(currentEmission, int64(tierRatio), tierCount)
 }
 
 // calculatePoolReward calculates the reward for a pool based on the emission, tier ratio, and tier count.
@@ -443,15 +443,6 @@ func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) (int6
 	return tierReward / tierCount, nil
 }
 
-// mustCalculatePoolReward preserves panic semantics for state-mutating cache paths.
-func mustCalculatePoolReward(emission int64, tierRatio int64, tierCount int64) int64 {
-	reward, err := calculatePoolReward(emission, tierRatio, tierCount)
-	if err != nil {
-		panic(err)
-	}
-
-	return reward
-}
 
 // computeTierRewards caches per-tier pool rewards to avoid recalculating for each pool iteration.
 func (self *PoolTier) computeTierRewards(emission int64) map[uint64]int64 {
@@ -468,7 +459,11 @@ func (self *PoolTier) computeTierRewards(emission int64) map[uint64]int64 {
 			panic(makeErrorWithDetails(errInvalidPoolTier, err.Error()))
 		}
 
-		tierRewards[tierNum] = mustCalculatePoolReward(emission, int64(tierRatio), tierCount)
+		reward, err := calculatePoolReward(emission, int64(tierRatio), tierCount)
+		if err != nil {
+			panic(err)
+		}
+		tierRewards[tierNum] = reward
 	}
 
 	return tierRewards
