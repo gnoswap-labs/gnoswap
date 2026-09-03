@@ -161,7 +161,7 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 //
 // Returns:
 //   - inputAmount: Actual input amount consumed as string
-//   - outputAmount: Actual output amount received as string (negative value)
+//   - outputAmount: Actual output amount received as string
 //
 // Panics if swap execution fails or token transfer fails.
 func (r *routerV1) exactOutSwapRoute(
@@ -183,8 +183,6 @@ func (r *routerV1) exactOutSwapRoute(
 	// handle referral registration
 	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)
 
-	resultInputAmount := inputAmount
-	resultOutputAmount := -outputAmount
 
 	eventAttrs := append([]string{
 		"prevAddr", caller.String(),
@@ -193,8 +191,8 @@ func (r *routerV1) exactOutSwapRoute(
 		"output", params.outputToken,
 		"exactAmount", utils.FormatInt(params.exactAmount),
 		"quote", params.quoteArr,
-		"resultInputAmount", utils.FormatInt(resultInputAmount),
-		"resultOutputAmount", utils.FormatInt(resultOutputAmount),
+		"resultInputAmount", utils.FormatInt(inputAmount),
+		"resultOutputAmount", utils.FormatInt(outputAmount),
 		"referrer", actualReferrer,
 	}, buildRouteEventAttrs(params.routeArr)...)
 
@@ -203,7 +201,7 @@ func (r *routerV1) exactOutSwapRoute(
 		eventAttrs...,
 	)
 
-	return resultInputAmount, resultOutputAmount
+	return inputAmount, outputAmount
 }
 
 // ExactOutSwapOperation handles swaps where the output amount is specified.
