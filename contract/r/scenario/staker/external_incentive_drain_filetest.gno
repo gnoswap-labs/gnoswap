@@ -298,7 +298,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] transfer GNS to external creator
 // [INFO] approve GNS for external incentive creation
 // [INFO] create external incentive for 90 days
-// [INFO] create external incentive with incentiveID:  g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567905:1
+// [INFO] create external incentive with incentiveID:  g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567905:1
 //
 // [SCENARIO] 5. Start external incentive
 // [INFO] skip blocks until external incentive starts

@@ -436,11 +436,11 @@ func testActiveProposalAndVotingWeight(cur realm) {
 // [EXPECTED] Proposal 999 exists: false
 // [EXPECTED] Proposal details:
 // [EXPECTED] - ID: 1
-// [EXPECTED] - Proposer: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] - Proposer: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] - Type: CommunityPoolSpend
 // [EXPECTED] - Yes weight: 1000000000
 // [EXPECTED] - No weight: 0
-// [EXPECTED] Proposal 1 proposer: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] Proposal 1 proposer: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] Proposal 1 type: CommunityPoolSpend
 // [EXPECTED] Proposal 1 yea: 1000000000
 // [EXPECTED] Proposal 1 nay: 0
@@ -460,7 +460,7 @@ func testActiveProposalAndVotingWeight(cur realm) {
 // [EXPECTED] - Yes weight: 1000000000
 // [EXPECTED] - No weight: 0
 // [EXPECTED] Voting info addresses (offset=0, limit=10): 1 voters
-// [EXPECTED] - Voter 1: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] - Voter 1: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] Admin voting info exists: true
 // [EXPECTED] Admin voting info:
 // [EXPECTED] - Vote type: yes
@@ -474,7 +474,7 @@ func testActiveProposalAndVotingWeight(cur realm) {
 // [INFO] Testing proposal data getters
 // [INFO] Testing community pool spend info
 // [EXPECTED] Community pool spend info:
-// [EXPECTED] - To: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] - To: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] - Token path: gno.land/r/gnoswap/gns.GNS
 // [EXPECTED] - Amount: 1000
 // [INFO] Testing execution info (should fail for community pool spend)

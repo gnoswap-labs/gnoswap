@@ -271,12 +271,12 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 // [EXPECTED] first unstake succeeded
 //
 // [SCENARIO] 5. Verify NFT ownership after first unstake
-// [EXPECTED] NFT ownership returned to admin after first unstake: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] NFT ownership returned to admin after first unstake: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 //
 // [SCENARIO] 6. Second unstake attempt - should fail
 // [EXPECTED] Try to unstake the same position again - should fail
 //
 // [SCENARIO] 7. Verify position still exists and is accessible
 // [EXPECTED] position still exists with liquidity: 1025
-// [EXPECTED] NFT still owned by admin: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] NFT still owned by admin: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] position can be re-staked successfully

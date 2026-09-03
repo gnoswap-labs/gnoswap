@@ -318,7 +318,7 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 // [INFO] created pool and set tier
 //
 // [SCENARIO] 3. Create external incentive
-// [INFO] created external incentive: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
+// [INFO] created external incentive: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567900:1
 //
 // [SCENARIO] 4. Start incentive and stake position
 // [INFO] staked position 1 (liquidity: 20026)

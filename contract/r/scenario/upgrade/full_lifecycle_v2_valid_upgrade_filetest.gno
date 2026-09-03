@@ -1866,7 +1866,7 @@ func finalInvariants(cur realm) {
 //
 // [SCENARIO] 5. Position lifecycle: mint, increase, decrease, collect fee
 // [EXPECTED] minted position: 1 liquidity: 1066918731 amount0: 50000000 amount1: 50000000
-// [EXPECTED] position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] position owner: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] position pool key: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] position ticks: -960 960
 // [EXPECTED] position in range: true
@@ -1913,14 +1913,14 @@ func finalInvariants(cur realm) {
 // [EXPECTED] pool tier after SetPoolTier: 2
 // [EXPECTED] pool tier after ChangePoolTier: 1
 // [EXPECTED] tier1 pool count: 2
-// [EXPECTED] incentive id: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567965:1
+// [EXPECTED] incentive id: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567965:1
 // [EXPECTED] incentive reward token: gno.land/r/gnoswap/gns.GNS
 // [EXPECTED] incentive total reward: 1500000000
-// [EXPECTED] incentive creator: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] incentive creator: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] incentive deposit gns: 1000000000
 // [EXPECTED] staked position 1 into: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] is staked: true
-// [EXPECTED] deposit owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] deposit owner: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] deposit liquidity: 640151239
 // [EXPECTED] deposit target pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] position operator after stake is the staker caller: true
@@ -2056,7 +2056,7 @@ func finalInvariants(cur realm) {
 // [EXPECTED] incentive distributed: 64697761
 // [EXPECTED] collected incentive penalty: 95405246
 // [EXPECTED] position 1 staked after unstake: false
-// [EXPECTED] position 1 owner after unstake: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] position 1 owner after unstake: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] position 1 operator cleared: true
 // [EXPECTED] allowed token count after removal: 2
 // [EXPECTED] pool tier after removal: 0

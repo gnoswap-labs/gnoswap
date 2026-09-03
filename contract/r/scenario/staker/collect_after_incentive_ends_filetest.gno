@@ -270,7 +270,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] created pool and set tier
 //
 // [SCENARIO] 3. Create and start 90-day external incentive
-// [INFO] created 90-day incentive - ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
+// [INFO] created 90-day incentive - ID: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567900:1
 //
 // [SCENARIO] 4. User mints and stakes position
 // [INFO] user staked position 1

@@ -119,20 +119,20 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 
 // Output:
 // [SCENARIO] 1. Admin delegates first
-// [INFO] delegated 1000000 GNS from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [INFO] delegated 1000000 GNS from g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz to g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 //
 // [SCENARIO] 2. First pool creation (before alice delegation)
 // [INFO] created gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000 pool (poolCreationFee: 100000000)
 //
 // [SCENARIO] 3. Alice delegates in the middle
-// [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [INFO] delegated 1000000 GNS from g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh to g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 //
 // [SCENARIO] 4. Second pool creation (after alice delegation)
 // [INFO] created gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:500 pool (poolCreationFee: 100000000)
 //
 // [SCENARIO] 5. Check and collect protocol fee reward for admin
-// [INFO] collected protocol fee reward for g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [EXPECTED] g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5's balance of gno.land/r/gnoswap/gns.GNS: 150000000
+// [INFO] collected protocol fee reward for g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
+// [EXPECTED] g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz's balance of gno.land/r/gnoswap/gns.GNS: 150000000
 //
 // [SCENARIO] 6. Check and collect protocol fee reward for alice
 // [INFO] collected protocol fee reward for g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh

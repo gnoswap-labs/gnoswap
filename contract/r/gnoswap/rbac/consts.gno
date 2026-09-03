@@ -5,10 +5,10 @@ import "chain"
 // User-controlled addresses for protocol roles.
 const (
 	// ADMIN is the initial admin address for RBAC management.
-	ADMIN address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"
+	ADMIN address = "g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz"
 
 	// DEV_OPS is the initial DevOps address for operational tasks.
-	DEV_OPS address = "g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9"
+	DEV_OPS address = "g1kg87wr06tmw7uvlyk4yrj3r2pzmt2j83d47nu7"
 )
 
 // Derived package addresses — computed deterministically from deployment paths

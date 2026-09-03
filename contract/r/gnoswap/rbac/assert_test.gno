@@ -82,7 +82,7 @@ func TestAssert_assertIsPendingOwner(cur realm, t *testing.T) {
 			name:        "Current owner should panic",
 			addr:        ADMIN,
 			shouldPanic: true,
-			expectedMsg: "caller is not pending owner || caller: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+			expectedMsg: "caller is not pending owner || caller: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz",
 		},
 		{
 			name:        "Random address should panic",
@@ -147,7 +147,7 @@ func TestAssert_assertIsAdmin(cur realm, t *testing.T) {
 			name:        "Non-admin address should panic",
 			addr:        DEV_OPS,
 			shouldPanic: true,
-			expectedMsg: "caller is not admin || caller: g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9",
+			expectedMsg: "caller is not admin || caller: g1kg87wr06tmw7uvlyk4yrj3r2pzmt2j83d47nu7",
 		},
 		{
 			name:        "Empty address should panic",
@@ -199,7 +199,7 @@ func TestAssert_assertIsAdminWithRoleUpdate(cur realm, t *testing.T) {
 			name:        "Old admin address should panic",
 			addr:        ADMIN,
 			shouldPanic: true,
-			expectedMsg: "caller is not admin || caller: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5",
+			expectedMsg: "caller is not admin || caller: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz",
 		},
 	}
 
@@ -230,7 +230,7 @@ func TestAssert_assertFunctionsIntegration(cur realm, t *testing.T) {
 		assertIsOwner(ADMIN)
 
 		// DEV_OPS should not be owner or pending owner
-		uassert.PanicsWithMessage(t, cur, "caller is not owner || caller: g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9", func() {
+		uassert.PanicsWithMessage(t, cur, "caller is not owner || caller: g1kg87wr06tmw7uvlyk4yrj3r2pzmt2j83d47nu7", func() {
 			assertIsOwner(DEV_OPS)
 		})
 
@@ -253,7 +253,7 @@ func TestAssert_assertFunctionsIntegration(cur realm, t *testing.T) {
 		assertIsPendingOwner(DEV_OPS)
 
 		// ADMIN should not be pending owner
-		uassert.PanicsWithMessage(t, cur, "caller is not pending owner || caller: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5", func() {
+		uassert.PanicsWithMessage(t, cur, "caller is not pending owner || caller: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz", func() {
 			assertIsPendingOwner(ADMIN)
 		})
 	})
@@ -268,7 +268,7 @@ func TestAssert_assertFunctionsIntegration(cur realm, t *testing.T) {
 		assertIsAdmin(ADMIN)
 
 		// Non-admin should fail
-		uassert.PanicsWithMessage(t, cur, "caller is not admin || caller: g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9", func() {
+		uassert.PanicsWithMessage(t, cur, "caller is not admin || caller: g1kg87wr06tmw7uvlyk4yrj3r2pzmt2j83d47nu7", func() {
 			assertIsAdmin(DEV_OPS)
 		})
 	})
@@ -433,7 +433,7 @@ func TestAssert_assertIsAdminOrGovernance(cur realm, t *testing.T) {
 			name:        "Dev ops address should panic",
 			addr:        DEV_OPS,
 			shouldPanic: true,
-			expectedMsg: "caller is not admin or governance || caller: g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9",
+			expectedMsg: "caller is not admin or governance || caller: g1kg87wr06tmw7uvlyk4yrj3r2pzmt2j83d47nu7",
 		},
 		{
 			name:        "Random address should panic",

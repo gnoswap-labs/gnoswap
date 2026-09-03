@@ -331,5 +331,5 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 // [EXPECTED] successfully unstaked position from de-tiered pool
 //
 // [SCENARIO] 11. Verify position ownership after unstake
-// [EXPECTED] NFT ownership returned to admin: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] NFT ownership returned to admin: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] position still accessible - liquidity: 1025

@@ -296,7 +296,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] created pool and set tier
 //
 // [SCENARIO] 3. Create external incentive and wait for start
-// [INFO] created external incentive g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567900:1
+// [INFO] created external incentive g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567900:1
 //
 // [SCENARIO] 4. Skip 10 days with nobody staked (unclaimable gap)
 // [INFO] skipped 10 days with zero staked liquidity

@@ -17,7 +17,7 @@ var (
 	privateLedger *grc20.PrivateLedger
 	userTeller    grc20.Teller
 
-	owner = ownable.NewWithAddress("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5") // ADMIN
+	owner = ownable.NewWithAddress("g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz") // ADMIN
 )
 
 func init(cur realm) {

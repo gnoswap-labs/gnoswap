@@ -405,7 +405,7 @@ func upgradeToV2Valid(cur realm) {
 // [EXPECTED] AddToken gno.land/r/onbloc/bar.BAR allowedCount: 3
 //
 // [SCENARIO] 9. Exercise external-incentive BPTrees through v2_valid
-// [EXPECTED] CreateExternalIncentive id: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567950:1
+// [EXPECTED] CreateExternalIncentive id: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567950:1
 // [EXPECTED] incentive rewardToken: gno.land/r/gnoswap/gns.GNS
 // [EXPECTED] incentive totalReward: 1500000000
 // [EXPECTED] EndExternalIncentive refunded: true

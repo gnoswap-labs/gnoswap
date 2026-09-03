@@ -273,7 +273,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] user staked position 1
 //
 // [SCENARIO] 3. Create external incentive and start
-// [INFO] created external incentive g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567905:1
+// [INFO] created external incentive g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567905:1
 //
 // [SCENARIO] 4. User mints and stakes position
 // [INFO] user staked position 2

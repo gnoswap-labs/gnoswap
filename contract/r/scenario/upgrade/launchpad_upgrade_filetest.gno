@@ -134,7 +134,7 @@ func verifyProjectInfo(cur realm, projectId string) {
 // [EXPECTED] Project name: Test OBL Project
 // [EXPECTED] Project info: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 10000000
-// [EXPECTED] Project recipient: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] Project recipient: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] Project created height: 123
 // [EXPECTED] Project created time: 1234567890
 //
@@ -147,6 +147,6 @@ func verifyProjectInfo(cur realm, projectId string) {
 // [EXPECTED] Project name: Test OBL Project
 // [EXPECTED] Project info: gno.land/r/onbloc/obl.OBL
 // [EXPECTED] Project deposit amount: 10000000
-// [EXPECTED] Project recipient: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] Project recipient: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] Project created height: 123
 // [EXPECTED] Project created time: 1234567890

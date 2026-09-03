@@ -615,4 +615,4 @@ func getPositionOwner(cur realm) {
 //
 // [SCENARIO] 2.22. GetPositionOwner
 // [INFO] Check GetPositionOwner method
-// [EXPECTED] position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] position owner: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz

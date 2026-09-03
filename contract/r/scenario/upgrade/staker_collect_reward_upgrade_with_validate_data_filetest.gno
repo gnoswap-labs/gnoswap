@@ -531,7 +531,7 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 // [EXPECTED] Stake time: 1234567900
 //
 // [SCENARIO] 7-1. Snapshot the staking state written by v1
-// [EXPECTED] Deposit owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] Deposit owner: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] Deposit liquidity: 1066918731
 // [EXPECTED] Deposit ticks: -960 960
 // [EXPECTED] Deposit warmup tiers: 4

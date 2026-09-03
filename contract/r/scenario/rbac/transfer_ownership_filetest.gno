@@ -253,8 +253,8 @@ func testNewOwnerCanTransfer(cur realm) {
 // [SCENARIO] RBAC Transfer Ownership Process - Full Cycle Test
 //
 // [STEP 1] Verify initial ownership state
-// [INFO] Current owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
-// [INFO] ROLE_ADMIN address: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [INFO] Current owner: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
+// [INFO] ROLE_ADMIN address: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [INFO] Pending owner:
 // [INFO] Owner == ROLE_ADMIN: true
 // [SUCCESS] Initial state verified - Owner and ROLE_ADMIN are unified
@@ -264,17 +264,17 @@ func testNewOwnerCanTransfer(cur realm) {
 // [SUCCESS] Non-owner correctly blocked from initiating transfer
 //
 // [STEP 3] Owner initiates ownership transfer
-// [INFO] Owner (g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5) initiating transfer to new owner (g1dejhwhm0wahx2ujlta047h6lta047h6l5la58j)
+// [INFO] Owner (g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz) initiating transfer to new owner (g1dejhwhm0wahx2ujlta047h6lta047h6l5la58j)
 // [SUCCESS] Ownership transfer initiated by current owner
 //
 // [STEP 4] Verify pending owner state
-// [INFO] Current owner (should be unchanged): g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [INFO] Current owner (should be unchanged): g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [INFO] Pending owner (should be new owner): g1dejhwhm0wahx2ujlta047h6lta047h6l5la58j
 // [SUCCESS] Pending owner state verified correctly
 //
 // [STEP 5] Non-pending owner cannot accept ownership
 // [INFO] Attempting accept by non-pending owner (g1wfskuer0d40h2um9wf047h6lta047h6lmzq38v)
-// [INFO] Attempting accept by original owner (g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5)
+// [INFO] Attempting accept by original owner (g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz)
 // [SUCCESS] Non-pending owners correctly blocked from accepting
 //
 // [STEP 6] Pending owner accepts ownership
@@ -289,13 +289,13 @@ func testNewOwnerCanTransfer(cur realm) {
 // [SUCCESS] Ownership transfer completed - Owner and ROLE_ADMIN remain unified
 //
 // [STEP 8] Verify ROLE_ADMIN updated in access module
-// [INFO] Previous owner address: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [INFO] Previous owner address: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [INFO] Current ROLE_ADMIN address: g1dejhwhm0wahx2ujlta047h6lta047h6l5la58j
 // [INFO] Previous owner is ROLE_ADMIN: false
 // [SUCCESS] Previous owner is no longer ROLE_ADMIN - authority transferred
 //
 // [STEP 9] Previous owner can no longer transfer ownership
-// [INFO] Previous owner (g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5) attempting to transfer ownership
+// [INFO] Previous owner (g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz) attempting to transfer ownership
 // [SUCCESS] Previous owner correctly blocked from transferring
 //
 // [STEP 10] New owner can initiate another transfer

@@ -342,7 +342,7 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 // [EXPECTED] total delegated: 2800000000
 // [EXPECTED] total xGNS supply: 3000000000
 // [EXPECTED] delegation count: 3
-// [EXPECTED] first delegation from/to/amount: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 2000000000
+// [EXPECTED] first delegation from/to/amount: g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz 2000000000
 // [EXPECTED] every v1 delegation value survived the upgrade
 //
 // [SCENARIO] 9. Keep operating on the v1-created delegations

@@ -458,7 +458,7 @@ func mustOwnerOf(tid grc721.TokenID) address {
 //   - Duration: 7776000 seconds
 //   - Expected reward per second: 1000
 //   - Expected dust (should be 0): 0
-// [INFO] incentive ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567905:1
+// [INFO] incentive ID: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567905:1
 // [INFO] creator QUX balance before: 7776000000
 // [INFO] staker QUX balance before: 0
 // [INFO] creator GNS balance before: 100000000000
@@ -497,7 +497,7 @@ func mustOwnerOf(tid grc721.TokenID) address {
 // [INFO] unstaking position to collect remaining rewards
 // [INFO] rewards collected from unstaking: 0 QUX
 // [INFO] total rewards collected so far: 6263999998 QUX
-// [INFO] position owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [INFO] position owner after unstaking: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 //
 // [SCENARIO] 12. End external incentive and verify no dust
 // [INFO] ending external incentive

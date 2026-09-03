@@ -46,7 +46,7 @@ var (
 	adminUser    = adminAddr
 	adminRealm   = testing.NewUserRealm(adminAddr)
 
-	// g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+	// g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 	externalCreatorAddr  = testutils.TestAddress("externalCreator")
 	externalCreatorUser  = externalCreatorAddr
 	externalCreatorRealm = testing.NewUserRealm(externalCreatorAddr)
@@ -277,7 +277,7 @@ func endExternalQuxIncentive(cur realm) {
 	stakerQuxBeforeEnds := qux.BalanceOf(stakerAddr)
 	gnsBalanceBeforeEnds := gns.BalanceOf(externalCreatorUser)
 
-	incentiveID := "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567910:1"
+	incentiveID := "g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567910:1"
 	sr.EndExternalIncentive(
 		cross(cur),
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
@@ -341,7 +341,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] transfer QUX reward and GNS deposit to external creator
 // [INFO] approve QUX and GNS for external incentive creation
 // [INFO] create external incentive for 90 days
-// [INFO] create external incentive with incentiveID:  g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567910:1
+// [INFO] create external incentive with incentiveID:  g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567910:1
 //
 // [SCENARIO] 6. Start external incentive
 // [INFO] skip blocks until external incentive starts

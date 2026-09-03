@@ -446,7 +446,7 @@ func endExternalIncentive(cur realm) {
 	testing.SkipHeights(9999999)
 
 	println("[INFO] end external incentive")
-	incentiveID := "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234568025:1"
+	incentiveID := "g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234568025:1"
 	sr.EndExternalIncentive(
 		cross(cur),
 		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500",
@@ -525,7 +525,7 @@ func mustOwnerOf(tid grc721.TokenID) address {
 // [EXPECTED] position 01 - ID: 1
 // [EXPECTED] liquidity: 12437
 // [EXPECTED] amount0: 1000, amount1: 368
-// [EXPECTED] position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] position owner: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 //
 // [SCENARIO] 4. Mint native position 02
 // [INFO] approve tokens for second native minting
@@ -536,13 +536,13 @@ func mustOwnerOf(tid grc721.TokenID) address {
 // [EXPECTED] position 02 - ID: 2
 // [EXPECTED] liquidity: 12437
 // [EXPECTED] amount0: 1000, amount1: 368
-// [EXPECTED] position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] position owner: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 //
 // [SCENARIO] 5. Create external incentive with native coin
 // [INFO] prepare 10_000_000_000 ugnot for external incentive
 // [INFO] add token and approve gns
 // [INFO] create external incentive with native coin
-// [INFO] create external incentive with incentiveID:  g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234568025:1
+// [INFO] create external incentive with incentiveID:  g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234568025:1
 // [INFO] external incentive created - start: 1234742400, end: 1242518400
 // [EXPECTED] admin wugnot balance after external incentive: 49999005
 //
@@ -571,7 +571,7 @@ func mustOwnerOf(tid grc721.TokenID) address {
 // [INFO] wugnot balance before unstake: 52217369
 // [INFO] ugnot balance before unstake: 20050001005
 // [INFO] unstake token (no unwrap)
-// [EXPECTED] NFT owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] NFT owner after unstaking: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] wugnot balance after unstake: 53297615
 // [EXPECTED] ugnot balance after unstake: 20050001005
 // [EXPECTED] wugnot increase from unstake: 1080246
@@ -582,7 +582,7 @@ func mustOwnerOf(tid grc721.TokenID) address {
 // [INFO] wugnot balance before unstake: 53297615
 // [INFO] ugnot balance before unstake: 20050001005
 // [INFO] unstake token (no unwrap)
-// [EXPECTED] NFT owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] NFT owner after unstaking: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 // [EXPECTED] wugnot balance after unstake: 58756719
 // [EXPECTED] ugnot balance after unstake: 20050001005
 // [EXPECTED] wugnot increase from unstake: 5459104

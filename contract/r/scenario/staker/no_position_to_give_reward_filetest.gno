@@ -316,7 +316,7 @@ func mustOwnerOf(tid grc721.TokenID) address {
 // [EXPECTED] position ID: 1
 // [EXPECTED] liquidity: 200510
 // [EXPECTED] amount0: 1000, amount1: 1000
-// [EXPECTED] position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 (not staked)
+// [EXPECTED] position owner: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz (not staked)
 //
 // [SCENARIO] 6. Check emission with position minted but not staked
 // [INFO] check emission when position exists but is not staked

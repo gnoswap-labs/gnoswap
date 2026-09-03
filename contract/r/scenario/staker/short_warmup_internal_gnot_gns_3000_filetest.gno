@@ -268,7 +268,7 @@ func mustOwnerOf(tid grc721.TokenID) address {
 // [EXPECTED] position ID: 1
 // [EXPECTED] liquidity: 1005
 // [EXPECTED] amount0: 50, amount1: 50
-// [EXPECTED] position owner: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] position owner: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 //
 // [SCENARIO] 4. Stake token 01
 // [INFO] approve and stake token 01

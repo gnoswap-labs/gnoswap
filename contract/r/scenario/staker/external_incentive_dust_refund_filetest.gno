@@ -390,7 +390,7 @@ func positionIdFrom(cur realm, tokenId uint64) grc721.TokenID {
 // [EXPECTED] bar reward: 7974993637
 //
 // [SCENARIO] 9. Collect external incentive penalty
-// [INFO] collect external incentive penalty g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567905:1
+// [INFO] collect external incentive penalty g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz:1234567905:1
 // [EXPECTED] bar penalty: 1944444446
 // [EXPECTED] staker bar balance: 2
 //

@@ -185,7 +185,7 @@ func voteAndExecute(cur realm, proposalID int64, config governance.Config) {
 
 // Output:
 // [SCENARIO] 1. Delegate gns to admin
-// [INFO] gns delegated to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 (amount: 1000000000)
+// [INFO] gns delegated to g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz (amount: 1000000000)
 //
 // [SCENARIO] 2. Skip voting smoothing duration for create proposal
 // [INFO] current height: 43323

@@ -358,7 +358,7 @@ func mustOwnerOf(tid grc721.TokenID) address {
 //
 // [SCENARIO] 6. Unstake position 02
 // [INFO] unstake position 02
-// [EXPECTED] position 02 owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+// [EXPECTED] position 02 owner after unstaking: g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz
 //
 // [SCENARIO] 7. Collect rewards after unstaking
 // [INFO] collect reward for position 01 after position 02 unstaked

@@ -590,7 +590,7 @@ func TestLaunchpadDeposit_stakeGovernance(cur realm, t *testing.T) {
 			userAddress:          adminAddr,
 			expectedError:        false,
 			expectedHasAbort:     true,
-			expectedAbortMessage: "unauthorized: caller g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 is not launchpad",
+			expectedAbortMessage: "unauthorized: caller g10n6fcxm0zr3pl9gz0q4nacwvlfkjzya97rlxxz is not launchpad",
 		},
 	}
 
