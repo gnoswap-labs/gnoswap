@@ -98,6 +98,8 @@ type IStakerGetter interface {
 	GetPendingProtocolFees() map[string]int64
 	HasUnstakedPosition(positionId uint64) bool
 	GetUnstakedPositionExitTime(positionId uint64) (int64, error)
+	GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error)
+	GetUncollectedIncentiveCount(incentiveId string) int64
 	IsStaked(positionId uint64) bool
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string

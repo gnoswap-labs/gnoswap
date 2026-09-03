@@ -113,6 +113,16 @@ func (u *UnstakedPosition) HasPendingIncentiveId(incentiveId string) bool {
 	return u.pendingIncentiveIds[incentiveId]
 }
 
+// PendingIncentiveIdList returns the incentives still to be collected.
+func (u *UnstakedPosition) PendingIncentiveIdList() []string {
+	incentiveIds := make([]string, 0, len(u.pendingIncentiveIds))
+	for incentiveId := range u.pendingIncentiveIds {
+		incentiveIds = append(incentiveIds, incentiveId)
+	}
+
+	return incentiveIds
+}
+
 // HasPendingIncentives reports whether any incentive is still to be collected.
 func (u *UnstakedPosition) HasPendingIncentives() bool {
 	return len(u.pendingIncentiveIds) > 0

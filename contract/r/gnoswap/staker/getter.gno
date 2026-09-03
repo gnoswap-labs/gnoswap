@@ -292,6 +292,20 @@ func GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
 	return getImplementation().GetUnstakedPositionExitTime(positionId)
 }
 
+// GetUnstakedPositionPendingIncentives returns the incentives an unstaked position has yet to collect.
+func GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
+	incentiveIds, err := getImplementation().GetUnstakedPositionPendingIncentives(positionId)
+	if err != nil {
+		return nil, err
+	}
+	return cloneStringSlice(incentiveIds), nil
+}
+
+// GetUncollectedIncentiveCount returns how many unstaked positions still owe a reward from the incentive.
+func GetUncollectedIncentiveCount(incentiveId string) int64 {
+	return getImplementation().GetUncollectedIncentiveCount(incentiveId)
+}
+
 // IsStaked returns whether a position is staked.
 func IsStaked(positionId uint64) bool {
 	return getImplementation().IsStaked(positionId)

@@ -171,3 +171,20 @@ func (s *stakerV1) GetUnstakedPositionExitTime(positionId uint64) (int64, error)
 
 	return position.ExitTime(), nil
 }
+
+// GetUnstakedPositionPendingIncentives returns the incentives an unstaked position has yet to
+// collect.
+func (s *stakerV1) GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
+	position := s.getUnstakedPositions().get(positionId)
+	if position == nil {
+		return nil, ufmt.Errorf("%v: positionId(%d) has no uncollected reward", errDataNotFound, positionId)
+	}
+
+	return position.PendingIncentiveIdList(), nil
+}
+
+// GetUncollectedIncentiveCount returns how many unstaked positions still owe a reward from the
+// incentive; EndExternalIncentive is refused while it is non-zero.
+func (s *stakerV1) GetUncollectedIncentiveCount(incentiveId string) int64 {
+	return s.uncollectedIncentiveCountOf(incentiveId)
+}
