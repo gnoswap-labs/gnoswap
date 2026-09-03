@@ -165,7 +165,6 @@ func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32
 // It materializes elapsed halving boundaries while the pre-cross liquidity is
 // still effective, before modifying the deposit for that individual cross.
 func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickId int32, zeroForOne bool, timestamp int64) {
-	s.getPoolTier().cacheRewardForPool(timestamp, s.getPools(), pool.PoolPath())
 
 	// Calculate the effective tick position after crossing
 	// For zeroForOne swaps, liquidity becomes effective one tick lower
@@ -183,6 +182,7 @@ func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickI
 
 	// Update pool's cumulative deposit with the liquidity change
 	poolResolver := NewPoolResolver(pool)
+	s.getPoolTier().cacheRewardForPool(timestamp, s.getPools(), pool.PoolPath())
 	newAcc := poolResolver.modifyDeposit(liquidityDelta, timestamp, nextTick)
 
 	// Update the tick's outside accumulation for reward calculations
