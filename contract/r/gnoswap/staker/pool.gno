@@ -836,7 +836,7 @@ func NewTick(tickId int32) *Tick {
 		id:                   tickId,
 		stakedLiquidityGross: u256.Zero(),
 		stakedLiquidityDelta: i256.Zero(),
-		outsideAccumulation:  NewUintTreeN(64),
+		outsideAccumulation:  NewUintTreeN(4),
 	}
 }
 
