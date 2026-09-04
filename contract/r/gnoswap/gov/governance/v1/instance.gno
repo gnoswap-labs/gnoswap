@@ -88,6 +88,11 @@ func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Propos
 	deadlineIndex := g.store.GetActiveProposalsByDeadline()
 
 	snapshotIndex.Set(proposal.ActiveProposalSnapshotKey(), proposal.ID())
+	// The deadline always starts at VotingEndTime, even for executable
+	// proposal types: whether a proposal reaches the later executable
+	// window (deadline ExpiredTime) depends on the vote outcome, which
+	// isn't known until voting actually ends. pruneInactiveProposals
+	// reschedules the entry to ExpiredTime only if voting passed.
 	deadlineIndex.Set(
 		proposal.ActiveProposalDeadlineKey(proposal.Status().Schedule().VotingEndTime()),
 		proposal.ID(),
@@ -109,13 +114,24 @@ func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Propos
 	return true
 }
 
-func (g *governanceV1) removeActiveProposal(_ int, rlm realm, proposal *governance.Proposal) error {
+// removeActiveProposal removes a proposal from the active index.
+// deadlines lists every lifecycle deadline the caller's code path could
+// possibly have stored the entry under, so only the keys that can actually
+// exist are removed:
+//   - Cancel only succeeds while a proposal is still upcoming, so it only
+//     ever wrote a VotingEndTime deadline key.
+//   - Execute only succeeds once a proposal is executable (voting has ended
+//     and passed), but pruneInactiveProposals may or may not have already
+//     rescheduled the entry to ExpiredTime by then, so both keys must be
+//     attempted.
+func (g *governanceV1) removeActiveProposal(_ int, rlm realm, proposal *governance.Proposal, deadlines ...int64) error {
 	snapshotIndex := g.store.GetActiveProposalsBySnapshot()
 	deadlineIndex := g.store.GetActiveProposalsByDeadline()
 
 	snapshotIndex.Remove(proposal.ActiveProposalSnapshotKey())
-	deadlineIndex.Remove(proposal.ActiveProposalDeadlineKey(proposal.Status().Schedule().VotingEndTime()))
-	deadlineIndex.Remove(proposal.ActiveProposalDeadlineKey(proposal.Status().Schedule().ExpiredTime()))
+	for _, deadline := range deadlines {
+		deadlineIndex.Remove(proposal.ActiveProposalDeadlineKey(deadline))
+	}
 
 	if err := g.store.SetActiveProposalsBySnapshot(0, rlm, snapshotIndex); err != nil {
 		return err
@@ -139,10 +155,11 @@ func (g *governanceV1) pruneInactiveProposals(_ int, rlm realm, current int64) e
 			return false
 		}
 
-		deadline := proposal.Status().Schedule().VotingEndTime()
-		if key == proposal.ActiveProposalDeadlineKey(proposal.Status().Schedule().ExpiredTime()) {
-			deadline = proposal.Status().Schedule().ExpiredTime()
-		}
+		// The key was built from whichever deadline this entry currently
+		// represents (VotingEndTime, or ExpiredTime after a prior reschedule),
+		// so decode it directly instead of recomputing candidate keys to
+		// compare against.
+		deadline := governance.ActiveProposalIndexKeyDeadline(key)
 		if deadline > current {
 			return true
 		}
