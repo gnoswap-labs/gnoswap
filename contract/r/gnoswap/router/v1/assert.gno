@@ -107,3 +107,22 @@ func assertIsRouterImplementation(caller address) {
 		))
 	}
 }
+
+// assertHopFullyConsumed reverts when an exact-in hop consumed less input than specified.
+func assertHopFullyConsumed(hopIndex int, specifiedAmount, consumedAmount int64) {
+	err := validateHopFullyConsumed(hopIndex, specifiedAmount, consumedAmount)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func validateHopFullyConsumed(hopIndex int, specifiedAmount, consumedAmount int64) error {
+	if consumedAmount != specifiedAmount {
+		return makeErrorWithDetails(
+			errInsufficientLiquidity,
+			ufmt.Sprintf("partial fill on hop(%d): requested=%d, consumed=%d", hopIndex, specifiedAmount, consumedAmount),
+		)
+	}
+
+	return nil
+}

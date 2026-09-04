@@ -3,6 +3,7 @@ package router
 import (
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/access"
 )
 
@@ -22,6 +23,9 @@ func (r *routerV1) multiSwap(_ int, rlm realm, sp SwapParams, numPools int, swap
 			u256.Zero(),
 			callbackData,
 		)
+
+		// every hop of a forward multi-hop swap is exact-in
+		assertHopFullyConsumed(currentPoolIndex, sp.amountSpecified, amountIn)
 
 		if currentPoolIndex == 0 {
 			firstAmountIn = amountIn
@@ -58,6 +62,9 @@ func (r *routerV1) multiDrySwap(sp SingleSwapParams, numPools int, swapPath stri
 			u256.Zero(),
 			newDrySwapCallbackData(sp),
 		)
+
+		// mirror the real-swap full-consumption guard so dry runs predict reverts
+		assertHopFullyConsumed(currentPoolIndex, sp.amountSpecified, amountIn)
 
 		if currentPoolIndex == 0 {
 			firstAmountIn = amountIn
@@ -122,6 +129,12 @@ func (r *routerV1) executeCollectedSwaps(_ int, rlm realm, swapInfo []SingleSwap
 			newSwapCallbackData(swapInfo[currentPoolIndex], payer),
 		)
 
+		// hops re-specified from the previous hop's actual output run as exact-in
+		// (positive amountSpecified) and must consume that amount entirely
+		if spec := swapInfo[currentPoolIndex].amountSpecified; spec > 0 {
+			assertHopFullyConsumed(currentPoolIndex, spec, amountIn)
+		}
+
 		if currentPoolIndex == len(swapInfo)-1 {
 			firstAmountIn = amountIn
 		}
@@ -147,6 +160,14 @@ func (r *routerV1) executeCollectedDrySwaps(swapInfo []SingleSwapParams) (int64,
 			u256.Zero(),
 			newDrySwapCallbackData(swapInfo[currentPoolIndex]),
 		)
+
+		// mirror the real-swap full-consumption guard so dry runs predict reverts
+		if spec := swapInfo[currentPoolIndex].amountSpecified; spec > 0 {
+			err := validateHopFullyConsumed(currentPoolIndex, spec, amountIn)
+			if err != nil {
+				return 0, 0, err
+			}
+		}
 
 		if currentPoolIndex == len(swapInfo)-1 {
 			firstAmountIn = amountIn

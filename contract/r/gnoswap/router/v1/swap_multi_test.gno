@@ -98,3 +98,17 @@ func TestMultiSwap(cur realm, t *testing.T) {
 		})
 	}
 }
+
+func TestAssertHopFullyConsumed(cur realm, t *testing.T) {
+	uassert.NotPanics(t, cur, func() {
+		assertHopFullyConsumed(0, 1000, 1000)
+	})
+
+	uassert.PanicsWithMessage(
+		t, cur,
+		"[GNOSWAP-ROUTER-020] insufficient liquidity for swap || partial fill on hop(1): requested=1000, consumed=900",
+		func() {
+			assertHopFullyConsumed(1, 1000, 900)
+		},
+	)
+}

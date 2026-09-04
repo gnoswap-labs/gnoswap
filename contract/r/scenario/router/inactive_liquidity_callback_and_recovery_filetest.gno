@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -76,7 +77,7 @@ func main(cur realm) {
 	// consumes that liquidity, then reaches the upper terminal tick.
 	println()
 	println("[STEP 5] Cross remaining [100, 200] liquidity and reach the upper terminal")
-	println("[ACTION] Execute baz -> bar ExactIn swap with input=100000")
+	println("[ACTION] Execute baz -> bar ExactIn swap with input=100000 and explicit price limit")
 	moveTowardOutOfRangeLiquidityAndTerminal(cur)
 	assertTick(887270, "tick after crossing out-of-range liquidity")
 
@@ -133,9 +134,13 @@ func assertCallbackPanicTowardEmptySide(cur realm) {
 	ufmt.Printf("[RESULT] Empty-side swap aborted as expected: %v\n", r)
 }
 
+// The terminal-driving swap intentionally consumes less input than requested,
+// so it must set an explicit sqrtPriceLimitX96: without one the router now
+// reverts on any exact-in swap that cannot consume the full input.
 func moveTowardOutOfRangeLiquidityAndTerminal(cur realm) {
 	testing.SetRealm(adminRealm)
-	in, out := rt.ExactInSwapRoute(cross(cur), bazPath, barPath, "100000", reverseRoute, "100", "0", deadline, "")
+	limit := new(u256.Uint).Sub(gnsmath.TickMathGetSqrtRatioAtTick(887271), u256.One()).ToString()
+	in, out := rt.ExactInSingleSwapRoute(cross(cur), bazPath, barPath, "100000", reverseRoute, "0", limit, deadline, "")
 	ufmt.Printf("[RESULT] Forward swap: in=%s out=%s\n", in, out)
 }
 
@@ -193,7 +198,7 @@ func assertActiveLiquidity(wantZero bool, label string) {
 // [EXPECTED] tick after empty-side callback abort: -887271
 //
 // [STEP 5] Cross remaining [100, 200] liquidity and reach the upper terminal
-// [ACTION] Execute baz -> bar ExactIn swap with input=100000
+// [ACTION] Execute baz -> bar ExactIn swap with input=100000 and explicit price limit
 // [RESULT] Forward swap: in=10154 out=9985
 // [EXPECTED] tick after crossing out-of-range liquidity: 887270
 //
