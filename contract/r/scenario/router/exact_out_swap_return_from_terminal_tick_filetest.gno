@@ -26,15 +26,15 @@ import (
 )
 
 const (
-	fee       uint32 = 100
+	fee        uint32 = 100
 	maxApprove int64  = 9223372036854775807
 	deadline   int64  = 9999999999
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm    = testing.NewUserRealm(adminAddr)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 
 	barPath      = "gno.land/r/onbloc/bar.BAR"
@@ -99,16 +99,15 @@ func setup(cur realm) {
 	println("[SUCCESS] Minted the only position in range [-50, 50]")
 }
 
-
-// lowerTerminalLimit matches the router's default forward limit for fee=100:
-// sqrtRatioAtTick(minTick+1) + 1, i.e. the price at the lower terminal tick.
+// lowerTerminalLimit bounds the forward terminal test to tick -887271.
+// The explicit limit permits the intentional partial fill.
 func lowerTerminalLimit() string {
 	limit := gnsmath.TickMathGetSqrtRatioAtTick(-887271)
 	return new(u256.Uint).Add(limit, u256.One()).ToString()
 }
 
-// upperTerminalLimit matches the router's default backward limit for fee=100:
-// sqrtRatioAtTick(maxTick-1) - 1, i.e. the price at the upper terminal tick.
+// upperTerminalLimit bounds the forward terminal test to tick 887270.
+// The explicit limit permits the intentional partial fill.
 func upperTerminalLimit() string {
 	limit := gnsmath.TickMathGetSqrtRatioAtTick(887271)
 	return new(u256.Uint).Sub(limit, u256.One()).ToString()
