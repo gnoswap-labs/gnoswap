@@ -1,7 +1,6 @@
 package router
 
 import (
-	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/router"
 
@@ -39,7 +38,7 @@ func (r *routerV1) swapInner(
 		token0Path, token1Path = token1Path, token0Path
 	}
 
-	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
+	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, sqrtPriceLimitX96)
 
 	amount0Str, amount1Str := pl.Swap(
 		cross(rlm),
@@ -83,7 +82,7 @@ func (r *routerV1) swapDryInner(
 		token0Path, token1Path = token1Path, token0Path
 	}
 
-	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
+	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, sqrtPriceLimitX96)
 
 	// check possible
 	amount0Str, amount1Str, err := pl.DrySwap(
@@ -119,26 +118,13 @@ func (r *routerV1) swapDryInner(
 // If a non-zero limit is provided by the caller, it is returned as-is.
 // Otherwise, it returns the global TickMath boundary for the swap direction.
 // The returned pointer is shared (read-only — callers must not mutate it).
-func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX96 *u256.Uint) *u256.Uint {
+func calculateSqrtPriceLimitForSwap(zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) *u256.Uint {
 	if !sqrtPriceLimitX96.IsZero() {
 		return sqrtPriceLimitX96
 	}
 
-	assertKnownPoolFeeTier(fee)
 	if zeroForOne {
 		return sqrtPriceLimitForward
 	}
 	return sqrtPriceLimitBackward
-}
-
-func assertKnownPoolFeeTier(fee uint32) {
-	switch fee {
-	case 100, 500, 3000, 10000:
-		return
-	default:
-		panic(makeErrorWithDetails(
-			errInvalidPoolFeeTier,
-			ufmt.Sprintf("unknown fee(%d)", fee),
-		))
-	}
 }

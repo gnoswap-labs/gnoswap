@@ -17,70 +17,24 @@ func TestCalculateSqrtPriceLimitForSwap(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		zeroForOne        bool
-		fee               uint32
 		sqrtPriceLimitX96 *u256.Uint
 		expected          string
 	}{
 		{
 			name:              "already set sqrtPriceLimit",
 			zeroForOne:        true,
-			fee:               500,
 			sqrtPriceLimitX96: u256.NewUint(1000),
 			expected:          "1000",
 		},
 		{
-			name:              "zeroForOne fee 100 uses global minimum boundary",
+			name:              "zeroForOne uses global minimum boundary",
 			zeroForOne:        true,
-			fee:               100,
 			sqrtPriceLimitX96: u256.Zero(),
 			expected:          "4295128740",
 		},
 		{
-			name:              "zeroForOne fee 500 uses global minimum boundary",
-			zeroForOne:        true,
-			fee:               500,
-			sqrtPriceLimitX96: u256.Zero(),
-			expected:          "4295128740",
-		},
-		{
-			name:              "zeroForOne fee 3000 uses global minimum boundary",
-			zeroForOne:        true,
-			fee:               3000,
-			sqrtPriceLimitX96: u256.Zero(),
-			expected:          "4295128740",
-		},
-		{
-			name:              "zeroForOne fee 10000 uses global minimum boundary",
-			zeroForOne:        true,
-			fee:               10000,
-			sqrtPriceLimitX96: u256.Zero(),
-			expected:          "4295128740",
-		},
-		{
-			name:              "oneForZero fee 100 uses global maximum boundary",
+			name:              "oneForZero uses global maximum boundary",
 			zeroForOne:        false,
-			fee:               100,
-			sqrtPriceLimitX96: u256.Zero(),
-			expected:          "1461446703485210103287273052203988822378723970341",
-		},
-		{
-			name:              "oneForZero fee 500 uses global maximum boundary",
-			zeroForOne:        false,
-			fee:               500,
-			sqrtPriceLimitX96: u256.Zero(),
-			expected:          "1461446703485210103287273052203988822378723970341",
-		},
-		{
-			name:              "oneForZero fee 3000 uses global maximum boundary",
-			zeroForOne:        false,
-			fee:               3000,
-			sqrtPriceLimitX96: u256.Zero(),
-			expected:          "1461446703485210103287273052203988822378723970341",
-		},
-		{
-			name:              "oneForZero fee 10000 uses global maximum boundary",
-			zeroForOne:        false,
-			fee:               10000,
 			sqrtPriceLimitX96: u256.Zero(),
 			expected:          "1461446703485210103287273052203988822378723970341",
 		},
@@ -90,7 +44,6 @@ func TestCalculateSqrtPriceLimitForSwap(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := calculateSqrtPriceLimitForSwap(
 				tt.zeroForOne,
-				tt.fee,
 				tt.sqrtPriceLimitX96,
 			)
 			uassert.Equal(t, result.ToString(), tt.expected)
