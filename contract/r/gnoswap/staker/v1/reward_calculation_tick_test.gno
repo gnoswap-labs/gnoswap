@@ -287,6 +287,18 @@ func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 	}
 }
 
+func TestUpdateCurrentOutsideAccumulation_SkipsUnchangedCheckpoint(t *testing.T) {
+	tick := sr.NewTick(100)
+	tick.SetOutsideAccumulationAt(400, u256.NewUint(500))
+
+	tickResolver := NewTickResolver(tick)
+	tickResolver.updateCurrentOutsideAccumulation(500, u256.NewUint(1000))
+
+	uassert.Equal(t, 1, tick.OutsideAccumulation().Size())
+	uassert.Equal(t, "500", tickResolver.CurrentOutsideAccumulation(500).ToString())
+	uassert.Equal(t, "500", tickResolver.CurrentOutsideAccumulation(600).ToString())
+}
+
 func TestTickCrossHook_BatchesNetZeroDeltaInitializedTick(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 

@@ -52,10 +52,16 @@ func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.
 }
 
 // updateCurrentOutsideAccumulation updates the tick's outside accumulation
-// It "flips" the accumulation's inside/outside by subtracting the current outside accumulation from the global accumulation
+// It "flips" the accumulation's inside/outside by subtracting the current outside accumulation from the global accumulation.
+// An unchanged result does not require a checkpoint because predecessor queries
+// return the same value for this and all subsequent timestamps.
 func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
+	if newOutsideAccumulation.Eq(currentOutsideAccumulation) {
+		return
+	}
+
 	self.SetOutsideAccumulationAt(timestamp, newOutsideAccumulation)
 }
 
