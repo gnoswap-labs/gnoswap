@@ -16,11 +16,6 @@ const (
 	MAX_SQRT_RATIO_MINUS_ONE string = "1461446703485210103287273052203988822378723970341"
 )
 
-var (
-	sqrtPriceLimitForward  = u256.MustFromDecimal(MIN_SQRT_RATIO_PLUS_ONE)
-	sqrtPriceLimitBackward = u256.MustFromDecimal(MAX_SQRT_RATIO_MINUS_ONE)
-)
-
 // swapInner executes the core swap logic by interacting with the pool contract.
 // Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
 func (r *routerV1) swapInner(
@@ -38,7 +33,7 @@ func (r *routerV1) swapInner(
 		token0Path, token1Path = token1Path, token0Path
 	}
 
-	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, sqrtPriceLimitX96)
+	sqrtPriceLimitStr := calculateSqrtPriceLimitToStr(zeroForOne, sqrtPriceLimitX96)
 
 	amount0Str, amount1Str := pl.Swap(
 		cross(rlm),
@@ -48,7 +43,7 @@ func (r *routerV1) swapInner(
 		recipient,
 		zeroForOne,
 		utils.FormatInt(amountSpecified),
-		sqrtPriceLimitX96.ToString(),
+		sqrtPriceLimitStr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 			// assert is pool to prevent unauthorized callback
 			caller := cur.Previous().Address()
@@ -82,7 +77,7 @@ func (r *routerV1) swapDryInner(
 		token0Path, token1Path = token1Path, token0Path
 	}
 
-	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, sqrtPriceLimitX96)
+	sqrtPriceLimitStr := calculateSqrtPriceLimitToStr(zeroForOne, sqrtPriceLimitX96)
 
 	// check possible
 	amount0Str, amount1Str, err := pl.DrySwap(
@@ -91,7 +86,7 @@ func (r *routerV1) swapDryInner(
 		data.fee,
 		zeroForOne,
 		utils.FormatInt(amountSpecified),
-		sqrtPriceLimitX96.ToString(),
+		sqrtPriceLimitStr,
 	)
 	if err != nil {
 		panic(err)
@@ -114,17 +109,16 @@ func (r *routerV1) swapDryInner(
 	return poolRecv.Int64(), poolOut.Int64()
 }
 
-// calculateSqrtPriceLimitForSwap returns the price limit for a swap operation.
-// If a non-zero limit is provided by the caller, it is returned as-is.
-// Otherwise, it returns the global TickMath boundary for the swap direction.
-// The returned pointer is shared (read-only — callers must not mutate it).
-func calculateSqrtPriceLimitForSwap(zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) *u256.Uint {
+// calculateSqrtPriceLimitToStr returns the price-limit string for a swap operation.
+// A non-zero caller limit is formatted as-is; a zero limit uses the global
+// TickMath boundary for the swap direction.
+func calculateSqrtPriceLimitToStr(zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) string {
 	if !sqrtPriceLimitX96.IsZero() {
-		return sqrtPriceLimitX96
+		return sqrtPriceLimitX96.ToString()
 	}
 
 	if zeroForOne {
-		return sqrtPriceLimitForward
+		return MIN_SQRT_RATIO_PLUS_ONE
 	}
-	return sqrtPriceLimitBackward
+	return MAX_SQRT_RATIO_MINUS_ONE
 }
