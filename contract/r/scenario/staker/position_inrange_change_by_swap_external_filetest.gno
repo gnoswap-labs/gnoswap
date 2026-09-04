@@ -6,9 +6,11 @@ package main
 
 import (
 	"chain/runtime"
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/demo/tokens/grc721"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -240,6 +242,16 @@ func collectExternalRewardWhileInRange(cur realm) {
 	println("[INFO] confirmed: external rewards distributed while position is in-range")
 }
 
+// lowerTerminalLimit matches the router's default forward limit for fee=100:
+// sqrtRatioAtTick(minTick+1) + 1, i.e. the price at the lower terminal tick.
+// The terminal-driving swap intentionally consumes less input than requested,
+// so it must set an explicit sqrtPriceLimitX96: without one the router now
+// reverts on any exact-in swap that cannot consume the full input.
+func lowerTerminalLimit() string {
+	limit := gnsmath.TickMathGetSqrtRatioAtTick(-887271)
+	return new(u256.Uint).Add(limit, u256.One()).ToString()
+}
+
 func performSwapToMovePrice(cur realm) {
 	testing.SetRealm(adminRealm)
 
@@ -255,20 +267,20 @@ func performSwapToMovePrice(cur realm) {
 	// Swap a large amount to move the tick significantly
 	swapAmount := "100000"
 
-	println("[INFO] swap bar for baz to move tick up")
-	_, amountOut := rt.ExactInSwapRoute(
+	println("[INFO] swap bar for baz with explicit price limit")
+	amountIn, amountOut := rt.ExactInSingleSwapRoute(
 		cross(cur),
 		barPath,
 		bazPath,
 		swapAmount,
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
-		"100",
 		"0",
+		lowerTerminalLimit(),
 		maxTimeout,
 		"",
 	)
 
-	ufmt.Printf("[INFO] swapped %s bar for %s baz\n", swapAmount, amountOut)
+	ufmt.Printf("[INFO] swapped %s bar for %s baz\n", amountIn, amountOut)
 
 	// Check tick after swap
 	currentTickAfter, _ := pl.GetSlot0Tick(poolPath)
@@ -280,14 +292,14 @@ func performSwapToMovePrice(cur realm) {
 		// Try another swap to move further
 		println("[INFO] perform additional swap")
 
-		rt.ExactInSwapRoute(
+		rt.ExactInSingleSwapRoute(
 			cross(cur),
 			barPath,
 			bazPath,
 			swapAmount,
 			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
-			"100",
 			"0",
+			lowerTerminalLimit(),
 			maxTimeout,
 			"",
 		)
@@ -455,8 +467,8 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] approve tokens for swapping
 // [INFO] tick before swap: 0
 // [INFO] perform large swap to move price out of range
-// [INFO] swap bar for baz to move tick up
-// [INFO] swapped 100000 bar for 9985 baz
+// [INFO] swap bar for baz with explicit price limit
+// [INFO] swapped 10028 bar for 9985 baz
 // [EXPECTED] tick after swap: -887271
 //
 // [SCENARIO] 8. Collect external reward while out-of-range

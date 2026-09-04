@@ -10,6 +10,7 @@ import (
 // ErrorMessages define all error message templates used throughout the router
 const (
 	// slippage validation
+	errExactInAmountMismatch  = "consumed input does not match requested (requested=%d, consumed=%d)"
 	errExactOutAmountExceeded = "received more than requested in requested=%d, actual=%d"
 
 	// route validation
@@ -47,6 +48,15 @@ func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount int64, swap
 
 	if diff > swapCount {
 		return ufmt.Errorf(errExactOutAmountExceeded, specifiedAmount, resultAmount)
+	}
+
+	return nil
+}
+
+// exactInAmount checks that the swap consumed exactly the requested input amount.
+func (v *SwapValidator) exactInAmount(resultAmount, specifiedAmount int64) error {
+	if resultAmount != specifiedAmount {
+		return ufmt.Errorf(errExactInAmountMismatch, specifiedAmount, resultAmount)
 	}
 
 	return nil
@@ -189,6 +199,14 @@ func (r *routerV1) finalizeSwap(
 	if swapType == ExactOut && !isSetSqrtPriceLimitX96 {
 		if err := validator.exactOutAmount(resultAmountOutWithoutFee, amountSpecified, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
+		}
+	}
+
+	// Validate exact in amount if applicable
+	// If sqrtPriceLimitX96 is set, partial consumption up to the price limit is intended
+	if swapType == ExactIn && !isSetSqrtPriceLimitX96 {
+		if err := validator.exactInAmount(resultAmountIn, amountSpecified); err != nil {
+			panic(addDetailToError(errInsufficientLiquidity, err.Error()))
 		}
 	}
 

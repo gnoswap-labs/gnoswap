@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -45,6 +46,9 @@ var (
 
 // This is intentionally a single narrow position.  There is no full-range
 // liquidity to mask a failure to leave a terminal, inactive-liquidity state.
+// Terminal-driving swaps intentionally consume less input than requested, so
+// they must set an explicit sqrtPriceLimitX96: without one the router now
+// reverts on any exact-in swap that cannot consume the full input.
 func main(cur realm) {
 	println("[SCENARIO] Router returns from terminal tick without full-range liquidity")
 	println()
@@ -52,8 +56,8 @@ func main(cur realm) {
 	setup(cur)
 
 	println("[STEP 2] Move the pool to the lower terminal tick")
-	println("[ACTION] Execute bar -> baz ExactIn swap with input=100000")
-	forwardIn, forwardOut := rt.ExactInSwapRoute(cross(cur), barPath, bazPath, "100000", forwardRoute, "100", "0", deadline, "")
+	println("[ACTION] Execute bar -> baz ExactIn swap with input=100000 and explicit price limit")
+	forwardIn, forwardOut := rt.ExactInSingleSwapRoute(cross(cur), barPath, bazPath, "100000", forwardRoute, "0", lowerTerminalLimit(), deadline, "")
 	ufmt.Printf("[RESULT] Forward swap: in=%s out=%s\n", forwardIn, forwardOut)
 	assertTick(poolPath, -887271, "lower")
 
@@ -67,8 +71,8 @@ func main(cur realm) {
 
 	println()
 	println("[STEP 4] Move the pool to the upper terminal tick")
-	println("[ACTION] Execute baz -> bar ExactIn swap with input=100000")
-	forwardIn, forwardOut = rt.ExactInSwapRoute(cross(cur), bazPath, barPath, "100000", reverseRoute, "100", "0", deadline, "")
+	println("[ACTION] Execute baz -> bar ExactIn swap with input=100000 and explicit price limit")
+	forwardIn, forwardOut = rt.ExactInSingleSwapRoute(cross(cur), bazPath, barPath, "100000", reverseRoute, "0", upperTerminalLimit(), deadline, "")
 	ufmt.Printf("[RESULT] Forward swap: in=%s out=%s\n", forwardIn, forwardOut)
 	assertTick(poolPath, 887270, "upper")
 
@@ -100,6 +104,20 @@ func setup(cur realm) {
 	println("[SUCCESS] Minted the only position in range [-50, 50]")
 }
 
+// lowerTerminalLimit matches the router's default forward limit for fee=100:
+// sqrtRatioAtTick(minTick+1) + 1, i.e. the price at the lower terminal tick.
+func lowerTerminalLimit() string {
+	limit := gnsmath.TickMathGetSqrtRatioAtTick(-887271)
+	return new(u256.Uint).Add(limit, u256.One()).ToString()
+}
+
+// upperTerminalLimit matches the router's default backward limit for fee=100:
+// sqrtRatioAtTick(maxTick-1) - 1, i.e. the price at the upper terminal tick.
+func upperTerminalLimit() string {
+	limit := gnsmath.TickMathGetSqrtRatioAtTick(887271)
+	return new(u256.Uint).Sub(limit, u256.One()).ToString()
+}
+
 func assertTick(path string, want int32, terminal string) {
 	got, _ := pl.GetSlot0Tick(path)
 	ufmt.Printf("[EXPECTED] Tick after %s terminal swap: %d\n", terminal, got)
@@ -124,7 +142,7 @@ func assertTickInRange(path string, lower, upper int32, terminal string) {
 // [INFO] Create bar:baz:100 pool at tick 0
 // [SUCCESS] Minted the only position in range [-50, 50]
 // [STEP 2] Move the pool to the lower terminal tick
-// [ACTION] Execute bar -> baz ExactIn swap with input=100000
+// [ACTION] Execute bar -> baz ExactIn swap with input=100000 and explicit price limit
 // [RESULT] Forward swap: in=10028 out=9985
 // [EXPECTED] Tick after lower terminal swap: -887271
 //
@@ -135,7 +153,7 @@ func assertTickInRange(path string, lower, upper int32, terminal string) {
 // [SUCCESS] Returned to the active [-50, 50] range
 //
 // [STEP 4] Move the pool to the upper terminal tick
-// [ACTION] Execute baz -> bar ExactIn swap with input=100000
+// [ACTION] Execute baz -> bar ExactIn swap with input=100000 and explicit price limit
 // [RESULT] Forward swap: in=19030 out=18993
 // [EXPECTED] Tick after upper terminal swap: 887270
 //
