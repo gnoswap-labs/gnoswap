@@ -42,11 +42,11 @@ func TestCalculateSqrtPriceLimitForSwap(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			result := calculateSqrtPriceLimitForSwap(
+			result := calculateSqrtPriceLimitToStr(
 				tt.zeroForOne,
 				tt.sqrtPriceLimitX96,
 			)
-			uassert.Equal(t, result.ToString(), tt.expected)
+			uassert.Equal(t, result, tt.expected)
 		})
 	}
 }
