@@ -44,6 +44,7 @@ var (
 
 func main(cur realm) {
 	println("[SCENARIO] TWAP after liquidity exhaustion reaches the upper price boundary")
+	println("[SCENARIO] 1. Create a limit position over ticks [0, 120]")
 
 	testing.SetRealm(adminRealm)
 	gns.Approve(cross(cur), poolAddr, pool.GetPoolCreationFee())
@@ -54,9 +55,17 @@ func main(cur realm) {
 
 	testing.SetRealm(positionRealm)
 	pool.Mint(cross(cur), barPath, fooPath, fee100, 0, 120, liquidity, adminAddr)
+	poolPath := pool.GetPoolPath(barPath, fooPath, fee100)
+	p, _ := pool.GetPools().Get(poolPath).(*pool.Pool)
+	println("[INFO] Initial tick:", p.Slot0Tick())
+	println("[INFO] Initial active liquidity:", p.Liquidity().ToString())
 
-	// The swap observation records tick 0 before the position is exhausted.
+	println("[SCENARIO] 2. Record a pre-exhaustion observation at tick 0")
 	testing.SkipHeights(1)
+	println("[INFO] Elapsed seconds before swap:", windowSeconds)
+	println()
+
+	println("[SCENARIO] 3. Exhaust the limit position and reach the price boundary")
 	testing.SetRealm(routerRealm)
 	amount0, amount1 := pool.Swap(
 		cross(cur), barPath, fooPath, fee100, adminAddr, false, swapAmount, maxPrice,
@@ -74,14 +83,17 @@ func main(cur realm) {
 	if amount0 != "-59817377" || amount1 != "60183362" {
 		panic("unexpected limit-exhaustion swap amounts")
 	}
+	println("[INFO] Swap amounts:", amount0, amount1)
 
-	poolPath := pool.GetPoolPath(barPath, fooPath, fee100)
-	p, _ := pool.GetPools().Get(poolPath).(*pool.Pool)
+	p, _ = pool.GetPools().Get(poolPath).(*pool.Pool)
 	if p.Slot0Tick() != 887271 || !p.Liquidity().IsZero() {
 		panic("expected the exhausted pool at the upper price boundary")
 	}
+	println("[INFO] Tick after exhaustion:", p.Slot0Tick())
+	println("[INFO] Active liquidity after exhaustion:", p.Liquidity().ToString())
+	println()
 
-	// The pool remains at tick 887271 for ten seconds after reaching the boundary.
+	println("[SCENARIO] 4. Consult TWAP after ten seconds at the upper boundary")
 	testing.SkipHeights(2)
 	recentTick, _, err := pool.OracleConsult(poolPath, windowSeconds)
 	if err != nil {
@@ -103,6 +115,18 @@ func main(cur realm) {
 
 // Output:
 // [SCENARIO] TWAP after liquidity exhaustion reaches the upper price boundary
+// [SCENARIO] 1. Create a limit position over ticks [0, 120]
+// [INFO] Initial tick: 0
+// [INFO] Initial active liquidity: 10000000000
+// [SCENARIO] 2. Record a pre-exhaustion observation at tick 0
+// [INFO] Elapsed seconds before swap: 5
+//
+// [SCENARIO] 3. Exhaust the limit position and reach the price boundary
+// [INFO] Swap amounts: -59817377 60183362
+// [INFO] Tick after exhaustion: 887271
+// [INFO] Active liquidity after exhaustion: 0
+//
+// [SCENARIO] 4. Consult TWAP after ten seconds at the upper boundary
 // [INFO] Slot tick after exhaustion: 887271
 // [INFO] TWAP for final 5 seconds: 887271
 // [INFO] TWAP across all 15 seconds: 591514
