@@ -1,7 +1,6 @@
 package router
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/router"
@@ -11,44 +10,17 @@ import (
 	"gno.land/p/gnoswap/utils"
 
 	pl "gno.land/r/gnoswap/pool"
-	plv1 "gno.land/r/gnoswap/pool/v1"
 )
 
 const (
-	MIN_SQRT_RATIO string = "4295128739"                                        // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
-	MAX_SQRT_RATIO string = "1461446703485210103287273052203988822378723970342" // same as TickMathGetSqrtRatioAtTick(MAX_TICK)
+	MIN_SQRT_RATIO_PLUS_ONE  string = "4295128740"
+	MAX_SQRT_RATIO_MINUS_ONE string = "1461446703485210103287273052203988822378723970341"
 )
 
-// Precomputed sqrt price limits per fee tier and direction.
-// TickMathGetSqrtRatioAtTick costs ~2M-2.4M gas per call and only depends on fee tier,
-// so we compute all 8 values (4 fees × 2 directions) once at init and cache them.
-// Callers use the cached pointer read-only (only .ToString() is called on the result).
 var (
-	sqrtPriceLimitForward  = make(map[uint32]*u256.Uint) // zeroForOne=true:  sqrtRatioAtTick(minTick+1) + 1
-	sqrtPriceLimitBackward = make(map[uint32]*u256.Uint) // zeroForOne=false: sqrtRatioAtTick(maxTick-1) - 1
+	sqrtPriceLimitForward  = u256.MustFromDecimal(MIN_SQRT_RATIO_PLUS_ONE)
+	sqrtPriceLimitBackward = u256.MustFromDecimal(MAX_SQRT_RATIO_MINUS_ONE)
 )
-
-func init() {
-	for _, fee := range []uint32{plv1.FeeTier100, plv1.FeeTier500, plv1.FeeTier3000, plv1.FeeTier10000} {
-		// zeroForOne=true: price must stay above minimum
-		minTick := getMinTick(fee) + 1
-		fwd := gnsmath.TickMathGetSqrtRatioAtTick(minTick) // returns a fresh allocation
-		if fwd.IsZero() {
-			fwd = u256.MustFromDecimal(MIN_SQRT_RATIO)
-		}
-		fwd.Add(fwd, u256.One()) // fwd += 1 in-place
-		sqrtPriceLimitForward[fee] = fwd
-
-		// zeroForOne=false: price must stay below maximum
-		maxTick := getMaxTick(fee) - 1
-		bwd := gnsmath.TickMathGetSqrtRatioAtTick(maxTick) // returns a fresh allocation
-		if bwd.IsZero() {
-			bwd = u256.MustFromDecimal(MAX_SQRT_RATIO)
-		}
-		bwd.Sub(bwd, u256.One()) // bwd -= 1 in-place
-		sqrtPriceLimitBackward[fee] = bwd
-	}
-}
 
 // swapInner executes the core swap logic by interacting with the pool contract.
 // Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
@@ -145,65 +117,26 @@ func (r *routerV1) swapDryInner(
 
 // calculateSqrtPriceLimitForSwap returns the price limit for a swap operation.
 // If a non-zero limit is provided by the caller, it is returned as-is.
-// Otherwise, returns the precomputed limit for the given fee tier and direction.
+// Otherwise, it returns the global TickMath boundary for the swap direction.
 // The returned pointer is shared (read-only — callers must not mutate it).
 func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX96 *u256.Uint) *u256.Uint {
 	if !sqrtPriceLimitX96.IsZero() {
 		return sqrtPriceLimitX96
 	}
 
+	assertKnownPoolFeeTier(fee)
 	if zeroForOne {
-		return mustGetSqrtPriceLimit(sqrtPriceLimitForward, fee)
+		return sqrtPriceLimitForward
 	}
-	return mustGetSqrtPriceLimit(sqrtPriceLimitBackward, fee)
+	return sqrtPriceLimitBackward
 }
 
-func mustGetSqrtPriceLimit(limits map[uint32]*u256.Uint, fee uint32) *u256.Uint {
-	limit, ok := limits[fee]
-	if !ok {
-		panic(addDetailToError(
-			errInvalidPoolFeeTier,
-			ufmt.Sprintf("unknown fee(%d)", fee),
-		))
-	}
-	return limit
-}
-
-// getMinTick returns the minimum tick value for a given fee tier.
-// The implementation follows Uniswap V3's tick spacing rules where
-// lower fee tiers allow for finer price granularity.
-func getMinTick(fee uint32) int32 {
+func assertKnownPoolFeeTier(fee uint32) {
 	switch fee {
-	case 100:
-		return -887272
-	case 500:
-		return -887270
-	case 3000:
-		return -887220
-	case 10000:
-		return -887200
+	case 100, 500, 3000, 10000:
+		return
 	default:
-		panic(addDetailToError(
-			errInvalidPoolFeeTier,
-			ufmt.Sprintf("unknown fee(%d)", fee),
-		))
-	}
-}
-
-// getMaxTick returns the maximum tick value for a given fee tier.
-// The max tick values are the exact negatives of min tick values.
-func getMaxTick(fee uint32) int32 {
-	switch fee {
-	case 100:
-		return 887272
-	case 500:
-		return 887270
-	case 3000:
-		return 887220
-	case 10000:
-		return 887200
-	default:
-		panic(addDetailToError(
+		panic(makeErrorWithDetails(
 			errInvalidPoolFeeTier,
 			ufmt.Sprintf("unknown fee(%d)", fee),
 		))
