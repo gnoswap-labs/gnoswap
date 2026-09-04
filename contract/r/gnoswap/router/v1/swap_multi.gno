@@ -64,7 +64,10 @@ func (r *routerV1) multiDrySwap(sp SingleSwapParams, numPools int, swapPath stri
 		)
 
 		// mirror the real-swap full-consumption guard so dry runs predict reverts
-		assertHopFullyConsumed(currentPoolIndex, sp.amountSpecified, amountIn)
+		err := validateHopFullyConsumed(currentPoolIndex, sp.amountSpecified, amountIn)
+		if err != nil {
+			return 0, 0, err
+		}
 
 		if currentPoolIndex == 0 {
 			firstAmountIn = amountIn
