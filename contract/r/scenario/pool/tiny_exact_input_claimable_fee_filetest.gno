@@ -97,6 +97,7 @@ func main(cur realm) {
 
 	println("[INFO] Swap amounts:", amount0, amount1)
 	println("[INFO] Tick after swap:", p.Slot0Tick())
+	println("[INFO] Fee growth token1:", p.FeeGrowthGlobal1X128().ToString())
 	println("[INFO] Collected LP fees:", collected0, collected1)
 	println("[RESULT] The crossed LP collected the one-unit fee")
 }
@@ -105,5 +106,6 @@ func main(cur realm) {
 // [SCENARIO] A tiny exact-input fee becomes claimable after an empty-range cross
 // [INFO] Swap amounts: 0 1
 // [INFO] Tick after swap: 100
+// [INFO] Fee growth token1: 340282366920938463463374607431768211456
 // [INFO] Collected LP fees: 0 1
 // [RESULT] The crossed LP collected the one-unit fee
