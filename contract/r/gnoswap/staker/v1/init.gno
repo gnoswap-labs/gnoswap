@@ -115,6 +115,20 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		}
 	}
 
+	if !stakerStore.HasUnstakedPositionsStoreKey() {
+		err := stakerStore.SetUnstakedPositions(0, rlm, sr.NewBPTreeN(16))
+		if err != nil {
+			return err
+		}
+	}
+
+	if !stakerStore.HasUncollectedIncentiveCountsStoreKey() {
+		err := stakerStore.SetUncollectedIncentiveCounts(0, rlm, sr.NewBPTreeN(16))
+		if err != nil {
+			return err
+		}
+	}
+
 	if !stakerStore.HasWarmupTemplateStoreKey() {
 		err := stakerStore.SetWarmupTemplate(0, rlm, sr.DefaultWarmupTemplate())
 		if err != nil {

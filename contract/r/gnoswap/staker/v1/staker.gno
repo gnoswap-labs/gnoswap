@@ -207,6 +207,7 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 	halt.AssertIsNotHaltedStaker()
 
 	assertIsNotStaked(s, positionId)
+	assertHasNoExitCheckpoint(s, positionId)
 
 	en.MintAndDistributeGns(cross(rlm))
 
@@ -427,6 +428,9 @@ type collectContext struct {
 	deposit         *sr.Deposit
 	depositResolver *DepositResolver
 
+	// checkpoint is set when the position was unstaked before collecting.
+	checkpoint *sr.UnstakedPosition
+
 	currentTime int64
 	blockHeight int64
 
@@ -442,15 +446,13 @@ type collectContext struct {
 // newCollectContext resolves the deposit and snapshots the accumulator values used for reward
 // calculation tracking. Call it AFTER the calculation's state update has been applied, so a lazily
 // created pool is already persisted.
-func (s *stakerV1) newCollectContext(_ int, rlm realm, positionId uint64, currentTime, blockHeight int64) *collectContext {
-	deposit := s.getDeposits().get(positionId)
+func (s *stakerV1) newCollectContext(_ int, rlm realm, target *collectTarget, currentTime, blockHeight int64) *collectContext {
+	positionId := target.positionId
+	deposit := target.deposit
 
 	pool, _ := s.getPools().Get(deposit.TargetPoolPath())
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := newPoolResolverWithExit(pool, target.checkpoint)
 	globalAccX128, stakedLiquidity := poolResolver.globalRewardRatioAccumulationAt(currentTime)
-
-	lowerTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickLower()))
-	upperTickResolver := NewTickResolver(poolResolver.GetOrNewTick(deposit.TickUpper()))
 
 	previousRealm := rlm.Previous()
 
@@ -458,6 +460,7 @@ func (s *stakerV1) newCollectContext(_ int, rlm realm, positionId uint64, curren
 		positionId:      positionId,
 		deposit:         deposit,
 		depositResolver: NewDepositResolver(deposit),
+		checkpoint:      target.checkpoint,
 
 		currentTime: currentTime,
 		blockHeight: blockHeight,
@@ -467,20 +470,136 @@ func (s *stakerV1) newCollectContext(_ int, rlm realm, positionId uint64, curren
 
 		stakedLiquidity:     stakedLiquidity,
 		globalAccX128:       globalAccX128,
-		lowerOutsideAccX128: lowerTickResolver.CurrentOutsideAccumulation(currentTime),
-		upperOutsideAccX128: upperTickResolver.CurrentOutsideAccumulation(currentTime),
+		lowerOutsideAccX128: poolResolver.outsideAccumulationAt(deposit.TickLower(), currentTime),
+		upperOutsideAccX128: poolResolver.outsideAccumulationAt(deposit.TickUpper(), currentTime),
+	}
+}
+
+// unstakingFee returns the fee rate this collect settles under: the live rate while staked,
+// and the rate pinned at exit for a checkpoint, whose window closed under it.
+func (self *collectContext) unstakingFee(s *stakerV1) uint64 {
+	if self.checkpoint != nil {
+		return self.checkpoint.UnstakingFee()
+	}
+
+	return s.GetUnstakingFee()
+}
+
+// persistDeposit writes the deposit back, unless it belongs to a checkpoint and is not there.
+func (self *collectContext) persistDeposit(s *stakerV1) {
+	if self.checkpoint != nil {
+		return
+	}
+
+	s.getDeposits().set(self.positionId, self.deposit)
+}
+
+// markEmissionCollected records the emission collect on the checkpoint.
+func (s *stakerV1) markEmissionCollected(target *collectTarget) {
+	if !target.isCheckpoint() {
+		return
+	}
+
+	target.checkpoint.MarkEmissionCollected()
+	s.dropUnstakedPositionIfCollected(target)
+}
+
+// markIncentiveCollected records the incentive collect on the checkpoint. Delivery reports a
+// skip with an empty reward token; a skipped incentive that could still cover the owed amount
+// stays pending, while one that no longer can is forfeited - its reward amount only ever
+// decreases, so waiting cannot help, and a checkpoint pending it forever would lock both this
+// position's re-staking and the incentive's own refund.
+func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarget, incentiveId string, rewardAmount, rewardPenalty int64, rewardToken string) {
+	if !target.isCheckpoint() || !target.checkpoint.HasPendingIncentiveId(incentiveId) {
+		return
+	}
+
+	if rewardToken == "" && (rewardAmount > 0 || rewardPenalty > 0) {
+		incentiveResolver := NewExternalIncentiveResolver(s.getExternalIncentives().get(incentiveId))
+		if incentiveResolver.RewardAmount() >= gnsmath.SafeAddInt64(rewardAmount, rewardPenalty) {
+			return
+		}
+
+		previousRealm := rlm.Previous()
+		chain.Emit(
+			"ForfeitUncollectedIncentiveReward",
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"positionId", utils.FormatUint(target.positionId),
+			"incentiveId", incentiveId,
+			"rewardToken", incentiveResolver.RewardToken(),
+			"forfeitedAmount", utils.FormatInt(rewardAmount),
+			"forfeitedPenalty", utils.FormatInt(rewardPenalty),
+			"availableAmount", utils.FormatInt(incentiveResolver.RewardAmount()),
+			"currentTime", utils.FormatInt(time.Now().Unix()),
+			"currentHeight", utils.FormatInt(runtime.ChainHeight()),
+		)
+	}
+
+	target.checkpoint.MarkIncentiveCollected(incentiveId)
+	s.addUncollectedIncentiveCount(incentiveId, -1)
+	s.dropUnstakedPositionIfCollected(target)
+}
+
+// collectTarget is the record a collect runs against: the live deposit while staked, or the
+// exit checkpoint an unstake left behind.
+type collectTarget struct {
+	positionId uint64
+	deposit    *sr.Deposit
+	// currentTime is now while staked, and the exit time for a checkpoint.
+	currentTime int64
+	checkpoint  *sr.UnstakedPosition
+}
+
+// checkpointDeposit returns the deposit to calculate against when it is not in the tree.
+func (self *collectTarget) checkpointDeposit() *sr.Deposit {
+	if self.checkpoint == nil {
+		return nil
+	}
+
+	return self.deposit
+}
+
+// isCheckpoint reports whether the collect runs against an exit checkpoint.
+func (self *collectTarget) isCheckpoint() bool {
+	return self.checkpoint != nil
+}
+
+// resolveCollectTarget resolves what a collect runs against and asserts the caller may.
+func (s *stakerV1) resolveCollectTarget(positionId uint64, caller address) *collectTarget {
+	position := s.getUnstakedPositions().get(positionId)
+	if position == nil {
+		assertIsDepositor(s, caller, positionId)
+
+		return &collectTarget{
+			positionId:  positionId,
+			deposit:     s.getDeposits().get(positionId),
+			currentTime: time.Now().Unix(),
+		}
+	}
+
+	// A checkpoint collect is permissionless: it can only ever deliver to the position's owner,
+	// and an open entry point is what lets anyone clear the checkpoints that hold up
+	// EndExternalIncentive on the pool.
+	return &collectTarget{
+		positionId:  positionId,
+		deposit:     position.Deposit(),
+		currentTime: position.ExitTime(),
+		checkpoint:  position,
 	}
 }
 
 // newRewardCollectParam builds the calculation input for a collect of the given position.
-func (s *stakerV1) newRewardCollectParam(positionId uint64, currentTime, blockHeight int64) *calculatePositionRewardParam {
+func (s *stakerV1) newRewardCollectParam(target *collectTarget, currentTime, blockHeight int64) *calculatePositionRewardParam {
 	return &calculatePositionRewardParam{
 		CurrentHeight: blockHeight,
 		CurrentTime:   currentTime,
 		Deposits:      s.getDeposits(),
 		Pools:         s.getPools(),
 		PoolTier:      s.getPoolTier(),
-		PositionId:    positionId,
+		PositionId:    target.positionId,
+		Deposit:       target.checkpointDeposit(),
+		Exit:          target.checkpoint,
 	}
 }
 
@@ -509,17 +628,18 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
-	assertIsDepositor(s, rlm.Previous().Address(), positionId)
+
+	target := s.resolveCollectTarget(positionId, rlm.Previous().Address())
 
 	en.MintAndDistributeGns(cross(rlm))
 
-	currentTime := time.Now().Unix()
+	currentTime := target.currentTime
 	blockHeight := runtime.ChainHeight()
 
 	// Calculation is read-only; the resulting state updates (reward-cache update, lazy pool persistence)
 	// are applied via updateInternalPositionReward, which is the collect-only counterpart to the
 	// calculation shared with the Collectable* view getters.
-	rewardParam := s.newRewardCollectParam(positionId, currentTime, blockHeight)
+	rewardParam := s.newRewardCollectParam(target, currentTime, blockHeight)
 	rewards, rewardUpdate, err := s.calculateInternalPositionReward(rewardParam)
 	if err != nil {
 		panic(err)
@@ -527,9 +647,13 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 	reward := aggregateRewards(rewards)
 	s.updateInternalPositionReward(rewardParam, rewardUpdate)
 
-	ctx := s.newCollectContext(0, rlm, positionId, currentTime, blockHeight)
+	ctx := s.newCollectContext(0, rlm, target, currentTime, blockHeight)
 
-	return s.deliverEmissionReward(0, rlm, ctx, reward)
+	rewardToUser, rewardPenalty := s.deliverEmissionReward(0, rlm, ctx, reward)
+
+	s.markEmissionCollected(target)
+
+	return rewardToUser, rewardPenalty
 }
 
 // CollectExternalIncentiveReward harvests one external incentive reward of a staked position.
@@ -560,28 +684,31 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
-	assertIsDepositor(s, rlm.Previous().Address(), positionId)
-	assertIsIncentiveOfDeposit(s, positionId, incentiveId)
 
-	currentTime := time.Now().Unix()
+	target := s.resolveCollectTarget(positionId, rlm.Previous().Address())
+	assertIsIncentiveOfPool(s, target.deposit.TargetPoolPath(), positionId, incentiveId)
+
+	currentTime := target.currentTime
 	blockHeight := runtime.ChainHeight()
 
 	// Calculation is read-only; the resulting state updates (lazy pool persistence, deposit
 	// incentive-index updates) are applied via updateExternalPositionReward, which is the collect-only
 	// counterpart to the calculation shared with the Collectable* view getters.
-	rewardParam := s.newRewardCollectParam(positionId, currentTime, blockHeight)
+	rewardParam := s.newRewardCollectParam(target, currentTime, blockHeight)
 	rewards, rewardUpdate := s.calculateExternalPositionReward(rewardParam, incentiveId)
 	reward := aggregateRewards(rewards)
 	s.updateExternalPositionReward(rewardParam, rewardUpdate)
 
-	ctx := s.newCollectContext(0, rlm, positionId, currentTime, blockHeight)
+	ctx := s.newCollectContext(0, rlm, target, currentTime, blockHeight)
 
-	_, rewardAmount, rewardPenalty := s.deliverExternalIncentiveReward(
+	rewardToken, rewardAmount, rewardPenalty := s.deliverExternalIncentiveReward(
 		0, rlm, ctx, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId],
 	)
 
 	// Persist the deposit even when nothing was delivered: the incentive-index update above still ran.
-	s.getDeposits().set(positionId, ctx.deposit)
+	ctx.persistDeposit(s)
+
+	s.markIncentiveCollected(0, rlm, target, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId], rewardToken)
 
 	return rewardAmount, rewardPenalty
 }
@@ -607,15 +734,16 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
-	assertIsDepositor(s, rlm.Previous().Address(), positionId)
+
+	target := s.resolveCollectTarget(positionId, rlm.Previous().Address())
 
 	en.MintAndDistributeGns(cross(rlm))
 
-	currentTime := time.Now().Unix()
+	currentTime := target.currentTime
 	blockHeight := runtime.ChainHeight()
 
 	// One calculation and one state update cover both reward sources.
-	rewardParam := s.newRewardCollectParam(positionId, currentTime, blockHeight)
+	rewardParam := s.newRewardCollectParam(target, currentTime, blockHeight)
 	rewards, rewardUpdate, err := s.calculatePositionReward(rewardParam)
 	if err != nil {
 		panic(err)
@@ -623,7 +751,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	reward := aggregateRewards(rewards)
 	s.updatePositionReward(rewardParam, rewardUpdate)
 
-	ctx := s.newCollectContext(0, rlm, positionId, currentTime, blockHeight)
+	ctx := s.newCollectContext(0, rlm, target, currentTime, blockHeight)
 
 	// External rewards are delivered first, the order the two reward paths ran in before they were split.
 	toUserExternalReward := make(map[string]int64)
@@ -633,6 +761,9 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		rewardToken, rewardAmount, rewardPenalty := s.deliverExternalIncentiveReward(
 			0, rlm, ctx, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId],
 		)
+
+		s.markIncentiveCollected(0, rlm, target, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId], rewardToken)
+
 		// An empty reward token means the incentive delivered nothing and stays collectible.
 		if rewardToken == "" {
 			continue
@@ -643,6 +774,8 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	}
 
 	internalRewardToUser, internalRewardPenalty := s.deliverEmissionReward(0, rlm, ctx, reward)
+
+	s.markEmissionCollected(target)
 
 	return utils.FormatInt(internalRewardToUser), utils.FormatInt(internalRewardPenalty), toUserExternalReward, toUserExternalPenalty
 }
@@ -670,10 +803,21 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	rewardAmount int64,
 	externalPenalty int64,
 ) (string, int64, int64) {
+	// A checkpoint's window closes at ctx.currentTime, so a cursor already there means this
+	// incentive was delivered. The checkpoint entry points are permissionless, and rewardAmount
+	// was computed before the deliveries ran: without this, a reentrant collect between them
+	// would let the stale amount be paid a second time.
+	if ctx.checkpoint != nil && ctx.depositResolver.ExternalRewardLastCollectTime(incentiveId) >= ctx.currentTime {
+		return "", 0, 0
+	}
+
 	// Skip when user reward is zero.
 	// Do not update last collect time so the reward accrues until
 	// the next collection where a non-zero amount can be delivered.
-	if rewardAmount == 0 {
+	//
+	// An exit checkpoint has no next collection: it stopped accruing, so a penalty left here
+	// would never be booked and would be dropped with the checkpoint.
+	if rewardAmount == 0 && (ctx.checkpoint == nil || externalPenalty == 0) {
 		return "", 0, 0
 	}
 
@@ -734,7 +878,7 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	// update
 	s.getExternalIncentives().set(incentiveId, incentive)
 
-	toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, rewardToken, rewardAmount, false)
+	toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, rewardToken, rewardAmount, false, ctx.unstakingFee(s))
 	if err != nil {
 		panic(err.Error())
 	}
@@ -788,6 +932,13 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 //
 // Returns the GNS amount sent to the user and the penalty amount sent to the community pool.
 func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, reward Reward) (int64, int64) {
+	// Same reentrancy backstop as deliverExternalIncentiveReward: a checkpoint whose internal
+	// cursor already reached its window's close has had this delivery, and reward was computed
+	// before the external deliveries ran.
+	if ctx.checkpoint != nil && ctx.depositResolver.InternalRewardLastCollectTime() >= ctx.currentTime {
+		return 0, 0
+	}
+
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
 	internalReward := int64(0)
@@ -798,11 +949,15 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 	// Skip internal reward state update when user reward is zero (only penalty).
 	// Do not update last collect time so the reward accrues until the next
 	// collection where a non-zero amount can be delivered.
-	skipInternalUpdate := reward.Internal == 0
+	//
+	// An exit checkpoint has no next collection: it stopped accruing, so a penalty left here
+	// would never be delivered and would be dropped with the checkpoint.
+	skipInternalUpdate := reward.Internal == 0 &&
+		(ctx.checkpoint == nil || reward.InternalPenalty == 0)
 
 	// internal reward to user
 	if !skipInternalUpdate {
-		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, GNS_TOKEN_KEY, reward.Internal, true)
+		toUser, feeAmount, err := s.handleStakingRewardFee(0, rlm, GNS_TOKEN_KEY, reward.Internal, true, ctx.unstakingFee(s))
 		if err != nil {
 			panic(err.Error())
 		}
@@ -841,7 +996,10 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 
 	// Unclaimable must be processed after regular rewards so that accumulated
 	// unclaimable amounts are reset in the same collect window.
-	unClaimableInternal := s.processUnClaimableReward(ctx.depositResolver.TargetPoolPath(), ctx.currentTime)
+	// Always at the current time, never at ctx.currentTime: this accumulator is pool-global, and
+	// a checkpoint collect would rewind it to its exit timestamp, re-counting everything since as
+	// unclaimable and paying it out of the shared reserve.
+	unClaimableInternal := s.processUnClaimableReward(ctx.depositResolver.TargetPoolPath(), time.Now().Unix())
 	if unClaimableInternal > 0 {
 		totalEmissionSent = gnsmath.SafeAddInt64(totalEmissionSent, unClaimableInternal)
 	}
@@ -857,8 +1015,7 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 		}
 	}
 
-	deposits := s.getDeposits()
-	deposits.set(ctx.positionId, ctx.deposit)
+	ctx.persistDeposit(s)
 
 	if internalRewardToUser > 0 {
 		gns.Transfer(cross(rlm), ctx.deposit.Owner(), internalRewardToUser)
@@ -930,8 +1087,8 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 	// unStaked status
 	poolPath := deposit.TargetPoolPath()
 
-	// claim All Rewards
-	s.CollectReward(0, rlm, positionId)
+	// record the exit checkpoint; collecting is left to the Collect* entry points
+	s.recordUnstakedPosition(0, rlm, positionId, deposit, time.Now().Unix())
 
 	if err := s.applyUnStake(positionId); err != nil {
 		panic(err)

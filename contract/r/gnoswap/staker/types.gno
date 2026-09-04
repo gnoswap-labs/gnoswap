@@ -96,6 +96,10 @@ type IStakerGetter interface {
 	GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) (string, error)
 	GetUnstakingFee() uint64
 	GetPendingProtocolFees() map[string]int64
+	HasUnstakedPosition(positionId uint64) bool
+	GetUnstakedPositionExitTime(positionId uint64) (int64, error)
+	GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error)
+	GetUncollectedIncentiveCount(incentiveId string) int64
 	IsStaked(positionId uint64) bool
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string
@@ -156,6 +160,16 @@ type IStakerStore interface {
 	HasPendingProtocolFeesStoreKey() bool
 	GetPendingProtocolFees() map[string]int64
 	SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error
+
+	// UnstakedPositions
+	HasUnstakedPositionsStoreKey() bool
+	GetUnstakedPositions() *bptree.BPTree
+	SetUnstakedPositions(_ int, rlm realm, positions *bptree.BPTree) error
+
+	// UncollectedIncentiveCounts
+	HasUncollectedIncentiveCountsStoreKey() bool
+	GetUncollectedIncentiveCounts() *bptree.BPTree
+	SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error
 
 	// Pools
 	HasPoolsStoreKey() bool

@@ -1,6 +1,8 @@
 package staker
 
 import (
+	"time"
+
 	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -58,6 +60,20 @@ type calculatePositionRewardParam struct {
 
 	// Position variables
 	PositionId uint64
+
+	// Deposit overrides the Deposits lookup for a deposit that is no longer in the tree.
+	Deposit *sr.Deposit
+	// Exit pins the pool state to the moment the position left the pool; nil while staked.
+	Exit *sr.UnstakedPosition
+}
+
+// deposit resolves the deposit the calculation runs against.
+func (self *calculatePositionRewardParam) deposit() *sr.Deposit {
+	if self.Deposit != nil {
+		return self.Deposit
+	}
+
+	return self.Deposits.get(self.PositionId)
 }
 
 // positionRewardUpdate carries the persisted-state changes produced (but not applied) by a calculation.
@@ -96,7 +112,7 @@ type positionRewardContext struct {
 // persisted state. A missing pool is created ephemerally and its persistence is deferred to the
 // update path.
 func (s *stakerV1) newPositionRewardContext(param *calculatePositionRewardParam) *positionRewardContext {
-	deposit := param.Deposits.get(param.PositionId)
+	deposit := param.deposit()
 	poolPath := deposit.TargetPoolPath()
 
 	pool, poolExisted := param.Pools.Get(poolPath)
@@ -104,7 +120,7 @@ func (s *stakerV1) newPositionRewardContext(param *calculatePositionRewardParam)
 		// Read-only: use an ephemeral pool; persistence is deferred to updatePositionReward.
 		pool = sr.NewPool(poolPath, param.CurrentTime)
 	}
-	poolResolver := NewPoolResolver(pool)
+	poolResolver := newPoolResolverWithExit(pool, param.Exit)
 
 	return &positionRewardContext{
 		deposit:         deposit,
@@ -319,7 +335,10 @@ func (s *stakerV1) persistLazyPool(param *calculatePositionRewardParam, updatePa
 // calculation itself no longer needs this, but downstream unclaimable processing (which reads
 // CurrentReward) and off-chain history rely on the cache, so it is advanced on the emission collect path.
 func (s *stakerV1) updateInternalRewardCache(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
-	param.PoolTier.cacheRewardForPool(param.CurrentTime, param.Pools, updateParams.poolPath)
+	// Always at the current time, never at param.CurrentTime: the cache and the unclaimable
+	// tracking it drives are pool-global, and a checkpoint collect would rewind them to its exit
+	// timestamp, where the pool may have had no staked liquidity.
+	param.PoolTier.cacheRewardForPool(time.Now().Unix(), param.Pools, updateParams.poolPath)
 }
 
 // applyExternalIncentiveIndex persists the deposit incentive-index updates discovered during calculation.
@@ -328,7 +347,7 @@ func (s *stakerV1) applyExternalIncentiveIndex(param *calculatePositionRewardPar
 		return
 	}
 
-	deposit := param.Deposits.get(param.PositionId)
+	deposit := param.deposit()
 	for _, incentiveId := range updateParams.newExternalIncentiveIds {
 		deposit.AddExternalIncentiveId(incentiveId)
 	}
@@ -397,7 +416,7 @@ func (self *PoolResolver) resolveInternalRewardSegments(poolTier *PoolTier, pool
 
 	if cursor < endTime {
 		var err error
-		segments, err = appendInternalRewardTailSegments(segments, poolTier, poolPath, cursor, endTime, currentReward)
+		segments, err = appendInternalRewardTailSegments(segments, poolTier, poolPath, cursor, endTime, currentReward, self.exit)
 		if err != nil {
 			return nil, err
 		}
@@ -409,19 +428,23 @@ func (self *PoolResolver) resolveInternalRewardSegments(poolTier *PoolTier, pool
 // appendInternalRewardTailSegments appends the schedule for the tail [startTime, endTime], where no
 // persisted cache entry exists beyond startTime. Over this span tier/count are constant, so the rate
 // changes only at halving boundaries.
-func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier *PoolTier, poolPath string, startTime, endTime, baseReward int64) ([]internalRewardSegment, error) {
-	tier := poolTier.CurrentTier(poolPath)
+func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier *PoolTier, poolPath string, startTime, endTime, baseReward int64, exit *sr.UnstakedPosition) ([]internalRewardSegment, error) {
+	// A checkpoint reads the tier context it exited under: this window closed at the exit.
+	tier, ratio, count, err := poolTier.tierContextOf(poolPath)
+	if err != nil {
+		return nil, err
+	}
+	if exit != nil {
+		tier, ratio, count = exit.Tier(), exit.TierRatio(), exit.TierCount()
+	}
+
 	if tier == 0 || tier >= AllTierCount {
 		// Not currently tiered: the rate cannot increase; the base is 0 after de-tier.
 		return append(segments, internalRewardSegment{start: startTime, end: endTime, rewardPerSecond: baseReward}), nil
 	}
 
-	tierRatio, err := poolTier.tierRatio.Get(tier)
-	if err != nil {
-		return nil, makeErrorWithDetails(errInvalidPoolTier, err.Error())
-	}
-	tierRatioInt64 := int64(tierRatio)
-	tierCount := int64(poolTier.counts[tier])
+	tierRatioInt64 := int64(ratio)
+	tierCount := int64(count)
 
 	halvingTimestamps, halvingEmissions, err := poolTier.getHalvingBlocksInRange(startTime, endTime)
 	if err != nil {

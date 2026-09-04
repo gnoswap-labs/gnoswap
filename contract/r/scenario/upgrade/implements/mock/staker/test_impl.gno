@@ -400,6 +400,44 @@ func (t *TestStaker) GetUnstakingFee() uint64 {
 	return t.instance.GetUnstakingFee()
 }
 
+func (t *TestStaker) HasUnstakedPosition(positionId uint64) bool {
+	return t.ExecuteFn(
+		"HasUnstakedPosition",
+		func(args ...any) any { return t.instance.HasUnstakedPosition(args[0].(uint64)) },
+		positionId,
+	).(bool)
+}
+
+func (t *TestStaker) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
+	return t.ExecuteFn(
+		"GetUnstakedPositionExitTime",
+		func(args ...any) any {
+			exitTime, _ := t.instance.GetUnstakedPositionExitTime(args[0].(uint64))
+			return exitTime
+		},
+		positionId,
+	).(int64), nil
+}
+
+func (t *TestStaker) GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
+	return t.ExecuteFn(
+		"GetUnstakedPositionPendingIncentives",
+		func(args ...any) any {
+			incentiveIds, _ := t.instance.GetUnstakedPositionPendingIncentives(args[0].(uint64))
+			return incentiveIds
+		},
+		positionId,
+	).([]string), nil
+}
+
+func (t *TestStaker) GetUncollectedIncentiveCount(incentiveId string) int64 {
+	return t.ExecuteFn(
+		"GetUncollectedIncentiveCount",
+		func(args ...any) any { return t.instance.GetUncollectedIncentiveCount(args[0].(string)) },
+		incentiveId,
+	).(int64)
+}
+
 func (t *TestStaker) IsStaked(positionId uint64) bool {
 	return t.instance.IsStaked(positionId)
 }

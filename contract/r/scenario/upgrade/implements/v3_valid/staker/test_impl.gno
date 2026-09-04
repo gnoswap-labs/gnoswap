@@ -287,6 +287,22 @@ func (t *TestStaker) GetUnstakingFee() uint64 {
 	return t.instance.GetUnstakingFee()
 }
 
+func (t *TestStaker) HasUnstakedPosition(positionId uint64) bool {
+	return t.instance.HasUnstakedPosition(positionId)
+}
+
+func (t *TestStaker) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
+	return t.instance.GetUnstakedPositionExitTime(positionId)
+}
+
+func (t *TestStaker) GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
+	return t.instance.GetUnstakedPositionPendingIncentives(positionId)
+}
+
+func (t *TestStaker) GetUncollectedIncentiveCount(incentiveId string) int64 {
+	return t.instance.GetUncollectedIncentiveCount(incentiveId)
+}
+
 func (t *TestStaker) IsStaked(positionId uint64) bool {
 	return t.instance.IsStaked(positionId)
 }

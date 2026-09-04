@@ -167,6 +167,7 @@ func stakeAndUnstakeInSameBlock(cur realm) {
 
 	println("[INFO] immediately unstake position 01 (same block)")
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 
 	ownerAfterUnstake := mustOwnerOf(positionIdFrom(cur, 1))
 	gnsAfterUnstake := gns.BalanceOf(adminUser)
