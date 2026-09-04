@@ -1,6 +1,9 @@
 package governance
 
-import bptree "gno.land/p/nt/bptree/v0"
+import (
+	"gno.land/p/gnoswap/utils"
+	bptree "gno.land/p/nt/bptree/v0"
+)
 
 // Proposal represents a governance proposal with all its associated data and state.
 // This is the core structure that tracks proposal lifecycle from creation to execution.
@@ -78,6 +81,30 @@ func (p *Proposal) ConfigVersion() int64 {
 // SnapshotTime returns the snapshot time for voting weight lookup.
 func (p *Proposal) SnapshotTime() int64 {
 	return p.snapshotTime
+}
+
+// ActiveProposalSnapshotKey returns this proposal's chronological snapshot index key.
+func (p *Proposal) ActiveProposalSnapshotKey() string {
+	return activeProposalIndexKey(p.snapshotTime, p.id)
+}
+
+// ActiveProposalDeadlineKey returns this proposal's chronological lifecycle deadline index key.
+func (p *Proposal) ActiveProposalDeadlineKey(deadline int64) string {
+	return activeProposalIndexKey(deadline, p.id)
+}
+
+// activeProposalIndexKey encodes the ordering timestamp (snapshot time or
+// lifecycle deadline) and proposal ID as fixed-width big-endian integers, so
+// B+Tree byte-ordering matches numeric ordering without decimal zero-padding.
+func activeProposalIndexKey(timestamp int64, proposalID int64) string {
+	return utils.EncodeUint64(uint64(timestamp)) + utils.EncodeUint64(uint64(proposalID))
+}
+
+// ActiveProposalIndexKeyDeadline decodes the timestamp a deadline-index key
+// was built with, so callers can recover the lifecycle stage a stored entry
+// currently represents without recomputing and comparing candidate keys.
+func ActiveProposalIndexKeyDeadline(key string) int64 {
+	return int64(utils.DecodeUint64(key[:8]))
 }
 
 // Data returns the proposal data.
@@ -173,6 +200,11 @@ func (p *Proposal) Clone() *Proposal {
 }
 
 func NewProposalTree() *bptree.BPTree {
+	return bptree.NewBPTreeN(16)
+}
+
+// NewActiveProposalTree creates the snapshot-time ordered index of active proposals.
+func NewActiveProposalTree() *bptree.BPTree {
 	return bptree.NewBPTreeN(16)
 }
 

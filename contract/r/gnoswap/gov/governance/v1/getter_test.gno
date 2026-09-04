@@ -48,9 +48,8 @@ func setupGetterTestWithProposal(cur realm, t *testing.T) *governanceV1 {
 		runtime.ChainHeight(),
 	)
 
-	gv.store.SetProposal(0, cur, 1, proposal)
+	uassert.True(t, gv.addProposal(0, cur, proposal))
 	gv.store.GetProposalCounter().Next()
-	gv.store.AddUserProposal(0, cur, "g1proposer", 1)
 
 	return gv
 }
@@ -928,6 +927,121 @@ func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPruneInactiveProposals_RemovesTerminalIndexEntries(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	expired := governance.NewProposal(
+		1,
+		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000, 1000),
+		governance.NewProposalMetadata("expired", "expired"),
+		governance.NewProposalData(governance.Text, nil, nil),
+		address("g1expired"),
+		1,
+		now-1000,
+		runtime.ChainHeight(),
+	)
+	active := governance.NewProposal(
+		2,
+		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now, 1000),
+		governance.NewProposalMetadata("active", "active"),
+		governance.NewProposalData(governance.Text, nil, nil),
+		address("g1active"),
+		1,
+		now,
+		runtime.ChainHeight(),
+	)
+	uassert.True(t, gv.addProposal(0, cur, expired))
+	uassert.True(t, gv.addProposal(0, cur, active))
+
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall) == nil)
+
+	uassert.Equal(t, 1, store.GetActiveProposalsBySnapshot().Size())
+	snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
+	uassert.True(t, hasActive)
+	uassert.Equal(t, active.SnapshotTime(), snapshotTime)
+}
+
+func TestPruneInactiveProposals_BoundsWorkPerCall(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	const (
+		expiredCount = 5
+		limit        = 2
+	)
+	for i := int64(0); i < expiredCount; i++ {
+		expired := governance.NewProposal(
+			i+1,
+			NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000+i, 1000),
+			governance.NewProposalMetadata("expired", "expired"),
+			governance.NewProposalData(governance.Text, nil, nil),
+			address("g1expired"),
+			1,
+			now-1000+i,
+			runtime.ChainHeight(),
+		)
+		uassert.True(t, gv.addProposal(0, cur, expired))
+	}
+	uassert.Equal(t, expiredCount, store.GetActiveProposalsByDeadline().Size())
+
+	// A single call only removes up to `limit` terminal entries, even though
+	// every entry in the index is already past its deadline.
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, limit) == nil)
+	uassert.Equal(t, expiredCount-limit, store.GetActiveProposalsByDeadline().Size())
+
+	// The next call makes further progress on the remaining backlog.
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, limit) == nil)
+	uassert.Equal(t, expiredCount-2*limit, store.GetActiveProposalsByDeadline().Size())
+
+	// A final call fully drains the backlog.
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, limit) == nil)
+	uassert.Equal(t, 0, store.GetActiveProposalsByDeadline().Size())
+}
+
+// TestPruneInactiveProposals_DrainsBacklogLargerThanProductionCap proves that
+// a backlog bigger than the real maxProposalsPrunedPerCall cap is not stuck:
+// it takes exactly the expected number of calls at the production cap to
+// fully drain, rather than requiring one unbounded call.
+func TestPruneInactiveProposals_DrainsBacklogLargerThanProductionCap(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	const backlogSize = maxProposalsPrunedPerCall + 50 // exceeds the real per-call cap
+
+	for i := int64(0); i < backlogSize; i++ {
+		expired := governance.NewProposal(
+			i+1,
+			NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000+i, 1000),
+			governance.NewProposalMetadata("expired", "expired"),
+			governance.NewProposalData(governance.Text, nil, nil),
+			address("g1expired"),
+			1,
+			now-1000+i,
+			runtime.ChainHeight(),
+		)
+		uassert.True(t, gv.addProposal(0, cur, expired))
+	}
+	uassert.Equal(t, backlogSize, store.GetActiveProposalsByDeadline().Size())
+
+	// First call hits the production cap and leaves the remainder for the
+	// next call — it is not forced to process the whole backlog at once.
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall) == nil)
+	uassert.Equal(t, backlogSize-maxProposalsPrunedPerCall, store.GetActiveProposalsByDeadline().Size())
+
+	// A second call at the same production cap fully drains what's left,
+	// since the remainder is smaller than the cap.
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall) == nil)
+	uassert.Equal(t, 0, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, 0, store.GetActiveProposalsBySnapshot().Size())
 }
 
 // ==================================
