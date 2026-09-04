@@ -503,11 +503,21 @@ func applySwapResult(pool *pl.Pool, result *SwapResult) {
 	slot0.SetTick(result.NewTick)
 	pool.SetSlot0(slot0)
 
-	pool.SetLiquidity(result.NewLiquidity)
-	pool.SetProtocolFeesToken0(result.NewProtocolFeeToken0)
-	pool.SetProtocolFeesToken1(result.NewProtocolFeeToken1)
-	pool.SetFeeGrowthGlobal0X128(result.FeeGrowthGlobal0X128)
-	pool.SetFeeGrowthGlobal1X128(result.FeeGrowthGlobal1X128)
+	if !pool.Liquidity().Eq(result.NewLiquidity) {
+		pool.SetLiquidity(result.NewLiquidity)
+	}
+	if pool.ProtocolFeesToken0() != result.NewProtocolFeeToken0 {
+		pool.SetProtocolFeesToken0(result.NewProtocolFeeToken0)
+	}
+	if pool.ProtocolFeesToken1() != result.NewProtocolFeeToken1 {
+		pool.SetProtocolFeesToken1(result.NewProtocolFeeToken1)
+	}
+	if !pool.FeeGrowthGlobal0X128().Eq(result.FeeGrowthGlobal0X128) {
+		pool.SetFeeGrowthGlobal0X128(result.FeeGrowthGlobal0X128)
+	}
+	if !pool.FeeGrowthGlobal1X128().Eq(result.FeeGrowthGlobal1X128) {
+		pool.SetFeeGrowthGlobal1X128(result.FeeGrowthGlobal1X128)
+	}
 }
 
 // validatePriceLimits ensures the provided price limit is valid for the swap direction

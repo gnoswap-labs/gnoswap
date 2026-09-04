@@ -2412,3 +2412,77 @@ func TestSwap_FlashSwapArbitragePattern(cur realm, t *testing.T) {
 	t.Logf("Flash swap arbitrage pattern verified: received %d output tokens before payment (amount0=%s, amount1=%s)",
 		outputAmountReceived, amount0, amount1)
 }
+
+func TestApplySwapResult_SkipsUnchangedState(t *testing.T) {
+	tests := []struct {
+		name                 string
+		newLiquidity         string
+		protocolFeeToken0    int64
+		protocolFeeToken1    int64
+		feeGrowthGlobal0X128 string
+		feeGrowthGlobal1X128 string
+		liquidityUnchanged   bool
+		feeGrowth0Unchanged  bool
+		feeGrowth1Unchanged  bool
+	}{
+		{
+			name:                 "zero_for_one",
+			newLiquidity:         "30",
+			protocolFeeToken0:    11,
+			protocolFeeToken1:    20,
+			feeGrowthGlobal0X128: "101",
+			feeGrowthGlobal1X128: "200",
+			liquidityUnchanged:   true,
+			feeGrowth0Unchanged:  false,
+			feeGrowth1Unchanged:  true,
+		},
+		{
+			name:                 "one_for_zero",
+			newLiquidity:         "31",
+			protocolFeeToken0:    10,
+			protocolFeeToken1:    21,
+			feeGrowthGlobal0X128: "100",
+			feeGrowthGlobal1X128: "201",
+			liquidityUnchanged:   false,
+			feeGrowth0Unchanged:  true,
+			feeGrowth1Unchanged:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pool := pl.NewPool("token0", "token1", FeeTier500, u256.One(), 1, 0, 0)
+			pool.SetLiquidity(u256.MustFromDecimal("30"))
+			pool.SetProtocolFeesToken0(10)
+			pool.SetProtocolFeesToken1(20)
+			pool.SetFeeGrowthGlobal0X128(u256.MustFromDecimal("100"))
+			pool.SetFeeGrowthGlobal1X128(u256.MustFromDecimal("200"))
+
+			liquidity := pool.Liquidity()
+			feeGrowth0 := pool.FeeGrowthGlobal0X128()
+			feeGrowth1 := pool.FeeGrowthGlobal1X128()
+			result := &SwapResult{
+				NewSqrtPrice:         u256.MustFromDecimal("2"),
+				NewTick:              1,
+				NewLiquidity:         u256.MustFromDecimal(tt.newLiquidity),
+				NewProtocolFeeToken0: tt.protocolFeeToken0,
+				NewProtocolFeeToken1: tt.protocolFeeToken1,
+				FeeGrowthGlobal0X128: u256.MustFromDecimal(tt.feeGrowthGlobal0X128),
+				FeeGrowthGlobal1X128: u256.MustFromDecimal(tt.feeGrowthGlobal1X128),
+			}
+
+			applySwapResult(pool, result)
+
+			uassert.True(t, pool.Slot0SqrtPriceX96().Eq(result.NewSqrtPrice))
+			uassert.Equal(t, result.NewTick, pool.Slot0Tick())
+			uassert.True(t, pool.Liquidity().Eq(result.NewLiquidity))
+			uassert.Equal(t, result.NewProtocolFeeToken0, pool.ProtocolFeesToken0())
+			uassert.Equal(t, result.NewProtocolFeeToken1, pool.ProtocolFeesToken1())
+			uassert.True(t, pool.FeeGrowthGlobal0X128().Eq(result.FeeGrowthGlobal0X128))
+			uassert.True(t, pool.FeeGrowthGlobal1X128().Eq(result.FeeGrowthGlobal1X128))
+			uassert.Equal(t, tt.liquidityUnchanged, pool.Liquidity() == liquidity)
+			uassert.Equal(t, tt.feeGrowth0Unchanged, pool.FeeGrowthGlobal0X128() == feeGrowth0)
+			uassert.Equal(t, tt.feeGrowth1Unchanged, pool.FeeGrowthGlobal1X128() == feeGrowth1)
+		})
+	}
+}
