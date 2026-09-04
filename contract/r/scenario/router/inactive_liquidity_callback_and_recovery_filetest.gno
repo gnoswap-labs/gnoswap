@@ -26,22 +26,22 @@ import (
 )
 
 const (
-	fee       uint32 = 100
+	fee        uint32 = 100
 	maxApprove int64  = 9223372036854775807
 	deadline   int64  = 9999999999
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm    = testing.NewUserRealm(adminAddr)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
 
-	barPath      = "gno.land/r/onbloc/bar.BAR"
-	bazPath      = "gno.land/r/onbloc/baz.BAZ"
-	poolPath     = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
-	forwardRoute = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
-	reverseRoute = "gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:100"
+	barPath         = "gno.land/r/onbloc/bar.BAR"
+	bazPath         = "gno.land/r/onbloc/baz.BAZ"
+	poolPath        = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
+	forwardRoute    = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
+	reverseRoute    = "gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/bar.BAR:100"
 	middleLiquidity string
 )
 
@@ -71,7 +71,7 @@ func main(cur realm) {
 	println("[STEP 4] Swap toward the empty lower side")
 	println("[ACTION] Execute bar -> baz ExactIn swap with input=100000")
 	assertCallbackPanicTowardEmptySide(cur)
-	assertTick(-887271, "tick after empty-side callback abort")
+	assertTick(-887272, "tick after empty-side callback abort")
 
 	// The opposite direction first crosses inactive ticks, enters [100, 200],
 	// consumes that liquidity, then reaches the upper terminal tick.
@@ -195,7 +195,7 @@ func assertActiveLiquidity(wantZero bool, label string) {
 // [STEP 4] Swap toward the empty lower side
 // [ACTION] Execute bar -> baz ExactIn swap with input=100000
 // [RESULT] Empty-side swap aborted as expected: [GNOSWAP-ROUTER-020] insufficient liquidity for swap || swap entirely within 0-liquidity region
-// [EXPECTED] tick after empty-side callback abort: -887271
+// [EXPECTED] tick after empty-side callback abort: -887272
 //
 // [STEP 5] Cross remaining [100, 200] liquidity and reach the upper terminal
 // [ACTION] Execute baz -> bar ExactIn swap with input=100000 and explicit price limit

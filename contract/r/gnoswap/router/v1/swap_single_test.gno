@@ -167,7 +167,7 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "panic",
-			errorMessage: "[GNOSWAP-ROUTER-005] invalid pool fee tier || unknown fee(0)",
+			errorMessage: "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:0) to exist",
 		},
 		{
 			name: "Fail: Invalid fee tier 2",
@@ -182,7 +182,7 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 				Build(),
 			expectError:  true,
 			errType:      "panic",
-			errorMessage: "[GNOSWAP-ROUTER-005] invalid pool fee tier || unknown fee(1000000)",
+			errorMessage: "[GNOSWAP-POOL-005] requested data not found || expected poolPath(gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:1000000) to exist",
 		},
 		{
 			name: "Fail: Zero amount specified",

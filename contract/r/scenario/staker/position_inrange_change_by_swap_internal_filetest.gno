@@ -101,7 +101,6 @@ func main(cur realm) {
 	println("[SCENARIO] 9. Collect reward after returning to in-range")
 	collectRewardAfterReturningInRange(cur)
 	println()
-
 }
 
 func initAndSetup(cur realm) {

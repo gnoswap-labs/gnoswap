@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -18,36 +17,26 @@ func TestCalculateSqrtPriceLimitForSwap(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
 		zeroForOne        bool
-		fee               uint32
 		sqrtPriceLimitX96 *u256.Uint
-		expected          *u256.Uint
+		expected          string
 	}{
 		{
 			name:              "already set sqrtPriceLimit",
 			zeroForOne:        true,
-			fee:               500,
 			sqrtPriceLimitX96: u256.NewUint(1000),
-			expected:          u256.NewUint(1000),
+			expected:          "1000",
 		},
 		{
-			name:              "when zeroForOne is true, calculate min tick",
+			name:              "zeroForOne uses global minimum boundary",
 			zeroForOne:        true,
-			fee:               500,
 			sqrtPriceLimitX96: u256.Zero(),
-			expected: u256.Zero().Add(
-				gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(500)+1),
-				u256.One(),
-			),
+			expected:          "4295128740",
 		},
 		{
-			name:              "when zeroForOne is false, calculate max tick",
+			name:              "oneForZero uses global maximum boundary",
 			zeroForOne:        false,
-			fee:               500,
 			sqrtPriceLimitX96: u256.Zero(),
-			expected: u256.Zero().Sub(
-				gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1),
-				u256.One(),
-			),
+			expected:          "1461446703485210103287273052203988822378723970341",
 		},
 	}
 
@@ -55,88 +44,9 @@ func TestCalculateSqrtPriceLimitForSwap(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			result := calculateSqrtPriceLimitForSwap(
 				tt.zeroForOne,
-				tt.fee,
 				tt.sqrtPriceLimitX96,
 			)
-			uassert.Equal(t, result.ToString(), tt.expected.ToString())
-		})
-	}
-}
-
-func TestMustGetSqrtPriceLimit(cur realm, t *testing.T) {
-	tests := []struct {
-		name        string
-		limits      map[uint32]*u256.Uint
-		fee         uint32
-		expected    *u256.Uint
-		expectPanic bool
-	}{
-		{
-			name:     "forward limit fee 100",
-			limits:   sqrtPriceLimitForward,
-			fee:      100,
-			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(100)+1), u256.One()),
-		},
-		{
-			name:     "forward limit fee 500",
-			limits:   sqrtPriceLimitForward,
-			fee:      500,
-			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(500)+1), u256.One()),
-		},
-		{
-			name:     "forward limit fee 3000",
-			limits:   sqrtPriceLimitForward,
-			fee:      3000,
-			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(3000)+1), u256.One()),
-		},
-		{
-			name:     "forward limit fee 10000",
-			limits:   sqrtPriceLimitForward,
-			fee:      10000,
-			expected: u256.Zero().Add(gnsmath.TickMathGetSqrtRatioAtTick(getMinTick(10000)+1), u256.One()),
-		},
-		{
-			name:     "backward limit fee 100",
-			limits:   sqrtPriceLimitBackward,
-			fee:      100,
-			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(100)-1), u256.One()),
-		},
-		{
-			name:     "backward limit fee 500",
-			limits:   sqrtPriceLimitBackward,
-			fee:      500,
-			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(500)-1), u256.One()),
-		},
-		{
-			name:     "backward limit fee 3000",
-			limits:   sqrtPriceLimitBackward,
-			fee:      3000,
-			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(3000)-1), u256.One()),
-		},
-		{
-			name:     "backward limit fee 10000",
-			limits:   sqrtPriceLimitBackward,
-			fee:      10000,
-			expected: u256.Zero().Sub(gnsmath.TickMathGetSqrtRatioAtTick(getMaxTick(10000)-1), u256.One()),
-		},
-		{
-			name:        "unknown fee panics",
-			limits:      sqrtPriceLimitForward,
-			fee:         9999,
-			expectPanic: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			if tt.expectPanic {
-				uassert.PanicsContains(t, cur, "unknown fee", func() {
-					mustGetSqrtPriceLimit(tt.limits, tt.fee)
-				})
-			} else {
-				result := mustGetSqrtPriceLimit(tt.limits, tt.fee)
-				uassert.Equal(t, result.ToString(), tt.expected.ToString())
-			}
+			uassert.Equal(t, result.ToString(), tt.expected)
 		})
 	}
 }
