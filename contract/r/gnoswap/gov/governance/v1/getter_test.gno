@@ -958,12 +958,51 @@ func TestPruneInactiveProposals_RemovesTerminalIndexEntries(cur realm, t *testin
 	uassert.True(t, gv.addProposal(0, cur, expired))
 	uassert.True(t, gv.addProposal(0, cur, active))
 
-	uassert.True(t, gv.pruneInactiveProposals(0, cur, now) == nil)
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall) == nil)
 
 	uassert.Equal(t, 1, store.GetActiveProposalsBySnapshot().Size())
 	snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
 	uassert.True(t, hasActive)
 	uassert.Equal(t, active.SnapshotTime(), snapshotTime)
+}
+
+func TestPruneInactiveProposals_BoundsWorkPerCall(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	const (
+		expiredCount = 5
+		limit        = 2
+	)
+	for i := int64(0); i < expiredCount; i++ {
+		expired := governance.NewProposal(
+			i+1,
+			NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000+i, 1000),
+			governance.NewProposalMetadata("expired", "expired"),
+			governance.NewProposalData(governance.Text, nil, nil),
+			address("g1expired"),
+			1,
+			now-1000+i,
+			runtime.ChainHeight(),
+		)
+		uassert.True(t, gv.addProposal(0, cur, expired))
+	}
+	uassert.Equal(t, expiredCount, store.GetActiveProposalsByDeadline().Size())
+
+	// A single call only removes up to `limit` terminal entries, even though
+	// every entry in the index is already past its deadline.
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, limit) == nil)
+	uassert.Equal(t, expiredCount-limit, store.GetActiveProposalsByDeadline().Size())
+
+	// The next call makes further progress on the remaining backlog.
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, limit) == nil)
+	uassert.Equal(t, expiredCount-2*limit, store.GetActiveProposalsByDeadline().Size())
+
+	// A final call fully drains the backlog.
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, limit) == nil)
+	uassert.Equal(t, 0, store.GetActiveProposalsByDeadline().Size())
 }
 
 // ==================================

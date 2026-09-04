@@ -141,13 +141,25 @@ func (g *governanceV1) removeActiveProposal(_ int, rlm realm, proposal *governan
 
 // pruneInactiveProposals processes only proposals whose next lifecycle deadline
 // has elapsed. It never scans the snapshot-ordered active index.
-func (g *governanceV1) pruneInactiveProposals(_ int, rlm realm, current int64) error {
+//
+// limit bounds how many deadline entries a single call processes. Without a
+// cap, a long-neglected admin cleanup (or a burst of proposals expiring at
+// once) would force one call to walk an unbounded backlog, risking a gas
+// cost that scales with however large the backlog happened to grow.
+// A caller facing a larger backlog than limit must call this again;
+// GetOldestActiveProposalSnapshotTime stays correct in the meantime since it
+// re-validates every entry it reads instead of trusting the index is clean.
+func (g *governanceV1) pruneInactiveProposals(_ int, rlm realm, current int64, limit int) error {
 	deadlineIndex := g.store.GetActiveProposalsByDeadline()
 	var deadlineKeysToRemove []string
 	var snapshotKeysToRemove []string
 	var proposalsToReschedule []*governance.Proposal
 
 	deadlineIndex.Iterate("", "", func(key string, value any) bool {
+		if len(deadlineKeysToRemove) >= limit {
+			return true
+		}
+
 		proposalID := value.(int64)
 		proposal, exists := g.getProposal(proposalID)
 		if !exists {
