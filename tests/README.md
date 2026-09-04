@@ -37,19 +37,20 @@ make envs
 
 ### Pre-Deployment Commands
 
-**⚠️ IMPORTANT: These commands must be executed before deployment!**
+`make deploy` automatically removes all Gno test files before deploying. You can
+also run the removal step manually when preparing a partial deployment.
 
 ```bash
-# Step 1: Remove all test files (REQUIRED before deployment)
+# Optional: remove all test files manually
 make remove-test
 
-# Step 2: Faucet admin account (for local/test environments)
+# Faucet admin account (for local/test environments)
 make faucet-admin ENV=local
 ```
 
 **What these commands do:**
 
-1. **`make remove-test`**: Removes all `*_test.gno` and `testutils.gno` files
+1. **`make remove-test`**: Removes all `*_test.gno` and `testutils.gno` files (also run automatically by `make deploy`)
    - Prevents test files from being deployed to the blockchain
    - Reduces deployment costs and contract size
    - Protects internal testing logic from exposure
