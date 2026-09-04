@@ -319,11 +319,10 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 	refundableAmountsByTier := make(map[int64]int64)
 
 	for duration, tier := range project.Tiers() {
-		// Calculate pending rewards for remaining depositors
-		currentDepositCount := getTierCurrentDepositCount(tier)
+		// Settlement uses tier aggregate accounting, never the unbounded
+		// per-deposit reward tree.
 		tierCollectableReward := int64(0)
-
-		if currentDepositCount > 0 {
+		if getTierCurrentDepositCount(tier) > 0 {
 			var err error
 			tierCollectableReward, err = lp.applyTierRewardGrowthWithRewards(tier, currentTime)
 			if err != nil {
@@ -380,23 +379,22 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 	return projectRefundableAmount, nil
 }
 
-// applyTierRewardGrowthWithRewards calculates the total collectable rewards
-// for all active deposits in a specific tier.
+// applyTierRewardGrowthWithRewards updates a tier index and returns a
+// conservative aggregate reservation for active claims. Rounding dust remains
+// in the project instead of risking an under-reserved depositor claim.
 func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectTier, currentTime int64) (int64, error) {
 	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
 	if err != nil {
 		return 0, err
 	}
 
-	// Update reward accumulation to current time before calculating collectable rewards.
-	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(tier), currentTime)
-	if err != nil {
+	if err := updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(tier), currentTime); err != nil {
 		return 0, err
 	}
 
 	emitUpdateLaunchpadRewardAccumulation(tier.ID(), rewardManager, getTierCurrentDepositAmount(tier))
 
-	return calculateClaimableRewardsForActiveDeposits(rewardManager), nil
+	return calculateMaximumClaimableRewardsForActiveDeposits(rewardManager), nil
 }
 
 // validateTransferLeft validates the transfer of remaining tokens

@@ -930,68 +930,6 @@ func TestLaunchpadProject_validateRefundProject(cur realm, t *testing.T) {
 	})
 }
 
-// TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits tests that claimable rewards
-// are correctly calculated for active deposits.
-func TestLaunchpadProject_calculateClaimableRewardsForActiveDeposits(cur realm, t *testing.T) {
-	t.Run("calculate claimable rewards with active deposits", func(cur realm, t *testing.T) {
-		// Create reward manager with accumulated rewards
-		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 reward per deposit
-
-		// Add reward state for deposit with priceDebt = 0.5
-		// So claimable = (1.0 - 0.5) * 100,000 = 50,000
-		rewardState := launchpad.NewRewardState(
-			u256.Zero().Div(consts.Q128(), u256.NewUint(2)), // priceDebt = 0.5
-			100_000, // deposit amount
-			1000,    // start time
-			2000,    // end time
-			1100,    // claimable time
-		)
-		rm.SetReward("deposit1", rewardState)
-
-		// Calculate claimable rewards
-		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
-
-		// Expected: (1.0 - 0.5) * 100,000 = 50,000
-		uassert.True(t, claimableRewards > 0, "claimable rewards should be positive")
-		uassert.Equal(t, int64(50_000), claimableRewards)
-	})
-
-	t.Run("no active deposits returns zero", func(cur realm, t *testing.T) {
-		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(consts.Q128())
-
-		// No reward states added
-		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
-
-		uassert.Equal(t, int64(0), claimableRewards)
-	})
-
-	t.Run("multiple deposits with different claimable rewards", func(cur realm, t *testing.T) {
-		rm := newRewardManager(100_000, 1000, 2000, 0)
-		rm.SetAccumulatedRewardPerDepositX128(consts.Q128()) // 1.0 reward per deposit
-
-		// Deposit 1: priceDebt = 0.5, amount = 100,000 -> claimable = 50,000
-		rewardState1 := launchpad.NewRewardState(
-			u256.Zero().Div(consts.Q128(), u256.NewUint(2)), // priceDebt = 0.5
-			100_000, 1000, 2000, 1100,
-		)
-		rm.SetReward("deposit1", rewardState1)
-
-		// Deposit 2: priceDebt = 0.25, amount = 200,000 -> claimable = 150,000
-		rewardState2 := launchpad.NewRewardState(
-			u256.Zero().Div(consts.Q128(), u256.NewUint(4)), // priceDebt = 0.25
-			200_000, 1000, 2000, 1100,
-		)
-		rm.SetReward("deposit2", rewardState2)
-
-		claimableRewards := calculateClaimableRewardsForActiveDeposits(rm)
-
-		// Expected: 50,000 + 150,000 = 200,000
-		uassert.Equal(t, int64(200_000), claimableRewards)
-	})
-}
-
 // TestLaunchpadProject_applyTierRewardGrowthWithRewards tests that tier claimable rewards
 // are correctly calculated.
 func TestLaunchpadProject_applyTierRewardGrowthWithRewards(cur realm, t *testing.T) {
@@ -1015,6 +953,7 @@ func TestLaunchpadProject_applyTierRewardGrowthWithRewards(cur realm, t *testing
 			u256.Zero().Div(consts.Q128(), u256.NewUint(2)),
 			100_000, 1000, 2000, 1100,
 		)
+		addActiveRewardState(rm, rewardState)
 		rm.SetReward("deposit1", rewardState)
 		projectTierRewardManagers.Set(tierID, rm)
 		lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers)
@@ -1142,6 +1081,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 			// Set price debt: Q128 / priceDebtRatio
 			priceDebt := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(tt.priceDebtRatio)))
 			rewardState := launchpad.NewRewardState(priceDebt, tt.depositAmount, 1000, 2000, 1100)
+			addActiveRewardState(rm, rewardState)
 			rm.SetReward("deposit1", rewardState)
 
 			projectTierRewardManagers.Set(tierID, rm)
@@ -1169,8 +1109,8 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 
 			uassert.NoError(t, err)
 
-			// Verify claimable amount calculation
-			claimable := calculateClaimableRewardsForActiveDeposits(rm)
+			// Verify the bounded aggregate claim reservation.
+			claimable := calculateMaximumClaimableRewardsForActiveDeposits(rm)
 			uassert.Equal(t, tt.expectedClaimable, claimable)
 
 			// Verify refundable amount
@@ -1260,6 +1200,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 			for i, dep := range tt.deposits {
 				priceDebt := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(dep.priceDebtRatio)))
 				rewardState := launchpad.NewRewardState(priceDebt, dep.amount, 1000, 2000, 1100)
+				addActiveRewardState(rm, rewardState)
 				rm.SetReward("deposit"+utils.FormatInt(int64(i)), rewardState)
 			}
 
@@ -1277,8 +1218,8 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 
 			uassert.NoError(t, err)
 
-			// Verify total claimable
-			totalClaimable := calculateClaimableRewardsForActiveDeposits(rm)
+			// Verify the bounded aggregate claim reservation.
+			totalClaimable := calculateMaximumClaimableRewardsForActiveDeposits(rm)
 			uassert.Equal(t, tt.expectedTotalClaimable, totalClaimable)
 
 			// Verify refundable amount
