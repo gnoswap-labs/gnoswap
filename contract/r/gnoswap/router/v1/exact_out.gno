@@ -170,6 +170,8 @@ func (r *routerV1) exactOutSwapRoute(
 	params SwapRouteParams,
 	referrer string,
 ) (int64, int64) {
+	fundsSnapshot := r.captureFundsSnapshot(params.routeArr)
+
 	inputAmount, outputAmount, err := r.commonSwapRoute(0, rlm, params)
 	if err != nil {
 		panic(err)
@@ -180,9 +182,12 @@ func (r *routerV1) exactOutSwapRoute(
 
 	common.SafeGRC20Transfer(0, rlm, params.outputToken, caller, outputAmount)
 
+	// refund any route-token surplus (e.g. a partially filled intermediate hop)
+	// within the same transaction
+	r.refundLeftovers(0, rlm, fundsSnapshot, caller)
+
 	// handle referral registration
 	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)
-
 
 	eventAttrs := append([]string{
 		"prevAddr", caller.String(),

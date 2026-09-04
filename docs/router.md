@@ -32,3 +32,10 @@ GnoSwap charges router fee on output tokens. In exact-out swaps, user receives `
 - `SwapCallback` missing `AssertIsPool` → anyone forges callback params, drains approvals.
 - `DrySwapRoute` / live swap divergence → users see wrong expected amounts.
 - Multi-hop route where intermediate token equals input or output token → unexpected behavior.
+
+## Leftover Refund
+
+Every swap entry point snapshots the router's balance and pending protocol fee for each route token before executing (`refund.gno`). After the output payout, any surplus a route token accrued in the router during the swap — e.g. an intermediate hop that only partially filled against thin liquidity — is transferred back to the swap caller in the same transaction (`SwapRouteRefund` event per token).
+
+- Only the delta against the pre-swap snapshot is refunded. Balances the router held before the swap, and protocol fees recorded as pending during the swap (protocol fee realm halted), are never touched.
+- The refund runs after all state updates and payouts, as the final interaction of the call (CEI). There is no permissionless sweep: Uniswap's `refundETH`/`sweepToken` model relies on multicall atomicity, which does not exist here, so router balances must never be claimable by later callers.
