@@ -95,8 +95,11 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetPoolStakedLiquidity(\
 # stdout 1669251248
 
 # A real swap across the same tick should still dispatch and batch the staker hook.
+# The pool cannot absorb the full input, so the swap sets an explicit price limit
+# (same limit as the DrySwap above) to opt in to the partial fill: without one the
+# router reverts on any exact-in swap that cannot consume the full input.
 gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 9223372036854775806 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSwapRoute -args gno.land/r/onbloc/bar.BAR -args gno.land/r/onbloc/foo.FOO -args 10000000 -args "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000" -args "100" -args "0" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func ExactInSingleSwapRoute -args gno.land/r/onbloc/bar.BAR -args gno.land/r/onbloc/foo.FOO -args 10000000 -args "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000" -args "0" -args "4306525355" -args 9999999999 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout 'BatchStakerTickCross'
 
 -- run/dryswap_cross_tick.gno --
