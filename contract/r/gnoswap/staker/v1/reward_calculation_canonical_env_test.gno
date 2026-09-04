@@ -605,6 +605,7 @@ func (self *canonicalRewardState) MoveTick(cur realm, t *testing.T, poolPath str
 	t.Logf("	[%d] (%d->%d) %s", self.CurrentTime(), pool.tick, tick, pool.poolPath)
 
 	zeroForOne := tick < pool.tick // true if moving left, false if moving right
+	getMockInstance().swapStartHook(0, cur, pool.poolPath, self.CurrentTime())
 	if zeroForOne {
 		// backward
 		for i := pool.tick; i > tick; i-- {
@@ -633,6 +634,9 @@ func (self *canonicalRewardState) MoveTick(cur realm, t *testing.T, poolPath str
 			// why this hook is invoked inline).
 			getMockInstance().tickCrossHook(0, cur, pool.poolPath, i, zeroForOne, self.CurrentTime())
 		}
+	}
+	if err := getMockInstance().swapEndHook(0, cur, pool.poolPath); err != nil {
+		panic(err)
 	}
 
 	// update canonical state
