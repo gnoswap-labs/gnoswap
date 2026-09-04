@@ -1005,6 +1005,45 @@ func TestPruneInactiveProposals_BoundsWorkPerCall(cur realm, t *testing.T) {
 	uassert.Equal(t, 0, store.GetActiveProposalsByDeadline().Size())
 }
 
+// TestPruneInactiveProposals_DrainsBacklogLargerThanProductionCap proves that
+// a backlog bigger than the real maxProposalsPrunedPerCall cap is not stuck:
+// it takes exactly the expected number of calls at the production cap to
+// fully drain, rather than requiring one unbounded call.
+func TestPruneInactiveProposals_DrainsBacklogLargerThanProductionCap(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	const backlogSize = maxProposalsPrunedPerCall + 50 // exceeds the real per-call cap
+
+	for i := int64(0); i < backlogSize; i++ {
+		expired := governance.NewProposal(
+			i+1,
+			NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000+i, 1000),
+			governance.NewProposalMetadata("expired", "expired"),
+			governance.NewProposalData(governance.Text, nil, nil),
+			address("g1expired"),
+			1,
+			now-1000+i,
+			runtime.ChainHeight(),
+		)
+		uassert.True(t, gv.addProposal(0, cur, expired))
+	}
+	uassert.Equal(t, backlogSize, store.GetActiveProposalsByDeadline().Size())
+
+	// First call hits the production cap and leaves the remainder for the
+	// next call — it is not forced to process the whole backlog at once.
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall) == nil)
+	uassert.Equal(t, backlogSize-maxProposalsPrunedPerCall, store.GetActiveProposalsByDeadline().Size())
+
+	// A second call at the same production cap fully drains what's left,
+	// since the remainder is smaller than the cap.
+	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall) == nil)
+	uassert.Equal(t, 0, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, 0, store.GetActiveProposalsBySnapshot().Size())
+}
+
 // ==================================
 // Voting Weight Snapshot Getter Tests
 // ==================================
