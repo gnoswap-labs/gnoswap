@@ -11,9 +11,9 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-# Clone gno repository (master branch from gnoswap-labs)
-RUN git clone --branch master --single-branch --depth 1 \
-    https://github.com/gnoswap-labs/gno.git /app/gno
+# Clone the toolchain that backs the current Pearl testnet.
+RUN git clone --branch chain/pearl --single-branch --depth 1 \
+    https://github.com/gnolang/gno.git /app/gno
 
 # Build gno tools
 WORKDIR /app/gno

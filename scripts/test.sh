@@ -26,9 +26,9 @@ clone_repos() {
   echo "✅ Cloning gnoswap repository into tmp/gnoswap..."
   git clone https://github.com/gnoswap-labs/gnoswap.git "$GNOSWAP_PATH"
 
-  # Clone gno repository into $TMP_PATH
-  echo "✅ Cloning gno repository into tmp/gno..."
-  git clone --depth 1 --branch master https://github.com/gnolang/gno.git "$GNO_PATH"
+  # Clone the Gno source that backs the current Pearl testnet.
+  echo "✅ Cloning Pearl Gno repository into tmp/gno..."
+  git clone --depth 1 --branch chain/pearl https://github.com/gnolang/gno.git "$GNO_PATH"
 }
 
 # ✅ env setup(Go, Python install)

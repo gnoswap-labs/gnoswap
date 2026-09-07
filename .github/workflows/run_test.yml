@@ -33,9 +33,9 @@ jobs:
   setup-gno:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out gno (master)
+      - name: Check out Gno (Pearl)
         run: |
-          git clone --depth 1 https://github.com/gnoswap-labs/gno.git gno -b master
+          git clone --branch chain/pearl --single-branch --depth 1 https://github.com/gnolang/gno.git gno
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -66,9 +66,9 @@ jobs:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Check out gno (master)
+      - name: Check out Gno (Pearl)
         run: |
-          git clone --depth 1 https://github.com/gnoswap-labs/gno.git gno -b master
+          git clone --branch chain/pearl --single-branch --depth 1 https://github.com/gnolang/gno.git gno
 
       - name: Link contracts into gno/examples/gno.land (setup.py, same as Makefile)
         run: python3 setup.py -w .

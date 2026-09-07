@@ -15,8 +15,8 @@ jobs:
       - name: Check out gno
         uses: actions/checkout@v4
         with:
-          repository: gnoswap-labs/gno
-          ref: master
+          repository: gnolang/gno
+          ref: chain/pearl
           path: ./gno
 
       - name: Set up Go

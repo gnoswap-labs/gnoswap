@@ -92,7 +92,7 @@ make integration-test-build
 - For direct `gno test`, run `python3 setup.py -w <workdir>` first, then test from `<workdir>/gno/examples`.
 - `RUN=` maps to `gno test -run`; use regexes for subtests.
 - Filetests and integration txtar cases are coarse-grained. Do not update golden/bless outputs without reviewing diffs.
-- CI clones `gnoswap-labs/gno`, runs `setup.py`, updates fuzz seeds, and executes package tests via `.github/scripts/run_tests.rb`.
+- CI clones `gnolang/gno` at `chain/pearl`, runs `setup.py`, updates fuzz seeds, and executes package tests via `.github/scripts/run_tests.rb`.
 
 ## Conventions & Rules
 

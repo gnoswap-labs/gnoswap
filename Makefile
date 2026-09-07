@@ -3,6 +3,9 @@ PROJECT_ROOT := $(shell pwd)
 TMP_PATH := $(PROJECT_ROOT)/tmp
 GNO_PATH := $(TMP_PATH)/gno
 GNOSWAP_PATH := $(TMP_PATH)/gnoswap
+GNO_REPOSITORY ?= https://github.com/gnolang/gno.git
+GNO_REF ?= chain/pearl
+
 SCRIPT := $(PROJECT_ROOT)/scripts/test.sh
 
 include $(PROJECT_ROOT)/scripts/test_values.mk
@@ -63,7 +66,7 @@ test:
 	fi
 	@if [ ! -d "$(WORKDIR)/gno" ]; then \
 		echo "📦 gno repository not found. Cloning..."; \
-		git clone git@github.com:gnoswap-labs/gno.git $(WORKDIR)/gno; \
+		git clone --branch $(GNO_REF) --single-branch --depth 1 $(GNO_REPOSITORY) $(WORKDIR)/gno; \
 	fi
 	@python3 $(PROJECT_ROOT)/setup.py -w $(WORKDIR)
 	@cd $(WORKDIR)/gno/examples && \
