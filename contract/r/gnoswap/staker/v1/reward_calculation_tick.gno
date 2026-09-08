@@ -19,16 +19,16 @@ type TickResolver struct {
 func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 	acc := u256.Zero()
 	self.OutsideAccumulation().ReverseIterate(0, timestamp, func(key int64, value any) bool {
-		v, ok := value.(*u256.Uint)
+		v, ok := value.(string)
 		if !ok {
-			panic("failed to cast value to *u256.Uint")
+			panic("failed to cast value to string")
 		}
-		acc = v
+		if len(v) != 32 {
+			panic("invalid outside accumulation length")
+		}
+		acc.SetBytes([]byte(v))
 		return true
 	})
-	if acc == nil {
-		acc = u256.Zero()
-	}
 	return acc
 }
 
