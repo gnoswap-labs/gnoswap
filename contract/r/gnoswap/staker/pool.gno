@@ -211,7 +211,7 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 		// This ensures proper unclaimable period tracking from the moment rewards start emitting.
 		lastUnclaimableTime:           0,
 		unclaimableAcc:                0,
-		rewardCache:                   NewUintTreeN(64),
+		rewardCache:                   NewUintTreeN(4),
 		incentives:                    NewIncentives(poolPath),
 		ticks:                         NewTicks(),
 		globalRewardRatioAccumulation: NewUintTreeN(64),
@@ -399,9 +399,9 @@ func (i *Incentives) IterateIncentiveIdsByTime(startTime, endTime int64, fn func
 func NewIncentives(targetPoolPath string) *Incentives {
 	result := &Incentives{
 		targetPoolPath:     targetPoolPath,
-		unclaimablePeriods: NewUintTreeN(64),
+		unclaimablePeriods: NewUintTreeN(4),
 		incentives:         bptree.NewBPTreeN(16),
-		byStartTime:        NewUintTreeN(64),
+		byStartTime:        NewUintTreeN(4),
 	}
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.
