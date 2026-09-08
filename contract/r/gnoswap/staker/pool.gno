@@ -8,6 +8,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -767,7 +768,7 @@ type Tick struct {
 
 	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
 	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
-	outsideAccumulation *UintTree // timestamp -> *u256.Uint
+	outsideAccumulation *UintTree // timestamp -> fixed 32-byte big-endian string
 }
 
 // Tick Getter/Setter methods
@@ -814,7 +815,11 @@ func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
 
 // SetOutsideAccumulationAt sets the outside accumulation at the timestamp.
 func (t *Tick) SetOutsideAccumulationAt(timestamp int64, acc *u256.Uint) {
-	t.outsideAccumulation.Set(timestamp, u256.Zero().Set(acc))
+	t.outsideAccumulation.Set(timestamp,
+		utils.EncodeUint64(acc[3])+
+			utils.EncodeUint64(acc[2])+
+			utils.EncodeUint64(acc[1])+
+			utils.EncodeUint64(acc[0]))
 }
 
 // Clone returns a deep copy of the tick.

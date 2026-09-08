@@ -13,6 +13,18 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 | `type.gno` | Type definitions |
 | `wrap_unwrap.gno` | Token wrapping utilities |
 
+## Checkpoint Storage Schema
+
+`Tick.outsideAccumulation` checkpoints are stored as strings containing exactly 32
+binary bytes in big-endian uint256 order (most-significant limb first). Readers
+require both the string type and the exact 32-byte length; decimal strings and
+legacy `*uint256.Uint` values are not compatible.
+
+This changes the persisted tick history schema within the staker realm. A
+fresh deployment is required; it is not a v1-only implementation upgrade and
+cannot be applied in place to existing deployments. No migration API is
+provided.
+
 ## Rules
 
 ### Hooks
