@@ -204,7 +204,7 @@ func (p *Pool) Clone() *Pool {
 func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
 		poolPath:        poolPath,
-		stakedLiquidity: NewUintTreeN(64),
+		stakedLiquidity: NewUintTreeN(4),
 		// lastUnclaimableTime is initialized to 0, which means "tracking not started yet".
 		// When the pool receives a tier assignment (or external incentive), `cacheReward` will be called,
 		// which will automatically call `startUnclaimablePeriod` if the pool has zero liquidity.
@@ -214,8 +214,8 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 		rewardCache:                   NewUintTreeN(4),
 		incentives:                    NewIncentives(poolPath),
 		ticks:                         NewTicks(),
-		globalRewardRatioAccumulation: NewUintTreeN(64),
-		historicalTick:                NewUintTreeN(64),
+		globalRewardRatioAccumulation: NewUintTreeN(4),
+		historicalTick:                NewUintTreeN(4),
 	}
 
 	pool.SetGlobalRewardRatioAccumulationAt(currentTime, "0")
