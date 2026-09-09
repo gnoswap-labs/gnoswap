@@ -135,6 +135,7 @@ func (rs RewardState) Clone() *RewardState {
 	return &RewardState{
 		priceDebtX128:           rs.priceDebtX128,
 		priceDebtX128Set:        rs.priceDebtX128Set,
+		claimableTime:           rs.claimableTime,
 		depositAmount:           rs.depositAmount,
 		distributeStartTime:     rs.distributeStartTime,
 		distributeEndTime:       rs.distributeEndTime,
