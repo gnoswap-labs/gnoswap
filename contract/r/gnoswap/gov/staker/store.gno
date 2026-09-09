@@ -2,6 +2,7 @@ package staker
 
 import (
 	"errors"
+
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
@@ -149,12 +150,14 @@ func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
 		return nil, false
 	}
 
-	delegation, ok := result.(*Delegation)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *Delegation: %T", result))
+	switch delegation := result.(type) {
+	case Delegation:
+		return (&delegation).Clone(), true
+	case *Delegation:
+		return delegation.Clone(), true
+	default:
+		panic(ufmt.Sprintf("failed to cast result to Delegation: %T", result))
 	}
-
-	return delegation, true
 }
 
 func (s *govStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *Delegation) error {
@@ -163,8 +166,12 @@ func (s *govStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *D
 	}
 
 	delegations := s.GetAllDelegations()
-
-	delegations.Set(utils.Int64ToString(id), delegation)
+	key := utils.Int64ToString(id)
+	if delegation == nil {
+		delegations.Remove(key)
+	} else {
+		delegations.Set(key, *delegation.Clone())
+	}
 	return s.kvStore.Set(0, rlm, StoreKeyDelegations, delegations)
 }
 

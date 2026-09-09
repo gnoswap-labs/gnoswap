@@ -19,12 +19,17 @@ func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launc
 		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositId))
 	}
 
-	rewardState, ok := rewardStateI.(*launchpad.RewardState)
-	if !ok {
+	switch rewardState := rewardStateI.(type) {
+	case launchpad.RewardState:
+		return rewardState.Clone(), nil
+	case *launchpad.RewardState:
+		if rewardState == nil {
+			return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositId))
+		}
+		return rewardState.Clone(), nil
+	default:
 		return nil, ufmt.Errorf("failed to cast rewardState to *launchpad.RewardState: %T", rewardStateI)
 	}
-
-	return rewardState, nil
 }
 
 func calculateRewardPerDepositX128(r *launchpad.RewardManager, rewardPerSecondX128 *u256.Uint, totalStaked int64, currentTime int64) (*u256.Uint, error) {
@@ -94,9 +99,7 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit *launchpad.Depo
 }
 
 func addRewardState(r *launchpad.RewardManager, deposit *launchpad.Deposit, rewardState *launchpad.RewardState) *launchpad.RewardState {
-	rewards := r.Rewards()
-	rewards.Set(deposit.ID(), rewardState)
-	r.SetRewards(rewards)
+	r.SetReward(deposit.ID(), rewardState)
 
 	return rewardState
 }
@@ -222,9 +225,7 @@ func collectReward(r *launchpad.RewardManager, depositId string, currentTime int
 	}
 
 	rewardState.SetClaimedAmount(rewardState.ClaimedAmount() + claimableReward)
-	rewards := r.Rewards()
-	rewards.Set(depositId, rewardState)
-	r.SetRewards(rewards)
+	r.SetReward(depositId, rewardState)
 	r.SetTotalClaimedAmount(r.TotalClaimedAmount() + claimableReward)
 
 	return claimableReward, nil

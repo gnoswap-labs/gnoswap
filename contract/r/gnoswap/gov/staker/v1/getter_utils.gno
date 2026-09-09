@@ -9,16 +9,17 @@ import (
 // returns a value the caller may hold without reaching realm-owned state.
 
 // cloneDelegationEntry is the transformation for the delegation tree.
-// Delegation is mutable and its setters are declared in /r/gnoswap/gov/staker,
-// so an external holder of the stored pointer could write realm state through
-// it.
+// Delegation records are stored as values; accept the legacy pointer form so
+// reads remain compatible with pre-migration state and test fixtures.
 func cloneDelegationEntry(value any) any {
-	delegation, ok := value.(*staker.Delegation)
-	if !ok {
+	switch delegation := value.(type) {
+	case staker.Delegation:
+		return (&delegation).Clone()
+	case *staker.Delegation:
+		return delegation.Clone()
+	default:
 		return nil
 	}
-
-	return delegation.Clone()
 }
 
 // cloneDelegationIDsEntry is the transformation for a delegator's delegation

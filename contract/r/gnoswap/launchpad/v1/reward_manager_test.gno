@@ -1964,10 +1964,17 @@ func TestRewardManager_addRewardState(cur realm, t *testing.T) {
 			stored := manager.Rewards().Get(tt.depositId)
 			uassert.NotNil(t, stored, "reward state should not be nil")
 
-			// Verify the stored state has correct deposit amount
-			storedState, ok := stored.(*launchpad.RewardState)
-			uassert.True(t, ok)
-			uassert.Equal(t, tt.rewardAmount, storedState.DepositAmount())
+			// RewardManager stores detached value records. Accept the value
+			// representation while retaining compatibility with legacy pointers.
+			switch storedState := stored.(type) {
+			case launchpad.RewardState:
+				uassert.Equal(t, tt.rewardAmount, storedState.DepositAmount())
+			case *launchpad.RewardState:
+				uassert.True(t, storedState != nil)
+				uassert.Equal(t, tt.rewardAmount, storedState.DepositAmount())
+			default:
+				uassert.True(t, false)
+			}
 
 			expectedDebt := u256.Zero().Mul(
 				u256.NewUint(1000),

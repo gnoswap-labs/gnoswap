@@ -583,9 +583,9 @@ func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, curren
 
 	var err error
 	var idsToRemove []int64
-	allDelegations := gs.store.GetAllDelegations()
 
-	// Collect from all available delegations
+	// Collect from all available delegations. Store access returns a detached
+	// record copy, so every mutation below is explicitly persisted.
 	delegationTree.Iterate("", "", func(delegatee string, value any) bool {
 		delegationIDs, ok := value.([]int64)
 		if !ok {
@@ -596,12 +596,8 @@ func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, curren
 			return false
 		}
 		for _, id := range delegationIDs {
-			delegationRaw := allDelegations.Get(utils.FormatInt(id))
-			if delegationRaw == nil {
-				continue
-			}
-			delegation, ok := delegationRaw.(*staker.Delegation)
-			if !ok {
+			delegation, exists := gs.store.GetDelegation(id)
+			if !exists {
 				continue
 			}
 

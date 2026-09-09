@@ -24,14 +24,18 @@ func cloneProjectEntry(value any) any {
 }
 
 // cloneRewardStateEntry is the transformation for a project tier's reward
-// tree. RewardState is mutable and its setters are declared in
-// /r/gnoswap/launchpad, so an external holder of the stored pointer could
-// write realm state through it.
+// tree. Reward states are stored as values; accept the legacy pointer form so
+// reads remain compatible with pre-migration state and test fixtures.
 func cloneRewardStateEntry(value any) any {
-	rewardState, ok := value.(*launchpad.RewardState)
-	if !ok {
+	switch rewardState := value.(type) {
+	case launchpad.RewardState:
+		return rewardState.Clone()
+	case *launchpad.RewardState:
+		if rewardState == nil {
+			return nil
+		}
+		return rewardState.Clone()
+	default:
 		return nil
 	}
-
-	return rewardState.Clone()
 }
