@@ -153,9 +153,9 @@ func (lp *launchpadV1) depositGns(
 		projectTier.EndTime(),
 	)
 
-	// Get state and store deposit
-	deposits := lp.store.GetDeposits()
-	deposits.Set(depositID, deposit)
+	// Store a value in the deposits tree. Mutations use a detached pointer and
+	// write the updated value back explicitly.
+	deposits.Set(depositID, *deposit)
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {

@@ -37,9 +37,16 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 	caller := previousRealm.Address()
 	lp.assertIsDepositOwner(depositID, caller)
 
+	deposit := lp.mustGetDeposit(depositID)
+	// Check the retained record before emission or reward collection. A
+	// withdrawn deposit no longer has a reward state, so this guard must run
+	// first to keep repeat withdrawals deterministic and non-mutating.
+	if deposit.IsWithdrawn() {
+		panic(makeErrorWithDetails(errAlreadyCollected, ufmt.Sprintf("(%s)", depositID)).Error())
+	}
+
 	emission.MintAndDistributeGns(cross(rlm))
 
-	deposit := lp.mustGetDeposit(depositID)
 	targetProjectTierID := deposit.ProjectTierID()
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
@@ -151,9 +158,9 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Depo
 		return "", 0, err
 	}
 
-	// Store updated deposit in state
+	// Store the detached copy back as a value so the withdrawal is durable.
 	deposits := lp.store.GetDeposits()
-	deposits.Set(deposit.ID(), deposit)
+	deposits.Set(deposit.ID(), *deposit)
 
 	// Save the modified state back
 	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {

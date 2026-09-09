@@ -252,9 +252,8 @@ func (lp *launchpadV1) GetProjectTierRewards(projectId string, tier int64) *rotr
 	return rotree.Wrap(rewardManager.Rewards(), cloneRewardStateEntry)
 }
 
-// GetDeposit retrieves a deposit by its ID.
-// Returns a cloned deposit to prevent external modification.
-// Returns nil and error if deposit not found.
+// GetDeposit retrieves a detached copy of a deposit by its ID.
+// Returning a copy keeps callers from mutating the value stored in the tree.
 func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
 	value := deposits.Get(depositId)
@@ -262,12 +261,19 @@ func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) 
 		return nil, errors.New("deposit not found")
 	}
 
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
+	switch deposit := value.(type) {
+	case launchpad.Deposit:
+		return deposit.Clone(), nil
+	case *launchpad.Deposit:
+		if deposit == nil {
+			return nil, errors.New("invalid deposit type")
+		}
+		// Read pre-migration pointer payloads without exposing their backing
+		// object. New writes use the value case above.
+		return deposit.Clone(), nil
+	default:
 		return nil, errors.New("invalid deposit type")
 	}
-
-	return deposit.Clone(), nil
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.
