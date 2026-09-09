@@ -5,6 +5,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 // type Pool describes a single Pool's state
@@ -18,7 +19,7 @@ type Pool struct {
 	slot0                Slot0
 	balances             TokenPair // balances of the pool
 	protocolFees         TokenPair
-	feeGrowthGlobal0X128 *u256.Uint       // uint256
+	feeGrowthGlobal0X128 string           // fixed-width 32-byte big-endian uint256
 	feeGrowthGlobal1X128 *u256.Uint       // uint256
 	liquidity            *u256.Uint       // total amount of active liquidity in the pool (within current tick range)
 	ticks                *bptree.BPTree   // tick(int32) -> TickInfo
@@ -40,7 +41,7 @@ func (p *Pool) Slot0SqrtPriceX96() *u256.Uint    { return p.slot0.sqrtPriceX96 }
 func (p *Pool) Slot0Tick() int32                 { return p.slot0.tick }
 func (p *Pool) Slot0FeeProtocol() uint8          { return p.slot0.feeProtocol }
 func (p *Pool) Slot0Unlocked() bool              { return p.slot0.unlocked }
-func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint { return p.feeGrowthGlobal0X128 }
+func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint { return utils.DecodeUint256(p.feeGrowthGlobal0X128) }
 func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint { return p.feeGrowthGlobal1X128 }
 func (p *Pool) ProtocolFees() TokenPair          { return p.protocolFees }
 func (p *Pool) ProtocolFeesToken0() int64        { return p.protocolFees.token0 }
@@ -99,7 +100,7 @@ func (p *Pool) SetSlot0(slot0 Slot0) {
 }
 
 func (p *Pool) SetFeeGrowthGlobal0X128(feeGrowthGlobal0X128 *u256.Uint) {
-	p.feeGrowthGlobal0X128 = u256.Zero().Set(feeGrowthGlobal0X128)
+	p.feeGrowthGlobal0X128 = utils.EncodeUint256(feeGrowthGlobal0X128)
 }
 
 func (p *Pool) SetFeeGrowthGlobal1X128(feeGrowthGlobal1X128 *u256.Uint) {
@@ -218,7 +219,7 @@ func (p *Pool) Clone() *Pool {
 		slot0:                p.slot0.Clone(),
 		balances:             p.balances,
 		protocolFees:         p.protocolFees,
-		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
+		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128,
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
 		liquidity:            p.liquidity.Clone(),
 		ticks:                nil,
@@ -245,7 +246,7 @@ func NewPool(
 		fee:                  fee,
 		tickSpacing:          tickSpacing,
 		slot0:                slot0,
-		feeGrowthGlobal0X128: u256.Zero(),
+		feeGrowthGlobal0X128: utils.EncodeUint256(u256.Zero()),
 		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         NewTokenPair(),
 		liquidity:            u256.Zero(),
