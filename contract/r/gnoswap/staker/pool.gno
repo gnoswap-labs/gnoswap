@@ -57,7 +57,7 @@ const AllTierCount = 4 // 0, 1, 2, 3
 type Pool struct {
 	poolPath string
 
-	stakedLiquidity *UintTree // uint64 timestamp -> *u256.Uint(Q128)
+	stakedLiquidity *UintTree // uint64 timestamp -> fixed-width 16-byte uint128 string
 
 	lastUnclaimableTime int64
 	unclaimableAcc      int64
@@ -95,8 +95,9 @@ func (p *Pool) SetStakedLiquidity(stakedLiquidity *UintTree) {
 	p.stakedLiquidity = stakedLiquidity
 }
 
+// SetStakedLiquidityAt stores a fixed-width 16-byte uint128 history checkpoint.
 func (p *Pool) SetStakedLiquidityAt(currentTime int64, delta *u256.Uint) {
-	p.StakedLiquidity().Set(currentTime, u256.Zero().Set(delta))
+	p.StakedLiquidity().Set(currentTime, utils.EncodeUint128(delta))
 }
 
 // LastUnclaimableTime returns the last unclaimable time
