@@ -176,11 +176,17 @@ func (s *governanceStore) GetProposal(proposalID int64) (*Proposal, bool) {
 		return nil, false
 	}
 
-	proposal, ok := result.(*Proposal)
-	if !ok {
+	// Proposals are stored as values so a tree lookup cannot hand out a
+	// realm-owned root pointer. Keep accepting the legacy pointer form while
+	// reading state created before this representation change.
+	switch proposal := result.(type) {
+	case Proposal:
+		return proposal.Clone(), true
+	case *Proposal:
+		return proposal.Clone(), true
+	default:
 		return nil, false
 	}
-	return proposal, true
 }
 
 func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal *Proposal) error {
@@ -196,8 +202,10 @@ func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, propos
 		return errors.New("proposal ID does not match the storage key")
 	}
 
+	// Store a detached deep copy as a value. Nested status, metadata, and data
+	// pointers must not remain aliased with the caller's mutable proposal.
 	proposals := s.GetProposals()
-	proposals.Set(formatInt64Key(proposalID), proposal)
+	proposals.Set(formatInt64Key(proposalID), *proposal.Clone())
 
 	return s.kvStore.Set(0, rlm, StoreKeyProposals.String(), proposals)
 }

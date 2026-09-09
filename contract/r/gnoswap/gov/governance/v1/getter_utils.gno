@@ -10,17 +10,20 @@ import (
 
 // cloneProposalEntry is the transformation for the proposal tree. Proposal is
 // mutable and its setters are declared in /r/gnoswap/gov/governance, so an
-// external holder of the stored pointer could write realm state through it.
+// external holder of a stored root or nested pointer must not write realm state.
 //
-// Proposal.Clone leaves the type-specific data nil; see it for which lookups
-// read it instead.
+// The store uses Proposal values in the candidate representation. Accept the
+// legacy pointer form too so this read-only view remains compatible with
+// pre-migration state and unit fixtures.
 func cloneProposalEntry(value any) any {
-	proposal, ok := value.(*governance.Proposal)
-	if !ok {
+	switch proposal := value.(type) {
+	case governance.Proposal:
+		return proposal.Clone()
+	case *governance.Proposal:
+		return proposal.Clone()
+	default:
 		return nil
 	}
-
-	return proposal.Clone()
 }
 
 // cloneVotingInfoEntry is the transformation for a proposal's voting info

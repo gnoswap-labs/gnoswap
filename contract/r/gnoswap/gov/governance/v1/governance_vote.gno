@@ -160,8 +160,15 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, err
 	}
 
-	// Update proposal vote tallies
+	// Update proposal vote tallies on the detached proposal copy.
 	err = proposalResolver.Vote(votedYes, votingWeight)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	// Proposal roots are stored as values; persist the mutated copy explicitly
+	// so voting tallies survive the storage round trip.
+	err = gv.store.SetProposal(0, rlm, proposalID, proposal)
 	if err != nil {
 		return nil, 0, 0, err
 	}
