@@ -28,6 +28,33 @@ func newStakerPool() *Pool {
 	return pool
 }
 
+func TestTickGrossUsesStrictUint256Encoding(t *testing.T) {
+	tick := NewTick(100)
+	value := u256.MaxUint256()
+	tick.SetStakedLiquidityGross(value)
+
+	if len(tick.stakedLiquidityGross) != 32 {
+		t.Fatalf("stored gross length = %d; want 32", len(tick.stakedLiquidityGross))
+	}
+	uassert.Equal(t, value.ToString(), tick.StakedLiquidityGross().ToString())
+	uassert.Equal(t, tick.stakedLiquidityGross, tick.Clone().stakedLiquidityGross)
+
+	ticks := NewTicks()
+	ticks.SetTick(100, tick)
+	uassert.True(t, ticks.Has(100))
+	tick.SetStakedLiquidityGross(u256.Zero())
+	ticks.SetTick(100, tick)
+	uassert.False(t, ticks.Has(100))
+}
+
+func TestTickGrossRejectsMalformedEncoding(cur realm, t *testing.T) {
+	tick := NewTick(100)
+	tick.stakedLiquidityGross = string(make([]byte, 31))
+	uassert.PanicsContains(t, cur, "", func() {
+		tick.StakedLiquidityGross()
+	})
+}
+
 func TestMutableStakerGetterIsolation(t *testing.T) {
 	tests := []struct {
 		name      string

@@ -8,6 +8,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -703,7 +704,7 @@ func (self *Ticks) Has(tickId int32) bool {
 
 // SetTick sets a tick by ID
 func (t *Ticks) SetTick(tickId int32, tick *Tick) {
-	if tick.stakedLiquidityGross.IsZero() {
+	if tick.StakedLiquidityGross().IsZero() {
 		t.tree.Remove(EncodeInt(tickId))
 		return
 	}
@@ -760,8 +761,7 @@ type Tick struct {
 	id int32
 
 	// conceptually equal with Pool.liquidityGross but only for the staked positions
-	stakedLiquidityGross *u256.Uint
-
+	stakedLiquidityGross string
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
 	stakedLiquidityDelta *i256.Int
 
@@ -784,12 +784,12 @@ func (t *Tick) SetId(id int32) {
 
 // StakedLiquidityGross returns the staked liquidity gross
 func (t *Tick) StakedLiquidityGross() *u256.Uint {
-	return t.stakedLiquidityGross
+	return utils.DecodeUint256(t.stakedLiquidityGross)
 }
 
 // SetStakedLiquidityGross sets the staked liquidity gross
 func (t *Tick) SetStakedLiquidityGross(stakedLiquidityGross *u256.Uint) {
-	t.stakedLiquidityGross = u256.Zero().Set(stakedLiquidityGross)
+	t.stakedLiquidityGross = utils.EncodeUint256(stakedLiquidityGross)
 }
 
 // StakedLiquidityDelta returns the staked liquidity delta
@@ -825,7 +825,7 @@ func (t *Tick) Clone() *Tick {
 
 	return &Tick{
 		id:                   t.id,
-		stakedLiquidityGross: t.stakedLiquidityGross.Clone(),
+		stakedLiquidityGross: t.stakedLiquidityGross,
 		stakedLiquidityDelta: t.stakedLiquidityDelta.Clone(),
 		outsideAccumulation:  t.outsideAccumulation.Clone(),
 	}
@@ -834,7 +834,7 @@ func (t *Tick) Clone() *Tick {
 func NewTick(tickId int32) *Tick {
 	return &Tick{
 		id:                   tickId,
-		stakedLiquidityGross: u256.Zero(),
+		stakedLiquidityGross: utils.EncodeUint256(u256.Zero()),
 		stakedLiquidityDelta: i256.Zero(),
 		outsideAccumulation:  NewUintTreeN(4),
 	}
