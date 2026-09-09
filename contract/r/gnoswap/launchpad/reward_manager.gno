@@ -4,6 +4,7 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 // RewardManager manages the distribution of rewards for a project tier.
@@ -37,7 +38,7 @@ type RewardManager struct {
 	accumulatedTime             int64 // last time when reward was calculated
 	rewardClaimableDuration     int64 // duration of reward claimable
 
-	activePriceDebtX128 *u256.Uint // sum of active deposit amount × initial reward index
+	activePriceDebtX128 string // sum of active deposit amount × initial reward index, fixed-width encoded
 }
 
 // Rewards returns the rewards tree of the reward manager.
@@ -115,11 +116,11 @@ func (rm *RewardManager) SetActiveClaimedAmount(amount int64) {
 }
 
 func (rm *RewardManager) ActivePriceDebtX128() *u256.Uint {
-	return rm.activePriceDebtX128
+	return utils.DecodeUint256(rm.activePriceDebtX128)
 }
 
 func (rm *RewardManager) SetActivePriceDebtX128(debt *u256.Uint) {
-	rm.activePriceDebtX128 = u256.Zero().Set(debt)
+	rm.activePriceDebtX128 = utils.EncodeUint256(debt)
 }
 
 // DistributeStartTime returns the distribute start time of the reward manager.
@@ -196,7 +197,7 @@ func (rm RewardManager) Clone() *RewardManager {
 		accumulatedDistributeAmount:     rm.accumulatedDistributeAmount,
 		accumulatedTime:                 rm.accumulatedTime,
 		rewardClaimableDuration:         rm.rewardClaimableDuration,
-		activePriceDebtX128:             rm.activePriceDebtX128.Clone(),
+		activePriceDebtX128:             rm.activePriceDebtX128,
 	}
 }
 
@@ -219,7 +220,7 @@ func NewRewardManager(
 		accumulatedRewardPerDepositX128: u256.Zero(),
 		distributeAmountPerSecondX128:   u256.Zero(),
 		rewardClaimableDuration:         rewardCollectableDuration,
-		activePriceDebtX128:             u256.Zero(),
+		activePriceDebtX128:             utils.EncodeUint256(u256.Zero()),
 		rewards:                         bptree.NewBPTreeN(16),
 	}
 }
