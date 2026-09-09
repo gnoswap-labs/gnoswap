@@ -815,11 +815,7 @@ func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
 
 // SetOutsideAccumulationAt sets the outside accumulation at the timestamp.
 func (t *Tick) SetOutsideAccumulationAt(timestamp int64, acc *u256.Uint) {
-	t.outsideAccumulation.Set(timestamp,
-		utils.EncodeUint64(acc[3])+
-			utils.EncodeUint64(acc[2])+
-			utils.EncodeUint64(acc[1])+
-			utils.EncodeUint64(acc[0]))
+	t.outsideAccumulation.Set(timestamp, utils.EncodeUint256(acc))
 }
 
 // Clone returns a deep copy of the tick.

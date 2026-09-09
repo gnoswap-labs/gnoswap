@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -103,5 +104,34 @@ func TestDecodeUint64(cur realm, t *testing.T) {
 			continue
 		}
 		uassert.Equal(t, tt.want, DecodeUint64(tt.key))
+	}
+}
+
+func TestUint256CodecByteOrder(t *testing.T) {
+	value := &u256.Uint{
+		0x18191a1b1c1d1e1f,
+		0x1011121314151617,
+		0x08090a0b0c0d0e0f,
+		0x0001020304050607,
+	}
+	var bytes [32]byte
+	for i := range bytes {
+		bytes[i] = byte(i)
+	}
+	encoded := string(bytes[:])
+	uassert.Equal(t, encoded, EncodeUint256(value))
+	uassert.Equal(t, value.ToString(), DecodeUint256(encoded).ToString())
+
+	// Decoding must not share mutable values between callers.
+	decoded := DecodeUint256(encoded)
+	decoded.Set(u256.Zero())
+	uassert.Equal(t, value.ToString(), DecodeUint256(encoded).ToString())
+}
+
+func TestDecodeUint256RejectsInvalidLength(cur realm, t *testing.T) {
+	for _, length := range []int{0, 31, 33} {
+		uassert.PanicsContains(t, cur, "", func() {
+			DecodeUint256(string(make([]byte, length)))
+		})
 	}
 }
