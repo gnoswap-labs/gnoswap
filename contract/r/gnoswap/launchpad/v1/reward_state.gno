@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"errors"
+
 	"gno.land/r/gnoswap/launchpad"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
@@ -18,11 +19,12 @@ func isRewardStateClaimable(r *launchpad.RewardState, currentTime int64) bool {
 // the accumulated reward per deposit.
 // Returns the total reward amount.
 func calculateReward(r *launchpad.RewardState, accumRewardPerDepositX128 *u256.Uint) int64 {
-	if accumRewardPerDepositX128 == nil || r.PriceDebtX128() == nil {
+	priceDebtX128 := r.PriceDebtX128()
+	if accumRewardPerDepositX128 == nil || priceDebtX128 == nil {
 		return 0
 	}
 
-	actualRewardPerDepositX128 := u256.Zero().Sub(accumRewardPerDepositX128, r.PriceDebtX128())
+	actualRewardPerDepositX128 := u256.Zero().Sub(accumRewardPerDepositX128, priceDebtX128)
 	if actualRewardPerDepositX128.IsZero() {
 		return 0
 	}
