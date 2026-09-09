@@ -155,6 +155,7 @@ func (pt ProjectTier) Clone() *ProjectTier {
 	}
 	return &ProjectTier{
 		id:                               pt.id,
+		totalDistributeAmount:            pt.totalDistributeAmount,
 		distributeAmountPerSecondX128:    pt.distributeAmountPerSecondX128,
 		distributeAmountPerSecondX128Set: pt.distributeAmountPerSecondX128Set,
 		startTime:                        pt.startTime,
