@@ -571,11 +571,6 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 	switch rewardState := rewardValue.(type) {
 	case launchpad.RewardState:
 		return rewardState.Clone(), nil
-	case *launchpad.RewardState:
-		if rewardState == nil {
-			return nil, makeErrorWithDetails(errDataNotFound, "reward state not found")
-		}
-		return rewardState.Clone(), nil
 	default:
 		return nil, errors.New("invalid reward state type")
 	}

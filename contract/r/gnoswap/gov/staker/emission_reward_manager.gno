@@ -7,7 +7,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-const errFailedToCastRewardState = "failed to cast rewardStates's element to *EmissionRewardState: %T"
+const errFailedToCastRewardState = "failed to cast rewardStates's element to reward state value: %T"
 
 // EmissionRewardManager manages the distribution of emission rewards to stakers.
 type EmissionRewardManager struct {
@@ -66,8 +66,6 @@ func (e *EmissionRewardManager) GetRewardState(addr string) (*EmissionRewardStat
 	switch rewardState := ri.(type) {
 	case EmissionRewardState:
 		return (&rewardState).Clone(), true, nil
-	case *EmissionRewardState:
-		return rewardState.Clone(), true, nil
 	default:
 		return nil, false, ufmt.Errorf(errFailedToCastRewardState, ri)
 	}
