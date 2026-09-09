@@ -168,7 +168,7 @@ func (gv *governanceV1) GetTitleByProposalId(proposalId int64) (string, error) {
 	if !exists {
 		return "", ufmt.Errorf("proposal %d not found", proposalId)
 	}
-	return proposal.Metadata().Title(), nil
+	return proposal.Title(), nil
 }
 
 // GetDescriptionByProposalId returns the description of a proposal.
@@ -177,7 +177,7 @@ func (gv *governanceV1) GetDescriptionByProposalId(proposalId int64) (string, er
 	if !exists {
 		return "", ufmt.Errorf("proposal %d not found", proposalId)
 	}
-	return proposal.Metadata().Description(), nil
+	return proposal.Description(), nil
 }
 
 // GetProposalStatusByProposalId returns the current status of a proposal.

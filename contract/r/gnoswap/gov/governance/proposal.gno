@@ -5,14 +5,15 @@ import bptree "gno.land/p/nt/bptree/v0"
 // Proposal represents a governance proposal with all its associated data and state.
 // This is the core structure that tracks proposal lifecycle from creation to execution.
 type Proposal struct {
-	id            int64             // Unique identifier for the proposal
-	proposer      address           // The address of the proposer
-	configVersion int64             // The version of the governance config used
-	status        *ProposalStatus   // Current status and voting information
-	metadata      *ProposalMetadata // Title and description
-	data          *ProposalData     // Type-specific proposal data
-	snapshotTime  int64             // Timestamp for voting weight snapshot lookup
-	createdHeight int64             // Block height at creation
+	id              int64            // Unique identifier for the proposal
+	proposer        address          // The address of the proposer
+	configVersion   int64            // The version of the governance config used
+	status          *ProposalStatus  // Current status and voting information
+	metadata        ProposalMetadata // Title and description, stored inline
+	metadataPresent bool             // Distinguishes absent metadata from zero values
+	data            *ProposalData    // Type-specific proposal data
+	snapshotTime    int64            // Timestamp for voting weight snapshot lookup
+	createdHeight   int64            // Block height at creation
 }
 
 // ID returns the unique identifier of the proposal.
@@ -27,11 +28,17 @@ func (p *Proposal) Type() ProposalType {
 
 // Title returns the proposal title.
 func (p *Proposal) Title() string {
+	if !p.metadataPresent {
+		return ""
+	}
 	return p.metadata.Title()
 }
 
 // Description returns the proposal description.
 func (p *Proposal) Description() string {
+	if !p.metadataPresent {
+		return ""
+	}
 	return p.metadata.Description()
 }
 
@@ -90,9 +97,13 @@ func (p *Proposal) Status() *ProposalStatus {
 	return p.status
 }
 
-// Metadata returns the proposal metadata.
+// Metadata returns a detached copy of the proposal metadata, or nil when the
+// proposal was created without metadata.
 func (p *Proposal) Metadata() *ProposalMetadata {
-	return p.metadata
+	if !p.metadataPresent {
+		return nil
+	}
+	return p.metadata.Clone()
 }
 
 // IsTextType checks if this is a text proposal.
@@ -136,39 +147,43 @@ func NewProposal(
 	snapshotTime int64,
 	createdHeight int64,
 ) *Proposal {
+	metadataValue := ProposalMetadata{}
+	metadataPresent := metadata != nil
+	if metadataPresent {
+		metadataValue = *metadata.Clone()
+	}
+
 	return &Proposal{
-		id:            proposalID,
-		proposer:      proposerAddress,
-		status:        status,
-		metadata:      metadata,
-		data:          data,
-		configVersion: configVersion,
-		snapshotTime:  snapshotTime,
-		createdHeight: createdHeight,
+		id:              proposalID,
+		proposer:        proposerAddress,
+		status:          status,
+		metadata:        metadataValue,
+		metadataPresent: metadataPresent,
+		data:            data,
+		configVersion:   configVersion,
+		snapshotTime:    snapshotTime,
+		createdHeight:   createdHeight,
 	}
 }
 
-// Clone copies a proposal's own fields and leaves its type-specific data nil.
-//
-// The copy is shallow because the read-only proposal view clones every entry a
-// caller reads, and ProposalData carries the execution message slice, so
-// copying it would copy every message for each entry on a page. Read the data
-// through its own lookups instead: GetProposalTypeByProposalId,
-// GetProposalCommunityPoolSpendInfo, and GetProposalExecutionInfo.
+// Clone returns a detached proposal copy. Status and type-specific data remain
+// deep-cloned because callers may use their pointer-returning accessors, while
+// inline metadata is copied by value and its presence bit is preserved.
 func (p *Proposal) Clone() *Proposal {
 	if p == nil {
 		return nil
 	}
 
 	return &Proposal{
-		id:            p.id,
-		proposer:      p.proposer,
-		configVersion: p.configVersion,
-		status:        p.status.Clone(),
-		metadata:      p.metadata.Clone(),
-		data:          p.data.Clone(),
-		snapshotTime:  p.snapshotTime,
-		createdHeight: p.createdHeight,
+		id:              p.id,
+		proposer:        p.proposer,
+		configVersion:   p.configVersion,
+		status:          p.status.Clone(),
+		metadata:        p.metadata,
+		metadataPresent: p.metadataPresent,
+		data:            p.data.Clone(),
+		snapshotTime:    p.snapshotTime,
+		createdHeight:   p.createdHeight,
 	}
 }
 
