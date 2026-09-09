@@ -4,6 +4,7 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 // RewardManager manages the distribution of rewards for a project tier.
@@ -13,7 +14,7 @@ import (
 //
 // Fields:
 // - rewards (bptree.BPTree): A map of deposit IDs to their associated reward states.
-// - distributeAmountPerSecondX128 (u256.Uint): The amount of tokens to be distributed per second, represented as a Q128 fixed-point number.
+// - distributeAmountPerSecondX128 (string): The fixed-width 32-byte big-endian encoding of the Q128 per-second distribution amount.
 // - accumulatedRewardPerDepositX128 (u256.Uint): The accumulated reward per GNS stake, represented as a Q128 fixed-point number.
 // - totalDistributeAmount (int64): The total amount of tokens to be distributed.
 // - totalClaimedAmount (int64): The total amount of tokens claimed.
@@ -24,7 +25,7 @@ import (
 type RewardManager struct {
 	rewards *bptree.BPTree // depositId -> RewardState
 
-	distributeAmountPerSecondX128   *u256.Uint // distribute amount per second, Q128
+	distributeAmountPerSecondX128   string     // distribute amount per second, Q128, fixed-width encoded
 	accumulatedRewardPerDepositX128 *u256.Uint // accumulated reward per GNS stake, Q128
 
 	totalDistributeAmount       int64 // total distributed amount
@@ -60,12 +61,12 @@ func (rm *RewardManager) RemoveReward(depositID string) {
 
 // DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the reward manager.
 func (rm *RewardManager) DistributeAmountPerSecondX128() *u256.Uint {
-	return rm.distributeAmountPerSecondX128
+	return utils.DecodeUint256(rm.distributeAmountPerSecondX128)
 }
 
 // SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the reward manager.
 func (rm *RewardManager) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
-	rm.distributeAmountPerSecondX128 = u256.Zero().Set(amount)
+	rm.distributeAmountPerSecondX128 = utils.EncodeUint256(amount)
 }
 
 // AccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of the reward manager.
@@ -185,7 +186,7 @@ func (rm RewardManager) Clone() *RewardManager {
 
 	return &RewardManager{
 		rewards:                         rewardsTree,
-		distributeAmountPerSecondX128:   rm.distributeAmountPerSecondX128.Clone(),
+		distributeAmountPerSecondX128:   rm.distributeAmountPerSecondX128,
 		accumulatedRewardPerDepositX128: rm.accumulatedRewardPerDepositX128.Clone(),
 		totalDistributeAmount:           rm.totalDistributeAmount,
 		totalClaimedAmount:              rm.totalClaimedAmount,
@@ -217,7 +218,7 @@ func NewRewardManager(
 		accumulatedDistributeAmount:     0,
 		accumulatedTime:                 0,
 		accumulatedRewardPerDepositX128: u256.Zero(),
-		distributeAmountPerSecondX128:   u256.Zero(),
+		distributeAmountPerSecondX128:   utils.EncodeUint256(u256.Zero()),
 		rewardClaimableDuration:         rewardCollectableDuration,
 		activePriceDebtX128:             u256.Zero(),
 		rewards:                         bptree.NewBPTreeN(16),
