@@ -111,6 +111,13 @@ func (gv *governanceV1) executeProposal(
 		return nil, err
 	}
 
+	// Persist the status transition before invoking proposal actions. This
+	// preserves the old pointer-backed mutation order while still writing back
+	// the detached value held by value-backed storage.
+	if err := gv.store.SetProposal(0, rlm, proposalID, proposal); err != nil {
+		return nil, err
+	}
+
 	// Execute proposal based on its type
 	switch proposal.Type() {
 	case governance.CommunityPoolSpend:
@@ -125,12 +132,6 @@ func (gv *governanceV1) executeProposal(
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	// Proposal roots are stored as values; persist the fully updated copy only
-	// after all proposal actions have succeeded.
-	if err := gv.store.SetProposal(0, rlm, proposalID, proposal); err != nil {
-		return nil, err
 	}
 
 	return proposal, nil
