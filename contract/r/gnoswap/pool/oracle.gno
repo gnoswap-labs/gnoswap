@@ -34,8 +34,8 @@ func NewObservation(
 	tickCumulative int64,
 	secondsPerLiquidityCumulativeX128 string,
 	initialized bool,
-) *Observation {
-	return &Observation{
+) Observation {
+	return Observation{
 		blockTimestamp:                    blockTimestamp,
 		tickCumulative:                    tickCumulative,
 		secondsPerLiquidityCumulativeX128: secondsPerLiquidityCumulativeX128,
@@ -43,7 +43,7 @@ func NewObservation(
 	}
 }
 
-func NewDefaultObservation() *Observation {
+func NewDefaultObservation() Observation {
 	return NewObservation(
 		0,
 		0,
@@ -70,11 +70,14 @@ func (t *ObservationTree) Get(index uint16) (*Observation, bool) {
 	if value == nil {
 		return nil, false
 	}
-	observation, ok := value.(*Observation)
-	return observation, ok
+	observation, ok := value.(Observation)
+	if !ok {
+		return nil, false
+	}
+	return &observation, true
 }
 
-func (t *ObservationTree) Set(index uint16, observation *Observation) {
+func (t *ObservationTree) Set(index uint16, observation Observation) {
 	if t == nil || t.tree == nil {
 		panic("observation tree is not initialized")
 	}

@@ -162,12 +162,13 @@ func transform(last *pl.Observation, blockTimestamp int64, tick int32, liquidity
 		secondsPerLiquidityDelta,
 	)
 
-	return pl.NewObservation(
+	observation := pl.NewObservation(
 		blockTimestamp,
 		tickCumulative,
 		secondsPerLiquidityCumulativeX128.ToString(),
 		true,
-	), nil
+	)
+	return &observation, nil
 }
 
 func grow(observations *pl.ObservationTree, current, next uint16) (uint16, error) {
@@ -235,7 +236,7 @@ func writeObservation(
 		return 0, 0, err
 	}
 
-	observations.Set(indexUpdated, observation)
+	observations.Set(indexUpdated, *observation)
 	return indexUpdated, cardinalityUpdated, nil
 }
 
