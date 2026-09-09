@@ -4,6 +4,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 // ProjectTier represents a tier within a project.
@@ -12,7 +13,7 @@ import (
 // rewards for a specific tier of a project.
 //
 // Fields:
-// - distributeAmountPerSecondX128 (u256.Uint): The amount of tokens to be distributed per second, represented as a Q128 fixed-point number.
+// - distributeAmountPerSecondX128 (string): The fixed-width 32-byte big-endian encoding of the Q128 per-second distribution amount.
 // - startTime (int64): The time for the start of the tier.
 // - endTime (int64): The time for the end of the tier.
 // - id (string): The unique identifier for the tier, formatted as "{projectID}:duration".
@@ -23,8 +24,8 @@ import (
 // - totalWithdrawCount (int64): The total number of withdrawals from the tier.
 // - totalCollectedAmount (int64): The total amount of tokens collected as rewards for the tier.
 type ProjectTier struct {
-	distributeAmountPerSecondX128 *u256.Uint // distribute amount per second, Q128
-	id                            string     // '{projectId}:duration' // duartion == 30, 90, 180
+	distributeAmountPerSecondX128 string // distribute amount per second, Q128, fixed-width encoded
+	id                            string // '{projectId}:duration' // duartion == 30, 90, 180
 	totalDistributeAmount         int64
 	totalDepositAmount            int64 // accumulated deposit amount
 	totalWithdrawAmount           int64 // accumulated withdraw amount
@@ -37,12 +38,12 @@ type ProjectTier struct {
 
 // DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the project tier.
 func (pt *ProjectTier) DistributeAmountPerSecondX128() *u256.Uint {
-	return pt.distributeAmountPerSecondX128
+	return utils.DecodeUint256(pt.distributeAmountPerSecondX128)
 }
 
 // SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the project tier.
 func (pt *ProjectTier) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
-	pt.distributeAmountPerSecondX128 = u256.Zero().Set(amount)
+	pt.distributeAmountPerSecondX128 = utils.EncodeUint256(amount)
 }
 
 // ID returns the ID of the project tier.
@@ -148,7 +149,7 @@ func (pt ProjectTier) Clone() *ProjectTier {
 	return &ProjectTier{
 		id:                            pt.id,
 		totalDistributeAmount:         pt.totalDistributeAmount,
-		distributeAmountPerSecondX128: pt.distributeAmountPerSecondX128.Clone(),
+		distributeAmountPerSecondX128: pt.distributeAmountPerSecondX128,
 		startTime:                     pt.startTime,
 		endTime:                       pt.endTime,
 		totalDepositAmount:            pt.totalDepositAmount,
@@ -170,7 +171,7 @@ func NewProjectTier(
 	return &ProjectTier{
 		id:                            MakeProjectTierID(projectID, tierDuration),
 		totalDistributeAmount:         totalDistributeAmount,
-		distributeAmountPerSecondX128: u256.Zero(),
+		distributeAmountPerSecondX128: utils.EncodeUint256(u256.Zero()),
 		startTime:                     startTime,
 		endTime:                       endTime,
 		totalDepositAmount:            0,
