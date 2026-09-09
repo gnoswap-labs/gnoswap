@@ -176,7 +176,7 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 	emission.MintAndDistributeGns(cross(rlm))
 
 	// Attempt to cancel the proposal
-	proposal, err := gv.cancel(proposalID, currentAt, currentHeight, caller)
+	proposal, err := gv.cancel(0, rlm, proposalID, currentAt, currentHeight, caller)
 	if err != nil {
 		panic(err)
 	}
@@ -195,6 +195,7 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 // cancel handles core logic of proposal cancellation.
 // Validates proposal state and updates status to canceled.
 func (gv *governanceV1) cancel(
+	_ int, rlm realm,
 	proposalID, canceledAt, canceledHeight int64,
 	canceledBy address,
 ) (proposal *governance.Proposal, err error) {
