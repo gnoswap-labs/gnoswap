@@ -2,13 +2,17 @@ package launchpad
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 // RewardState represents the state of a reward for a deposit.
 // It contains the necessary data to manage and distribute rewards for a specific deposit.
+//
+// priceDebtX128 is persisted as one fixed-width 32-byte big-endian string.
+// The public API remains *uint256.Uint so callers do not depend on storage layout.
 type RewardState struct {
-	priceDebtX128 *u256.Uint // price debt per GNS stake, Q128
-	claimableTime int64      // time when reward can be claimed
+	priceDebtX128 string // 32-byte big-endian Q128 price debt
+	claimableTime int64  // time when reward can be claimed
 
 	depositAmount           int64 // amount of GNS staked
 	distributeStartTime     int64 // time when launchpad started staking
@@ -27,7 +31,7 @@ func NewRewardState(
 	claimableTime int64,
 ) *RewardState {
 	return &RewardState{
-		priceDebtX128:           accumulatedRewardPerDepositX128,
+		priceDebtX128:           utils.EncodeUint256(accumulatedRewardPerDepositX128),
 		depositAmount:           depositAmount,
 		distributeStartTime:     distributeStartTime,
 		distributeEndTime:       distributeEndTime,
@@ -37,14 +41,14 @@ func NewRewardState(
 	}
 }
 
-// PriceDebtX128 returns the price debt (Q128) of the reward state.
+// PriceDebtX128 returns a fresh public value decoded from the persisted debt.
 func (rs *RewardState) PriceDebtX128() *u256.Uint {
-	return rs.priceDebtX128
+	return utils.DecodeUint256(rs.priceDebtX128)
 }
 
-// SetPriceDebtX128 sets the price debt (Q128) of the reward state.
+// SetPriceDebtX128 stores the debt in its fixed-width binary representation.
 func (rs *RewardState) SetPriceDebtX128(debt *u256.Uint) {
-	rs.priceDebtX128 = u256.Zero().Set(debt)
+	rs.priceDebtX128 = utils.EncodeUint256(debt)
 }
 
 // ClaimableTime returns the claimable time of the reward state.
@@ -119,7 +123,7 @@ func (rs *RewardState) SetClaimedAmount(amount int64) {
 
 func (rs RewardState) Clone() *RewardState {
 	return &RewardState{
-		priceDebtX128:           rs.priceDebtX128.Clone(),
+		priceDebtX128:           rs.priceDebtX128,
 		claimableTime:           rs.claimableTime,
 		depositAmount:           rs.depositAmount,
 		distributeStartTime:     rs.distributeStartTime,
