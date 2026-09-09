@@ -14,6 +14,41 @@ import (
 	sr "gno.land/r/gnoswap/staker"
 )
 
+// Reusing one position calculation must not mix token rates, clamped windows,
+// per-incentive cursors, or warmup penalties, nor mutate a reused raw value.
+func TestRewardStateReuseAcrossIncentiveWindows(cur realm, t *testing.T) {
+	const start = int64(1000)
+	pool := newLinearAccPool("reuse_pool", start, 1024)
+	deposit := newInRangeDeposit("reuse_pool", start, 1024, 30, math.MaxInt64)
+	deposit.SetWarmups([]sr.Warmup{
+		sr.NewWarmup(5, 1005, 30),
+		sr.NewWarmup(5, 1010, 70),
+		sr.NewWarmup(math.MaxInt64, math.MaxInt64, 100),
+	})
+	deposit.SetExternalRewardLastCollectTime("later_cursor", 1007)
+	incentives := []*sr.ExternalIncentive{
+		sr.NewExternalIncentive("full", "reuse_pool", "token_a", 15000, 1000, 1015, deposit.Owner(), 0, 1, start),
+		sr.NewExternalIncentive("clamped", "reuse_pool", "token_b", 6000, 1003, 1009, deposit.Owner(), 0, 1, start),
+		sr.NewExternalIncentive("later_cursor", "reuse_pool", "token_c", 30000, 1000, 1015, deposit.Owner(), 0, 1, start),
+		sr.NewExternalIncentive("boundary", "reuse_pool", "token_d", 10000, 1005, 1010, deposit.Owner(), 0, 1, start),
+	}
+	wantRewards := [][]int64{{1500, 3500, 5000}, {600, 2800, 0}, {0, 4200, 10000}, {0, 7000, 0}}
+	wantPenalties := [][]int64{{3500, 1500, 0}, {1400, 1200, 0}, {0, 1800, 0}, {0, 3000, 0}}
+	state := pool.RewardStateOf(deposit)
+	state.calculateInternalReward([]internalRewardSegment{{start: start, end: 1005, rewardPerSecond: 1000}, {start: 1005, end: 1015, rewardPerSecond: 500}})
+	state.reset()
+	for pass := 0; pass < 2; pass++ {
+		for i, incentive := range incentives {
+			rewards, penalties := state.calculateExternalReward(start, 1015, incentive)
+			for j := range wantRewards[i] {
+				uassert.Equal(t, wantRewards[i][j], rewards[j])
+				uassert.Equal(t, wantPenalties[i][j], penalties[j])
+			}
+			state.reset()
+		}
+	}
+}
+
 // Test NewPools constructor
 func TestNewPools(cur realm, t *testing.T) {
 	pools := NewPools()
@@ -970,7 +1005,8 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 			makePoolWithHistory := func(poolPath string, history []struct {
 				at   int64
 				tick int32
-			}) *PoolResolver {
+			},
+			) *PoolResolver {
 				pool := sr.NewPool(poolPath, tt.startTime)
 				resolver := NewPoolResolver(pool)
 

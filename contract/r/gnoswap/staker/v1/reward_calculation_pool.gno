@@ -276,12 +276,13 @@ func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64,
 
 // RewardStateOf initializes a new RewardState for the given deposit.
 func (self *PoolResolver) RewardStateOf(deposit *sr.Deposit) *RewardState {
-	warmups := len(deposit.Warmups())
+	warmups := deposit.Warmups()
 	result := &RewardState{
 		pool:      self,
 		deposit:   NewDepositResolver(deposit),
-		rewards:   make([]int64, warmups),
-		penalties: make([]int64, warmups),
+		warmups:   warmups,
+		rewards:   make([]int64, len(warmups)),
+		penalties: make([]int64, len(warmups)),
 	}
 
 	return result
@@ -306,10 +307,28 @@ func NewPoolResolver(pool *sr.Pool) *PoolResolver {
 type RewardState struct {
 	pool    *PoolResolver
 	deposit *DepositResolver
+	warmups []sr.Warmup
+
+	// Scoped to this position calculation; reset only clears per-token results.
+	rawRewards map[int64]*u256.Uint
 
 	// accumulated rewards for each warmup
 	rewards   []int64
 	penalties []int64
+}
+
+// rawRewardAt reuses immutable accumulations across emission segments and incentives.
+// Pool history and deposit bounds must remain unchanged for this RewardState's lifetime.
+func (self *RewardState) rawRewardAt(timestamp int64) *u256.Uint {
+	if raw, ok := self.rawRewards[timestamp]; ok {
+		return raw
+	}
+	raw := self.pool.CalculateRawRewardForPosition(timestamp, self.pool.CurrentTick(timestamp), self.deposit.Deposit)
+	if self.rawRewards == nil {
+		self.rawRewards = make(map[int64]*u256.Uint)
+	}
+	self.rawRewards[timestamp] = raw
+	return raw
 }
 
 // calculateInternalReward computes the position's per-warmup rewards and penalties from a pre-resolved
@@ -395,7 +414,7 @@ func (self *RewardState) calculateExternalReward(startTime, endTime int64, incen
 
 // applyWarmup applies the warmup to the rewards and calculate penalties.
 func (self *RewardState) applyWarmup() {
-	for i, warmup := range self.deposit.Warmups() {
+	for i, warmup := range self.warmups {
 		warmupReward := self.rewards[i]
 
 		// calculate warmup reward applying warmup ratio
@@ -414,18 +433,16 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		return nil
 	}
 
-	startTick := self.pool.CurrentTick(startTime)
-	startRaw := self.pool.CalculateRawRewardForPosition(startTime, startTick, self.deposit.Deposit)
+	startRaw := self.rawRewardAt(startTime)
 
-	for i, warmup := range self.deposit.Warmups() {
+	for i, warmup := range self.warmups {
 		if startTime >= warmup.NextWarmupTime {
 			// passed the warmup
 			continue
 		}
 
 		if endTime < warmup.NextWarmupTime {
-			endTick := self.pool.CurrentTick(endTime)
-			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
+			endRaw := self.rawRewardAt(endTime)
 			// Modular by design: boundary ticks created at different times give a
 			// wrapped base, so the borrow is expected and the wrapped difference
 			// is the true accumulation (Uniswap V3 subtracts unchecked too).
@@ -442,8 +459,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 			break
 		}
 
-		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
-		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
+		endRaw := self.rawRewardAt(warmup.NextWarmupTime)
 		// See the note above: the subtraction is intentionally modular.
 		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
@@ -456,7 +472,6 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		self.rewards[i] = gnsmath.SafeAddInt64(self.rewards[i], gnsmath.SafeConvertToInt64(rewardAcc))
 
 		startTime = warmup.NextWarmupTime
-		startTick = endTick
 		startRaw = endRaw
 	}
 
@@ -473,17 +488,15 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 		return nil
 	}
 
-	startTick := self.pool.CurrentTick(startTime)
-	startRaw := self.pool.CalculateRawRewardForPosition(startTime, startTick, self.deposit.Deposit)
+	startRaw := self.rawRewardAt(startTime)
 
-	for i, warmup := range self.deposit.Warmups() {
+	for i, warmup := range self.warmups {
 		if startTime >= warmup.NextWarmupTime {
 			continue
 		}
 
 		if endTime < warmup.NextWarmupTime {
-			endTick := self.pool.CurrentTick(endTime)
-			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
+			endRaw := self.rawRewardAt(endTime)
 			// Modular by design: boundary ticks created at different times give a
 			// wrapped base, so the borrow is expected and the wrapped difference
 			// is the true accumulation (Uniswap V3 subtracts unchecked too).
@@ -501,8 +514,7 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 			break
 		}
 
-		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
-		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
+		endRaw := self.rawRewardAt(warmup.NextWarmupTime)
 		// See the note above: the subtraction is intentionally modular.
 		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
@@ -516,7 +528,6 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 		self.rewards[i] = gnsmath.SafeAddInt64(self.rewards[i], gnsmath.SafeConvertToInt64(rewardAcc))
 
 		startTime = warmup.NextWarmupTime
-		startTick = endTick
 		startRaw = endRaw
 	}
 

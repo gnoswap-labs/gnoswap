@@ -105,13 +105,14 @@ func (s *stakerV1) newPositionRewardContext(param *calculatePositionRewardParam)
 		pool = sr.NewPool(poolPath, param.CurrentTime)
 	}
 	poolResolver := NewPoolResolver(pool)
+	rewardState := poolResolver.RewardStateOf(deposit)
 
 	return &positionRewardContext{
 		deposit:         deposit,
-		depositResolver: NewDepositResolver(deposit),
+		depositResolver: rewardState.deposit,
 		poolResolver:    poolResolver,
-		rewardState:     poolResolver.RewardStateOf(deposit),
-		warmupLen:       len(deposit.Warmups()),
+		rewardState:     rewardState,
+		warmupLen:       len(rewardState.warmups),
 		update: positionRewardUpdate{
 			poolPath:    poolPath,
 			pool:        pool,
