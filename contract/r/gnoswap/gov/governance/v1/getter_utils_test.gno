@@ -54,20 +54,9 @@ func TestCloneVotingInfoEntry(cur realm, t *testing.T) {
 	t.Run("returns nil for a value that is not a voting info", func(cur realm, t *testing.T) {
 		uassert.Equal(t, nil, cloneVotingInfoEntry("not a voting info"))
 		uassert.Equal(t, nil, cloneVotingInfoEntry(nil))
+		uassert.Equal(t, nil, cloneVotingInfoEntry(governance.NewVotingInfo(1000)))
 	})
 
-	t.Run("returns a copy the caller cannot write back through", func(cur realm, t *testing.T) {
-		stored := governance.NewVotingInfo(1000)
-		stored.SetVotedYes(true)
-
-		cloned, ok := cloneVotingInfoEntry(stored).(*governance.VotingInfo)
-		uassert.True(t, ok)
-		uassert.False(t, cloned == stored)
-		uassert.Equal(t, stored.VotedYes(), cloned.VotedYes())
-
-		cloned.SetVotedYes(false)
-		uassert.True(t, stored.VotedYes())
-	})
 	t.Run("clones a value-backed tree entry", func(cur realm, t *testing.T) {
 		stored := governance.NewVotingInfo(1000)
 		stored.SetVotedYes(true)

@@ -177,11 +177,5 @@ func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address)
 		return votingInfo.Clone(), true
 	}
 
-	// Accept the pre-value representation while old state is being read. New
-	// writes always use the value branch above.
-	if votingInfo, ok := votingInfoRaw.(*governance.VotingInfo); ok {
-		return votingInfo.Clone(), true
-	}
-
 	return nil, false
 }
