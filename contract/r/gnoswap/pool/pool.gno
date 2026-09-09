@@ -5,6 +5,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 // type Pool describes a single Pool's state
@@ -20,7 +21,7 @@ type Pool struct {
 	protocolFees         TokenPair
 	feeGrowthGlobal0X128 *u256.Uint       // uint256
 	feeGrowthGlobal1X128 *u256.Uint       // uint256
-	liquidity            *u256.Uint       // total amount of active liquidity in the pool (within current tick range)
+	liquidity            string           // fixed-width 32-byte big-endian uint256; active liquidity in current tick range
 	ticks                *bptree.BPTree   // tick(int32) -> TickInfo
 	tickBitmaps          map[int16]string // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(string)
 	positions            *bptree.BPTree   // maps the key (caller, lower tick, upper tick) to a unique position
@@ -45,7 +46,7 @@ func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint { return p.feeGrowthGlobal1X128
 func (p *Pool) ProtocolFees() TokenPair          { return p.protocolFees }
 func (p *Pool) ProtocolFeesToken0() int64        { return p.protocolFees.token0 }
 func (p *Pool) ProtocolFeesToken1() int64        { return p.protocolFees.token1 }
-func (p *Pool) Liquidity() *u256.Uint            { return p.liquidity }
+func (p *Pool) Liquidity() *u256.Uint            { return utils.DecodeUint256(p.liquidity) }
 func (p *Pool) Ticks() *bptree.BPTree            { return p.ticks }
 func (p *Pool) TickBitmaps() map[int16]string    { return p.tickBitmaps }
 func (p *Pool) Positions() *bptree.BPTree        { return p.positions }
@@ -119,7 +120,7 @@ func (p *Pool) SetProtocolFeesToken1(token1 int64) {
 }
 
 func (p *Pool) SetLiquidity(liquidity *u256.Uint) {
-	p.liquidity = u256.Zero().Set(liquidity)
+	p.liquidity = utils.EncodeUint256(liquidity)
 }
 
 func (p *Pool) SetTicks(ticks *bptree.BPTree) {
@@ -220,7 +221,7 @@ func (p *Pool) Clone() *Pool {
 		protocolFees:         p.protocolFees,
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
-		liquidity:            p.liquidity.Clone(),
+		liquidity:            p.liquidity,
 		ticks:                nil,
 		tickBitmaps:          nil,
 		positions:            nil,
@@ -248,7 +249,7 @@ func NewPool(
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         NewTokenPair(),
-		liquidity:            u256.Zero(),
+		liquidity:            utils.EncodeUint256(u256.Zero()),
 		ticks:                bptree.NewBPTreeN(32),
 		tickBitmaps:          make(map[int16]string),
 		positions:            bptree.NewBPTreeN(16),
