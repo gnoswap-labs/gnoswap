@@ -28,6 +28,39 @@ func newStakerPool() *Pool {
 	return pool
 }
 
+func TestIncentiveRateUsesStrictUint256Encoding(t *testing.T) {
+	incentive := NewExternalIncentive("incentive-1", "foo:bar:500", "reward-token", 1000, 10, 20, adminAddr, 30, 40, 50)
+	value := u256.MaxUint256()
+	incentive.SetRewardPerSecondX128(value)
+
+	if len(incentive.rewardPerSecondX128) != 32 {
+		t.Fatalf("stored rate length = %d; want 32", len(incentive.rewardPerSecondX128))
+	}
+	uassert.Equal(t, value.ToString(), incentive.RewardPerSecondX128().ToString())
+	uassert.Equal(t, incentive.rewardPerSecondX128, incentive.Clone().rewardPerSecondX128)
+}
+
+func TestIncentiveRatePreservesQ128Rounding(t *testing.T) {
+	rewardAmount := int64(1_000_000_000_000)
+	startTimestamp := int64(10)
+	endTimestamp := startTimestamp + 90
+	incentive := NewExternalIncentive("incentive-1", "foo:bar:500", "reward-token", rewardAmount, startTimestamp, endTimestamp, adminAddr, 30, 40, 50)
+	expected := u256.MulDiv(
+		u256.NewUintFromInt64(rewardAmount),
+		consts.Q128(),
+		u256.NewUintFromInt64(endTimestamp-startTimestamp),
+	)
+	uassert.Equal(t, expected.ToString(), incentive.RewardPerSecondX128().ToString())
+}
+
+func TestIncentiveRateRejectsMalformedEncoding(cur realm, t *testing.T) {
+	incentive := NewExternalIncentive("incentive-1", "foo:bar:500", "reward-token", 1000, 10, 20, adminAddr, 30, 40, 50)
+	incentive.rewardPerSecondX128 = string(make([]byte, 31))
+	uassert.PanicsContains(t, cur, "", func() {
+		incentive.RewardPerSecondX128()
+	})
+}
+
 func TestMutableStakerGetterIsolation(t *testing.T) {
 	tests := []struct {
 		name      string
