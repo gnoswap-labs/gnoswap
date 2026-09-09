@@ -275,8 +275,8 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 //
 // ```
 func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {
-	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128().Clone()
-	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128().Clone()
+	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128()
+	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128()
 	liquidityDelta := positionParams.liquidityDelta
 
 	var flippedLower, flippedUpper bool

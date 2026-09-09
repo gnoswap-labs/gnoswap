@@ -3,6 +3,7 @@ package pool
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -17,6 +18,29 @@ func makeTestPool() *Pool {
 		tickBitmaps: make(map[int16]string),
 		positions:   bptree.NewBPTreeN(16),
 	}
+}
+
+func TestPool_ValueUintFields_KeepDetachedAccessors(cur realm, t *testing.T) {
+	pool := makeTestPool()
+	value := u256.MustFromDecimal("123")
+	pool.SetSlot0(NewSlot0(value, 0, 0, true))
+	pool.SetFeeGrowthGlobal0X128(value)
+	pool.SetFeeGrowthGlobal1X128(value)
+	pool.SetLiquidity(value)
+
+	pool.Slot0SqrtPriceX96().Set(u256.MustFromDecimal("999"))
+	pool.FeeGrowthGlobal0X128().Set(u256.MustFromDecimal("999"))
+	pool.FeeGrowthGlobal1X128().Set(u256.MustFromDecimal("999"))
+	pool.Liquidity().Set(u256.MustFromDecimal("999"))
+
+	uassert.Equal(t, "123", pool.Slot0SqrtPriceX96().ToString())
+	uassert.Equal(t, "123", pool.FeeGrowthGlobal0X128().ToString())
+	uassert.Equal(t, "123", pool.FeeGrowthGlobal1X128().ToString())
+	uassert.Equal(t, "123", pool.Liquidity().ToString())
+
+	slot0Copy := pool.Slot0()
+	slot0Copy.SetSqrtPriceX96(u256.MustFromDecimal("777"))
+	uassert.Equal(t, "123", pool.Slot0SqrtPriceX96().ToString())
 }
 
 func makeTestTickInfo(liquidityGross, feeGrowth0, feeGrowth1, liquidityNet string, initialized bool) TickInfo {
