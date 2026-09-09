@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -104,4 +105,69 @@ func TestDecodeUint64(cur realm, t *testing.T) {
 		}
 		uassert.Equal(t, tt.want, DecodeUint64(tt.key))
 	}
+}
+
+func TestUint128Codec(cur realm, t *testing.T) {
+	tests := []struct {
+		name  string
+		value *u256.Uint
+		want  [16]byte
+	}{
+		{
+			name:  "zero",
+			value: u256.Zero(),
+			want:  [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		{
+			name:  "low limb",
+			value: &u256.Uint{0x1020304050607080, 0, 0, 0},
+			want:  [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80},
+		},
+		{
+			name:  "high limb",
+			value: &u256.Uint{0, 0x0102030405060708, 0, 0},
+			want:  [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		{
+			name:  "both limbs",
+			value: &u256.Uint{0x1020304050607080, 0x0102030405060708, 0, 0},
+			want:  [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80},
+		},
+		{
+			name:  "maximum",
+			value: &u256.Uint{^uint64(0), ^uint64(0), 0, 0},
+			want:  [16]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			encoded := EncodeUint128(tt.value)
+			uassert.Equal(t, 16, len(encoded))
+			for i := range tt.want {
+				uassert.Equal(t, tt.want[i], encoded[i])
+			}
+
+			decoded := DecodeUint128(string(tt.want[:]))
+			uassert.Equal(t, tt.value.ToString(), decoded.ToString())
+		})
+	}
+}
+
+func TestUint128CodecRejectsInvalidInput(cur realm, t *testing.T) {
+	uassert.PanicsContains(t, cur, "", func() {
+		DecodeUint128(string(make([]byte, 15)))
+	})
+	uassert.PanicsContains(t, cur, "", func() {
+		DecodeUint128(string(make([]byte, 17)))
+	})
+	uassert.PanicsContains(t, cur, "", func() {
+		EncodeUint128(&u256.Uint{0, 0, 1, 0})
+	})
+	uassert.PanicsContains(t, cur, "", func() {
+		EncodeUint128(&u256.Uint{0, 0, 0, 1})
+	})
+	uassert.PanicsContains(t, cur, "", func() {
+		EncodeUint128(nil)
+	})
 }

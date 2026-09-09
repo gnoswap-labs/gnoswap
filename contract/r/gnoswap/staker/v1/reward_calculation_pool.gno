@@ -10,6 +10,7 @@ import (
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -112,16 +113,17 @@ func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
 }
 
 func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uint) {
-	liquidity = u256.Zero()
-
 	self.StakedLiquidity().ReverseIterate(0, currentTime, func(key int64, value any) bool {
-		res, ok := value.(*u256.Uint)
+		valueStr, ok := value.(string)
 		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to *u256.Uint: %T", value))
+			panic(ufmt.Sprintf("failed to cast value to string: %T", value))
 		}
-		liquidity = res
+		liquidity = utils.DecodeUint128(valueStr)
 		return true
 	})
+	if liquidity == nil {
+		return u256.Zero()
+	}
 	return liquidity
 }
 

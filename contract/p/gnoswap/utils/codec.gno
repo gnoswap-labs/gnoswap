@@ -1,6 +1,9 @@
 package utils
 
-import "gno.land/p/nt/ufmt/v0"
+import (
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/ufmt/v0"
+)
 
 // EncodeUint16 converts a uint16 into a fixed-width 2-byte big-endian string.
 func EncodeUint16(value uint16) string {
@@ -45,4 +48,25 @@ func DecodeUint64(key string) uint64 {
 		uint64(key[5])<<16 |
 		uint64(key[6])<<8 |
 		uint64(key[7])
+}
+
+// EncodeUint128 converts a uint256 into a fixed-width 16-byte big-endian string.
+// It panics when value exceeds the uint128 range.
+func EncodeUint128(value *u256.Uint) string {
+	if value == nil {
+		panic("cannot encode nil uint128")
+	}
+	if value[2]|value[3] != 0 {
+		panic(ufmt.Sprintf("uint128 overflow: %s", value.ToString()))
+	}
+	return EncodeUint64(value[1]) + EncodeUint64(value[0])
+}
+
+// DecodeUint128 converts a fixed-width 16-byte big-endian string into a uint256.
+// It returns a new value and panics if input is not exactly 16 bytes.
+func DecodeUint128(encoded string) *u256.Uint {
+	if len(encoded) != 16 {
+		panic(ufmt.Sprintf("invalid uint128 encoding length: %d", len(encoded)))
+	}
+	return u256.Zero().SetBytes([]byte(encoded))
 }
