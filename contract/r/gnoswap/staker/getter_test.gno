@@ -21,6 +21,27 @@ func newStakerDeposit() *Deposit {
 	return deposit
 }
 
+func TestDepositLiquidityUsesStrictUint256Encoding(t *testing.T) {
+	value := u256.MaxUint256()
+	deposit := NewDeposit(adminAddr, "foo:bar:500", value, 10, -100, 100, nil)
+
+	if len(deposit.liquidity) != 32 {
+		t.Fatalf("stored liquidity length = %d; want 32", len(deposit.liquidity))
+	}
+	uassert.Equal(t, value.ToString(), deposit.Liquidity().ToString())
+
+	deposit.SetLiquidity(u256.NewUint(7))
+	uassert.Equal(t, "7", deposit.Liquidity().ToString())
+	uassert.Equal(t, deposit.liquidity, deposit.Clone().liquidity)
+}
+
+func TestDepositLiquidityRejectsMalformedEncoding(cur realm, t *testing.T) {
+	deposit := &Deposit{liquidity: string(make([]byte, 31))}
+	uassert.PanicsContains(t, cur, "", func() {
+		deposit.Liquidity()
+	})
+}
+
 func newStakerPool() *Pool {
 	pool := NewPool("foo:bar:500", 10)
 	pool.SetLastUnclaimableTime(20)

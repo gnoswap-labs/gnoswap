@@ -4,11 +4,12 @@ import (
 	"math"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 type Deposit struct {
 	warmups                        []Warmup         // warmup information
-	liquidity                      *u256.Uint       // liquidity
+	liquidity                      string           // fixed 32-byte big-endian liquidity
 	targetPoolPath                 string           // staked position's pool path
 	owner                          address          // owner address
 	stakeTime                      int64            // staked time
@@ -39,11 +40,11 @@ func (d *Deposit) SetTargetPoolPath(targetPoolPath string) {
 }
 
 func (d *Deposit) Liquidity() *u256.Uint {
-	return d.liquidity
+	return utils.DecodeUint256(d.liquidity)
 }
 
 func (d *Deposit) SetLiquidity(liquidity *u256.Uint) {
-	d.liquidity = u256.Zero().Set(liquidity)
+	d.liquidity = utils.EncodeUint256(liquidity)
 }
 
 func (d *Deposit) StakeTime() int64 {
@@ -230,7 +231,7 @@ func (d *Deposit) Clone() *Deposit {
 
 	return &Deposit{
 		warmups:                        cloneWarmups(d.warmups),
-		liquidity:                      d.liquidity.Clone(),
+		liquidity:                      d.liquidity,
 		targetPoolPath:                 d.targetPoolPath,
 		owner:                          d.owner,
 		stakeTime:                      d.stakeTime,
@@ -256,7 +257,7 @@ func NewDeposit(
 	return &Deposit{
 		owner:                          owner,
 		targetPoolPath:                 targetPoolPath,
-		liquidity:                      liquidity,
+		liquidity:                      utils.EncodeUint256(liquidity),
 		warmups:                        warmups,
 		stakeTime:                      currentTime,
 		tickLower:                      tickLower,
