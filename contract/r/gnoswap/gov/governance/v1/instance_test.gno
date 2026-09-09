@@ -176,6 +176,9 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 				// Cancel the proposal
 				proposalResolver := NewProposalResolver(proposal)
 				_ = proposalResolver.cancel(baseCreatedAt+50, 100, proposerAddr)
+				if err := gv.store.SetProposal(0, cur, proposal.ID(), proposal); err != nil {
+					panic(err)
+				}
 			},
 			currentTime:            baseCreatedAt + 50,
 			expectedRemainingCount: 0,
