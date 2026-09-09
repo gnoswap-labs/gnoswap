@@ -3,8 +3,8 @@ package staker
 import (
 	"testing"
 
-	uassert "gno.land/p/nt/uassert/v0"
 	u256 "gno.land/p/gnoswap/uint256"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestNewEmissionRewardState tests creating a new emission reward state
@@ -50,13 +50,13 @@ func TestNewEmissionRewardState(cur realm, t *testing.T) {
 // TestEmissionRewardState_Setters tests all setter methods
 func TestEmissionRewardState_Setters(cur realm, t *testing.T) {
 	tests := []struct {
-		name                     string
-		newRewardDebtX128        *u256.Uint
-		newAccumulatedAmount     int64
-		newAccumulatedTimestamp  int64
-		newClaimedAmount         int64
-		newClaimedTimestamp      int64
-		newStakedAmount          int64
+		name                    string
+		newRewardDebtX128       *u256.Uint
+		newAccumulatedAmount    int64
+		newAccumulatedTimestamp int64
+		newClaimedAmount        int64
+		newClaimedTimestamp     int64
+		newStakedAmount         int64
 	}{
 		{
 			name:                    "Set all values to non-zero",
@@ -130,32 +130,15 @@ func TestEmissionRewardState_Getters(cur realm, t *testing.T) {
 	}
 }
 
-// TestEmissionRewardState_Clone tests that rewardDebtX128 is cloned
-func TestEmissionRewardState_Clone(cur realm, t *testing.T) {
-	tests := []struct {
-		name                  string
-		initialRewardDebtX128 *u256.Uint
-		modifiedValue         *u256.Uint
-	}{
-		{
-			name:                  "Modifying original should not affect state",
-			initialRewardDebtX128: u256.NewUint(1000),
-			modifiedValue:         u256.NewUint(9999),
-		},
-	}
+func TestEmissionRewardState_DebtSnapshot(cur realm, t *testing.T) {
+	value := u256.MaxUint256()
+	expected := value.ToString()
+	state := NewEmissionRewardState(value)
+	value.Clear()
+	uassert.Equal(t, state.GetRewardDebtX128().ToString(), expected)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			// given
-			original := tc.initialRewardDebtX128
-
-			// when
-			state := NewEmissionRewardState(original)
-			original = tc.modifiedValue // Try to modify original
-
-			// then - state should still have the original value
-			uassert.Equal(t, state.GetRewardDebtX128().ToString(), tc.initialRewardDebtX128.ToString())
-			uassert.NotEqual(t, state.GetRewardDebtX128().ToString(), tc.modifiedValue.ToString())
-		})
-	}
+	state.GetRewardDebtX128().Clear()
+	uassert.Equal(t, state.GetRewardDebtX128().ToString(), expected)
+	state.SetRewardDebtX128(value)
+	uassert.True(t, state.GetRewardDebtX128().IsZero())
 }

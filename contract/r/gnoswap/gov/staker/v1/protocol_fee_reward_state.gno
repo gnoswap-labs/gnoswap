@@ -245,9 +245,8 @@ func (p *ProtocolFeeRewardStateResolver) updateRewardDebtX128(
 	}
 
 	// Persist only the tokens whose value actually changed instead of replacing the maps.
-	// SetRewardDebtX128 allocates a fresh map plus one u256 per token on every stake
-	// change, so replacing it costs one persisted entry per registered token regardless
-	// of how many actually earned anything (gas report issue 1 / §1.2).
+	// Replacing the debt map rewrites every registered token, including those
+	// that received no new fees.
 	//
 	// Registered protocol-fee tokens are monotonic and accumulatedProtocolFeeX128PerStake
 	// always covers the full registered set, so writing per token cannot drop an entry.

@@ -3,21 +3,21 @@ package staker
 import (
 	"testing"
 
-	uassert "gno.land/p/nt/uassert/v0"
 	u256 "gno.land/p/gnoswap/uint256"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestNewProtocolFeeRewardState tests creating a new protocol fee reward state
 func TestNewProtocolFeeRewardState(cur realm, t *testing.T) {
 	tests := []struct {
-		name                              string
+		name                               string
 		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
-		expectedMapSize                   int
+		expectedMapSize                    int
 	}{
 		{
-			name: "Create with empty map",
+			name:                               "Create with empty map",
 			accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
-			expectedMapSize:                   0,
+			expectedMapSize:                    0,
 		},
 		{
 			name: "Create with single token",
@@ -129,11 +129,11 @@ func TestProtocolFeeRewardState_SettersAndGetters(cur realm, t *testing.T) {
 // TestProtocolFeeRewardState_TokenSpecificGetters tests token-specific getter methods
 func TestProtocolFeeRewardState_TokenSpecificGetters(cur realm, t *testing.T) {
 	tests := []struct {
-		name               string
-		token              string
-		rewardDebtX128     *u256.Uint
-		accumulatedReward  int64
-		claimedReward      int64
+		name              string
+		token             string
+		rewardDebtX128    *u256.Uint
+		accumulatedReward int64
+		claimedReward     int64
 	}{
 		{
 			name:              "Get values for existing token",
@@ -316,4 +316,25 @@ func TestProtocolFeeRewardState_ForTokenSetters(cur realm, t *testing.T) {
 		uassert.NotNil(t, state.GetClaimedRewards())
 		uassert.Equal(t, state.GetClaimedRewardForToken("token"), int64(1))
 	})
+}
+
+func TestProtocolFeeRewardState_DebtSnapshots(cur realm, t *testing.T) {
+	value := u256.MaxUint256()
+	expected := value.ToString()
+	state := NewProtocolFeeRewardState(map[string]*u256.Uint{"token": value})
+	value.Clear()
+	uassert.Equal(t, state.GetRewardDebtX128ForToken("token").ToString(), expected)
+
+	state.GetRewardDebtX128ForToken("token").Clear()
+	snapshot := state.GetRewardDebtX128()
+	snapshot["token"].Clear()
+	delete(snapshot, "token")
+	uassert.Equal(t, state.GetRewardDebtX128ForToken("token").ToString(), expected)
+
+	state.SetRewardDebtX128ForToken("zero", u256.Zero())
+	uassert.True(t, state.GetRewardDebtX128ForToken("zero").IsZero())
+	uassert.True(t, state.GetRewardDebtX128ForToken("missing") == nil)
+	state.SetRewardDebtX128(map[string]*u256.Uint{"replacement": u256.NewUint(7)})
+	uassert.True(t, state.GetRewardDebtX128ForToken("token") == nil)
+	uassert.Equal(t, state.GetRewardDebtX128ForToken("replacement").ToString(), "7")
 }
