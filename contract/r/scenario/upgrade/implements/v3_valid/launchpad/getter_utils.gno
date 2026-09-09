@@ -19,12 +19,17 @@ func cloneProjectEntry(value any) any {
 }
 
 // cloneRewardStateEntry is the transformation for a project tier's reward
-// tree.
+// tree. Reward states are stored as values; accept the legacy pointer form.
 func cloneRewardStateEntry(value any) any {
-	rewardState, ok := value.(*launchpad.RewardState)
-	if !ok {
+	switch rewardState := value.(type) {
+	case launchpad.RewardState:
+		return rewardState.Clone()
+	case *launchpad.RewardState:
+		if rewardState == nil {
+			return nil
+		}
+		return rewardState.Clone()
+	default:
 		return nil
 	}
-
-	return rewardState.Clone()
 }

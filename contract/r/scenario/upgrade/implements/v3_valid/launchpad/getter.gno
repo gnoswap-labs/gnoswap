@@ -509,12 +509,17 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 		return nil, errors.New("reward state not found")
 	}
 
-	rewardState, ok := rewardValue.(*launchpad.RewardState)
-	if !ok {
+	switch rewardState := rewardValue.(type) {
+	case launchpad.RewardState:
+		return rewardState.Clone(), nil
+	case *launchpad.RewardState:
+		if rewardState == nil {
+			return nil, errors.New("reward state not found")
+		}
+		return rewardState.Clone(), nil
+	default:
 		return nil, errors.New("invalid reward state type")
 	}
-
-	return rewardState.Clone(), nil
 }
 
 // GetProjectActiveStatus returns whether a project is currently active.

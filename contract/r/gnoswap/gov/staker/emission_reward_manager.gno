@@ -62,11 +62,15 @@ func (e *EmissionRewardManager) GetRewardState(addr string) (*EmissionRewardStat
 	if ri == nil {
 		return nil, false, nil
 	}
-	rs, castOk := ri.(*EmissionRewardState)
-	if !castOk {
+
+	switch rewardState := ri.(type) {
+	case EmissionRewardState:
+		return (&rewardState).Clone(), true, nil
+	case *EmissionRewardState:
+		return rewardState.Clone(), true, nil
+	default:
 		return nil, false, ufmt.Errorf(errFailedToCastRewardState, ri)
 	}
-	return rs, true, nil
 }
 
 /* Setters */
@@ -91,7 +95,11 @@ func (e *EmissionRewardManager) SetTotalStakedAmount(totalStakedAmount int64) {
 	e.totalStakedAmount = totalStakedAmount
 }
 
-// SetRewardState sets the reward state for a specific address
+// SetRewardState stores a detached value copy for a specific address.
 func (e *EmissionRewardManager) SetRewardState(address string, rewardState *EmissionRewardState) {
-	e.rewardStates.Set(address, rewardState)
+	if rewardState == nil {
+		e.rewardStates.Remove(address)
+		return
+	}
+	e.rewardStates.Set(address, *rewardState.Clone())
 }
