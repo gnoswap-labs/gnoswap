@@ -14,8 +14,9 @@ type EmissionRewardManager struct {
 	// rewardStates maps address to EmissionRewardState for tracking individual staker rewards
 	rewardStates *bptree.BPTree // address -> EmissionRewardState
 
-	// accumulatedRewardX128PerStake tracks the cumulative reward per unit of stake with 128-bit precision
-	accumulatedRewardX128PerStake *u256.Uint
+	// accumulatedRewardX128PerStake tracks the cumulative reward per unit of stake with 128-bit precision.
+	// Keep the Uint inline so the manager record does not carry a pointer-valued numeric.
+	accumulatedRewardX128PerStake u256.Uint
 	// distributedAmount tracks the total amount of rewards distributed
 	distributedAmount int64
 	// accumulatedTimestamp tracks the last timestamp when rewards were accumulated
@@ -29,7 +30,7 @@ type EmissionRewardManager struct {
 // NewEmissionRewardManager creates new emission reward manager instance.
 func NewEmissionRewardManager() *EmissionRewardManager {
 	return &EmissionRewardManager{
-		accumulatedRewardX128PerStake: u256.NewUint(0),
+		accumulatedRewardX128PerStake: u256.Uint{},
 		accumulatedTimestamp:          0,
 		totalStakedAmount:             0,
 		distributedAmount:             0,
@@ -37,9 +38,10 @@ func NewEmissionRewardManager() *EmissionRewardManager {
 	}
 }
 
-// GetAccumulatedRewardX128PerStake returns the accumulated reward per stake with 128-bit precision.
+// GetAccumulatedRewardX128PerStake returns a detached accumulated reward per stake
+// value with 128-bit precision.
 func (e *EmissionRewardManager) GetAccumulatedRewardX128PerStake() *u256.Uint {
-	return e.accumulatedRewardX128PerStake
+	return e.accumulatedRewardX128PerStake.Clone()
 }
 
 // GetAccumulatedTimestamp returns the last timestamp when rewards were accumulated.
@@ -76,7 +78,11 @@ func (e *EmissionRewardManager) SetRewardStates(rewardStates *bptree.BPTree) {
 }
 
 func (e *EmissionRewardManager) SetAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake *u256.Uint) {
-	e.accumulatedRewardX128PerStake = u256.Zero().Set(accumulatedRewardX128PerStake)
+	if accumulatedRewardX128PerStake == nil {
+		e.accumulatedRewardX128PerStake = u256.Uint{}
+		return
+	}
+	e.accumulatedRewardX128PerStake = *accumulatedRewardX128PerStake
 }
 
 func (e *EmissionRewardManager) SetDistributedAmount(distributedAmount int64) {

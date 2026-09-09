@@ -3,9 +3,9 @@ package staker
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // TestNewProtocolFeeRewardManager tests creating a new protocol fee reward manager
@@ -203,6 +203,10 @@ func TestProtocolFeeRewardManager_ForTokenSetters(cur realm, t *testing.T) {
 		value.Set(u256.NewUint(200))
 
 		uassert.Equal(t, manager.GetAccumulatedProtocolFeeX128PerStake("token").ToString(), "100")
+
+		all := manager.GetAllAccumulatedProtocolFeeX128PerStake()
+		all["token"].Set(u256.NewUint(300))
+		uassert.Equal(t, manager.GetAccumulatedProtocolFeeX128PerStake("token").ToString(), "100")
 	})
 
 	t.Run("Initialize nil maps", func(cur realm, t *testing.T) {
@@ -215,4 +219,22 @@ func TestProtocolFeeRewardManager_ForTokenSetters(cur realm, t *testing.T) {
 		uassert.NotNil(t, manager.GetProtocolFeeAmounts())
 		uassert.Equal(t, manager.GetProtocolFeeAmount("token"), int64(10))
 	})
+}
+
+func TestProtocolFeeRewardManager_MissingDiffersFromZero(cur realm, t *testing.T) {
+	manager := NewProtocolFeeRewardManager()
+
+	// A token absent from the value-backed map remains distinguishable from
+	// a token explicitly registered with a zero accumulator.
+	uassert.Equal(t, manager.GetAccumulatedProtocolFeeX128PerStake("missing"), nil)
+
+	manager.SetAccumulatedProtocolFeeX128PerStakeForToken("zero", u256.Zero())
+	zero := manager.GetAccumulatedProtocolFeeX128PerStake("zero")
+	uassert.NotEqual(t, zero, nil)
+	uassert.Equal(t, zero.ToString(), "0")
+
+	// Compatibility getters return detached pointers; mutating one cannot
+	// silently alter the inline map value.
+	zero.Set(u256.NewUint(1))
+	uassert.Equal(t, manager.GetAccumulatedProtocolFeeX128PerStake("zero").ToString(), "0")
 }

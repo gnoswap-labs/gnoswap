@@ -773,3 +773,19 @@ func TestEmissionRewardManager_removeStake_preservesAggregateInvariantOnOverRemo
 	uassert.Equal(t, int64(300), bob.GetStakedAmount())
 	uassert.Equal(t, int64(500), resolver.GetTotalStakedAmount())
 }
+
+func TestEmissionRewardManager_ValueAccumulatorDetachedGetter(cur realm, t *testing.T) {
+	manager := staker.NewEmissionRewardManager()
+	value := u256.NewUint(100)
+	manager.SetAccumulatedRewardX128PerStake(value)
+	value.Set(u256.NewUint(200))
+
+	// The setter copies into the inline Uint field.
+	stored := manager.GetAccumulatedRewardX128PerStake()
+	uassert.Equal(t, stored.ToString(), "100")
+
+	// The getter is detached so callers cannot mutate manager state without
+	// going through its setter.
+	stored.Set(u256.NewUint(300))
+	uassert.Equal(t, manager.GetAccumulatedRewardX128PerStake().ToString(), "100")
+}
