@@ -181,7 +181,17 @@ func (rm RewardManager) Clone() *RewardManager {
 	rm.rewards.Iterate("", "", func(key string, value interface{}) bool {
 		switch rewardState := value.(type) {
 		case RewardState:
-			rewardsTree.Set(key, rewardState.Clone())
+			rewardStateClone := &RewardState{
+				priceDebtX128:           rewardState.PriceDebtX128().Clone(),
+				claimableTime:           rewardState.ClaimableTime(),
+				depositAmount:           rewardState.DepositAmount(),
+				distributeStartTime:     rewardState.DistributeStartTime(),
+				distributeEndTime:       rewardState.DistributeEndTime(),
+				accumulatedRewardAmount: rewardState.AccumulatedRewardAmount(),
+				accumulatedTime:         rewardState.AccumulatedTime(),
+				claimedAmount:           rewardState.ClaimedAmount(),
+			}
+			rewardsTree.Set(key, rewardStateClone)
 		default:
 			return true
 		}
