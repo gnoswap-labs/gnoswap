@@ -165,8 +165,13 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 
 	// get current state and price bounds
 	tick := p.Slot0Tick()
+	var liquidityBefore *u256.Uint
+	if !params.liquidityDelta.IsZero() {
+		liquidityBefore = p.Liquidity()
+	}
+
 	// update position state
-	position, err := updatePosition(p, observations, params, tick)
+	position, err := updatePositionWithLiquidity(p, observations, params, tick, liquidityBefore)
 	if err != nil {
 		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
@@ -195,7 +200,6 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 
 	case tick < params.tickUpper:
 		// case 2: Current price is within the position range
-		liquidityBefore := p.Liquidity()
 		currentTime := time.Now().Unix()
 		// Update oracle BEFORE liquidity changes
 		if observations == nil {
@@ -275,8 +279,12 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 //
 // ```
 func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {
-	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128().Clone()
-	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128().Clone()
+	return updatePositionWithLiquidity(p, observations, positionParams, tick, nil)
+}
+
+func updatePositionWithLiquidity(p *pl.Pool, observations *pl.ObservationTree, positionParams ModifyPositionParams, tick int32, liquidityBefore *u256.Uint) (pl.PositionInfo, error) {
+	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128()
+	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128()
 	liquidityDelta := positionParams.liquidityDelta
 
 	var flippedLower, flippedUpper bool
@@ -286,13 +294,16 @@ func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams
 			return pl.NewDefaultPositionInfo(), errors.New("observations not initialized")
 		}
 		slot0 := p.Slot0()
+		if liquidityBefore == nil {
+			liquidityBefore = p.Liquidity()
+		}
 		tickCumulative, secondsPerLiquidityStr, err := observeSingle(
 			observations,
 			blockTimestamp,
 			0,
 			slot0.Tick(),
 			slot0.ObservationIndex(),
-			p.Liquidity(),
+			liquidityBefore,
 			slot0.ObservationCardinality(),
 		)
 		if err != nil {
@@ -353,8 +364,8 @@ func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams
 		p,
 		positionKey,
 		liquidityDelta,
-		feeGrowthInside0X128.Clone(),
-		feeGrowthInside1X128.Clone(),
+		feeGrowthInside0X128,
+		feeGrowthInside1X128,
 	)
 	if err != nil {
 		return pl.NewDefaultPositionInfo(), err
