@@ -411,20 +411,21 @@ func NewIncentives(targetPoolPath string) *Incentives {
 }
 
 type ExternalIncentive struct {
-	incentiveId              string     // incentive id
-	startTimestamp           int64      // start time for external reward
-	endTimestamp             int64      // end time for external reward
-	createdHeight            int64      // block height when the incentive was created
-	createdTimestamp         int64      // timestamp when the incentive was created
-	depositGnsAmount         int64      // deposited gns amount
-	targetPoolPath           string     // external reward target pool path
-	rewardToken              string     // external reward token path
-	totalRewardAmount        int64      // total reward amount
-	rewardAmount             int64      // to be distributed reward amount
-	rewardPerSecondX128      *u256.Uint // reward per second, scaled by 2^128 to preserve sub-second precision
-	distributedRewardAmount  int64      // distributed reward amount, when un-staked and refunded
-	accumulatedPenaltyAmount int64      // accumulated warmup penalty from CollectReward
-	creator                  address    // creator address
+	incentiveId              string    // incentive id
+	startTimestamp           int64     // start time for external reward
+	endTimestamp             int64     // end time for external reward
+	createdHeight            int64     // block height when the incentive was created
+	createdTimestamp         int64     // timestamp when the incentive was created
+	depositGnsAmount         int64     // deposited gns amount
+	targetPoolPath           string    // external reward target pool path
+	rewardToken              string    // external reward token path
+	totalRewardAmount        int64     // total reward amount
+	rewardAmount             int64     // to be distributed reward amount
+	rewardPerSecondX128      u256.Uint // reward per second, scaled by 2^128 to preserve sub-second precision
+	rewardPerSecondX128Set   bool      // whether rewardPerSecondX128 is present
+	distributedRewardAmount  int64     // distributed reward amount, when un-staked and refunded
+	accumulatedPenaltyAmount int64     // accumulated warmup penalty from CollectReward
+	creator                  address   // creator address
 
 	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 
@@ -534,12 +535,16 @@ func (e *ExternalIncentive) SetRewardAmount(rewardAmount int64) {
 // RewardPerSecondX128 returns the Q128-scaled reward per second.
 // The underlying value is (rewardAmount << 128) / duration.
 func (e *ExternalIncentive) RewardPerSecondX128() *u256.Uint {
-	return e.rewardPerSecondX128
+	if !e.rewardPerSecondX128Set {
+		return nil
+	}
+	return u256.Zero().Set(&e.rewardPerSecondX128)
 }
 
 // SetRewardPerSecondX128 sets the Q128-scaled reward per second.
 func (e *ExternalIncentive) SetRewardPerSecondX128(rewardPerSecondX128 *u256.Uint) {
-	e.rewardPerSecondX128 = u256.Zero().Set(rewardPerSecondX128)
+	e.rewardPerSecondX128 = *rewardPerSecondX128
+	e.rewardPerSecondX128Set = true
 }
 
 // DistributedRewardAmount returns the distributed reward amount
@@ -596,10 +601,10 @@ func (e *ExternalIncentive) SetUnclaimableSeconds(unclaimableSeconds int64) {
 }
 
 func (e *ExternalIncentive) Clone() *ExternalIncentive {
-	rewardPerSecondX128 := u256.Zero()
-
-	if e.rewardPerSecondX128 != nil {
-		rewardPerSecondX128 = e.rewardPerSecondX128.Clone()
+	// The legacy clone materialized an absent rate as a present zero.
+	rewardPerSecondX128 := e.rewardPerSecondX128
+	if !e.rewardPerSecondX128Set {
+		rewardPerSecondX128 = u256.Uint{}
 	}
 
 	return &ExternalIncentive{
@@ -614,6 +619,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		totalRewardAmount:        e.totalRewardAmount,
 		rewardAmount:             e.rewardAmount,
 		rewardPerSecondX128:      rewardPerSecondX128,
+		rewardPerSecondX128Set:   true,
 		creator:                  e.creator,
 		refunded:                 e.refunded,
 		unclaimableSeconds:       e.unclaimableSeconds,
@@ -646,7 +652,7 @@ func NewExternalIncentive(
 		u256.NewUintFromInt64(incentiveDuration),
 	)
 
-	return &ExternalIncentive{
+	incentive := &ExternalIncentive{
 		incentiveId:              incentiveId,
 		targetPoolPath:           targetPoolPath,
 		rewardToken:              rewardToken,
@@ -654,7 +660,6 @@ func NewExternalIncentive(
 		rewardAmount:             rewardAmount,
 		startTimestamp:           startTimestamp,
 		endTimestamp:             endTimestamp,
-		rewardPerSecondX128:      rewardPerSecondX128,
 		distributedRewardAmount:  0,
 		accumulatedPenaltyAmount: 0,
 		creator:                  creator,
@@ -664,6 +669,8 @@ func NewExternalIncentive(
 		refunded:                 false,
 		unclaimableSeconds:       0,
 	}
+	incentive.SetRewardPerSecondX128(rewardPerSecondX128)
+	return incentive
 }
 
 // Tick mapping for each pool
@@ -703,6 +710,9 @@ func (self *Ticks) Has(tickId int32) bool {
 
 // SetTick sets a tick by ID
 func (t *Ticks) SetTick(tickId int32, tick *Tick) {
+	if !tick.stakedLiquidityGrossSet {
+		panic("cannot persist tick with absent gross liquidity")
+	}
 	if tick.stakedLiquidityGross.IsZero() {
 		t.tree.Remove(EncodeInt(tickId))
 		return
@@ -753,17 +763,19 @@ func NewTicks() Ticks {
 //
 // Fields:
 // - id (int32): The ID of the tick.
-// - stakedLiquidityGross (*u256.Uint): Total gross staked liquidity at this tick.
-// - stakedLiquidityDelta (*i256.Int): Net change in staked liquidity at this tick.
+// - stakedLiquidityGross (u256.Uint): Total gross staked liquidity at this tick.
+// - stakedLiquidityDelta (i256.Int): Net change in staked liquidity at this tick.
 // - outsideAccumulation (*UintTree): RewardRatioAccumulation outside the tick.
 type Tick struct {
 	id int32
 
 	// conceptually equal with Pool.liquidityGross but only for the staked positions
-	stakedLiquidityGross *u256.Uint
+	stakedLiquidityGross    u256.Uint
+	stakedLiquidityGrossSet bool // whether stakedLiquidityGross is present
 
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
-	stakedLiquidityDelta *i256.Int
+	stakedLiquidityDelta    i256.Int
+	stakedLiquidityDeltaSet bool // whether stakedLiquidityDelta is present
 
 	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
 	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
@@ -784,22 +796,30 @@ func (t *Tick) SetId(id int32) {
 
 // StakedLiquidityGross returns the staked liquidity gross
 func (t *Tick) StakedLiquidityGross() *u256.Uint {
-	return t.stakedLiquidityGross
+	if !t.stakedLiquidityGrossSet {
+		return nil
+	}
+	return u256.Zero().Set(&t.stakedLiquidityGross)
 }
 
 // SetStakedLiquidityGross sets the staked liquidity gross
 func (t *Tick) SetStakedLiquidityGross(stakedLiquidityGross *u256.Uint) {
-	t.stakedLiquidityGross = u256.Zero().Set(stakedLiquidityGross)
+	t.stakedLiquidityGross = *stakedLiquidityGross
+	t.stakedLiquidityGrossSet = true
 }
 
 // StakedLiquidityDelta returns the staked liquidity delta
 func (t *Tick) StakedLiquidityDelta() *i256.Int {
-	return t.stakedLiquidityDelta
+	if !t.stakedLiquidityDeltaSet {
+		return nil
+	}
+	return i256.Zero().Set(&t.stakedLiquidityDelta)
 }
 
 // SetStakedLiquidityDelta sets the staked liquidity delta
 func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
-	t.stakedLiquidityDelta = i256.Zero().Set(stakedLiquidityDelta)
+	t.stakedLiquidityDelta = *stakedLiquidityDelta
+	t.stakedLiquidityDeltaSet = true
 }
 
 // OutsideAccumulation returns the outside accumulation tree
@@ -822,21 +842,28 @@ func (t *Tick) Clone() *Tick {
 	if t == nil {
 		return nil
 	}
+	if !t.stakedLiquidityGrossSet || !t.stakedLiquidityDeltaSet {
+		panic("cannot clone tick with absent liquidity")
+	}
 
 	return &Tick{
-		id:                   t.id,
-		stakedLiquidityGross: t.stakedLiquidityGross.Clone(),
-		stakedLiquidityDelta: t.stakedLiquidityDelta.Clone(),
-		outsideAccumulation:  t.outsideAccumulation.Clone(),
+		id:                      t.id,
+		stakedLiquidityGross:    t.stakedLiquidityGross,
+		stakedLiquidityGrossSet: t.stakedLiquidityGrossSet,
+		stakedLiquidityDelta:    t.stakedLiquidityDelta,
+		stakedLiquidityDeltaSet: t.stakedLiquidityDeltaSet,
+		outsideAccumulation:     t.outsideAccumulation.Clone(),
 	}
 }
 
 func NewTick(tickId int32) *Tick {
 	return &Tick{
-		id:                   tickId,
-		stakedLiquidityGross: u256.Zero(),
-		stakedLiquidityDelta: i256.Zero(),
-		outsideAccumulation:  NewUintTreeN(4),
+		id:                      tickId,
+		stakedLiquidityGross:    u256.Uint{},
+		stakedLiquidityGrossSet: true,
+		stakedLiquidityDelta:    i256.Int{},
+		stakedLiquidityDeltaSet: true,
+		outsideAccumulation:     NewUintTreeN(4),
 	}
 }
 
