@@ -261,7 +261,7 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 				uassert.Equal(t, int64(400), manager.AccumulatedDistributeAmount())
 				uassert.Equal(t, int64(600), manager.AccumulatedTime())
 				uassert.Equal(t, int64(30), manager.RewardClaimableDuration())
-				rawReward, _ := manager.Rewards().Get("deposit-1")
+				rawReward := manager.Rewards().Get("deposit-1")
 				rewardState := rawReward.(RewardState)
 				uassert.Equal(t, "700", rewardState.PriceDebtX128().ToString())
 				uassert.Equal(t, int64(1100), rewardState.ClaimableTime())
