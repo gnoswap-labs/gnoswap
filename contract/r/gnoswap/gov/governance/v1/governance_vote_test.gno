@@ -863,7 +863,7 @@ func setupTestVotingInfo(cur realm, t *testing.T, gov *governanceV1, proposalID 
 	if !exists {
 		votingInfos = governance.NewVotingInfoTree()
 	}
-	votingInfos.Set(voter, votingInfo)
+	votingInfos.Set(voter, *votingInfo)
 
 	// Set the voting info for the voter
 	gov.store.SetProposalVotingInfos(0, cur, proposalID, votingInfos)

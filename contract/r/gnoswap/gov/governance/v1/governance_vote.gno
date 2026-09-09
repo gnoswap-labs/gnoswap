@@ -147,14 +147,16 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, err
 	}
 
-	// Store the user's vote in the proposal voting infos
+	// Store the detached user's vote as a value. The resolver intentionally
+	// mutates a copy returned by getProposalUserVotingInfo, so persisting the
+	// value here is required for every vote.
 	votingInfosTree, _ := gv.getProposalUserVotingInfos(proposalID)
 	if votingInfosTree == nil {
 		return nil, 0, 0, makeErrorWithDetails(
 			errDataNotFound, "voting infos tree not found for proposal")
 	}
 
-	votingInfosTree.Set(voterAddress.String(), userVote)
+	votingInfosTree.Set(voterAddress.String(), *userVote)
 	err = gv.store.SetProposalVotingInfos(0, rlm, proposalID, votingInfosTree)
 	if err != nil {
 		return nil, 0, 0, err
