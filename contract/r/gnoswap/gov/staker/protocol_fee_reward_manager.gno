@@ -5,6 +5,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 // ProtocolFeeRewardManager manages the distribution of protocol fee rewards to stakers.
@@ -14,8 +15,9 @@ type ProtocolFeeRewardManager struct {
 	// rewardStates maps address to ProtocolFeeRewardState for tracking individual staker rewards
 	rewardStates *bptree.BPTree // address -> ProtocolFeeRewardState
 
-	// accumulatedProtocolFeeX128PerStake maps token path to accumulated fee per stake with 128-bit precision
-	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
+	// accumulatedProtocolFeeX128PerStake maps token path to its fixed-width 32-byte
+	// big-endian accumulated fee per stake with 128-bit precision.
+	accumulatedProtocolFeeX128PerStake map[string]string
 	// protocolFeeAmounts maps token path to total distributed protocol fee amounts
 	protocolFeeAmounts map[string]int64
 	// accumulatedTimestamp tracks the last timestamp when fees were accumulated
@@ -33,7 +35,7 @@ func NewProtocolFeeRewardManager() *ProtocolFeeRewardManager {
 	return &ProtocolFeeRewardManager{
 		rewardStates:                       bptree.NewBPTreeN(16),
 		protocolFeeAmounts:                 make(map[string]int64),
-		accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
+		accumulatedProtocolFeeX128PerStake: make(map[string]string),
 		accumulatedTimestamp:               0,
 		totalStakedAmount:                  0,
 	}
@@ -61,7 +63,11 @@ func (p *ProtocolFeeRewardManager) GetRewardState(addr string) (*ProtocolFeeRewa
 // Returns:
 //   - *u256.Uint: accumulated protocol fee per stake for the token (scaled by 2^128)
 func (p *ProtocolFeeRewardManager) GetAccumulatedProtocolFeeX128PerStake(token string) *u256.Uint {
-	return p.accumulatedProtocolFeeX128PerStake[token]
+	encoded, ok := p.accumulatedProtocolFeeX128PerStake[token]
+	if !ok {
+		return nil
+	}
+	return utils.DecodeUint256(encoded)
 }
 
 func (p *ProtocolFeeRewardManager) GetProtocolFeeAmounts() map[string]int64 {
@@ -87,9 +93,9 @@ func (p *ProtocolFeeRewardManager) SetRewardStates(rewardStates *bptree.BPTree) 
 }
 
 func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake map[string]*u256.Uint) {
-	copied := make(map[string]*u256.Uint, len(accumulatedProtocolFeeX128PerStake))
+	copied := make(map[string]string, len(accumulatedProtocolFeeX128PerStake))
 	for token, value := range accumulatedProtocolFeeX128PerStake {
-		copied[token] = u256.Zero().Set(value)
+		copied[token] = utils.EncodeUint256(value)
 	}
 	p.accumulatedProtocolFeeX128PerStake = copied
 }
@@ -104,9 +110,9 @@ func (p *ProtocolFeeRewardManager) SetProtocolFeeAmounts(protocolFeeAmounts map[
 
 func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStakeForToken(token string, value *u256.Uint) {
 	if p.accumulatedProtocolFeeX128PerStake == nil {
-		p.accumulatedProtocolFeeX128PerStake = make(map[string]*u256.Uint)
+		p.accumulatedProtocolFeeX128PerStake = make(map[string]string)
 	}
-	p.accumulatedProtocolFeeX128PerStake[token] = u256.Zero().Set(value)
+	p.accumulatedProtocolFeeX128PerStake[token] = utils.EncodeUint256(value)
 }
 
 func (p *ProtocolFeeRewardManager) SetProtocolFeeAmountForToken(token string, amount int64) {
@@ -124,9 +130,14 @@ func (p *ProtocolFeeRewardManager) SetTotalStakedAmount(totalStakedAmount int64)
 	p.totalStakedAmount = totalStakedAmount
 }
 
-// GetAllAccumulatedProtocolFeeX128PerStake returns all accumulated protocol fees per stake
+// GetAllAccumulatedProtocolFeeX128PerStake returns all accumulated protocol fees per stake.
+// The returned map and Uint values are isolated copies; mutating either cannot alter manager state.
 func (p *ProtocolFeeRewardManager) GetAllAccumulatedProtocolFeeX128PerStake() map[string]*u256.Uint {
-	return p.accumulatedProtocolFeeX128PerStake
+	copied := make(map[string]*u256.Uint, len(p.accumulatedProtocolFeeX128PerStake))
+	for token, encoded := range p.accumulatedProtocolFeeX128PerStake {
+		copied[token] = utils.DecodeUint256(encoded)
+	}
+	return copied
 }
 
 // GetProtocolFeeAmount returns the protocol fee amount for a specific token

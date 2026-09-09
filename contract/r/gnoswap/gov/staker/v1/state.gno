@@ -281,16 +281,16 @@ func (g *govStakerV1) addStakeEmissionReward(_ int, rlm realm, address string, a
 	emissionRewardManager := g.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 
-	if err := resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp); err != nil {
-		return err
-	}
-
-	if err := resolvedManager.addStake(address, amount, currentTimestamp); err != nil {
-		return err
-	}
-
-	err := g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager)
+	accumulatedReward, err := resolvedManager.updateAccumulatedRewardX128PerStakeWithValue(distributedAmount, currentTimestamp)
 	if err != nil {
+		return err
+	}
+
+	if err := resolvedManager.addStakeWithAccumulatedReward(address, amount, currentTimestamp, accumulatedReward); err != nil {
+		return err
+	}
+
+	if err := g.store.SetEmissionRewardManager(0, rlm, emissionRewardManager); err != nil {
 		return err
 	}
 
@@ -313,11 +313,12 @@ func (g *govStakerV1) removeStakeEmissionReward(_ int, rlm realm, address string
 	emissionRewardManager := g.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 
-	if err := resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp); err != nil {
+	accumulatedReward, err := resolvedManager.updateAccumulatedRewardX128PerStakeWithValue(distributedAmount, currentTimestamp)
+	if err != nil {
 		return err
 	}
 
-	if err := resolvedManager.removeStake(address, amount, currentTimestamp); err != nil {
+	if err := resolvedManager.removeStakeWithAccumulatedReward(address, amount, currentTimestamp, accumulatedReward); err != nil {
 		return err
 	}
 
@@ -347,11 +348,12 @@ func (g *govStakerV1) claimRewardsEmissionReward(_ int, rlm realm, address strin
 	emissionRewardManager := g.store.GetEmissionRewardManager()
 	resolvedManager := NewEmissionRewardManagerResolver(emissionRewardManager)
 
-	if err := resolvedManager.updateAccumulatedRewardX128PerStake(distributedAmount, currentTimestamp); err != nil {
+	accumulatedReward, err := resolvedManager.updateAccumulatedRewardX128PerStakeWithValue(distributedAmount, currentTimestamp)
+	if err != nil {
 		return 0, err
 	}
 
-	amount, err := resolvedManager.claimRewards(address, currentTimestamp)
+	amount, err := resolvedManager.claimRewardsWithAccumulatedReward(address, currentTimestamp, accumulatedReward)
 	if err != nil {
 		return 0, err
 	}
@@ -391,16 +393,16 @@ func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
-		return err
-	}
-
-	if err := resolvedManager.addStake(address, amount, currentTimestamp); err != nil {
-		return err
-	}
-
-	err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager)
+	accumulatedAmounts, err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeWithValues(accruedAmounts, currentTimestamp)
 	if err != nil {
+		return err
+	}
+
+	if err := resolvedManager.addStakeWithAccumulatedRewards(address, amount, currentTimestamp, accumulatedAmounts); err != nil {
+		return err
+	}
+
+	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
 		return err
 	}
 
@@ -423,11 +425,12 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address str
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
+	accumulatedAmounts, err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeWithValues(accruedAmounts, currentTimestamp)
+	if err != nil {
 		return err
 	}
 
-	if err := resolvedManager.removeStake(address, amount, currentTimestamp); err != nil {
+	if err := resolvedManager.removeStakeWithAccumulatedRewards(address, amount, currentTimestamp, accumulatedAmounts); err != nil {
 		return err
 	}
 
@@ -461,11 +464,12 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address st
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
+	accumulatedAmounts, err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeWithValues(accruedAmounts, currentTimestamp)
+	if err != nil {
 		return nil, err
 	}
 
-	rewards, err := resolvedManager.claimRewards(address, currentTimestamp)
+	rewards, err := resolvedManager.claimRewardsWithAccumulatedRewards(address, currentTimestamp, accumulatedAmounts)
 	if err != nil {
 		return nil, err
 	}
@@ -489,11 +493,12 @@ func (g *govStakerV1) claimAccruedProtocolFeeRewardByTokenPath(address string, t
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, accruedAmount, currentTimestamp); err != nil {
+	accumulatedAmount, err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeForTokenWithValue(tokenPath, accruedAmount)
+	if err != nil {
 		return nil, 0, false, err
 	}
 
-	reward, err := resolvedManager.claimRewardForToken(address, tokenPath, currentTimestamp)
+	reward, err := resolvedManager.claimRewardForTokenWithAccumulatedReward(address, tokenPath, currentTimestamp, accumulatedAmount)
 	if err != nil {
 		return nil, 0, false, err
 	}
