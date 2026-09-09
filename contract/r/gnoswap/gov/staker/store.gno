@@ -153,8 +153,6 @@ func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
 	switch delegation := result.(type) {
 	case Delegation:
 		return (&delegation).Clone(), true
-	case *Delegation:
-		return delegation.Clone(), true
 	default:
 		panic(ufmt.Sprintf("failed to cast result to Delegation: %T", result))
 	}

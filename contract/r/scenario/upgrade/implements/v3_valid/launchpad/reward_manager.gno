@@ -22,13 +22,8 @@ func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launc
 	switch rewardState := rewardStateI.(type) {
 	case launchpad.RewardState:
 		return rewardState.Clone(), nil
-	case *launchpad.RewardState:
-		if rewardState == nil {
-			return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositId))
-		}
-		return rewardState.Clone(), nil
 	default:
-		return nil, ufmt.Errorf("failed to cast rewardState to *launchpad.RewardState: %T", rewardStateI)
+		return nil, ufmt.Errorf("failed to cast rewardState to launchpad.RewardState: %T", rewardStateI)
 	}
 }
 

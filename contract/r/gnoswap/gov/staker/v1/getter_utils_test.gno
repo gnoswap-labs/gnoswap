@@ -26,12 +26,12 @@ func TestCloneDelegationEntry(cur realm, t *testing.T) {
 	})
 
 	t.Run("returns a copy the caller cannot write back through", func(cur realm, t *testing.T) {
-		stored := newCloneTestDelegation()
+		stored := *newCloneTestDelegation()
 		stored.SetCollectedAmount(300)
 
 		cloned, ok := cloneDelegationEntry(stored).(*staker.Delegation)
 		uassert.True(t, ok)
-		uassert.False(t, cloned == stored)
+		uassert.False(t, cloned == &stored)
 		uassert.Equal(t, stored.CollectedAmount(), cloned.CollectedAmount())
 
 		cloned.SetCollectedAmount(999)
@@ -39,7 +39,7 @@ func TestCloneDelegationEntry(cur realm, t *testing.T) {
 	})
 
 	t.Run("returns a distinct copy per read", func(cur realm, t *testing.T) {
-		stored := newCloneTestDelegation()
+		stored := *newCloneTestDelegation()
 
 		first, ok := cloneDelegationEntry(stored).(*staker.Delegation)
 		uassert.True(t, ok)

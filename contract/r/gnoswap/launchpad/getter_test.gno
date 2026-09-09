@@ -48,7 +48,7 @@ func newLaunchpadRewardManager() *RewardManager {
 	manager.SetAccumulatedDistributeAmount(400)
 	manager.SetAccumulatedTime(600)
 	rewards := bptree.NewBPTreeN(16)
-	rewards.Set("deposit-1", NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100))
+	rewards.Set("deposit-1", *NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100))
 	manager.SetRewards(rewards)
 	return manager
 }

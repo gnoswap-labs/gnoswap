@@ -50,8 +50,6 @@ func (p *ProtocolFeeRewardManager) GetRewardState(addr string) (*ProtocolFeeRewa
 	switch rewardState := ri.(type) {
 	case ProtocolFeeRewardState:
 		return (&rewardState).Clone(), true, nil
-	case *ProtocolFeeRewardState:
-		return rewardState.Clone(), true, nil
 	default:
 		return nil, false, ufmt.Errorf(errFailedToCastRewardState, ri)
 	}
