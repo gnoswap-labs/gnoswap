@@ -3,6 +3,7 @@ package pool
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -17,6 +18,36 @@ func makeTestPool() *Pool {
 		tickBitmaps: make(map[int16]string),
 		positions:   bptree.NewBPTreeN(16),
 	}
+}
+
+func TestPoolDeferredUintGettersDetached(cur realm, t *testing.T) {
+	pool := NewPool("token0", "token1", 3000, u256.NewUint(123456789), 60, 0, 0)
+	pool.SetFeeGrowthGlobal0X128(u256.NewUint(7))
+	pool.SetFeeGrowthGlobal1X128(u256.NewUint(11))
+	pool.SetLiquidity(u256.NewUint(13))
+
+	fee0 := pool.FeeGrowthGlobal0X128()
+	fee0.Set(u256.NewUint(70))
+	fee1 := pool.FeeGrowthGlobal1X128()
+	fee1.Set(u256.NewUint(110))
+	liquidity := pool.Liquidity()
+	liquidity.Set(u256.NewUint(130))
+	price := pool.Slot0SqrtPriceX96()
+	price.Set(u256.NewUint(123456790))
+
+	uassert.Equal(t, "7", pool.FeeGrowthGlobal0X128().ToString())
+	uassert.Equal(t, "11", pool.FeeGrowthGlobal1X128().ToString())
+	uassert.Equal(t, "13", pool.Liquidity().ToString())
+	uassert.Equal(t, "123456789", pool.Slot0SqrtPriceX96().ToString())
+
+	slot0 := pool.Slot0()
+	slotPrice := slot0.SqrtPriceX96()
+	slotPrice.Set(u256.NewUint(1))
+	uassert.Equal(t, "123456789", pool.Slot0SqrtPriceX96().ToString())
+
+	clone := pool.Clone()
+	clone.SetLiquidity(u256.NewUint(99))
+	uassert.Equal(t, "13", pool.Liquidity().ToString())
 }
 
 func makeTestTickInfo(liquidityGross, feeGrowth0, feeGrowth1, liquidityNet string, initialized bool) TickInfo {
