@@ -62,6 +62,8 @@ func newModifyPositionParams(
 type SwapCache struct {
 	feeProtocol                       uint8      // protocol fee for the input token
 	liquidityStart                    *u256.Uint // liquidity at the beginning of the swap
+	feeGrowthGlobal0X128              *u256.Uint // token 0 fee growth at the beginning of the swap
+	feeGrowthGlobal1X128              *u256.Uint // token 1 fee growth at the beginning of the swap
 	blockTimestamp                    int64      // current block timestamp
 	tickCumulative                    int64      // current tick accumulator value
 	secondsPerLiquidityCumulativeX128 *u256.Uint // current seconds per liquidity accumulator
@@ -72,12 +74,15 @@ type SwapCache struct {
 func newSwapCache(
 	feeProtocol uint8,
 	liquidityStart *u256.Uint,
+	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
 	blockTimestamp int64,
 	slot0Start pl.Slot0,
 ) *SwapCache {
 	return &SwapCache{
 		feeProtocol:                       feeProtocol,
 		liquidityStart:                    liquidityStart,
+		feeGrowthGlobal0X128:              feeGrowthGlobal0X128,
+		feeGrowthGlobal1X128:              feeGrowthGlobal1X128,
 		blockTimestamp:                    blockTimestamp,
 		tickCumulative:                    0,
 		secondsPerLiquidityCumulativeX128: u256.Zero(),
@@ -95,6 +100,7 @@ type SwapState struct {
 	sqrtPriceX96             *u256.Uint // current sqrt(price)
 	tick                     int32      // tick associated with the current sqrt(price)
 	feeGrowthGlobalX128      *u256.Uint // global fee growth of the input token
+	feeGrowthGlobalChanged   bool       // whether fee growth changed during this swap
 	protocolFee              *u256.Uint // amount of input token paid as protocol fee
 	liquidity                *u256.Uint // current liquidity in range
 }
@@ -117,7 +123,7 @@ func newSwapState(
 }
 
 func (s *SwapState) setSqrtPriceX96(sqrtPriceX96 *u256.Uint) {
-	s.sqrtPriceX96 = sqrtPriceX96.Clone()
+	s.sqrtPriceX96 = sqrtPriceX96
 }
 
 func (s *SwapState) setTick(tick int32) {
@@ -126,6 +132,7 @@ func (s *SwapState) setTick(tick int32) {
 
 func (s *SwapState) setFeeGrowthGlobalX128(feeGrowthGlobalX128 *u256.Uint) {
 	s.feeGrowthGlobalX128 = feeGrowthGlobalX128
+	s.feeGrowthGlobalChanged = true
 }
 
 func (s *SwapState) setProtocolFee(fee *u256.Uint) {
