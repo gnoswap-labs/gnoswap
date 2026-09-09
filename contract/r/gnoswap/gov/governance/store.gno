@@ -176,17 +176,15 @@ func (s *governanceStore) GetProposal(proposalID int64) (*Proposal, bool) {
 		return nil, false
 	}
 
-	// Proposals are stored as values so a tree lookup cannot hand out a
-	// realm-owned root pointer. Keep accepting the legacy pointer form while
-	// reading state created before this representation change.
-	switch proposal := result.(type) {
-	case Proposal:
-		return proposal.Clone(), true
-	case *Proposal:
-		return proposal.Clone(), true
-	default:
+	// Proposal entries are stored as values. Return a detached pointer copy to
+	// preserve the existing pointer-based reader API without exposing the value
+	// held by the storage tree.
+	proposal, ok := result.(Proposal)
+	if !ok {
 		return nil, false
 	}
+
+	return proposal.Clone(), true
 }
 
 func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal *Proposal) error {
