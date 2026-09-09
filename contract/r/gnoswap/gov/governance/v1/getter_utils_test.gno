@@ -37,10 +37,11 @@ func TestCloneProposalEntry(cur realm, t *testing.T) {
 
 	t.Run("returns a distinct copy per read", func(cur realm, t *testing.T) {
 		stored := newCloneTestProposal(cur, t)
+		storedValue := *stored.Clone()
 
-		first, ok := cloneProposalEntry(stored).(*governance.Proposal)
+		first, ok := cloneProposalEntry(storedValue).(*governance.Proposal)
 		uassert.True(t, ok)
-		second, ok := cloneProposalEntry(stored).(*governance.Proposal)
+		second, ok := cloneProposalEntry(storedValue).(*governance.Proposal)
 		uassert.True(t, ok)
 
 		uassert.False(t, first == stored)

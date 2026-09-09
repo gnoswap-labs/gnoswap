@@ -87,18 +87,22 @@ func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposa
 	if m.proposals == nil {
 		return nil, false
 	}
-	proposal := m.proposals.Get(utils.FormatInt(proposalID))
-	if proposal == nil {
+	result := m.proposals.Get(utils.FormatInt(proposalID))
+	if result == nil {
 		return nil, false
 	}
-	return proposal.(*governance.Proposal), true
+	proposal, ok := result.(governance.Proposal)
+	if !ok {
+		return nil, false
+	}
+	return proposal.Clone(), true
 }
 
 func (m *mockGovernanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal *governance.Proposal) error {
 	if m.proposals == nil {
 		m.proposals = governance.NewProposalTree()
 	}
-	m.proposals.Set(utils.FormatInt(proposalID), proposal)
+	m.proposals.Set(utils.FormatInt(proposalID), *proposal.Clone())
 	return nil
 }
 
