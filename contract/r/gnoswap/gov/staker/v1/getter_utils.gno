@@ -9,14 +9,11 @@ import (
 // returns a value the caller may hold without reaching realm-owned state.
 
 // cloneDelegationEntry is the transformation for the delegation tree.
-// Delegation records are stored as values; accept the legacy pointer form so
-// reads remain compatible with pre-migration state and test fixtures.
+// Stored values are cloned before they cross the read-only API boundary.
 func cloneDelegationEntry(value any) any {
 	switch delegation := value.(type) {
 	case staker.Delegation:
 		return (&delegation).Clone()
-	case *staker.Delegation:
-		return delegation.Clone()
 	default:
 		return nil
 	}

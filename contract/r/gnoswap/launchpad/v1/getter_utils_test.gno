@@ -59,11 +59,11 @@ func TestCloneRewardStateEntry(cur realm, t *testing.T) {
 	})
 
 	t.Run("returns a copy the caller cannot write back through", func(cur realm, t *testing.T) {
-		stored := launchpad.NewRewardState(u256.Zero(), 1_000_000, 100, 200, 300)
+		stored := *launchpad.NewRewardState(u256.Zero(), 1_000_000, 100, 200, 300)
 
 		cloned, ok := cloneRewardStateEntry(stored).(*launchpad.RewardState)
 		uassert.True(t, ok)
-		uassert.False(t, cloned == stored)
+		uassert.False(t, cloned == &stored)
 		uassert.Equal(t, stored.DepositAmount(), cloned.DepositAmount())
 
 		cloned.SetDepositAmount(999)

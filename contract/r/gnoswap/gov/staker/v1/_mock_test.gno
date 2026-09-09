@@ -17,8 +17,8 @@ type mockGovStakerStore struct {
 	totalDelegatedAmount           int64
 	totalLockedAmount              int64
 
-	// Delegation data
-	delegations      *bptree.BPTree // map[int64]*staker.Delegation
+	// Delegation data stores value records; GetDelegation returns detached pointers.
+	delegations      *bptree.BPTree // map[int64]staker.Delegation
 	delegationNextID *staker.Counter
 	userDelegations  *bptree.BPTree
 
@@ -111,12 +111,19 @@ func (m *mockGovStakerStore) GetDelegation(id int64) (*staker.Delegation, bool) 
 	if value == nil {
 		return nil, false
 	}
-	return value.(*staker.Delegation), true
+	delegation, ok := value.(staker.Delegation)
+	if !ok {
+		panic("failed to cast mock delegation value")
+	}
+	return (&delegation).Clone(), true
 }
 
 func (m *mockGovStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *staker.Delegation) error {
-	m.delegations.Remove(utils.Uint64ToString(uint64(id)))
-	m.delegations.Set(utils.Uint64ToString(uint64(id)), delegation)
+	key := utils.Uint64ToString(uint64(id))
+	m.delegations.Remove(key)
+	if delegation != nil {
+		m.delegations.Set(key, *delegation.Clone())
+	}
 	return nil
 }
 

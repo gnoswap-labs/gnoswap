@@ -182,10 +182,8 @@ func (rm RewardManager) Clone() *RewardManager {
 		switch rewardState := value.(type) {
 		case RewardState:
 			rewardsTree.Set(key, rewardState.Clone())
-		case *RewardState:
-			if rewardState != nil {
-				rewardsTree.Set(key, rewardState.Clone())
-			}
+		default:
+			return true
 		}
 		return false
 	})

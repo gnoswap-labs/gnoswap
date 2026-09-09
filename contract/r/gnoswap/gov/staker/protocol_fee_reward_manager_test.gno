@@ -3,9 +3,9 @@ package staker
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // TestNewProtocolFeeRewardManager tests creating a new protocol fee reward manager
@@ -160,7 +160,7 @@ func TestProtocolFeeRewardManager_SetRewardStates(cur realm, t *testing.T) {
 			manager := NewProtocolFeeRewardManager()
 			newTree := bptree.NewBPTreeN(16)
 			for _, addr := range tc.addresses {
-				newTree.Set(addr, NewProtocolFeeRewardState(make(map[string]*u256.Uint)))
+				newTree.Set(addr, *NewProtocolFeeRewardState(make(map[string]*u256.Uint)))
 			}
 
 			// when
