@@ -68,6 +68,17 @@ func TestCloneVotingInfoEntry(cur realm, t *testing.T) {
 		cloned.SetVotedYes(false)
 		uassert.True(t, stored.VotedYes())
 	})
+	t.Run("clones a value-backed tree entry", func(cur realm, t *testing.T) {
+		stored := governance.NewVotingInfo(1000)
+		stored.SetVotedYes(true)
+
+		cloned, ok := cloneVotingInfoEntry(*stored).(*governance.VotingInfo)
+		uassert.True(t, ok)
+		uassert.Equal(t, stored.VotedYes(), cloned.VotedYes())
+
+		cloned.SetVotedYes(false)
+		uassert.True(t, stored.VotedYes())
+	})
 }
 
 func TestCloneProposalIDsEntry(cur realm, t *testing.T) {

@@ -170,10 +170,18 @@ func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address)
 		return nil, false
 	}
 
-	votingInfo, ok := votingInfoRaw.(*governance.VotingInfo)
-	if !ok {
-		return nil, false
+	// Per-proposal voting infos are stored as values so a tree lookup cannot
+	// expose a pointer into realm-owned state. Return a detached pointer to
+	// preserve the resolver/getter API; mutating callers must write it back.
+	if votingInfo, ok := votingInfoRaw.(governance.VotingInfo); ok {
+		return votingInfo.Clone(), true
 	}
 
-	return votingInfo, true
+	// Accept the pre-value representation while old state is being read. New
+	// writes always use the value branch above.
+	if votingInfo, ok := votingInfoRaw.(*governance.VotingInfo); ok {
+		return votingInfo.Clone(), true
+	}
+
+	return nil, false
 }

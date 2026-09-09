@@ -105,7 +105,7 @@ func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 				voterAddr := address("g1voter00000000000000000000000000000001")
 				votingInfo := governance.NewVotingInfo(1000)
 				votingInfos := governance.NewVotingInfoTree()
-				votingInfos.Set(voterAddr.String(), votingInfo)
+				votingInfos.Set(voterAddr.String(), *votingInfo)
 				store.SetProposalVotingInfos(0, cur, 1, votingInfos)
 				return store
 			},
@@ -141,7 +141,7 @@ func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 				otherUser := address("g1other00000000000000000000000000000002")
 				votingInfo := governance.NewVotingInfo(1000)
 				votingInfos := governance.NewVotingInfoTree()
-				votingInfos.Set(otherUser.String(), votingInfo)
+				votingInfos.Set(otherUser.String(), *votingInfo)
 				store.SetProposalVotingInfos(0, cur, 1, votingInfos)
 				return store
 			},
@@ -167,6 +167,31 @@ func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetProposalUserVotingInfoReturnsDetachedCopy(cur realm, t *testing.T) {
+	store := newMockGovernanceStore()
+	voter := address("g1voter00000000000000000000000000000001")
+	stored := governance.NewVotingInfo(1000)
+	votingInfos := governance.NewVotingInfoTree()
+	votingInfos.Set(voter.String(), *stored)
+	store.SetProposalVotingInfos(0, cur, 1, votingInfos)
+
+	gv := &governanceV1{
+		store:          store,
+		stakerAccessor: newMockGovStakerAccessor(),
+	}
+
+	detached, found := gv.getProposalUserVotingInfo(1, voter)
+	uassert.True(t, found)
+	detached.SetVoted(true)
+	detached.SetVotedWeight(900)
+
+	raw := votingInfos.Get(voter.String())
+	value, ok := raw.(governance.VotingInfo)
+	uassert.True(t, ok)
+	uassert.False(t, value.IsVoted())
+	uassert.Equal(t, int64(0), value.VotedWeight())
 }
 
 func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
@@ -209,11 +234,11 @@ func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 			store.SetProposal(0, cur, tt.proposalID, proposal)
 
 			// Create voting infos
-			votingInfos := governance.NewProposalUserVotingInfoTree()
+			votingInfos := governance.NewVotingInfoTree()
 			for i := 0; i < tt.numVotes; i++ {
 				voterAddr := address("g1voter0000000000000000000000000000000" + utils.FormatInt(int64(i)))
 				votingInfo := governance.NewVotingInfo(1000)
-				votingInfos.Set(voterAddr.String(), votingInfo)
+				votingInfos.Set(voterAddr.String(), *votingInfo)
 			}
 
 			// Update votes
