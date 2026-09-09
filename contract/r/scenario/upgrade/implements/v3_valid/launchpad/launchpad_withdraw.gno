@@ -34,14 +34,9 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 	caller := previousRealm.Address()
 	lp.assertIsDepositOwner(depositID, caller)
 
-	deposit := lp.mustGetDeposit(depositID)
-	// Check the retained record before emission. A withdrawn deposit must
-	// reject repeats without traversing reward or emission state.
-	if deposit.IsWithdrawn() {
-		panic(makeErrorWithDetails(errAlreadyCollected, ufmt.Sprintf("(%s)", depositID)).Error())
-	}
-
 	emission.MintAndDistributeGns(cross(rlm))
+
+	deposit := lp.mustGetDeposit(depositID)
 
 	currentTime := time.Now().Unix()
 	recipient, withdrawalAmount, err := lp.withdrawDeposit(0, rlm, deposit, runtime.ChainHeight(), currentTime)

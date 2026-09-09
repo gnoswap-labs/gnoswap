@@ -269,20 +269,11 @@ func (lp *launchpadV1) getDepositValueForGetter(depositId string) (launchpad.Dep
 		return launchpad.Deposit{}, errors.New("deposit not found")
 	}
 
-	switch deposit := value.(type) {
-	case launchpad.Deposit:
-		return deposit, nil
-	case *launchpad.Deposit:
-		if deposit == nil {
-			return launchpad.Deposit{}, errors.New("invalid deposit type")
-		}
-		// Read pre-migration pointer payloads without exposing their backing
-		// object. New writes use the value case above.
-		clone := deposit.Clone()
-		return *clone, nil
-	default:
+	deposit, ok := value.(launchpad.Deposit)
+	if !ok {
 		return launchpad.Deposit{}, errors.New("invalid deposit type")
 	}
+	return deposit, nil
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.

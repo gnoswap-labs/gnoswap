@@ -67,19 +67,11 @@ func (lp *launchpadV1) getDeposit(depositID string) (*launchpad.Deposit, error) 
 		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
 	}
 
-	switch deposit := depositI.(type) {
-	case launchpad.Deposit:
-		return deposit.Clone(), nil
-	case *launchpad.Deposit:
-		if deposit == nil {
-			return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("deposit(%s) not found", depositID))
-		}
-		// Accept pointer payloads while reading pre-migration state. New writes
-		// always use the value case above.
-		return deposit.Clone(), nil
-	default:
+	deposit, ok := depositI.(launchpad.Deposit)
+	if !ok {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("deposit(%s) not found", depositID))
 	}
+	return deposit.Clone(), nil
 }
 
 // nextDepositID increments and returns the next unique deposit ID.
