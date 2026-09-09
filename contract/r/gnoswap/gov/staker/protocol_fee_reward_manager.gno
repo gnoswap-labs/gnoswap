@@ -124,7 +124,8 @@ func (p *ProtocolFeeRewardManager) SetTotalStakedAmount(totalStakedAmount int64)
 	p.totalStakedAmount = totalStakedAmount
 }
 
-// GetAllAccumulatedProtocolFeeX128PerStake returns all accumulated protocol fees per stake
+// GetAllAccumulatedProtocolFeeX128PerStake returns all accumulated protocol fees per stake.
+// Cross-realm callers copy this readonly-tainted map before merging updates.
 func (p *ProtocolFeeRewardManager) GetAllAccumulatedProtocolFeeX128PerStake() map[string]*u256.Uint {
 	return p.accumulatedProtocolFeeX128PerStake
 }

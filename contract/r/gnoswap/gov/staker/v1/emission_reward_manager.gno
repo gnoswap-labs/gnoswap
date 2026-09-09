@@ -45,74 +45,105 @@ func (self *EmissionRewardManagerResolver) calculateAccumulatedRewardX128PerStak
 	currentDistributedAmount int64,
 	currentTimestamp int64,
 ) (*u256.Uint, error) {
-	// If we're looking at a past timestamp, return current state
+	// If we're looking at a past timestamp, return current state.
 	if currentTimestamp < self.GetAccumulatedTimestamp() {
 		return self.GetAccumulatedRewardX128PerStake(), nil
 	}
 
-	// With no stake there is nobody to credit, so the delta accrued over that window is
-	// dropped and the caller advances the cursor past it. The protocol fee accumulator
-	// applies the same policy, see ProtocolFeeRewardManagerResolver.
+	// Decode the persisted accumulator once for this calculation. The value is
+	// passed through every branch below instead of re-decoding it on each return.
+	accumulatedReward := self.GetAccumulatedRewardX128PerStake()
 	totalStakedAmount := self.GetTotalStakedAmount()
 	if totalStakedAmount == 0 {
-		return self.GetAccumulatedRewardX128PerStake(), nil
+		// With no stake there is nobody to credit, so the delta accrued over
+		// that window is dropped and the cursor advances past it.
+		return accumulatedReward, nil
 	}
 
-	// Newly distributed rewards since last update
 	distributedAmountDelta := gnsmath.SafeSubInt64(currentDistributedAmount, self.GetDistributedAmount())
 	if distributedAmountDelta <= 0 {
-		// Non-positive delta. nothing to do more.
-		return self.GetAccumulatedRewardX128PerStake(), nil
+		return accumulatedReward, nil
 	}
 
-	// Reward per stake for the new distribution
 	distributedAmountDeltaX128PerStake := u256.Zero().Div(
 		u256.Zero().Lsh(u256.NewUintFromInt64(distributedAmountDelta), 128),
 		u256.NewUintFromInt64(totalStakedAmount),
 	)
 
-	// Add to accumulated reward per stake
-	accumulatedReward := u256.Zero().Add(self.GetAccumulatedRewardX128PerStake(), distributedAmountDeltaX128PerStake)
-	return accumulatedReward, nil
+	return u256.Zero().Add(accumulatedReward, distributedAmountDeltaX128PerStake), nil
 }
 
 // updateAccumulatedRewardX128PerStake updates the internal accumulated reward state.
 // This method should be called before any stake changes to ensure accurate reward calculations.
 // Updates accumulated reward per stake with current distribution data.
-func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
+// updateAccumulatedRewardX128PerStakeWithValue updates the persisted accumulator
+// and returns the numeric value prepared for the next operation in this
+// transaction. The returned value is calculation-local and is never stored.
+func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStakeWithValue(
 	currentDistributedAmount int64,
 	currentTimestamp int64,
-) error {
-	// DO NOT apply out-of-order timestamps
+) (*u256.Uint, error) {
 	if currentTimestamp < self.GetAccumulatedTimestamp() {
-		return nil
+		return self.GetAccumulatedRewardX128PerStake(), nil
 	}
 
-	// Update accumulated reward state
 	accumulatedRewardX128PerStake, err := self.calculateAccumulatedRewardX128PerStake(
 		currentDistributedAmount,
 		currentTimestamp,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	self.setAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake.Clone())
+	self.setAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake)
 	self.setDistributedAmount(currentDistributedAmount)
 	self.setAccumulatedTimestamp(currentTimestamp)
 
-	return nil
+	return accumulatedRewardX128PerStake, nil
+}
+
+// updateAccumulatedRewardX128PerStake updates the internal accumulated reward state.
+func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
+	currentDistributedAmount int64,
+	currentTimestamp int64,
+) error {
+	if currentTimestamp < self.GetAccumulatedTimestamp() {
+		return nil
+	}
+	_, err := self.updateAccumulatedRewardX128PerStakeWithValue(
+		currentDistributedAmount,
+		currentTimestamp,
+	)
+	return err
 }
 
 // addStake adds a stake for an address and updates their reward state.
 // This method ensures rewards are properly calculated before the stake change.
 // Adds stake for specified address and updates reward calculations.
+// addStake adds a stake for an address and updates their reward state.
 func (self *EmissionRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
 	if amount < 0 {
 		return errors.New(errAmountMustBeNonNegative)
 	}
+	return self.addStakeWithAccumulatedReward(
+		address,
+		amount,
+		currentTimestamp,
+		self.GetAccumulatedRewardX128PerStake(),
+	)
+}
 
-	accumulatedReward := self.GetAccumulatedRewardX128PerStake()
+// addStakeWithAccumulatedReward uses an accumulator prepared earlier in the
+// same transaction, avoiding a second persisted-value decode.
+func (self *EmissionRewardManagerResolver) addStakeWithAccumulatedReward(
+	address string,
+	amount int64,
+	currentTimestamp int64,
+	accumulatedReward *u256.Uint,
+) error {
+	if amount < 0 {
+		return errors.New(errAmountMustBeNonNegative)
+	}
 
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
@@ -123,8 +154,7 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 	}
 
 	resolvedState := NewEmissionRewardStateResolver(rewardState)
-	err = resolvedState.addStakeWithUpdateRewardDebtX128(amount, accumulatedReward, currentTimestamp)
-	if err != nil {
+	if err = resolvedState.addStakeWithUpdateRewardDebtX128(amount, accumulatedReward, currentTimestamp); err != nil {
 		return err
 	}
 
@@ -141,7 +171,27 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 // removeStake removes a stake for an address and updates their reward state.
 // This method ensures rewards are properly calculated before the stake change.
 // Removes stake for specified address and updates reward calculations.
+// removeStake removes a stake for an address and updates their reward state.
 func (self *EmissionRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
+	if amount < 0 {
+		return errors.New(errAmountMustBeNonNegative)
+	}
+	return self.removeStakeWithAccumulatedReward(
+		address,
+		amount,
+		currentTimestamp,
+		self.GetAccumulatedRewardX128PerStake(),
+	)
+}
+
+// removeStakeWithAccumulatedReward uses an accumulator prepared earlier in the
+// same transaction, avoiding a second persisted-value decode.
+func (self *EmissionRewardManagerResolver) removeStakeWithAccumulatedReward(
+	address string,
+	amount int64,
+	currentTimestamp int64,
+	accumulatedReward *u256.Uint,
+) error {
 	if amount < 0 {
 		return errors.New(errAmountMustBeNonNegative)
 	}
@@ -150,8 +200,6 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 	if updatedTotalStakedAmount < 0 {
 		return errors.New(errRemoveAmountExceedsTotalStaked)
 	}
-
-	accumulatedReward := self.GetAccumulatedRewardX128PerStake()
 
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil {
@@ -162,33 +210,43 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 	}
 
 	resolvedState := NewEmissionRewardStateResolver(rewardState)
-
-	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, accumulatedReward, currentTimestamp)
-	if err != nil {
+	if err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, accumulatedReward, currentTimestamp); err != nil {
 		return err
 	}
 
-	// persist updated state
 	self.setRewardStates(address, rewardState)
-
 	self.SetTotalStakedAmount(updatedTotalStakedAmount)
-
 	return nil
 }
 
 // claimRewards processes reward claiming for an address.
 // This method calculates and returns the amount of rewards claimed.
 // Claims available rewards for specified address.
-func (self *EmissionRewardManagerResolver) claimRewards(address string, currentTimestamp int64) (claimedRewardAmount int64, err error) {
+// claimRewards processes reward claiming for an address.
+func (self *EmissionRewardManagerResolver) claimRewards(address string, currentTimestamp int64) (int64, error) {
+	return self.claimRewardsWithAccumulatedReward(
+		address,
+		currentTimestamp,
+		self.GetAccumulatedRewardX128PerStake(),
+	)
+}
+
+// claimRewardsWithAccumulatedReward uses an accumulator prepared earlier in
+// the same transaction, avoiding a second persisted-value decode.
+func (self *EmissionRewardManagerResolver) claimRewardsWithAccumulatedReward(
+	address string,
+	currentTimestamp int64,
+	accumulatedReward *u256.Uint,
+) (claimedRewardAmount int64, err error) {
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil || !ok {
 		return 0, err
 	}
 
 	resolvedState := NewEmissionRewardStateResolver(rewardState)
-	claimedRewardAmount, cErr := resolvedState.claimRewardsWithUpdateRewardDebtX128(self.GetAccumulatedRewardX128PerStake(), currentTimestamp)
-	if cErr != nil {
-		return 0, cErr
+	claimedRewardAmount, err = resolvedState.claimRewardsWithUpdateRewardDebtX128(accumulatedReward, currentTimestamp)
+	if err != nil {
+		return 0, err
 	}
 
 	self.setRewardStates(address, rewardState)
