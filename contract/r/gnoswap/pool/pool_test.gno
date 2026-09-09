@@ -3,6 +3,7 @@ package pool
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -190,4 +191,28 @@ func TestPool_TickMethods_BoundaryTicks(cur realm, t *testing.T) {
 		uassert.Nil(t, err)
 		uassert.Equal(t, info.LiquidityGross(), got.LiquidityGross())
 	}
+}
+
+func TestPool_FeeGrowthGlobal1X128BinaryIsolation(cur realm, t *testing.T) {
+	pool := NewPool("token0", "token1", 3000, u256.One(), 60, 0, 0)
+	value := &u256.Uint{
+		0x0102030405060708,
+		0x1112131415161718,
+		0x2122232425262728,
+		0x3132333435363738,
+	}
+	want := value.ToString()
+
+	pool.SetFeeGrowthGlobal1X128(value)
+	uassert.Equal(t, 32, len(pool.feeGrowthGlobal1X128))
+	value.Set(u256.Zero())
+	uassert.Equal(t, want, pool.FeeGrowthGlobal1X128().ToString())
+
+	got := pool.FeeGrowthGlobal1X128()
+	got.Set(u256.Zero())
+	uassert.Equal(t, want, pool.FeeGrowthGlobal1X128().ToString())
+
+	clone := pool.Clone()
+	clone.SetFeeGrowthGlobal1X128(u256.One())
+	uassert.Equal(t, want, pool.FeeGrowthGlobal1X128().ToString())
 }
