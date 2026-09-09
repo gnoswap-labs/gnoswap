@@ -155,6 +155,7 @@ func (lp *launchpadV1) depositGns(
 
 	// Store a value in the deposits tree. Mutations use a detached pointer and
 	// write the updated value back explicitly.
+	deposits := lp.store.GetDeposits()
 	deposits.Set(depositID, *deposit)
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
