@@ -127,6 +127,12 @@ func (gv *governanceV1) executeProposal(
 		}
 	}
 
+	// Proposal roots are stored as values; persist the fully updated copy only
+	// after all proposal actions have succeeded.
+	if err := gv.store.SetProposal(0, rlm, proposalID, proposal); err != nil {
+		return nil, err
+	}
+
 	return proposal, nil
 }
 
@@ -192,7 +198,8 @@ func (gv *governanceV1) cancel(
 	proposalID, canceledAt, canceledHeight int64,
 	canceledBy address,
 ) (proposal *governance.Proposal, err error) {
-	// Retrieve the proposal from storage
+	// Retrieve the proposal from storage. Value-backed storage returns a
+	// detached mutable copy that must be written back after cancellation.
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
 		return nil, errors.New(errDataNotFound)
@@ -203,6 +210,12 @@ func (gv *governanceV1) cancel(
 	// Attempt to cancel the proposal (this validates cancellation conditions)
 	err = proposalResolver.cancel(canceledAt, canceledHeight, canceledBy)
 	if err != nil {
+		return nil, err
+	}
+
+	// Cancellation mutates a detached value copy, so write the new status back
+	// before returning.
+	if err = gv.store.SetProposal(0, rlm, proposalID, proposal); err != nil {
 		return nil, err
 	}
 
