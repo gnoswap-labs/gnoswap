@@ -3,9 +3,9 @@ package staker
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // TestNewProtocolFeeRewardManager tests creating a new protocol fee reward manager
@@ -215,4 +215,44 @@ func TestProtocolFeeRewardManager_ForTokenSetters(cur realm, t *testing.T) {
 		uassert.NotNil(t, manager.GetProtocolFeeAmounts())
 		uassert.Equal(t, manager.GetProtocolFeeAmount("token"), int64(10))
 	})
+}
+
+func TestProtocolFeeRewardManager_EncodedAccumulatorCopies(cur realm, t *testing.T) {
+	manager := NewProtocolFeeRewardManager()
+	maxValue := u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")
+	expectedMax := maxValue.ToString()
+	input := map[string]*u256.Uint{
+		"max":  maxValue,
+		"zero": u256.Zero(),
+	}
+	manager.SetAccumulatedProtocolFeeX128PerStake(input)
+	if len(manager.accumulatedProtocolFeeX128PerStake["max"]) != 32 || len(manager.accumulatedProtocolFeeX128PerStake["zero"]) != 32 {
+		t.Errorf("accumulator backing values must be fixed-width 32-byte encodings")
+	}
+
+	// The setter encodes a snapshot, not the caller's mutable Uint values.
+	input["max"].Set(u256.Zero())
+	fetched := manager.GetAccumulatedProtocolFeeX128PerStake("max")
+	fetched.Set(u256.Zero())
+
+	// Both the map and every decoded Uint returned by the full getter are isolated.
+	all := manager.GetAllAccumulatedProtocolFeeX128PerStake()
+	all["max"].Set(u256.Zero())
+	delete(all, "zero")
+	all["new"] = u256.NewUint(7)
+
+	storedMax := manager.GetAccumulatedProtocolFeeX128PerStake("max")
+	storedZero := manager.GetAccumulatedProtocolFeeX128PerStake("zero")
+	if storedMax == nil || storedMax.ToString() != expectedMax {
+		t.Errorf("max accumulator changed through an input/getter alias")
+	}
+	if storedZero == nil || storedZero.ToString() != "0" {
+		t.Errorf("explicit zero accumulator was lost")
+	}
+	if manager.GetAccumulatedProtocolFeeX128PerStake("missing") != nil {
+		t.Errorf("missing token was changed into an implicit zero")
+	}
+	if len(manager.GetAllAccumulatedProtocolFeeX128PerStake()) != 2 {
+		t.Errorf("full getter exposed manager map")
+	}
 }
