@@ -253,27 +253,23 @@ func (lp *launchpadV1) GetProjectTierRewards(projectId string, tier int64) *rotr
 // GetDeposit retrieves a detached copy of a deposit by its ID.
 // Returning a copy keeps callers from mutating the value stored in the tree.
 func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) {
-	deposit, err := lp.getDepositValueForGetter(depositId)
-	if err != nil {
-		return nil, err
-	}
-	return &deposit, nil
+	return lp.getDepositValueForGetter(depositId)
 }
 
 // getDepositValueForGetter reads the value payload used by the deposits tree
 // and preserves the public getter's existing not-found and invalid-type errors.
-func (lp *launchpadV1) getDepositValueForGetter(depositId string) (launchpad.Deposit, error) {
+func (lp *launchpadV1) getDepositValueForGetter(depositId string) (*launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
 	value := deposits.Get(depositId)
 	if value == nil {
-		return launchpad.Deposit{}, errors.New("deposit not found")
+		return nil, errors.New("deposit not found")
 	}
 
 	deposit, ok := value.(launchpad.Deposit)
 	if !ok {
-		return launchpad.Deposit{}, errors.New("invalid deposit type")
+		return nil, errors.New("invalid deposit type")
 	}
-	return deposit, nil
+	return deposit.Clone(), nil
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.
