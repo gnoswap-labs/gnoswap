@@ -773,3 +773,19 @@ func TestEmissionRewardManager_removeStake_preservesAggregateInvariantOnOverRemo
 	uassert.Equal(t, int64(300), bob.GetStakedAmount())
 	uassert.Equal(t, int64(500), resolver.GetTotalStakedAmount())
 }
+
+func TestEmissionRewardManager_EncodedAccumulatorCopies(cur realm, t *testing.T) {
+	manager := staker.NewEmissionRewardManager()
+	maxValue := u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935")
+	manager.SetAccumulatedRewardX128PerStake(maxValue)
+
+	// The encoded field snapshots setter input and decodes a fresh Uint per getter.
+	maxValue.Set(u256.Zero())
+	fetched := manager.GetAccumulatedRewardX128PerStake()
+	fetched.Set(u256.Zero())
+
+	stored := manager.GetAccumulatedRewardX128PerStake()
+	if stored == nil || stored.ToString() != "115792089237316195423570985008687907853269984665640564039457584007913129639935" {
+		t.Errorf("encoded emission accumulator changed through a getter/setter alias")
+	}
+}

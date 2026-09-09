@@ -5,6 +5,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 const errFailedToCastRewardState = "failed to cast rewardStates's element to *EmissionRewardState: %T"
@@ -14,8 +15,9 @@ type EmissionRewardManager struct {
 	// rewardStates maps address to EmissionRewardState for tracking individual staker rewards
 	rewardStates *bptree.BPTree // address -> EmissionRewardState
 
-	// accumulatedRewardX128PerStake tracks the cumulative reward per unit of stake with 128-bit precision
-	accumulatedRewardX128PerStake *u256.Uint
+	// accumulatedRewardX128PerStake stores the fixed-width 32-byte big-endian
+	// accumulated reward per stake with 128-bit precision.
+	accumulatedRewardX128PerStake string
 	// distributedAmount tracks the total amount of rewards distributed
 	distributedAmount int64
 	// accumulatedTimestamp tracks the last timestamp when rewards were accumulated
@@ -29,7 +31,7 @@ type EmissionRewardManager struct {
 // NewEmissionRewardManager creates new emission reward manager instance.
 func NewEmissionRewardManager() *EmissionRewardManager {
 	return &EmissionRewardManager{
-		accumulatedRewardX128PerStake: u256.NewUint(0),
+		accumulatedRewardX128PerStake: utils.EncodeUint256(u256.Zero()),
 		accumulatedTimestamp:          0,
 		totalStakedAmount:             0,
 		distributedAmount:             0,
@@ -39,7 +41,7 @@ func NewEmissionRewardManager() *EmissionRewardManager {
 
 // GetAccumulatedRewardX128PerStake returns the accumulated reward per stake with 128-bit precision.
 func (e *EmissionRewardManager) GetAccumulatedRewardX128PerStake() *u256.Uint {
-	return e.accumulatedRewardX128PerStake
+	return utils.DecodeUint256(e.accumulatedRewardX128PerStake)
 }
 
 // GetAccumulatedTimestamp returns the last timestamp when rewards were accumulated.
@@ -76,7 +78,7 @@ func (e *EmissionRewardManager) SetRewardStates(rewardStates *bptree.BPTree) {
 }
 
 func (e *EmissionRewardManager) SetAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake *u256.Uint) {
-	e.accumulatedRewardX128PerStake = u256.Zero().Set(accumulatedRewardX128PerStake)
+	e.accumulatedRewardX128PerStake = utils.EncodeUint256(accumulatedRewardX128PerStake)
 }
 
 func (e *EmissionRewardManager) SetDistributedAmount(distributedAmount int64) {
