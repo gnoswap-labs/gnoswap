@@ -3,6 +3,7 @@ package pool
 import (
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
@@ -190,4 +191,39 @@ func TestPool_TickMethods_BoundaryTicks(cur realm, t *testing.T) {
 		uassert.Nil(t, err)
 		uassert.Equal(t, info.LiquidityGross(), got.LiquidityGross())
 	}
+}
+
+func TestSlot0_SqrtPriceX96BinaryIsolation(cur realm, t *testing.T) {
+	value := &u256.Uint{
+		0x0102030405060708,
+		0x1112131415161718,
+		0x2122232425262728,
+		0x3132333435363738,
+	}
+	want := value.ToString()
+	slot0 := NewSlot0(value, -7, 5, false)
+	slot0.SetObservationIndex(3)
+	slot0.SetObservationCardinality(8)
+	slot0.SetObservationCardinalityNext(13)
+
+	uassert.Equal(t, 32, len(slot0.sqrtPriceX96))
+	value.Set(u256.Zero())
+	uassert.Equal(t, want, slot0.SqrtPriceX96().ToString())
+
+	got := slot0.SqrtPriceX96()
+	got.Set(u256.Zero())
+	uassert.Equal(t, want, slot0.SqrtPriceX96().ToString())
+	pool := NewPool("token0", "token1", 3000, u256.One(), 60, 0, 0)
+	pool.SetSlot0(slot0)
+	uassert.Equal(t, want, pool.Slot0SqrtPriceX96().ToString())
+
+	clone := slot0.Clone()
+	clone.SetSqrtPriceX96(u256.One())
+	uassert.Equal(t, want, slot0.SqrtPriceX96().ToString())
+	uassert.Equal(t, int32(-7), clone.Tick())
+	uassert.Equal(t, uint8(5), clone.FeeProtocol())
+	uassert.Equal(t, false, clone.Unlocked())
+	uassert.Equal(t, uint16(3), clone.ObservationIndex())
+	uassert.Equal(t, uint16(8), clone.ObservationCardinality())
+	uassert.Equal(t, uint16(13), clone.ObservationCardinalityNext())
 }

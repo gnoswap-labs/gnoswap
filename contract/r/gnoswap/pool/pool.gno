@@ -5,6 +5,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 // type Pool describes a single Pool's state
@@ -36,7 +37,7 @@ func (p *Pool) BalanceToken0() int64             { return p.balances.token0 }
 func (p *Pool) BalanceToken1() int64             { return p.balances.token1 }
 func (p *Pool) TickSpacing() int32               { return p.tickSpacing }
 func (p *Pool) Slot0() Slot0                     { return p.slot0 }
-func (p *Pool) Slot0SqrtPriceX96() *u256.Uint    { return p.slot0.sqrtPriceX96 }
+func (p *Pool) Slot0SqrtPriceX96() *u256.Uint    { return p.slot0.SqrtPriceX96() }
 func (p *Pool) Slot0Tick() int32                 { return p.slot0.tick }
 func (p *Pool) Slot0FeeProtocol() uint8          { return p.slot0.feeProtocol }
 func (p *Pool) Slot0Unlocked() bool              { return p.slot0.unlocked }
@@ -290,16 +291,16 @@ func (p *TokenPair) SetToken1(token1 int64) { p.token1 = token1 }
 // Slot0 mirrors Uniswap V3's slot0(): current price/tick/protocol-fee/lock
 // state and the oracle cursor/capacity metadata.
 type Slot0 struct {
-	sqrtPriceX96               *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
-	tick                       int32      // current tick of the pool, i.e according to the last tick transition that was run
-	feeProtocol                uint8      // protocol fee for both tokens of the pool
-	unlocked                   bool       // whether the pool is currently locked to reentrancy
-	observationIndex           uint16     // the index of the most-recently written observation
-	observationCardinality     uint16     // the current maximum number of observations stored
-	observationCardinalityNext uint16     // the next maximum number of observations to store
+	sqrtPriceX96               string // fixed-width 32-byte big-endian uint256, current Q96 price
+	tick                       int32  // current tick of the pool, i.e according to the last tick transition that was run
+	feeProtocol                uint8  // protocol fee for both tokens of the pool
+	unlocked                   bool   // whether the pool is currently locked to reentrancy
+	observationIndex           uint16 // the index of the most-recently written observation
+	observationCardinality     uint16 // the current maximum number of observations stored
+	observationCardinalityNext uint16 // the next maximum number of observations to store
 }
 
-func (s *Slot0) SqrtPriceX96() *u256.Uint           { return s.sqrtPriceX96.Clone() }
+func (s *Slot0) SqrtPriceX96() *u256.Uint           { return utils.DecodeUint256(s.sqrtPriceX96) }
 func (s *Slot0) Tick() int32                        { return s.tick }
 func (s *Slot0) FeeProtocol() uint8                 { return s.feeProtocol }
 func (s *Slot0) Unlocked() bool                     { return s.unlocked }
@@ -312,7 +313,7 @@ func (s *Slot0) ObservationCardinalityNext() uint16 { return s.observationCardin
 // returned sqrtPriceX96 pointer.
 func (s *Slot0) Clone() Slot0 {
 	return Slot0{
-		sqrtPriceX96:               s.sqrtPriceX96.Clone(),
+		sqrtPriceX96:               s.sqrtPriceX96,
 		tick:                       s.tick,
 		feeProtocol:                s.feeProtocol,
 		unlocked:                   s.unlocked,
@@ -322,10 +323,12 @@ func (s *Slot0) Clone() Slot0 {
 	}
 }
 
-func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint) { s.sqrtPriceX96 = sqrtPriceX96.Clone() }
-func (s *Slot0) SetTick(tick int32)                      { s.tick = tick }
-func (s *Slot0) SetFeeProtocol(feeProtocol uint8)        { s.feeProtocol = feeProtocol }
-func (s *Slot0) SetUnlocked(unlocked bool)               { s.unlocked = unlocked }
+func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint) {
+	s.sqrtPriceX96 = utils.EncodeUint256(sqrtPriceX96)
+}
+func (s *Slot0) SetTick(tick int32)               { s.tick = tick }
+func (s *Slot0) SetFeeProtocol(feeProtocol uint8) { s.feeProtocol = feeProtocol }
+func (s *Slot0) SetUnlocked(unlocked bool)        { s.unlocked = unlocked }
 func (s *Slot0) SetObservationIndex(observationIndex uint16) {
 	s.observationIndex = observationIndex
 }
@@ -345,7 +348,7 @@ func NewSlot0(
 	unlocked bool,
 ) Slot0 {
 	return Slot0{
-		sqrtPriceX96:               sqrtPriceX96.Clone(),
+		sqrtPriceX96:               utils.EncodeUint256(sqrtPriceX96),
 		tick:                       tick,
 		feeProtocol:                feeProtocol,
 		unlocked:                   unlocked,
