@@ -51,7 +51,11 @@ func (rm *RewardManager) SetRewards(rewards *bptree.BPTree) {
 }
 
 func (rm *RewardManager) SetReward(depositID string, rewardState *RewardState) {
-	rm.rewards.Set(depositID, rewardState)
+	if rewardState == nil {
+		rm.rewards.Remove(depositID)
+		return
+	}
+	rm.rewards.Set(depositID, *rewardState.Clone())
 }
 
 func (rm *RewardManager) RemoveReward(depositID string) {
@@ -175,11 +179,14 @@ func (rm *RewardManager) SetRewardClaimableDuration(duration int64) {
 func (rm RewardManager) Clone() *RewardManager {
 	rewardsTree := bptree.NewBPTreeN(16)
 	rm.rewards.Iterate("", "", func(key string, value interface{}) bool {
-		rewardState, ok := value.(*RewardState)
-		if !ok {
-			return true
+		switch rewardState := value.(type) {
+		case RewardState:
+			rewardsTree.Set(key, rewardState.Clone())
+		case *RewardState:
+			if rewardState != nil {
+				rewardsTree.Set(key, rewardState.Clone())
+			}
 		}
-		rewardsTree.Set(key, rewardState.Clone())
 		return false
 	})
 

@@ -155,3 +155,49 @@ func NewProtocolFeeRewardState(accumulatedProtocolFeeX128PerStake map[string]*u2
 		claimedTimestamp:     0,
 	}
 }
+
+// Clone creates a detached deep copy of the protocol fee reward state.
+// The nested token maps and fixed-point values are copied so a resolver can
+// mutate its local state before writing it back to the manager tree.
+func (p *ProtocolFeeRewardState) Clone() *ProtocolFeeRewardState {
+	if p == nil {
+		return nil
+	}
+
+	var rewardDebtX128 map[string]*u256.Uint
+	if p.rewardDebtX128 != nil {
+		rewardDebtX128 = make(map[string]*u256.Uint, len(p.rewardDebtX128))
+		for token, value := range p.rewardDebtX128 {
+			if value == nil {
+				rewardDebtX128[token] = nil
+			} else {
+				rewardDebtX128[token] = value.Clone()
+			}
+		}
+	}
+
+	var accumulatedRewards map[string]int64
+	if p.accumulatedRewards != nil {
+		accumulatedRewards = make(map[string]int64, len(p.accumulatedRewards))
+		for token, value := range p.accumulatedRewards {
+			accumulatedRewards[token] = value
+		}
+	}
+
+	var claimedRewards map[string]int64
+	if p.claimedRewards != nil {
+		claimedRewards = make(map[string]int64, len(p.claimedRewards))
+		for token, value := range p.claimedRewards {
+			claimedRewards[token] = value
+		}
+	}
+
+	return &ProtocolFeeRewardState{
+		rewardDebtX128:       rewardDebtX128,
+		accumulatedRewards:   accumulatedRewards,
+		claimedRewards:       claimedRewards,
+		accumulatedTimestamp: p.accumulatedTimestamp,
+		claimedTimestamp:     p.claimedTimestamp,
+		stakedAmount:         p.stakedAmount,
+	}
+}

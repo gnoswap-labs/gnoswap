@@ -46,11 +46,15 @@ func (p *ProtocolFeeRewardManager) GetRewardState(addr string) (*ProtocolFeeRewa
 	if ri == nil {
 		return nil, false, nil
 	}
-	rs, castOk := ri.(*ProtocolFeeRewardState)
-	if !castOk {
+
+	switch rewardState := ri.(type) {
+	case ProtocolFeeRewardState:
+		return (&rewardState).Clone(), true, nil
+	case *ProtocolFeeRewardState:
+		return rewardState.Clone(), true, nil
+	default:
 		return nil, false, ufmt.Errorf(errFailedToCastRewardState, ri)
 	}
-	return rs, true, nil
 }
 
 // GetAccumulatedProtocolFeeX128PerStake returns the accumulated protocol fee per stake for a specific token.
@@ -134,7 +138,11 @@ func (p *ProtocolFeeRewardManager) GetProtocolFeeAmount(token string) int64 {
 	return p.protocolFeeAmounts[token]
 }
 
-// SetRewardState sets the reward state for a specific address
+// SetRewardState stores a detached value copy for a specific address.
 func (p *ProtocolFeeRewardManager) SetRewardState(address string, rewardState *ProtocolFeeRewardState) {
-	p.rewardStates.Set(address, rewardState)
+	if rewardState == nil {
+		p.rewardStates.Remove(address)
+		return
+	}
+	p.rewardStates.Set(address, *rewardState.Clone())
 }
