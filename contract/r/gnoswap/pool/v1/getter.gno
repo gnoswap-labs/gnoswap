@@ -108,27 +108,27 @@ func (i *poolV1) GetSlot0(poolPath string) pl.Slot0 {
 
 func (i *poolV1) GetObservationAt(poolPath string, index uint16) (pl.Observation, error) {
 	if _, err := i.getPool(poolPath); err != nil {
-		return *pl.NewDefaultObservation(), err
+		return pl.NewDefaultObservation(), err
 	}
 
 	// Uniswap's observations(uint256) getter is backed by a fixed-size array:
 	// an in-range but never-written slot returns the zero observation, while an
 	// out-of-range index reverts.
 	if index >= maxObservationCardinality {
-		return *pl.NewDefaultObservation(), makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("observation index %d out of range", index))
+		return pl.NewDefaultObservation(), makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("observation index %d out of range", index))
 	}
 
 	observations, err := i.getObservations(poolPath)
 	if err != nil {
-		return *pl.NewDefaultObservation(), err
+		return pl.NewDefaultObservation(), err
 	}
 
 	observation, ok := observations.Get(index)
 	if !ok || observation == nil {
-		return *pl.NewDefaultObservation(), nil
+		return pl.NewDefaultObservation(), nil
 	}
 
-	return *observation.Clone(), nil
+	return *observation, nil
 }
 
 // Observe returns the tick and seconds-per-liquidity cumulatives for each

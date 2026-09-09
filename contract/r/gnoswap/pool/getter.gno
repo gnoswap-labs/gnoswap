@@ -211,7 +211,7 @@ func GetObservationAt(poolPath string, index uint16) (Observation, error) {
 		return Observation{}, err
 	}
 
-	return *observation.Clone(), nil
+	return observation, nil
 }
 
 // Observe returns the tick and seconds-per-liquidity cumulatives for each
