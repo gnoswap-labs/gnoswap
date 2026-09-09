@@ -33,11 +33,6 @@ func cloneVotingInfoEntry(value any) any {
 		return votingInfo.Clone()
 	}
 
-	// Accept legacy pointer entries while reading pre-value state.
-	if votingInfo, ok := value.(*governance.VotingInfo); ok {
-		return votingInfo.Clone()
-	}
-
 	return nil
 }
 
