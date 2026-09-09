@@ -10,12 +10,9 @@ import (
 
 // cloneProjectEntry is the transformation for the project tree. Project is
 // mutable and its setters are declared in /r/gnoswap/launchpad, so an external
-// holder of the stored pointer could write realm state through it.
-//
-// Project.Clone leaves the project's maps nil; see it for which lookups read
-// them instead.
+// holder of a cloned value cannot write realm state through it.
 func cloneProjectEntry(value any) any {
-	project, ok := value.(*launchpad.Project)
+	project, ok := value.(launchpad.Project)
 	if !ok {
 		return nil
 	}

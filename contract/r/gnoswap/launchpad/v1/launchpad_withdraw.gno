@@ -143,6 +143,12 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Depo
 	withdrawToTier(projectTier, deposit)
 	project.SetTier(deposit.Tier(), projectTier)
 
+	projects := lp.store.GetProjects()
+	projects.Set(project.ID(), *project)
+	if err := lp.store.SetProjects(0, rlm, projects); err != nil {
+		return "", 0, err
+	}
+
 	// Finalize withdrawal
 	withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
 

@@ -10,7 +10,7 @@ import (
 
 // cloneProjectEntry is the transformation for the project tree.
 func cloneProjectEntry(value any) any {
-	project, ok := value.(*launchpad.Project)
+	project, ok := value.(launchpad.Project)
 	if !ok {
 		return nil
 	}

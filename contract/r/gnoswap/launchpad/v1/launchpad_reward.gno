@@ -100,6 +100,7 @@ func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit *launchpad
 		project.SetTier(deposit.Tier(), projectTier)
 
 		projects := lp.store.GetProjects()
+		projects.Set(project.ID(), *project)
 		if err := lp.store.SetProjects(0, rlm, projects); err != nil {
 			return "", 0, err
 		}

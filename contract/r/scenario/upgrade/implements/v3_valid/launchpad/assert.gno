@@ -42,9 +42,9 @@ func (lp *launchpadV1) assertHasProject(caller address) {
 
 	projects := lp.store.GetProjects()
 	projects.Iterate("", "", func(key string, value interface{}) bool {
-		project, ok := value.(*launchpad.Project)
+		project, ok := value.(launchpad.Project)
 		if !ok {
-			panic(ufmt.Sprintf("failed to cast projects's element to *launchpad.Project: %T", value))
+			panic(ufmt.Sprintf("failed to cast projects's element to launchpad.Project: %T", value))
 		}
 
 		hasProject = project.IsRecipient(caller)

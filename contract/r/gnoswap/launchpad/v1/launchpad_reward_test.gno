@@ -86,7 +86,7 @@ func TestLaunchpadReward_CollectDepositReward(cur realm, t *testing.T) {
 				tiers := make(map[int64]*launchpad.ProjectTier)
 				tiers[tt.tier] = projectTier
 				project.SetTiers(tiers)
-				projects.Set(tt.projectID, project)
+				projects.Set(tt.projectID, *project)
 				setTestProjects(projects)
 			}
 

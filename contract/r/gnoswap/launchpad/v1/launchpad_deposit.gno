@@ -177,6 +177,12 @@ func (lp *launchpadV1) depositGns(
 	depositToTier(projectTier, deposit)
 	project.SetTier(tierDuration, projectTier)
 
+	projects := lp.store.GetProjects()
+	projects.Set(project.ID(), *project)
+	if err := lp.store.SetProjects(0, rlm, projects); err != nil {
+		return nil, nil, false, "", err
+	}
+
 	// Save the modified state back
 	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {
 		return nil, nil, false, "", err

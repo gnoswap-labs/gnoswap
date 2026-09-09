@@ -425,7 +425,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsFullBalanceRestoration(cur realm, t 
 	)
 
 	projects := lp.store.GetProjects()
-	projects.Set(project.ID(), project)
+	projects.Set(project.ID(), *project)
 	lp.store.SetProjects(0, cur, projects)
 
 	testing.SkipHeights(10)
@@ -636,7 +636,7 @@ func TestLaunchpadWithdraw_RewardStateRemovalWithMultipleDeposits(cur realm, t *
 				currentHeight: currentHeight,
 			})
 			projects := lp.store.GetProjects()
-			projects.Set(project.ID(), project)
+			projects.Set(project.ID(), *project)
 			lp.store.SetProjects(0, cur, projects)
 
 			testing.SkipHeights(10)
@@ -1054,7 +1054,7 @@ func initLaunchpadWithdrawTestWithTier(cur realm, t *testing.T, depositor addres
 	},
 	)
 	projects := lp.store.GetProjects()
-	projects.Set(project.ID(), project)
+	projects.Set(project.ID(), *project)
 	lp.store.SetProjects(0, cur, projects)
 
 	testing.SkipHeights(10)

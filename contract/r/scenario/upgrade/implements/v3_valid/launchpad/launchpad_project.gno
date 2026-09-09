@@ -205,7 +205,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 		))
 	}
 
-	projects.Set(project.ID(), project)
+	projects.Set(project.ID(), *project)
 
 	// Save the modified state back
 	if err := lp.store.SetProjects(0, rlm, projects); err != nil {

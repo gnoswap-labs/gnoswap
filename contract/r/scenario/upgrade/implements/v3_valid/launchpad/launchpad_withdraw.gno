@@ -105,6 +105,10 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Depo
 
 	// Process withdrawal from project tier
 	withdrawToTier(projectTier, deposit)
+	project.SetTier(deposit.Tier(), projectTier)
+
+	projects := lp.store.GetProjects()
+	projects.Set(project.ID(), *project)
 
 	// Update rewards with new deposit amount after withdrawal
 	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
@@ -120,6 +124,9 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Depo
 	deposits.Set(deposit.ID(), deposit)
 
 	// Save the modified state back
+	if err := lp.store.SetProjects(0, rlm, projects); err != nil {
+		return "", 0, err
+	}
 	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {
 		return "", 0, err
 	}

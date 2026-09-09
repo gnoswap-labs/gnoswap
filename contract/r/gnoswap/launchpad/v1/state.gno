@@ -9,17 +9,17 @@ import (
 
 func (lp *launchpadV1) getProject(projectID string) (*launchpad.Project, error) {
 	projects := lp.store.GetProjects()
-	project := projects.Get(projectID)
-	if project == nil {
+	projectValue := projects.Get(projectID)
+	if projectValue == nil {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
 	}
 
-	p, ok := project.(*launchpad.Project)
+	project, ok := projectValue.(launchpad.Project)
 	if !ok {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
 	}
 
-	return p, nil
+	return &project, nil
 }
 
 func (lp *launchpadV1) getProjectTier(projectID string, tierDuration int64) (*launchpad.ProjectTier, error) {

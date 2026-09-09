@@ -79,23 +79,23 @@ func TestTierAllocationNoLeftover(cur realm, t *testing.T) {
 			testing.SetHeight(currentHeight)
 
 			project, err := lp.createProject(0, cur, &createProjectParams{
-					name:          "Test Project",
-					tokenPath:     "gno.land/r/onbloc/obl.OBL",
-					depositAmount: tt.depositAmount,
-					tier30Ratio:   tt.tier30Ratio,
-					tier90Ratio:   tt.tier90Ratio,
-					tier180Ratio:  tt.tier180Ratio,
-					recipient:     testutils.TestAddress("project"),
-					startTime:     currentTime,
-					currentTime:   currentTime,
-					currentHeight: currentHeight,
-				},
+				name:          "Test Project",
+				tokenPath:     "gno.land/r/onbloc/obl.OBL",
+				depositAmount: tt.depositAmount,
+				tier30Ratio:   tt.tier30Ratio,
+				tier90Ratio:   tt.tier90Ratio,
+				tier180Ratio:  tt.tier180Ratio,
+				recipient:     testutils.TestAddress("project"),
+				startTime:     currentTime,
+				currentTime:   currentTime,
+				currentHeight: currentHeight,
+			},
 			)
 			uassert.NoError(t, err)
 			uassert.NotNil(t, project, "project should not be nil")
 
 			projects := lp.store.GetProjects()
-			projects.Set(project.ID(), project)
+			projects.Set(project.ID(), *project)
 			lp.store.SetProjects(0, cur, projects)
 
 			// get all tiers and calculate total allocated
@@ -142,23 +142,23 @@ func TestTierAllocationRemainder(cur realm, t *testing.T) {
 	depositAmount := int64(1000)
 
 	project, err := lp.createProject(0, cur, &createProjectParams{
-			name:          "Remainder Test",
-			tokenPath:     "gno.land/r/onbloc/obl.OBL",
-			depositAmount: depositAmount,
-			tier30Ratio:   33, // 1000 * 33 / 100 = 330
-			tier90Ratio:   33, // 1000 * 33 / 100 = 330
-			tier180Ratio:  34, // 1000 * 34 / 100 = 340
-			recipient:     testutils.TestAddress("project"),
-			startTime:     currentTime,
-			currentTime:   currentTime,
-			currentHeight: currentHeight,
-		},
+		name:          "Remainder Test",
+		tokenPath:     "gno.land/r/onbloc/obl.OBL",
+		depositAmount: depositAmount,
+		tier30Ratio:   33, // 1000 * 33 / 100 = 330
+		tier90Ratio:   33, // 1000 * 33 / 100 = 330
+		tier180Ratio:  34, // 1000 * 34 / 100 = 340
+		recipient:     testutils.TestAddress("project"),
+		startTime:     currentTime,
+		currentTime:   currentTime,
+		currentHeight: currentHeight,
+	},
 	)
 	uassert.NoError(t, err)
 	uassert.NotNil(t, project, "project should not be nil")
 
 	projects := lp.store.GetProjects()
-	projects.Set(project.ID(), project)
+	projects.Set(project.ID(), *project)
 	lp.store.SetProjects(0, cur, projects)
 
 	tier30, _ := getProjectTier(project, 30)

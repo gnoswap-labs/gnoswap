@@ -228,7 +228,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 	}
 
 	project.SetTiersRatios(projectTierRatios)
-	projects.Set(project.ID(), project)
+	projects.Set(project.ID(), *project)
 
 	// Save the modified state back
 	if err := lp.store.SetProjects(0, rlm, projects); err != nil {
@@ -377,6 +377,12 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 			updatedTiers[duration] = tier
 		}
 		project.SetTiers(updatedTiers)
+
+		projects := lp.store.GetProjects()
+		projects.Set(project.ID(), *project)
+		if err := lp.store.SetProjects(0, rlm, projects); err != nil {
+			return 0, err
+		}
 
 		common.SafeGRC20Transfer(0, rlm, project.TokenPath(), recipient, projectRefundableAmount)
 	}

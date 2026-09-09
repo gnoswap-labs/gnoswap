@@ -657,7 +657,7 @@ func initLaunchpadDepositTest(cur realm, t *testing.T) {
 	)
 
 	projects := lp.store.GetProjects()
-	projects.Set(project.ID(), project)
+	projects.Set(project.ID(), *project)
 	lp.store.SetProjects(0, cur, projects)
 
 	testing.SkipHeights(10)

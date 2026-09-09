@@ -25,7 +25,7 @@ func TestCloneProjectEntry(cur realm, t *testing.T) {
 			100,
 		)
 
-		cloned, ok := cloneProjectEntry(stored).(*launchpad.Project)
+		cloned, ok := cloneProjectEntry(*stored).(*launchpad.Project)
 		uassert.True(t, ok)
 		uassert.False(t, cloned == stored)
 		uassert.Equal(t, stored.Name(), cloned.Name())
@@ -44,9 +44,9 @@ func TestCloneProjectEntry(cur realm, t *testing.T) {
 			100,
 		)
 
-		first, ok := cloneProjectEntry(stored).(*launchpad.Project)
+		first, ok := cloneProjectEntry(*stored).(*launchpad.Project)
 		uassert.True(t, ok)
-		second, ok := cloneProjectEntry(stored).(*launchpad.Project)
+		second, ok := cloneProjectEntry(*stored).(*launchpad.Project)
 		uassert.True(t, ok)
 		uassert.False(t, first == second)
 	})
