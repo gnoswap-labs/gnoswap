@@ -149,35 +149,6 @@ func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32
 	currentSwapBatch.AddCross(sr.NewSwapTickCross(tickId, zeroForOne, liquidityDelta))
 }
 
-// processTickCrossImmediate processes one unbatched tick cross.
-// It materializes elapsed halving boundaries while the pre-cross liquidity is
-// still effective, before modifying the deposit for that individual cross.
-func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickId int32, zeroForOne bool, timestamp int64) {
-	// Calculate the effective tick position after crossing
-	// For zeroForOne swaps, liquidity becomes effective one tick lower
-	nextTick := tickId
-	if zeroForOne {
-		nextTick-- // Move to the lower tick where liquidity becomes active
-	}
-
-	// Calculate liquidity delta with direction consideration
-	liquidityDelta := tick.StakedLiquidityDelta()
-	if zeroForOne {
-		// Negate delta for zeroForOne direction (liquidity being removed from current range)
-		liquidityDelta = i256.Zero().Neg(liquidityDelta)
-	}
-
-	// Update pool's cumulative deposit with the liquidity change
-	poolResolver := NewPoolResolver(pool)
-	s.getPoolTier().cacheRewardForPool(timestamp, s.getPools(), pool.PoolPath())
-	newAcc := poolResolver.modifyDeposit(liquidityDelta, timestamp, nextTick)
-
-	// Update the tick's outside accumulation for reward calculations
-	// This ensures proper reward distribution tracking across tick boundaries
-	tickResolver := NewTickResolver(tick)
-	tickResolver.updateCurrentOutsideAccumulation(timestamp, newAcc)
-}
-
 // processBatchedTickCrosses processes all accumulated tick crosses at once
 // This is the core optimization function that processes multiple tick crosses in a single operation.
 // Instead of updating pool state for each tick cross individually (O(n) operations),
