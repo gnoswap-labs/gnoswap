@@ -235,10 +235,10 @@ func (s *stakerV1) GetIncentiveRewardAmountAsString(poolPath string, incentiveId
 // GetIncentiveRewardPerSecondX128 returns the Q128-scaled reward per second of
 // an incentive (i.e. actual rate = value / 2^128). The Q128 form preserves
 // sub-second precision that would otherwise be lost to int64 truncation.
-func (s *stakerV1) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) (*u256.Uint, error) {
+func (s *stakerV1) GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) (u256.Uint, error) {
 	incentive, err := s.getIncentive(poolPath, incentiveId)
 	if err != nil {
-		return nil, err
+		return u256.Uint{}, err
 	}
 
 	return incentive.RewardPerSecondX128(), nil
@@ -571,7 +571,7 @@ func (s *stakerV1) GetPoolIncentives(poolPath string) *rotree.ReadOnlyTree {
 		return nil
 	}
 
-	return rotree.Wrap(pool.Incentives().IncentiveTrees(), cloneExternalIncentiveEntry)
+	return rotree.Wrap(pool.Incentives().IncentiveTrees(), externalIncentiveValueEntry)
 }
 
 // GetPoolGlobalRewardRatioAccumulations returns a read-only view of a pool's

@@ -205,12 +205,12 @@ func GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) (stri
 // incentive, expressed as a Q128 fixed-point number (i.e. actual rate =
 // value / 2^128). Callers needing an integer rate can right-shift the result
 // by 128.
-func GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) (*u256.Uint, error) {
+func GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) (u256.Uint, error) {
 	amount, err := getImplementation().GetIncentiveRewardPerSecondX128(poolPath, incentiveId)
 	if err != nil {
-		return nil, err
+		return u256.Uint{}, err
 	}
-	return amount.Clone(), nil
+	return amount, nil
 }
 
 // GetIncentiveRewardToken returns the reward token of an incentive.

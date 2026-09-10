@@ -40,9 +40,7 @@ func cloneExternalIncentives(src []ExternalIncentive) []ExternalIncentive {
 	}
 
 	copied := make([]ExternalIncentive, len(src))
-	for i := range src {
-		copied[i] = *src[i].Clone()
-	}
+	copy(copied, src)
 
 	return copied
 }

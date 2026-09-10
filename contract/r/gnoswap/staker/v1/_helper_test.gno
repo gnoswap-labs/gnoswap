@@ -563,6 +563,7 @@ func getPositionOperator(positionId uint64) address {
 // rewardPerSecondFromX128 returns the floored integer reward-per-second
 // derived from the Q128-scaled value. Used in tests for expected calculations.
 func rewardPerSecondFromX128(incentive *sr.ExternalIncentive) int64 {
-	rps := u256.Zero().Rsh(incentive.RewardPerSecondX128(), 128)
+	rate := incentive.RewardPerSecondX128()
+	rps := u256.Zero().Rsh(&rate, 128)
 	return int64(rps.Uint64())
 }

@@ -5,8 +5,8 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -149,7 +149,8 @@ func TestMutableStakerGetterIsolation(t *testing.T) {
 				uassert.Equal(t, "reward-token", values[0].RewardToken())
 				uassert.Equal(t, int64(1000), values[0].RewardAmount())
 				expectedRPSX128 := u256.Zero().Mul(u256.NewUintFromInt64(100), consts.Q128())
-				uassert.Equal(t, expectedRPSX128.ToString(), values[0].RewardPerSecondX128().ToString())
+				actualRPSX128 := values[0].RewardPerSecondX128()
+				uassert.Equal(t, expectedRPSX128.ToString(), actualRPSX128.ToString())
 				uassert.Equal(t, int64(0), values[0].DistributedRewardAmount())
 				uassert.Equal(t, false, values[0].Refunded())
 			},

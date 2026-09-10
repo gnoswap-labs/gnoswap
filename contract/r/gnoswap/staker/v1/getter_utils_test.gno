@@ -8,7 +8,7 @@ import (
 	sr "gno.land/r/gnoswap/staker"
 )
 
-func newCloneTestExternalIncentive() *sr.ExternalIncentive {
+func newValueTestExternalIncentive() *sr.ExternalIncentive {
 	return sr.NewExternalIncentive(
 		"incentive-1",
 		"token0:token1:3000",
@@ -23,31 +23,20 @@ func newCloneTestExternalIncentive() *sr.ExternalIncentive {
 	)
 }
 
-func TestCloneExternalIncentiveEntry(cur realm, t *testing.T) {
+func TestExternalIncentiveValueEntry(cur realm, t *testing.T) {
 	t.Run("returns nil for a value that is not an incentive", func(cur realm, t *testing.T) {
-		uassert.Equal(t, nil, cloneExternalIncentiveEntry("not an incentive"))
-		uassert.Equal(t, nil, cloneExternalIncentiveEntry(nil))
+		uassert.Equal(t, nil, externalIncentiveValueEntry("not an incentive"))
+		uassert.Equal(t, nil, externalIncentiveValueEntry(nil))
 	})
 
-	t.Run("returns a copy the caller cannot write back through", func(cur realm, t *testing.T) {
-		stored := newCloneTestExternalIncentive()
+	t.Run("returns a value copy the caller cannot write back through", func(cur realm, t *testing.T) {
+		stored := newValueTestExternalIncentive()
 
-		cloned, ok := cloneExternalIncentiveEntry(stored).(*sr.ExternalIncentive)
+		value, ok := externalIncentiveValueEntry(stored).(sr.ExternalIncentive)
 		uassert.True(t, ok)
-		uassert.False(t, cloned == stored)
-		uassert.Equal(t, stored.RewardToken(), cloned.RewardToken())
+		uassert.Equal(t, stored.RewardToken(), value.RewardToken())
 
-		cloned.SetRewardToken("gno.land/r/onbloc/mutated")
+		value.SetRewardToken("gno.land/r/onbloc/mutated")
 		uassert.Equal(t, "gno.land/r/onbloc/baz", stored.RewardToken())
-	})
-
-	t.Run("returns a distinct copy per read", func(cur realm, t *testing.T) {
-		stored := newCloneTestExternalIncentive()
-
-		first, ok := cloneExternalIncentiveEntry(stored).(*sr.ExternalIncentive)
-		uassert.True(t, ok)
-		second, ok := cloneExternalIncentiveEntry(stored).(*sr.ExternalIncentive)
-		uassert.True(t, ok)
-		uassert.False(t, first == second)
 	})
 }

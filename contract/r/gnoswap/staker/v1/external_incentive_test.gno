@@ -2241,9 +2241,9 @@ func TestEndExternalIncentiveRefundWithPenalty(cur realm, t *testing.T) {
 			}
 
 			// refund with penalty >= refund without penalty
-			cloned := incentive.Clone()
+			cloned := *incentive
 			cloned.SetAccumulatedPenaltyAmount(0)
-			_, refundNoPenalty, _ := s.endExternalIncentive(poolResolver, NewExternalIncentiveResolver(cloned), creator, endTime+100)
+			_, refundNoPenalty, _ := s.endExternalIncentive(poolResolver, NewExternalIncentiveResolver(&cloned), creator, endTime+100)
 			if refund < refundNoPenalty {
 				t.Errorf("refund with penalty(%d) < refund without(%d)", refund, refundNoPenalty)
 			}
@@ -2466,7 +2466,8 @@ func TestEndExternalIncentive_DoesNotStealUncollectedUserReward(cur realm, t *te
 	if overflow {
 		t.Fatal("expected reward accumulation to fit uint256")
 	}
-	expectedRewardU256 := u256.MulDiv(positionAccX128, incentive.RewardPerSecondX128(), q128)
+	rate := incentive.RewardPerSecondX128()
+	expectedRewardU256 := u256.MulDiv(positionAccX128, &rate, q128)
 	expectedRewardU256 = u256.Zero().Rsh(expectedRewardU256, 128)
 	expectedReward := gnsmath.SafeConvertToInt64(expectedRewardU256)
 

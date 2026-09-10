@@ -2,8 +2,8 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type IStaker interface {
@@ -81,7 +81,7 @@ type IStakerGetter interface {
 	GetIncentiveCreator(poolPath string, incentiveId string) (address, error)
 	GetIncentiveRewardAmount(poolPath string, incentiveId string) (*u256.Uint, error)
 	GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) (string, error)
-	GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) (*u256.Uint, error)
+	GetIncentiveRewardPerSecondX128(poolPath string, incentiveId string) (u256.Uint, error)
 	GetIncentiveRewardToken(poolPath string, incentiveId string) (string, error)
 	GetIncentiveStartTimestamp(poolPath string, incentiveId string) (int64, error)
 	GetMinimumRewardAmount() int64

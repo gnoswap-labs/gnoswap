@@ -198,9 +198,10 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 	// rewardPerSecondX128 = rps << 128, so dividing by q128 here recovers the
 	// floor of (timeDiff * rps) without the truncation that an int64 rps would
 	// have introduced at incentive-creation time.
+	rate := incentive.RewardPerSecondX128()
 	unclaimable := u256.MulDiv(
 		u256.NewUintFromInt64(timeDiff),
-		incentive.RewardPerSecondX128(),
+		&rate,
 		q128,
 	)
 	return gnsmath.SafeConvertToInt64(unclaimable)

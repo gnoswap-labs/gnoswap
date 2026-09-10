@@ -358,7 +358,8 @@ func (self *RewardState) updateExternalReward(startTime, endTime int64, incentiv
 		return nil // Already ended
 	}
 
-	return self.rewardPerWarmupX128(startTime, endTime, incentive.RewardPerSecondX128())
+	rate := incentive.RewardPerSecondX128()
+	return self.rewardPerWarmupX128(startTime, endTime, rate)
 }
 
 // calculateCollectableExternalReward calculates the calculated external reward for the deposit.
@@ -468,7 +469,7 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 // stored as `(rewardAmount << 128) / duration` in ExternalIncentive, so an
 // extra `>> 128` is needed after the standard `MulDiv(rewardAcc, rps, q128)`
 // to materialize the integer result.
-func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPerSecondX128 *u256.Uint) error {
+func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPerSecondX128 u256.Uint) error {
 	if startTime == endTime {
 		return nil
 	}
@@ -494,7 +495,7 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 				panic(errors.New(errOverflow))
 			}
 
-			rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
+			rewardAcc = u256.MulDiv(rewardAcc, &rewardPerSecondX128, q128)
 			rewardAcc = u256.Zero().Rsh(rewardAcc, 128)
 			self.rewards[i] = gnsmath.SafeAddInt64(self.rewards[i], gnsmath.SafeConvertToInt64(rewardAcc))
 
@@ -511,7 +512,7 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 			panic(errors.New(errOverflow))
 		}
 
-		rewardAcc = u256.MulDiv(rewardAcc, rewardPerSecondX128, q128)
+		rewardAcc = u256.MulDiv(rewardAcc, &rewardPerSecondX128, q128)
 		rewardAcc = u256.Zero().Rsh(rewardAcc, 128)
 		self.rewards[i] = gnsmath.SafeAddInt64(self.rewards[i], gnsmath.SafeConvertToInt64(rewardAcc))
 

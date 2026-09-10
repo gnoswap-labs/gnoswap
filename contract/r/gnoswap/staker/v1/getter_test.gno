@@ -275,7 +275,7 @@ func TestGetterIncentiveRewardAmounts(cur realm, t *testing.T) {
 	// rewardPerSecondX128 >> 128 should still equal the legacy value 2777.
 	rewardPerSecondX128, err := state.instance.GetIncentiveRewardPerSecondX128(state.poolPath, state.incentiveId)
 	uassert.NoError(t, err)
-	floor := u256.Zero().Rsh(rewardPerSecondX128, 128)
+	floor := u256.Zero().Rsh(&rewardPerSecondX128, 128)
 	uassert.Equal(t, "2777", floor.ToString())
 
 	// Test u256 variants
@@ -295,7 +295,7 @@ func TestGetterPoolIncentiveDepositObjects(cur realm, t *testing.T) {
 	uassert.NoError(t, err)
 	uassert.Equal(t, state.poolPath, pool.PoolPath())
 
-	incentive, ok := state.instance.GetPoolIncentives(state.poolPath).Get(state.incentiveId).(*sr.ExternalIncentive)
+	incentive, ok := state.instance.GetPoolIncentives(state.poolPath).Get(state.incentiveId).(sr.ExternalIncentive)
 	uassert.True(t, ok)
 	uassert.Equal(t, state.incentiveId, incentive.IncentiveId())
 	uassert.Equal(t, barPath, incentive.RewardToken())
@@ -805,12 +805,10 @@ func TestGetterPoolIncentive(cur realm, t *testing.T) {
 	uassert.Equal(t, 1, len(collectKeys(incentives, 0, 1)))
 	uassert.Equal(t, 1, len(collectKeys(incentives, 1, 1)))
 
-	// Entries are cloned, so a reader cannot reach the stored incentive.
-	first, ok := incentives.Get(state.incentiveId).(*sr.ExternalIncentive)
+	// Entries are values, so a reader cannot reach the stored incentive.
+	incentive, ok := incentives.Get(state.incentiveId).(sr.ExternalIncentive)
 	uassert.True(t, ok)
-	second, ok := incentives.Get(state.incentiveId).(*sr.ExternalIncentive)
-	uassert.True(t, ok)
-	uassert.False(t, first == second)
+	uassert.Equal(t, state.incentiveId, incentive.IncentiveId())
 }
 
 func TestGetterPoolGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
