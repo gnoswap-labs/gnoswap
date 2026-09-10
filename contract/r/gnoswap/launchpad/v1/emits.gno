@@ -18,12 +18,14 @@ import (
 // deposit total after the stake change (the divisor for the next accumulation delta),
 // and distributeAmountPerSecondX128 lets indexers project the accumulator forward.
 func emitUpdateLaunchpadRewardAccumulation(projectTierID string, r *launchpad.RewardManager, totalDepositAmount int64) {
+	accumulatedRewardPerDepositX128 := r.AccumulatedRewardPerDepositX128()
+	distributeAmountPerSecondX128 := r.DistributeAmountPerSecondX128()
 	chain.Emit(
 		"UpdateLaunchpadRewardAccumulation",
 		"projectTierId", projectTierID,
 		"totalDepositAmount", utils.FormatInt(totalDepositAmount),
-		"accumulatedRewardPerDepositX128", r.AccumulatedRewardPerDepositX128().ToString(),
-		"distributeAmountPerSecondX128", r.DistributeAmountPerSecondX128().ToString(),
+		"accumulatedRewardPerDepositX128", accumulatedRewardPerDepositX128.ToString(),
+		"distributeAmountPerSecondX128", distributeAmountPerSecondX128.ToString(),
 		"accumulatedTime", utils.FormatInt(r.AccumulatedTime()),
 	)
 }

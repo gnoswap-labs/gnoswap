@@ -80,8 +80,9 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit *launchpad.Depo
 		claimableTime = r.DistributeEndTime()
 	}
 
+	accumulatedRewardPerDepositX128 := r.AccumulatedRewardPerDepositX128()
 	rewardState := launchpad.NewRewardState(
-		r.AccumulatedRewardPerDepositX128().Clone(),
+		&accumulatedRewardPerDepositX128,
 		deposit.DepositAmount(),
 		deposit.CreatedAt(),
 		r.DistributeEndTime(),
@@ -126,8 +127,9 @@ func addActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.Rew
 		panic(errors.New(errOverflow))
 	}
 
+	activePriceDebtX128 := r.ActivePriceDebtX128()
 	r.SetActiveDepositAmount(gnsmath.SafeAddInt64(r.ActiveDepositAmount(), rewardState.DepositAmount()))
-	r.SetActivePriceDebtX128(u256.Zero().Add(r.ActivePriceDebtX128(), debt))
+	r.SetActivePriceDebtX128(u256.Zero().Add(&activePriceDebtX128, debt))
 }
 
 func removeActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.RewardState) {
@@ -139,9 +141,10 @@ func removeActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.
 		panic(errors.New(errOverflow))
 	}
 
+	activePriceDebtX128 := r.ActivePriceDebtX128()
 	r.SetActiveDepositAmount(gnsmath.SafeSubInt64(r.ActiveDepositAmount(), rewardState.DepositAmount()))
 	r.SetActiveClaimedAmount(gnsmath.SafeSubInt64(r.ActiveClaimedAmount(), rewardState.ClaimedAmount()))
-	r.SetActivePriceDebtX128(u256.Zero().Sub(r.ActivePriceDebtX128(), debt))
+	r.SetActivePriceDebtX128(u256.Zero().Sub(&activePriceDebtX128, debt))
 }
 
 func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u256.Uint, currentTime int64) error {
@@ -157,7 +160,8 @@ func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u
 		currentTime = r.DistributeEndTime()
 	}
 
-	accumulated := u256.Zero().Add(r.AccumulatedRewardPerDepositX128(), rewardPerDepositX128)
+	accumulatedRewardPerDepositX128 := r.AccumulatedRewardPerDepositX128()
+	accumulated := u256.Zero().Add(&accumulatedRewardPerDepositX128, rewardPerDepositX128)
 	r.SetAccumulatedRewardPerDepositX128(accumulated)
 	r.SetAccumulatedTime(currentTime)
 
@@ -180,9 +184,10 @@ func updateRewardPerDepositX128(r *launchpad.RewardManager, totalDepositAmount i
 	}
 
 	// Calculate and update rewards
+	distributeAmountPerSecondX128 := r.DistributeAmountPerSecondX128()
 	rewardPerDepositX128, err := calculateRewardPerDepositX128(
 		r,
-		r.DistributeAmountPerSecondX128(),
+		&distributeAmountPerSecondX128,
 		totalDepositAmount,
 		currentTime,
 	)
@@ -259,7 +264,8 @@ func collectReward(r *launchpad.RewardManager, depositId string, currentTime int
 		)
 	}
 
-	claimableReward := calculateClaimableReward(rewardState, r.AccumulatedRewardPerDepositX128())
+	accumulatedRewardPerDepositX128 := r.AccumulatedRewardPerDepositX128()
+	claimableReward := calculateClaimableReward(rewardState, &accumulatedRewardPerDepositX128)
 	if claimableReward == 0 {
 		return 0, nil
 	}
@@ -292,15 +298,17 @@ func newRewardManager(
 // claim without traversing the attacker-controlled reward tree. Aggregating
 // before Q128 truncation retains rounding dust but cannot under-reserve claims.
 func calculateMaximumClaimableRewardsForActiveDeposits(r *launchpad.RewardManager) int64 {
+	accumulatedRewardPerDepositX128 := r.AccumulatedRewardPerDepositX128()
 	reward, overflow := u256.Zero().MulOverflow(
-		r.AccumulatedRewardPerDepositX128(),
+		&accumulatedRewardPerDepositX128,
 		u256.NewUintFromInt64(r.ActiveDepositAmount()),
 	)
 	if overflow {
 		panic(errors.New(errOverflow))
 	}
 
-	reward = reward.Sub(reward, r.ActivePriceDebtX128()).Rsh(reward, 128)
+	activePriceDebtX128 := r.ActivePriceDebtX128()
+	reward = reward.Sub(reward, &activePriceDebtX128).Rsh(reward, 128)
 	totalReward := gnsmath.SafeConvertToInt64(reward)
 	if totalReward <= r.ActiveClaimedAmount() {
 		return 0

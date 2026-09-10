@@ -24,8 +24,8 @@ import (
 type RewardManager struct {
 	rewards *bptree.BPTree // depositId -> RewardState
 
-	distributeAmountPerSecondX128   *u256.Uint // distribute amount per second, Q128
-	accumulatedRewardPerDepositX128 *u256.Uint // accumulated reward per GNS stake, Q128
+	distributeAmountPerSecondX128   u256.Uint // distribute amount per second, Q128
+	accumulatedRewardPerDepositX128 u256.Uint // accumulated reward per GNS stake, Q128
 
 	totalDistributeAmount       int64 // total distributed amount
 	totalClaimedAmount          int64 // total claimed amount
@@ -37,7 +37,7 @@ type RewardManager struct {
 	accumulatedTime             int64 // last time when reward was calculated
 	rewardClaimableDuration     int64 // duration of reward claimable
 
-	activePriceDebtX128 *u256.Uint // sum of active deposit amount × initial reward index
+	activePriceDebtX128 u256.Uint // sum of active deposit amount × initial reward index
 }
 
 // Rewards returns the rewards tree of the reward manager.
@@ -58,24 +58,24 @@ func (rm *RewardManager) RemoveReward(depositID string) {
 	rm.rewards.Remove(depositID)
 }
 
-// DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the reward manager.
-func (rm *RewardManager) DistributeAmountPerSecondX128() *u256.Uint {
+// DistributeAmountPerSecondX128 returns the distribute amount per second (Q128).
+func (rm *RewardManager) DistributeAmountPerSecondX128() u256.Uint {
 	return rm.distributeAmountPerSecondX128
 }
 
 // SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the reward manager.
 func (rm *RewardManager) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
-	rm.distributeAmountPerSecondX128 = u256.Zero().Set(amount)
+	rm.distributeAmountPerSecondX128.Set(amount)
 }
 
-// AccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of the reward manager.
-func (rm *RewardManager) AccumulatedRewardPerDepositX128() *u256.Uint {
+// AccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128).
+func (rm *RewardManager) AccumulatedRewardPerDepositX128() u256.Uint {
 	return rm.accumulatedRewardPerDepositX128
 }
 
 // SetAccumulatedRewardPerDepositX128 sets the accumulated reward per deposit (Q128) of the reward manager.
 func (rm *RewardManager) SetAccumulatedRewardPerDepositX128(amount *u256.Uint) {
-	rm.accumulatedRewardPerDepositX128 = u256.Zero().Set(amount)
+	rm.accumulatedRewardPerDepositX128.Set(amount)
 }
 
 // TotalDistributeAmount returns the total distribute amount of the reward manager.
@@ -114,12 +114,12 @@ func (rm *RewardManager) SetActiveClaimedAmount(amount int64) {
 	rm.activeClaimedAmount = amount
 }
 
-func (rm *RewardManager) ActivePriceDebtX128() *u256.Uint {
+func (rm *RewardManager) ActivePriceDebtX128() u256.Uint {
 	return rm.activePriceDebtX128
 }
 
 func (rm *RewardManager) SetActivePriceDebtX128(debt *u256.Uint) {
-	rm.activePriceDebtX128 = u256.Zero().Set(debt)
+	rm.activePriceDebtX128.Set(debt)
 }
 
 // DistributeStartTime returns the distribute start time of the reward manager.
@@ -185,8 +185,8 @@ func (rm RewardManager) Clone() *RewardManager {
 
 	return &RewardManager{
 		rewards:                         rewardsTree,
-		distributeAmountPerSecondX128:   rm.distributeAmountPerSecondX128.Clone(),
-		accumulatedRewardPerDepositX128: rm.accumulatedRewardPerDepositX128.Clone(),
+		distributeAmountPerSecondX128:   rm.distributeAmountPerSecondX128,
+		accumulatedRewardPerDepositX128: rm.accumulatedRewardPerDepositX128,
 		totalDistributeAmount:           rm.totalDistributeAmount,
 		totalClaimedAmount:              rm.totalClaimedAmount,
 		activeDepositAmount:             rm.activeDepositAmount,
@@ -196,7 +196,7 @@ func (rm RewardManager) Clone() *RewardManager {
 		accumulatedDistributeAmount:     rm.accumulatedDistributeAmount,
 		accumulatedTime:                 rm.accumulatedTime,
 		rewardClaimableDuration:         rm.rewardClaimableDuration,
-		activePriceDebtX128:             rm.activePriceDebtX128.Clone(),
+		activePriceDebtX128:             rm.activePriceDebtX128,
 	}
 }
 
@@ -216,10 +216,10 @@ func NewRewardManager(
 		activeClaimedAmount:             0,
 		accumulatedDistributeAmount:     0,
 		accumulatedTime:                 0,
-		accumulatedRewardPerDepositX128: u256.Zero(),
-		distributeAmountPerSecondX128:   u256.Zero(),
+		accumulatedRewardPerDepositX128: u256.Uint{},
+		distributeAmountPerSecondX128:   u256.Uint{},
 		rewardClaimableDuration:         rewardCollectableDuration,
-		activePriceDebtX128:             u256.Zero(),
+		activePriceDebtX128:             u256.Uint{},
 		rewards:                         bptree.NewBPTreeN(16),
 	}
 }

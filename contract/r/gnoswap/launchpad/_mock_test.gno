@@ -306,15 +306,15 @@ func (m *MockLaunchpad) GetProjectCreatedAt(projectId string) (int64, error) {
 	return res[0].(int64), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (*u256.Uint, error) {
+func (m *MockLaunchpad) GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (u256.Uint, error) {
 	res, ok := m.Response.Get("GetProjectTierDistributeAmountPerSecondX128")
 	if !ok {
-		return nil, nil
+		return u256.Uint{}, nil
 	}
 	if len(res) < 2 || res[1] == nil {
-		return res[0].(*u256.Uint), nil
+		return *res[0].(*u256.Uint), nil
 	}
-	return res[0].(*u256.Uint), res[1].(error)
+	return *res[0].(*u256.Uint), res[1].(error)
 }
 
 func (m *MockLaunchpad) GetProjectTierTotalDistributeAmount(projectId string, tier int64) (int64, error) {
@@ -504,26 +504,26 @@ func (m *MockLaunchpad) GetDepositEndTime(depositId string) (int64, error) {
 	return res[0].(int64), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*u256.Uint, error) {
+func (m *MockLaunchpad) GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (u256.Uint, error) {
 	res, ok := m.Response.Get("GetProjectTierRewardDistributeAmountPerSecondX128")
 	if !ok {
-		return nil, nil
+		return u256.Uint{}, nil
 	}
 	if len(res) < 2 || res[1] == nil {
-		return res[0].(*u256.Uint), nil
+		return *res[0].(*u256.Uint), nil
 	}
-	return res[0].(*u256.Uint), res[1].(error)
+	return *res[0].(*u256.Uint), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*u256.Uint, error) {
+func (m *MockLaunchpad) GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (u256.Uint, error) {
 	res, ok := m.Response.Get("GetProjectTierRewardAccumulatedRewardPerDepositX128")
 	if !ok {
-		return nil, nil
+		return u256.Uint{}, nil
 	}
 	if len(res) < 2 || res[1] == nil {
-		return res[0].(*u256.Uint), nil
+		return *res[0].(*u256.Uint), nil
 	}
-	return res[0].(*u256.Uint), res[1].(error)
+	return *res[0].(*u256.Uint), res[1].(error)
 }
 
 func (m *MockLaunchpad) GetProjectTierRewardTotalDistributeAmount(projectTierId string) (int64, error) {

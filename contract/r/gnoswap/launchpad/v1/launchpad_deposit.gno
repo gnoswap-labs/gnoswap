@@ -183,11 +183,12 @@ func (lp *launchpadV1) depositGns(
 	}
 
 	emitUpdateLaunchpadRewardAccumulation(projectTier.ID(), rewardManager, getTierCurrentDepositAmount(projectTier))
+	distributeAmountPerSecondX128 := rewardManager.DistributeAmountPerSecondX128()
 
 	return deposit,
 		rewardState,
 		isFirstDeposit,
-		rewardManager.DistributeAmountPerSecondX128().ToString(),
+		distributeAmountPerSecondX128.ToString(),
 		nil
 }
 

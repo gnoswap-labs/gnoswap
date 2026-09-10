@@ -78,15 +78,8 @@ func GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {
 }
 
 // GetProjectTierDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a project tier.
-func GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (*u256.Uint, error) {
-	amount, err := getImplementation().GetProjectTierDistributeAmountPerSecondX128(projectId, tier)
-	if err != nil {
-		return nil, err
-	}
-	if amount == nil {
-		return nil, nil
-	}
-	return amount.Clone(), nil
+func GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (u256.Uint, error) {
+	return getImplementation().GetProjectTierDistributeAmountPerSecondX128(projectId, tier)
 }
 
 // GetProjectTierTotalDistributeAmount returns the total distribute amount of a project tier.
@@ -229,27 +222,13 @@ func GetProjectTierRewardManager(projectTierId string) (*RewardManager, error) {
 }
 
 // GetProjectTierRewardDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
-func GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*u256.Uint, error) {
-	amount, err := getImplementation().GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId)
-	if err != nil {
-		return nil, err
-	}
-	if amount == nil {
-		return nil, nil
-	}
-	return amount.Clone(), nil
+func GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (u256.Uint, error) {
+	return getImplementation().GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId)
 }
 
 // GetProjectTierRewardAccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of a reward manager.
-func GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*u256.Uint, error) {
-	amount, err := getImplementation().GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId)
-	if err != nil {
-		return nil, err
-	}
-	if amount == nil {
-		return nil, nil
-	}
-	return amount.Clone(), nil
+func GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (u256.Uint, error) {
+	return getImplementation().GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId)
 }
 
 // GetProjectTierRewardTotalDistributeAmount returns the total distribute amount of a reward manager.

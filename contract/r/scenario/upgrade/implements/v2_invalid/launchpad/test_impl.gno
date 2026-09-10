@@ -169,7 +169,7 @@ func (t *TestLaunchpad) GetProjectTier(projectId string, tier int64) (*launchpad
 	return t.instance.GetProjectTier(projectId, tier)
 }
 
-func (t *TestLaunchpad) GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (*u256.Uint, error) {
+func (t *TestLaunchpad) GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (u256.Uint, error) {
 	if !t.isActive("GetProjectTierDistributeAmountPerSecondX128") {
 		panic("test implementation: GetProjectTierDistributeAmountPerSecondX128 not supported")
 	}
@@ -344,14 +344,14 @@ func (t *TestLaunchpad) GetProjectTierRewardManager(projectTierId string) (*laun
 	return t.instance.GetProjectTierRewardManager(projectTierId)
 }
 
-func (t *TestLaunchpad) GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*u256.Uint, error) {
+func (t *TestLaunchpad) GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (u256.Uint, error) {
 	if !t.isActive("GetProjectTierRewardDistributeAmountPerSecondX128") {
 		panic("test implementation: GetProjectTierRewardDistributeAmountPerSecondX128 not supported")
 	}
 	return t.instance.GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId)
 }
 
-func (t *TestLaunchpad) GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*u256.Uint, error) {
+func (t *TestLaunchpad) GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (u256.Uint, error) {
 	if !t.isActive("GetProjectTierRewardAccumulatedRewardPerDepositX128") {
 		panic("test implementation: GetProjectTierRewardAccumulatedRewardPerDepositX128 not supported")
 	}

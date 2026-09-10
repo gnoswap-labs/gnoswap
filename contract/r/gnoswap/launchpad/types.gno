@@ -2,8 +2,8 @@ package launchpad
 
 import (
 	"gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type ILaunchpad interface {
@@ -51,7 +51,7 @@ type ILaunchpadGetter interface {
 	GetProjectCreatedAt(projectId string) (int64, error)
 
 	GetProjectTier(projectId string, tier int64) (*ProjectTier, error)
-	GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (*uint256.Uint, error)
+	GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (uint256.Uint, error)
 	GetProjectTierTotalDistributeAmount(projectId string, tier int64) (int64, error)
 	GetProjectTierTotalDepositAmount(projectId string, tier int64) (int64, error)
 	GetProjectTierTotalWithdrawAmount(projectId string, tier int64) (int64, error)
@@ -79,8 +79,8 @@ type ILaunchpadGetter interface {
 
 	GetProjectTierRewardManagerCount() int
 	GetProjectTierRewardManager(projectTierId string) (*RewardManager, error)
-	GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*uint256.Uint, error)
-	GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*uint256.Uint, error)
+	GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (uint256.Uint, error)
+	GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (uint256.Uint, error)
 	GetProjectTierRewardTotalDistributeAmount(projectTierId string) (int64, error)
 	GetProjectTierRewardTotalClaimedAmount(projectTierId string) (int64, error)
 	GetProjectTierRewardDistributeStartTime(projectTierId string) (int64, error)

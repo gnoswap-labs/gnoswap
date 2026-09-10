@@ -161,10 +161,12 @@ func (lp *launchpadV1) depositGns(
 		return nil, nil, false, "", err
 	}
 
+	distributeAmountPerSecondX128 := rewardManager.DistributeAmountPerSecondX128()
+
 	return deposit,
 		rewardState,
 		isFirstDeposit,
-		rewardManager.DistributeAmountPerSecondX128().ToString(),
+		distributeAmountPerSecondX128.ToString(),
 		nil
 }
 

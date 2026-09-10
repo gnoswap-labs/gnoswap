@@ -127,11 +127,11 @@ func (lp *launchpadV1) GetProjectTier(projectId string, tier int64) (*launchpad.
 }
 
 // GetProjectTierDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a project tier.
-// Returns 0 and error if project or tier not found.
-func (lp *launchpadV1) GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (*uint256.Uint, error) {
+// Returns zero and error if project or tier not found.
+func (lp *launchpadV1) GetProjectTierDistributeAmountPerSecondX128(projectId string, tier int64) (uint256.Uint, error) {
 	projectTier, err := lp.GetProjectTier(projectId, tier)
 	if err != nil {
-		return nil, err
+		return uint256.Uint{}, err
 	}
 
 	return projectTier.DistributeAmountPerSecondX128(), nil
@@ -450,22 +450,22 @@ func (lp *launchpadV1) GetProjectTierRewardManager(projectTierId string) (*launc
 }
 
 // GetProjectTierRewardDistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of a reward manager.
-// Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (*uint256.Uint, error) {
+// Returns zero and error if reward manager not found.
+func (lp *launchpadV1) GetProjectTierRewardDistributeAmountPerSecondX128(projectTierId string) (uint256.Uint, error) {
 	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
-		return nil, err
+		return uint256.Uint{}, err
 	}
 
 	return manager.DistributeAmountPerSecondX128(), nil
 }
 
 // GetProjectTierRewardAccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of a reward manager.
-// Returns 0 and error if reward manager not found.
-func (lp *launchpadV1) GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (*uint256.Uint, error) {
+// Returns zero and error if reward manager not found.
+func (lp *launchpadV1) GetProjectTierRewardAccumulatedRewardPerDepositX128(projectTierId string) (uint256.Uint, error) {
 	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {
-		return nil, err
+		return uint256.Uint{}, err
 	}
 
 	return manager.AccumulatedRewardPerDepositX128(), nil

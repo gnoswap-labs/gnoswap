@@ -11,6 +11,14 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
+func uintToString(value u256.Uint) string {
+	return value.ToString()
+}
+
+func isUintZero(value u256.Uint) bool {
+	return value.IsZero()
+}
+
 func TestRewardManager_IsInitialized(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
@@ -111,7 +119,7 @@ func TestRewardManager_UpdateRewardPerDepositX128(cur realm, t *testing.T) {
 			if tt.expectedHasError {
 				uassert.ErrorContains(t, err, tt.expectedError)
 			} else {
-				uassert.Equal(t, tt.expectedAccumulatedRewardPerDeposit, manager.AccumulatedRewardPerDepositX128().ToString())
+				uassert.Equal(t, tt.expectedAccumulatedRewardPerDeposit, uintToString(manager.AccumulatedRewardPerDepositX128()))
 			}
 		})
 	}
@@ -676,7 +684,7 @@ func TestRewardManager_EdgeCase_ZeroDuration(cur realm, t *testing.T) {
 	)
 
 	// Should have zero distribute amount per second
-	uassert.Equal(t, true, manager.DistributeAmountPerSecondX128().IsZero(),
+	uassert.Equal(t, true, isUintZero(manager.DistributeAmountPerSecondX128()),
 		"Zero duration should result in zero distribution rate")
 }
 
@@ -1648,7 +1656,7 @@ func TestRewardManager_updateDistributeAmountPerSecondX128(cur realm, t *testing
 			)
 
 			// Store initial state
-			initialAmount := manager.DistributeAmountPerSecondX128().ToString()
+			initialAmount := uintToString(manager.DistributeAmountPerSecondX128())
 			initialStart := manager.DistributeStartTime()
 			initialEnd := manager.DistributeEndTime()
 
@@ -1663,12 +1671,12 @@ func TestRewardManager_updateDistributeAmountPerSecondX128(cur realm, t *testing
 			// then
 			if tt.expectNoUpdate {
 				// Verify no update occurred
-				uassert.Equal(t, initialAmount, manager.DistributeAmountPerSecondX128().ToString())
+				uassert.Equal(t, initialAmount, uintToString(manager.DistributeAmountPerSecondX128()))
 				uassert.Equal(t, initialStart, manager.DistributeStartTime())
 				uassert.Equal(t, initialEnd, manager.DistributeEndTime())
 			} else {
 				// Verify update occurred with correct values
-				uassert.Equal(t, tt.expectedAmountPerSecond, manager.DistributeAmountPerSecondX128().ToString())
+				uassert.Equal(t, tt.expectedAmountPerSecond, uintToString(manager.DistributeAmountPerSecondX128()))
 				uassert.Equal(t, tt.expectedStartTime, manager.DistributeStartTime())
 				uassert.Equal(t, tt.expectedEndTime, manager.DistributeEndTime())
 			}
@@ -1874,7 +1882,7 @@ func TestRewardManager_addRewardPerDepositX128(cur realm, t *testing.T) {
 			manager.SetDistributeEndTime(tt.managerValues.distributeEndTime)
 
 			// Store initial state
-			initialReward := manager.AccumulatedRewardPerDepositX128().ToString()
+			initialReward := uintToString(manager.AccumulatedRewardPerDepositX128())
 			initialTime := manager.AccumulatedTime()
 
 			// when
@@ -1889,11 +1897,11 @@ func TestRewardManager_addRewardPerDepositX128(cur realm, t *testing.T) {
 
 			if tt.expectNoUpdate {
 				// Verify no update occurred
-				uassert.Equal(t, initialReward, manager.AccumulatedRewardPerDepositX128().ToString())
+				uassert.Equal(t, initialReward, uintToString(manager.AccumulatedRewardPerDepositX128()))
 				uassert.Equal(t, initialTime, manager.AccumulatedTime())
 			} else {
 				// Verify update occurred with correct values
-				uassert.Equal(t, tt.expectedAccumulatedReward, manager.AccumulatedRewardPerDepositX128().ToString())
+				uassert.Equal(t, tt.expectedAccumulatedReward, uintToString(manager.AccumulatedRewardPerDepositX128()))
 				uassert.Equal(t, tt.expectedAccumulatedTime, manager.AccumulatedTime())
 			}
 		})
@@ -1974,13 +1982,13 @@ func TestRewardManager_addRewardState(cur realm, t *testing.T) {
 				u256.NewUintFromInt64(tt.rewardAmount),
 			)
 			uassert.Equal(t, tt.rewardAmount, manager.ActiveDepositAmount())
-			uassert.Equal(t, expectedDebt.ToString(), manager.ActivePriceDebtX128().ToString())
+			uassert.Equal(t, expectedDebt.ToString(), uintToString(manager.ActivePriceDebtX128()))
 
 			if err := removeRewardState(manager, tt.depositId); err != nil {
 				t.Fatal(err)
 			}
 			uassert.Equal(t, int64(0), manager.ActiveDepositAmount())
-			uassert.Equal(t, "0", manager.ActivePriceDebtX128().ToString())
+			uassert.Equal(t, "0", uintToString(manager.ActivePriceDebtX128()))
 		})
 	}
 }

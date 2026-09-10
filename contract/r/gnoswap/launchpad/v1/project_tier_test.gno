@@ -404,7 +404,7 @@ func TestProjectTier_UpdateDistributeAmountPerSecond(cur realm, t *testing.T) {
 
 			// Get the actual value (need to shift right by 128 to get the integer part)
 			distributePerSecond := tier.DistributeAmountPerSecondX128()
-			actualPerSecond := distributePerSecond.Rsh(distributePerSecond, 128).Int64()
+			actualPerSecond := distributePerSecond.Rsh(&distributePerSecond, 128).Int64()
 
 			// Verify it's in expected range
 			uassert.Equal(t, true, actualPerSecond > tt.expectedDistributePerSecondGT,
@@ -430,9 +430,11 @@ func TestProjectTier_VaryingBlockTimes(cur realm, t *testing.T) {
 	updateTierDistributeAmountPerSecond(slowBlockTier)
 
 	// Both should have the same distribute amount per second
+	fastBlockRate := fastBlockTier.DistributeAmountPerSecondX128()
+	slowBlockRate := slowBlockTier.DistributeAmountPerSecondX128()
 	uassert.Equal(t,
-		fastBlockTier.DistributeAmountPerSecondX128().ToString(),
-		slowBlockTier.DistributeAmountPerSecondX128().ToString(),
+		uintToString(fastBlockRate),
+		uintToString(slowBlockRate),
 		"Distribution rate should be the same regardless of block time")
 }
 
@@ -444,7 +446,8 @@ func TestProjectTier_EdgeCases(cur realm, t *testing.T) {
 	updateTierDistributeAmountPerSecond(zeroDurationTier)
 
 	// Should result in zero distribution
-	uassert.Equal(t, true, zeroDurationTier.DistributeAmountPerSecondX128().IsZero(),
+	zeroDurationRate := zeroDurationTier.DistributeAmountPerSecondX128()
+	uassert.Equal(t, true, isUintZero(zeroDurationRate),
 		"Zero duration should result in zero distribution rate")
 
 	// Test negative duration (end before start - should not happen but test defensive programming)

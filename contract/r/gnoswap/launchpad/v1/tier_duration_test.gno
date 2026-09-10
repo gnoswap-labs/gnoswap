@@ -126,7 +126,7 @@ func TestTierDurationConsistency(cur realm, t *testing.T) {
 
 			initialStartTime := tier.StartTime()
 			initialEndTime := tier.EndTime()
-			initialDistributePerSecond := tier.DistributeAmountPerSecondX128().ToString()
+			initialDistributePerSecond := uintToString(tier.DistributeAmountPerSecondX128())
 
 			// calculate expected duration in blocks
 			expectedDurationBlocks := tt.expectedDurationDays * 24 * 60 * 60
@@ -165,7 +165,7 @@ func TestTierDurationConsistency(cur realm, t *testing.T) {
 				"%s: Start height should not change", tt.name)
 			uassert.Equal(t, initialEndTime, tierAfterDeposits.EndTime(),
 				"%s: End height should not change", tt.name)
-			uassert.Equal(t, initialDistributePerSecond, tierAfterDeposits.DistributeAmountPerSecondX128().ToString(),
+			uassert.Equal(t, initialDistributePerSecond, uintToString(tierAfterDeposits.DistributeAmountPerSecondX128()),
 				"%s: Distribute per second should not change", tt.name)
 
 			// Verify duration remains consistent
