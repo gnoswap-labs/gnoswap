@@ -23,26 +23,31 @@ import (
 // - totalWithdrawCount (int64): The total number of withdrawals from the tier.
 // - totalCollectedAmount (int64): The total amount of tokens collected as rewards for the tier.
 type ProjectTier struct {
-	distributeAmountPerSecondX128 *u256.Uint // distribute amount per second, Q128
-	id                            string     // '{projectId}:duration' // duartion == 30, 90, 180
-	totalDistributeAmount         int64
-	totalDepositAmount            int64 // accumulated deposit amount
-	totalWithdrawAmount           int64 // accumulated withdraw amount
-	totalDepositCount             int64 // accumulated deposit count
-	totalWithdrawCount            int64 // accumulated withdraw count
-	totalCollectedAmount          int64 // total collected amount by user (reward)
-	startTime                     int64
-	endTime                       int64
+	distributeAmountPerSecondX128    u256.Uint // distribute amount per second, Q128
+	distributeAmountPerSecondX128Set bool      // preserves legacy nil vs present-zero state
+	id                               string    // '{projectId}:duration' // duartion == 30, 90, 180
+	totalDistributeAmount            int64
+	totalDepositAmount               int64 // accumulated deposit amount
+	totalWithdrawAmount              int64 // accumulated withdraw amount
+	totalDepositCount                int64 // accumulated deposit count
+	totalWithdrawCount               int64 // accumulated withdraw count
+	totalCollectedAmount             int64 // total collected amount by user (reward)
+	startTime                        int64
+	endTime                          int64
 }
 
-// DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the project tier.
+// DistributeAmountPerSecondX128 returns a detached distribute amount per second (Q128) copy.
 func (pt *ProjectTier) DistributeAmountPerSecondX128() *u256.Uint {
-	return pt.distributeAmountPerSecondX128
+	if !pt.distributeAmountPerSecondX128Set {
+		return nil
+	}
+	return pt.distributeAmountPerSecondX128.Clone()
 }
 
 // SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the project tier.
 func (pt *ProjectTier) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
-	pt.distributeAmountPerSecondX128 = u256.Zero().Set(amount)
+	pt.distributeAmountPerSecondX128.Set(amount)
+	pt.distributeAmountPerSecondX128Set = true
 }
 
 // ID returns the ID of the project tier.
@@ -145,17 +150,21 @@ func (pt *ProjectTier) IsEnded(currentTime int64) bool {
 }
 
 func (pt ProjectTier) Clone() *ProjectTier {
+	if !pt.distributeAmountPerSecondX128Set {
+		panic("cannot clone absent project tier distribution rate")
+	}
 	return &ProjectTier{
-		id:                            pt.id,
-		totalDistributeAmount:         pt.totalDistributeAmount,
-		distributeAmountPerSecondX128: pt.distributeAmountPerSecondX128.Clone(),
-		startTime:                     pt.startTime,
-		endTime:                       pt.endTime,
-		totalDepositAmount:            pt.totalDepositAmount,
-		totalWithdrawAmount:           pt.totalWithdrawAmount,
-		totalDepositCount:             pt.totalDepositCount,
-		totalWithdrawCount:            pt.totalWithdrawCount,
-		totalCollectedAmount:          pt.totalCollectedAmount,
+		id:                               pt.id,
+		totalDistributeAmount:            pt.totalDistributeAmount,
+		distributeAmountPerSecondX128:    pt.distributeAmountPerSecondX128,
+		distributeAmountPerSecondX128Set: pt.distributeAmountPerSecondX128Set,
+		startTime:                        pt.startTime,
+		endTime:                          pt.endTime,
+		totalDepositAmount:               pt.totalDepositAmount,
+		totalWithdrawAmount:              pt.totalWithdrawAmount,
+		totalDepositCount:                pt.totalDepositCount,
+		totalWithdrawCount:               pt.totalWithdrawCount,
+		totalCollectedAmount:             pt.totalCollectedAmount,
 	}
 }
 
@@ -168,16 +177,17 @@ func NewProjectTier(
 	endTime int64,
 ) *ProjectTier {
 	return &ProjectTier{
-		id:                            MakeProjectTierID(projectID, tierDuration),
-		totalDistributeAmount:         totalDistributeAmount,
-		distributeAmountPerSecondX128: u256.Zero(),
-		startTime:                     startTime,
-		endTime:                       endTime,
-		totalDepositAmount:            0,
-		totalWithdrawAmount:           0,
-		totalDepositCount:             0,
-		totalWithdrawCount:            0,
-		totalCollectedAmount:          0,
+		id:                               MakeProjectTierID(projectID, tierDuration),
+		totalDistributeAmount:            totalDistributeAmount,
+		distributeAmountPerSecondX128:    u256.Uint{},
+		distributeAmountPerSecondX128Set: true,
+		startTime:                        startTime,
+		endTime:                          endTime,
+		totalDepositAmount:               0,
+		totalWithdrawAmount:              0,
+		totalDepositCount:                0,
+		totalWithdrawCount:               0,
+		totalCollectedAmount:             0,
 	}
 }
 
