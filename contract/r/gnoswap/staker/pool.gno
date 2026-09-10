@@ -411,20 +411,21 @@ func NewIncentives(targetPoolPath string) *Incentives {
 }
 
 type ExternalIncentive struct {
-	incentiveId              string     // incentive id
-	startTimestamp           int64      // start time for external reward
-	endTimestamp             int64      // end time for external reward
-	createdHeight            int64      // block height when the incentive was created
-	createdTimestamp         int64      // timestamp when the incentive was created
-	depositGnsAmount         int64      // deposited gns amount
-	targetPoolPath           string     // external reward target pool path
-	rewardToken              string     // external reward token path
-	totalRewardAmount        int64      // total reward amount
-	rewardAmount             int64      // to be distributed reward amount
-	rewardPerSecondX128      *u256.Uint // reward per second, scaled by 2^128 to preserve sub-second precision
-	distributedRewardAmount  int64      // distributed reward amount, when un-staked and refunded
-	accumulatedPenaltyAmount int64      // accumulated warmup penalty from CollectReward
-	creator                  address    // creator address
+	incentiveId              string    // incentive id
+	startTimestamp           int64     // start time for external reward
+	endTimestamp             int64     // end time for external reward
+	createdHeight            int64     // block height when the incentive was created
+	createdTimestamp         int64     // timestamp when the incentive was created
+	depositGnsAmount         int64     // deposited gns amount
+	targetPoolPath           string    // external reward target pool path
+	rewardToken              string    // external reward token path
+	totalRewardAmount        int64     // total reward amount
+	rewardAmount             int64     // to be distributed reward amount
+	rewardPerSecondX128      u256.Uint // reward per second, scaled by 2^128 to preserve sub-second precision
+	rewardPerSecondX128Set   bool      // whether rewardPerSecondX128 is present
+	distributedRewardAmount  int64     // distributed reward amount, when un-staked and refunded
+	accumulatedPenaltyAmount int64     // accumulated warmup penalty from CollectReward
+	creator                  address   // creator address
 
 	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
 
@@ -534,12 +535,16 @@ func (e *ExternalIncentive) SetRewardAmount(rewardAmount int64) {
 // RewardPerSecondX128 returns the Q128-scaled reward per second.
 // The underlying value is (rewardAmount << 128) / duration.
 func (e *ExternalIncentive) RewardPerSecondX128() *u256.Uint {
-	return e.rewardPerSecondX128
+	if !e.rewardPerSecondX128Set {
+		return nil
+	}
+	return u256.Zero().Set(&e.rewardPerSecondX128)
 }
 
 // SetRewardPerSecondX128 sets the Q128-scaled reward per second.
 func (e *ExternalIncentive) SetRewardPerSecondX128(rewardPerSecondX128 *u256.Uint) {
-	e.rewardPerSecondX128 = u256.Zero().Set(rewardPerSecondX128)
+	e.rewardPerSecondX128 = *rewardPerSecondX128
+	e.rewardPerSecondX128Set = true
 }
 
 // DistributedRewardAmount returns the distributed reward amount
@@ -596,10 +601,10 @@ func (e *ExternalIncentive) SetUnclaimableSeconds(unclaimableSeconds int64) {
 }
 
 func (e *ExternalIncentive) Clone() *ExternalIncentive {
-	rewardPerSecondX128 := u256.Zero()
-
-	if e.rewardPerSecondX128 != nil {
-		rewardPerSecondX128 = e.rewardPerSecondX128.Clone()
+	// The legacy clone materialized an absent rate as a present zero.
+	rewardPerSecondX128 := e.rewardPerSecondX128
+	if !e.rewardPerSecondX128Set {
+		rewardPerSecondX128 = u256.Uint{}
 	}
 
 	return &ExternalIncentive{
@@ -614,6 +619,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		totalRewardAmount:        e.totalRewardAmount,
 		rewardAmount:             e.rewardAmount,
 		rewardPerSecondX128:      rewardPerSecondX128,
+		rewardPerSecondX128Set:   true,
 		creator:                  e.creator,
 		refunded:                 e.refunded,
 		unclaimableSeconds:       e.unclaimableSeconds,
@@ -646,7 +652,7 @@ func NewExternalIncentive(
 		u256.NewUintFromInt64(incentiveDuration),
 	)
 
-	return &ExternalIncentive{
+	incentive := &ExternalIncentive{
 		incentiveId:              incentiveId,
 		targetPoolPath:           targetPoolPath,
 		rewardToken:              rewardToken,
@@ -654,7 +660,6 @@ func NewExternalIncentive(
 		rewardAmount:             rewardAmount,
 		startTimestamp:           startTimestamp,
 		endTimestamp:             endTimestamp,
-		rewardPerSecondX128:      rewardPerSecondX128,
 		distributedRewardAmount:  0,
 		accumulatedPenaltyAmount: 0,
 		creator:                  creator,
@@ -664,6 +669,8 @@ func NewExternalIncentive(
 		refunded:                 false,
 		unclaimableSeconds:       0,
 	}
+	incentive.SetRewardPerSecondX128(rewardPerSecondX128)
+	return incentive
 }
 
 // Tick mapping for each pool
