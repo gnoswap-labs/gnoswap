@@ -3,8 +3,8 @@ package staker
 import (
 	"testing"
 
-	uassert "gno.land/p/nt/uassert/v0"
 	u256 "gno.land/p/gnoswap/uint256"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestNewEmissionRewardState tests creating a new emission reward state
@@ -50,13 +50,13 @@ func TestNewEmissionRewardState(cur realm, t *testing.T) {
 // TestEmissionRewardState_Setters tests all setter methods
 func TestEmissionRewardState_Setters(cur realm, t *testing.T) {
 	tests := []struct {
-		name                     string
-		newRewardDebtX128        *u256.Uint
-		newAccumulatedAmount     int64
-		newAccumulatedTimestamp  int64
-		newClaimedAmount         int64
-		newClaimedTimestamp      int64
-		newStakedAmount          int64
+		name                    string
+		newRewardDebtX128       *u256.Uint
+		newAccumulatedAmount    int64
+		newAccumulatedTimestamp int64
+		newClaimedAmount        int64
+		newClaimedTimestamp     int64
+		newStakedAmount         int64
 	}{
 		{
 			name:                    "Set all values to non-zero",
@@ -130,32 +130,44 @@ func TestEmissionRewardState_Getters(cur realm, t *testing.T) {
 	}
 }
 
-// TestEmissionRewardState_Clone tests that rewardDebtX128 is cloned
+// TestEmissionRewardState_Clone verifies that value-backed copies detach every
+// mutable field while preserving the encoded debt snapshot.
 func TestEmissionRewardState_Clone(cur realm, t *testing.T) {
-	tests := []struct {
-		name                  string
-		initialRewardDebtX128 *u256.Uint
-		modifiedValue         *u256.Uint
-	}{
-		{
-			name:                  "Modifying original should not affect state",
-			initialRewardDebtX128: u256.NewUint(1000),
-			modifiedValue:         u256.NewUint(9999),
-		},
-	}
+	state := NewEmissionRewardState(u256.MaxUint256())
+	state.SetAccumulatedRewardAmount(10)
+	state.SetAccumulatedTimestamp(20)
+	state.SetClaimedRewardAmount(3)
+	state.SetClaimedTimestamp(4)
+	state.SetStakedAmount(5)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			// given
-			original := tc.initialRewardDebtX128
+	clone := state.Clone()
+	clone.SetRewardDebtX128(u256.NewUint(7))
+	clone.SetAccumulatedRewardAmount(100)
+	clone.SetAccumulatedTimestamp(200)
+	clone.SetClaimedRewardAmount(30)
+	clone.SetClaimedTimestamp(40)
+	clone.SetStakedAmount(50)
 
-			// when
-			state := NewEmissionRewardState(original)
-			original = tc.modifiedValue // Try to modify original
+	uassert.Equal(t, state.GetRewardDebtX128().ToString(), u256.MaxUint256().ToString())
+	uassert.Equal(t, state.GetAccumulatedRewardAmount(), int64(10))
+	uassert.Equal(t, state.GetAccumulatedTimestamp(), int64(20))
+	uassert.Equal(t, state.GetClaimedRewardAmount(), int64(3))
+	uassert.Equal(t, state.GetClaimedTimestamp(), int64(4))
+	uassert.Equal(t, state.GetStakedAmount(), int64(5))
+}
 
-			// then - state should still have the original value
-			uassert.Equal(t, state.GetRewardDebtX128().ToString(), tc.initialRewardDebtX128.ToString())
-			uassert.NotEqual(t, state.GetRewardDebtX128().ToString(), tc.modifiedValue.ToString())
-		})
-	}
+func TestEmissionRewardState_DebtSnapshot(cur realm, t *testing.T) {
+	empty := &EmissionRewardState{}
+	uassert.True(t, empty.GetRewardDebtX128() == nil)
+
+	value := u256.MaxUint256()
+	expected := value.ToString()
+	state := NewEmissionRewardState(value)
+	value.Clear()
+	uassert.Equal(t, state.GetRewardDebtX128().ToString(), expected)
+
+	state.GetRewardDebtX128().Clear()
+	uassert.Equal(t, state.GetRewardDebtX128().ToString(), expected)
+	state.SetRewardDebtX128(value)
+	uassert.True(t, state.GetRewardDebtX128().IsZero())
 }

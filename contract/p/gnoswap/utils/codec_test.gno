@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -104,4 +105,21 @@ func TestDecodeUint64(cur realm, t *testing.T) {
 		}
 		uassert.Equal(t, tt.want, DecodeUint64(tt.key))
 	}
+}
+
+func TestUint256Codec(t *testing.T) {
+	encoded := "\x00\x01\x02\x03\x04\x05\x06\x07" +
+		"\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f" +
+		"\x10\x11\x12\x13\x14\x15\x16\x17" +
+		"\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f"
+	value := &u256.Uint{
+		0x18191a1b1c1d1e1f,
+		0x1011121314151617,
+		0x08090a0b0c0d0e0f,
+		0x0001020304050607,
+	}
+	uassert.Equal(t, EncodeUint256(value), encoded)
+	uassert.True(t, DecodeUint256(encoded).Eq(value))
+	uassert.True(t, DecodeUint256(EncodeUint256(u256.MaxUint256())).Eq(u256.MaxUint256()))
+	uassert.True(t, DecodeUint256(EncodeUint256(u256.Zero())).IsZero())
 }

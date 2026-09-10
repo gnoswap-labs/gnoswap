@@ -3,21 +3,21 @@ package staker
 import (
 	"testing"
 
-	uassert "gno.land/p/nt/uassert/v0"
 	u256 "gno.land/p/gnoswap/uint256"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestNewProtocolFeeRewardState tests creating a new protocol fee reward state
 func TestNewProtocolFeeRewardState(cur realm, t *testing.T) {
 	tests := []struct {
-		name                              string
+		name                               string
 		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
-		expectedMapSize                   int
+		expectedMapSize                    int
 	}{
 		{
-			name: "Create with empty map",
+			name:                               "Create with empty map",
 			accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
-			expectedMapSize:                   0,
+			expectedMapSize:                    0,
 		},
 		{
 			name: "Create with single token",
@@ -129,11 +129,11 @@ func TestProtocolFeeRewardState_SettersAndGetters(cur realm, t *testing.T) {
 // TestProtocolFeeRewardState_TokenSpecificGetters tests token-specific getter methods
 func TestProtocolFeeRewardState_TokenSpecificGetters(cur realm, t *testing.T) {
 	tests := []struct {
-		name               string
-		token              string
-		rewardDebtX128     *u256.Uint
-		accumulatedReward  int64
-		claimedReward      int64
+		name              string
+		token             string
+		rewardDebtX128    *u256.Uint
+		accumulatedReward int64
+		claimedReward     int64
 	}{
 		{
 			name:              "Get values for existing token",
@@ -223,6 +223,7 @@ func TestProtocolFeeRewardState_NilMapHandling(cur realm, t *testing.T) {
 			}
 
 			// when & then
+			uassert.True(t, state.GetRewardDebtX128() == nil)
 			// GetRewardDebtX128ForToken returns nil for non-existent token when map is nil
 			debt := state.GetRewardDebtX128ForToken(tc.token)
 			if debt != nil {
@@ -234,39 +235,33 @@ func TestProtocolFeeRewardState_NilMapHandling(cur realm, t *testing.T) {
 	}
 }
 
-// TestProtocolFeeRewardState_Clone tests that reward debt is cloned
+// TestProtocolFeeRewardState_Clone verifies that all value-backed maps detach.
 func TestProtocolFeeRewardState_Clone(cur realm, t *testing.T) {
-	tests := []struct {
-		name          string
-		token         string
-		originalValue *u256.Uint
-		modifiedValue *u256.Uint
-	}{
-		{
-			name:          "Modifying original should not affect state",
-			token:         "token1",
-			originalValue: u256.NewUint(1000),
-			modifiedValue: u256.NewUint(9999),
-		},
-	}
+	state := NewProtocolFeeRewardState(map[string]*u256.Uint{
+		"token1": u256.NewUint(1000),
+	})
+	state.SetAccumulatedRewardForToken("token1", 10)
+	state.SetClaimedRewardForToken("token1", 3)
+	state.SetAccumulatedTimestamp(20)
+	state.SetClaimedTimestamp(21)
+	state.SetStakedAmount(22)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			// given
-			original := map[string]*u256.Uint{
-				tc.token: tc.originalValue,
-			}
+	clone := state.Clone()
+	clone.SetRewardDebtX128ForToken("token1", u256.NewUint(9999))
+	clone.SetRewardDebtX128ForToken("token2", u256.NewUint(2))
+	clone.SetAccumulatedRewardForToken("token1", 100)
+	clone.SetClaimedRewardForToken("token1", 30)
+	clone.SetAccumulatedTimestamp(200)
+	clone.SetClaimedTimestamp(210)
+	clone.SetStakedAmount(220)
 
-			// when
-			state := NewProtocolFeeRewardState(original)
-			original[tc.token] = tc.modifiedValue // Try to modify original
-
-			// then - state should still have the original value
-			actualValue := state.GetRewardDebtX128ForToken(tc.token)
-			uassert.Equal(t, actualValue.ToString(), tc.originalValue.ToString())
-			uassert.NotEqual(t, actualValue.ToString(), tc.modifiedValue.ToString())
-		})
-	}
+	uassert.Equal(t, state.GetRewardDebtX128ForToken("token1").ToString(), "1000")
+	uassert.True(t, state.GetRewardDebtX128ForToken("token2") == nil)
+	uassert.Equal(t, state.GetAccumulatedRewardForToken("token1"), int64(10))
+	uassert.Equal(t, state.GetClaimedRewardForToken("token1"), int64(3))
+	uassert.Equal(t, state.GetAccumulatedTimestamp(), int64(20))
+	uassert.Equal(t, state.GetClaimedTimestamp(), int64(21))
+	uassert.Equal(t, state.GetStakedAmount(), int64(22))
 }
 
 func TestProtocolFeeRewardState_ForTokenSetters(cur realm, t *testing.T) {
@@ -316,4 +311,25 @@ func TestProtocolFeeRewardState_ForTokenSetters(cur realm, t *testing.T) {
 		uassert.NotNil(t, state.GetClaimedRewards())
 		uassert.Equal(t, state.GetClaimedRewardForToken("token"), int64(1))
 	})
+}
+
+func TestProtocolFeeRewardState_DebtSnapshots(cur realm, t *testing.T) {
+	value := u256.MaxUint256()
+	expected := value.ToString()
+	state := NewProtocolFeeRewardState(map[string]*u256.Uint{"token": value})
+	value.Clear()
+	uassert.Equal(t, state.GetRewardDebtX128ForToken("token").ToString(), expected)
+
+	state.GetRewardDebtX128ForToken("token").Clear()
+	snapshot := state.GetRewardDebtX128()
+	snapshot["token"].Clear()
+	delete(snapshot, "token")
+	uassert.Equal(t, state.GetRewardDebtX128ForToken("token").ToString(), expected)
+
+	state.SetRewardDebtX128ForToken("zero", u256.Zero())
+	uassert.True(t, state.GetRewardDebtX128ForToken("zero").IsZero())
+	uassert.True(t, state.GetRewardDebtX128ForToken("missing") == nil)
+	state.SetRewardDebtX128(map[string]*u256.Uint{"replacement": u256.NewUint(7)})
+	uassert.True(t, state.GetRewardDebtX128ForToken("token") == nil)
+	uassert.Equal(t, state.GetRewardDebtX128ForToken("replacement").ToString(), "7")
 }

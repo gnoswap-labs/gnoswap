@@ -2,15 +2,16 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 )
 
 // ProtocolFeeRewardState tracks protocol fee reward information for an individual staker across multiple tokens.
 // Unlike emission rewards which are single-token, protocol fees can come from various trading pairs,
 // requiring separate tracking and calculation for each token type.
 type ProtocolFeeRewardState struct {
-	// rewardDebtX128 maps token path to reward debt with 128-bit precision scaling
-	// Used to calculate rewards earned since the last update for each token
-	rewardDebtX128 map[string]*u256.Uint
+	// rewardDebtX128 maps token paths to Q128-scaled debts as 32 big-endian bytes.
+	// An absent token has no debt; an encoded zero is a present zero debt.
+	rewardDebtX128 map[string]string
 	// accumulatedRewards maps token path to total rewards accumulated but not yet claimed
 	accumulatedRewards map[string]int64
 	// claimedRewards maps token path to total amount of rewards that have been claimed
@@ -24,7 +25,14 @@ type ProtocolFeeRewardState struct {
 }
 
 func (p *ProtocolFeeRewardState) GetRewardDebtX128() map[string]*u256.Uint {
-	return p.rewardDebtX128
+	if p.rewardDebtX128 == nil {
+		return nil
+	}
+	decoded := make(map[string]*u256.Uint, len(p.rewardDebtX128))
+	for token, value := range p.rewardDebtX128 {
+		decoded[token] = utils.DecodeUint256(value)
+	}
+	return decoded
 }
 
 func (p *ProtocolFeeRewardState) GetAccumulatedRewards() map[string]int64 {
@@ -49,15 +57,15 @@ func (p *ProtocolFeeRewardState) GetStakedAmount() int64 {
 
 /* Setters */
 
-// SetRewardDebtX128 stores a copy of the given map. Copying into a map
+// SetRewardDebtX128 stores encoded copies of the given map. Copying into a map
 // allocated by this domain method keeps the stored map owned by
 // /r/gnoswap/gov/staker, so later per-token writes (SetRewardDebtX128ForToken)
 // from any realm clear the cross-realm write guard. Storing the caller's map
 // directly would leave the map stamped with the caller's realm.
 func (p *ProtocolFeeRewardState) SetRewardDebtX128(rewardDebtX128 map[string]*u256.Uint) {
-	copied := make(map[string]*u256.Uint, len(rewardDebtX128))
+	copied := make(map[string]string, len(rewardDebtX128))
 	for token, value := range rewardDebtX128 {
-		copied[token] = u256.Zero().Set(value)
+		copied[token] = utils.EncodeUint256(value)
 	}
 	p.rewardDebtX128 = copied
 }
@@ -90,13 +98,15 @@ func (p *ProtocolFeeRewardState) SetStakedAmount(stakedAmount int64) {
 	p.stakedAmount = stakedAmount
 }
 
-// Additional getters for individual token rewards
-
 func (p *ProtocolFeeRewardState) GetRewardDebtX128ForToken(token string) *u256.Uint {
 	if p.rewardDebtX128 == nil {
 		return nil
 	}
-	return p.rewardDebtX128[token]
+	value, ok := p.rewardDebtX128[token]
+	if !ok {
+		return nil
+	}
+	return utils.DecodeUint256(value)
 }
 
 func (p *ProtocolFeeRewardState) GetAccumulatedRewardForToken(token string) int64 {
@@ -113,13 +123,11 @@ func (p *ProtocolFeeRewardState) GetClaimedRewardForToken(token string) int64 {
 	return p.claimedRewards[token]
 }
 
-// Additional setters for individual token rewards
-
 func (p *ProtocolFeeRewardState) SetRewardDebtX128ForToken(token string, value *u256.Uint) {
 	if p.rewardDebtX128 == nil {
-		p.rewardDebtX128 = make(map[string]*u256.Uint)
+		p.rewardDebtX128 = make(map[string]string)
 	}
-	p.rewardDebtX128[token] = u256.Zero().Set(value)
+	p.rewardDebtX128[token] = utils.EncodeUint256(value)
 }
 
 func (p *ProtocolFeeRewardState) SetAccumulatedRewardForToken(token string, value int64) {
@@ -139,11 +147,11 @@ func (p *ProtocolFeeRewardState) SetClaimedRewardForToken(token string, value in
 // NewProtocolFeeRewardState creates a new protocol fee reward state for a staker.
 // This factory function initializes the state with the current system reward debt for all tokens.
 func NewProtocolFeeRewardState(accumulatedProtocolFeeX128PerStake map[string]*u256.Uint) *ProtocolFeeRewardState {
-	rewardDebtX128 := make(map[string]*u256.Uint)
+	rewardDebtX128 := make(map[string]string, len(accumulatedProtocolFeeX128PerStake))
 
-	// Clone reward debt for each token to avoid reference issues
+	// Encode a snapshot so later accumulator changes cannot alter the debt.
 	for token, accumulatedFee := range accumulatedProtocolFeeX128PerStake {
-		rewardDebtX128[token] = accumulatedFee.Clone()
+		rewardDebtX128[token] = utils.EncodeUint256(accumulatedFee)
 	}
 
 	return &ProtocolFeeRewardState{
@@ -157,22 +165,18 @@ func NewProtocolFeeRewardState(accumulatedProtocolFeeX128PerStake map[string]*u2
 }
 
 // Clone creates a detached deep copy of the protocol fee reward state.
-// The nested token maps and fixed-point values are copied so a resolver can
-// mutate its local state before writing it back to the manager tree.
+// The token maps are copied so a resolver can mutate its local state before
+// writing it back to the manager tree. Encoded debt strings are immutable.
 func (p *ProtocolFeeRewardState) Clone() *ProtocolFeeRewardState {
 	if p == nil {
 		return nil
 	}
 
-	var rewardDebtX128 map[string]*u256.Uint
+	var rewardDebtX128 map[string]string
 	if p.rewardDebtX128 != nil {
-		rewardDebtX128 = make(map[string]*u256.Uint, len(p.rewardDebtX128))
+		rewardDebtX128 = make(map[string]string, len(p.rewardDebtX128))
 		for token, value := range p.rewardDebtX128 {
-			if value == nil {
-				rewardDebtX128[token] = nil
-			} else {
-				rewardDebtX128[token] = value.Clone()
-			}
+			rewardDebtX128[token] = value
 		}
 	}
 
