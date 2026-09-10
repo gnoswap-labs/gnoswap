@@ -124,6 +124,12 @@ func Cancel(
 	return getImplementation().Cancel(0, cur, proposalId)
 }
 
+// PruneInactiveProposals removes terminal proposals from the active proposal index.
+// It is callable only by the governance staker during delegation-history cleanup.
+func PruneInactiveProposals(cur realm) {
+	getImplementation().PruneInactiveProposals(0, cur)
+}
+
 // Reconfigure updates the governance configuration parameters.
 // Only callable by admin or governance.
 //

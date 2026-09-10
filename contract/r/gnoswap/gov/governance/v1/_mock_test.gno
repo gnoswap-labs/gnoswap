@@ -13,6 +13,8 @@ type mockGovernanceStore struct {
 	config                    governance.Config
 	configs                   *bptree.BPTree
 	proposals                 *bptree.BPTree
+	activeProposalsBySnapshot *bptree.BPTree
+	activeProposalsByDeadline *bptree.BPTree
 	proposalUserVotingInfos   *bptree.BPTree
 	userProposals             *bptree.BPTree
 	setProposalVotingInfosErr error
@@ -104,6 +106,32 @@ func (m *mockGovernanceStore) SetProposal(_ int, rlm realm, proposalID int64, pr
 
 func (m *mockGovernanceStore) SetProposals(_ int, rlm realm, proposals *bptree.BPTree) error {
 	m.proposals = proposals
+	return nil
+}
+
+func (m *mockGovernanceStore) HasActiveProposalsBySnapshotStoreKey() bool {
+	return m.activeProposalsBySnapshot != nil
+}
+
+func (m *mockGovernanceStore) GetActiveProposalsBySnapshot() *bptree.BPTree {
+	return m.activeProposalsBySnapshot
+}
+
+func (m *mockGovernanceStore) SetActiveProposalsBySnapshot(_ int, rlm realm, tree *bptree.BPTree) error {
+	m.activeProposalsBySnapshot = tree
+	return nil
+}
+
+func (m *mockGovernanceStore) HasActiveProposalsByDeadlineStoreKey() bool {
+	return m.activeProposalsByDeadline != nil
+}
+
+func (m *mockGovernanceStore) GetActiveProposalsByDeadline() *bptree.BPTree {
+	return m.activeProposalsByDeadline
+}
+
+func (m *mockGovernanceStore) SetActiveProposalsByDeadline(_ int, rlm realm, tree *bptree.BPTree) error {
+	m.activeProposalsByDeadline = tree
 	return nil
 }
 
@@ -231,12 +259,14 @@ func newMockGovernance() *governanceV1 {
 
 func newMockGovernanceStore() *mockGovernanceStore {
 	return &mockGovernanceStore{
-		configCounter:           governance.NewCounter(),
-		proposalCounter:         governance.NewCounter(),
-		configs:                 governance.NewConfigTree(),
-		proposals:               governance.NewProposalTree(),
-		proposalUserVotingInfos: governance.NewProposalUserVotingInfoTree(),
-		userProposals:           governance.NewUserProposalTree(),
+		configCounter:             governance.NewCounter(),
+		proposalCounter:           governance.NewCounter(),
+		configs:                   governance.NewConfigTree(),
+		proposals:                 governance.NewProposalTree(),
+		activeProposalsBySnapshot: governance.NewActiveProposalTree(),
+		activeProposalsByDeadline: governance.NewActiveProposalTree(),
+		proposalUserVotingInfos:   governance.NewProposalUserVotingInfoTree(),
+		userProposals:             governance.NewUserProposalTree(),
 	}
 }
 

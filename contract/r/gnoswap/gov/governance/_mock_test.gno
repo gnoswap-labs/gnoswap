@@ -104,6 +104,10 @@ func (m *MockGovernance) Cancel(_ int, rlm realm, proposalId int64) int64 {
 	return res[0].(int64)
 }
 
+func (m *MockGovernance) PruneInactiveProposals(_ int, rlm realm) {
+	m.Response.Get("PruneInactiveProposals")
+}
+
 func (m *MockGovernance) Reconfigure(
 	_ int, rlm realm,
 	votingStartDelay int64,

@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/gov/governance"
 	"gno.land/r/gnoswap/halt"
 )
 
@@ -76,6 +77,7 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, sn
 	access.AssertIsAdmin(caller)
 
 	assertIsValidSnapshotTime(snapshotTime)
+	governance.PruneInactiveProposals(cross(rlm))
 	assertIsAvailableCleanupSnapshotTime(snapshotTime)
 
 	// Clean total delegation history
