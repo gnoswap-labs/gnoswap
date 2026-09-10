@@ -754,7 +754,7 @@ func NewTicks() Ticks {
 // Fields:
 // - id (int32): The ID of the tick.
 // - stakedLiquidityGross (*u256.Uint): Total gross staked liquidity at this tick.
-// - stakedLiquidityDelta (*i256.Int): Net change in staked liquidity at this tick.
+// - stakedLiquidityDelta (i256.Int): Net change in staked liquidity at this tick.
 // - outsideAccumulation (*UintTree): RewardRatioAccumulation outside the tick.
 type Tick struct {
 	id int32
@@ -763,7 +763,8 @@ type Tick struct {
 	stakedLiquidityGross *u256.Uint
 
 	// conceptually equal with Pool.liquidityNet but only for the staked positions
-	stakedLiquidityDelta *i256.Int
+	stakedLiquidityDelta    i256.Int
+	stakedLiquidityDeltaSet bool // whether stakedLiquidityDelta is present
 
 	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
 	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
@@ -794,12 +795,16 @@ func (t *Tick) SetStakedLiquidityGross(stakedLiquidityGross *u256.Uint) {
 
 // StakedLiquidityDelta returns the staked liquidity delta
 func (t *Tick) StakedLiquidityDelta() *i256.Int {
-	return t.stakedLiquidityDelta
+	if !t.stakedLiquidityDeltaSet {
+		return nil
+	}
+	return i256.Zero().Set(&t.stakedLiquidityDelta)
 }
 
 // SetStakedLiquidityDelta sets the staked liquidity delta
 func (t *Tick) SetStakedLiquidityDelta(stakedLiquidityDelta *i256.Int) {
-	t.stakedLiquidityDelta = i256.Zero().Set(stakedLiquidityDelta)
+	t.stakedLiquidityDelta = *stakedLiquidityDelta
+	t.stakedLiquidityDeltaSet = true
 }
 
 // OutsideAccumulation returns the outside accumulation tree
@@ -822,21 +827,26 @@ func (t *Tick) Clone() *Tick {
 	if t == nil {
 		return nil
 	}
+	if !t.stakedLiquidityDeltaSet {
+		panic("cannot clone tick with absent delta liquidity")
+	}
 
 	return &Tick{
-		id:                   t.id,
-		stakedLiquidityGross: t.stakedLiquidityGross.Clone(),
-		stakedLiquidityDelta: t.stakedLiquidityDelta.Clone(),
-		outsideAccumulation:  t.outsideAccumulation.Clone(),
+		id:                      t.id,
+		stakedLiquidityGross:    t.stakedLiquidityGross.Clone(),
+		stakedLiquidityDelta:    t.stakedLiquidityDelta,
+		stakedLiquidityDeltaSet: t.stakedLiquidityDeltaSet,
+		outsideAccumulation:     t.outsideAccumulation.Clone(),
 	}
 }
 
 func NewTick(tickId int32) *Tick {
 	return &Tick{
-		id:                   tickId,
-		stakedLiquidityGross: u256.Zero(),
-		stakedLiquidityDelta: i256.Zero(),
-		outsideAccumulation:  NewUintTreeN(4),
+		id:                      tickId,
+		stakedLiquidityGross:    u256.Zero(),
+		stakedLiquidityDelta:    i256.Int{},
+		stakedLiquidityDeltaSet: true,
+		outsideAccumulation:     NewUintTreeN(4),
 	}
 }
 
