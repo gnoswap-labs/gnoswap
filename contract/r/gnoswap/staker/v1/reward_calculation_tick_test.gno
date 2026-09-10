@@ -326,7 +326,11 @@ func TestTickCrossHook_BatchesNetZeroDeltaInitializedTick(cur realm, t *testing.
 	}
 
 	instance.getPools().set(poolPath, pool)
+	instance.store.SetCurrentSwapBatch(0, cur, nil)
 	instance.swapStartHook(0, cur, poolPath, batchTime)
+	if instance.store.GetCurrentSwapBatch() != nil {
+		t.Fatal("swapStartHook must not create a batch before a staked boundary is crossed")
+	}
 	instance.tickCrossHook(0, cur, poolPath, 10, false, batchTime)
 
 	batch := instance.store.GetCurrentSwapBatch()
@@ -382,51 +386,45 @@ func TestTickCrossHook_DoesNotAutoInsertUninitializedTick(cur realm, t *testing.
 	pool.Ticks().SetTick(10, tick)
 
 	instance.getPools().set(poolPath, pool)
+	instance.store.SetCurrentSwapBatch(0, cur, nil)
 	instance.swapStartHook(0, cur, poolPath, batchTime)
-	if instance.store.GetCurrentSwapBatch() == nil {
-		t.Fatal("current swap batch not found for pool with staked ticks")
+	if instance.store.GetCurrentSwapBatch() != nil {
+		t.Fatal("swapStartHook must not create a batch before a staked boundary is crossed")
 	}
 
-	// Crossing an uninitialized tick must not insert it into the pool's tick tree.
+	// Crossing an uninitialized tick must not insert it into the pool's tick tree
+	// or create a batch.
 	instance.tickCrossHook(0, cur, poolPath, 999, false, batchTime)
 
 	if pool.Ticks().Has(999) {
 		t.Fatal("tickCrossHook auto-inserted uninitialized tick 999; tick state must not grow")
 	}
-
-	batch := instance.store.GetCurrentSwapBatch()
-	if crosses := batch.Crosses(); len(crosses) != 0 {
-		t.Fatalf("batch crosses length = %d, want 0 for uninitialized tick", len(crosses))
+	if instance.store.GetCurrentSwapBatch() != nil {
+		t.Fatal("tickCrossHook must not create a batch for an uninitialized tick")
 	}
+	uassert.NoError(t, instance.swapEndHook(0, cur, poolPath))
 }
 
-// TestSwapStartHook_SkipsBatchForPoolWithoutStakedTicks verifies that the swap
-// start hook does not persist a swap batch for a pool without any staked ticks,
-// keeping swap hooks inactive on pools with no staking state.
-func TestSwapStartHook_SkipsBatchForPoolWithoutStakedTicks(cur realm, t *testing.T) {
+// TestSwapStartHook_DoesNotCreateBatch verifies that a swap without a staked
+// boundary does not create persistent batch state.
+func TestSwapStartHook_DoesNotCreateBatch(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 
 	instance := getMockInstance()
 	poolPath := "test_pool"
 	startTime := int64(1000)
 
-	// The mock store starts with a default inactive batch; capture it to detect
-	// whether swapStartHook replaces it.
-	before := instance.store.GetCurrentSwapBatch()
-
 	// Pool is registered but never staked: its tick tree must be empty.
 	pool := sr.NewPool(poolPath, startTime)
 	instance.getPools().set(poolPath, pool)
+	instance.store.SetCurrentSwapBatch(0, cur, nil)
 
 	instance.swapStartHook(0, cur, poolPath, 1100)
 
-	after := instance.store.GetCurrentSwapBatch()
-	if after != before {
-		t.Fatal("swapStartHook must not replace the swap batch for a pool without staked ticks")
+	if instance.store.GetCurrentSwapBatch() != nil {
+		t.Fatal("swapStartHook must not create a batch")
 	}
-	if after.PoolPath() == poolPath {
-		t.Fatal("swapStartHook must not create a swap batch for a pool without staked ticks")
-	}
+	uassert.NoError(t, instance.swapEndHook(0, cur, poolPath))
 }
 
 // TestProcessBatchedTickCrosses_SkipsPrunedTick verifies batch processing
@@ -453,7 +451,7 @@ func TestProcessBatchedTickCrosses_SkipsPrunedTick(cur realm, t *testing.T) {
 	pool.Ticks().SetTick(10, tick)
 
 	instance.getPools().set(poolPath, pool)
-	instance.swapStartHook(0, cur, poolPath, batchTime)
+	instance.store.SetCurrentSwapBatch(0, cur, nil)
 	instance.tickCrossHook(0, cur, poolPath, 10, false, batchTime)
 
 	batch := instance.store.GetCurrentSwapBatch()
