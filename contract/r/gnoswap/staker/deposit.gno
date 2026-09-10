@@ -8,7 +8,8 @@ import (
 
 type Deposit struct {
 	warmups                        []Warmup         // warmup information
-	liquidity                      *u256.Uint       // liquidity
+	liquidity                      u256.Uint        // liquidity
+	liquiditySet                   bool             // whether liquidity is present
 	targetPoolPath                 string           // staked position's pool path
 	owner                          address          // owner address
 	stakeTime                      int64            // staked time
@@ -39,11 +40,15 @@ func (d *Deposit) SetTargetPoolPath(targetPoolPath string) {
 }
 
 func (d *Deposit) Liquidity() *u256.Uint {
-	return d.liquidity
+	if !d.liquiditySet {
+		return nil
+	}
+	return u256.Zero().Set(&d.liquidity)
 }
 
 func (d *Deposit) SetLiquidity(liquidity *u256.Uint) {
-	d.liquidity = u256.Zero().Set(liquidity)
+	d.liquidity = *liquidity
+	d.liquiditySet = true
 }
 
 func (d *Deposit) StakeTime() int64 {
@@ -227,10 +232,14 @@ func (d *Deposit) Clone() *Deposit {
 	if d == nil {
 		return nil
 	}
+	if !d.liquiditySet {
+		panic("cannot clone deposit with absent liquidity")
+	}
 
 	return &Deposit{
 		warmups:                        cloneWarmups(d.warmups),
-		liquidity:                      d.liquidity.Clone(),
+		liquidity:                      d.liquidity,
+		liquiditySet:                   d.liquiditySet,
 		targetPoolPath:                 d.targetPoolPath,
 		owner:                          d.owner,
 		stakeTime:                      d.stakeTime,
@@ -253,10 +262,9 @@ func NewDeposit(
 	tickLower, tickUpper int32,
 	warmups []Warmup,
 ) *Deposit {
-	return &Deposit{
+	deposit := &Deposit{
 		owner:                          owner,
 		targetPoolPath:                 targetPoolPath,
-		liquidity:                      liquidity,
 		warmups:                        warmups,
 		stakeTime:                      currentTime,
 		tickLower:                      tickLower,
@@ -268,6 +276,10 @@ func NewDeposit(
 		externalIncentiveIds:           make(map[string]bool),
 		lastExternalIncentiveUpdatedAt: 0,
 	}
+	if liquidity != nil {
+		deposit.SetLiquidity(liquidity)
+	}
+	return deposit
 }
 
 type Warmup struct {
