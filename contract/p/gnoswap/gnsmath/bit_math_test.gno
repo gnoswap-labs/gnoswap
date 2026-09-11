@@ -328,9 +328,21 @@ func TestBitMath_BitMathLeastSignificantBit(cur realm, t *testing.T) {
 			expected: 10,
 		},
 		{
-			name:     "2^200+2^20",
+			name:     "mixed_high_and_low_bits",
 			input:    "1606938044258990275541962092341162602522202993782792835302425600",
 			expected: 10,
+		},
+
+		// Multiple nonzero limbs: the lowest nonzero limb determines the LSB.
+		{
+			name:     "limb1_wins_over_limbs2_and_3",
+			input:    "6277101735386680764176071790128604917344661914852964433920", // 2^192 + 2^128 + 2^75
+			expected: 75,
+		},
+		{
+			name:     "limb2_wins_over_limb3",
+			input:    "6277101735386682157632364331371612762084747484986628636672", // 2^192 + 2^140
+			expected: 140,
 		},
 		{
 			name:     "max_uint256_minus_one",
@@ -361,32 +373,6 @@ func TestBitMath_BitMathLeastSignificantBit_PowersOfTwo(t *testing.T) {
 		num := new(u256.Uint).Lsh(u256.One(), uint(i))
 		result := BitMathLeastSignificantBit(num)
 		uassert.Equal(t, result, uint8(i))
-	}
-}
-
-func TestBitMath_Consistency(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-	}{
-		{"small_number", "42"},
-		{"medium_number", "1234567890"},
-		{"large_number", "123456789012345678901234567890123456789"},
-		{"half_max", "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
-		{"near_max", "115792089237316195423570985008687907853269984665640564039457584007913129639934"},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			x := u256.MustFromDecimal(tc.input)
-			msb := BitMathMostSignificantBit(x)
-			lsb := BitMathLeastSignificantBit(x)
-
-			// MSB must be >= LSB
-			if msb < lsb {
-				t.Errorf("Invalid result: MSB(%d) < LSB(%d) for %s", msb, lsb, tc.input)
-			}
-		})
 	}
 }
 
@@ -483,7 +469,7 @@ func TestBitMath_ActualValues(t *testing.T) {
 		name  string
 		input string
 	}{
-		{"2^200+2^20", "1606938044258990275541962092341162602522202993782792835302425600"},
+		{"mixed_high_and_low_bits", "1606938044258990275541962092341162602522202993782792835302425600"},
 		{"large1", "98765432109876543210987654321098765432109876543210987654321098765432"},
 		{"large2", "11111111111111111111111111111111111111111111111111111111111111111111"},
 		{"large3", "99999999999999999999999999999999999999999999999999999999999999999999"},

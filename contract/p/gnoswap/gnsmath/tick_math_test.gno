@@ -281,8 +281,22 @@ func TestTickMath_GetTickAtSqrtRatio(cur realm, t *testing.T) {
 			expectedPanicMessage: "",
 		},
 		{
+			name:                 "just below ratio at tick 0",
+			sqrtPriceX96:         "79228162514264337593543950335",
+			expectedTick:         -1,
+			expectedHasPanic:     false,
+			expectedPanicMessage: "",
+		},
+		{
 			name:                 "sqrt ratio at tick 0",
 			sqrtPriceX96:         "79228162514264337593543950336",
+			expectedTick:         0,
+			expectedHasPanic:     false,
+			expectedPanicMessage: "",
+		},
+		{
+			name:                 "just above ratio at tick 0",
+			sqrtPriceX96:         "79228162514264337593543950337",
 			expectedTick:         0,
 			expectedHasPanic:     false,
 			expectedPanicMessage: "",
