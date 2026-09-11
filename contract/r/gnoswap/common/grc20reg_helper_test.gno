@@ -93,11 +93,11 @@ func TestGrc20regHelper_TokenMethod(t *testing.T) {
 	})
 
 	t.Run("BalanceOf()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, int64(10000000000), token.BalanceOf(address("g1skl80cuz8zq3lul9pgz5pc35l2pfzgxgfpsqkx")))
+		uassert.Equal(t, int64(10000000000), token.BalanceOf(defaultHolder))
 	})
 
 	t.Run("Allowance()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, int64(0), token.Allowance(address("g1skl80cuz8zq3lul9pgz5pc35l2pfzgxgfpsqkx"), address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")))
+		uassert.Equal(t, int64(0), token.Allowance(defaultHolder, address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")))
 	})
 
 	t.Run("RenderHome()", func(cur realm, t *testing.T) {
@@ -838,8 +838,6 @@ func TestGrc20regHelper_TotalSupply(t *testing.T) {
 }
 
 func TestGrc20regHelper_BalanceOf(t *testing.T) {
-	defaultHolder := address("g1skl80cuz8zq3lul9pgz5pc35l2pfzgxgfpsqkx")
-
 	tests := []struct {
 		name            string
 		path            string
@@ -891,7 +889,7 @@ func TestGrc20regHelper_BalanceOf(t *testing.T) {
 }
 
 func TestGrc20regHelper_Allowance(t *testing.T) {
-	owner := address("g1skl80cuz8zq3lul9pgz5pc35l2pfzgxgfpsqkx")
+	owner := defaultHolder
 	spender := address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")
 
 	tests := []struct {
