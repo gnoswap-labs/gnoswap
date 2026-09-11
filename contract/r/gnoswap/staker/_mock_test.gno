@@ -130,6 +130,10 @@ func (m *MockStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
 	m.Response.Get("RemoveToken")
 }
 
+func (m *MockStaker) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool) {
+	m.Response.Get("SetDeniedRewardToken")
+}
+
 func (m *MockStaker) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	m.Response.Get("SetWarmUp")
 }
@@ -629,6 +633,15 @@ func (m *MockStaker) GetTotalEmissionSent() int64 {
 
 func (m *MockStaker) GetAllowedTokens() []string {
 	res, ok := m.Response.Get("GetAllowedTokens")
+	if !ok {
+		return nil
+	}
+
+	return res[0].([]string)
+}
+
+func (m *MockStaker) GetDeniedRewardTokens() []string {
+	res, ok := m.Response.Get("GetDeniedRewardTokens")
 	if !ok {
 		return nil
 	}

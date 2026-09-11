@@ -321,6 +321,11 @@ func GetAllowedTokens() []string {
 	return cloneStringSlice(getImplementation().GetAllowedTokens())
 }
 
+// GetDeniedRewardTokens returns the denied external incentive reward tokens.
+func GetDeniedRewardTokens() []string {
+	return cloneStringSlice(getImplementation().GetDeniedRewardTokens())
+}
+
 // GetWarmupTemplate returns the current warmup template.
 func GetWarmupTemplate() []Warmup {
 	return cloneWarmups(getImplementation().GetWarmupTemplate())

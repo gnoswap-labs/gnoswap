@@ -29,6 +29,8 @@ const (
 	errIsNotEndedIncentive           = "[GNOSWAP-STAKER-022] incentive is not ended yet"
 	errCannotCancelIncentive         = "[GNOSWAP-STAKER-023] cannot cancel incentive"
 	errUncollectedPosition           = "[GNOSWAP-STAKER-024] position has uncollected rewards"
+	errDeniedRewardToken             = "[GNOSWAP-STAKER-025] denied reward token"
+	errCannotDenyDefaultToken        = "[GNOSWAP-STAKER-026] cannot deny default token"
 )
 
 func makeErrorWithDetails(message string, details string) error {

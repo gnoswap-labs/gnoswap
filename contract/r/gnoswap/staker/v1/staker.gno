@@ -857,6 +857,49 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	// process reward states
 	rewardToken := incentive.RewardToken()
 
+	// Ledger-level delivery guard (audit finding #4).
+	//
+	// The bookkeeping check above proves the incentive owes this reward; it says
+	// nothing about whether the ledger transfers below can succeed. Both legs run
+	// inside UnStakeToken's mandatory collect, and a panic there holds the NFT
+	// and the underlying liquidity hostage to a third-party token.
+	//
+	// GnoSwap transfers resolve through grc20reg's concrete *grc20.Token straight
+	// into PrivateLedger, so no token-realm code runs in the path and the
+	// reachable failure set is closed. Because grc20 Mint enforces
+	// totalSupply <= MaxInt64 and every ledger operation conserves
+	// sum(balances) == totalSupply, a recipient-balance overflow is unreachable;
+	// the only reachable failure is the sender balance falling short of what
+	// BOTH legs move (issuer burn of the staker's balance, or accounting drift).
+	// The fee leg settles carried-over pending protocol fees of the same token
+	// too, hence the +pending term. The full derivation, the trust model, and
+	// the re-audit trigger live in docs/staker.md.
+	//
+	// Skipping BEFORE any bookkeeping means: while staked the reward simply
+	// stays pending and becomes collectible once the balance is restored; at
+	// unstake it is forfeited and, having never been deducted, eventually
+	// returns to the incentive creator through EndExternalIncentive.
+	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
+	pendingProtocolFee := s.store.GetPendingProtocolFees()[rewardToken]
+	requiredBalance := gnsmath.SafeAddInt64(totalRewardAmount, pendingProtocolFee)
+
+	if common.BalanceOf(rewardToken, stakerAddr) < requiredBalance {
+		chain.Emit(
+			"UndeliverableExternalReward",
+			"prevAddr", ctx.prevAddr,
+			"prevRealm", ctx.prevRealm,
+			"positionId", utils.FormatUint(ctx.positionId),
+			"incentiveId", incentiveId,
+			"rewardToken", rewardToken,
+			"requiredBalance", utils.FormatInt(requiredBalance),
+			"stakerBalance", utils.FormatInt(common.BalanceOf(rewardToken, stakerAddr)),
+			"currentTime", utils.FormatInt(ctx.currentTime),
+			"currentHeight", utils.FormatInt(ctx.blockHeight),
+		)
+
+		return "", 0, 0
+	}
+
 	incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), totalRewardAmount))
 	incentiveResolver.addDistributedRewardAmount(rewardAmount)
 	incentiveResolver.addAccumulatedPenaltyAmount(externalPenalty)

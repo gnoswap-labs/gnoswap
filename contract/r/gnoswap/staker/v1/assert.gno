@@ -160,6 +160,18 @@ func assertIsGreaterThanMinimumRewardAmount(s *stakerV1, rewardToken string, rew
 
 // assertIsAllowedForExternalReward ensures the token is allowed for external rewards.
 func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
+	// Operational stop switch: a denied token can never start a NEW incentive,
+	// whether it qualifies as a pool-pair token or through the governance
+	// allowlist. Collection of already-created incentives is deliberately
+	// unaffected; the delivery guard in deliverExternalIncentiveReward bounds
+	// that blast radius instead.
+	if contains(s.store.GetDeniedRewardTokens(), tokenPath) {
+		panic(makeErrorWithDetails(
+			errDeniedRewardToken,
+			ufmt.Sprintf("tokenPath(%s) is denied as an external reward token", tokenPath),
+		))
+	}
+
 	token0, token1, _ := poolPathDivide(poolPath)
 
 	if tokenPath == token0 || tokenPath == token1 {

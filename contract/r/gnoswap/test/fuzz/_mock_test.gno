@@ -381,6 +381,7 @@ type MockStakerStore struct {
 	externalIncentives               *bptree.BPTree
 	totalEmissionSent                int64
 	allowedTokens                    []string
+	deniedRewardTokens               []string
 	incentiveCounter                 *sr.Counter
 	tokenSpecificMinimumRewards      map[string]int64
 	unstakingFee                     uint64
@@ -499,6 +500,37 @@ func (s *MockStakerStore) RemoveAllowedToken(_ int, rlm realm, tokenPath string)
 	for i, token := range s.allowedTokens {
 		if token == tokenPath {
 			s.allowedTokens = append(s.allowedTokens[:i], s.allowedTokens[i+1:]...)
+			break
+		}
+	}
+
+	return nil
+}
+
+// DeniedRewardTokens
+func (s *MockStakerStore) HasDeniedRewardTokensStoreKey() bool {
+	return s.deniedRewardTokens != nil
+}
+
+func (s *MockStakerStore) GetDeniedRewardTokens() []string {
+	return s.deniedRewardTokens
+}
+
+func (s *MockStakerStore) AddDeniedRewardToken(_ int, rlm realm, tokenPath string) error {
+	for _, token := range s.deniedRewardTokens {
+		if token == tokenPath {
+			return nil
+		}
+	}
+
+	s.deniedRewardTokens = append(s.deniedRewardTokens, tokenPath)
+	return nil
+}
+
+func (s *MockStakerStore) RemoveDeniedRewardToken(_ int, rlm realm, tokenPath string) error {
+	for i, token := range s.deniedRewardTokens {
+		if token == tokenPath {
+			s.deniedRewardTokens = append(s.deniedRewardTokens[:i], s.deniedRewardTokens[i+1:]...)
 			break
 		}
 	}

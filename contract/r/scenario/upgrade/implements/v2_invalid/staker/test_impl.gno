@@ -130,6 +130,13 @@ func (t *TestStaker) AddToken(_ int, rlm realm, tokenPath string) {
 	t.instance.AddToken(0, rlm, tokenPath)
 }
 
+func (t *TestStaker) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool) {
+	if !t.isActive("SetDeniedRewardToken") {
+		panic("test implementation: SetDeniedRewardToken not supported")
+	}
+	t.instance.SetDeniedRewardToken(0, rlm, tokenPath, denied)
+}
+
 func (t *TestStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
 	if !t.isActive("RemoveToken") {
 		panic("test implementation: RemoveToken not supported")
@@ -542,6 +549,13 @@ func (t *TestStaker) GetAllowedTokens() []string {
 		panic("test implementation: GetAllowedTokens not supported")
 	}
 	return t.instance.GetAllowedTokens()
+}
+
+func (t *TestStaker) GetDeniedRewardTokens() []string {
+	if !t.isActive("GetDeniedRewardTokens") {
+		panic("test implementation: GetDeniedRewardTokens not supported")
+	}
+	return t.instance.GetDeniedRewardTokens()
 }
 
 func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {

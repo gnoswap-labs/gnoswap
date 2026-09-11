@@ -45,6 +45,60 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 - Final warmup tier must be `math.MaxInt64`. Finite value → panic when block time passes it.
 - Warmup percentages must sum to ≤ 100 at any point.
 
+### External Reward Delivery Guard (audit finding #4)
+
+`UnStakeToken` collects inline, so a panic anywhere in reward delivery holds the
+NFT and the underlying liquidity hostage. `deliverExternalIncentiveReward`
+therefore pre-checks the staker realm's live balance of the reward token against
+what BOTH delivery legs will move — the user payout and the unstaking-fee
+settlement, which also flushes carried-over pending protocol fees of the same
+token — and **skips** the delivery (emitting `UndeliverableExternalReward`)
+instead of letting `SafeGRC20Transfer` panic.
+
+**Skip semantics.** The guard runs before any bookkeeping. While the position
+stays staked, a skip is a deferral: the per-incentive collect cursor does not
+advance and the reward becomes collectible again once the balance is restored
+(anyone may donate). At unstake, the skipped share is forfeited; never having
+been deducted, it stays inside the incentive and returns to its creator through
+`EndExternalIncentive`.
+
+**Why a balance check is sufficient (the closed failure set).** GnoSwap
+transfers resolve through grc20reg's concrete `*grc20.Token` straight into
+`PrivateLedger` — no token-realm code runs in the path, so a reward token cannot
+inject pause, blocklist or fee-on-transfer behaviour. The ledger's own failure
+set is: sender balance, address validity, self-transfer, negative amount, and a
+recipient-balance overflow (`math/overflow.Add64p` panics). Validity,
+self-transfer and negative amounts are unreachable at this call site. The
+recipient overflow is unreachable for **every** registered token, because grc20
+`Mint` refuses any amount past `MaxInt64 - totalSupply` and all ledger
+operations conserve `sum(balances) == totalSupply`; hence
+`recipientBalance + amount <= totalSupply <= MaxInt64`.
+`TestGrc20MintOverflowGuard_PinsSupplyInvariant` pins that theorem — if it ever
+fails, re-derive the guard. The one remaining reachable failure is the sender
+balance falling short: an issuer burning the staker realm's balance, or
+accounting drift. That is exactly what the guard checks.
+
+> **Re-audit trigger:** the derivation above is bound to the deployed
+> `r/demo/defi/grc20reg` + `p/demo/tokens/grc20` pair (grc20reg refuses
+> re-registration, so a token's ledger can never be swapped). If the registry is
+> ever migrated, re-derive the failure set before trusting the guard.
+
+**Trust model of pair-token rewards.** Pool-pair tokens qualify as reward tokens
+for their own pool without the governance allowlist — a product policy. An LP
+who farms token X rewards on an X pool is trusting X's issuer; the guard bounds
+a betrayal of that trust to the X rewards themselves, never the principal and
+never other tokens.
+
+**Deny switch.** `SetDeniedRewardToken(tokenPath, denied)` (admin or governance)
+is the operational stop for that policy: a denied token cannot start NEW
+incentives, through either qualification path. Existing incentives keep
+collecting — the guard already bounds them — and default protocol tokens (GNS,
+WUGNOT) cannot be denied.
+
+Withdrawal transactions can still fail on the VM's storage-deposit layer when
+the signer attaches too small a deposit; that is signer-side and clears on
+retry with a larger `-max-deposit`.
+
 ## Pitfalls
 
 - Finite final warmup tier → panic at runtime.
@@ -54,3 +108,4 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 - `lastCollectTime` shared across incentives → wrong reward amounts.
 - `referrer` not forwarded → lost referral attribution.
 - `rewardPerSecond` dust not handled → small balance permanently locked.
+- Reward delivery without the balance guard → a third-party token failure aborts `UnStakeToken` and locks the NFT (audit finding #4).

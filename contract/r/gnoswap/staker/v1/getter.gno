@@ -519,6 +519,11 @@ func (s *stakerV1) GetAllowedTokens() []string {
 	return s.store.GetAllowedTokens()
 }
 
+// GetDeniedRewardTokens returns the denied external incentive reward token list.
+func (s *stakerV1) GetDeniedRewardTokens() []string {
+	return s.store.GetDeniedRewardTokens()
+}
+
 // GetWarmupTemplate returns the current warmup template.
 func (s *stakerV1) GetWarmupTemplate() []sr.Warmup {
 	return s.store.GetWarmupTemplate()

@@ -36,6 +36,7 @@ type IStakerManager interface {
 	CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64
 	AddToken(_ int, rlm realm, tokenPath string)
 	RemoveToken(_ int, rlm realm, tokenPath string)
+	SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool)
 
 	SetWarmUp(_ int, rlm realm, pct, timeDuration int64)
 	SetDepositGnsAmount(_ int, rlm realm, amount int64)
@@ -103,6 +104,7 @@ type IStakerGetter interface {
 	IsStaked(positionId uint64) bool
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string
+	GetDeniedRewardTokens() []string
 	GetWarmupTemplate() []Warmup
 }
 
@@ -138,6 +140,12 @@ type IStakerStore interface {
 	SetAllowedTokens(_ int, rlm realm, tokens []string) error
 	AddAllowedToken(_ int, rlm realm, tokenPath string) error
 	RemoveAllowedToken(_ int, rlm realm, tokenPath string) error
+
+	// DeniedRewardTokens
+	HasDeniedRewardTokensStoreKey() bool
+	GetDeniedRewardTokens() []string
+	AddDeniedRewardToken(_ int, rlm realm, tokenPath string) error
+	RemoveDeniedRewardToken(_ int, rlm realm, tokenPath string) error
 
 	// IncentiveCounter
 	HasIncentiveCounterStoreKey() bool

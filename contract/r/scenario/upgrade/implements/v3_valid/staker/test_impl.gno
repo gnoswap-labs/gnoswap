@@ -78,6 +78,10 @@ func (t *TestStaker) AddToken(_ int, rlm realm, tokenPath string) {
 	t.instance.AddToken(0, rlm, tokenPath)
 }
 
+func (t *TestStaker) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool) {
+	t.instance.SetDeniedRewardToken(0, rlm, tokenPath, denied)
+}
+
 func (t *TestStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
 	t.instance.RemoveToken(0, rlm, tokenPath)
 }
@@ -313,6 +317,10 @@ func (t *TestStaker) GetTotalEmissionSent() int64 {
 
 func (t *TestStaker) GetAllowedTokens() []string {
 	return t.instance.GetAllowedTokens()
+}
+
+func (t *TestStaker) GetDeniedRewardTokens() []string {
+	return t.instance.GetDeniedRewardTokens()
 }
 
 func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {
