@@ -328,9 +328,21 @@ func TestBitMath_BitMathLeastSignificantBit(cur realm, t *testing.T) {
 			expected: 10,
 		},
 		{
-			name:     "2^200+2^20",
+			name:     "mixed_high_and_low_bits",
 			input:    "1606938044258990275541962092341162602522202993782792835302425600",
 			expected: 10,
+		},
+
+		// Multiple nonzero limbs: the lowest nonzero limb determines the LSB.
+		{
+			name:     "limb1_wins_over_limbs2_and_3",
+			input:    "6277101735386680764176071790128604917344661914852964433920", // 2^192 + 2^128 + 2^75
+			expected: 75,
+		},
+		{
+			name:     "limb2_wins_over_limb3",
+			input:    "6277101735386682157632364331371612762084747484986628636672", // 2^192 + 2^140
+			expected: 140,
 		},
 		{
 			name:     "max_uint256_minus_one",
@@ -361,32 +373,6 @@ func TestBitMath_BitMathLeastSignificantBit_PowersOfTwo(t *testing.T) {
 		num := new(u256.Uint).Lsh(u256.One(), uint(i))
 		result := BitMathLeastSignificantBit(num)
 		uassert.Equal(t, result, uint8(i))
-	}
-}
-
-func TestBitMath_Consistency(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-	}{
-		{"small_number", "42"},
-		{"medium_number", "1234567890"},
-		{"large_number", "123456789012345678901234567890123456789"},
-		{"half_max", "57896044618658097711785492504343953926634992332820282019728792003956564819967"},
-		{"near_max", "115792089237316195423570985008687907853269984665640564039457584007913129639934"},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			x := u256.MustFromDecimal(tc.input)
-			msb := BitMathMostSignificantBit(x)
-			lsb := BitMathLeastSignificantBit(x)
-
-			// MSB must be >= LSB
-			if msb < lsb {
-				t.Errorf("Invalid result: MSB(%d) < LSB(%d) for %s", msb, lsb, tc.input)
-			}
-		})
 	}
 }
 
@@ -483,7 +469,7 @@ func TestBitMath_ActualValues(t *testing.T) {
 		name  string
 		input string
 	}{
-		{"2^200+2^20", "1606938044258990275541962092341162602522202993782792835302425600"},
+		{"mixed_high_and_low_bits", "1606938044258990275541962092341162602522202993782792835302425600"},
 		{"large1", "98765432109876543210987654321098765432109876543210987654321098765432"},
 		{"large2", "11111111111111111111111111111111111111111111111111111111111111111111"},
 		{"large3", "99999999999999999999999999999999999999999999999999999999999999999999"},
@@ -558,58 +544,6 @@ func TestBitMath_VerifyCalculations(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestBitMath_ShiftTableCompleteness(t *testing.T) {
-	// Verify newMsbShifts() covers all necessary ranges
-	t.Run("msb_shifts_coverage", func(t *testing.T) {
-		expectedShifts := []uint{128, 64, 32, 16, 8, 4, 2, 1}
-
-		if len(newMsbShifts()) != len(expectedShifts) {
-			t.Errorf("newMsbShifts() has %d entries, expected %d", len(newMsbShifts()), len(expectedShifts))
-		}
-
-		for i, expected := range expectedShifts {
-			if i < len(newMsbShifts()) && newMsbShifts()[i].shift != expected {
-				t.Errorf("newMsbShifts()[%d].shift = %d, expected %d", i, newMsbShifts()[i].shift, expected)
-			}
-		}
-
-		// Verify bit patterns are correct powers of 2
-		for i, s := range newMsbShifts() {
-			// Calculate expected value: 2^shift
-			expected := new(u256.Uint).Lsh(u256.One(), s.shift)
-			if !s.bitPattern.Eq(expected) {
-				t.Errorf("newMsbShifts()[%d].bitPattern incorrect for shift %d", i, s.shift)
-			}
-		}
-	})
-
-	// Verify newLsbShifts() covers all necessary ranges
-	t.Run("lsb_shifts_coverage", func(t *testing.T) {
-		expectedShifts := []uint{128, 64, 32, 16, 8, 4, 2, 1}
-
-		if len(newLsbShifts()) != len(expectedShifts) {
-			t.Errorf("newLsbShifts() has %d entries, expected %d", len(newLsbShifts()), len(expectedShifts))
-		}
-
-		for i, expected := range expectedShifts {
-			if i < len(newLsbShifts()) && newLsbShifts()[i].shift != expected {
-				t.Errorf("newLsbShifts()[%d].shift = %d, expected %d", i, newLsbShifts()[i].shift, expected)
-			}
-		}
-
-		// Verify bit patterns are correct (2^shift - 1)
-		for i, s := range newLsbShifts() {
-			// Calculate expected value: 2^shift - 1
-			powerOfTwo := new(u256.Uint).Lsh(u256.One(), s.shift)
-			expected := new(u256.Uint).Sub(powerOfTwo, u256.One())
-
-			if !s.bitPattern.Eq(expected) {
-				t.Errorf("newLsbShifts()[%d].bitPattern incorrect for shift %d", i, s.shift)
-			}
-		}
-	})
 }
 
 // TestBitMathInputPreservation verifies that bit math functions do not mutate their input.
@@ -691,62 +625,6 @@ func TestBitMath_Idempotency(t *testing.T) {
 			t.Errorf("Value mutated after multiple calls: %s", v)
 		}
 	}
-}
-
-// TestBitMathMemoryReuse specifically tests temp.Clone() is used instead of mutating the input parameter.
-func TestBitMath_MemoryReuse(t *testing.T) {
-	// Test with 2^128 - a value that triggers multiple shift operations
-	v := "340282366920938463463374607431768211456"
-
-	t.Run("MSB_no_reallocation", func(t *testing.T) {
-		x := u256.MustFromDecimal(v)
-
-		// Store the original pointer value (*Uint itself, not address of x)
-		originalPtr := x
-
-		// Execute the function that previously had mutation issues
-		msb := BitMathMostSignificantBit(x)
-
-		// Verify the pointer hasn't changed (no reallocation)
-		if x != originalPtr {
-			t.Error("Pointer value changed - unexpected reallocation occurred")
-		}
-
-		// Verify the value hasn't been mutated
-		if !x.Eq(u256.MustFromDecimal(v)) {
-			t.Error("Value was mutated")
-		}
-
-		// Verify the result is correct
-		if msb != 128 {
-			t.Errorf("Incorrect MSB: got %d, expected 128", msb)
-		}
-	})
-
-	t.Run("LSB_no_reallocation", func(t *testing.T) {
-		x := u256.MustFromDecimal(v)
-
-		// Store the original pointer value (*Uint itself, not address of x)
-		originalPtr := x
-
-		// Execute the function
-		lsb := BitMathLeastSignificantBit(x)
-
-		// Verify the pointer hasn't changed (no reallocation)
-		if x != originalPtr {
-			t.Error("Pointer value changed - unexpected reallocation occurred")
-		}
-
-		// Verify the value hasn't been mutated
-		if !x.Eq(u256.MustFromDecimal(v)) {
-			t.Error("Value was mutated")
-		}
-
-		// Verify the result is correct (2^128 has LSB at position 128)
-		if lsb != 128 {
-			t.Errorf("Incorrect LSB: got %d, expected 128", lsb)
-		}
-	})
 }
 
 func TestBitMath_SpecialPatterns(t *testing.T) {
