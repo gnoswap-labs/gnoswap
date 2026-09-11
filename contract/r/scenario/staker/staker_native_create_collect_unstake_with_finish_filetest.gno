@@ -413,6 +413,7 @@ func unstakeToken(cur realm, tokenId uint64) {
 
 	println("[INFO] unstake token (no unwrap)")
 	sr.UnStakeToken(cross(cur), tokenId)
+	sr.CollectReward(cross(cur), tokenId)
 	testing.SkipHeights(1)
 
 	owner := mustOwnerOf(positionIdFrom(cur, tokenId))

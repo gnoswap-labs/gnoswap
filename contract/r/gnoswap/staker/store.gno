@@ -24,6 +24,8 @@ const (
 	StoreKeyTokenSpecificMinimumRewards      StoreKey = "tokenSpecificMinimumRewards"
 	StoreKeyUnstakingFee                     StoreKey = "unstakingFee"
 	StoreKeyPendingProtocolFees              StoreKey = "pendingProtocolFees"
+	StoreKeyUnstakedPositions                StoreKey = "unstakedPositions"
+	StoreKeyUncollectedIncentiveCounts       StoreKey = "uncollectedIncentiveCounts"
 	StoreKeyPools                            StoreKey = "pools"
 	StoreKeyPoolTierMemberships              StoreKey = "poolTierMemberships"
 	StoreKeyPoolTierRatio                    StoreKey = "poolTierRatio"
@@ -383,6 +385,60 @@ func (s *stakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]i
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), fees)
+}
+
+// UnstakedPositions
+func (s *stakerStore) HasUnstakedPositionsStoreKey() bool {
+	return s.kvStore.Has(StoreKeyUnstakedPositions.String())
+}
+
+func (s *stakerStore) GetUnstakedPositions() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyUnstakedPositions.String())
+	if err != nil {
+		panic(err)
+	}
+
+	positions, ok := result.(*bptree.BPTree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
+	}
+
+	return positions
+}
+
+func (s *stakerStore) SetUnstakedPositions(_ int, rlm realm, positions *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyUnstakedPositions.String(), positions)
+}
+
+// UncollectedIncentiveCounts
+func (s *stakerStore) HasUncollectedIncentiveCountsStoreKey() bool {
+	return s.kvStore.Has(StoreKeyUncollectedIncentiveCounts.String())
+}
+
+func (s *stakerStore) GetUncollectedIncentiveCounts() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyUncollectedIncentiveCounts.String())
+	if err != nil {
+		panic(err)
+	}
+
+	counts, ok := result.(*bptree.BPTree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
+	}
+
+	return counts
+}
+
+func (s *stakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyUncollectedIncentiveCounts.String(), counts)
 }
 
 // Pools

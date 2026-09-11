@@ -224,6 +224,7 @@ func collectReward(cur realm, positionId uint64) {
 func unStakePosition(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 	staker.UnStakeToken(cross(cur), positionId)
+	staker.CollectReward(cross(cur), positionId)
 	isStaked := staker.IsStaked(positionId)
 	println("[EXPECTED] UnStaked position ID:", positionId, "isStaked now:", isStaked)
 }

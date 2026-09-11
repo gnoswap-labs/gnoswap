@@ -244,6 +244,21 @@ func (self *PoolTier) changeTier(currentTime int64, pools *Pools, poolPath strin
 // cacheReward updates the reward cache for each pool, accounting for any halving events
 // that occurred between the last cached timestamp and the current timestamp.
 // Note: Block height is used only for event tracking purposes.
+// tierContextOf returns the pool's tier and the ratio/count setting its current emission rate.
+func (self *PoolTier) tierContextOf(poolPath string) (uint64, uint64, uint64, error) {
+	tier := self.CurrentTier(poolPath)
+	if tier == 0 || tier >= AllTierCount {
+		return tier, 0, 0, nil
+	}
+
+	ratio, err := self.tierRatio.Get(tier)
+	if err != nil {
+		return 0, 0, 0, makeErrorWithDetails(errInvalidPoolTier, err.Error())
+	}
+
+	return tier, ratio, self.counts[tier], nil
+}
+
 func (self *PoolTier) cacheReward(currentTimestamp int64, pools *Pools) {
 	lastTimestamp := self.lastRewardCacheTimestamp
 

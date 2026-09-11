@@ -249,6 +249,7 @@ func runStakeUnstakeCycles(cur realm) {
 	// cycle 1: stake 10d, unstake, leave a 10d gap
 	testing.SkipHeights(STAKE_RUN_1 / 5)
 	sr.UnStakeToken(cross(cur), lpTokenId)
+	sr.CollectReward(cross(cur), lpTokenId)
 	ufmt.Printf("[INFO] unstaked after %d seconds (gap %d starts)\n", STAKE_RUN_1, GAP_1)
 	testing.SkipHeights(GAP_1 / 5)
 	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
@@ -258,6 +259,7 @@ func runStakeUnstakeCycles(cur realm) {
 	// cycle 2: stake 5d, unstake, leave a 5d gap
 	testing.SkipHeights(STAKE_RUN_2 / 5)
 	sr.UnStakeToken(cross(cur), lpTokenId)
+	sr.CollectReward(cross(cur), lpTokenId)
 	ufmt.Printf("[INFO] unstaked after %d seconds (gap %d starts)\n", STAKE_RUN_2, GAP_2)
 	testing.SkipHeights(GAP_2 / 5)
 	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
@@ -267,6 +269,7 @@ func runStakeUnstakeCycles(cur realm) {
 	// cycle 3: stake 5d, unstake, leave a 3d gap
 	testing.SkipHeights(STAKE_RUN_3 / 5)
 	sr.UnStakeToken(cross(cur), lpTokenId)
+	sr.CollectReward(cross(cur), lpTokenId)
 	ufmt.Printf("[INFO] unstaked after %d seconds (gap %d starts)\n", STAKE_RUN_3, GAP_3)
 	testing.SkipHeights(GAP_3 / 5)
 	gnft.Approve(cross(cur), stakerAddr, positionIdFrom(cur, int(lpTokenId)))
