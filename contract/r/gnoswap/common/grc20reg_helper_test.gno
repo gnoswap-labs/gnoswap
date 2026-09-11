@@ -16,7 +16,7 @@ var (
 	testRealm     = testing.NewCodeRealm("gno.land/r/gnoswap/common")
 	alice         = testutils.TestAddress("alice")
 	bob           = testutils.TestAddress("bob")
-	defaultHolder = address("g1rp7cmetn27eqlpjpc4vuusf8kaj746tysc0qgh") // foo20 initial token holder (govdao t1 multisig)
+	defaultHolder = address("g1skl80cuz8zq3lul9pgz5pc35l2pfzgxgfpsqkx") // foo20 initial token holder (govdao t1 multisig)
 )
 
 func TestGrc20regHelper_GetToken(t *testing.T) {
@@ -93,11 +93,11 @@ func TestGrc20regHelper_TokenMethod(t *testing.T) {
 	})
 
 	t.Run("BalanceOf()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, int64(10000000000), token.BalanceOf(address("g1rp7cmetn27eqlpjpc4vuusf8kaj746tysc0qgh")))
+		uassert.Equal(t, int64(10000000000), token.BalanceOf(address("g1skl80cuz8zq3lul9pgz5pc35l2pfzgxgfpsqkx")))
 	})
 
 	t.Run("Allowance()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, int64(0), token.Allowance(address("g1rp7cmetn27eqlpjpc4vuusf8kaj746tysc0qgh"), address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")))
+		uassert.Equal(t, int64(0), token.Allowance(address("g1skl80cuz8zq3lul9pgz5pc35l2pfzgxgfpsqkx"), address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")))
 	})
 
 	t.Run("RenderHome()", func(cur realm, t *testing.T) {
@@ -838,7 +838,7 @@ func TestGrc20regHelper_TotalSupply(t *testing.T) {
 }
 
 func TestGrc20regHelper_BalanceOf(t *testing.T) {
-	defaultHolder := address("g1rp7cmetn27eqlpjpc4vuusf8kaj746tysc0qgh")
+	defaultHolder := address("g1skl80cuz8zq3lul9pgz5pc35l2pfzgxgfpsqkx")
 
 	tests := []struct {
 		name            string
@@ -891,7 +891,7 @@ func TestGrc20regHelper_BalanceOf(t *testing.T) {
 }
 
 func TestGrc20regHelper_Allowance(t *testing.T) {
-	owner := address("g1rp7cmetn27eqlpjpc4vuusf8kaj746tysc0qgh")
+	owner := address("g1skl80cuz8zq3lul9pgz5pc35l2pfzgxgfpsqkx")
 	spender := address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")
 
 	tests := []struct {
