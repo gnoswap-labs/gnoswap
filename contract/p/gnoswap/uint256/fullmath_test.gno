@@ -463,6 +463,12 @@ func TestDivRoundingUp(t *testing.T) {
 			y:         "0",
 			wantPanic: true,
 		},
+		{
+			name:      "panic_zero_divided_by_zero",
+			x:         "0",
+			y:         "0",
+			wantPanic: true,
+		},
 
 		// Boundary: max values
 		{
@@ -482,6 +488,30 @@ func TestDivRoundingUp(t *testing.T) {
 			x:    "1000000000000000000000000000000000000001",
 			y:    "1000000000000000000",
 			want: "1000000000000000000001", // 1000000000000000000 + 1
+		},
+		{
+			name: "max_divided_by_one",
+			x:    MAX_UINT256,
+			y:    "1",
+			want: MAX_UINT256,
+		},
+		{
+			name: "rounding_carries_into_next_limb",
+			x:    MAX_UINT256,
+			y:    "6277101735386680763835789423207666416102355444464034512896", // 2^192
+			want: "18446744073709551616",                                       // 2^64
+		},
+		{
+			name: "multi_limb_exact_division",
+			x:    MAX_UINT256,
+			y:    "340282366920938463463374607431768211457", // 2^128 + 1
+			want: "340282366920938463463374607431768211455", // 2^128 - 1
+		},
+		{
+			name: "remainder_only_in_high_limb",
+			x:    "6277101735386680763835789423207666416120802188537744064512", // 2^192 + 2^64
+			y:    "6277101735386680763835789423207666416102355444464034512896", // 2^192
+			want: "2",
 		},
 	}
 
@@ -505,6 +535,13 @@ func TestDivRoundingUp(t *testing.T) {
 
 			if !got.Eq(want) {
 				t.Errorf("DivRoundingUp(%s, %s) = %s, want %s", tc.x, tc.y, got.ToString(), tc.want)
+			}
+			if x.ToString() != tc.x || y.ToString() != tc.y {
+				t.Fatal("DivRoundingUp modified its inputs")
+			}
+			got.Clear()
+			if x.ToString() != tc.x || y.ToString() != tc.y {
+				t.Fatal("mutating the result modified an input")
 			}
 		})
 	}
@@ -559,37 +596,18 @@ func TestMulDivFloorVsCeil(t *testing.T) {
 	}
 }
 
-// ceil == floor || ceil == floor+1
-func TestDivRoundingUpProperty(t *testing.T) {
-	testCases := []struct {
-		x, y uint64
-	}{
-		{100, 3},   // 33.33... -> floor=33, ceil=34
-		{100, 10},  // 10.0 -> floor=10, ceil=10 (exact)
-		{1000, 7},  // 142.857... -> floor=142, ceil=143
-		{999, 333}, // 3.0 -> floor=3, ceil=3 (exact)
-		{1, 2},     // 0.5 -> floor=0, ceil=1
-		{0, 999},   // 0.0 -> floor=0, ceil=0 (exact)
+func TestDivRoundingUpSharedInput(t *testing.T) {
+	x := MaxUint256()
+	got := DivRoundingUp(x, x)
+	if !got.Eq(One()) {
+		t.Fatalf("DivRoundingUp(x, x) = %s, want 1", got.ToString())
 	}
-
-	for i, tc := range testCases {
-		t.Run(ufmt.Sprintf("property_test_%d", i), func(t *testing.T) {
-			if tc.y == 0 {
-				return // Skip division by zero
-			}
-
-			xUint := MustFromDecimal(ufmt.Sprintf("%d", tc.x))
-			yUint := MustFromDecimal(ufmt.Sprintf("%d", tc.y))
-
-			ceil := DivRoundingUp(xUint, yUint)
-			floor := new(Uint).Div(xUint, yUint)
-			floorPlusOne := new(Uint).Add(floor, One())
-
-			if !ceil.Eq(floor) && !ceil.Eq(floorPlusOne) {
-				t.Errorf("Property failed: ceil(%s) != floor(%s) && ceil != floor+1(%s)",
-					ceil.ToString(), floor.ToString(), floorPlusOne.ToString())
-			}
-		})
+	if x.ToString() != MAX_UINT256 {
+		t.Fatal("DivRoundingUp modified the shared input")
+	}
+	got.Clear()
+	if x.ToString() != MAX_UINT256 {
+		t.Fatal("mutating the result modified the shared input")
 	}
 }
 

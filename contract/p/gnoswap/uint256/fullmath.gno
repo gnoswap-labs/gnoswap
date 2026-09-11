@@ -84,15 +84,9 @@ func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 // DivRoundingUp calculates ceil(x / y) and returns the result.
 // Panics if y is zero.
 func DivRoundingUp(x, y *Uint) *Uint {
-	div := new(Uint).Div(x, y)
-	mod := new(Uint).Mod(x, y)
-	return new(Uint).Add(div, gt(mod, &Uint{0, 0, 0, 0}))
-}
-
-// gt returns One() if x > y, otherwise returns Zero().
-func gt(x, y *Uint) *Uint {
-	if x.Gt(y) {
-		return &Uint{1, 0, 0, 0}
+	div, mod := new(Uint).DivMod(x, y, new(Uint))
+	if !mod.IsZero() {
+		div.Add(div, &Uint{1, 0, 0, 0})
 	}
-	return &Uint{0, 0, 0, 0}
+	return div
 }
