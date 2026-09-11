@@ -6,7 +6,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	grc721 "gno.land/p/demo/tokens/grc721"
+	grc721 "gno.land/p/demo/tokens/grc721/v0"
 	u256 "gno.land/p/gnoswap/uint256"
 	rotree "gno.land/p/nt/bptree/v0/rotree"
 

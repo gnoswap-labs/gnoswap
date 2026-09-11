@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	testutils "gno.land/p/nt/testutils/v0"
-	"gno.land/p/onbloc/json"
+	"gno.land/p/onbloc/json/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
