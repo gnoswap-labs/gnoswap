@@ -180,7 +180,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [SCENARIO] 2. Mint Position (Limit selling 0 for 1 at tick 0 thru 120)
 // [INFO] Swap 1 -> 0
 // [INFO] Swap 0: -59817377
-// [INFO] Swap 1: 60183363
+// [INFO] Swap 1: 60183362
 //
 // [SCENARIO] 3. Burn Position (Burn liquidity from tick 0 to 120)
 // [INFO] Burn 0: 0
@@ -192,6 +192,6 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 //
 // [SCENARIO] 5. Verify Final State (Check slot tick >= 120)
 // [INFO] slot tick should be >= 120
-// [INFO] Slot tick: 120
+// [INFO] Slot tick: 887271
 //
 // [INFO] Scenario completed
