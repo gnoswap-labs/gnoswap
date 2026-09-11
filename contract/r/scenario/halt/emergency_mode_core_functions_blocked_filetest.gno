@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/demo/tokens/grc721/v0"
 	"gno.land/p/gnoswap/gnsmath"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"

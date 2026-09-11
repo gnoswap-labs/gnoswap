@@ -3,9 +3,9 @@ package common
 import (
 	"errors"
 
-	"gno.land/p/demo/tokens/grc20"
-	ufmt "gno.land/p/nt/ufmt/v0"
-	"gno.land/r/demo/defi/grc20reg"
+	"gno.land/p/nt/grc20/v0"
+	"gno.land/p/nt/ufmt/v0"
+	"gno.land/r/nt/grc20reg/v0"
 )
 
 // GetToken returns a grc20.Token instance for the specified tokenKey, panicking if not registered.

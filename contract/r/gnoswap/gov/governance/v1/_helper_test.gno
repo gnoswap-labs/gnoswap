@@ -3,7 +3,7 @@ package governance
 import (
 	"testing"
 
-	"gno.land/p/onbloc/json"
+	"gno.land/p/onbloc/json/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"

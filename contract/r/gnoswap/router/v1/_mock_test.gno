@@ -3,7 +3,7 @@ package router
 import (
 	"strconv"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/demo/tokens/grc721/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
