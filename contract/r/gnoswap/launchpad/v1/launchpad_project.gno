@@ -156,7 +156,7 @@ func (lp *launchpadV1) CreateProject(
 // Returns the created project and any error.
 func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectParams) (launchpad.Project, error) {
 	if err := params.validate(); err != nil {
-		return launchpad.Project{}, err
+		return launchpad.DefaultProject(), err
 	}
 
 	// create project
@@ -175,7 +175,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 
 	// check duplicate project
 	if projects.Has(project.ID()) {
-		return launchpad.Project{}, makeErrorWithDetails(
+		return launchpad.DefaultProject(), makeErrorWithDetails(
 			errDuplicateProject,
 			ufmt.Sprintf("project(%s) already exists", project.ID()),
 		)
@@ -183,11 +183,11 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 
 	projectConditions, err := launchpad.NewProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
 	if err != nil {
-		return launchpad.Project{}, err
+		return launchpad.DefaultProject(), err
 	}
 
 	for _, condition := range projectConditions {
-		addProjectCondition(project, condition.TokenPath(), condition)
+		project = addProjectCondition(project, condition.TokenPath(), condition)
 	}
 
 	projectTierRatios := map[int64]int64{
@@ -217,7 +217,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 			params.startTime,
 			params.startTime+tierDurationTime,
 		)
-		addProjectTier(project, duration, projectTier)
+		project = addProjectTier(project, duration, projectTier)
 
 		projectTierRewardManagers.Set(projectTier.ID(), newRewardManager(
 			projectTier.TotalDistributeAmount(),
@@ -232,15 +232,15 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 
 	// Save the modified state back
 	if err := lp.store.SetProjects(0, rlm, projects); err != nil {
-		return launchpad.Project{}, err
+		return launchpad.DefaultProject(), err
 	}
 	if err := lp.store.SetProjectTierRewardManagers(0, rlm, projectTierRewardManagers); err != nil {
-		return launchpad.Project{}, err
+		return launchpad.DefaultProject(), err
 	}
 	recipients := lp.store.GetProjectRecipients()
 	recipients.Set(project.Recipient().String(), true)
 	if err := lp.store.SetProjectRecipients(0, rlm, recipients); err != nil {
-		return launchpad.Project{}, err
+		return launchpad.DefaultProject(), err
 	}
 
 	return project, nil

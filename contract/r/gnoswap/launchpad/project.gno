@@ -197,6 +197,15 @@ func (p *Project) IsRecipient(recipient address) bool {
 	return p.recipient == recipient
 }
 
+// DefaultProject creates an empty independently owned Project value.
+func DefaultProject() Project {
+	return Project{
+		conditions:  make(map[string]*ProjectCondition),
+		tiers:       make(map[int64]*ProjectTier),
+		tiersRatios: make(map[int64]int64),
+	}
+}
+
 // MakeProject creates an independently owned Project value.
 func MakeProject(
 	name string,

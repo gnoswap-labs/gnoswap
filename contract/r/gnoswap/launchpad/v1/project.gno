@@ -83,10 +83,12 @@ func validateRefundRemainingAmount(p launchpad.Project, currentTime int64) error
 	return nil
 }
 
-func addProjectTier(p launchpad.Project, tierDuration int64, projectTier *launchpad.ProjectTier) {
+func addProjectTier(p launchpad.Project, tierDuration int64, projectTier *launchpad.ProjectTier) launchpad.Project {
 	p.SetTier(tierDuration, projectTier)
+	return p
 }
 
-func addProjectCondition(p launchpad.Project, tokenPath string, condition *launchpad.ProjectCondition) {
+func addProjectCondition(p launchpad.Project, tokenPath string, condition *launchpad.ProjectCondition) launchpad.Project {
 	p.SetCondition(tokenPath, condition)
+	return p
 }

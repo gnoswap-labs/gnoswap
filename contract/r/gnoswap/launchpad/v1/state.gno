@@ -11,12 +11,12 @@ func (lp *launchpadV1) getProject(projectID string) (launchpad.Project, error) {
 	projects := lp.store.GetProjects()
 	projectValue := projects.Get(projectID)
 	if projectValue == nil {
-		return launchpad.Project{}, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
+		return launchpad.DefaultProject(), makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
 	}
 
 	project, ok := projectValue.(launchpad.Project)
 	if !ok {
-		return launchpad.Project{}, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
+		return launchpad.DefaultProject(), makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
 	}
 
 	return project, nil

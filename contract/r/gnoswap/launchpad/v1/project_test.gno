@@ -889,7 +889,7 @@ func TestProject_AddProjectTier(cur realm, t *testing.T) {
 			project.SetTiers(tt.initialTiers)
 
 			// Execute
-			addProjectTier(project, tt.duration, tt.tier)
+			project = addProjectTier(project, tt.duration, tt.tier)
 
 			// Verify
 			tiers := project.Tiers()
