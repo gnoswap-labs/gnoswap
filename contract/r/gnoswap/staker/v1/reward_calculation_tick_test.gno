@@ -224,6 +224,101 @@ func TestCurrentOutsideAccumulation(t *testing.T) {
 	}
 }
 
+func TestOutsideAccumulationUint256Encoding(t *testing.T) {
+	limb1 := u256.Zero()
+	limb1[1] = 1
+	limb2 := u256.Zero()
+	limb2[2] = 1
+	limb3 := u256.Zero()
+	limb3[3] = 1
+
+	values := []struct {
+		name  string
+		value *u256.Uint
+	}{
+		{name: "zero", value: u256.Zero()},
+		{name: "least significant bit", value: u256.One()},
+		{name: "bit 64", value: limb1},
+		{name: "bit 128", value: limb2},
+		{name: "bit 192", value: limb3},
+		{name: "maximum", value: u256.MaxUint256()},
+	}
+
+	for _, tt := range values {
+		t.Run(tt.name, func(t *testing.T) {
+			tick := sr.NewTick(100)
+			tick.SetOutsideAccumulationAt(500, tt.value)
+
+			raw, ok := tick.OutsideAccumulation().Get(500)
+			if !ok {
+				t.Fatal("outside accumulation checkpoint was not stored")
+			}
+			encoded, ok := raw.(string)
+			if !ok {
+				t.Fatalf("stored checkpoint type = %T; want string", raw)
+			}
+			if len(encoded) != 32 {
+				t.Fatalf("stored checkpoint length = %d; want 32", len(encoded))
+			}
+
+			got := NewTickResolver(tick).CurrentOutsideAccumulation(500)
+			uassert.Equal(t, tt.value.ToString(), got.ToString())
+		})
+	}
+}
+
+func TestOutsideAccumulationUsesPredecessorAndOverwrites(t *testing.T) {
+	tick := sr.NewTick(100)
+	tick.SetOutsideAccumulationAt(100, u256.NewUint(11))
+	tick.SetOutsideAccumulationAt(200, u256.NewUint(22))
+	resolver := NewTickResolver(tick)
+
+	uassert.Equal(t, "0", resolver.CurrentOutsideAccumulation(99).ToString())
+	uassert.Equal(t, "11", resolver.CurrentOutsideAccumulation(150).ToString())
+	uassert.Equal(t, "22", resolver.CurrentOutsideAccumulation(200).ToString())
+
+	tick.SetOutsideAccumulationAt(200, u256.NewUint(33))
+	uassert.Equal(t, "11", resolver.CurrentOutsideAccumulation(199).ToString())
+	uassert.Equal(t, "33", resolver.CurrentOutsideAccumulation(200).ToString())
+	uassert.Equal(t, "33", resolver.CurrentOutsideAccumulation(250).ToString())
+}
+
+func TestOutsideAccumulationInputAndResultAreIsolated(t *testing.T) {
+	input := u256.NewUint(7)
+	tick := sr.NewTick(100)
+	tick.SetOutsideAccumulationAt(500, input)
+
+	input.Set(u256.NewUint(9))
+	resolver := NewTickResolver(tick)
+	result := resolver.CurrentOutsideAccumulation(500)
+	uassert.Equal(t, "7", result.ToString())
+
+	result.Set(u256.NewUint(11))
+	uassert.Equal(t, "7", resolver.CurrentOutsideAccumulation(500).ToString())
+}
+
+func TestCurrentOutsideAccumulationRejectsMalformedLength(cur realm, t *testing.T) {
+	for _, payload := range []string{
+		"",
+		string(make([]byte, 31)),
+		string(make([]byte, 33)),
+	} {
+		tick := sr.NewTick(100)
+		tick.OutsideAccumulation().Set(500, payload)
+		uassert.AbortsContains(t, cur, "", func() {
+			NewTickResolver(tick).CurrentOutsideAccumulation(500)
+		})
+	}
+}
+
+func TestCurrentOutsideAccumulationRejectsNonStringPayload(cur realm, t *testing.T) {
+	tick := sr.NewTick(100)
+	tick.OutsideAccumulation().Set(500, u256.NewUint(1))
+	uassert.AbortsContains(t, cur, "", func() {
+		NewTickResolver(tick).CurrentOutsideAccumulation(500)
+	})
+}
+
 // Test updateCurrentOutsideAccumulation
 func TestUpdateCurrentOutsideAccumulation(t *testing.T) {
 	tests := []struct {
