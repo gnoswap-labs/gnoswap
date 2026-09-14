@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	_ "gno.land/r/gnoswap/common/v1"
+
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -256,9 +258,27 @@ func getTokenPathsFromPosition(tokenId uint64) (string, string) {
 	return token0, token1
 }
 
+func mustGetPositionPoolKey(positionId uint64) string {
+	poolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
+
+	return poolKey
+}
+
+func mustGetPositionLiquidity(positionId uint64) string {
+	liquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+
+	return liquidity
+}
+
 // getPoolInfoFromPosition extracts token0Path, token1Path, and fee tier from a position
 func getPoolInfoFromPosition(tokenId uint64) (string, string, uint32) {
-	poolKey := position.GetPositionPoolKey(tokenId)
+	poolKey := mustGetPositionPoolKey(tokenId)
 	return parsePoolKey(poolKey)
 }
 

@@ -401,7 +401,8 @@ func TestStoreSetAndGetReservedTokens(cur realm, t *testing.T) {
 			name: "set and get reserved tokens successfully",
 			setupFn: func(cur realm, ps IProtocolFeeStore) {
 				ps.InitializeReservedTokens(0, cur)
-				ps.SetReservedTokens(0, cur, []string{"gno.land/r/demo/token1", "gno.land/r/demo/token2"})
+				ps.AddReservedToken(0, cur, "gno.land/r/demo/token1")
+				ps.AddReservedToken(0, cur, "gno.land/r/demo/token2")
 			},
 			testFn: func(cur realm, t *testing.T, ps IProtocolFeeStore) {
 				uassert.True(t, ps.HasReservedTokensStoreKey(), "should have reserved tokens after initializing")
@@ -427,10 +428,19 @@ func TestStoreSetAndGetReservedTokens(cur realm, t *testing.T) {
 			panicMessage: "should panic when getting uninitialized reserved tokens",
 		},
 		{
-			name: "error when setting nil reserved tokens",
+			name: "remove reserved token keeps the others",
+			setupFn: func(cur realm, ps IProtocolFeeStore) {
+				ps.InitializeReservedTokens(0, cur)
+				ps.AddReservedToken(0, cur, "gno.land/r/demo/token1")
+				ps.AddReservedToken(0, cur, "gno.land/r/demo/token2")
+			},
 			testFn: func(cur realm, t *testing.T, ps IProtocolFeeStore) {
-				err := ps.SetReservedTokens(0, cur, nil)
-				uassert.ErrorContains(t, err, "reservedTokens is nil")
+				uassert.NoError(t, ps.RemoveReservedToken(0, cur, "gno.land/r/demo/token1"))
+				uassert.False(t, ps.HasReservedToken("gno.land/r/demo/token1"))
+				uassert.True(t, ps.HasReservedToken("gno.land/r/demo/token2"))
+				retrieved := ps.GetReservedTokens()
+				uassert.Equal(t, 1, len(retrieved))
+				uassert.Equal(t, "gno.land/r/demo/token2", retrieved[0])
 			},
 		},
 	}
@@ -496,6 +506,48 @@ func TestStoreAddReservedToken(cur realm, t *testing.T) {
 			err = ps.AddReservedToken(0, cur, tt.tokenPath)
 			uassert.NoError(t, err)
 			uassert.Equal(t, 1, len(ps.GetReservedTokens()))
+		})
+	}
+}
+
+func TestStoreRemoveReservedToken(cur realm, t *testing.T) {
+	tests := []struct {
+		name           string
+		tokenPath      string
+		expectedTokens []string
+	}{
+		{
+			name:           "removes middle token and preserves order",
+			tokenPath:      "tokenB",
+			expectedTokens: []string{"tokenA", "tokenC"},
+		},
+		{
+			name:           "does nothing for absent token",
+			tokenPath:      "tokenX",
+			expectedTokens: []string{"tokenA", "tokenB", "tokenC"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(cur, t)
+			ps := NewProtocolFeeStore(kvStore)
+
+			err := ps.InitializeReservedTokens(0, cur)
+			uassert.NoError(t, err)
+			for _, tokenPath := range []string{"tokenA", "tokenB", "tokenC"} {
+				err = ps.AddReservedToken(0, cur, tokenPath)
+				uassert.NoError(t, err)
+			}
+
+			err = ps.RemoveReservedToken(0, cur, tt.tokenPath)
+			uassert.NoError(t, err)
+
+			reservedTokens := ps.GetReservedTokens()
+			uassert.Equal(t, len(tt.expectedTokens), len(reservedTokens))
+			for i, tokenPath := range tt.expectedTokens {
+				uassert.Equal(t, tokenPath, reservedTokens[i])
+			}
 		})
 	}
 }

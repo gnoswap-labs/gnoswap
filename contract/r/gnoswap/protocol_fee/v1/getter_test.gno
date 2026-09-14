@@ -121,7 +121,7 @@ func TestGetReservedTokens(cur realm, t *testing.T) {
 				pf.store.AddReservedToken(0, cur, "gno.land/r/baz")
 				return pf
 			},
-			expected: []string{"gno.land/r/foo", "gno.land/r/bar", "gno.land/r/baz"},
+			expected: []string{"gno.land/r/bar", "gno.land/r/baz", "gno.land/r/foo"},
 		},
 	}
 

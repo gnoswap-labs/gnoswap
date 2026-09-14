@@ -1,7 +1,9 @@
 package pool
 
 import (
-	"errors"
+	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"
 )
 
@@ -30,14 +32,16 @@ func init(cur realm) {
 
 func registerPoolV1(cur realm) {
 	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, poolStore pool.IPoolStore) pool.IPool {
-		if !rlm.IsCurrent() {
-			panic(errors.New(errSpoofedRealm))
-		}
+		access.AssertIsRlmCurrent(0, rlm)
 
 		err := initStoreData(0, rlm, poolStore)
 		if err != nil {
 			panic(err)
 		}
+
+		emission.SetDefaultInitialPoolChecker(cross(rlm), func(poolPath string) bool {
+			return pool.ExistsPoolPath(poolPath)
+		})
 
 		return NewPoolV1(poolStore)
 	})
@@ -49,6 +53,17 @@ func initStoreData(_ int, rlm realm, poolStore pool.IPoolStore) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if !poolStore.HasObservations() {
+		err := poolStore.SetObservations(0, rlm, pool.NewObservationsTree())
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := validatePoolObservations(poolStore); err != nil {
+		return err
 	}
 
 	if !poolStore.HasFeeAmountTickSpacing() {
@@ -65,11 +80,12 @@ func initStoreData(_ int, rlm realm, poolStore pool.IPoolStore) error {
 		}
 	}
 
-	if !poolStore.HasPendingProtocolFees() {
-		err := poolStore.SetPendingProtocolFees(0, rlm, make(map[string]int64))
-		if err != nil {
-			return err
-		}
+	pendingProtocolFees := make(map[string]int64)
+	if poolStore.HasPendingProtocolFees() {
+		pendingProtocolFees = poolStore.GetPendingProtocolFees()
+	}
+	if err := poolStore.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
+		return err
 	}
 
 	if !poolStore.HasSlot0FeeProtocol() {
@@ -123,4 +139,23 @@ func initStoreData(_ int, rlm realm, poolStore pool.IPoolStore) error {
 	}
 
 	return nil
+}
+
+// validatePoolObservations ensures every persisted pool owns an observation tree.
+// CreatePool initializes the pair in one transaction; this check catches an
+// implementation or upgrade that would otherwise leave a pool unusable later.
+func validatePoolObservations(poolStore pool.IPoolStore) error {
+	pools := poolStore.GetPools()
+	observations := poolStore.GetObservations()
+
+	var validationErr error
+	pools.Iterate("", "", func(poolPath string, _ any) bool {
+		if !observations.Has(poolPath) {
+			validationErr = ufmt.Errorf("expected observations for poolPath(%s) to exist", poolPath)
+			return true
+		}
+		return false
+	})
+
+	return validationErr
 }

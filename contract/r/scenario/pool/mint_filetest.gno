@@ -3,8 +3,9 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -14,6 +15,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -71,7 +73,7 @@ func main(cur realm) {
 	foo.Approve(cross(cur), poolAddr, maxApprove)
 	bar.Approve(cross(cur), poolAddr, maxApprove)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 
 	println("[SCENARIO] 1. returns 0 before initialization")
 	println("[EXPECTED] liquidity:", thisPool.Liquidity().ToString(), "expected: 0")

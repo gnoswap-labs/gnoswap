@@ -11,7 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -27,6 +29,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -93,6 +96,7 @@ func initSystem(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Set emission start time
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Set initial distribution: 75% to staker
@@ -100,8 +104,8 @@ func initSystem(cur realm) {
 		cross(cur),
 		7500, // liquidityStakerPct
 		2000, // devOpsPct
-		500, // communityPoolPct
-		0, // govStakerPct
+		500,  // communityPoolPct
+		0,    // govStakerPct
 	)
 
 	// Remove unstaking fee for clearer reward calculations
@@ -119,7 +123,11 @@ func initSystem(cur realm) {
 	baz.Transfer(cross(cur), user1Addr, 1_000_000)
 
 	println("[EXPECTED] Initial distribution set to 75% for stakers")
-	ufmt.Printf("[EXPECTED] Current staker emission per second: %d\n", emission.GetStakerEmissionAmountPerSecond())
+	rate, err := emission.GetStakerEmissionAmountPerSecond()
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] Current staker emission per second: %d\n", rate)
 }
 
 func createPoolAndPosition(cur realm) {
@@ -186,7 +194,10 @@ func changeDistribution(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Record emission rate before change
-	beforeRate := emission.GetStakerEmissionAmountPerSecond()
+	beforeRate, err := emission.GetStakerEmissionAmountPerSecond()
+	if err != nil {
+		panic(err)
+	}
 
 	// Change distribution to 50% for stakers
 	emission.ChangeDistributionPct(
@@ -194,11 +205,14 @@ func changeDistribution(cur realm) {
 		5000, // liquidityStakerPct
 		3000, // devOpsPct
 		2000, // communityPoolPct
-		0, // govStakerPct
+		0,    // govStakerPct
 	)
 
 	// Check emission rate after change
-	afterRate := emission.GetStakerEmissionAmountPerSecond()
+	afterRate, err := emission.GetStakerEmissionAmountPerSecond()
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] Emission rate before change: %d\n", beforeRate)
 	ufmt.Printf("[EXPECTED] Emission rate after change: %d\n", afterRate)

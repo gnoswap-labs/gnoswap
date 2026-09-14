@@ -14,6 +14,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/onbloc/obl"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 	_ "gno.land/r/gnoswap/launchpad/v3_valid"
 )
@@ -109,7 +110,7 @@ func testLaunchpadUpgrade(cur realm) {
 
 func verifyProjectInfo(cur realm, projectId string) {
 	testing.SetRealm(adminRealm)
-	projectInfo, _ := launchpad.GetProject(projectId)
+	projectInfo, _ := launchpad.GetProjects().Get(projectId).(*launchpad.Project)
 	ufmt.Printf("[EXPECTED] Project ID: %s\n", projectInfo.ID())
 	ufmt.Printf("[EXPECTED] Project name: %s\n", projectInfo.Name())
 	ufmt.Printf("[EXPECTED] Project info: %s\n", projectInfo.TokenPath())

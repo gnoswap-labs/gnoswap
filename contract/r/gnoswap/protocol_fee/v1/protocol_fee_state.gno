@@ -59,7 +59,7 @@ func (pfs *protocolFeeState) distributeToDevOps(_ int, rlm realm, token string, 
 	if err := pfs.addActualDistributedToDevOps(0, rlm, token, amount); err != nil {
 		return err
 	}
-	common.SafeGRC20Transfer(cross(rlm), token, devOpsAddr, amount)
+	common.SafeGRC20Transfer(0, rlm, token, devOpsAddr, amount)
 
 	return nil
 }
@@ -72,7 +72,7 @@ func (pfs *protocolFeeState) distributeToGovStaker(_ int, rlm realm, token strin
 	if err := pfs.addActualDistributedToGovStaker(0, rlm, token, amount); err != nil {
 		return err
 	}
-	common.SafeGRC20Transfer(cross(rlm), token, govStakerAddr, amount)
+	common.SafeGRC20Transfer(0, rlm, token, govStakerAddr, amount)
 
 	return nil
 }
@@ -181,12 +181,9 @@ func (pfs *protocolFeeState) GetActualDistributedToDevOpsByTokenPath(tokenPath s
 	return retrieveAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 }
 
-// clearReservedTokens clears the reserved token index after distribution.
-func (pfs *protocolFeeState) clearReservedTokens(_ int, rlm realm) error {
-	if err := pfs.store.SetReservedTokens(0, rlm, []string{}); err != nil {
-		return err
-	}
-	return nil
+// removeReservedToken removes one distributed token from the reserved token index.
+func (pfs *protocolFeeState) removeReservedToken(_ int, rlm realm, tokenPath string) error {
+	return pfs.store.RemoveReservedToken(0, rlm, tokenPath)
 }
 
 // NewProtocolFeeState creates a new instance of protocolFeeState with initialized values

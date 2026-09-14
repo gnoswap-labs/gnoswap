@@ -2,7 +2,6 @@ package governance
 
 import (
 	"chain"
-	"errors"
 	"time"
 
 	"gno.land/p/gnoswap/utils"
@@ -51,9 +50,7 @@ func (gv *governanceV1) Reconfigure(
 	executionDelay int64,
 	executionWindow int64,
 ) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	// Check if system is halted before proceeding
 	halt.AssertIsNotHaltedGovernance()

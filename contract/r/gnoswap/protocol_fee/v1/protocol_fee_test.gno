@@ -1,6 +1,7 @@
 package protocol_fee
 
 import (
+	"chain"
 	"chain/runtime"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
 
 	"gno.land/r/onbloc/bar"
@@ -168,6 +170,161 @@ func TestDistributeProtocolFee_Unauthorized(cur realm, t *testing.T) {
 					pf.DistributeProtocolFee(0, cur)
 				}(cross(cur))
 			})
+		})
+	}
+}
+
+func TestDistributeProtocolFeeByTokenPath_NoAmountPreservesOtherReservedTokens(cur realm, t *testing.T) {
+	pf := createTestProtocolFee(t)
+	pfs := pf.getProtocolFeeState()
+
+	pfs.store.AddReservedToken(0, cur, "gno.land/r/onbloc/bar.BAR")
+	pfs.store.AddReservedToken(0, cur, "gno.land/r/onbloc/obl.OBL")
+	pfs.store.AddReservedToken(0, cur, "gno.land/r/onbloc/qux.QUX")
+
+	testing.SetRealm(govStakerRealm)
+	func(cur realm) {
+		pf.DistributeProtocolFeeByTokenPath(0, cur, "gno.land/r/onbloc/obl.OBL")
+	}(cross(cur))
+
+	reservedTokens := pf.GetReservedTokens()
+	uassert.Equal(t, len(reservedTokens), 2)
+	uassert.Equal(t, reservedTokens[0], "gno.land/r/onbloc/bar.BAR")
+	uassert.Equal(t, reservedTokens[1], "gno.land/r/onbloc/qux.QUX")
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToDevOpsByTokenPath("gno.land/r/onbloc/obl.OBL"))
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/obl.OBL"))
+}
+
+func TestDistributeProtocolFeeByTokenPath_NonReservedTokenDoesNotMutate(cur realm, t *testing.T) {
+	pf := createTestProtocolFee(t)
+	pfs := pf.getProtocolFeeState()
+	nonReservedToken := "gno.land/r/onbloc/bar.BAR"
+	reservedToken := "gno.land/r/onbloc/obl.OBL"
+
+	if err := pfs.addAccuToGovStaker(0, cur, nonReservedToken, 100); err != nil {
+		panic(err)
+	}
+	if err := pfs.store.AddReservedToken(0, cur, reservedToken); err != nil {
+		panic(err)
+	}
+
+	testing.SetRealm(govStakerRealm)
+	func(cur realm) {
+		pf.DistributeProtocolFeeByTokenPath(0, cur, nonReservedToken)
+	}(cross(cur))
+
+	uassert.Equal(t, int64(100), pf.GetAccuTransferToGovStakerByTokenPath(nonReservedToken))
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToDevOpsByTokenPath(nonReservedToken))
+	uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath(nonReservedToken))
+	reservedTokens := pf.GetReservedTokens()
+	uassert.Equal(t, len(reservedTokens), 1)
+	uassert.Equal(t, reservedTokens[0], reservedToken)
+}
+
+// TestDistributeProtocolFeeByTokenPath_Unauthorized covers the authorization
+// failure path for the per-token flush. It shares assertIsAdminOrGovStaker
+// with the bulk path, but exercises the ByTokenPath entry directly.
+func TestDistributeProtocolFeeByTokenPath_Unauthorized(cur realm, t *testing.T) {
+	tests := []struct {
+		name      string
+		prevRealm runtime.Realm
+		panicMsg  string
+	}{
+		{
+			name:      "failure - caller is not admin or gov/staker",
+			prevRealm: testing.NewCodeRealm("gno.land/r/unknown/contract"),
+			panicMsg:  "unauthorized: caller g1pxn2ve8l38svvke6wzpvhkhld8xjktk66qpn5h is not admin or gov/staker",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(cur realm, t *testing.T) {
+			pf := createTestProtocolFee(t)
+
+			testing.SetRealm(test.prevRealm)
+			uassert.AbortsContains(t, cur, test.panicMsg, func() {
+				func(cur realm) {
+					pf.DistributeProtocolFeeByTokenPath(0, cur, "gno.land/r/onbloc/bar.BAR")
+				}(cross(cur))
+			})
+		})
+	}
+}
+
+// TestDistributeProtocolFeeByTokenPath_HaltScenario covers the halt behavior
+// of the per-token flush, mirroring the bulk-path halt tests:
+//   - SAFE_MODE halts withdrawals, so the flush is skipped silently and must
+//     not touch distribution state or reserved tokens.
+//   - EMERGENCY keeps withdrawals enabled, so the flush is not blocked; with
+//     no pending distribution the call is a no-op (mirrors
+//     TestDistributeProtocolFee_HaltScenario_Emergency).
+func TestDistributeProtocolFeeByTokenPath_HaltScenario(cur realm, t *testing.T) {
+	tests := []struct {
+		name      string
+		haltLevel halt.HaltLevel
+	}{
+		{
+			name:      "safe mode",
+			haltLevel: halt.HaltLevelSafeMode,
+		},
+		{
+			name:      "emergency",
+			haltLevel: halt.HaltLevelEmergency,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// Given
+			pf := createTestProtocolFee(t)
+
+			testing.SetOriginCaller(adminAddr)
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross(cur), tt.haltLevel)
+			defer func() {
+				func(cur realm) {
+					testing.SetOriginCaller(adminAddr)
+					testing.SetRealm(adminRealm)
+					halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+				}(cross(cur))
+			}()
+
+			if tt.haltLevel == halt.HaltLevelSafeMode {
+				// Seed pending distribution state only for safe mode: it is
+				// the case that must preserve it untouched.
+				if err := pf.getProtocolFeeState().addAccuToGovStaker(0, cur, "gno.land/r/onbloc/bar.BAR", 100); err != nil {
+					panic(err)
+				}
+				if err := pf.store.AddReservedToken(0, cur, "gno.land/r/onbloc/bar.BAR"); err != nil {
+					panic(err)
+				}
+
+				testing.SetRealm(adminRealm)
+				common.SafeGRC20Transfer(0, cur, "gno.land/r/onbloc/bar.BAR", protocolFeeAddr, 100)
+			}
+
+			testing.SetRealm(govStakerRealm)
+
+			// When - Then: the call does not panic.
+			uassert.NotPanics(t, cur, func() {
+				func(cur realm) {
+					pf.DistributeProtocolFeeByTokenPath(0, cur, "gno.land/r/onbloc/bar.BAR")
+				}(cross(cur))
+			})
+
+			if tt.haltLevel == halt.HaltLevelSafeMode {
+				// Safe mode: distribution state and reserved token are untouched.
+				uassert.Equal(t, int64(100), pf.GetAccuTransferToGovStakerByTokenPath("gno.land/r/onbloc/bar.BAR"))
+				uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar.BAR"))
+				uassert.Equal(t, int64(0), pf.GetActualDistributedToDevOpsByTokenPath("gno.land/r/onbloc/bar.BAR"))
+				reservedTokens := pf.getProtocolFeeState().ReservedTokens()
+				uassert.Equal(t, 1, len(reservedTokens))
+				uassert.Equal(t, "gno.land/r/onbloc/bar.BAR", reservedTokens[0])
+			} else {
+				// Emergency: no distribution is recorded.
+				uassert.Equal(t, int64(0), pf.GetActualDistributedToGovStakerByTokenPath("gno.land/r/onbloc/bar.BAR"))
+				uassert.Equal(t, int64(0), pf.GetActualDistributedToDevOpsByTokenPath("gno.land/r/onbloc/bar.BAR"))
+			}
 		})
 	}
 }
@@ -348,6 +505,136 @@ func TestAddToProtocolFee(cur realm, t *testing.T) {
 			uassert.Equal(t, common.BalanceOf(test.tokenPath, protocolFeeAddr)-beforeBalance, test.amount)
 		})
 	}
+}
+
+func TestAdvanceAccrualEpoch(cur realm, t *testing.T) {
+	pf := createTestProtocolFee(t)
+
+	uassert.Equal(t, pf.GetAccrualEpoch(), int64(0))
+
+	// Only gov/staker may advance the epoch.
+	testing.SetRealm(testing.NewCodeRealm(poolPath))
+	uassert.AbortsWithMessage(t, cur, "unauthorized: caller "+chain.PackageAddress(poolPath).String()+" is not "+prbac.ROLE_GOV_STAKER.String(), func() {
+		func(cur realm) {
+			pf.AdvanceAccrualEpoch(0, cur)
+		}(cross(cur))
+	})
+
+	testing.SetRealm(govStakerRealm)
+	epoch := func(cur realm) int64 {
+		return pf.AdvanceAccrualEpoch(0, cur)
+	}(cross(cur))
+	uassert.Equal(t, epoch, int64(1))
+	uassert.Equal(t, pf.GetAccrualEpoch(), int64(1))
+}
+
+func TestConsumeAccrualBuckets(cur realm, t *testing.T) {
+	pf := createTestProtocolFee(t)
+	poolRealm := testing.NewCodeRealm(poolPath)
+	barPath := "gno.land/r/onbloc/bar.BAR"
+	quxPath := "gno.land/r/onbloc/qux.QUX"
+
+	// Two fees in the same epoch share one bucket; a later epoch opens a new one.
+	for _, fee := range []struct {
+		tokenPath string
+		amount    int64
+	}{{barPath, 100}, {barPath, 20}, {quxPath, 50}} {
+		fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, fee.tokenPath, fee.amount)
+		testing.SetRealm(poolRealm)
+		func(cur realm) {
+			pf.AddToProtocolFee(0, cur, fee.tokenPath, fee.amount)
+		}(cross(cur))
+	}
+
+	testing.SetRealm(govStakerRealm)
+	func(cur realm) {
+		pf.AdvanceAccrualEpoch(0, cur)
+	}(cross(cur))
+
+	fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, barPath, 7)
+	testing.SetRealm(poolRealm)
+	func(cur realm) {
+		pf.AddToProtocolFee(0, cur, barPath, 7)
+	}(cross(cur))
+
+	// A query reports the buckets without clearing them.
+	epochs, amounts := pf.GetAccrualBuckets(barPath, 0)
+	uassert.Equal(t, len(epochs), 2)
+	uassert.Equal(t, epochs[0], int64(0))
+	uassert.Equal(t, amounts[0], int64(120))
+	uassert.Equal(t, epochs[1], int64(1))
+	uassert.Equal(t, amounts[1], int64(7))
+	uassert.Equal(t, len(pf.GetAccrualPendingTokens()), 2)
+
+	// Only gov/staker may consume.
+	testing.SetRealm(poolRealm)
+	uassert.AbortsWithMessage(t, cur, "unauthorized: caller "+chain.PackageAddress(poolPath).String()+" is not "+prbac.ROLE_GOV_STAKER.String(), func() {
+		func(cur realm) {
+			pf.ConsumeAccrualBuckets(0, cur, barPath, 0)
+		}(cross(cur))
+	})
+
+	// A limited consume takes the oldest bucket and keeps the token pending.
+	testing.SetRealm(govStakerRealm)
+	epochs, amounts = func(cur realm) ([]int64, []int64) {
+		return pf.ConsumeAccrualBuckets(0, cur, barPath, 1)
+	}(cross(cur))
+	uassert.Equal(t, len(epochs), 1)
+	uassert.Equal(t, epochs[0], int64(0))
+	uassert.Equal(t, amounts[0], int64(120))
+	uassert.Equal(t, len(pf.GetAccrualPendingTokens()), 2)
+
+	// Consuming the rest drops the token from the pending set, leaving the other token.
+	testing.SetRealm(govStakerRealm)
+	epochs, amounts = func(cur realm) ([]int64, []int64) {
+		return pf.ConsumeAccrualBuckets(0, cur, barPath, 0)
+	}(cross(cur))
+	uassert.Equal(t, len(epochs), 1)
+	uassert.Equal(t, epochs[0], int64(1))
+	uassert.Equal(t, amounts[0], int64(7))
+	uassert.Equal(t, len(pf.GetAccrualPendingTokens()), 1)
+	uassert.Equal(t, pf.GetAccrualPendingTokens()[0], quxPath)
+
+	// Consuming again yields nothing until another fee arrives.
+	testing.SetRealm(govStakerRealm)
+	epochs, _ = func(cur realm) ([]int64, []int64) {
+		return pf.ConsumeAccrualBuckets(0, cur, barPath, 0)
+	}(cross(cur))
+	uassert.Equal(t, len(epochs), 0)
+
+	// A later fee re-lists the token under the epoch in force.
+	fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, barPath, 25)
+	testing.SetRealm(poolRealm)
+	func(cur realm) {
+		pf.AddToProtocolFee(0, cur, barPath, 25)
+	}(cross(cur))
+
+	epochs, amounts = pf.GetAccrualBuckets(barPath, 0)
+	uassert.Equal(t, len(epochs), 1)
+	uassert.Equal(t, epochs[0], int64(1))
+	uassert.Equal(t, amounts[0], int64(25))
+	uassert.Equal(t, len(pf.GetAccrualPendingTokens()), 2)
+}
+
+func TestAddToProtocolFee_NoGovStakerShareIsNotListedForAccrual(cur realm, t *testing.T) {
+	pf := createTestProtocolFee(t)
+	poolRealm := testing.NewCodeRealm(poolPath)
+	barPath := "gno.land/r/onbloc/bar.BAR"
+
+	// The whole fee goes to devOps, so gov/staker has nothing to accrue.
+	testing.SetRealm(adminRealm)
+	func(cur realm) {
+		pf.SetDevOpsPct(0, cur, 10000)
+	}(cross(cur))
+
+	fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, barPath, 100)
+	testing.SetRealm(poolRealm)
+	func(cur realm) {
+		pf.AddToProtocolFee(0, cur, barPath, 100)
+	}(cross(cur))
+
+	uassert.Equal(t, pf.GetAccuTransferToGovStakerByTokenPath(barPath), int64(0))
+	uassert.Equal(t, len(pf.store.GetAccrualPendingTokens()), 0)
 }
 
 func TestProtocolFee_AddToProtocolFee_EdgeCases(cur realm, t *testing.T) {
@@ -1008,7 +1295,7 @@ func TestDistributeProtocolFee_HaltScenario_SafeMode(cur realm, t *testing.T) {
 	}()
 
 	testing.SetRealm(adminRealm)
-	common.SafeGRC20Transfer(cross(cur), "gno.land/r/onbloc/bar.BAR", protocolFeeAddr, 100)
+	common.SafeGRC20Transfer(0, cur, "gno.land/r/onbloc/bar.BAR", protocolFeeAddr, 100)
 
 	testing.SetRealm(govStakerRealm)
 

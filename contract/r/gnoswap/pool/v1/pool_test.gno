@@ -139,15 +139,17 @@ func addLiquidityWithValidation(cur realm, t *testing.T, pool *pl.Pool, scenario
 func verifyPriceCumulativeAccuracy(t *testing.T, pool *pl.Pool, timeElapsed int64, expectedTick int32) {
 	t.Helper()
 
-	lastObs, _ := lastObservation(pool.ObservationState())
+	slot0 := pool.Slot0()
+	lastObs, _ := observationAt(observationsForTest(pool), slot0.ObservationIndex())
 	beforeCumulative := lastObs.TickCumulative()
 	beforeTime := lastObs.BlockTimestamp()
 
 	// Update price cumulative
-	observationState := pool.ObservationState()
-	writeObservation(observationState, beforeTime+timeElapsed, expectedTick, pool.Liquidity())
+	observations := observationsForTest(pool)
+	writeObservationWithSlot0(observations, &slot0, beforeTime+timeElapsed, expectedTick, pool.Liquidity())
+	pool.SetSlot0(slot0)
 
-	afterObservation, _ := lastObservation(pool.ObservationState())
+	afterObservation, _ := observationAt(observationsForTest(pool), slot0.ObservationIndex())
 	afterCumulative := afterObservation.TickCumulative()
 	actualIncrease := afterCumulative - beforeCumulative
 	expectedIncrease := int64(expectedTick) * timeElapsed
@@ -407,7 +409,8 @@ func TestBurn_LiquidityWithdrawalScenarios(cur realm, t *testing.T) {
 			beforeLiquidity := new(u256.Uint).Set(pool.Liquidity())
 
 			// When: Withdraw specified amount of liquidity
-			amount0, amount1 := mockInstanceBurn(0, cur,
+			amount0, amount1 := mockInstanceBurn(
+				0, cur,
 				pool.Token0Path(),
 				pool.Token1Path(),
 				pool.Fee(),
@@ -486,37 +489,34 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 			slot0 := pl.NewSlot0(u256.MustFromDecimal(EQUAL_PRICE_RATIO), tt.initialTick, 0, true)
 			pool.SetSlot0(slot0)
 
-			observationState := pl.NewObservationState(100)
-			observationState.SetIndex(0)
-			observationState.SetCardinality(1)
-			observationState.SetCardinalityNext(1)
-			obs := pl.NewObservation(
+			observations := pl.NewPoolObservationsTree(100)
+			obs := pl.MakeObservation(
 				100,
 				5000000000,
-				"3000000",
 				"0",
 				true,
 			)
-			observationState.SetObservation(0, obs)
-			pool.SetObservationState(observationState)
+			observations.Set(0, obs)
+			setObservationsForTest(pool, observations)
 			pool.SetLiquidity(u256.MustFromDecimal(tt.liquidity))
 
-			lastObs, _ := lastObservation(pool.ObservationState())
+			slot0 = pool.Slot0()
+			lastObs, _ := observationAt(observationsForTest(pool), slot0.ObservationIndex())
 			beforeTickCumulative := lastObs.TickCumulative()
-			beforeLiquidityCumulative := u256.MustFromDecimal(lastObs.LiquidityCumulative())
 
-			observationState = pool.ObservationState()
-			lastObs, err := lastObservation(observationState)
+			observations = observationsForTest(pool)
+			lastObs, err := observationAt(observations, slot0.ObservationIndex())
 
 			uassert.NoError(t, err, "Last observation should succeed")
 			currentTime := lastObs.BlockTimestamp() + tt.timeElapsed
 
 			// When: Execute accumulation calculation
-			observationState2 := pool.ObservationState()
-			writeObservation(observationState2, currentTime, tt.initialTick, pool.Liquidity())
-			lastObs, _ = lastObservation(observationState2)
+			observations2 := observationsForTest(pool)
+			slot0 = pool.Slot0()
+			writeObservationWithSlot0(observations2, &slot0, currentTime, tt.initialTick, pool.Liquidity())
+			pool.SetSlot0(slot0)
+			lastObs, _ = observationAt(observations2, slot0.ObservationIndex())
 			tickCumulative := lastObs.TickCumulative()
-			liquidityCumulative := u256.MustFromDecimal(lastObs.LiquidityCumulative())
 			lastUpdateTime := lastObs.BlockTimestamp()
 
 			// Then: Verify expected behavior
@@ -525,19 +525,6 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 
 			uassert.Equal(t, expectedTickIncrease, actualTickIncrease,
 				ufmt.Sprintf("Tick cumulative calculation error: expected(%d) != actual(%d)", expectedTickIncrease, actualTickIncrease))
-
-			// Verify liquidity accumulation (only if liquidity is not 0)
-			if tt.liquidity != "0" {
-				expectedLiquidityIncrease := new(u256.Uint).Mul(
-					u256.MustFromDecimal(tt.liquidity),
-					u256.NewUint(uint64(tt.timeElapsed)),
-				)
-				expectedLiquidityCumulative := new(u256.Uint).Add(beforeLiquidityCumulative, expectedLiquidityIncrease)
-				uassert.Equal(t, expectedLiquidityCumulative.ToString(), liquidityCumulative.ToString())
-			} else {
-				// If liquidity is 0, the accumulated value does not change
-				uassert.Equal(t, beforeLiquidityCumulative.ToString(), liquidityCumulative.ToString())
-			}
 
 			uassert.Equal(t, currentTime, lastUpdateTime)
 			t.Logf("✓ %s: %s (Business risk: %s)", tt.description, tt.expectedBehavior, tt.businessRisk)
@@ -581,7 +568,8 @@ func TestAccessControl_AuthorizationValidation(cur realm, t *testing.T) {
 				testing.SetRealm(testing.NewUserRealm(unauthorizedAddr))
 				expectedMsg := ufmt.Sprintf("unauthorized: caller %s is not admin or governance", unauthorizedAddr.String())
 				uassert.AbortsWithMessage(t, cur, expectedMsg, func() {
-					mockInstanceCollectProtocol(0, cur,
+					mockInstanceCollectProtocol(
+						0, cur,
 						pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						unauthorizedAddr, "100", "100",
 					)
@@ -949,7 +937,7 @@ func simulateSwapActivity(cur realm, t *testing.T, pool *pl.Pool) {
 	approveTokenForRouter(cur, t, pool.Token0Path())
 
 	mockInstanceSwap(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
-		adminAddr, true, "1000000", "3945129629379410362911094631", adminAddr, func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
+		adminAddr, true, "1000000", "3945129629379410362911094631", func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 			return mockSwapCallback(cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
 		})
 
@@ -991,8 +979,8 @@ func approveTokensForPool(cur realm, t *testing.T, pool *pl.Pool) {
 	t.Helper()
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross(cur), pool.Token0Path(), poolAddr, maxApprove)
-	common.SafeGRC20Approve(cross(cur), pool.Token1Path(), poolAddr, maxApprove)
+	common.SafeGRC20Approve(0, cur, pool.Token0Path(), poolAddr, maxApprove)
+	common.SafeGRC20Approve(0, cur, pool.Token1Path(), poolAddr, maxApprove)
 }
 
 func getTokenBalance(t *testing.T, tokenPath string, addr address) int64 {
@@ -1089,7 +1077,8 @@ func TestCollect(cur realm, t *testing.T) {
 			testing.SetRealm(posRealm)
 			if tt.expectedPanic {
 				uassert.AbortsWithMessage(t, cur, tt.expectedPanicMsg, func() {
-					mockInstanceCollect(0, cur,
+					mockInstanceCollect(
+						0, cur,
 						pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 						adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
 						tt.request0, tt.request1,
@@ -1099,7 +1088,8 @@ func TestCollect(cur realm, t *testing.T) {
 				return
 			}
 
-			amount0, amount1 := mockInstanceCollect(0, cur,
+			amount0, amount1 := mockInstanceCollect(
+				0, cur,
 				pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 				adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
 				tt.request0, tt.request1,
@@ -1130,9 +1120,57 @@ func TestCollect(cur realm, t *testing.T) {
 			resetObject(cur, t)
 		})
 	}
+
+	t.Run("insufficient_internal_balance_reverts_collect", func(cur realm, t *testing.T) {
+		pool := setupStablecoinPool(cur, t)
+		approveTokensForPool(cur, t, pool)
+		testing.SetRealm(posRealm)
+
+		mockInstanceMint(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, LARGE_LIQUIDITY, adminAddr)
+		mockInstanceBurn(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+			WIDE_RANGE_LOWER, WIDE_RANGE_UPPER, MEDIUM_LIQUIDITY, adminAddr)
+
+		positionKey := getPositionKey(WIDE_RANGE_LOWER, WIDE_RANGE_UPPER)
+		positionBefore := mustGetPositionByPool(pool, positionKey)
+		owed0Before := positionBefore.TokensOwed0()
+		uassert.True(t, owed0Before > int64(1),
+			"setup should leave tokensOwed0 larger than the forced balance")
+
+		// Simulate an internal-ledger desync: balance is stale-low (1) while owed is larger.
+		pool.SetBalanceToken0(int64(1))
+
+		var amount0, amount1 string
+		r := revive(func() {
+			amount0, amount1 = mockInstanceCollect(
+				0, cur,
+				pool.Token0Path(), pool.Token1Path(), pool.Fee(),
+				adminAddr, WIDE_RANGE_LOWER, WIDE_RANGE_UPPER,
+				MAX_INT64, "0",
+			)
+		})
+
+		uassert.NotNil(t, r,
+			"Collect must revert when the internal balance is insufficient")
+		uassert.Equal(t, "", amount0,
+			"amount0 must not be returned on revert")
+		uassert.Equal(t, "", amount1,
+			"amount1 must not be returned on revert")
+
+		// State must be untouched: no negative balance, owed unchanged.
+		positionAfter := mustGetPositionByPool(pool, positionKey)
+		uassert.Equal(t, utils.FormatInt(owed0Before), utils.FormatInt(positionAfter.TokensOwed0()),
+			"TokensOwed0 must stay unchanged after revert")
+		validateNonNegativeBalances(t, pool)
+		uassert.Equal(t, int64(1), pool.BalanceToken0(),
+			"Pool balance0 must stay at the forced value after revert")
+
+		resetObject(cur, t)
+	})
 }
 
-// validateCollectInvariant validates pool balance >= tokensOwed invariant
+// validateCollectInvariant validates the normal-path invariant that the pool's
+// internal balance covers the position's outstanding owed amounts.
 func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper int32) {
 	t.Helper()
 	positionKey := getPositionKey(tickLower, tickUpper)
@@ -1144,6 +1182,18 @@ func validateCollectInvariant(t *testing.T, pool *pl.Pool, tickLower, tickUpper 
 	uassert.True(t, pool.BalanceToken1() >= position.TokensOwed1(),
 		ufmt.Sprintf("Pool balance1 (%s) must be >= tokensOwed1 (%s)",
 			utils.FormatInt(pool.BalanceToken1()), utils.FormatInt(position.TokensOwed1())))
+}
+
+// validateNonNegativeBalances validates only that Collect never stores a
+// negative balance. Used by the forced-desync case, where the setup
+// deliberately violates the stronger invariant above.
+func validateNonNegativeBalances(t *testing.T, pool *pl.Pool) {
+	t.Helper()
+
+	uassert.True(t, pool.BalanceToken0() >= 0,
+		ufmt.Sprintf("Pool balance0 (%s) must be non-negative", utils.FormatInt(pool.BalanceToken0())))
+	uassert.True(t, pool.BalanceToken1() >= 0,
+		ufmt.Sprintf("Pool balance1 (%s) must be non-negative", utils.FormatInt(pool.BalanceToken1())))
 }
 
 func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {
@@ -1164,7 +1214,8 @@ func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
 	bar.Approve(cross(cur), poolAddr, 1)
 
-	amount0, amount1 := mockInstanceSwap(0, cur,
+	amount0, amount1 := mockInstanceSwap(
+		0, cur,
 		barTokenPath,
 		fooTokenPath,
 		500,
@@ -1172,7 +1223,6 @@ func TestSwap_ZeroOutputAllowed(cur realm, t *testing.T) {
 		true,
 		"1",
 		"4295128740",
-		adminAddr,
 		func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 			return mockSwapCallback(cur, barTokenPath, fooTokenPath, amount0Delta, amount1Delta)
 		},

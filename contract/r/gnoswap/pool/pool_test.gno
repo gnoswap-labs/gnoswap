@@ -59,6 +59,25 @@ func TestPool_GetTick(cur realm, t *testing.T) {
 	uassert.Equal(t, expected.Initialized(), got.Initialized())
 }
 
+func TestPool_GetPosition(cur realm, t *testing.T) {
+	pool := makeTestPool()
+
+	t.Run("returns an existing position", func(cur realm, t *testing.T) {
+		position := NewPositionInfo()
+		position.SetLiquidity("1000000")
+		pool.SetPosition("position-key", position)
+
+		got, err := pool.GetPosition("position-key")
+		uassert.Nil(t, err)
+		uassert.Equal(t, "1000000", got.Liquidity())
+	})
+
+	t.Run("returns an error when missing", func(cur realm, t *testing.T) {
+		_, err := pool.GetPosition("missing-position-key")
+		uassert.NotNil(t, err)
+	})
+}
+
 func TestPool_SetTick(cur realm, t *testing.T) {
 	pool := makeTestPool()
 	tick := int32(100)

@@ -2,6 +2,7 @@
 package v3_valid
 
 import (
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 	"gno.land/r/gnoswap/gov/governance"
 	v1 "gno.land/r/gnoswap/gov/governance/v1"
 )
@@ -48,6 +49,11 @@ func (t *TestGovernance) Cancel(_ int, rlm realm, proposalId int64) int64 {
 	return t.instance.Cancel(0, rlm, proposalId)
 }
 
+// RemoveInactiveProposalFromIndex delegates inactive snapshot-index maintenance to the wrapped implementation.
+func (t *TestGovernance) RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64) {
+	t.instance.RemoveInactiveProposalFromIndex(0, rlm, proposalID)
+}
+
 func (t *TestGovernance) Reconfigure(_ int, rlm realm, votingStartDelay int64, votingPeriod int64, votingWeightSmoothingDuration int64, quorum int64, proposalCreationThreshold int64, executionDelay int64, executionWindow int64) int64 {
 	return t.instance.Reconfigure(0, rlm, votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow)
 }
@@ -66,7 +72,7 @@ func (t *TestGovernance) GetMaxSmoothingPeriod() int64 {
 }
 
 // Config getters
-func (t *TestGovernance) GetLatestConfig() governance.Config {
+func (t *TestGovernance) GetLatestConfig() (governance.Config, error) {
 	return t.instance.GetLatestConfig()
 }
 
@@ -74,25 +80,32 @@ func (t *TestGovernance) GetConfig(configVersion int64) (governance.Config, erro
 	return t.instance.GetConfig(configVersion)
 }
 
-// Proposal getters
-func (t *TestGovernance) GetProposalCount() int {
-	return t.instance.GetProposalCount()
-}
-
-func (t *TestGovernance) GetProposalIDs(offset, count int) []int64 {
-	return t.instance.GetProposalIDs(offset, count)
+func (t *TestGovernance) GetProposals() *rotree.ReadOnlyTree {
+	return t.instance.GetProposals()
 }
 
 func (t *TestGovernance) ExistsProposal(proposalID int64) bool {
 	return t.instance.ExistsProposal(proposalID)
 }
 
-func (t *TestGovernance) GetProposal(proposalID int64) (*governance.Proposal, error) {
-	return t.instance.GetProposal(proposalID)
-}
-
 func (t *TestGovernance) GetProposerByProposalId(proposalId int64) (address, error) {
 	return t.instance.GetProposerByProposalId(proposalId)
+}
+
+func (t *TestGovernance) GetProposalCreatedAt(proposalId int64) (int64, error) {
+	return t.instance.GetProposalCreatedAt(proposalId)
+}
+
+func (t *TestGovernance) GetProposalCreatedHeight(proposalId int64) (int64, error) {
+	return t.instance.GetProposalCreatedHeight(proposalId)
+}
+
+func (t *TestGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (*governance.CommunityPoolSpendInfo, error) {
+	return t.instance.GetProposalCommunityPoolSpendInfo(proposalID)
+}
+
+func (t *TestGovernance) GetProposalExecutionInfo(proposalID int64) (*governance.ExecutionInfo, error) {
+	return t.instance.GetProposalExecutionInfo(proposalID)
 }
 
 func (t *TestGovernance) GetProposalTypeByProposalId(proposalId int64) (governance.ProposalType, error) {
@@ -132,20 +145,12 @@ func (t *TestGovernance) GetVoteStatus(proposalId int64) (quorum, maxVotingWeigh
 	return t.instance.GetVoteStatus(proposalId)
 }
 
-func (t *TestGovernance) GetVotingInfoCount(proposalID int64) int {
-	return t.instance.GetVotingInfoCount(proposalID)
-}
-
-func (t *TestGovernance) GetVotingInfoAddresses(proposalID int64, offset, count int) []address {
-	return t.instance.GetVotingInfoAddresses(proposalID, offset, count)
+func (t *TestGovernance) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
+	return t.instance.GetVotingInfos(proposalID)
 }
 
 func (t *TestGovernance) ExistsVotingInfo(proposalID int64, addr address) bool {
 	return t.instance.ExistsVotingInfo(proposalID, addr)
-}
-
-func (t *TestGovernance) GetVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, error) {
-	return t.instance.GetVotingInfo(proposalID, addr)
 }
 
 func (t *TestGovernance) GetVoteWeight(proposalID int64, addr address) (int64, error) {
@@ -160,17 +165,12 @@ func (t *TestGovernance) GetVotedAt(proposalID int64, addr address) (int64, erro
 	return t.instance.GetVotedAt(proposalID, addr)
 }
 
-// User proposal getters
-func (t *TestGovernance) GetUserProposalCount(user address) int {
-	return t.instance.GetUserProposalCount(user)
+func (t *TestGovernance) GetUserProposals() *rotree.ReadOnlyTree {
+	return t.instance.GetUserProposals()
 }
 
-func (t *TestGovernance) GetUserProposalIDs(user address, offset, count int) []int64 {
-	return t.instance.GetUserProposalIDs(user, offset, count)
-}
-
-// Active proposal query
-func (t *TestGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+// Active proposal query; stale or missing index entries return an error.
+func (t *TestGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
 	return t.instance.GetOldestActiveProposalSnapshotTime()
 }
 

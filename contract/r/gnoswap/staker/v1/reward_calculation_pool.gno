@@ -2,6 +2,7 @@ package staker
 
 import (
 	"errors"
+	"math"
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
@@ -70,6 +71,10 @@ func (self *Pools) IterateAll(fn func(key string, pool *sr.Pool) bool) {
 
 type PoolResolver struct {
 	*sr.Pool
+
+	// exit is set only when collecting an exit checkpoint, and overrides the pool reads that
+	// would otherwise come from state the position no longer takes part in.
+	exit *sr.UnstakedPosition
 }
 
 func (self *PoolResolver) IncentivesResolver() *IncentivesResolver {
@@ -100,6 +105,10 @@ func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64
 // Get the latest tick in [0, currentTime] range.
 // Returns the tick.
 func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
+	if self.exit != nil && currentTime >= self.exit.ExitTime() {
+		return self.exit.ExitTick()
+	}
+
 	self.HistoricalTick().ReverseIterate(0, currentTime, func(key int64, value any) bool {
 		res, ok := value.(int32)
 		if !ok {
@@ -125,18 +134,69 @@ func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *
 	return liquidity
 }
 
-func (self *PoolResolver) TickResolver(tickId int32) *TickResolver {
-	return NewTickResolver(self.Ticks().Get(tickId))
+// GetOrNewTick returns the existing tick or a new zero-valued tick.
+//
+// Substituting a zero-valued tick on a read is safe because ticks are pruned
+// only when their staked gross liquidity reaches zero, in the same call that
+// removes the last deposit referencing them.
+func (self *PoolResolver) GetOrNewTick(tickId int32) *sr.Tick {
+	if self.exit != nil {
+		if lowerTick := self.exit.LowerTick(); lowerTick != nil && lowerTick.Id() == tickId {
+			return lowerTick
+		}
+		if upperTick := self.exit.UpperTick(); upperTick != nil && upperTick.Id() == tickId {
+			return upperTick
+		}
+	}
+
+	tick := self.Ticks().Get(tickId)
+	if tick == nil {
+		return sr.NewTick(tickId)
+	}
+	return tick
 }
 
-// IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
+// initializeNewTickOutsideAccumulation seeds a just-created boundary tick so
+// that below(tick) == globalAccumulation holds, keeping the three branches of
+// outsideAccumulationAt returns a boundary tick's outside accumulation at currentTime.
+//
+// An exit checkpoint answers for its own exit timestamp from the value pinned when it was
+// written: a tick cross later in the same block overwrites the entry at that timestamp, while
+// earlier entries can no longer change.
+func (self *PoolResolver) outsideAccumulationAt(tickId int32, currentTime int64) *u256.Uint {
+	if self.exit != nil && currentTime == self.exit.ExitTime() {
+		switch tickId {
+		case self.exit.Deposit().TickLower():
+			return u256.MustFromDecimal(self.exit.LowerOutsideAcc())
+		case self.exit.Deposit().TickUpper():
+			return u256.MustFromDecimal(self.exit.UpperOutsideAcc())
+		}
+	}
+
+	return NewTickResolver(self.GetOrNewTick(tickId)).CurrentOutsideAccumulation(currentTime)
+}
+
+// CalculateRawRewardForPosition consistent.
+func (self *PoolResolver) initializeNewTickOutsideAccumulation(currentTime int64, currentTick, tickId int32, tick *sr.Tick) {
+	if tickId > currentTick {
+		return
+	}
+
+	globalAcc, _ := self.globalRewardRatioAccumulationAt(currentTime)
+	tick.SetOutsideAccumulationAt(currentTime, globalAcc)
+}
+
+// IsExternallyIncentivizedPool returns true if the pool has an external incentive
+// that has not ended, including incentives that have not started yet.
 func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 	currentTime := time.Now().Unix()
 	hasIncentive := false
-	self.Incentives().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
-		incentive, ok := value.(*sr.ExternalIncentive)
+	// With a maximum duration of 365 days, older starts have already ended.
+	// Keep future starts eligible and retain historical records for reward claims.
+	self.Incentives().IterateIncentiveIdsByTime(stakeScanLowerBound(currentTime), math.MaxInt64, func(incentiveId string) bool {
+		incentive, ok := self.Incentives().Incentive(incentiveId)
 		if !ok {
-			panic("failed to cast value to *ExternalIncentive")
+			panic("incentive missing from pool start-time index")
 		}
 
 		resolver := NewExternalIncentiveResolver(incentive)
@@ -204,14 +264,6 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 	}
 }
 
-// cacheInternalReward caches the current emission and updates the global reward ratio accumulation.
-func (self *PoolResolver) cacheInternalReward(currentTime int64, currentEmission int64) {
-	self.cacheReward(currentTime, currentEmission)
-
-	currentStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
-	self.updateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
-}
-
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	oldAccTime, oldAccStr := self.CurrentGlobalRewardRatioAccumulation(currentTime)
 	timeDiff := gnsmath.SafeSubInt64(currentTime, oldAccTime)
@@ -233,6 +285,23 @@ func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int
 		currentStakedLiquidity,
 	)
 	return u256.Zero().Add(oldAcc, acc)
+}
+
+// globalRewardRatioAccumulationAt returns the global reward ratio accumulation *at* currentTime.
+//
+// CurrentGlobalRewardRatioAccumulation returns the latest stored checkpoint (<= currentTime), which is
+// only equal to the accumulation at currentTime when a checkpoint was written at that very timestamp.
+// Checkpoints are written exclusively by modifyDeposit (staked liquidity changes), so on any other path
+// the stored value lags by (currentTime - lastCheckpointTime) * q128 / stakedLiquidity.
+//
+// Reward calculation never has this problem because it derives the accumulation on demand
+// (CalculateRawRewardForPosition). Event emission must do the same, otherwise off-chain indexers that
+// treat the emitted accumulator as authoritative at the event timestamp silently drop that interval.
+func (self *PoolResolver) globalRewardRatioAccumulationAt(currentTime int64) (*u256.Uint, *u256.Uint) {
+	stakedLiquidity := self.CurrentStakedLiquidity(currentTime)
+	accumulation := self.calculateGlobalRewardRatioAccumulation(currentTime, stakedLiquidity)
+
+	return accumulation, stakedLiquidity
 }
 
 // updateGlobalRewardRatioAccumulation updates the global reward ratio accumulation and returns the new accumulation.
@@ -272,6 +341,14 @@ func NewPoolResolver(pool *sr.Pool) *PoolResolver {
 	}
 }
 
+// newPoolResolverWithExit builds a resolver that reads the pool through an exit checkpoint.
+func newPoolResolverWithExit(pool *sr.Pool, exit *sr.UnstakedPosition) *PoolResolver {
+	return &PoolResolver{
+		Pool: pool,
+		exit: exit,
+	}
+}
+
 // RewardState is a struct for storing the intermediate state for reward calculation.
 type RewardState struct {
 	pool    *PoolResolver
@@ -282,33 +359,15 @@ type RewardState struct {
 	penalties []int64
 }
 
-// calculateInternalReward calculates the internal reward for the deposit.
-// It calls rewardPerWarmup for each rewardCache interval, applies warmup, and returns the rewards and penalties.
-func (self *RewardState) calculateInternalReward(startTime, endTime int64) ([]int64, []int64) {
-	currentReward := self.pool.CurrentReward(startTime)
-
-	self.pool.RewardCache().Iterate(startTime, endTime, func(key int64, value any) bool {
-		reward, ok := value.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast value to int64: %T", value))
-		}
-
-		// Calculate reward for the period before this cache entry
-		err := self.rewardPerWarmup(startTime, key, currentReward)
-		if err != nil {
-			panic(err)
-		}
-
-		startTime = key
-		currentReward = reward
-		return false
-	})
-
-	if startTime < endTime {
-		// For the remaining period, use the last cached reward value
-		// If the pool was de-tiered and the last cached value is 0, this ensures no new rewards
-		err := self.rewardPerWarmup(startTime, endTime, currentReward)
-		if err != nil {
+// calculateInternalReward computes the position's per-warmup rewards and penalties from a pre-resolved
+// per-second reward-rate schedule (see PoolResolver.resolveInternalRewardSegments).
+//
+// It is pure: it neither queries pool tier/emission state nor writes any state, so the read-only view
+// path and the collect path use it identically. Each segment [start, end) is applied at its constant
+// per-second rate; rewardPerWarmup is a no-op for empty segments (start == end).
+func (self *RewardState) calculateInternalReward(segments []internalRewardSegment) ([]int64, []int64) {
+	for _, seg := range segments {
+		if err := self.rewardPerWarmup(seg.start, seg.end, seg.rewardPerSecond); err != nil {
 			panic(err)
 		}
 	}
@@ -387,7 +446,7 @@ func (self *RewardState) applyWarmup() {
 		warmupReward := self.rewards[i]
 
 		// calculate warmup reward applying warmup ratio
-		self.rewards[i] = gnsmath.SafeMulInt64(warmupReward, int64(warmup.WarmupRatio)) / 100
+		self.rewards[i] = gnsmath.SafeMulDivInt64(warmupReward, int64(warmup.WarmupRatio), 100)
 
 		// warmup penalty is the difference between the warmup reward and the warmup reward applying warmup ratio
 		self.penalties[i] = gnsmath.SafeSubInt64(warmupReward, self.rewards[i])
@@ -414,12 +473,12 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 		if endTime < warmup.NextWarmupTime {
 			endTick := self.pool.CurrentTick(endTime)
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
-			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
-			if overflow {
-				panic(errors.New(errOverflow))
-			}
+			// Modular by design: boundary ticks created at different times give a
+			// wrapped base, so the borrow is expected and the wrapped difference
+			// is the true accumulation (Uniswap V3 subtracts unchecked too).
+			rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
-			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+			rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 			if overflow {
 				panic(errors.New(errOverflow))
 			}
@@ -432,12 +491,10 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 
 		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
-		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
-		if overflow {
-			panic(errors.New(errOverflow))
-		}
+		// See the note above: the subtraction is intentionally modular.
+		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
-		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+		rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 		if overflow {
 			panic(errors.New(errOverflow))
 		}
@@ -474,12 +531,12 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 		if endTime < warmup.NextWarmupTime {
 			endTick := self.pool.CurrentTick(endTime)
 			endRaw := self.pool.CalculateRawRewardForPosition(endTime, endTick, self.deposit.Deposit)
-			rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
-			if overflow {
-				panic(errors.New(errOverflow))
-			}
+			// Modular by design: boundary ticks created at different times give a
+			// wrapped base, so the borrow is expected and the wrapped difference
+			// is the true accumulation (Uniswap V3 subtracts unchecked too).
+			rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
-			rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+			rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 			if overflow {
 				panic(errors.New(errOverflow))
 			}
@@ -493,12 +550,10 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 
 		endTick := self.pool.CurrentTick(warmup.NextWarmupTime)
 		endRaw := self.pool.CalculateRawRewardForPosition(warmup.NextWarmupTime, endTick, self.deposit.Deposit)
-		rewardAcc, overflow := u256.Zero().SubOverflow(endRaw, startRaw)
-		if overflow {
-			panic(errors.New(errOverflow))
-		}
+		// See the note above: the subtraction is intentionally modular.
+		rewardAcc := u256.Zero().Sub(endRaw, startRaw)
 
-		rewardAcc, overflow = u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
+		rewardAcc, overflow := u256.Zero().MulOverflow(rewardAcc, self.deposit.Liquidity())
 		if overflow {
 			panic(errors.New(errOverflow))
 		}
@@ -546,7 +601,14 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 		}
 	}
 
-	self.Pool.SetStakedLiquidityAt(currentTime, deltaApplied)
+	// Only append a staked-liquidity entry when the value actually changes (e.g. a tick cross whose
+	// net delta is zero leaves it unchanged). Unlike the global reward ratio accumulation, this tree
+	// carries no time-checkpoint semantics: it is read purely as a point-in-time value via
+	// CurrentStakedLiquidity (latest entry <= t), so omitting a duplicate-valued entry preserves
+	// behavior while keeping this append-only tree from growing on no-op updates.
+	if !lastStakedLiquidity.Eq(deltaApplied) {
+		self.Pool.SetStakedLiquidityAt(currentTime, deltaApplied)
+	}
 
 	return result
 }
@@ -625,8 +687,8 @@ func (self *PoolResolver) CalculateRawRewardForPosition(currentTime int64, curre
 
 	globalAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, self.CurrentStakedLiquidity(currentTime))
 
-	lowerAcc := self.TickResolver(deposit.TickLower()).CurrentOutsideAccumulation(currentTime)
-	upperAcc := self.TickResolver(deposit.TickUpper()).CurrentOutsideAccumulation(currentTime)
+	lowerAcc := self.outsideAccumulationAt(deposit.TickLower(), currentTime)
+	upperAcc := self.outsideAccumulationAt(deposit.TickUpper(), currentTime)
 	if currentTick < deposit.TickLower() {
 		rewardAcc = u256.Zero().Sub(lowerAcc, upperAcc)
 	} else if currentTick >= deposit.TickUpper() {

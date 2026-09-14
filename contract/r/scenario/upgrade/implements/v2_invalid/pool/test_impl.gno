@@ -3,6 +3,7 @@ package v2_invalid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
@@ -75,6 +76,13 @@ func (t *TestPool) Burn(_ int, rlm realm, token0Path string, token1Path string, 
 	return t.instance.Burn(0, rlm, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
+func (t *TestPool) CollectSwapFee(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string, string, string) {
+	if !t.isActive("CollectSwapFee") {
+		panic("test implementation: CollectSwapFee not supported")
+	}
+	return t.instance.CollectSwapFee(0, rlm, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+}
+
 func (t *TestPool) Collect(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
 	if !t.isActive("Collect") {
 		panic("test implementation: Collect not supported")
@@ -89,19 +97,12 @@ func (t *TestPool) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 	t.instance.SetWithdrawalFee(0, rlm, fee)
 }
 
-func (t *TestPool) HandleWithdrawalFee(_ int, rlm realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
-	if !t.isActive("HandleWithdrawalFee") {
-		panic("test implementation: HandleWithdrawalFee not supported")
-	}
-	return t.instance.HandleWithdrawalFee(0, rlm, token0Path, amount0, token1Path, amount1, positionCaller)
-}
-
 // IPoolSwap interface
-func (t *TestPool) Swap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
+func (t *TestPool) Swap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
 	if !t.isActive("Swap") {
 		panic("test implementation: Swap not supported")
 	}
-	return t.instance.Swap(0, rlm, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
+	return t.instance.Swap(0, rlm, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, swapCallback)
 }
 
 func (t *TestPool) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
@@ -140,7 +141,7 @@ func (t *TestPool) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 u
 }
 
 // IPoolGetter interface
-func (t *TestPool) DrySwap(token0Path string, token1Path string, fee uint32, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string) (string, string, bool) {
+func (t *TestPool) DrySwap(token0Path string, token1Path string, fee uint32, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string) (string, string, error) {
 	if !t.isActive("DrySwap") {
 		panic("test implementation: DrySwap not supported")
 	}
@@ -154,74 +155,60 @@ func (t *TestPool) ExistsPoolPath(poolPath string) bool {
 	return t.instance.ExistsPoolPath(poolPath)
 }
 
-func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Pool, error) {
-	if !t.isActive("GetPool") {
-		panic("test implementation: GetPool not supported")
-	}
-	return t.instance.GetPool(token0Path, token1Path, fee)
-}
-
-func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
+func (t *TestPool) GetBalanceToken0(poolPath string) (int64, error) {
 	if !t.isActive("GetBalanceToken0") {
 		panic("test implementation: GetBalanceToken0 not supported")
 	}
 	return t.instance.GetBalanceToken0(poolPath)
 }
 
-func (t *TestPool) GetBalanceToken1(poolPath string) int64 {
+func (t *TestPool) GetBalanceToken1(poolPath string) (int64, error) {
 	if !t.isActive("GetBalanceToken1") {
 		panic("test implementation: GetBalanceToken1 not supported")
 	}
 	return t.instance.GetBalanceToken1(poolPath)
 }
 
-func (t *TestPool) GetFee(poolPath string) uint32 {
+func (t *TestPool) GetFee(poolPath string) (uint32, error) {
 	if !t.isActive("GetFee") {
 		panic("test implementation: GetFee not supported")
 	}
 	return t.instance.GetFee(poolPath)
 }
 
-func (t *TestPool) GetFeeAmountTickSpacing(fee uint32) int32 {
+func (t *TestPool) GetFeeAmountTickSpacing(fee uint32) (int32, error) {
 	if !t.isActive("GetFeeAmountTickSpacing") {
 		panic("test implementation: GetFeeAmountTickSpacing not supported")
 	}
 	return t.instance.GetFeeAmountTickSpacing(fee)
 }
 
-func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
+func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error) {
 	if !t.isActive("GetFeeGrowthGlobal0X128") {
 		panic("test implementation: GetFeeGrowthGlobal0X128 not supported")
 	}
 	return t.instance.GetFeeGrowthGlobal0X128(poolPath)
 }
 
-func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint {
+func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) (*u256.Uint, error) {
 	if !t.isActive("GetFeeGrowthGlobal1X128") {
 		panic("test implementation: GetFeeGrowthGlobal1X128 not supported")
 	}
 	return t.instance.GetFeeGrowthGlobal1X128(poolPath)
 }
 
-func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint, error) {
 	if !t.isActive("GetFeeGrowthGlobalX128") {
 		panic("test implementation: GetFeeGrowthGlobalX128 not supported")
 	}
 	return t.instance.GetFeeGrowthGlobalX128(poolPath)
 }
 
-func (t *TestPool) GetLiquidity(poolPath string) *u256.Uint {
+func (t *TestPool) GetLiquidity(poolPath string) (*u256.Uint, error) {
 	if !t.isActive("GetLiquidity") {
 		panic("test implementation: GetLiquidity not supported")
 	}
 	return t.instance.GetLiquidity(poolPath)
-}
-
-func (t *TestPool) GetObservation(poolPath string, secondsAgo int64) (int64, string, string, int64) {
-	if !t.isActive("GetObservation") {
-		panic("test implementation: GetObservation not supported")
-	}
-	return t.instance.GetObservation(poolPath, secondsAgo)
 }
 
 func (t *TestPool) GetPoolCreationFee() int64 {
@@ -231,168 +218,182 @@ func (t *TestPool) GetPoolCreationFee() int64 {
 	return t.instance.GetPoolCreationFee()
 }
 
-func (t *TestPool) GetPositionFeeGrowthInside0LastX128(poolPath, key string) string {
+func (t *TestPool) GetPositionFeeGrowthInside0LastX128(poolPath, key string) (string, error) {
 	if !t.isActive("GetPositionFeeGrowthInside0LastX128") {
 		panic("test implementation: GetPositionFeeGrowthInside0LastX128 not supported")
 	}
 	return t.instance.GetPositionFeeGrowthInside0LastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
+func (t *TestPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) (string, error) {
 	if !t.isActive("GetPositionFeeGrowthInside1LastX128") {
 		panic("test implementation: GetPositionFeeGrowthInside1LastX128 not supported")
 	}
 	return t.instance.GetPositionFeeGrowthInside1LastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
+func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string, error) {
 	if !t.isActive("GetPositionFeeGrowthInsideLastX128") {
 		panic("test implementation: GetPositionFeeGrowthInsideLastX128 not supported")
 	}
 	return t.instance.GetPositionFeeGrowthInsideLastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionLiquidity(poolPath, key string) string {
+func (t *TestPool) GetPositionLiquidity(poolPath, key string) (string, error) {
 	if !t.isActive("GetPositionLiquidity") {
 		panic("test implementation: GetPositionLiquidity not supported")
 	}
 	return t.instance.GetPositionLiquidity(poolPath, key)
 }
 
-func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) int64 {
+func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) (int64, error) {
 	if !t.isActive("GetPositionTokensOwed0") {
 		panic("test implementation: GetPositionTokensOwed0 not supported")
 	}
 	return t.instance.GetPositionTokensOwed0(poolPath, key)
 }
 
-func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) int64 {
+func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) (int64, error) {
 	if !t.isActive("GetPositionTokensOwed1") {
 		panic("test implementation: GetPositionTokensOwed1 not supported")
 	}
 	return t.instance.GetPositionTokensOwed1(poolPath, key)
 }
 
-func (t *TestPool) GetProtocolFeesToken0(poolPath string) int64 {
+func (t *TestPool) GetProtocolFeesToken0(poolPath string) (int64, error) {
 	if !t.isActive("GetProtocolFeesToken0") {
 		panic("test implementation: GetProtocolFeesToken0 not supported")
 	}
 	return t.instance.GetProtocolFeesToken0(poolPath)
 }
 
-func (t *TestPool) GetProtocolFeesToken1(poolPath string) int64 {
+func (t *TestPool) GetProtocolFeesToken1(poolPath string) (int64, error) {
 	if !t.isActive("GetProtocolFeesToken1") {
 		panic("test implementation: GetProtocolFeesToken1 not supported")
 	}
 	return t.instance.GetProtocolFeesToken1(poolPath)
 }
 
-func (t *TestPool) GetSlot0FeeProtocol(poolPath string) uint8 {
+func (t *TestPool) GetSlot0FeeProtocol(poolPath string) (uint8, error) {
 	if !t.isActive("GetSlot0FeeProtocol") {
 		panic("test implementation: GetSlot0FeeProtocol not supported")
 	}
 	return t.instance.GetSlot0FeeProtocol(poolPath)
 }
 
-func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
+func (t *TestPool) GetSlot0(poolPath string) pool.Slot0 {
+	if !t.isActive("GetSlot0") {
+		panic("test implementation: GetSlot0 not supported")
+	}
+	return t.instance.GetSlot0(poolPath)
+}
+
+func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
+	if !t.isActive("GetObservationAt") {
+		panic("test implementation: GetObservationAt not supported")
+	}
+	return t.instance.GetObservationAt(poolPath, index)
+}
+
+func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error) {
 	if !t.isActive("GetSlot0SqrtPriceX96") {
 		panic("test implementation: GetSlot0SqrtPriceX96 not supported")
 	}
 	return t.instance.GetSlot0SqrtPriceX96(poolPath)
 }
 
-func (t *TestPool) GetSlot0Tick(poolPath string) int32 {
+func (t *TestPool) GetSlot0Tick(poolPath string) (int32, error) {
 	if !t.isActive("GetSlot0Tick") {
 		panic("test implementation: GetSlot0Tick not supported")
 	}
 	return t.instance.GetSlot0Tick(poolPath)
 }
 
-func (t *TestPool) GetSlot0Unlocked(poolPath string) bool {
+func (t *TestPool) GetSlot0Unlocked(poolPath string) (bool, error) {
 	if !t.isActive("GetSlot0Unlocked") {
 		panic("test implementation: GetSlot0Unlocked not supported")
 	}
 	return t.instance.GetSlot0Unlocked(poolPath)
 }
 
-func (t *TestPool) GetTickCumulativeOutside(poolPath string, tick int32) int64 {
+func (t *TestPool) GetTickCumulativeOutside(poolPath string, tick int32) (int64, error) {
 	if !t.isActive("GetTickCumulativeOutside") {
 		panic("test implementation: GetTickCumulativeOutside not supported")
 	}
 	return t.instance.GetTickCumulativeOutside(poolPath, tick)
 }
 
-func (t *TestPool) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) string {
+func (t *TestPool) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) (string, error) {
 	if !t.isActive("GetTickFeeGrowthOutside0X128") {
 		panic("test implementation: GetTickFeeGrowthOutside0X128 not supported")
 	}
 	return t.instance.GetTickFeeGrowthOutside0X128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
+func (t *TestPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) (string, error) {
 	if !t.isActive("GetTickFeeGrowthOutside1X128") {
 		panic("test implementation: GetTickFeeGrowthOutside1X128 not supported")
 	}
 	return t.instance.GetTickFeeGrowthOutside1X128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
+func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string, error) {
 	if !t.isActive("GetTickFeeGrowthOutsideX128") {
 		panic("test implementation: GetTickFeeGrowthOutsideX128 not supported")
 	}
 	return t.instance.GetTickFeeGrowthOutsideX128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickInitialized(poolPath string, tick int32) bool {
+func (t *TestPool) GetTickInitialized(poolPath string, tick int32) (bool, error) {
 	if !t.isActive("GetTickInitialized") {
 		panic("test implementation: GetTickInitialized not supported")
 	}
 	return t.instance.GetTickInitialized(poolPath, tick)
 }
 
-func (t *TestPool) GetTickLiquidityGross(poolPath string, tick int32) string {
+func (t *TestPool) GetTickLiquidityGross(poolPath string, tick int32) (string, error) {
 	if !t.isActive("GetTickLiquidityGross") {
 		panic("test implementation: GetTickLiquidityGross not supported")
 	}
 	return t.instance.GetTickLiquidityGross(poolPath, tick)
 }
 
-func (t *TestPool) GetTickLiquidityNet(poolPath string, tick int32) string {
+func (t *TestPool) GetTickLiquidityNet(poolPath string, tick int32) (string, error) {
 	if !t.isActive("GetTickLiquidityNet") {
 		panic("test implementation: GetTickLiquidityNet not supported")
 	}
 	return t.instance.GetTickLiquidityNet(poolPath, tick)
 }
 
-func (t *TestPool) GetTickSecondsOutside(poolPath string, tick int32) uint32 {
+func (t *TestPool) GetTickSecondsOutside(poolPath string, tick int32) (uint32, error) {
 	if !t.isActive("GetTickSecondsOutside") {
 		panic("test implementation: GetTickSecondsOutside not supported")
 	}
 	return t.instance.GetTickSecondsOutside(poolPath, tick)
 }
 
-func (t *TestPool) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string {
+func (t *TestPool) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) (string, error) {
 	if !t.isActive("GetTickSecondsPerLiquidityOutsideX128") {
 		panic("test implementation: GetTickSecondsPerLiquidityOutsideX128 not supported")
 	}
 	return t.instance.GetTickSecondsPerLiquidityOutsideX128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickSpacing(poolPath string) int32 {
+func (t *TestPool) GetTickSpacing(poolPath string) (int32, error) {
 	if !t.isActive("GetTickSpacing") {
 		panic("test implementation: GetTickSpacing not supported")
 	}
 	return t.instance.GetTickSpacing(poolPath)
 }
 
-func (t *TestPool) GetToken0Path(poolPath string) string {
+func (t *TestPool) GetToken0Path(poolPath string) (string, error) {
 	if !t.isActive("GetToken0Path") {
 		panic("test implementation: GetToken0Path not supported")
 	}
 	return t.instance.GetToken0Path(poolPath)
 }
 
-func (t *TestPool) GetToken1Path(poolPath string) string {
+func (t *TestPool) GetToken1Path(poolPath string) (string, error) {
 	if !t.isActive("GetToken1Path") {
 		panic("test implementation: GetToken1Path not supported")
 	}
@@ -406,26 +407,29 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	if !t.isActive("GetTWAP") {
-		panic("test implementation: GetTWAP not supported")
+func (t *TestPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+	if !t.isActive("OracleConsult") {
+		panic("test implementation: OracleConsult not supported")
 	}
-	return t.instance.GetTWAP(poolPath, secondsAgo)
+	return t.instance.OracleConsult(poolPath, secondsAgo)
 }
 
-// Pool enumeration
-func (t *TestPool) GetPoolCount() int {
-	if !t.isActive("GetPoolCount") {
-		panic("test implementation: GetPoolCount not supported")
+func (t *TestPool) SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, *u256.Uint, uint32, error) {
+	if !t.isActive("SnapshotCumulativesInside") {
+		panic("test implementation: SnapshotCumulativesInside not supported")
 	}
-	return t.instance.GetPoolCount()
+	return t.instance.SnapshotCumulativesInside(poolPath, tickLower, tickUpper)
 }
 
-func (t *TestPool) GetPoolPaths(offset, count int) []string {
-	if !t.isActive("GetPoolPaths") {
-		panic("test implementation: GetPoolPaths not supported")
+func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
+	if !t.isActive("GetPools") {
+		panic("test implementation: GetPools not supported")
 	}
-	return t.instance.GetPoolPaths(offset, count)
+	return t.instance.GetPools()
 }
 
 func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
@@ -435,23 +439,15 @@ func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 	return t.instance.GetFeeAmountTickSpacings()
 }
 
-// Position enumeration
-func (t *TestPool) GetPoolPositionCount(poolPath string) int {
-	if !t.isActive("GetPoolPositionCount") {
-		panic("test implementation: GetPoolPositionCount not supported")
+func (t *TestPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
+	if !t.isActive("GetPoolPositions") {
+		panic("test implementation: GetPoolPositions not supported")
 	}
-	return t.instance.GetPoolPositionCount(poolPath)
-}
-
-func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	if !t.isActive("GetPoolPositionKeys") {
-		panic("test implementation: GetPoolPositionKeys not supported")
-	}
-	return t.instance.GetPoolPositionKeys(poolPath, offset, count)
+	return t.instance.GetPoolPositions(poolPath)
 }
 
 // Tick enumeration
-func (t *TestPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32 {
+func (t *TestPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) ([]int32, error) {
 	if !t.isActive("GetInitializedTicksInRange") {
 		panic("test implementation: GetInitializedTicksInRange not supported")
 	}
@@ -473,16 +469,16 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
 }
 
-func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) {
-	if !t.isActive("GetPosition") {
-		panic("test implementation: GetPosition not supported")
+func (t *TestPool) Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	if !t.isActive("Observe") {
+		panic("test implementation: Observe not supported")
 	}
-	return t.instance.GetPosition(poolPath, key)
+	return t.instance.Observe(poolPath, secondsAgos)
 }
 
-func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
-	if !t.isActive("GetObservationState") {
-		panic("test implementation: GetObservationState not supported")
+func (t *TestPool) GetPendingProtocolFees() map[string]int64 {
+	if !t.isActive("GetPendingProtocolFees") {
+		panic("test implementation: GetPendingProtocolFees not supported")
 	}
-	return t.instance.GetObservationState(poolPath)
+	return t.instance.GetPendingProtocolFees()
 }

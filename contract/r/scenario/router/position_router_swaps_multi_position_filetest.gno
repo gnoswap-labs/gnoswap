@@ -22,6 +22,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -145,8 +146,10 @@ func executeExactInRouterSwaps(cur realm) {
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
 	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
-	ufmt.Printf("[INFO] Pool balance of BAR: %d\n", pool.GetBalanceToken0(poolPath))
-	ufmt.Printf("[INFO] Pool balance of FOO: %d\n", pool.GetBalanceToken1(poolPath))
+	balance0, _ := pool.GetBalanceToken0(poolPath)
+	balance1, _ := pool.GetBalanceToken1(poolPath)
+	ufmt.Printf("[INFO] Pool balance of BAR: %d\n", balance0)
+	ufmt.Printf("[INFO] Pool balance of FOO: %d\n", balance1)
 
 	amountIn, amountOut := router.ExactInSwapRoute(
 		cross(cur),
@@ -172,7 +175,7 @@ func executeExactOutRouterSwaps(cur realm) {
 	// set current realm and origin caller
 	ufmt.Println("[INFO] Executing first swap FOO -> BAR")
 	dryAmountIn, dryAmountOut, success := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			fooPath,
 			barPath,
 			"10983000000",
@@ -181,6 +184,7 @@ func executeExactOutRouterSwaps(cur realm) {
 			"100",
 			"1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 
 	ufmt.Printf("[EXPECTED] Dry swap amountIn should be %s\n", dryAmountIn)
@@ -247,7 +251,7 @@ func executeExactOutRouterSwaps(cur realm) {
 // [INFO] Pool balance of BAR: 10907007633
 // [INFO] Pool balance of FOO: 11000000000
 // [EXPECTED] Swap amountIn should be 1000000000000
-// [EXPECTED] Swap amountOut should be -10804908355
+// [EXPECTED] Swap amountOut should be 10804908355
 // [SCENARIO] 4. Execute exact out swap with almost all
 // [INFO] Executing first swap FOO -> BAR
 // [EXPECTED] Dry swap amountIn should be 0

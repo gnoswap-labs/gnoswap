@@ -6,11 +6,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	testutils "gno.land/p/nt/testutils/v0"
 
@@ -22,6 +23,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -212,7 +214,7 @@ func mintPositionWithGnot(cur realm) BalanceSnapshot {
 		"50000000",   // amount1Desired (GNOT)
 		"0",          // amount0Min
 		"0",          // amount1Min
-		max_timeout, // deadline
+		max_timeout,  // deadline
 		userAddr,
 		"",
 	)
@@ -300,7 +302,7 @@ func removeLiquidityToGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
-	currentLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
+	currentLiquidity, _ := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
 
 	// Remove 30% liquidity
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
@@ -343,7 +345,7 @@ func closePositionToGnot(cur realm) BalanceSnapshot {
 	testing.SetRealm(userRealm)
 
 	// Get current position liquidity
-	currentLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
+	currentLiquidity, _ := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
 
 	// Remove 30% liquidity
 	liquidityInt, _ := strconv.ParseInt(currentLiquidity, 10, 64)
@@ -358,7 +360,7 @@ func closePositionToGnot(cur realm) BalanceSnapshot {
 		max_timeout,
 	)
 
-	remainingLiquidity := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
+	remainingLiquidity, _ := pl.GetLiquidity("gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
 
 	println("[INFO] Final liquidity removed:", remainingLiquidity)
 	println("[INFO] Final GNS returned:", amount0)
@@ -437,9 +439,9 @@ func validateFinalReconciliation(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 4. Perform Swaps (Both Directions)
 // [INFO] Swap 1: 10,000,000 GNOT → GNS
-// [INFO] Swap 1 - In: 10000000 Out: -9426232
+// [INFO] Swap 1 - In: 10000000 Out: 9426232
 // [INFO] Swap 2: GNS → 5,000,000 GNOT
-// [INFO] Swap 2 - In: 4597249 Out: -5000000
+// [INFO] Swap 2 - In: 4597249 Out: 5000000
 // [BALANCE] After Swaps
 //   User - WGNOT: 945000000 GNS: 954828983
 //   Position - WUGNOT: 0 GNS: 0

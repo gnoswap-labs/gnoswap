@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc20"
+	"gno.land/p/nt/grc20/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 
@@ -27,7 +27,7 @@ func resetGnsTokenObject(cur realm, t *testing.T) {
 	t.Helper()
 
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6, tokenID, cur)
-	userTeller = token.CallerTeller()
+	userTeller = privateLedger.CallerTeller()
 
 	privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
 }

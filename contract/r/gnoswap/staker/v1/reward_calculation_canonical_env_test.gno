@@ -96,7 +96,7 @@ func NewCanonicalRewardState(
 	currentTime := time.Now().Unix()
 
 	// Technically, the block number being provided to the NewPoolTier should be 124, but because of duplicate creation of the default pool, we put 123 here to just make rewardCache work for the testing.
-	result.global.poolTier = NewPoolTier(pools, currentTime, test_gnousdc, func() int64 { return int64(result.PerSecondEmission) }, func(start, end int64) ([]int64, []int64) {
+	result.global.poolTier = NewPoolTier(pools, currentTime, test_gnousdc, func() (int64, error) { return int64(result.PerSecondEmission), nil }, func(start, end int64) ([]int64, []int64, error) {
 		heights := make([]int64, 0)
 		emissions := make([]int64, 0)
 		result.emissionUpdates.Iterate(start, end, func(key int64, value any) bool {
@@ -108,7 +108,7 @@ func NewCanonicalRewardState(
 			emissions = append(emissions, int64(v))
 			return false
 		})
-		return heights, emissions
+		return heights, emissions, nil
 	})
 
 	result.NextBlock() // must skip height 0
@@ -261,7 +261,7 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 	return self.Reward[height][depositId]
 }
 
-func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) ([]int64, []int64, []map[string]int64, []map[string]int64) {
+func (self *canonicalRewardState) EmulateCalculateCollectablePositionReward(positionId uint64) ([]int64, []int64, []map[string]int64, []map[string]int64) {
 	currentTimestamp := self.CurrentTime()
 	// cache per-tier and per-pool rewards
 	self.global.poolTier.cacheReward(currentTimestamp, self.global.pools)
@@ -280,7 +280,12 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(positionId uint64) (
 
 	lastCollectTimestamp := deposit.InternalRewardLastCollectTime()
 
-	internalRewards, internalPenalties := poolResolver.RewardStateOf(deposit).calculateInternalReward(lastCollectTimestamp, currentTimestamp)
+	// Emulator materialized the reward cache above, so resolving the schedule reads it in full.
+	internalSegments, err := poolResolver.resolveInternalRewardSegments(self.global.poolTier, poolPath, lastCollectTimestamp, currentTimestamp)
+	if err != nil {
+		panic(err)
+	}
+	internalRewards, internalPenalties := poolResolver.RewardStateOf(deposit).calculateInternalReward(internalSegments)
 
 	externalRewards := make([]map[string]int64, 4)
 	externalPenalties := make([]map[string]int64, 4)
@@ -322,7 +327,7 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 		}
 	}
 
-	rewards, penalties, externalRewards, externalPenalties := self.EmulateCalcPositionReward(depositId)
+	rewards, penalties, externalRewards, externalPenalties := self.EmulateCalculateCollectablePositionReward(depositId)
 
 	deposit := self.global.deposits.get(depositId)
 	resolver := NewDepositResolver(deposit)
@@ -420,8 +425,22 @@ func (self *canonicalRewardState) StakeToken(cur realm, positionId uint64, targe
 	// historical tick must be set regardless of the deposit's range
 	poolResolver.Pool.SetHistoricalTickAt(currentTimestamp, canonicalPool.tick)
 
-	poolResolver.TickResolver(deposit.TickLower()).modifyDepositLower(currentTimestamp, signedLiquidity)
-	poolResolver.TickResolver(deposit.TickUpper()).modifyDepositUpper(currentTimestamp, signedLiquidity)
+	// Mirrors StakeToken's boundary-tick seeding.
+	lowerExisted := pool.Ticks().Get(deposit.TickLower()) != nil
+	lowerTick := poolResolver.GetOrNewTick(deposit.TickLower())
+	if !lowerExisted {
+		poolResolver.initializeNewTickOutsideAccumulation(currentTimestamp, canonicalPool.tick, deposit.TickLower(), lowerTick)
+	}
+	NewTickResolver(lowerTick).modifyDepositLower(currentTimestamp, signedLiquidity)
+	pool.Ticks().SetTick(deposit.TickLower(), lowerTick)
+
+	upperExisted := pool.Ticks().Get(deposit.TickUpper()) != nil
+	upperTick := poolResolver.GetOrNewTick(deposit.TickUpper())
+	if !upperExisted {
+		poolResolver.initializeNewTickOutsideAccumulation(currentTimestamp, canonicalPool.tick, deposit.TickUpper(), upperTick)
+	}
+	NewTickResolver(upperTick).modifyDepositUpper(currentTimestamp, signedLiquidity)
+	pool.Ticks().SetTick(deposit.TickUpper(), upperTick)
 
 	return nil
 }
@@ -454,8 +473,13 @@ func (self *canonicalRewardState) UnstakeToken(positionId uint64) {
 	if self.isInRange(deposit) {
 		poolResolver.modifyDeposit(signedLiquidity, currentTimestamp, canonicalPool.tick)
 	}
-	poolResolver.TickResolver(deposit.TickLower()).modifyDepositLower(currentTimestamp, signedLiquidity)
-	poolResolver.TickResolver(deposit.TickUpper()).modifyDepositUpper(currentTimestamp, signedLiquidity)
+	lowerTick := poolResolver.GetOrNewTick(deposit.TickLower())
+	NewTickResolver(lowerTick).modifyDepositLower(currentTimestamp, signedLiquidity)
+	pool.Ticks().SetTick(deposit.TickLower(), lowerTick)
+
+	upperTick := poolResolver.GetOrNewTick(deposit.TickUpper())
+	NewTickResolver(upperTick).modifyDepositUpper(currentTimestamp, signedLiquidity)
+	pool.Ticks().SetTick(deposit.TickUpper(), upperTick)
 }
 
 func newExternalIncentiveBy(

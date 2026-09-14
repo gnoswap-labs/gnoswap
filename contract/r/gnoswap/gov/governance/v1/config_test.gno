@@ -255,7 +255,8 @@ func zzSkip2_TestConfig_Reconfigure(cur realm, t *testing.T) {
 					tc.executionDelay,
 					tc.executionWindow,
 				)
-				cfg := gs.GetLatestConfig()
+				cfg, err := gs.GetLatestConfig()
+				uassert.NoError(t, err)
 				uassert.NotNil(t, cfg)
 				uassert.Equal(t, cfg.VotingStartDelay, tc.votingStartDelay)
 				uassert.Equal(t, cfg.VotingPeriod, tc.votingPeriod)

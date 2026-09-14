@@ -1,6 +1,7 @@
 package governance
 
 import (
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 )
 
@@ -52,6 +53,8 @@ type IGovernanceManager interface {
 		proposalId int64,
 	) int64
 
+	RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64)
+
 	// Configuration
 	Reconfigure(
 		_ int, rlm realm,
@@ -73,16 +76,17 @@ type IGovernanceGetter interface {
 	GetMaxSmoothingPeriod() int64
 
 	// Config getters
-	GetLatestConfig() Config
+	GetLatestConfig() (Config, error)
 	GetConfig(configVersion int64) (Config, error)
 
-	// Proposal getters
-	GetProposalCount() int
-	GetProposalIDs(offset, count int) []int64
+	GetProposals() *rotree.ReadOnlyTree
 	ExistsProposal(proposalID int64) bool
-	GetProposal(proposalID int64) (*Proposal, error)
 	GetProposerByProposalId(proposalId int64) (address, error)
 	GetProposalTypeByProposalId(proposalId int64) (ProposalType, error)
+	GetProposalCreatedAt(proposalId int64) (int64, error)
+	GetProposalCreatedHeight(proposalId int64) (int64, error)
+	GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error)
+	GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error)
 	GetYeaByProposalId(proposalId int64) (int64, error)
 	GetNayByProposalId(proposalId int64) (int64, error)
 	GetConfigVersionByProposalId(proposalId int64) (int64, error)
@@ -93,20 +97,16 @@ type IGovernanceGetter interface {
 
 	// Vote getters
 	GetVoteStatus(proposalId int64) (quorum, maxVotingWeight, yesWeight, noWeight int64, err error)
-	GetVotingInfoCount(proposalID int64) int
-	GetVotingInfoAddresses(proposalID int64, offset, count int) []address
+	GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree
 	ExistsVotingInfo(proposalID int64, addr address) bool
-	GetVotingInfo(proposalID int64, addr address) (*VotingInfo, error)
 	GetVoteWeight(proposalID int64, addr address) (int64, error)
 	GetVotedHeight(proposalID int64, addr address) (int64, error)
 	GetVotedAt(proposalID int64, addr address) (int64, error)
 
-	// User proposal getters
-	GetUserProposalCount(user address) int
-	GetUserProposalIDs(user address, offset, count int) []int64
+	GetUserProposals() *rotree.ReadOnlyTree
 
 	// Active proposal query
-	GetOldestActiveProposalSnapshotTime() (int64, bool)
+	GetOldestActiveProposalSnapshotTime() (int64, bool, error)
 
 	// Voting weight snapshot getters
 	GetCurrentVotingWeightSnapshot() (int64, int64, error)
@@ -135,6 +135,10 @@ type IGovernanceStore interface {
 	SetProposal(_ int, rlm realm, proposalID int64, proposal *Proposal) error
 	SetProposals(_ int, rlm realm, proposals *bptree.BPTree) error
 
+	HasActiveProposalsBySnapshotStoreKey() bool
+	GetActiveProposalsBySnapshot() *bptree.BPTree
+	SetActiveProposalsBySnapshot(_ int, rlm realm, tree *bptree.BPTree) error
+
 	// Proposal voting info methods
 	HasProposalUserVotingInfosStoreKey() bool
 	GetProposalUserVotingInfos() *bptree.BPTree
@@ -144,6 +148,7 @@ type IGovernanceStore interface {
 
 	// User proposals methods
 	HasUserProposalsStoreKey() bool
+	GetUserProposals() *bptree.BPTree
 	GetUserProposalIDs(user string) ([]int64, bool)
 	SetUserProposals(_ int, rlm realm, userProposals *bptree.BPTree) error
 	AddUserProposal(_ int, rlm realm, user string, proposalID int64) error

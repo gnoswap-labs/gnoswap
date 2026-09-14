@@ -5,9 +5,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -20,6 +21,7 @@ import (
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/protocol_fee"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 	_ "gno.land/r/onbloc/bar"

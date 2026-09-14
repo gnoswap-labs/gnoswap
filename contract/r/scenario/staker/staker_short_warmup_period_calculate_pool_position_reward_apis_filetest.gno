@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -24,6 +24,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -57,7 +58,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
@@ -158,8 +159,8 @@ func createExternalIncentiveBarBaz(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
 		barPath,
 		9000000000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	println("[INFO] create external incentive BAZ for bar:baz:100")
@@ -169,8 +170,8 @@ func createExternalIncentiveBarBaz(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
 		bazPath,
 		1800000000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentives created for bar:baz:100\n")
@@ -202,8 +203,8 @@ func createExternalIncentiveQux(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		quxPath,
 		9000000000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive created for bar:qux:100\n")

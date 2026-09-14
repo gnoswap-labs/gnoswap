@@ -2,6 +2,7 @@ package pool
 
 import (
 	"errors"
+
 	"gno.land/p/gnoswap/store"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -18,6 +19,7 @@ func (s StoreKey) String() string {
 const (
 	// Pool data storage keys
 	StoreKeyPools                StoreKey = "pools"                // Map containing all pools
+	StoreKeyObservations         StoreKey = "observations"         // poolPath -> observation B+tree
 	StoreKeyFeeAmountTickSpacing StoreKey = "feeAmountTickSpacing" // Fee tier to tick spacing mapping
 	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
 
@@ -69,6 +71,31 @@ func (s *poolStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyPools.String(), pools)
+}
+
+func (s *poolStore) HasObservations() bool {
+	return s.kvStore.Has(StoreKeyObservations.String())
+}
+
+func (s *poolStore) GetObservations() *bptree.BPTree {
+	observations, err := s.kvStore.GetBPTree(StoreKeyObservations.String())
+	if err != nil {
+		panic(err)
+	}
+	if observations == nil {
+		panic("observations is nil")
+	}
+	return observations
+}
+
+func (s *poolStore) SetObservations(_ int, rlm realm, observations *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+	if observations == nil {
+		panic("observations is nil")
+	}
+	return s.kvStore.Set(0, rlm, StoreKeyObservations.String(), observations)
 }
 
 func (s *poolStore) HasFeeAmountTickSpacing() bool {
@@ -179,7 +206,7 @@ func (s *poolStore) GetPendingProtocolFees() map[string]int64 {
 		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
 	}
 
-	return cloneStringInt64Map(pendingProtocolFees)
+	return pendingProtocolFees
 }
 
 func (s *poolStore) SetPendingProtocolFees(_ int, rlm realm, pendingProtocolFees map[string]int64) error {
@@ -187,7 +214,45 @@ func (s *poolStore) SetPendingProtocolFees(_ int, rlm realm, pendingProtocolFees
 		return errors.New(ErrSpoofedRealm)
 	}
 
-	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), pendingProtocolFees)
+	// The map is copied here so it is allocated by, and therefore mutable from, this realm.
+	owned := make(map[string]int64, len(pendingProtocolFees))
+	for tokenPath, amount := range pendingProtocolFees {
+		owned[tokenPath] = amount
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), owned)
+}
+
+func (s *poolStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.GetPendingProtocolFees()[tokenPath]
+}
+
+func (s *poolStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	if rlm.IsCode() && !s.kvStore.IsWriteAuthorized(rlm.Address()) {
+		return errors.New(store.ErrWritePermissionDenied)
+	}
+
+	s.GetPendingProtocolFees()[tokenPath] = amount
+
+	return nil
+}
+
+func (s *poolStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	if rlm.IsCode() && !s.kvStore.IsWriteAuthorized(rlm.Address()) {
+		return errors.New(store.ErrWritePermissionDenied)
+	}
+
+	delete(s.GetPendingProtocolFees(), tokenPath)
+
+	return nil
 }
 
 func (s *poolStore) HasWithdrawalFeeBPS() bool {

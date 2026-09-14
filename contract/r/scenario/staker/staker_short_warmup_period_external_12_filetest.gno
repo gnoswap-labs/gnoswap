@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -26,6 +26,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -57,7 +58,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 )
@@ -157,7 +158,7 @@ func mintBarQux100Position1(cur realm) {
 		panic("position ID should be 1")
 	}
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
+	owner := mustOwnerOf(positionIdFrom(cur, positionId))
 	if owner != adminAddr {
 		panic("position should be owned by admin")
 	}
@@ -179,8 +180,8 @@ func createExternalIncentiveBar(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		barPath,
 		2_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive BAR created successfully\n")
@@ -201,8 +202,8 @@ func createExternalIncentiveQux(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		quxPath,
 		2_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive QUX created successfully\n")
@@ -228,9 +229,9 @@ func waitForActiveExternal(cur realm) {
 	testing.SkipHeights(1)
 
 	println("[INFO] skip blocks to make external incentives active")
-	testing.SkipHeights(849) // in active
-	testing.SkipHeights(1)   // active but no block passed since active
-	testing.SkipHeights(50)  // skip 50 more blocks
+	testing.SkipHeights(35409) // in active
+	testing.SkipHeights(1)     // active but no block passed since active
+	testing.SkipHeights(50)    // skip 50 more blocks
 
 	println("[INFO] mint and distribute GNS after active")
 	emission.MintAndDistributeGns(cross(cur))
@@ -294,6 +295,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 
 func milliToSec(cur realm, ms int64) int64 {
 	return ms / int64(1000)
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

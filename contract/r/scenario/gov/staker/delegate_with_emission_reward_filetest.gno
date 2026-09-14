@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -19,6 +21,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 )
@@ -65,6 +68,7 @@ func main(cur realm) {
 func changeEmissionDistribution(cur realm) {
 	// change emission distribution ratio
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	en.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	en.ChangeDistributionPct(
 		cross(cur),

@@ -14,6 +14,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -128,7 +129,7 @@ func testSwapRouteBarQuxExactIn(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 1000")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -7318")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 7318")
 	println()
 }
 
@@ -174,7 +175,7 @@ func testSwapRouteBarQuxExactOut(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 141")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -1001")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 1001")
 	println()
 }
 
@@ -220,7 +221,7 @@ func TestSwapRouteQuxBarExactIn(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 1000")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -135")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 135")
 	println()
 }
 
@@ -266,7 +267,7 @@ func TestSwapRouteQuxBarExactOut(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 7365")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -999")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 999")
 	println()
 }
 
@@ -289,7 +290,7 @@ func TestSwapRouteQuxBarExactOut(cur realm) {
 // [INFO] Approving tokens for swap
 // [INFO] Executing swap route (bar → baz → qux)
 // [EXPECTED] amountIn: 1000 expected: 1000
-// [EXPECTED] amountOut: -7318 expected: -7318
+// [EXPECTED] amountOut: 7318 expected: 7318
 //
 // [SCENARIO] Given: Dry swap route bar to qux exact out preparation
 // [INFO] Executing dry swap route exact out (bar → baz → qux)
@@ -299,7 +300,7 @@ func TestSwapRouteQuxBarExactOut(cur realm) {
 // [INFO] Approving tokens for swap
 // [INFO] Executing swap route exact out (bar → baz → qux)
 // [EXPECTED] amountIn: 141 expected: 141
-// [EXPECTED] amountOut: -1001 expected: -1001
+// [EXPECTED] amountOut: 1001 expected: 1001
 //
 // [SCENARIO] Given: Dry swap route qux to bar exact in preparation
 // [INFO] Executing dry swap route (qux → baz → bar)
@@ -309,7 +310,7 @@ func TestSwapRouteQuxBarExactOut(cur realm) {
 // [INFO] Approving tokens for swap
 // [INFO] Executing swap route (qux → baz → bar)
 // [EXPECTED] amountIn: 1000 expected: 1000
-// [EXPECTED] amountOut: -135 expected: -135
+// [EXPECTED] amountOut: 135 expected: 135
 //
 // [SCENARIO] Given: Dry swap route qux to bar exact out preparation
 // [INFO] Executing dry swap route exact out (qux → baz → bar)
@@ -319,6 +320,6 @@ func TestSwapRouteQuxBarExactOut(cur realm) {
 // [INFO] Approving tokens for swap
 // [INFO] Executing swap route exact out (qux → baz → bar)
 // [EXPECTED] amountIn: 7373 expected: 7365
-// [EXPECTED] amountOut: -1000 expected: -999
+// [EXPECTED] amountOut: 1000 expected: 999
 //
 // [INFO] Scenario completed

@@ -1,8 +1,6 @@
 package pool
 
 import (
-	"chain"
-
 	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -41,46 +39,6 @@ func maxLiquidityPerTickSpacing60FromDec() *u256.Uint {
 
 func maxLiquidityPerTickSpacing200FromDec() *u256.Uint {
 	return &u256.Uint{6592429331424883148, 2078974875882965, 0, 0} // 38350317471085141830651933667504588
-}
-
-// GetTickLiquidityGross returns the gross liquidity for the specified tick.
-func GetTickLiquidityGross(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).LiquidityGross()
-}
-
-// GetTickLiquidityNet returns the net liquidity for the specified tick.
-func GetTickLiquidityNet(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).LiquidityNet()
-}
-
-// GetTickFeeGrowthOutside0X128 returns the fee growth outside the tick for token 0.
-func GetTickFeeGrowthOutside0X128(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).FeeGrowthOutside0X128()
-}
-
-// GetTickFeeGrowthOutside1X128 returns the fee growth outside the tick for token 1.
-func GetTickFeeGrowthOutside1X128(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).FeeGrowthOutside1X128()
-}
-
-// GetTickCumulativeOutside returns the cumulative liquidity outside the tick.
-func GetTickCumulativeOutside(p *pl.Pool, tick int32) int64 {
-	return mustGetTick(p, tick).TickCumulativeOutside()
-}
-
-// GetTickSecondsPerLiquidityOutsideX128 returns the seconds per liquidity outside the tick.
-func GetTickSecondsPerLiquidityOutsideX128(p *pl.Pool, tick int32) string {
-	return mustGetTick(p, tick).SecondsPerLiquidityOutsideX128()
-}
-
-// GetTickSecondsOutside returns the seconds outside the tick.
-func GetTickSecondsOutside(p *pl.Pool, tick int32) uint32 {
-	return mustGetTick(p, tick).SecondsOutside()
-}
-
-// GetTickInitialized returns whether the tick is initialized.
-func GetTickInitialized(p *pl.Pool, tick int32) bool {
-	return mustGetTick(p, tick).Initialized()
 }
 
 // getFeeGrowthInside calculates the fee growth within a specified tick range.
@@ -158,6 +116,10 @@ func getFeeGrowthInside(
 //   - liquidityDelta: *i256.Int, the amount of liquidity to add or remove.
 //   - feeGrowthGlobal0X128: *u256.Uint, the global fee growth value for token 0.
 //   - feeGrowthGlobal1X128: *u256.Uint, the global fee growth value for token 1.
+//   - secondsPerLiquidityCumulativeX128: *u256.Uint, the current oracle accumulator used to
+//     seed the outside accumulator of a newly initialized active tick (tick <= tickCurrent).
+//   - tickCumulative: int64, the current oracle tick accumulator used for the same seeding.
+//   - blockTimestamp: int64, the current block timestamp used for the same seeding.
 //   - upper:         bool, indicates if this is the upper boundary (true for upper, false for lower).
 //   - maxLiquidity:  *u256.Uint, the maximum allowed liquidity.
 //
@@ -188,7 +150,7 @@ func getFeeGrowthInside(
 //
 // ```gno
 //
-//	flipped := pool.tickUpdate(10, 5, liquidityDelta, feeGrowth0, feeGrowth1, true, maxLiquidity)
+//	flipped := pool.tickUpdate(10, 5, liquidityDelta, feeGrowth0, feeGrowth1, secondsPerLiquidityCumulativeX128, tickCumulative, blockTimestamp, true, maxLiquidity)
 //	println("Tick flipped:", flipped)
 //
 // ```
@@ -199,6 +161,9 @@ func tickUpdate(
 	liquidityDelta *i256.Int,
 	feeGrowthGlobal0X128 *u256.Uint,
 	feeGrowthGlobal1X128 *u256.Uint,
+	secondsPerLiquidityCumulativeX128 *u256.Uint,
+	tickCumulative int64,
+	blockTimestamp int64,
 	upper bool,
 	maxLiquidity *u256.Uint,
 ) (flipped bool) {
@@ -220,6 +185,9 @@ func tickUpdate(
 		if tick <= tickCurrent {
 			tickInfo.SetFeeGrowthOutside0X128(feeGrowthGlobal0X128.ToString())
 			tickInfo.SetFeeGrowthOutside1X128(feeGrowthGlobal1X128.ToString())
+			tickInfo.SetSecondsPerLiquidityOutsideX128(secondsPerLiquidityCumulativeX128.ToString())
+			tickInfo.SetTickCumulativeOutside(tickCumulative)
+			tickInfo.SetSecondsOutside(uint32(blockTimestamp))
 		}
 		tickInfo.SetInitialized(true)
 	}
@@ -266,12 +234,6 @@ func tickCross(
 	thisTick.SetSecondsOutside(uint32(blockTimestamp) - thisTick.SecondsOutside())
 
 	setTick(p, tick, thisTick)
-
-	chain.Emit(
-		"PoolTickCross",
-		"poolPath", p.PoolPath(),
-		"tick", NewTickEventInfo(tick, thisTick).ToString(),
-	)
 
 	return i256.MustFromDecimal(thisTick.LiquidityNet())
 }

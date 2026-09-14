@@ -4,15 +4,16 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/grc721/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -25,6 +26,7 @@ import (
 
 	mock "gno.land/r/gnoswap/staker/mock"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 	_ "gno.land/r/gnoswap/staker/v3_valid"
 )
@@ -118,6 +120,7 @@ func initialize(cur realm) {
 	staker.UpgradeImpl(cross(cur), stakerV1Path)
 	println("[EXPECTED] Initialized staker contract with v1:", stakerV1Path)
 
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+5)
 	testing.SkipHeights(1)
 
@@ -203,9 +206,9 @@ func checkStakingInfo(cur realm, positionId uint64) {
 	println("[EXPECTED] Is staked:", isStaked)
 
 	if isStaked {
-		targetPoolPath := staker.GetDepositTargetPoolPath(positionId)
-		liquidity := staker.GetDepositLiquidityAsString(positionId)
-		stakeTime := staker.GetDepositStakeTime(positionId)
+		targetPoolPath, _ := staker.GetDepositTargetPoolPath(positionId)
+		liquidity, _ := staker.GetDepositLiquidityAsString(positionId)
+		stakeTime, _ := staker.GetDepositStakeTime(positionId)
 
 		println("[EXPECTED] Target pool path:", targetPoolPath)
 		println("[EXPECTED] Staked liquidity:", liquidity)
@@ -310,8 +313,8 @@ func withAbortsWithMessage(cur realm, callback func(), logMessage string) {
 //
 // [SCENARIO] 13. Collect reward with v3_valid
 // [INFO] Collect reward
-// [EXPECTED] Total reward: 133374323
-// [EXPECTED] Reward to user: 39731368
+// [EXPECTED] Total reward: 133374324
+// [EXPECTED] Reward to user: 39731369
 // [EXPECTED] Reward penalty: 93642955
 //
 // [SCENARIO] 14. Check staking info after reward collection

@@ -692,6 +692,17 @@ func TestMintGns_StateUpdates(cur realm, t *testing.T) {
 	}
 }
 
+func TestGetHalvingYearMintedAmountTracksMintedEmission(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	InitGnsTest(cur, t)
+
+	currentYear := GetHalvingYear(time.Now().Unix())
+	testing.SetRealm(emissionRealm)
+	mintedAmount := MintGns(cross(cur), adminAddr)
+
+	uassert.Equal(t, mintedAmount, GetHalvingYearMintedAmount(currentYear))
+}
+
 func TestInitEmissionState(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string

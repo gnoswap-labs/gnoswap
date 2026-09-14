@@ -1,14 +1,14 @@
 loadpkg gno.land/p/nt/bptree/v0
 loadpkg gno.land/p/nt/ufmt/v0
-loadpkg gno.land/p/onbloc/json
+loadpkg gno.land/p/onbloc/json/v0
 loadpkg gno.land/p/nt/ownable/v0
-loadpkg gno.land/p/demo/tokens/grc20
-loadpkg gno.land/p/demo/tokens/grc721
+loadpkg gno.land/p/nt/grc20/v0
+loadpkg gno.land/p/nt/grc721/v0
 loadpkg gno.land/r/demo/defi/foo20
 
 loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
-loadpkg gno.land/r/demo/defi/grc20reg
+loadpkg gno.land/r/nt/grc20reg/v0
 
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/p/gnoswap/uint256
@@ -19,6 +19,7 @@ loadpkg gno.land/p/gnoswap/version_manager
 loadpkg gno.land/r/gnoswap/rbac
 loadpkg gno.land/r/gnoswap/halt
 loadpkg gno.land/r/gnoswap/common
+loadpkg gno.land/r/gnoswap/common/v1
 loadpkg gno.land/r/gnoswap/referral
 
 loadpkg gno.land/r/gnoswap/gns
@@ -138,9 +139,9 @@ func HandleSwapCallbackWithContext(
 
 	switch {
 	case amount0Delta > 0:
-		common.SafeGRC20TransferFrom(cross(cur), token0Path, payer, poolAddr, amount0Delta)
+		common.SafeGRC20TransferFrom(0, cur, token0Path, payer, poolAddr, amount0Delta)
 	case amount1Delta > 0:
-		common.SafeGRC20TransferFrom(cross(cur), token1Path, payer, poolAddr, amount1Delta)
+		common.SafeGRC20TransferFrom(0, cur, token1Path, payer, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -172,7 +173,6 @@ func main(cur realm) {
 		false,
 		"60283363",
 		"1461446703485210103287273052203988822378723970341",
-		userAddr,
 		callbackFn,
 	)
 }
@@ -201,7 +201,6 @@ func main(cur realm) {
 		false,
 		"60283363",
 		"1461446703485210103287273052203988822378723970341",
-		userAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return swap_wrapper.HandleSwapCallbackWithContext(
 				cur,

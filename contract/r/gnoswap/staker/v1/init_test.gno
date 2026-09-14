@@ -23,3 +23,8 @@ func TestInit_initStoreDataUsesFreshAllowedTokensPerStore(cur realm, t *testing.
 	uassert.Equal(t, secondStoreAllowedTokens[0], GNS_TOKEN_KEY)
 	uassert.Equal(t, secondStoreAllowedTokens[1], WUGNOT_TOKEN_KEY)
 }
+
+func TestInit_initStoreDataAllowsMissingDefaultInitialPool(cur realm, t *testing.T) {
+	err := initStoreData(0, cur, &MockStakerStore{}, newMockEmissionAccessor())
+	uassert.Nil(t, err)
+}

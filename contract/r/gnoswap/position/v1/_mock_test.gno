@@ -3,8 +3,8 @@ package position
 import (
 	"strconv"
 
-	"gno.land/p/demo/tokens/grc721"
 	bptree "gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/grc721/v0"
 	"gno.land/r/gnoswap/position"
 )
 

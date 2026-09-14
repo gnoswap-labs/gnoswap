@@ -65,5 +65,26 @@ func initStoreData(_ int, rlm realm, protocolFeeStore protocol_fee.IProtocolFeeS
 		}
 	}
 
+	if !protocolFeeStore.HasAccrualEpochStoreKey() {
+		err := protocolFeeStore.InitializeAccrualEpoch(0, rlm)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !protocolFeeStore.HasAccrualBucketsStoreKey() {
+		err := protocolFeeStore.InitializeAccrualBuckets(0, rlm)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !protocolFeeStore.HasAccrualPendingTokensStoreKey() {
+		err := protocolFeeStore.InitializeAccrualPendingTokens(0, rlm)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

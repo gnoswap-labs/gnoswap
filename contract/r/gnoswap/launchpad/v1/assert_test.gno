@@ -6,9 +6,6 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
-
-	gov_staker "gno.land/r/gnoswap/gov/staker"
-	"gno.land/r/gnoswap/launchpad"
 )
 
 func TestAssert_assertIsValidAmount(cur realm, t *testing.T) {
@@ -102,7 +99,7 @@ func TestAssert_assertIsDepositOwner(cur realm, t *testing.T) {
 					time.Now().Unix()+1000,
 				)
 				deposits := lp.store.GetDeposits()
-				deposits.Set(depositID, deposit)
+				deposits.Set(depositID, *deposit)
 				return depositID
 			},
 			caller:        ownerAddr,
@@ -133,7 +130,7 @@ func TestAssert_assertIsDepositOwner(cur realm, t *testing.T) {
 					time.Now().Unix()+1000,
 				)
 				deposits := lp.store.GetDeposits()
-				deposits.Set(depositID, deposit)
+				deposits.Set(depositID, *deposit)
 				return depositID
 			},
 			caller:        otherAddr,
@@ -173,139 +170,29 @@ func TestAssert_assertIsDepositOwner(cur realm, t *testing.T) {
 }
 
 func TestAssert_assertHasProject(cur realm, t *testing.T) {
-	projectOwner := testutils.TestAddress("project_owner")
-	otherUser := testutils.TestAddress("other_user")
-	nonProjectOwner := testutils.TestAddress("non_project_owner")
+	launchpadAddr, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
+	lp := getTestImplementation()
+	recipient := testutils.TestAddress("project_owner")
+	otherRecipient := testutils.TestAddress("other_owner")
+	outsider := testutils.TestAddress("non_project_owner")
 
-	tests := []struct {
-		name          string
-		setupProjects func(realm, *launchpadV1)
-		caller        address
-		expectedPanic bool
-		expectedError string
-	}{
-		{
-			name: "valid - caller owns at least one project",
-			setupProjects: func(cur realm, lp *launchpadV1) {
-				project := launchpad.NewProject(
-					"Test Project",
-					"gno.land/r/demo/token",
-					1000000,
-					projectOwner,
-					100,
-					time.Now().Unix(),
-				)
-				projects := lp.store.GetProjects()
-				projects.Set(project.ID(), project)
-				// Register project owner in gov/staker (call from launchpad realm)
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-				gov_staker.SetAmountByProjectWallet(cross(cur), projectOwner, 1, true)
-			},
-			caller:        projectOwner,
-			expectedPanic: false,
-		},
-		{
-			name: "panic when caller owns no project",
-			setupProjects: func(cur realm, lp *launchpadV1) {
-				project := launchpad.NewProject(
-					"Test Project",
-					"gno.land/r/demo/token",
-					1000000,
-					projectOwner,
-					100,
-					time.Now().Unix(),
-				)
-				projects := lp.store.GetProjects()
-				projects.Set(project.ID(), project)
-			},
-			caller:        otherUser,
-			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-014",
-		},
-		{
-			name: "panic when projects tree is empty",
-			setupProjects: func(cur realm, lp *launchpadV1) {
-				// Don't add any projects
-			},
-			caller:        otherUser,
-			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-014",
-		},
-		{
-			name: "valid - caller owns one of multiple projects",
-			setupProjects: func(cur realm, lp *launchpadV1) {
-				projects := lp.store.GetProjects()
+	uassert.PanicsContains(t, cur, "GNOSWAP-LAUNCHPAD-014", func() {
+		lp.assertHasProject(recipient)
+	})
 
-				// Add project owned by someone else
-				project1 := launchpad.NewProject(
-					"Other Project",
-					"gno.land/r/demo/token1",
-					1000000,
-					otherUser,
-					100,
-					time.Now().Unix(),
-				)
-				projects.Set(project1.ID(), project1)
-
-				// Add project owned by caller
-				project2 := launchpad.NewProject(
-					"My Project",
-					"gno.land/r/demo/token2",
-					1000000,
-					projectOwner,
-					101,
-					time.Now().Unix(),
-				)
-				projects.Set(project2.ID(), project2)
-
-				// Register both project owners in gov/staker (call from launchpad realm)
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/launchpad"))
-				gov_staker.SetAmountByProjectWallet(cross(cur), otherUser, 1, true)
-				gov_staker.SetAmountByProjectWallet(cross(cur), projectOwner, 1, true)
-			},
-			caller:        projectOwner,
-			expectedPanic: false,
-		},
-		{
-			name: "panic when multiple projects exist but caller owns none",
-			setupProjects: func(cur realm, lp *launchpadV1) {
-				projects := lp.store.GetProjects()
-
-				// Add multiple projects owned by others
-				for i := 0; i < 3; i++ {
-					project := launchpad.NewProject(
-						"Other Project",
-						"gno.land/r/demo/token",
-						1000000,
-						otherUser,
-						int64(100+i),
-						time.Now().Unix(),
-					)
-					projects.Set(project.ID(), project)
-				}
-			},
-			caller:        nonProjectOwner,
-			expectedPanic: true,
-			expectedError: "GNOSWAP-LAUNCHPAD-014",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// given
-			resetTestStore()
-			lp := getTestImplementation()
-			tt.setupProjects(cur, lp)
-
-			// when & then
-			if tt.expectedPanic {
-				uassert.PanicsContains(t, cur, tt.expectedError, func() {
-					lp.assertHasProject(tt.caller)
-				})
-				return
-			}
-
-			lp.assertHasProject(tt.caller)
+	// Creating another project for the same recipient must preserve membership.
+	for _, cfg := range []testProjectConfig{
+		{name: "First", recipientSuffix: "project_owner", rewardAmount: 1000000, tier30Pct: 100},
+		{name: "Shared recipient", recipientSuffix: "project_owner", rewardAmount: 1000000, tier30Pct: 100},
+		{name: "Other recipient", recipientSuffix: "other_owner", rewardAmount: 1000000, tier30Pct: 100},
+	} {
+		createTestProject(cur, t, lp, launchpadAddr, adminRealm, cfg)
+		// Reinitializing an implementation must not clear existing recipients.
+		uassert.NoError(t, initStoreData(0, cur, lp.store))
+		lp.assertHasProject(recipient)
+		uassert.PanicsContains(t, cur, "GNOSWAP-LAUNCHPAD-014", func() {
+			lp.assertHasProject(outsider)
 		})
 	}
+	lp.assertHasProject(otherRecipient)
 }

@@ -5,14 +5,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 
 	"gno.land/r/gnoswap/access"
 
@@ -27,6 +27,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -60,7 +61,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
 	poolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100"
@@ -107,6 +108,7 @@ func main(cur realm) {
 
 	println("[SCENARIO] 10. Collect external reward after returning to in-range")
 	collectExternalRewardAfterReturningInRange(cur)
+	println()
 }
 
 func initAndSetup(cur realm) {
@@ -145,14 +147,14 @@ func createExternalIncentive(cur realm) {
 		poolPath,
 		barPath,
 		90_000_000_000, // 90 billion bar tokens for 90 days
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	ufmt.Printf("[INFO] external incentive created - reward per block: ~1000000000\n")
 
 	// Make external incentives start
-	leftHeight := 978 - runtime.ChainHeight()
+	leftHeight := 35538 - runtime.ChainHeight()
 	if leftHeight > 0 {
 		testing.SkipHeights(leftHeight + 5) // skip 5 blocks more
 	}
@@ -188,7 +190,7 @@ func mintNarrowRangePosition(cur realm) {
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
 	// Check current pool tick
-	currentTick := pl.GetSlot0Tick(poolPath)
+	currentTick, _ := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] current pool tick: %d\n", currentTick)
 	ufmt.Printf("[INFO] position range: -50 to 50\n")
 
@@ -209,7 +211,7 @@ func stakePositionAndVerifyInRange(cur realm) {
 	ufmt.Printf("[EXPECTED] position staked successfully\n")
 
 	// Verify position is in-range
-	currentTick := pl.GetSlot0Tick(poolPath)
+	currentTick, _ := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] current tick after staking: %d\n", currentTick)
 
 	if currentTick < -50 || currentTick > 50 {
@@ -240,6 +242,16 @@ func collectExternalRewardWhileInRange(cur realm) {
 	println("[INFO] confirmed: external rewards distributed while position is in-range")
 }
 
+// lowerTerminalLimit matches the router's default forward limit for fee=100:
+// sqrtRatioAtTick(minTick+1) + 1, i.e. the price at the lower terminal tick.
+// The terminal-driving swap intentionally consumes less input than requested,
+// so it must set an explicit sqrtPriceLimitX96: without one the router now
+// reverts on any exact-in swap that cannot consume the full input.
+func lowerTerminalLimit() string {
+	limit := gnsmath.TickMathGetSqrtRatioAtTick(-887271)
+	return new(u256.Uint).Add(limit, u256.One()).ToString()
+}
+
 func performSwapToMovePrice(cur realm) {
 	testing.SetRealm(adminRealm)
 
@@ -248,51 +260,51 @@ func performSwapToMovePrice(cur realm) {
 	baz.Approve(cross(cur), routerAddr, maxInt64)
 
 	// Check current tick before swap
-	currentTickBefore := pl.GetSlot0Tick(poolPath)
+	currentTickBefore, _ := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] tick before swap: %d\n", currentTickBefore)
 
 	println("[INFO] perform large swap to move price out of range")
 	// Swap a large amount to move the tick significantly
 	swapAmount := "100000"
 
-	println("[INFO] swap bar for baz to move tick up")
-	_, amountOut := rt.ExactInSwapRoute(
+	println("[INFO] swap bar for baz with explicit price limit")
+	amountIn, amountOut := rt.ExactInSingleSwapRoute(
 		cross(cur),
 		barPath,
 		bazPath,
 		swapAmount,
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
-		"100",
 		"0",
+		lowerTerminalLimit(),
 		maxTimeout,
 		"",
 	)
 
-	ufmt.Printf("[INFO] swapped %s bar for %s baz\n", swapAmount, amountOut)
+	ufmt.Printf("[INFO] swapped %s bar for %s baz\n", amountIn, amountOut)
 
 	// Check tick after swap
-	currentTickAfter := pl.GetSlot0Tick(poolPath)
+	currentTickAfter, _ := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[EXPECTED] tick after swap: %d\n", currentTickAfter)
 
-	// Position should now be out of range (tick > 50)
-	if currentTickAfter <= 50 {
+	// Position should now be out of range (tick < -50).
+	if currentTickAfter >= -50 {
 		println("[WARNING] swap might not have moved price far enough")
 		// Try another swap to move further
 		println("[INFO] perform additional swap")
 
-		rt.ExactInSwapRoute(
+		rt.ExactInSingleSwapRoute(
 			cross(cur),
 			barPath,
 			bazPath,
 			swapAmount,
 			"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100",
-			"100",
 			"0",
+			lowerTerminalLimit(),
 			maxTimeout,
 			"",
 		)
 
-		finalTick := pl.GetSlot0Tick(poolPath)
+		finalTick, _ := pl.GetSlot0Tick(poolPath)
 		ufmt.Printf("[EXPECTED] final tick after additional swap: %d\n", finalTick)
 	}
 
@@ -324,12 +336,12 @@ func performReverseSwap(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Check current tick before reverse swap
-	currentTickBefore := pl.GetSlot0Tick(poolPath)
+	currentTickBefore, _ := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] tick before reverse swap: %d\n", currentTickBefore)
 
 	println("[INFO] perform reverse swap to move price back into range")
 	// Swap baz for bar to move tick back down
-	reverseSwapAmount := "50000"
+	reverseSwapAmount := "1000"
 
 	println("[INFO] swap baz for bar to move tick down")
 
@@ -350,7 +362,7 @@ func performReverseSwap(cur realm) {
 	ufmt.Printf("[INFO] swapped %s baz for %s bar\n", reverseSwapAmount, amountOut)
 
 	// Check tick after reverse swap
-	currentTickAfter := pl.GetSlot0Tick(poolPath)
+	currentTickAfter, _ := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[EXPECTED] tick after reverse swap: %d\n", currentTickAfter)
 
 	// Position should be back in range (-50 <= tick <= 50)
@@ -379,7 +391,7 @@ func collectExternalRewardAfterReturningInRange(cur realm) {
 	ufmt.Printf("[EXPECTED] external reward after returning to in-range: %d\n", backInRangeReward)
 
 	// Get final tick for verification
-	finalTick := pl.GetSlot0Tick(poolPath)
+	finalTick, _ := pl.GetSlot0Tick(poolPath)
 	ufmt.Printf("[INFO] final tick: %d\n", finalTick)
 
 	if finalTick >= -50 && finalTick <= 50 {
@@ -455,12 +467,9 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] approve tokens for swapping
 // [INFO] tick before swap: 0
 // [INFO] perform large swap to move price out of range
-// [INFO] swap bar for baz to move tick up
-// [INFO] swapped 100000 bar for -9985 baz
+// [INFO] swap bar for baz with explicit price limit
+// [INFO] swapped 10028 bar for 9985 baz
 // [EXPECTED] tick after swap: -887271
-// [WARNING] swap might not have moved price far enough
-// [INFO] perform additional swap
-// [EXPECTED] final tick after additional swap: -887271
 //
 // [SCENARIO] 8. Collect external reward while out-of-range
 // [INFO] skip blocks to accumulate external rewards while out-of-range
@@ -472,16 +481,15 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] tick before reverse swap: -887271
 // [INFO] perform reverse swap to move price back into range
 // [INFO] swap baz for bar to move tick down
-// [INFO] swapped 50000 baz for 0 bar
-// [EXPECTED] tick after reverse swap: -887271
-// [WARNING] position might still be out-of-range
-// [INFO] position range: -50 to 50, current tick: -887271
+// [INFO] swapped 1000 baz for 1002 bar
+// [EXPECTED] tick after reverse swap: -45
+// [INFO] position is back in-range
 //
 // [SCENARIO] 10. Collect external reward after returning to in-range
 // [INFO] skip blocks to accumulate external rewards after returning to in-range
 // [INFO] collect external reward after position returned to in-range
-// [EXPECTED] external reward after returning to in-range: 0
-// [INFO] final tick: -887271
-// [INFO] position is still out-of-range, no external rewards as expected
+// [EXPECTED] external reward after returning to in-range: 190972
+// [INFO] final tick: -45
+// [INFO] confirmed: external rewards resumed when position returned to in-range
 // [INFO] position in-range change by swap (external rewards) scenario completed successfully
 // [INFO] confirmed: external rewards are only distributed when positions are in-range

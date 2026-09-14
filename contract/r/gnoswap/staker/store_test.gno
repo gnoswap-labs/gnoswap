@@ -91,6 +91,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 			if !ss.HasAllowedTokensStoreKey() {
 				ss.SetAllowedTokens(0, cur, []string{})
 			}
+			uassert.NoError(t, ss.SetPendingProtocolFees(0, cur, map[string]int64{"token": 10}))
 
 			testing.SetRealm(tc.callerRealm)
 			if tc.expectedErrorWithRead {
@@ -106,6 +107,25 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
 				uassert.NoError(t, err)
+			}
+
+			err = ss.SetPendingProtocolFee(0, cur, "token", 20)
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+				uassert.Equal(t, int64(10), ss.GetPendingProtocolFee("token"))
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(20), ss.GetPendingProtocolFee("token"))
+			}
+
+			err = ss.RemovePendingProtocolFee(0, cur, "token")
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+				uassert.Equal(t, int64(10), ss.GetPendingProtocolFee("token"))
+			} else {
+				uassert.NoError(t, err)
+				_, exists := ss.GetPendingProtocolFees()["token"]
+				uassert.False(t, exists)
 			}
 		})
 	}
@@ -1007,14 +1027,16 @@ func TestStoreSetAndGetPoolTierGetEmission(cur realm, t *testing.T) {
 		{
 			name: "set and get pool tier get emission successfully",
 			setupFn: func(cur realm, ss IStakerStore) {
-				emissionFunc := func() int64 { return 1000 }
+				emissionFunc := func() (int64, error) { return 1000, nil }
 				ss.SetPoolTierGetEmission(0, cur, emissionFunc)
 			},
 			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
 				uassert.True(t, ss.HasPoolTierGetEmissionStoreKey(), "should have pool tier get emission after setting")
 				retrieved := ss.GetPoolTierGetEmission()
 				uassert.NotEqual(t, nil, retrieved)
-				uassert.Equal(t, int64(1000), retrieved())
+				amount, err := retrieved()
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(1000), amount)
 			},
 		},
 		{
@@ -1065,8 +1087,8 @@ func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(cur realm, t *testing.T) 
 		{
 			name: "set and get pool tier get halving blocks in range successfully",
 			setupFn: func(cur realm, ss IStakerStore) {
-				halvingFunc := func(start, end int64) ([]int64, []int64) {
-					return []int64{100, 200}, []int64{10, 20}
+				halvingFunc := func(start, end int64) ([]int64, []int64, error) {
+					return []int64{100, 200}, []int64{10, 20}, nil
 				}
 				ss.SetPoolTierGetHalvingBlocksInRange(0, cur, halvingFunc)
 			},
@@ -1075,7 +1097,8 @@ func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(cur realm, t *testing.T) 
 				retrieved := ss.GetPoolTierGetHalvingBlocksInRange()
 				uassert.NotEqual(t, nil, retrieved)
 
-				blocks, heights := retrieved(0, 1000)
+				blocks, heights, err := retrieved(0, 1000)
+				uassert.NoError(t, err)
 				uassert.Equal(t, 2, len(blocks))
 				uassert.Equal(t, 2, len(heights))
 				uassert.Equal(t, int64(100), blocks[0])
@@ -1212,63 +1235,6 @@ func TestStoreSetAndGetCurrentSwapBatch(cur realm, t *testing.T) {
 			},
 			shouldPanic:  true,
 			panicMessage: "should panic when getting uninitialized current swap batch",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
-
-			if tt.setupFn != nil {
-				tt.setupFn(cur, ss)
-			}
-
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
-
-			tt.testFn(cur, t, ss)
-		})
-	}
-}
-
-func TestStoreSetAndGetExternalIncentivesByCreationTime(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(cur realm, ss IStakerStore)
-		testFn       func(cur realm, t *testing.T, ss IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get external incentives by creation time successfully",
-			setupFn: func(cur realm, ss IStakerStore) {
-				tree := NewUintTree()
-				ss.SetExternalIncentivesByCreationTime(0, cur, tree)
-			},
-			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasExternalIncentivesByCreationTimeStoreKey(), "should have external incentives by creation time after setting")
-				retrieved := ss.GetExternalIncentivesByCreationTime()
-				uassert.NotEqual(t, nil, retrieved)
-			},
-		},
-		{
-			name: "should not have external incentives by creation time initially",
-			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasExternalIncentivesByCreationTimeStoreKey(), "should not have external incentives by creation time initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized external incentives by creation time",
-			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
-				ss.GetExternalIncentivesByCreationTime()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized external incentives by creation time",
 		},
 	}
 

@@ -21,6 +21,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -45,8 +47,8 @@ func testNoRetroactiveApplication(cur realm) {
 		cross(cur),
 		5000, // liquidityStakerPct
 		5000, // devOpsPct
-		0, // communityPoolPct
-		0, // govStakerPct
+		0,    // communityPoolPct
+		0,    // govStakerPct
 	)
 	println("[INFO] distribution ratio set to 50/50 (Staker/DevOps)")
 	println()
@@ -54,6 +56,7 @@ func testNoRetroactiveApplication(cur realm) {
 	println("[SCENARIO] 2. Set distribution start time")
 	now := time.Now().Unix()
 	distributionStartTime := now + 1
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), distributionStartTime)
 	println("[INFO] initial distribution: Staker=0, DevOps=0")
 	println()
@@ -80,8 +83,8 @@ func testNoRetroactiveApplication(cur realm) {
 		cross(cur),
 		8000, // liquidityStakerPct
 		2000, // devOpsPct
-		0, // communityPoolPct
-		0, // govStakerPct
+		0,    // communityPoolPct
+		0,    // govStakerPct
 	)
 
 	println("[INFO] distributed: Staker=15410958480000, DevOps=15410958480000, Community=0, Gov=0")

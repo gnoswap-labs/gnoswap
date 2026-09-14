@@ -6,6 +6,9 @@ import (
 	"errors"
 	"time"
 
+	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/r/gnoswap/access"
+
 	"gno.land/p/gnoswap/utils"
 
 	"gno.land/r/gnoswap/common"
@@ -39,11 +42,10 @@ import (
 //
 // Returns:
 //   - proposalID: ID of the executed proposal
+//
 // Callable by anyone once proposal is executable.
 func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	// Check if execution is allowed (system not halted for execution)
 	halt.AssertIsNotHaltedGovernance()
@@ -66,6 +68,9 @@ func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 		caller,
 	)
 	if err != nil {
+		panic(err)
+	}
+	if err := gv.removeActiveProposal(0, rlm, proposal); err != nil {
 		panic(err)
 	}
 
@@ -154,11 +159,10 @@ func (gv *governanceV1) executeProposal(
 //
 // Returns:
 //   - proposalID: ID of the cancelled proposal
+//
 // Only callable by original proposer before voting begins.
 func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedGovernance()
 
@@ -178,6 +182,9 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 	if err != nil {
 		panic(err)
 	}
+	if err := gv.removeActiveProposal(0, rlm, proposal); err != nil {
+		panic(err)
+	}
 
 	// Emit cancellation event for tracking
 	chain.Emit(
@@ -188,6 +195,33 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 	)
 
 	return proposal.ID()
+}
+
+// RemoveInactiveProposalFromIndex removes one inactive proposal from the
+// snapshot index without deleting its proposal or voting history.
+func (gv *governanceV1) RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedGovernance()
+
+	proposal, exists := gv.getProposal(proposalID)
+	if !exists {
+		panic(makeErrorWithDetails(errProposalNotFound, ufmt.Sprintf("proposalID: %d", proposalID)))
+	}
+	if NewProposalResolver(proposal).IsActive(time.Now().Unix()) {
+		panic(makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("proposal %d is still active", proposalID)))
+	}
+	if err := gv.removeActiveProposal(0, rlm, proposal); err != nil {
+		panic(err)
+	}
+
+	prev := rlm.Previous()
+	chain.Emit(
+		"RemoveInactiveProposalFromIndex",
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
+		"proposalId", utils.FormatInt(proposalID),
+	)
 }
 
 // cancel handles core logic of proposal cancellation.

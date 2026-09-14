@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -401,35 +402,6 @@ func TestCacheRewardPool(cur realm, t *testing.T) {
 	}
 }
 
-// Test cacheInternalReward
-func TestCacheInternalReward(cur realm, t *testing.T) {
-	tests := []struct {
-		name            string
-		poolPath        string
-		currentTime     int64
-		currentEmission int64
-	}{
-		{
-			name:            "cache internal reward",
-			poolPath:        "test_pool",
-			currentTime:     1000,
-			currentEmission: 10000,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			pool := sr.NewPool(tt.poolPath, tt.currentTime)
-			poolResolver := NewPoolResolver(pool)
-
-			poolResolver.cacheInternalReward(tt.currentTime, tt.currentEmission)
-
-			reward := poolResolver.CurrentReward(tt.currentTime)
-			uassert.Equal(t, tt.currentEmission, reward)
-		})
-	}
-}
-
 // Test calculateGlobalRewardRatioAccumulation
 func TestCalculateGlobalRewardRatioAccumulation(cur realm, t *testing.T) {
 	tests := []struct {
@@ -628,15 +600,15 @@ func TestIsExternallyIncentivizedPool(cur realm, t *testing.T) {
 	}
 }
 
-// Test TickResolver
-func TestTickResolver(cur realm, t *testing.T) {
+// Test GetOrNewTick
+func TestGetOrNewTick(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
 		poolPath string
 		tickId   int32
 	}{
 		{
-			name:     "get tick resolver",
+			name:     "get or new tick",
 			poolPath: "test_pool",
 			tickId:   0,
 		},
@@ -648,8 +620,10 @@ func TestTickResolver(cur realm, t *testing.T) {
 			pool := sr.NewPool(tt.poolPath, currentTime)
 			poolResolver := NewPoolResolver(pool)
 
-			tickResolver := poolResolver.TickResolver(tt.tickId)
+			tickResolver := NewTickResolver(poolResolver.GetOrNewTick(tt.tickId))
 			uassert.NotNil(t, tickResolver)
+			// Does not insert a missing tick.
+			uassert.False(t, pool.Ticks().Has(tt.tickId))
 		})
 	}
 }
@@ -683,6 +657,27 @@ func TestRewardStateApplyWarmup(cur realm, t *testing.T) {
 			warmupRatios:      []uint64{30},
 			expectedRewards:   []int64{300},
 			expectedPenalties: []int64{700},
+		},
+		{
+			name:              "apply 100% warmup without intermediate overflow",
+			rewards:           []int64{math.MaxInt64},
+			warmupRatios:      []uint64{100},
+			expectedRewards:   []int64{math.MaxInt64},
+			expectedPenalties: []int64{0},
+		},
+		{
+			name:              "apply 50% warmup without intermediate overflow",
+			rewards:           []int64{math.MaxInt64},
+			warmupRatios:      []uint64{50},
+			expectedRewards:   []int64{math.MaxInt64 / 2},
+			expectedPenalties: []int64{math.MaxInt64 - math.MaxInt64/2},
+		},
+		{
+			name:              "apply 100% warmup above int64 multiplication threshold",
+			rewards:           []int64{math.MaxInt64/100 + 1},
+			warmupRatios:      []uint64{100},
+			expectedRewards:   []int64{math.MaxInt64/100 + 1},
+			expectedPenalties: []int64{0},
 		},
 	}
 
@@ -975,7 +970,8 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 			makePoolWithHistory := func(poolPath string, history []struct {
 				at   int64
 				tick int32
-			}) *PoolResolver {
+			},
+			) *PoolResolver {
 				pool := sr.NewPool(poolPath, tt.startTime)
 				resolver := NewPoolResolver(pool)
 
@@ -991,9 +987,6 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 					pool.SetHistoricalTickAt(h.at, h.tick)
 				}
 
-				// Ensure boundary ticks exist with zero outside accumulation.
-				pool.Ticks().Get(-10)
-				pool.Ticks().Get(10)
 				return resolver
 			}
 
@@ -1018,8 +1011,10 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 			)
 
 			// 2) Reward calculation equivalence.
-			compactRewards, compactPenalties := compactResolver.RewardStateOf(deposit).calculateInternalReward(tt.startTime, tt.endTime)
-			denseRewards, densePenalties := denseResolver.RewardStateOf(deposit).calculateInternalReward(tt.startTime, tt.endTime)
+			// The per-second rate is constant across the window; only the historical tick density differs.
+			segments := []internalRewardSegment{{start: tt.startTime, end: tt.endTime, rewardPerSecond: tt.rewardPerSecond}}
+			compactRewards, compactPenalties := compactResolver.RewardStateOf(deposit).calculateInternalReward(segments)
+			denseRewards, densePenalties := denseResolver.RewardStateOf(deposit).calculateInternalReward(segments)
 
 			uassert.Equal(t, len(compactRewards), len(denseRewards))
 			for i := range compactRewards {

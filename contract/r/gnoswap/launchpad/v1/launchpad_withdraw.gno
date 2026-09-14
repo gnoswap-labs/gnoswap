@@ -26,6 +26,7 @@ import (
 // Returns:
 //   - amount: original GNS deposit amount returned to the depositor
 //   - err: non-nil for a spoofed-realm call; other withdrawal failures panic before returning
+//
 // Only callable by deposit owner after tier lock period ends.
 func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (int64, error) {
 	if !rlm.IsCurrent() {
@@ -69,7 +70,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 
 	// Transfer reward token to depositor
 	if rewardAmount > 0 {
-		common.SafeGRC20Transfer(cross(rlm), rewardTokenPath, deposit.Depositor(), rewardAmount)
+		common.SafeGRC20Transfer(0, rlm, rewardTokenPath, deposit.Depositor(), rewardAmount)
 
 		chain.Emit(
 			"CollectRewardByDepositId",
@@ -82,7 +83,7 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 	}
 
 	// Transfer the original GNS deposit back to the depositor
-	common.SafeGRC20Transfer(cross(rlm), GNS_TOKEN_KEY, deposit.Depositor(), withdrawalAmount)
+	common.SafeGRC20Transfer(0, rlm, GNS_TOKEN_KEY, deposit.Depositor(), withdrawalAmount)
 
 	chain.Emit(
 		"CollectDepositGns",
@@ -99,12 +100,8 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 }
 
 // withdrawDeposit withdraws a deposit and updates the reward manager.
-func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
+func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
 	// Input validation
-	if deposit == nil {
-		return "", 0, makeErrorWithDetails(errNotExistDeposit, "deposit is nil")
-	}
-
 	if currentTime <= 0 {
 		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}
@@ -146,14 +143,14 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Depo
 	project.SetTier(deposit.Tier(), projectTier)
 
 	// Finalize withdrawal
-	withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
+	deposit, withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
 
-	// Remove reward state from BPTree after withdrawal
-	// This improves iteration performance for calculateClaimableRewardsForActiveDeposits
-	// and prevents accessing reward state for already withdrawn deposits
-	removeRewardState(rewardManager, deposit.ID())
+	// Remove the reward state and its reserved active claim after withdrawal.
+	if err := removeRewardState(rewardManager, deposit.ID()); err != nil {
+		return "", 0, err
+	}
 
-	// Store updated deposit in state
+	// Persist the updated value; the caller's deposit value is unchanged.
 	deposits := lp.store.GetDeposits()
 	deposits.Set(deposit.ID(), deposit)
 

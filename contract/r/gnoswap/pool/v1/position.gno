@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"errors"
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
@@ -110,47 +111,6 @@ func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityD
 	return gnsmath.GetAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
-// PositionLiquidity returns the liquidity of a position.
-func PositionLiquidity(p *pl.Pool, key string) string {
-	return mustGetPositionByPool(p, key).Liquidity()
-}
-
-// PositionFeeGrowthInside0LastX128 returns the fee growth of token0 inside a position.
-func PositionFeeGrowthInside0LastX128(p *pl.Pool, key string) string {
-	return mustGetPositionByPool(p, key).FeeGrowthInside0LastX128()
-}
-
-// PositionFeeGrowthInside1LastX128 returns the fee growth of token1 inside a position.
-func PositionFeeGrowthInside1LastX128(p *pl.Pool, key string) string {
-	return mustGetPositionByPool(p, key).FeeGrowthInside1LastX128()
-}
-
-// PositionTokensOwed0 returns the amount of token0 owed by a position.
-func PositionTokensOwed0(p *pl.Pool, key string) int64 {
-	return mustGetPositionByPool(p, key).TokensOwed0()
-}
-
-// PositionTokensOwed1 returns the amount of token1 owed by a position.
-func PositionTokensOwed1(p *pl.Pool, key string) int64 {
-	return mustGetPositionByPool(p, key).TokensOwed1()
-}
-
-// GetPosition returns the position info for a given key.
-func GetPositionByPool(p *pl.Pool, key string) (pl.PositionInfo, bool) {
-	iPositionInfo := p.Positions().Get(key)
-	if iPositionInfo == nil {
-		newPosition := pl.NewDefaultPositionInfo()
-		return newPosition, false
-	}
-
-	positionInfo, ok := iPositionInfo.(pl.PositionInfo)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast iPositionInfo to PositionInfo: %T", iPositionInfo))
-	}
-
-	return positionInfo, true
-}
-
 // positionUpdateWithKey updates a position in the pool and returns the updated position.
 func positionUpdateWithKey(
 	p *pl.Pool,
@@ -162,7 +122,11 @@ func positionUpdateWithKey(
 	//
 	// Note: The positionUpdate function is designed to handle both new positions and existing positions,
 	// so there's no need to check for existence in GetPosition.
-	positionToUpdate, _ := GetPositionByPool(p, positionKey)
+	positionToUpdate, err := p.GetPosition(positionKey)
+	if err != nil {
+		positionToUpdate = pl.NewDefaultPositionInfo()
+	}
+
 	positionAfterUpdate, err := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	if err != nil {
 		return pl.NewDefaultPositionInfo(), err
@@ -176,19 +140,6 @@ func positionUpdateWithKey(
 // setPosition sets the position info for a given key.
 func setPosition(p *pl.Pool, posKey string, positionInfo pl.PositionInfo) {
 	p.SetPosition(posKey, positionInfo)
-}
-
-// mustGetPosition returns the position info for a given key.
-func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
-	positionInfo, exist := GetPositionByPool(p, positionKey)
-	if !exist {
-		panic(newErrorWithDetail(
-			errDataNotFound,
-			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
-		))
-	}
-
-	return &positionInfo
 }
 
 // modifyPosition updates a position in the pool and calculates the amount of tokens
@@ -207,7 +158,7 @@ func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
 //   - PositionInfo: updated position information
 //   - *u256.Uint: amount of token0 needed/returned
 //   - *u256.Uint: amount of token1 needed/returned
-func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *u256.Uint, *u256.Uint, error) {
+func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyPositionParams) (pl.PositionInfo, *u256.Uint, *u256.Uint, error) {
 	if err := validateTicks(params.tickLower, params.tickUpper); err != nil {
 		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
@@ -215,7 +166,7 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 	// get current state and price bounds
 	tick := p.Slot0Tick()
 	// update position state
-	position, err := updatePosition(p, params, tick)
+	position, err := updatePosition(p, observations, params, tick)
 	if err != nil {
 		return pl.NewDefaultPositionInfo(), zero, zero, err
 	}
@@ -246,12 +197,26 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 		// case 2: Current price is within the position range
 		liquidityBefore := p.Liquidity()
 		currentTime := time.Now().Unix()
-
 		// Update oracle BEFORE liquidity changes
-		err := writeObservationByPool(p, currentTime, tick, liquidityBefore)
+		if observations == nil {
+			return pl.NewDefaultPositionInfo(), zero, zero, errors.New("observations not initialized")
+		}
+		slot0 := p.Slot0()
+		observationIndex, observationCardinality, err := writeObservation(
+			observations,
+			slot0.ObservationIndex(),
+			currentTime,
+			tick,
+			liquidityBefore,
+			slot0.ObservationCardinality(),
+			slot0.ObservationCardinalityNext(),
+		)
 		if err != nil {
 			return pl.NewDefaultPositionInfo(), zero, zero, err
 		}
+		slot0.SetObservationIndex(observationIndex)
+		slot0.SetObservationCardinality(observationCardinality)
+		p.SetSlot0(slot0)
 
 		// token0 used from current price to upper tick
 		amount0 = calculateToken0Amount(sqrtPriceX96, sqrtRatioUpper, liqDelta)
@@ -309,13 +274,33 @@ func modifyPosition(p *pl.Pool, params ModifyPositionParams) (pl.PositionInfo, *
 //	println("Updated Position Info:", updatedPosition)
 //
 // ```
-func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {
+func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {
 	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128().Clone()
 	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128().Clone()
 	liquidityDelta := positionParams.liquidityDelta
 
 	var flippedLower, flippedUpper bool
 	if !liquidityDelta.IsZero() {
+		blockTimestamp := time.Now().Unix()
+		if observations == nil {
+			return pl.NewDefaultPositionInfo(), errors.New("observations not initialized")
+		}
+		slot0 := p.Slot0()
+		tickCumulative, secondsPerLiquidityStr, err := observeSingle(
+			observations,
+			blockTimestamp,
+			0,
+			slot0.Tick(),
+			slot0.ObservationIndex(),
+			p.Liquidity(),
+			slot0.ObservationCardinality(),
+		)
+		if err != nil {
+			return pl.NewDefaultPositionInfo(), err
+		}
+
+		secondsPerLiquidityCumulativeX128 := u256.MustFromDecimal(secondsPerLiquidityStr)
+
 		flippedLower = tickUpdate(
 			p,
 			positionParams.tickLower,
@@ -323,6 +308,9 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 			liquidityDelta,
 			feeGrowthGlobal0X128,
 			feeGrowthGlobal1X128,
+			secondsPerLiquidityCumulativeX128,
+			tickCumulative,
+			blockTimestamp,
 			false,
 			calculateMaxLiquidityPerTick(p.TickSpacing()),
 		)
@@ -334,6 +322,9 @@ func updatePosition(p *pl.Pool, positionParams ModifyPositionParams, tick int32)
 			liquidityDelta,
 			feeGrowthGlobal0X128,
 			feeGrowthGlobal1X128,
+			secondsPerLiquidityCumulativeX128,
+			tickCumulative,
+			blockTimestamp,
 			true,
 			calculateMaxLiquidityPerTick(p.TickSpacing()),
 		)

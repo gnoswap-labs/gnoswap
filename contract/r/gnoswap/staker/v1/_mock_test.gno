@@ -3,8 +3,10 @@ package staker
 import (
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/r/gnoswap/access"
+
 	bptree "gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"
@@ -18,21 +20,23 @@ type MockStakerStore struct {
 	externalIncentives               *bptree.BPTree
 	totalEmissionSent                int64
 	allowedTokens                    []string
+	deniedRewardTokens               []string
 	incentiveCounter                 *sr.Counter
 	tokenSpecificMinimumRewards      map[string]int64
 	unstakingFee                     uint64
 	pendingProtocolFees              map[string]int64
+	unstakedPositions                *bptree.BPTree
+	uncollectedIncentiveCounts       *bptree.BPTree
 	pools                            *bptree.BPTree
 	poolTierMemberships              *bptree.BPTree
 	poolTierRatio                    sr.TierRatio
 	poolTierCounts                   [sr.AllTierCount]uint64
 	poolTierLastRewardCacheTimestamp int64
 	poolTierCurrentEmission          int64
-	poolTierGetEmission              func() int64
-	poolTierGetHalvingBlocksInRange  func(start, end int64) ([]int64, []int64)
+	poolTierGetEmission              func() (int64, error)
+	poolTierGetHalvingBlocksInRange  func(start, end int64) ([]int64, []int64, error)
 	warmupTemplate                   []sr.Warmup
 	currentSwapBatch                 *sr.SwapBatchProcessor
-	externalIncentivesByCreationTime *sr.UintTree
 }
 
 // DepositGnsAmount
@@ -139,6 +143,35 @@ func (s *MockStakerStore) RemoveAllowedToken(_ int, rlm realm, tokenPath string)
 	return nil
 }
 
+// DeniedRewardTokens
+func (s *MockStakerStore) HasDeniedRewardTokensStoreKey() bool {
+	return s.deniedRewardTokens != nil
+}
+
+func (s *MockStakerStore) GetDeniedRewardTokens() []string {
+	return s.deniedRewardTokens
+}
+
+func (s *MockStakerStore) AddDeniedRewardToken(_ int, rlm realm, tokenPath string) error {
+	if contains(s.deniedRewardTokens, tokenPath) {
+		return nil
+	}
+
+	s.deniedRewardTokens = append(s.deniedRewardTokens, tokenPath)
+	return nil
+}
+
+func (s *MockStakerStore) RemoveDeniedRewardToken(_ int, rlm realm, tokenPath string) error {
+	for i, token := range s.deniedRewardTokens {
+		if token == tokenPath {
+			s.deniedRewardTokens = append(s.deniedRewardTokens[:i], s.deniedRewardTokens[i+1:]...)
+			break
+		}
+	}
+
+	return nil
+}
+
 // IncentiveCounter
 func (s *MockStakerStore) HasIncentiveCounterStoreKey() bool {
 	return s.incentiveCounter != nil
@@ -209,6 +242,48 @@ func (s *MockStakerStore) GetPendingProtocolFees() map[string]int64 {
 
 func (s *MockStakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
 	s.pendingProtocolFees = fees
+	return nil
+}
+
+// UnstakedPositions
+func (s *MockStakerStore) HasUnstakedPositionsStoreKey() bool {
+	return s.unstakedPositions != nil
+}
+
+func (s *MockStakerStore) GetUnstakedPositions() *bptree.BPTree {
+	return s.unstakedPositions
+}
+
+func (s *MockStakerStore) SetUnstakedPositions(_ int, rlm realm, positions *bptree.BPTree) error {
+	s.unstakedPositions = positions
+	return nil
+}
+
+// UncollectedIncentiveCounts
+func (s *MockStakerStore) HasUncollectedIncentiveCountsStoreKey() bool {
+	return s.uncollectedIncentiveCounts != nil
+}
+
+func (s *MockStakerStore) GetUncollectedIncentiveCounts() *bptree.BPTree {
+	return s.uncollectedIncentiveCounts
+}
+
+func (s *MockStakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error {
+	s.uncollectedIncentiveCounts = counts
+	return nil
+}
+
+func (s *MockStakerStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.pendingProtocolFees[tokenPath]
+}
+
+func (s *MockStakerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	s.pendingProtocolFees[tokenPath] = amount
+	return nil
+}
+
+func (s *MockStakerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(s.pendingProtocolFees, tokenPath)
 	return nil
 }
 
@@ -301,11 +376,11 @@ func (s *MockStakerStore) HasPoolTierGetEmissionStoreKey() bool {
 	return s.poolTierGetEmission != nil
 }
 
-func (s *MockStakerStore) GetPoolTierGetEmission() func() int64 {
+func (s *MockStakerStore) GetPoolTierGetEmission() func() (int64, error) {
 	return s.poolTierGetEmission
 }
 
-func (s *MockStakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() int64) error {
+func (s *MockStakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() (int64, error)) error {
 	s.poolTierGetEmission = fn
 	return nil
 }
@@ -315,11 +390,11 @@ func (s *MockStakerStore) HasPoolTierGetHalvingBlocksInRangeStoreKey() bool {
 	return s.poolTierGetHalvingBlocksInRange != nil
 }
 
-func (s *MockStakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64) {
+func (s *MockStakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64, error) {
 	return s.poolTierGetHalvingBlocksInRange
 }
 
-func (s *MockStakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64)) error {
+func (s *MockStakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64, error)) error {
 	s.poolTierGetHalvingBlocksInRange = fn
 	return nil
 }
@@ -352,25 +427,11 @@ func (s *MockStakerStore) SetCurrentSwapBatch(_ int, rlm realm, batch *sr.SwapBa
 	return nil
 }
 
-// ExternalIncentivesByCreationTime
-func (s *MockStakerStore) HasExternalIncentivesByCreationTimeStoreKey() bool {
-	return s.externalIncentivesByCreationTime != nil
-}
-
-func (s *MockStakerStore) GetExternalIncentivesByCreationTime() *sr.UintTree {
-	return s.externalIncentivesByCreationTime
-}
-
-func (s *MockStakerStore) SetExternalIncentivesByCreationTime(_ int, rlm realm, tree *sr.UintTree) error {
-	s.externalIncentivesByCreationTime = tree
-	return nil
-}
-
 func newMockStakerStore() *MockStakerStore {
 	swapBatch := sr.NewSwapBatchProcessor("", nil, 0)
 	swapBatch.SetIsActive(false)
 	return &MockStakerStore{
-		depositGnsAmount:                 1_000_000_000,
+		depositGnsAmount:                 100_000_000_000,
 		minimumRewardAmount:              1_000_000_000,
 		deposits:                         sr.NewBPTreeN(16),
 		externalIncentives:               sr.NewBPTreeN(16),
@@ -380,17 +441,18 @@ func newMockStakerStore() *MockStakerStore {
 		tokenSpecificMinimumRewards:      make(map[string]int64),
 		unstakingFee:                     0,
 		pendingProtocolFees:              make(map[string]int64),
+		unstakedPositions:                sr.NewBPTreeN(16),
+		uncollectedIncentiveCounts:       sr.NewBPTreeN(16),
 		pools:                            sr.NewBPTreeN(16),
 		poolTierMemberships:              sr.NewBPTreeN(16),
 		poolTierRatio:                    sr.NewTierRatio(0, 0, 0),
 		poolTierCounts:                   [sr.AllTierCount]uint64{},
 		poolTierLastRewardCacheTimestamp: 0,
 		poolTierCurrentEmission:          0,
-		poolTierGetEmission:              func() int64 { return 0 },
-		poolTierGetHalvingBlocksInRange:  func(start, end int64) ([]int64, []int64) { return nil, nil },
+		poolTierGetEmission:              func() (int64, error) { return 0, nil },
+		poolTierGetHalvingBlocksInRange:  func(start, end int64) ([]int64, []int64, error) { return nil, nil, nil },
 		warmupTemplate:                   sr.DefaultWarmupTemplate(),
 		currentSwapBatch:                 swapBatch,
-		externalIncentivesByCreationTime: sr.NewUintTree(),
 	}
 }
 
@@ -403,18 +465,24 @@ func (p *mockPoolAccessor) ExistsPoolPath(poolPath string) bool {
 
 func (p *mockPoolAccessor) GetSlot0Tick(poolPath string) int32 {
 	testing.SetRealm(adminRealm)
-	return pool.GetSlot0Tick(poolPath)
+	tick, err := pool.GetSlot0Tick(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	return tick
 }
 
 func (p *mockPoolAccessor) GetSlot0SqrtPriceX96(poolPath string) string {
 	testing.SetRealm(adminRealm)
-	return pool.GetSlot0SqrtPriceX96(poolPath)
+	sqrtPriceX96, err := pool.GetSlot0SqrtPriceX96(poolPath)
+	if err != nil {
+		panic(err)
+	}
+	return sqrtPriceX96
 }
 
 func (p *mockPoolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	pool.SetTickCrossHook(cross(rlm), func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 		hook(0, cur, poolPath, tickId, zeroForOne, timestamp)
@@ -422,9 +490,7 @@ func (p *mockPoolAccessor) SetTickCrossHook(_ int, rlm realm, hook func(_ int, r
 }
 
 func (p *mockPoolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string, timestamp int64)) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	pool.SetSwapStartHook(cross(rlm), func(cur realm, poolPath string, timestamp int64) {
 		hook(0, cur, poolPath, timestamp)
@@ -432,9 +498,7 @@ func (p *mockPoolAccessor) SetSwapStartHook(_ int, rlm realm, hook func(_ int, r
 }
 
 func (p *mockPoolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(_ int, rlm realm, poolPath string) error) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	pool.SetSwapEndHook(cross(rlm), func(cur realm, poolPath string) error {
 		return hook(0, cur, poolPath)
@@ -448,25 +512,21 @@ func newMockPoolAccessor() sr.PoolAccessor {
 type mockEmissionAccessor struct{}
 
 func (e *mockEmissionAccessor) MintAndDistributeGns(_ int, rlm realm) (int64, bool) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return emission.MintAndDistributeGns(cross(rlm))
 }
 
-func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecond() int64 {
+func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecond() (int64, error) {
 	return emission.GetStakerEmissionAmountPerSecond()
 }
 
-func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64) {
+func (e *mockEmissionAccessor) GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64, error) {
 	return emission.GetStakerEmissionAmountPerSecondInRange(start, end)
 }
 
 func (e *mockEmissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, callback func(_ int, rlm realm, emissionAmountPerSecond int64)) {
-	if !rlm.IsCurrent() {
-		panic(sr.ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	emission.SetOnDistributionPctChangeCallback(cross(rlm), func(cur realm, emissionAmountPerSecond int64) {
 		callback(0, cur, emissionAmountPerSecond)

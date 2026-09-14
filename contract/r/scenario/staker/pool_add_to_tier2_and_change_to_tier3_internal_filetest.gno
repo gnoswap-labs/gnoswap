@@ -5,12 +5,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -26,6 +28,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -95,6 +98,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -344,7 +348,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [SCENARIO] 7. Collect reward with tier 3
 // [INFO] skip blocks to accumulate rewards with tier 3
 // [INFO] collect reward with tier 3
-// [EXPECTED] reward with tier 3: 16053074
+// [EXPECTED] reward with tier 3: 16053075
 // [INFO] tier 3 reward recorded for comparison
 //
 // [SCENARIO] 8. Compare tier rewards

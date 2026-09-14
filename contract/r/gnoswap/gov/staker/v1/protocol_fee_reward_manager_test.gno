@@ -4,744 +4,449 @@ import (
 	"math"
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
+
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-// Test ProtocolFeeRewardManager creation
-func TestNewProtocolFeeRewardManager(cur realm, t *testing.T) {
-	t.Run("Create new protocol fee reward manager", func(cur realm, t *testing.T) {
-		// When: Create new protocol fee reward manager
-		manager := staker.NewProtocolFeeRewardManager()
-		resolver := NewProtocolFeeRewardManagerResolver(manager)
+const (
+	pfTestBar = "gno.land/r/onbloc/bar.BAR"
+	pfTestQux = "gno.land/r/onbloc/qux.QUX"
+)
 
-		// Then: Should initialize with empty values
-		uassert.NotEqual(t, resolver, nil)
-		uassert.Equal(t, resolver.GetAccumulatedTimestamp(), int64(0))
-		uassert.Equal(t, len(resolver.GetAllAccumulatedProtocolFeeX128PerStake()), 0)
-		uassert.Equal(t, len(resolver.GetProtocolFeeAmounts()), 0)
-	})
+func newPfTestManager() *ProtocolFeeRewardManagerResolver {
+	return NewProtocolFeeRewardManagerResolver(staker.NewProtocolFeeRewardManager())
 }
 
-// Test GetAccumulatedProtocolFeeX128PerStake
-func TestProtocolFeeRewardManager_GetAccumulatedProtocolFeeX128PerStake(cur realm, t *testing.T) {
-	tests := []struct {
-		name     string
-		setup    func(*ProtocolFeeRewardManagerResolver)
-		token    string
-		expected string
-	}{
-		{
-			name:     "Get non-existent token",
-			setup:    func(m *ProtocolFeeRewardManagerResolver) {},
-			token:    "token1",
-			expected: "0",
-		},
-		{
-			name: "Get existing token",
-			setup: func(m *ProtocolFeeRewardManagerResolver) {
-				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = u256.NewUintFromInt64(1000)
-				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
-			},
-			token:    "token1",
-			expected: "1000",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward manager
-			manager := staker.NewProtocolFeeRewardManager()
-			resolver := NewProtocolFeeRewardManagerResolver(manager)
-			tt.setup(resolver)
-
-			// When: Get accumulated protocol fee X128 per stake
-			result := resolver.GetAccumulatedProtocolFeeX128PerStake(tt.token)
-
-			// Then: Should return expected value or nil
-			if tt.expected == "0" {
-				if result != nil {
-					uassert.Equal(t, result.ToString(), tt.expected)
-				}
-			} else {
-				uassert.NotEqual(t, result, nil)
-				uassert.Equal(t, result.ToString(), tt.expected)
-			}
-		})
-	}
+// foldAll folds the given buckets as an exhaustive consume at the manager's epoch.
+func foldAll(t *testing.T, resolver *ProtocolFeeRewardManagerResolver, tokenPath string, epochs, amounts []int64, timestamp int64) {
+	t.Helper()
+	uassert.NoError(t, resolver.applyAccrualBuckets(tokenPath, epochs, amounts, true, timestamp))
 }
 
-// Test GetClaimableRewardAmounts
-func TestProtocolFeeRewardManager_GetClaimableRewardAmounts(cur realm, t *testing.T) {
-	tests := []struct {
-		name               string
-		setupManager       func(*ProtocolFeeRewardManagerResolver)
-		protocolFeeAmounts map[string]int64
-		address            string
-		currentTimestamp   int64
-		expectedLength     int
-	}{
-		{
-			name:         "No reward state for address",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000,
-			},
-			address:          "user1",
-			currentTimestamp: 100,
-			expectedLength:   0,
-		},
-		{
-			name: "With existing reward state",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				// Add stake to create reward state
-				m.addStake("user1", 1000, 50)
-				m.SetTotalStakedAmount(1000)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000,
-				"token2": 500,
-			},
-			address:          "user1",
-			currentTimestamp: 100,
-			expectedLength:   2,
-		},
-		{
-			name: "Get claimable with past timestamp",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				// Add stake to create reward state
-				m.addStake("user1", 1000, 100)
-				m.SetTotalStakedAmount(1000)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000,
-			},
-			address:          "user1",
-			currentTimestamp: 50, // past timestamp
-			expectedLength:   0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward manager setup
-			manager := staker.NewProtocolFeeRewardManager()
-			resolver := NewProtocolFeeRewardManagerResolver(manager)
-			tt.setupManager(resolver)
-
-			// When: Get claimable reward amounts
-			result, _ := resolver.GetClaimableRewardAmounts(
-				tt.protocolFeeAmounts,
-				tt.address,
-				tt.currentTimestamp,
-			)
-
-			// Then: Should return expected number of rewards
-			uassert.Equal(t, len(result), tt.expectedLength)
-		})
-	}
-}
-
-// Test addStake
 func TestProtocolFeeRewardManager_addStake(cur realm, t *testing.T) {
-	tests := []struct {
-		name             string
-		address          string
-		amount           int64
-		currentTimestamp int64
-		expectedTotal    int64
-		expectedHasError bool
-	}{
-		{
-			name:             "Add stake for new user",
-			address:          "user1",
-			amount:           1000,
-			currentTimestamp: 100,
-			expectedTotal:    1000,
-			expectedHasError: false,
-		},
-		{
-			name:             "Add stake with negative amount",
-			address:          "user1",
-			amount:           -200,
-			currentTimestamp: 300,
-			expectedTotal:    0, // Should not change when error occurs
-			expectedHasError: true,
-		},
-		{
-			name:             "Add stake with zero amount",
-			address:          "user1",
-			amount:           0,
-			currentTimestamp: 400,
-			expectedTotal:    0,
-			expectedHasError: true,
-		},
-		{
-			name:             "Add stake causing overflow",
-			address:          "user1",
-			amount:           1,
-			currentTimestamp: 500,
-			expectedTotal:    0,
-			expectedHasError: true,
-		},
-	}
+	t.Run("records epoch, total and staker event", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: New protocol fee reward manager for each test
-			manager := staker.NewProtocolFeeRewardManager()
-			resolver := NewProtocolFeeRewardManagerResolver(manager)
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.addStake("bob", 300, 2))
+		uassert.NoError(t, resolver.addStake("alice", 50, 3))
 
-			// Special setup for overflow test
-			if tt.name == "Add stake causing overflow" {
-				// Set total to MaxInt64
-				resolver.SetTotalStakedAmount(math.MaxInt64)
-			}
+		uassert.Equal(t, resolver.GetCurrentEpoch(), int64(3))
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(450))
+		uassert.Equal(t, resolver.GetTotalStakedAmountAt(0), int64(0))
+		uassert.Equal(t, resolver.GetTotalStakedAmountAt(1), int64(100))
+		uassert.Equal(t, resolver.GetTotalStakedAmountAt(2), int64(400))
+		uassert.Equal(t, resolver.GetTotalStakedAmountAt(3), int64(450))
 
-			// When: Add stake
-			err := resolver.addStake(tt.address, tt.amount, tt.currentTimestamp)
+		alice, ok, err := resolver.GetRewardState("alice")
+		uassert.NoError(t, err)
+		uassert.True(t, ok)
+		uassert.Equal(t, alice.GetStakedAmount(), int64(150))
+		uassert.Equal(t, alice.GetStakeEventCount(), int64(2))
+		event, ok := alice.GetStakeEvent(1)
+		uassert.True(t, ok)
+		uassert.Equal(t, event.GetEpoch(), int64(3))
+		uassert.Equal(t, event.GetStakedAmount(), int64(150))
 
-			// Then: Check error expectation
-			if tt.expectedHasError {
-				uassert.Error(t, err)
-				return
-			}
+		// No accumulator was touched.
+		uassert.Equal(t, len(resolver.GetTokenPaths()), 0)
+	})
 
-			// And: Total staked amount should be updated
-			uassert.NoError(t, err)
-			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedTotal)
+	t.Run("rejects non-positive amount", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.ErrorContains(t, resolver.addStake("alice", 0, 1), errAmountMustBePositive)
+		uassert.ErrorContains(t, resolver.addStake("alice", -1, 1), errAmountMustBePositive)
+	})
 
-			// And: Reward state should be created/updated
-			rewardState, ok, err := resolver.GetRewardState(tt.address)
-			uassert.NoError(t, err)
-			uassert.True(t, ok)
-			uassert.NotEqual(t, rewardState, nil)
-		})
-	}
-}
+	t.Run("rejects an epoch older than the one in force", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 5))
+		uassert.ErrorContains(t, resolver.addStake("alice", 100, 4), errInvalidAccrualEpoch)
+	})
 
-// Test removeStake
-func TestProtocolFeeRewardManager_removeStake(cur realm, t *testing.T) {
-	tests := []struct {
-		name             string
-		initialAmount    int64
-		removeAmount     int64
-		currentTimestamp int64
-		expectedAmount   int64
-		expectedHasError bool
-	}{
-		{
-			name:             "Remove partial stake",
-			initialAmount:    1000,
-			removeAmount:     300,
-			currentTimestamp: 100,
-			expectedAmount:   700,
-			expectedHasError: false,
-		},
-		{
-			name:             "Remove all stake",
-			initialAmount:    700,
-			removeAmount:     700,
-			currentTimestamp: 200,
-			expectedAmount:   0,
-			expectedHasError: false,
-		},
-		{
-			name:             "Remove zero stake",
-			initialAmount:    500,
-			removeAmount:     0,
-			currentTimestamp: 300,
-			expectedAmount:   500,
-			expectedHasError: false,
-		},
-		{
-			name:             "Remove negative stake (should not allow)",
-			initialAmount:    400,
-			removeAmount:     -100,
-			currentTimestamp: 400,
-			expectedAmount:   400, // Should not change when error occurs
-			expectedHasError: true,
-		},
-		{
-			name:             "Remove stake when none exists",
-			initialAmount:    0,
-			removeAmount:     100,
-			currentTimestamp: 500,
-			expectedAmount:   0, // Clamps to zero
-			expectedHasError: false,
-		},
-		{
-			name:             "Remove stake with amount exceeding staked",
-			initialAmount:    100,
-			removeAmount:     200,
-			currentTimestamp: 600,
-			expectedAmount:   0, // Clamps to zero
-			expectedHasError: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Manager with initial stake
-			manager := staker.NewProtocolFeeRewardManager()
-			resolver := NewProtocolFeeRewardManagerResolver(manager)
-			if tt.initialAmount > 0 {
-				resolver.addStake("user1", tt.initialAmount, 50)
-			}
-
-			// When: Remove stake
-			err := resolver.removeStake("user1", tt.removeAmount, tt.currentTimestamp)
-
-			// Then: Check error expectation
-			if tt.expectedHasError {
-				uassert.Error(t, err)
-				uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedAmount)
-				return
-			}
-
-			// And: Total staked amount should be updated
-			uassert.NoError(t, err)
-			uassert.Equal(t, resolver.GetTotalStakedAmount(), tt.expectedAmount)
-		})
-	}
-}
-
-// Test claimRewards
-func TestProtocolFeeRewardManager_claimRewards(cur realm, t *testing.T) {
-	tests := []struct {
-		name             string
-		setupManager     func(*ProtocolFeeRewardManagerResolver)
-		address          string
-		currentTimestamp int64
-		expectError      bool
-	}{
-		{
-			name:             "Claim rewards for non-existent user",
-			setupManager:     func(m *ProtocolFeeRewardManagerResolver) {},
-			address:          "user1",
-			currentTimestamp: 100,
-			expectError:      false,
-		},
-		{
-			name: "Claim rewards for existing user",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.addStake("user1", 1000, 50)
-				// Simulate some protocol fees
-				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128)
-				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
-			},
-			address:          "user1",
-			currentTimestamp: 100,
-			expectError:      false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward manager setup
-			manager := staker.NewProtocolFeeRewardManager()
-			resolver := NewProtocolFeeRewardManagerResolver(manager)
-			tt.setupManager(resolver)
-
-			// When: Claim rewards
-			rewards, err := resolver.claimRewards(tt.address, tt.currentTimestamp)
-
-			// Then: Check result
-			if tt.expectError {
-				uassert.Error(t, err)
-				uassert.Equal(t, rewards, nil)
-			} else {
-				uassert.NoError(t, err)
-				uassert.NotEqual(t, rewards, nil)
-			}
-		})
-	}
-}
-
-func TestProtocolFeeRewardManager_claimRewards_Multipletimes(cur realm, t *testing.T) {
-	t.Run("Claim rewards multiple times", func(cur realm, t *testing.T) {
-		// given
-		manager := staker.NewProtocolFeeRewardManager()
-		resolver := NewProtocolFeeRewardManagerResolver(manager)
-		resolver.addStake("user1", 1000, 10)
-		protocolFeeAmounts := map[string]int64{
-			"token1": 1000,
-		}
-		resolver.updateAccumulatedProtocolFeeX128PerStake(protocolFeeAmounts, 20)
-
-		// when - claim rewards multiple times
-		claimed1, err1 := resolver.claimRewards("user1", 30)
-		uassert.NoError(t, err1)
-
-		claimed2, err2 := resolver.claimRewards("user1", 40)
-		uassert.NoError(t, err2)
-
-		// then - second claim should return zero amounts (no new rewards)
-		uassert.NotEqual(t, claimed1, nil)
-		uassert.NotEqual(t, claimed2, nil)
-		// All amounts in second claim should be zero
-		for _, amount := range claimed2 {
-			uassert.Equal(t, amount, int64(0))
-		}
+	t.Run("rejects total overflow", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", math.MaxInt64-10, 1))
+		uassert.ErrorContains(t, resolver.addStake("bob", 11, 2), errTotalStakedAmountOverflow)
 	})
 }
 
-// Test calculateAccumulatedRewardX128PerStake
-func TestProtocolFeeRewardManager_calculateAccumulatedRewardX128PerStake(cur realm, t *testing.T) {
-	tests := []struct {
-		name               string
-		setupManager       func(*ProtocolFeeRewardManagerResolver)
-		protocolFeeAmounts map[string]int64
-		currentTimestamp   int64
-		shouldIncrease     bool
-		expectedResultLen  int // -1 means don't check
-		expectedChangedLen int // -1 means don't check
-	}{
-		{
-			name: "Current timestamp less than accumulated timestamp",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetAccumulatedTimestamp(200)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000,
-			},
-			currentTimestamp:   100,
-			shouldIncrease:     false,
-			expectedResultLen:  -1,
-			expectedChangedLen: -1,
-		},
-		{
-			name: "Normal calculation with positive protocol fee delta",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetAccumulatedTimestamp(50)
-				m.SetTotalStakedAmount(1000)
-				protocolFeeMap := make(map[string]int64)
-				protocolFeeMap["token1"] = 500
-				m.SetProtocolFeeAmounts(protocolFeeMap)
-				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = u256.NewUint(0)
-				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000, // Increase from 500 to 1000
-			},
-			currentTimestamp:   100,
-			shouldIncrease:     true,
-			expectedResultLen:  -1,
-			expectedChangedLen: -1,
-		},
-		{
-			name: "No increase when protocol fee delta is zero",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetAccumulatedTimestamp(50)
-				m.SetTotalStakedAmount(1000)
-				protocolFeeMap := make(map[string]int64)
-				protocolFeeMap["token1"] = 1000
-				m.SetProtocolFeeAmounts(protocolFeeMap)
-				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = u256.NewUint(500)
-				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000, // No change
-			},
-			currentTimestamp:   100,
-			shouldIncrease:     false,
-			expectedResultLen:  -1,
-			expectedChangedLen: -1,
-		},
-		{
-			name: "No increase when no staked amount",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetAccumulatedTimestamp(50)
-				m.SetTotalStakedAmount(0)
-				protocolFeeMap := make(map[string]int64)
-				protocolFeeMap["token1"] = 500
-				m.SetProtocolFeeAmounts(protocolFeeMap)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000,
-			},
-			currentTimestamp:   100,
-			shouldIncrease:     false,
-			expectedResultLen:  -1,
-			expectedChangedLen: -1,
-		},
-		{
-			name: "Calculate with max int64 protocol fee",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetTotalStakedAmount(1)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": int64(9223372036854775807),
-			},
-			currentTimestamp:   100,
-			shouldIncrease:     true,
-			expectedResultLen:  1,
-			expectedChangedLen: -1,
-		},
-		{
-			name: "Calculate with empty protocol fee amounts map",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.addStake("user1", 1000, 10)
-			},
-			protocolFeeAmounts: map[string]int64{},
-			currentTimestamp:   20,
-			shouldIncrease:     false,
-			expectedResultLen:  0,
-			expectedChangedLen: 0,
-		},
-		{
-			name: "Calculate with max int64 delta",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetTotalStakedAmount(1)
-				m.SetProtocolFeeAmounts(map[string]int64{
-					"token1": 0,
-				})
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 9223372036854775807, // max int64
-			},
-			currentTimestamp:   100,
-			shouldIncrease:     true,
-			expectedResultLen:  1,
-			expectedChangedLen: 1,
-		},
-	}
+func TestProtocolFeeRewardManager_removeStake(cur realm, t *testing.T) {
+	t.Run("records the decrease", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.removeStake("alice", 40, 2))
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward manager setup
-			manager := staker.NewProtocolFeeRewardManager()
-			resolver := NewProtocolFeeRewardManagerResolver(manager)
-			if tt.setupManager != nil {
-				tt.setupManager(resolver)
-			}
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(60))
+		uassert.Equal(t, resolver.GetTotalStakedAmountAt(1), int64(100))
+		uassert.Equal(t, resolver.GetTotalStakedAmountAt(2), int64(60))
 
-			initialRewards := make(map[string]*u256.Uint)
-			for token, reward := range resolver.GetAllAccumulatedProtocolFeeX128PerStake() {
-				initialRewards[token] = reward.Clone()
-			}
+		alice, _, _ := resolver.GetRewardState("alice")
+		uassert.Equal(t, alice.GetStakedAmount(), int64(60))
+		uassert.Equal(t, alice.GetStakeEventCount(), int64(2))
+	})
 
-			// When: Calculate accumulated reward X128 per stake
-			result, changedAmounts, err := resolver.calculateAccumulatedRewardX128PerStake(
-				tt.protocolFeeAmounts,
-				tt.currentTimestamp,
-			)
+	t.Run("rejects negative amount", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.ErrorContains(t, resolver.removeStake("alice", -1, 1), errAmountMustBeNonNegative)
+	})
 
-			uassert.NoError(t, err)
+	t.Run("rejects total underflow", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.ErrorContains(t, resolver.removeStake("alice", 1, 1), errRemoveAmountExceedsTotalStaked)
+	})
 
-			// Optional: check returned maps length expectations
-			if tt.expectedResultLen != -1 {
-				uassert.Equal(t, len(result), tt.expectedResultLen)
-			}
-			if tt.expectedChangedLen != -1 {
-				uassert.Equal(t, len(changedAmounts), tt.expectedChangedLen)
-			}
+	t.Run("rejects over-removal for the staker and leaves totals untouched", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.addStake("bob", 100, 2))
 
-			// Then: Check if result increased as expected for provided tokens
-			for token := range tt.protocolFeeAmounts {
-				resultReward, ok := result[token]
-				if !ok {
-					resultReward = u256.NewUint(0)
-				}
+		uassert.ErrorContains(t, resolver.removeStake("alice", 150, 3), errRemoveAmountExceedsStaked)
+		uassert.Equal(t, resolver.GetTotalStakedAmount(), int64(200))
+		uassert.Equal(t, resolver.GetCurrentEpoch(), int64(2))
+	})
 
-				initialReward, _ := initialRewards[token]
-
-				if tt.shouldIncrease {
-					if initialReward != nil {
-						uassert.True(t, resultReward.Gt(initialReward))
-					} else {
-						uassert.True(t, resultReward.Gt(u256.NewUint(0)))
-					}
-				} else {
-					if initialReward != nil {
-						uassert.Equal(t, resultReward.Cmp(initialReward), 0)
-					} else {
-						uassert.Equal(t, resultReward.ToString(), "0")
-					}
-				}
-			}
-		})
-	}
+	t.Run("rejects an epoch older than the one in force", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 5))
+		uassert.ErrorContains(t, resolver.removeStake("alice", 10, 4), errInvalidAccrualEpoch)
+	})
 }
 
-// Test updateAccumulatedProtocolFeeX128PerStake
-func TestProtocolFeeRewardManager_updateAccumulatedProtocolFeeX128PerStake(cur realm, t *testing.T) {
-	tests := []struct {
-		name               string
-		setupManager       func(*ProtocolFeeRewardManagerResolver)
-		protocolFeeAmounts map[string]int64
-		currentTimestamp   int64
-		shouldUpdate       bool
-	}{
-		{
-			name: "Should not update when current timestamp is less",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetAccumulatedTimestamp(200)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000,
-			},
-			currentTimestamp: 100,
-			shouldUpdate:     false,
-		},
-		{
-			name: "Should not update when current timestamp equals accumulated timestamp",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetAccumulatedTimestamp(100)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000,
-			},
-			currentTimestamp: 100,
-			shouldUpdate:     false,
-		},
-		{
-			name: "Should update when current timestamp is greater",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetAccumulatedTimestamp(50)
-				m.SetTotalStakedAmount(1000)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000,
-			},
-			currentTimestamp: 100,
-			shouldUpdate:     true,
-		},
-		{
-			name: "Update with past timestamp preserves state",
-			setupManager: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetAccumulatedTimestamp(100)
-			},
-			protocolFeeAmounts: map[string]int64{
-				"token1": 1000,
-			},
-			currentTimestamp: 50, // past timestamp
-			shouldUpdate:     false,
-		},
-	}
+func TestProtocolFeeRewardManager_applyAccrualBuckets(cur realm, t *testing.T) {
+	t.Run("divides each bucket by the total stake in force during its epoch", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.addStake("bob", 300, 2))
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward manager setup
-			manager := staker.NewProtocolFeeRewardManager()
-			resolver := NewProtocolFeeRewardManagerResolver(manager)
-			tt.setupManager(resolver)
-			initialTimestamp := resolver.GetAccumulatedTimestamp()
+		foldAll(t, resolver, pfTestBar, []int64{1, 2}, []int64{1000, 800}, 50)
 
-			// When: Update accumulated protocol fee X128 per stake
-			resolver.updateAccumulatedProtocolFeeX128PerStake(
-				tt.protocolFeeAmounts,
-				tt.currentTimestamp,
-			)
+		accumulator, ok := resolver.GetTokenAccumulator(pfTestBar)
+		uassert.True(t, ok)
+		// 1000/100 = 10 per stake, then 800/400 = 2 per stake.
+		uassert.Equal(t, accumulator.GetAccumulatedX128PerStakeAt(1).ToString(), x128(10))
+		uassert.Equal(t, accumulator.GetAccumulatedX128PerStakeAt(2).ToString(), x128(12))
+		uassert.Equal(t, accumulator.GetAccumulatedX128PerStake().ToString(), x128(12))
+		uassert.Equal(t, accumulator.GetFirstEpoch(), int64(1))
+		uassert.Equal(t, accumulator.GetProtocolFeeAmount(), int64(1800))
+		uassert.Equal(t, resolver.GetAccumulatedTimestamp(), int64(50))
+		// The epoch in force stays open, every earlier one is folded.
+		uassert.Equal(t, accumulator.GetFoldedEpoch(), int64(1))
+	})
 
-			// Then: Check if state was updated as expected
-			if tt.shouldUpdate {
-				uassert.Equal(t, resolver.GetAccumulatedTimestamp(), tt.currentTimestamp)
-			} else {
-				uassert.Equal(t, resolver.GetAccumulatedTimestamp(), initialTimestamp)
-			}
-		})
-	}
+	t.Run("drops a bucket with nothing staked but still counts it", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+
+		foldAll(t, resolver, pfTestBar, []int64{0}, []int64{5000}, 10)
+
+		accumulator, ok := resolver.GetTokenAccumulator(pfTestBar)
+		uassert.True(t, ok)
+		uassert.Equal(t, accumulator.GetAccumulatedX128PerStake().ToString(), "0")
+		uassert.Equal(t, accumulator.GetFirstEpoch(), int64(-1))
+		uassert.Equal(t, accumulator.GetProtocolFeeAmount(), int64(5000))
+	})
+
+	t.Run("a partial consume folds only up to the last bucket", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.removeStake("alice", 0, 2))
+		uassert.NoError(t, resolver.removeStake("alice", 0, 3))
+
+		uassert.NoError(t, resolver.applyAccrualBuckets(pfTestBar, []int64{1}, []int64{100}, false, 10))
+		accumulator, _ := resolver.GetTokenAccumulator(pfTestBar)
+		uassert.Equal(t, accumulator.GetFoldedEpoch(), int64(1))
+
+		// Exhausting the buckets marks every closed epoch as folded.
+		uassert.NoError(t, resolver.applyAccrualBuckets(pfTestBar, []int64{}, []int64{}, true, 11))
+		uassert.Equal(t, accumulator.GetFoldedEpoch(), int64(2))
+	})
+
+	t.Run("an empty exhaustive fold of an unknown token creates nothing", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		foldAll(t, resolver, pfTestBar, []int64{}, []int64{}, 10)
+		uassert.Equal(t, len(resolver.GetTokenPaths()), 0)
+	})
+
+	t.Run("rejects malformed buckets", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+
+		uassert.ErrorContains(t, resolver.applyAccrualBuckets(pfTestBar, []int64{1}, []int64{}, true, 1), errInvalidAccrualBuckets)
+		uassert.ErrorContains(t, resolver.applyAccrualBuckets(pfTestBar, []int64{2}, []int64{1}, true, 1), errInvalidAccrualBuckets)
+		uassert.ErrorContains(t, resolver.applyAccrualBuckets(pfTestBar, []int64{1, 0}, []int64{1, 1}, true, 1), errInvalidAccrualBuckets)
+		uassert.ErrorContains(t, resolver.applyAccrualBuckets(pfTestBar, []int64{1}, []int64{-1}, true, 1), errInvalidAccrualBuckets)
+	})
 }
 
-func TestProtocolFeeRewardManager_EdgeCases(cur realm, t *testing.T) {
-	tests := []struct {
-		name        string
-		setupTest   func(*ProtocolFeeRewardManagerResolver)
-		description string
-	}{
-		{
-			name: "Multiple tokens with different fee amounts",
-			setupTest: func(m *ProtocolFeeRewardManagerResolver) {
-				// Setup multiple tokens
-				m.SetTotalStakedAmount(1000)
-				m.SetAccumulatedTimestamp(50)
+// TestProtocolFeeRewardManager_claimRewards_ExactAcrossStakeChanges is the core
+// correctness check: fees folded long after the stake changes they span are still
+// attributed to the stake distribution in force when they arrived.
+func TestProtocolFeeRewardManager_claimRewards_ExactAcrossStakeChanges(cur realm, t *testing.T) {
+	resolver := newPfTestManager()
 
-				// Add stake for a user
-				m.addStake("user1", 1000, 50)
+	// epoch 1: alice 100 (total 100), fee 1000 -> alice 1000
+	// epoch 2: bob 300 (total 400), fee 800 -> alice 200, bob 600
+	// epoch 3: alice out (total 300), fee 300 -> bob 300
+	uassert.NoError(t, resolver.addStake("alice", 100, 1))
+	uassert.NoError(t, resolver.addStake("bob", 300, 2))
+	uassert.NoError(t, resolver.removeStake("alice", 100, 3))
 
-				// Simulate protocol fees for multiple tokens
-				protocolFeeAmounts := map[string]int64{
-					"token1": 1000,
-					"token2": 500,
-					"token3": 750,
-				}
+	foldAll(t, resolver, pfTestBar, []int64{1, 2, 3}, []int64{1000, 800, 300}, 100)
 
-				err := m.updateAccumulatedProtocolFeeX128PerStake(protocolFeeAmounts, 100)
-				uassert.NoError(t, err)
+	aliceRewards, err := resolver.claimRewards("alice", 100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, aliceRewards[pfTestBar], int64(1200))
 
-				// Verify claimable amounts
-				claimableAmounts, _ := m.GetClaimableRewardAmounts(protocolFeeAmounts, "user1", 100)
+	bobRewards, err := resolver.claimRewards("bob", 100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, bobRewards[pfTestBar], int64(900))
 
-				uassert.Equal(t, len(claimableAmounts), 3)
-				for token, amount := range claimableAmounts {
-					uassert.True(t, amount >= 0, "Amount should be non-negative for token: "+token)
-				}
-			},
-			description: "Should handle multiple tokens correctly",
-		},
-		{
-			name: "Zero protocol fee amounts",
-			setupTest: func(m *ProtocolFeeRewardManagerResolver) {
-				m.addStake("user1", 1000, 50)
+	// Nothing is left once collected.
+	aliceRewards, err = resolver.claimRewards("alice", 101)
+	uassert.NoError(t, err)
+	uassert.Equal(t, aliceRewards[pfTestBar], int64(0))
 
-				protocolFeeAmounts := map[string]int64{
-					"token1": 0,
-				}
+	alice, _, _ := resolver.GetRewardState("alice")
+	uassert.Equal(t, alice.GetClaimedReward(pfTestBar), int64(1200))
+	bob, _, _ := resolver.GetRewardState("bob")
+	uassert.Equal(t, bob.GetClaimedReward(pfTestBar), int64(900))
+}
 
-				claimableAmounts, _ := m.GetClaimableRewardAmounts(protocolFeeAmounts, "user1", 100)
-				uassert.Equal(t, claimableAmounts["token1"], int64(0))
-			},
-			description: "Should handle zero protocol fee amounts",
-		},
-		{
-			name: "Negative protocol fee delta",
-			setupTest: func(m *ProtocolFeeRewardManagerResolver) {
-				m.SetTotalStakedAmount(1000)
-				protocolFeeMap := make(map[string]int64)
-				protocolFeeMap["token1"] = 1000
-				m.SetProtocolFeeAmounts(protocolFeeMap)
-				existingAccumulated := u256.NewUintFromInt64(500)
-				accumulatedMap := make(map[string]*u256.Uint)
-				accumulatedMap["token1"] = existingAccumulated
-				m.SetAccumulatedProtocolFeeX128PerStake(accumulatedMap)
+func TestProtocolFeeRewardManager_claimRewards_SameSecondIsIdempotent(cur realm, t *testing.T) {
+	resolver := newPfTestManager()
+	uassert.NoError(t, resolver.addStake("alice", 100, 1))
+	foldAll(t, resolver, pfTestBar, []int64{1}, []int64{1000}, 100)
 
-				// Try with smaller amount (negative delta)
-				protocolFeeAmounts := map[string]int64{
-					"token1": 500, // Less than stored amount
-				}
+	rewards, err := resolver.claimRewards("alice", 100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, rewards[pfTestBar], int64(1000))
 
-				// Should not panic - just keep existing accumulated value
-				result, _, err := m.calculateAccumulatedRewardX128PerStake(protocolFeeAmounts, 100)
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
-				// Accumulated value should remain unchanged
-				if result["token1"].Cmp(existingAccumulated) != 0 {
-					t.Errorf("expected accumulated to remain %s, got %s", existingAccumulated.ToString(), result["token1"].ToString())
-				}
-			},
-			description: "Should handle negative protocol fee delta by keeping existing rate",
-		},
-	}
+	// A second all-token claim in the same second pays nothing and touches nothing.
+	rewards, err = resolver.claimRewards("alice", 100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, len(rewards), 0)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Fresh protocol fee reward manager
-			manager := staker.NewProtocolFeeRewardManager()
-			resolver := NewProtocolFeeRewardManagerResolver(manager)
+	// An unknown staker gets an empty map.
+	rewards, err = resolver.claimRewards("nobody", 100)
+	uassert.NoError(t, err)
+	uassert.Equal(t, len(rewards), 0)
+}
 
-			// When: Execute test setup
-			tt.setupTest(resolver)
+func TestProtocolFeeRewardManager_claimTokenReward(cur realm, t *testing.T) {
+	t.Run("settles one token and leaves the others untouched", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		foldAll(t, resolver, pfTestBar, []int64{1}, []int64{1000}, 100)
+		foldAll(t, resolver, pfTestQux, []int64{1}, []int64{500}, 100)
 
-			// Then: Test should complete without panicking
-			// Additional assertions are done within setupTest
-		})
-	}
+		reward, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(1000))
+
+		reward, err = resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(0))
+
+		rewards, err := resolver.claimRewards("alice", 100)
+		uassert.NoError(t, err)
+		uassert.Equal(t, rewards[pfTestBar], int64(0))
+		uassert.Equal(t, rewards[pfTestQux], int64(500))
+	})
+
+	t.Run("a bounded settle pays what it settled and the rest later", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		// alice alone: 100 (e1), 200 (e2), 300 (e3); fees 100, 200, 300 -> 1 per stake each epoch.
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.addStake("alice", 100, 2))
+		uassert.NoError(t, resolver.addStake("alice", 100, 3))
+		foldAll(t, resolver, pfTestBar, []int64{1, 2, 3}, []int64{100, 200, 300}, 100)
+
+		// One event per call: the first call closes the epoch 1 segment only, since the
+		// open segment is left alone until every event is settled.
+		first, err := resolver.claimTokenReward("alice", pfTestBar, 1)
+		uassert.NoError(t, err)
+		uassert.Equal(t, first, int64(100))
+
+		second, err := resolver.claimTokenReward("alice", pfTestBar, 1)
+		uassert.NoError(t, err)
+		uassert.Equal(t, second, int64(500))
+
+		third, err := resolver.claimTokenReward("alice", pfTestBar, 1)
+		uassert.NoError(t, err)
+		uassert.Equal(t, third, int64(0))
+	})
+
+	t.Run("an event past the folded epoch waits for the fold", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.addStake("bob", 300, 2))
+		uassert.NoError(t, resolver.removeStake("alice", 100, 3))
+
+		// Only epoch 1 is folded, so alice's exit at epoch 3 cannot be settled yet and
+		// nothing is paid for the still open window.
+		uassert.NoError(t, resolver.applyAccrualBuckets(pfTestBar, []int64{1}, []int64{1000}, false, 100))
+		reward, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(0))
+
+		foldAll(t, resolver, pfTestBar, []int64{2, 3}, []int64{800, 300}, 101)
+		reward, err = resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(1200))
+	})
+
+	t.Run("a token that never collected a fee leaves no state behind", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+
+		reward, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(0))
+
+		alice, _, _ := resolver.GetRewardState("alice")
+		uassert.Equal(t, len(alice.GetTokenPaths()), 0)
+	})
+
+	t.Run("an unknown staker gets nothing", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		reward, err := resolver.claimTokenReward("nobody", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(0))
+	})
+}
+
+func TestProtocolFeeRewardManager_LateJoinerEarnsNothingBeforeJoining(cur realm, t *testing.T) {
+	resolver := newPfTestManager()
+	uassert.NoError(t, resolver.addStake("alice", 100, 1))
+	foldAll(t, resolver, pfTestBar, []int64{1}, []int64{1000}, 10)
+
+	uassert.NoError(t, resolver.addStake("bob", 100, 2))
+	foldAll(t, resolver, pfTestBar, []int64{2}, []int64{1000}, 20)
+
+	bobRewards, err := resolver.claimRewards("bob", 20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, bobRewards[pfTestBar], int64(500))
+
+	aliceRewards, err := resolver.claimRewards("alice", 20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, aliceRewards[pfTestBar], int64(1500))
+}
+
+func TestProtocolFeeRewardManager_GetClaimableRewardAmount(cur realm, t *testing.T) {
+	t.Run("projects pending buckets without folding them", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.addStake("bob", 300, 2))
+		uassert.NoError(t, resolver.removeStake("alice", 100, 3))
+
+		claimable, err := resolver.GetClaimableRewardAmount("alice", pfTestBar, []int64{1, 2, 3}, []int64{1000, 800, 300})
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimable, int64(1200))
+		uassert.Equal(t, len(resolver.GetTokenPaths()), 0)
+
+		// Folding then claiming pays exactly what was projected.
+		foldAll(t, resolver, pfTestBar, []int64{1, 2, 3}, []int64{1000, 800, 300}, 100)
+		reward, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, claimable)
+	})
+
+	t.Run("combines folded history with pending buckets", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		foldAll(t, resolver, pfTestBar, []int64{1}, []int64{1000}, 10)
+		uassert.NoError(t, resolver.addStake("bob", 100, 2))
+
+		claimable, err := resolver.GetClaimableRewardAmount("alice", pfTestBar, []int64{2}, []int64{1000})
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimable, int64(1500))
+
+		claimable, err = resolver.GetClaimableRewardAmount("bob", pfTestBar, []int64{2}, []int64{1000})
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimable, int64(500))
+	})
+
+	t.Run("matches collect after a bounded fold consumed exactly its limit", func(cur realm, t *testing.T) {
+		// A bounded fold that consumes exactly its limit is reported as not exhausted,
+		// so foldedEpoch stays at the last consumed epoch even when nothing is left
+		// pending. Stake changes without fees then move the epoch in force ahead of
+		// it. The query must still report what a collect pays, since a collect starts
+		// with an exhaustive (empty) fold that marks every closed epoch as folded.
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.applyAccrualBuckets(pfTestBar, []int64{1}, []int64{1000}, false, 10))
+		uassert.NoError(t, resolver.addStake("alice", 100, 2))
+		uassert.NoError(t, resolver.addStake("alice", 100, 3))
+
+		accumulator, ok := resolver.GetTokenAccumulator(pfTestBar)
+		uassert.True(t, ok)
+		uassert.Equal(t, accumulator.GetFoldedEpoch(), int64(0))
+
+		claimable, err := resolver.GetClaimableRewardAmount("alice", pfTestBar, nil, nil)
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimable, int64(1000))
+
+		foldAll(t, resolver, pfTestBar, []int64{}, []int64{}, 11)
+		reward, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, claimable)
+	})
+
+	t.Run("unknown staker or token yields zero", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		claimable, err := resolver.GetClaimableRewardAmount("nobody", pfTestBar, nil, nil)
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimable, int64(0))
+
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		claimable, err = resolver.GetClaimableRewardAmount("alice", pfTestBar, nil, nil)
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimable, int64(0))
+	})
+}
+
+func TestProtocolFeeRewardManager_RemainderIsCarried(cur realm, t *testing.T) {
+	resolver := newPfTestManager()
+	uassert.NoError(t, resolver.addStake("alice", 3, 1))
+	uassert.NoError(t, resolver.addStake("bob", 3, 2))
+
+	// 10 over a stake of 6 is 5/3 per stake, which the X128 accumulator floors by a
+	// hair. alice's share comes out just under 5, so 4 is paid and the fraction is
+	// carried instead of being dropped.
+	foldAll(t, resolver, pfTestBar, []int64{2}, []int64{10}, 10)
+	first, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+	uassert.NoError(t, err)
+	uassert.Equal(t, first, int64(4))
+
+	alice, _, _ := resolver.GetRewardState("alice")
+	tokenState, ok := alice.GetTokenState(pfTestBar)
+	uassert.True(t, ok)
+	carried := tokenState.GetEarnedX128()
+	uassert.True(t, carried.Gt(u256.Zero().Sub(u256Lsh128(1), u256.NewUint(3))))
+	uassert.True(t, carried.Lt(u256Lsh128(1)))
+
+	// The carried fraction tops up the next payout.
+	foldAll(t, resolver, pfTestBar, []int64{2}, []int64{10}, 11)
+	second, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+	uassert.NoError(t, err)
+	uassert.Equal(t, second, int64(5))
+}
+
+func TestProtocolFeeRewardManager_LargeAmountsDoNotOverflow(cur realm, t *testing.T) {
+	resolver := newPfTestManager()
+	uassert.NoError(t, resolver.addStake("alice", math.MaxInt64, 1))
+
+	foldAll(t, resolver, pfTestBar, []int64{1}, []int64{math.MaxInt64}, 10)
+
+	reward, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+	uassert.NoError(t, err)
+	uassert.Equal(t, reward, int64(math.MaxInt64))
+}
+
+// x128 renders amount << 128 as a decimal string.
+func x128(amount int64) string {
+	return u256Lsh128(amount).ToString()
 }

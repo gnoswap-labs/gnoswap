@@ -5,9 +5,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -20,6 +21,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -194,6 +196,6 @@ func exactInSingleSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount(GNS): 10000000
-// [EXPECTED] outputTokenAmount(GNOT): -9695218
+// [EXPECTED] outputTokenAmount(GNOT): 9695218
 // [EXPECTED] GNS balance changed: 9695218
 // [EXPECTED] WUGNOT balance changed: -10000000

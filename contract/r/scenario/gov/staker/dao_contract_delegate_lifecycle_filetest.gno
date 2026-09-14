@@ -5,6 +5,7 @@
 package main
 
 import (
+	"strconv"
 	"testing"
 
 	testutils "gno.land/p/nt/testutils/v0"
@@ -13,20 +14,21 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/staker"
-	"gno.land/r/gnoswap/gov/xgns"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
+	"gno.land/r/gnoswap/gov/xgns"
 )
 
 var (
-	adminAddr     = access.MustGetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = testing.NewUserRealm(adminAddr)
-	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	adminAddr      = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm     = testing.NewUserRealm(adminAddr)
+	govStakerAddr  = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 	govStakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker")
 
 	originAddr  = testutils.TestAddress("dao-origin")
@@ -44,7 +46,7 @@ var (
 	undelegateAmount  = int64(2_000_000)
 	lockupHeights     = int64(120960)
 
-	initialDaoDelegationID    int64
+	initialDaoDelegationID     int64
 	redelegatedDaoDelegationID int64
 )
 
@@ -119,9 +121,9 @@ func verifyDaoOwnedDelegationAfterDelegate(cur realm) {
 		panic("dao delegation not found")
 	}
 
-	daoDelegation, err := staker.GetDelegation(daoDelegationIDs[0])
-	if err != nil {
-		panic(err)
+	daoDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(daoDelegationIDs[0], 10)).(*staker.Delegation)
+	if !ok {
+		panic("delegation not found")
 	}
 
 	initialDaoDelegationID = daoDelegationIDs[0]
@@ -150,9 +152,9 @@ func daoRedelegateToValidator2(cur realm) {
 		panic("dao redelegation ids missing")
 	}
 
-	newDelegation, err := staker.GetDelegation(newDelegationIDs[0])
-	if err != nil {
-		panic(err)
+	newDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(newDelegationIDs[0], 10)).(*staker.Delegation)
+	if !ok {
+		panic("delegation not found")
 	}
 
 	redelegatedDaoDelegationID = newDelegationIDs[0]
@@ -182,9 +184,9 @@ func daoUndelegatePartial(cur realm) {
 		panic("dao delegation missing after undelegate")
 	}
 
-	daoDelegation, err := staker.GetDelegation(daoDelegationIDs[0])
-	if err != nil {
-		panic(err)
+	daoDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(daoDelegationIDs[0], 10)).(*staker.Delegation)
+	if !ok {
+		panic("delegation not found")
 	}
 	withdraws, err := staker.GetDelegationWithdraws(daoDelegationIDs[0], 0, 10)
 	if err != nil {

@@ -2,6 +2,7 @@ package staker
 
 import (
 	"gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 )
 
@@ -49,13 +50,9 @@ type IGovStakerGetter interface {
 	GetTotalxGnsSupply() int64
 	GetTotalDelegated() int64
 	GetTotalLockedAmount() int64
-	GetDelegationCount() int
-	GetDelegationIDs(offset, count int) []int64
+	GetDelegations() *rotree.ReadOnlyTree
 	ExistsDelegation(delegationID int64) bool
-	GetDelegation(delegationID int64) (*Delegation, error)
-	GetDelegatorDelegateeCount(delegator address) int
-	GetDelegatorDelegateeAddresses(delegator address, offset, count int) []address
-	GetUserDelegationCount(delegator address, delegatee address) int
+	GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree
 	GetUserDelegationIDs(delegator address, delegatee address) []int64
 	HasDelegationSnapshotsKey() bool
 	GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool)

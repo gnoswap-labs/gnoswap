@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/bptree/v0"
 	"gno.land/p/nt/testutils/v0"
 	"gno.land/p/nt/uassert/v0"
 
@@ -22,6 +21,7 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 )
 
@@ -35,12 +35,13 @@ const (
 func TestCollectRewardGracefulDegradation(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
-	incentiveStartTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	incentiveStartTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 
 	// Test 1: Normal collection with sufficient rewards
 	t.Run("normal collection works", func(cur realm, t *testing.T) {
 		testing.SetRealm(adminRealm)
 		pl.SetPoolCreationFee(cross(cur), 0)
+		createDefaultInitialPoolForStakerTest(cur, t)
 		emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 		// setup
@@ -226,7 +227,7 @@ func TestCollectReward_NilIncentiveSkipped(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
 
-	startTimestamp := int64(1234569600)
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(cur, t,
 		poolPath,
 		gnsPath,
@@ -302,23 +303,28 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur r
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	sr.StakeToken(cross(cur), positionId, "")
 
-	// Fund caller for incentive creation.
-	TokenFaucet(cur, t, gnsPath, addr01)
-	TokenFaucet(cur, t, barPath, addr01)
-
-	// Create an external incentive that has already started.
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	gnsApprove(cur, t, addr01, stakerAddr, maxApprove)
-	barApprove(cur, t, addr01, stakerAddr, maxApprove)
-
-	startTimestamp := int64(1234569600)
-	CreateExternalIncentiveAsAdmin(cur, t,
+	// Create an already-started incentive directly for the reward calculation
+	// fixture. The public entrypoint intentionally rejects starts before 24 hours.
+	currentTime := time.Now().Unix()
+	createdIncentiveID := getMockInstance().store.NextIncentiveID(addr01, currentTime)
+	createdIncentive := sr.NewExternalIncentive(
+		createdIncentiveID,
 		poolPath,
 		barPath,
 		rewardMinimumAmount,
-		startTimestamp,
-		startTimestamp+incentiveDuration,
+		currentTime+1,
+		currentTime+1+incentiveDuration,
+		addr01,
+		0,
+		runtime.ChainHeight(),
+		currentTime,
 	)
+	getMockInstance().getExternalIncentives().tree.Set(createdIncentiveID, createdIncentive)
+	pool := getMockInstance().getPools().GetPoolOrNil(poolPath)
+	NewPoolResolver(pool).IncentivesResolver().create(createdIncentive)
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross(cur), stakerAddr, rewardMinimumAmount)
+	bar.Transfer(cross(cur), stakerV1Addr, rewardMinimumAmount)
 
 	// Allow some rewards to accrue.
 	testing.SkipHeights(3600)
@@ -346,12 +352,14 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur r
 	// First collect should skip external processing because rewardAmount is zero.
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	communityPoolBefore := TokenBalance(t, barPath, communityPoolAddr)
-	resolver := getMockInstance().getDepositResolver(positionId)
+	resolver, err := getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	firstLastCollect := resolver.ExternalRewardLastCollectTime(incentiveId)
 
 	sr.CollectReward(cross(cur), positionId)
 
-	resolver = getMockInstance().getDepositResolver(positionId)
+	resolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, firstLastCollect, resolver.ExternalRewardLastCollectTime(incentiveId))
 	uassert.Equal(t, int64(0), resolver.CollectedExternalReward(incentiveId))
 	uassert.Equal(t, communityPoolBefore, TokenBalance(t, barPath, communityPoolAddr))
@@ -363,7 +371,8 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur r
 	communityPoolBefore = TokenBalance(t, barPath, communityPoolAddr)
 	sr.CollectReward(cross(cur), positionId)
 
-	resolver = getMockInstance().getDepositResolver(positionId)
+	resolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	communityPoolAfter := TokenBalance(t, barPath, communityPoolAddr)
 	communityPoolChanges := communityPoolAfter - communityPoolBefore
 	if communityPoolChanges != 0 {
@@ -377,7 +386,8 @@ func TestCollectReward_ExternalPenaltyNotDoubleCountedWhenIncentiveMissing(cur r
 
 	// Subsequent collect in the same second should not apply the penalty again.
 	sr.CollectReward(cross(cur), positionId)
-	resolver = getMockInstance().getDepositResolver(positionId)
+	resolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	uassert.Equal(t, communityPoolAfter, TokenBalance(t, barPath, communityPoolAddr))
 	uassert.Equal(t, collectedAfter, resolver.CollectedExternalReward(incentiveId))
 	uassert.Equal(t, lastCollectAfter, resolver.ExternalRewardLastCollectTime(incentiveId))
@@ -426,14 +436,28 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur 
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	sr.StakeToken(cross(cur), positionId, "")
 
-	startTimestamp := int64(1234569600)
-	CreateExternalIncentiveAsAdmin(cur, t,
+	// Create an already-started incentive directly for the reward calculation
+	// fixture. The public entrypoint intentionally rejects starts before 24 hours.
+	currentTime := time.Now().Unix()
+	createdIncentiveID := getMockInstance().store.NextIncentiveID(addr01, currentTime)
+	createdIncentive := sr.NewExternalIncentive(
+		createdIncentiveID,
 		poolPath,
 		barPath,
 		rewardMinimumAmount,
-		startTimestamp,
-		startTimestamp+incentiveDuration,
+		currentTime+1,
+		currentTime+1+incentiveDuration,
+		addr01,
+		0,
+		runtime.ChainHeight(),
+		currentTime,
 	)
+	getMockInstance().getExternalIncentives().tree.Set(createdIncentiveID, createdIncentive)
+	pool := getMockInstance().getPools().GetPoolOrNil(poolPath)
+	NewPoolResolver(pool).IncentivesResolver().create(createdIncentive)
+	testing.SetRealm(adminRealm)
+	bar.Transfer(cross(cur), stakerAddr, rewardMinimumAmount)
+	bar.Transfer(cross(cur), stakerV1Addr, rewardMinimumAmount)
 
 	testing.SkipHeights(3600)
 
@@ -453,7 +477,8 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur 
 	}
 
 	blockHeight := runtime.ChainHeight()
-	reward := getMockInstance().calcPositionReward(blockHeight, time.Now().Unix(), positionId)
+	reward, err := getMockInstance().calculateCollectablePositionReward(blockHeight, time.Now().Unix(), positionId)
+	uassert.NoError(t, err)
 	rewardAmount := reward.External[incentiveId]
 	externalPenalty := reward.ExternalPenalty[incentiveId]
 	if rewardAmount <= 0 {
@@ -467,7 +492,8 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur 
 	incentive.SetRewardAmount(totalRewardAmount - 1)
 	incentives.set(incentiveId, incentive)
 
-	depositResolver := getMockInstance().getDepositResolver(positionId)
+	depositResolver, err := getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	beforeLastCollect := depositResolver.ExternalRewardLastCollectTime(incentiveId)
 	beforeCollected := depositResolver.CollectedExternalReward(incentiveId)
 	beforeUserBar := bar.BalanceOf(addr01)
@@ -477,7 +503,8 @@ func TestCollectReward_SkipsWhenPenaltyInclusiveDebitExceedsAvailableReward(cur 
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	sr.CollectReward(cross(cur), positionId)
 
-	depositResolver = getMockInstance().getDepositResolver(positionId)
+	depositResolver, err = getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 	incentiveAfter := getMockInstance().getExternalIncentives().get(incentiveId)
 	afterUserBar := bar.BalanceOf(addr01)
 	afterCommunityBar := bar.BalanceOf(communityPoolAddr)
@@ -498,6 +525,7 @@ func TestCollectReward_ZeroNetRewardWithPenalty(cur realm, t *testing.T) {
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Create pool
@@ -553,7 +581,8 @@ func TestCollectReward_ZeroNetRewardWithPenalty(cur realm, t *testing.T) {
 	communityGnsBefore := gns.BalanceOf(communityPoolAddr)
 
 	// Get deposit info to check internal state
-	depositResolver := getMockInstance().getDepositResolver(positionId)
+	depositResolver, err := getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
 
 	// Collect reward - should process penalty even if net reward is 0
 	sr.CollectReward(cross(cur), positionId)
@@ -583,6 +612,7 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// Create pool
@@ -637,9 +667,8 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
 	gnsApprove(cur, t, addr01, stakerAddr, 1000000000) // Approve GNS deposit
 
-	// Incentive must start at least 1 day in the future (midnight)
-	tomorrow := time.Now().AddDate(0, 0, 1)
-	startTimestamp := tomorrow.Truncate(24 * time.Hour).Unix()
+	// Incentive must start at least 24 hours in the future (midnight)
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(cur, t,
 		poolPath,
 		barPath,
@@ -665,8 +694,8 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	uassert.True(t, len(externalRewards) >= 0, "should have external reward tracking")
 
 	// Store initial tick state for comparison
-	lowerTick := poolResolver.TickResolver(tickLower)
-	upperTick := poolResolver.TickResolver(tickUpper)
+	lowerTick := NewTickResolver(poolResolver.GetOrNewTick(tickLower))
+	upperTick := NewTickResolver(poolResolver.GetOrNewTick(tickUpper))
 	initialLowerLiquidity := lowerTick.StakedLiquidityGross().Clone()
 	initialUpperLiquidity := upperTick.StakedLiquidityGross().Clone()
 
@@ -688,9 +717,12 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 	deposits := getMockInstance().getDeposits()
 	uassert.False(t, deposits.Has(positionId), "deposit should be removed after unstaking")
 
+	uassert.False(t, pool.Ticks().Has(tickLower))
+	uassert.False(t, pool.Ticks().Has(tickUpper))
+
 	// Verify tick liquidity was updated (should be reduced after unstaking)
-	finalLowerLiquidity := poolResolver.TickResolver(tickLower).StakedLiquidityGross()
-	finalUpperLiquidity := poolResolver.TickResolver(tickUpper).StakedLiquidityGross()
+	finalLowerLiquidity := NewTickResolver(poolResolver.GetOrNewTick(tickLower)).StakedLiquidityGross()
+	finalUpperLiquidity := NewTickResolver(poolResolver.GetOrNewTick(tickUpper)).StakedLiquidityGross()
 	uassert.True(t, finalLowerLiquidity.Lt(initialLowerLiquidity) || finalLowerLiquidity.IsZero(),
 		"lower tick liquidity should be reduced")
 	uassert.True(t, finalUpperLiquidity.Lt(initialUpperLiquidity) || finalUpperLiquidity.IsZero(),
@@ -703,6 +735,7 @@ func TestUnStakeToken_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
 	mockInstanceSetPoolTier(cross(cur), poolPath, 1)
@@ -740,7 +773,7 @@ func TestUnStakeToken_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
 	gnsApprove(cur, t, addr01, stakerAddr, 1000000000)
-	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	testing.SkipHeights(100)
 
@@ -763,6 +796,7 @@ func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(cur realm, t *testing.T)
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
+	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
 	mockInstanceSetPoolTier(cross(cur), poolPath, 1)
@@ -800,7 +834,7 @@ func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(cur realm, t *testing.T)
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
 	gnsApprove(cur, t, addr01, stakerAddr, 1000000000)
-	startTimestamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
 	CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
 	testing.SkipHeights(100)
 
@@ -869,99 +903,5 @@ func TestStakeToken_EmptyIncentiveList(cur realm, t *testing.T) {
 	lastUpdate := deposit.LastExternalIncentiveUpdatedAt()
 	if lastUpdate != 0 {
 		t.Errorf("Expected lastExternalIncentiveUpdatedAt to be 0, got %d", lastUpdate)
-	}
-}
-
-// TestStore_ExternalIncentivesByCreationTime tests the store functions
-// for the time-based incentive index with 2-level structure.
-func TestStore_ExternalIncentivesByCreationTime(cur realm, t *testing.T) {
-	initStakerTest(cur, t)
-	instance := getMockInstance()
-
-	poolPath1 := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
-	poolPath2 := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:3000"
-
-	// Test SetExternalIncentivesByCreationTime with 2-level structure
-	tree := sr.NewUintTree()
-
-	// Create pool map for timestamp 100
-	poolMap1 := sr.NewBPTreeN(16)
-	poolMap1.Set(poolPath1, []string{"incentive1"})
-	tree.Set(100, poolMap1)
-
-	// Create pool map for timestamp 200
-	poolMap2 := sr.NewBPTreeN(16)
-	poolMap2.Set(poolPath1, []string{"incentive2"})
-	poolMap2.Set(poolPath2, []string{"incentive3"})
-	tree.Set(200, poolMap2)
-
-	err := instance.store.SetExternalIncentivesByCreationTime(0, cur, tree)
-	if err != nil {
-		t.Fatalf("Failed to set incentives tree: %v", err)
-	}
-
-	// Test HasExternalIncentivesByCreationTimeStoreKey - now true
-	if !instance.store.HasExternalIncentivesByCreationTimeStoreKey() {
-		t.Error("Expected store key to exist after set")
-	}
-
-	// Test GetExternalIncentivesByCreationTime
-	retrieved := instance.store.GetExternalIncentivesByCreationTime()
-	if retrieved == nil {
-		t.Fatal("Expected to retrieve tree")
-	}
-
-	// Verify data at timestamp 100
-	value1, ok := retrieved.Get(100)
-	if !ok {
-		t.Error("Expected to find value at timestamp 100")
-	}
-	if value1 == nil {
-		t.Error("Expected pool map at timestamp 100")
-	}
-	pMap1, ok := value1.(*bptree.BPTree)
-	if !ok {
-		t.Fatalf("Expected *bptree.BPTree at timestamp 100, got %T", value1)
-	}
-	idsValue1 := pMap1.Get(poolPath1)
-	if idsValue1 == nil {
-		t.Error("Expected incentives for poolPath1 at timestamp 100")
-	}
-	ids1 := idsValue1.([]string)
-	if len(ids1) != 1 || ids1[0] != "incentive1" {
-		t.Errorf("Expected [incentive1], got %v", ids1)
-	}
-
-	// Verify data at timestamp 200
-	value2, ok := retrieved.Get(200)
-	if !ok {
-		t.Error("Expected to find value at timestamp 200")
-	}
-	if value2 == nil {
-		t.Error("Expected pool map at timestamp 200")
-	}
-	pMap2, ok := value2.(*bptree.BPTree)
-	if !ok {
-		t.Fatalf("Expected *bptree.BPTree at timestamp 200, got %T", value2)
-	}
-
-	// Check poolPath1 at timestamp 200
-	idsValue2a := pMap2.Get(poolPath1)
-	if idsValue2a == nil {
-		t.Error("Expected incentives for poolPath1 at timestamp 200")
-	}
-	ids2a := idsValue2a.([]string)
-	if len(ids2a) != 1 || ids2a[0] != "incentive2" {
-		t.Errorf("Expected [incentive2], got %v", ids2a)
-	}
-
-	// Check poolPath2 at timestamp 200
-	idsValue2b := pMap2.Get(poolPath2)
-	if idsValue2b == nil {
-		t.Error("Expected incentives for poolPath2 at timestamp 200")
-	}
-	ids2b := idsValue2b.([]string)
-	if len(ids2b) != 1 || ids2b[0] != "incentive3" {
-		t.Errorf("Expected [incentive3], got %v", ids2b)
 	}
 }

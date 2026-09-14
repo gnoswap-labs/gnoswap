@@ -6,11 +6,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -23,6 +24,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -133,7 +135,7 @@ func testMintPositionWithGnot(cur realm) {
 		"100000000",  // amount1Desired (GNOT - will be wrapped)
 		"0",          // amount0Min
 		"0",          // amount1Min
-		max_timeout, // deadline
+		max_timeout,  // deadline
 		userAddr,
 		"",
 	)
@@ -264,7 +266,7 @@ func testBurnPositionWithUnwrap(cur realm, removedLiquidity string) {
 //
 // [SCENARIO] 3. Execute Swaps (Generate Fees)
 // [INFO] Executing swaps to generate fees
-// [INFO] Swap 1 - GNS in: 10000000 WUGNOT out: -9695218
+// [INFO] Swap 1 - GNS in: 10000000 WUGNOT out: 9695218
 // [INFO] Protocol fee balance WUGNOT: 115880
 // [INFO] Protocol fee balance GNS: 0
 // [EXPECTED] Pool fee (0.5%) accumulated correctly

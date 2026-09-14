@@ -35,6 +35,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/position/v2_valid"
@@ -210,7 +211,11 @@ func mintPositionV2Valid(cur realm) {
 func setPositionOperatorV2Valid(cur realm) {
 	testing.SetRealm(stakerRealm)
 	position.SetPositionOperator(cross(cur), positionId, operatorAddr)
-	ufmt.Printf("[EXPECTED] v2_valid set operator id=%d operator=%s\n", positionId, position.GetPositionOperator(positionId))
+	operator, err := position.GetPositionOperator(positionId)
+	if err != nil {
+		panic(err)
+	}
+	ufmt.Printf("[EXPECTED] v2_valid set operator id=%d operator=%s\n", positionId, operator)
 }
 
 // clearV1PositionForReposition fully drains the v1 position so it satisfies the
@@ -219,13 +224,20 @@ func setPositionOperatorV2Valid(cur realm) {
 // v2_valid and then collects fees to zero out tokensOwed.
 func clearV1PositionForReposition(cur realm) {
 	testing.SetRealm(adminRealm)
-	remaining := position.GetPositionLiquidity(positionId)
+	remaining, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 	id, liq, _, _, _, _, _ := position.DecreaseLiquidity(cross(cur), positionId, remaining, "0", "0", time.Now().Unix()+3600)
 	ufmt.Printf("[EXPECTED] v2_valid drained position id=%d removedLiquidity=%s\n", id, liq)
 
 	cid, amount0, amount1, _, _, _ := position.CollectFee(cross(cur), positionId)
+	liquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[EXPECTED] v2_valid cleared owed id=%d amount0=%s amount1=%s liquidity=%s\n",
-		cid, amount0, amount1, position.GetPositionLiquidity(positionId))
+		cid, amount0, amount1, liquidity)
 }
 
 // repositionV2Valid repositions the now-cleared v1 position into a new tick
@@ -242,17 +254,35 @@ func repositionV2Valid(cur realm) {
 }
 
 func printPositionData(cur realm) {
-	liquidity := position.GetPositionLiquidity(positionId)
-	tickLower, tickUpper := position.GetPositionTicks(positionId)
-	poolKey := position.GetPositionPoolKey(positionId)
+	liquidity, err := position.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tickLower, tickUpper, err := position.GetPositionTicks(positionId)
+	if err != nil {
+		panic(err)
+	}
+	poolKey, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[EXPECTED] position id=%d liquidity=%s tickLower=%d tickUpper=%d pool=%s\n",
 		positionId, liquidity, tickLower, tickUpper, poolKey)
 }
 
 func printNewPositionData(cur realm) {
-	liquidity := position.GetPositionLiquidity(newPositionId)
-	tickLower, tickUpper := position.GetPositionTicks(newPositionId)
-	poolKey := position.GetPositionPoolKey(newPositionId)
+	liquidity, err := position.GetPositionLiquidity(newPositionId)
+	if err != nil {
+		panic(err)
+	}
+	tickLower, tickUpper, err := position.GetPositionTicks(newPositionId)
+	if err != nil {
+		panic(err)
+	}
+	poolKey, err := position.GetPositionPoolKey(newPositionId)
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[EXPECTED] position id=%d liquidity=%s tickLower=%d tickUpper=%d pool=%s\n",
 		newPositionId, liquidity, tickLower, tickUpper, poolKey)
 }
@@ -264,7 +294,7 @@ func printNewPositionData(cur realm) {
 // [SCENARIO] 2. Create v1 data: pool + position + swap
 // [EXPECTED] Created pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] v1 minted position id=1 liquidity=1066918731
-// [EXPECTED] v1 swap in=1000000 out=-997067
+// [EXPECTED] v1 swap in=1000000 out=997067
 //
 // [SCENARIO] 3. Read v1-created position data via getters
 // [EXPECTED] position id=1 liquidity=1066918731 tickLower=-960 tickUpper=960 pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500

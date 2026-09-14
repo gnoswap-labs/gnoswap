@@ -16,6 +16,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -183,7 +184,7 @@ func mintUpperRangePosition(cur realm) {
 
 func checkUnclaimedFeesBeforeSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.GetUnclaimedFee(1)
+	amount0, amount1, _ := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
@@ -205,7 +206,6 @@ func executeFirstSwap(cur realm) {
 		true,
 		"1234567",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
@@ -217,7 +217,7 @@ func executeFirstSwap(cur realm) {
 
 func checkUnclaimedFeesAfterFirstSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.GetUnclaimedFee(1)
+	amount0, amount1, _ := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
@@ -239,7 +239,6 @@ func executeSecondSwap(cur realm) {
 		true,
 		"20000000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
@@ -251,7 +250,7 @@ func executeSecondSwap(cur realm) {
 
 func checkUnclaimedFeesAfterSecondSwap(cur realm) {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.GetUnclaimedFee(1)
+	amount0, amount1, _ := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Unclaimed fee1 should be %s\n", amount1)
@@ -273,7 +272,6 @@ func executeThirdSwap(cur realm) {
 		false,
 		"20000000",
 		MAX_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, false)
 		},
@@ -285,7 +283,7 @@ func executeThirdSwap(cur realm) {
 
 func checkFinalUnclaimedFees(cur realm) {
 	testing.SetRealm(adminRealm)
-	amount0, amount1 := position.GetUnclaimedFee(1)
+	amount0, amount1, _ := position.GetUnclaimedFee(1)
 
 	ufmt.Printf("[EXPECTED] Final unclaimed fee0 should be %s\n", amount0)
 	ufmt.Printf("[EXPECTED] Final unclaimed fee1 should be %s\n", amount1)
@@ -295,11 +293,11 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

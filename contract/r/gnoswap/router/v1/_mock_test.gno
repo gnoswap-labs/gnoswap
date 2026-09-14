@@ -3,8 +3,8 @@ package router
 import (
 	"strconv"
 
-	"gno.land/p/demo/tokens/grc721"
 	bptree "gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/grc721/v0"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
 )
@@ -95,6 +95,20 @@ func (r *mockRouterStore) GetPendingProtocolFees() map[string]int64 {
 
 func (r *mockRouterStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
 	r.data[router.StoreKeyPendingProtocolFees.String()] = fees
+	return nil
+}
+
+func (r *mockRouterStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return r.GetPendingProtocolFees()[tokenPath]
+}
+
+func (r *mockRouterStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	r.GetPendingProtocolFees()[tokenPath] = amount
+	return nil
+}
+
+func (r *mockRouterStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(r.GetPendingProtocolFees(), tokenPath)
 	return nil
 }
 

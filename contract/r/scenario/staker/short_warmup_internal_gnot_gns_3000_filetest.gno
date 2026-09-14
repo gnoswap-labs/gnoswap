@@ -5,7 +5,6 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"chain/runtime"
@@ -14,7 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoland/wugnot"
@@ -28,6 +31,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -88,6 +92,7 @@ func main(cur realm) {
 
 func initWithShortWarmUp(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] override warm-up periods for testing")
@@ -133,7 +138,10 @@ func createPool(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] create wugnot:gns:3000 pool at tick 0")
-	pl.CreatePool(cross(cur), wugnotPath, gnsPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
+	if !pl.ExistsPoolPath(poolPath) {
+		pl.CreatePool(cross(cur), wugnotPath, gnsPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	}
 
 	testing.SkipHeights(1)
 	ufmt.Printf("[INFO] pool created, current height: %d\n", runtime.ChainHeight())
@@ -167,7 +175,7 @@ func mintWugnotGnsPos01(cur realm) {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
+	owner := mustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
@@ -232,6 +240,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

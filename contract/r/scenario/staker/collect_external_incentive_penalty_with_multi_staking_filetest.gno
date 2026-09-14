@@ -13,12 +13,13 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -33,6 +34,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -165,7 +167,7 @@ func createExternalIncentive(cur realm) {
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
 	createTimestamp := time.Now().Unix()
-	startTime := int64(1234569600) // Fixed start time
+	startTime := int64(1234742400) // Fixed start time
 	endTime := startTime + INCENTIVE_DURATION
 	incentiveStartTime = startTime
 	incentiveEndTime = endTime
@@ -223,8 +225,8 @@ func collectRewards(cur realm, positionId uint64) {
 	quxBeforeCollect := qux.BalanceOf(adminAddr)
 	sr.CollectReward(cross(cur), positionId)
 
-	penaltyAfterCollect := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
-	distributedAfterCollect := sr.GetIncentiveDistributedRewardAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	penaltyAfterCollect, _ := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	distributedAfterCollect, _ := sr.GetIncentiveDistributedRewardAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 	quxAfterCollect := qux.BalanceOf(adminAddr)
 	quxCollected := quxAfterCollect - quxBeforeCollect
 
@@ -252,7 +254,7 @@ func endIncentive(cur realm) {
 
 func collectPenalty(cur realm) {
 	creatorQuxBefore := qux.BalanceOf(externalCreatorUser)
-	penaltyBefore := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	penaltyBefore, _ := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
 	testing.SetRealm(adminRealm)
 	collected := sr.CollectExternalIncentivePenalty(
@@ -263,7 +265,7 @@ func collectPenalty(cur realm) {
 	)
 
 	creatorQuxAfter := qux.BalanceOf(externalCreatorUser)
-	penaltyAfter := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	penaltyAfter, _ := sr.GetIncentiveAccumulatedPenaltyAmount("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 
 	ufmt.Printf("[INFO] penalty before collection: %d\n", penaltyBefore)
 	ufmt.Printf("[INFO] penalty collected: %d\n", collected)
@@ -361,11 +363,11 @@ func positionIdFrom(cur realm, positionId uint64) grc721.TokenID {
 //   - qux collected: 1849996719
 // [INFO] position 3 CollectReward:
 //   - accumulatedPenaltyAmount: 883332176
-//   - distributedRewardAmount: 7249999990
-//   - qux collected: 2416664734
+//   - distributedRewardAmount: 7249999991
+//   - qux collected: 2416664735
 //
 // [SCENARIO] 9. Verify new penalty accrues and can be collected again
 // [INFO] second collection returned: 883332176
 // [EXPECTED] new penalty accrued after later CollectReward is collected again
 // [EXPECTED] staker gns balance: 0
-// [EXPECTED] staker qux balance: 8
+// [EXPECTED] staker qux balance: 7

@@ -12,13 +12,15 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -30,6 +32,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 	"gno.land/r/gnoswap/staker"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -110,6 +113,7 @@ func main(cur realm) {
 
 func initEmissionState(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	ufmt.Println("[INFO] Initializing emission state")
@@ -117,6 +121,11 @@ func initEmissionState(cur realm) {
 
 func initPool(cur realm) {
 	testing.SetRealm(adminRealm)
+	if pool.ExistsPoolPath(wugnotGnsPoolPath) {
+		ufmt.Println("[INFO] Pool created: %s (tier: 1)", wugnotGnsPoolPath)
+		return
+	}
+
 	pool.SetPoolCreationFee(cross(cur), 0)
 
 	testing.SetRealm(adminRealm)

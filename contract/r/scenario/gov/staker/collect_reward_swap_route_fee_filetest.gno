@@ -5,16 +5,18 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
@@ -101,8 +103,8 @@ func createPoolByAdmin(cur realm, token0, token1 string, fee int64) {
 func mintPositionByAdmin(cur realm, token0, token1 string, fee int64) {
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross(cur), token0, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross(cur), token1, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, token0, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, token1, poolAddr, math.MaxInt64)
 
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross(cur),
@@ -135,7 +137,7 @@ func exactInSingleSwapRouteByAdmin(cur realm,
 ) {
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross(cur), inputToken, routerAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, inputToken, routerAddr, math.MaxInt64)
 
 	// expected output token amount is -9955 (not handled amount is -9969, router fee is 14)
 	inputTokenAmount, outputTokenAmount := router.ExactInSingleSwapRoute(
@@ -150,7 +152,8 @@ func exactInSingleSwapRouteByAdmin(cur realm,
 		"",
 	)
 
-	ufmt.Printf("[EXPECTED] pool current tick: %d\n", pool.GetSlot0Tick(routeQueryString))
+	poolTick, _ := pool.GetSlot0Tick(routeQueryString)
+	ufmt.Printf("[EXPECTED] pool current tick: %d\n", poolTick)
 	ufmt.Printf("[EXPECTED] inputTokenAmount(%s): %s\n", inputToken, inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount(%s): %s\n", outputToken, outputTokenAmount)
 }
@@ -185,7 +188,7 @@ func checkBalanceFn(cur realm, tokenPath string, addr address, fn func()) {
 // [SCENARIO] 3. Swap route by swap route fee
 // [EXPECTED] pool current tick: -1
 // [EXPECTED] inputTokenAmount(gno.land/r/onbloc/bar.BAR): 10000
-// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): -9955
+// [EXPECTED] outputTokenAmount(gno.land/r/onbloc/qux.QUX): 9955
 //
 // [SCENARIO] 4. Check and collect protocol fee reward for alice
 // [INFO] collected protocol fee reward for g1v9kxjcm9ta047h6lta047h6lta047h6lzd40gh

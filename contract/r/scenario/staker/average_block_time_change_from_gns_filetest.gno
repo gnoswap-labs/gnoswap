@@ -5,16 +5,17 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
+	"gno.land/p/nt/grc721/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -30,6 +31,7 @@ import (
 	pn "gno.land/r/gnoswap/position"
 	sr "gno.land/r/gnoswap/staker"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/rbac"
@@ -94,6 +96,7 @@ func main(cur realm) {
 func initAccountAndEmission(cur realm) {
 	println("[INFO] send coins to admin")
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	testing.IssueCoins(adminAddr, chain.Coins{{"ugnot", 100_000_000_000_000}})
@@ -119,16 +122,20 @@ func createPool(cur realm) {
 
 	println("[INFO] set pool creation fee to 0")
 	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross(cur), 0)
+	if !pl.ExistsPoolPath(poolPath) {
+		pl.SetPoolCreationFee(cross(cur), 0)
+	}
 
 	println("[INFO] create pool gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000 at tick 0")
-	pl.CreatePool(
-		cross(cur),
-		wugnotPath,
-		gnsPath,
-		fee3000,
-		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
-	)
+	if !pl.ExistsPoolPath(poolPath) {
+		pl.CreatePool(
+			cross(cur),
+			wugnotPath,
+			gnsPath,
+			fee3000,
+			gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(), // 79228162514264337593543950337
+		)
+	}
 }
 
 func mintPosition(cur realm) {
@@ -227,4 +234,3 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 6. Collect reward for 1 blocks
 // [EXPECTED] position 1's reward for 1 blocks: 8026540
-

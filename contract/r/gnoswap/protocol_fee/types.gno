@@ -18,6 +18,9 @@ type IProtocolFeeManager interface {
 	SetDevOpsPct(_ int, rlm realm, pct int64)
 	SetGovStakerPct(_ int, rlm realm, pct int64)
 	AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error
+
+	AdvanceAccrualEpoch(_ int, rlm realm) int64
+	ConsumeAccrualBuckets(_ int, rlm realm, tokenPath string, limit int) ([]int64, []int64)
 }
 
 type IProtocolFeeGetter interface {
@@ -32,6 +35,9 @@ type IProtocolFeeGetter interface {
 	GetActualDistributedToDevOps() map[string]int64
 	GetActualDistributedToGovStakerByTokenPath(path string) int64
 	GetActualDistributedToDevOpsByTokenPath(path string) int64
+	GetAccrualEpoch() int64
+	GetAccrualPendingTokens() []string
+	GetAccrualBuckets(tokenPath string, limit int) ([]int64, []int64)
 }
 
 type IProtocolFeeStore interface {
@@ -67,6 +73,24 @@ type IProtocolFeeStore interface {
 	HasReservedTokensStoreKey() bool
 	InitializeReservedTokens(_ int, rlm realm) error
 	GetReservedTokens() []string
-	SetReservedTokens(_ int, rlm realm, reservedTokens []string) error
+	HasReservedToken(tokenPath string) bool
 	AddReservedToken(_ int, rlm realm, tokenPath string) error
+	RemoveReservedToken(_ int, rlm realm, tokenPath string) error
+
+	HasAccrualEpochStoreKey() bool
+	InitializeAccrualEpoch(_ int, rlm realm) error
+	GetAccrualEpoch() int64
+	SetAccrualEpoch(_ int, rlm realm, accrualEpoch int64) error
+
+	HasAccrualBucketsStoreKey() bool
+	InitializeAccrualBuckets(_ int, rlm realm) error
+	GetAccrualBuckets(tokenPath string, limit int) ([]int64, []int64)
+	AddAccrualBucket(_ int, rlm realm, tokenPath string, epoch int64, amount int64) error
+	RemoveAccrualBuckets(_ int, rlm realm, tokenPath string, epochs []int64) error
+
+	HasAccrualPendingTokensStoreKey() bool
+	InitializeAccrualPendingTokens(_ int, rlm realm) error
+	GetAccrualPendingTokens() []string
+	AddAccrualPendingToken(_ int, rlm realm, tokenPath string) error
+	RemoveAccrualPendingToken(_ int, rlm realm, tokenPath string) error
 }

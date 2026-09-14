@@ -509,7 +509,7 @@ func TestHalvingRates(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetHalvingYearAccumulatedAmount(cur realm, t *testing.T) {
+func TestGetHalvingYearMintedAmount(cur realm, t *testing.T) {
 	startTs := int64(10000)
 	es := NewEmissionState(1, startTs)
 
@@ -532,7 +532,7 @@ func TestGetHalvingYearAccumulatedAmount(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			got := es.getHalvingYearAccumulatedAmount(tt.year)
+			got := es.getHalvingYearMintedAmount(tt.year)
 			uassert.Equal(t, tt.expected, got)
 		})
 	}
@@ -567,7 +567,7 @@ func TestGetHalvingYearLeftAmount(cur realm, t *testing.T) {
 	}
 }
 
-func TestAddHalvingYearAccumulatedAmount(cur realm, t *testing.T) {
+func TestAddHalvingYearMintedAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		year        int64
@@ -591,20 +591,20 @@ func TestAddHalvingYearAccumulatedAmount(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			es := NewEmissionState(1, 10000)
-			err := es.addHalvingYearAccumulatedAmount(tt.year, tt.amount)
+			err := es.addHalvingYearMintedAmount(tt.year, tt.amount)
 
 			if tt.shouldError {
 				uassert.Error(t, err)
 			} else {
 				uassert.NoError(t, err)
-				got := es.getHalvingYearAccumulatedAmount(tt.year)
+				got := es.getHalvingYearMintedAmount(tt.year)
 				uassert.Equal(t, tt.amount, got)
 			}
 		})
 	}
 }
 
-func TestAddHalvingYearAccumulatedAmount_Cumulative(cur realm, t *testing.T) {
+func TestAddHalvingYearMintedAmountCumulative(cur realm, t *testing.T) {
 	tests := []struct {
 		name    string
 		amounts []int64
@@ -621,17 +621,17 @@ func TestAddHalvingYearAccumulatedAmount_Cumulative(cur realm, t *testing.T) {
 			expectedTotal := int64(0)
 
 			for _, amount := range tt.amounts {
-				err := es.addHalvingYearAccumulatedAmount(1, amount)
+				err := es.addHalvingYearMintedAmount(1, amount)
 				uassert.NoError(t, err)
 				expectedTotal += amount
-				got := es.getHalvingYearAccumulatedAmount(1)
+				got := es.getHalvingYearMintedAmount(1)
 				uassert.Equal(t, expectedTotal, got)
 			}
 		})
 	}
 }
 
-func TestAddHalvingYearAccumulatedAmount_Overflow(cur realm, t *testing.T) {
+func TestAddHalvingYearMintedAmountOverflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		initialValue int64
@@ -655,10 +655,10 @@ func TestAddHalvingYearAccumulatedAmount_Overflow(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			es := NewEmissionState(1, 10000)
-			es.halvingData.setAccumAmount(1, tt.initialValue)
+			es.halvingData.setMintedAmount(1, tt.initialValue)
 
 			uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
-				es.addHalvingYearAccumulatedAmount(1, tt.addAmount)
+				es.addHalvingYearMintedAmount(1, tt.addAmount)
 			})
 		})
 	}
@@ -749,18 +749,18 @@ func TestAddSubConsistency(cur realm, t *testing.T) {
 			es := NewEmissionState(1, 10000)
 			maxAmount := GetHalvingAmountsPerYear(tt.year)
 
-			// Add to accumulated
-			err := es.addHalvingYearAccumulatedAmount(tt.year, tt.emitAmount)
+			// Add minted amount
+			err := es.addHalvingYearMintedAmount(tt.year, tt.emitAmount)
 			uassert.NoError(t, err)
 
 			// Subtract from left
 			err = es.subHalvingYearLeftAmount(tt.year, tt.emitAmount)
 			uassert.NoError(t, err)
 
-			// Verify consistency: accum + left = max
-			accum := es.getHalvingYearAccumulatedAmount(tt.year)
+			// Verify consistency: minted + left = max
+			minted := es.getHalvingYearMintedAmount(tt.year)
 			left := es.getHalvingYearLeftAmount(tt.year)
-			uassert.Equal(t, maxAmount, accum+left)
+			uassert.Equal(t, maxAmount, minted+left)
 		})
 	}
 }
@@ -837,7 +837,7 @@ func TestEmissionStateHalvingDataIntegrity(cur realm, t *testing.T) {
 			uassert.Equal(t, halvingData.getStartTimestamp(year), es.getHalvingYearStartTimestamp(year))
 			uassert.Equal(t, halvingData.getEndTimestamp(year), es.getHalvingYearEndTimestamp(year))
 			uassert.Equal(t, halvingData.getAmountPerSecond(year), es.getHalvingYearAmountPerSecond(year))
-			uassert.Equal(t, halvingData.getAccumAmount(year), es.getHalvingYearAccumulatedAmount(year))
+			uassert.Equal(t, halvingData.getMintedAmount(year), es.getHalvingYearMintedAmount(year))
 			uassert.Equal(t, halvingData.getLeftAmount(year), es.getHalvingYearLeftAmount(year))
 		})
 	}
@@ -885,7 +885,7 @@ func TestEmissionStateRepeatedOperations(cur realm, t *testing.T) {
 
 			for i := 0; i < tt.iterations; i++ {
 				amount := int64(1000 + i)
-				err := es.addHalvingYearAccumulatedAmount(1, amount)
+				err := es.addHalvingYearMintedAmount(1, amount)
 				uassert.NoError(t, err)
 				err = es.subHalvingYearLeftAmount(1, amount)
 				uassert.NoError(t, err)
@@ -893,9 +893,9 @@ func TestEmissionStateRepeatedOperations(cur realm, t *testing.T) {
 
 			// Verify final state
 			maxAmount := GetHalvingAmountsPerYear(1)
-			accum := es.getHalvingYearAccumulatedAmount(1)
+			minted := es.getHalvingYearMintedAmount(1)
 			left := es.getHalvingYearLeftAmount(1)
-			uassert.Equal(t, maxAmount, accum+left)
+			uassert.Equal(t, maxAmount, minted+left)
 		})
 	}
 }
@@ -906,7 +906,7 @@ func TestEmissionStateAllYearsIndependent(cur realm, t *testing.T) {
 	// Modify each year independently
 	for year := int64(1); year <= HALVING_END_YEAR; year++ {
 		amount := year * 1000
-		err := es.addHalvingYearAccumulatedAmount(year, amount)
+		err := es.addHalvingYearMintedAmount(year, amount)
 		uassert.NoError(t, err)
 	}
 
@@ -914,7 +914,7 @@ func TestEmissionStateAllYearsIndependent(cur realm, t *testing.T) {
 	for year := int64(1); year <= HALVING_END_YEAR; year++ {
 		t.Run("year_"+utils.FormatInt(year), func(cur realm, t *testing.T) {
 			expected := year * 1000
-			got := es.getHalvingYearAccumulatedAmount(year)
+			got := es.getHalvingYearMintedAmount(year)
 			uassert.Equal(t, expected, got)
 		})
 	}

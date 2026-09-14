@@ -8,12 +8,13 @@ Staker manages distribution of internal (GNS emission) and external (admin-funde
 
 ## Configuration
 
-- **Deposit GNS Amount**: 1,000 GNS for external incentives (default)
+- **Deposit GNS Amount**: 100,000 GNS for external incentives (default)
 - **Minimum Reward Amount**: 1,000 tokens (default)
 - **Unstaking Fee**: 1% (default)
 - **Pool Tiers**: 1, 2, or 3 (assigned per pool)
 - **Warmup Schedule**: 30/50/70/100% over 30/60/90 days
 - **External Token Whitelist**: Approved reward tokens
+- **External Incentive Start**: UTC midnight, from the first eligible start (at least 24 hours after creation) through 7 days later
 
 ## Core Features
 
@@ -56,6 +57,9 @@ Ends incentive program and refunds remaining rewards to the provided refund addr
 
 ### `CollectExternalIncentivePenalty`
 Collects accumulated warmup penalties for an ended incentive to the provided refund address.
+
+### `CancelExternalIncentive`
+Removes a not-yet-started incentive and refunds the rewards and GNS deposit to the creator. Callable by admin, governance, or the creator.
 
 ## Reward Calculation Logic
 

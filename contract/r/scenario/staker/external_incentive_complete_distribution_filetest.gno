@@ -21,12 +21,13 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -42,6 +43,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -71,7 +73,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	// Duration and reward amount carefully chosen so rewardAmount % duration = 0
 	// 90 days = 7776000 seconds
@@ -229,9 +231,9 @@ func createExternalIncentiveNoDust(cur realm) {
 	ufmt.Printf("[INFO] staker QUX balance before: %d\n", stakerQuxBefore)
 	ufmt.Printf("[INFO] creator GNS balance before: %d\n", creatorGnsBefore)
 
-	// External incentive must start at least +1 day midnight
+	// External incentive must start at midnight at least 24 hours from now
 	// Using fixed timestamp for consistent testing
-	startTime := int64(1234569600) // This is the required +1 day midnight timestamp
+	startTime := int64(1234742400) // This is the required +2 day midnight timestamp
 	endTime := startTime + INCENTIVE_DURATION
 
 	testing.SetRealm(adminRealm)
@@ -257,8 +259,8 @@ func createExternalIncentiveNoDust(cur realm) {
 }
 
 func startExternalIncentive(cur realm) {
-	// Skip to start time (1234569600)
-	externalStartTime := int64(1234569600)
+	// Skip to start time (1234742400)
+	externalStartTime := int64(1234742400)
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
@@ -278,7 +280,7 @@ func stakePosition(cur realm) {
 	println("[INFO] stake position")
 	sr.StakeToken(cross(cur), 1, "")
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	owner := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[INFO] position owner after staking: %s\n", owner)
 }
 
@@ -352,7 +354,7 @@ func unstakePosition(cur realm) {
 	ufmt.Printf("[INFO] total rewards collected so far: %d QUX\n", totalRewardsCollected)
 
 	// Verify NFT ownership returned
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	owner := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[INFO] position owner after unstaking: %s\n", owner)
 }
 
@@ -424,6 +426,14 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(positionId))
 }
 
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
+}
+
 // Output:
 // [SCENARIO] Testing complete reward distribution with no dust
 //
@@ -453,10 +463,10 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] incentive ID: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234567905:1
 // [INFO] creator QUX balance before: 7776000000
 // [INFO] staker QUX balance before: 0
-// [INFO] creator GNS balance before: 1000000000
+// [INFO] creator GNS balance before: 100000000000
 // [INFO] creator QUX balance after: 7776000000
 // [INFO] staker QUX balance after: 7776000000
-// [INFO] creator GNS balance after: 1000000000
+// [INFO] creator GNS balance after: 100000000000
 // [INFO] total QUX deposited as reward: 0
 //
 // [SCENARIO] 5. Start external incentive
@@ -482,36 +492,36 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 //
 // [SCENARIO] 10. Collect final rewards
 // [INFO] collecting final rewards
-// [INFO] final rewards collected: 3887999999 QUX
+// [INFO] final rewards collected: 3888000000 QUX
 // [EXPECTED] community pool QUX unchanged on collect: 0 -> 0
 //
 // [SCENARIO] 11. Unstake position to collect all remaining rewards
 // [INFO] unstaking position to collect remaining rewards
 // [INFO] rewards collected from unstaking: 0 QUX
-// [INFO] total rewards collected so far: 6263999997 QUX
+// [INFO] total rewards collected so far: 6263999998 QUX
 // [INFO] position owner after unstaking: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
 //
 // [SCENARIO] 12. End external incentive and verify no dust
 // [INFO] ending external incentive
 // [INFO] before ending incentive:
 //   - Creator QUX: 7776000000
-//   - Staker contract QUX: 1512000003
-//   - Creator GNS (deposit): 1000000000
-//   - Admin total rewards collected (QUX): 6263999997
+//   - Staker contract QUX: 1512000002
+//   - Creator GNS (deposit): 100000000000
+//   - Admin total rewards collected (QUX): 6263999998
 // [INFO] after ending incentive:
 //   - Creator QUX: 7776000000
-//   - Staker contract QUX: 1512000003
-//   - Creator GNS (deposit): 2000000000
-//   - Admin QUX balances: 99990711998997
+//   - Staker contract QUX: 1512000002
+//   - Creator GNS (deposit): 200000000000
+//   - Admin QUX balances: 99990711998998
 // [RESULT] refund breakdown:
 //   - Total refunded reward token (QUX): 0
 //   - Total reduced from staker QUX: 0
-//   - Refunded GNS deposit: 1000000000
-// [EXPECTED] creator receives all remaining reward token: 1512000003
-// [EXPECTED] creator receives fixed GNS deposit: 1000000000
+//   - Refunded GNS deposit: 100000000000
+// [EXPECTED] creator receives all remaining reward token: 1512000002
+// [EXPECTED] creator receives fixed GNS deposit: 100000000000
 // [EXPECTED] Total reward distribution:
 //   - Initial reward amount: 7776000000 QUX
-//   - Rewards collected by staker: 6263999997 QUX
+//   - Rewards collected by staker: 6263999998 QUX
 //   - Undistributed reward refunded: 0 QUX
-//   - Total accounted for: 6263999997 QUX
-//   - Staker-retained penalty QUX: 1512000003
+//   - Total accounted for: 6263999998 QUX
+//   - Staker-retained penalty QUX: 1512000002

@@ -5,17 +5,19 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -31,6 +33,7 @@ import (
 	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/rbac"
@@ -147,6 +150,7 @@ func main(cur realm) {
 
 func initAccount(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -179,13 +183,18 @@ func initAccountPostDeposit(cur realm) {
 
 func createPoolWugnotGns3000Tier01(cur realm) {
 	testing.SetRealm(adminRealm)
+	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
 
 	println("[INFO] set pool creation fee to 0")
-	pl.SetPoolCreationFee(cross(cur), 0)
+	if !pl.ExistsPoolPath(poolPath) {
+		pl.SetPoolCreationFee(cross(cur), 0)
+	}
 
 	println("[INFO] approve gns and create pool")
 	gns.Approve(cross(cur), poolAddr, maxInt64)
-	pl.CreatePool(cross(cur), wugnotPath, gnsPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	if !pl.ExistsPoolPath(poolPath) {
+		pl.CreatePool(cross(cur), wugnotPath, gnsPath, 3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	}
 
 	totalSupply := gns.TotalSupply()
 	ufmt.Printf("[EXPECTED] gns total supply: %d\n", totalSupply)
@@ -206,8 +215,8 @@ func createExternalIncentiveGns(cur realm) {
 		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000",
 		"gno.land/r/gnoswap/gns.GNS",
 		2_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 
 	testing.SkipHeights(1)
@@ -394,7 +403,8 @@ func mintAndStakePos07OutRange(cur realm) {
 	bar.Approve(cross(cur), poolAddr, maxInt64)
 	foo.Approve(cross(cur), poolAddr, maxInt64)
 
-	ufmt.Printf("[EXPECTED] current pool tick: %d\n", pl.GetSlot0Tick("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100"))
+	poolTick, _ := pl.GetSlot0Tick("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100")
+	ufmt.Printf("[EXPECTED] current pool tick: %d\n", poolTick)
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		cross(cur),
@@ -437,6 +447,7 @@ func unstakeToken01(cur realm) {
 	println("[INFO] unstake token 01")
 	beforeGns := gns.BalanceOf(adminUser)
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 
 	rewardFromUnstake := afterGns - beforeGns
@@ -461,7 +472,7 @@ func createPoolExternalOnly(cur realm) {
 	baz.Approve(cross(cur), stakerAddr, 2_000_000_000)
 	gns.Approve(cross(cur), stakerAddr, depositGnsAmount)
 
-	startTime := int64(1244332800)
+	startTime := ((time.Now().Unix() / 86400) + 2) * 86400
 	endTime := startTime + TIMESTAMP_90DAYS
 
 	testing.SetRealm(adminRealm)
@@ -537,7 +548,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 9. Perform swaps
 // [INFO] perform exact-in swaps
-// [EXPECTED] swap result - tokenIn: 500, tokenOut: -497
+// [EXPECTED] swap result - tokenIn: 500, tokenOut: 497
 // [INFO] check reward for position 01 after swap
 // [EXPECTED] position 01 reward after swap: 18729875
 //
@@ -555,7 +566,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 12. Unstake token 01
 // [INFO] unstake token 01
-// [EXPECTED] reward from unstaking: 38798151
+// [EXPECTED] reward from unstaking: 38798152
 //
 // [SCENARIO] 13. Create pool with external incentive only
 // [INFO] create baz:qux:3000 pool (external only)

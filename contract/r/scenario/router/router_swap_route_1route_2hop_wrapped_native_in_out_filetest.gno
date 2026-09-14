@@ -17,6 +17,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -168,7 +169,7 @@ func testDrySwapRouteBarGnotExactIn(cur realm, t *testing.T) {
 
 	println("[INFO] Executing dry swap route (bar → baz → qux → wugnot)")
 	_, dryResult, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath,       // inputToken
 			wrappedWugnot, // outputToken
 			"1000",        // amountSpecified
@@ -177,6 +178,7 @@ func testDrySwapRouteBarGnotExactIn(cur realm, t *testing.T) {
 			"100", // quoteArr
 			"1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 19711")
 	println()
@@ -188,7 +190,7 @@ func testDrySwapRouteBarGnotExactOut(cur realm, t *testing.T) {
 
 	println("[INFO] Executing dry swap route exact out (bar → baz → qux → wugnot)")
 	dryResult, _, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			barPath,       // inputToken
 			wrappedWugnot, // outputToken
 			"20000",       // amountSpecified
@@ -197,6 +199,7 @@ func testDrySwapRouteBarGnotExactOut(cur realm, t *testing.T) {
 			"100", // quoteArr
 			"2000000",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 1015")
 	println()
@@ -208,7 +211,7 @@ func testDrySwapRouteGnotBarExactIn(cur realm, t *testing.T) {
 
 	println("[INFO] Executing dry swap route (wugnot → qux → baz → bar)")
 	_, dryResult, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			wrappedWugnot, // intputToken
 			barPath,       // outputToken
 			"5000",        // amountSpecified
@@ -217,6 +220,7 @@ func testDrySwapRouteGnotBarExactIn(cur realm, t *testing.T) {
 			"100", // quoteArr
 			"1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 247")
 	println()
@@ -228,7 +232,7 @@ func testDrySwapRouteGnotBarExactOut(cur realm, t *testing.T) {
 
 	println("[INFO] Executing dry swap route exact out (wugnot → qux → baz → bar)")
 	dryResult, _, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			wrappedWugnot, // intputToken
 			barPath,       // outputToken
 			"100",         // amountSpecified
@@ -237,6 +241,7 @@ func testDrySwapRouteGnotBarExactOut(cur realm, t *testing.T) {
 			"100", // quoteArr
 			"100000",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 2027")
 	println()

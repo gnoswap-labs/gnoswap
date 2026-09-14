@@ -11,6 +11,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -131,11 +132,11 @@ func createOBLProject(cur realm) {
 
 	// [INFO] Validate project info
 	testing.SetRealm(launchpadRealm)
-	project, _ := launchpad.GetProject(projectId)
+	project, _ := launchpad.GetProjects().Get(projectId).(*launchpad.Project)
 	println("[EXPECTED] Project name:", project.Name())
 	println("[EXPECTED] Project token path:", project.TokenPath())
 	println("[EXPECTED] Project deposit amount:", project.DepositAmount())
-	tiersRatios := project.TiersRatios()
+	tiersRatios, _ := launchpad.GetProjectTiersRatios(projectId)
 	println("[EXPECTED] Project tier30 ratio:", tiersRatios[30])
 	println("[EXPECTED] Project tier90 ratio:", tiersRatios[90])
 	println("[EXPECTED] Project tier180 ratio:", tiersRatios[180])
@@ -354,7 +355,7 @@ func collectProtocolFeeForOBLProjectRecipient2(cur realm) {
 // [INFO] Project recipient collecting protocol fee
 // [INFO] Bar balance in protocol fee: 0
 // [INFO] Qux balance in protocol fee: 0
-// [EXPECTED] Gov staker bar balance after collection: 2002
-// [EXPECTED] Gov staker qux balance after collection: 5002
-// [EXPECTED] Project bar balance after collection: 998
-// [EXPECTED] Project qux balance after collection: 2498
+// [EXPECTED] Gov staker bar balance after collection: 2001
+// [EXPECTED] Gov staker qux balance after collection: 5001
+// [EXPECTED] Project bar balance after collection: 999
+// [EXPECTED] Project qux balance after collection: 2499

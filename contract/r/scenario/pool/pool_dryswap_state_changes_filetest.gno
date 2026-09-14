@@ -3,9 +3,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"fmt"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
@@ -17,6 +18,7 @@ import (
 
 	"gno.land/r/gnoswap/pool"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 )
 
@@ -196,12 +198,12 @@ func swap(cur realm, t *testing.T, zeroForOne bool, amountSpecified string) {
 
 			// Transfer token0 if needed
 			if amount0Delta > 0 {
-				common.SafeGRC20Transfer(cross(cur), barPath, poolAddr, amount0Delta)
+				common.SafeGRC20Transfer(0, cur, barPath, poolAddr, amount0Delta)
 			}
 
 			// Transfer token1 if needed
 			if amount1Delta > 0 {
-				common.SafeGRC20Transfer(cross(cur), fooPath, poolAddr, amount1Delta)
+				common.SafeGRC20Transfer(0, cur, fooPath, poolAddr, amount1Delta)
 			}
 		}(cross(cur))
 
@@ -221,7 +223,6 @@ func swap(cur realm, t *testing.T, zeroForOne bool, amountSpecified string) {
 			zeroForOne,
 			amountSpecified,
 			MIN_PRICE,
-			adminAddr,
 			swapCallback,
 		)
 	}(cross(cur))
@@ -231,12 +232,12 @@ func swap(cur realm, t *testing.T, zeroForOne bool, amountSpecified string) {
 }
 
 func printChanges(cur realm, poolPath string, fn func()) {
-	previousTick := pool.GetSlot0Tick(poolPath)
-	previousBalance0, previousBalance1 := pool.GetBalances(poolPath)
-	previousFeeGrowthGlobal0X128, previousFeeGrowthGlobal1X128 := pool.GetFeeGrowthGlobalX128(poolPath)
+	previousTick, _ := pool.GetSlot0Tick(poolPath)
+	previousBalance0, previousBalance1, _ := pool.GetBalances(poolPath)
+	previousFeeGrowthGlobal0X128, previousFeeGrowthGlobal1X128, _ := pool.GetFeeGrowthGlobalX128(poolPath)
 	positionKey := pool.EncodePositionKey(tickLower, tickUpper)
-	previousPositionFeeGrowthInside0LastX128, previousPositionFeeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInsideLastX128(poolPath, positionKey)
-	previousPositionLiquidity := pool.GetPositionLiquidity(poolPath, positionKey)
+	previousPositionFeeGrowthInside0LastX128, previousPositionFeeGrowthInside1LastX128, _ := pool.GetPositionFeeGrowthInsideLastX128(poolPath, positionKey)
+	previousPositionLiquidity, _ := pool.GetPositionLiquidity(poolPath, positionKey)
 
 	expectedTick := int32(-100)
 	previousTickInfo, _ := pool.GetTickInfo(poolPath, previousTick)
@@ -246,11 +247,11 @@ func printChanges(cur realm, poolPath string, fn func()) {
 
 	fn()
 
-	currentTick := pool.GetSlot0Tick(poolPath)
-	currentBalance0, currentBalance1 := pool.GetBalances(poolPath)
-	currentFeeGrowthGlobal0X128, currentFeeGrowthGlobal1X128 := pool.GetFeeGrowthGlobalX128(poolPath)
-	currentPositionFeeGrowthInside0LastX128, currentPositionFeeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInsideLastX128(poolPath, positionKey)
-	currentPositionLiquidity := pool.GetPositionLiquidity(poolPath, positionKey)
+	currentTick, _ := pool.GetSlot0Tick(poolPath)
+	currentBalance0, currentBalance1, _ := pool.GetBalances(poolPath)
+	currentFeeGrowthGlobal0X128, currentFeeGrowthGlobal1X128, _ := pool.GetFeeGrowthGlobalX128(poolPath)
+	currentPositionFeeGrowthInside0LastX128, currentPositionFeeGrowthInside1LastX128, _ := pool.GetPositionFeeGrowthInsideLastX128(poolPath, positionKey)
+	currentPositionLiquidity, _ := pool.GetPositionLiquidity(poolPath, positionKey)
 	expectedTickInfo, _ := pool.GetTickInfo(poolPath, expectedTick)
 	expectedResultTickCumulativeOutside := expectedTickInfo.TickCumulativeOutside()
 	expectedResultTickFeeGrowthOutside0X128 := expectedTickInfo.FeeGrowthOutside0X128()

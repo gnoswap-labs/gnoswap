@@ -2,7 +2,8 @@ package position
 
 import (
 	"chain"
-	"errors"
+
+	"gno.land/r/gnoswap/access"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
@@ -11,7 +12,6 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt"
-	pl "gno.land/r/gnoswap/pool"
 )
 
 // Reposition adjusts the price range and liquidity of an existing position.
@@ -36,9 +36,7 @@ func (p *positionV1) Reposition(
 	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, int32, int32, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedPosition()
 
@@ -114,11 +112,15 @@ func (p *positionV1) Reposition(
 	position.SetBurned(false)
 	p.mustUpdatePosition(0, rlm, positionId, *position)
 
-	poolSqrtPriceX96 := pl.GetSlot0SqrtPriceX96(poolKey)
-	poolToken0Balance := pl.GetBalanceToken0(poolKey)
-	poolToken1Balance := pl.GetBalanceToken1(poolKey)
-
-	tickCumulative, liquidityCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp := pl.GetObservation(poolKey, 0)
+	pool := mustGetPool(poolKey)
+	positionLiquidity, err := p.GetPositionLiquidity(positionId)
+	if err != nil {
+		panic(err)
+	}
+	tickCumulative, secondsPerLiquidityCumulativeX128, observationTimestamp, err := currentPoolObservation(poolKey)
+	if err != nil {
+		panic(err)
+	}
 
 	chain.Emit(
 		"Reposition",
@@ -133,13 +135,12 @@ func (p *positionV1) Reposition(
 		"prevTickLower", utils.FormatInt(oldTickLower),
 		"prevTickUpper", utils.FormatInt(oldTickUpper),
 		"poolPath", poolKey,
-		"sqrtPriceX96", poolSqrtPriceX96,
-		"positionLiquidity", p.GetPositionLiquidity(positionId),
-		"poolLiquidity", pl.GetLiquidity(poolKey),
-		"token0Balance", utils.FormatInt(poolToken0Balance),
-		"token1Balance", utils.FormatInt(poolToken1Balance),
+		"sqrtPriceX96", pool.Slot0SqrtPriceX96().ToString(),
+		"positionLiquidity", positionLiquidity,
+		"poolLiquidity", pool.Liquidity().ToString(),
+		"token0Balance", utils.FormatInt(pool.BalanceToken0()),
+		"token1Balance", utils.FormatInt(pool.BalanceToken1()),
 		"tickCumulative", utils.FormatInt(tickCumulative),
-		"liquidityCumulative", liquidityCumulative,
 		"secondsPerLiquidityCumulativeX128", secondsPerLiquidityCumulativeX128,
 		"observationTimestamp", utils.FormatInt(observationTimestamp),
 	)

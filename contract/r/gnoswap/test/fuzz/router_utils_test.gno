@@ -100,7 +100,7 @@ func generatePoolIdentifier(f *fuzz.T, token0Path, token1Path string) string {
 func generateIntermediateToken(f *fuzz.T, currentToken, targetToken string) string {
 	availableTokens := make(map[string]bool)
 
-	for token, _ := range defaultTokenPaths {
+	for token := range defaultTokenPaths {
 		if token != currentToken && token != targetToken {
 			availableTokens[token] = true
 		}
@@ -117,7 +117,7 @@ func generateIntermediateToken(f *fuzz.T, currentToken, targetToken string) stri
 func generateIntermediateTokenWithPairs(f *fuzz.T, currentToken, targetToken string, usedPairs map[string]bool) string {
 	availableTokens := make(map[string]bool)
 
-	for token, _ := range defaultTokenPaths {
+	for token := range defaultTokenPaths {
 		if token == currentToken || token == targetToken {
 			continue
 		}
@@ -220,7 +220,8 @@ func setupRouterMintPositionByRoutePath(cur realm, ft *fuzz.T, routePathArr stri
 
 			// generate parameters for position
 			poolPath := pool.GetPoolPath(token0Path, token1Path, feeTier)
-			tickLower, tickUpper := generateInRangeTick(ft, pool.GetSlot0Tick(poolPath), feeTier)
+			currentTick, _ := pool.GetSlot0Tick(poolPath)
+			tickLower, tickUpper := generateInRangeTick(ft, currentTick, feeTier)
 			amountDesired := int64(1_000_000_000_000)
 
 			// setup position

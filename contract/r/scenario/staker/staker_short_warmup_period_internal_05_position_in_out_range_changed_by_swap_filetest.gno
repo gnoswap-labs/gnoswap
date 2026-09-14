@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -23,6 +25,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -88,6 +91,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// override warm-up period for testing
@@ -232,7 +236,7 @@ func stakeToken_1_2(cur realm) {
 
 func makePosition1OutRange(cur realm) {
 	testing.SetRealm(adminRealm)
-	poolTick := pl.GetSlot0Tick(poolPath)
+	poolTick, _ := pl.GetSlot0Tick(poolPath)
 	if poolTick != 0 {
 		panic("expected pool tick to be 0")
 	}
@@ -258,7 +262,7 @@ func makePosition1OutRange(cur realm) {
 		"", // referrer
 	)
 
-	if tokenIn != "10000" || tokenOut != "-9884" {
+	if tokenIn != "10000" || tokenOut != "9884" {
 		panic("unexpected swap result")
 	}
 
@@ -333,7 +337,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [EXPECTED] position 02 (in-range) reward: 3886800 GNS
 //
 // [SCENARIO] 6. Make position 01 out of range via swap
-// [EXPECTED] swap executed: 10000 BAR -> -9884 QUX
+// [EXPECTED] swap executed: 10000 BAR -> 9884 QUX
 //
 // [SCENARIO] 7. Check rewards after position goes out of range
 // [INFO] checking reward for position 01 (now out-range)

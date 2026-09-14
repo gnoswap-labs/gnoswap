@@ -22,9 +22,7 @@ import (
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
 func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	prev := rlm.Previous()
 	assertIsAdminOrGovStaker(prev.Address())
@@ -39,54 +37,92 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 	reservedTokens := pfs.ReservedTokens()
 
 	for _, token := range reservedTokens {
-		toDevOpsAmount := gnsmath.SafeSubInt64(
-			pfs.GetAccuTransferToDevOpsByTokenPath(token),
-			pfs.GetActualDistributedToDevOpsByTokenPath(token),
+		pf.distributeProtocolFeeForToken(
+			0,
+			rlm,
+			pfs,
+			protocolFeeAddr,
+			token,
 		)
-		toGovStakerAmount := gnsmath.SafeSubInt64(
-			pfs.GetAccuTransferToGovStakerByTokenPath(token),
-			pfs.GetActualDistributedToGovStakerByTokenPath(token),
-		)
-
-		amount := gnsmath.SafeAddInt64(toDevOpsAmount, toGovStakerAmount)
-		balance := common.BalanceOf(token, protocolFeeAddr)
-
-		// amount should be less than or equal to balance
-		if amount > balance {
-			panic(makeErrorWithDetail(
-				errInvalidAmount,
-				ufmt.Sprintf("amount: %d should be less than or equal to balance: %d", amount, balance),
-			))
-		}
-
-		if amount <= 0 {
-			continue
-		}
-
-		// Distribute to DevOps
-		if err := pfs.distributeToDevOps(0, rlm, token, toDevOpsAmount); err != nil {
-			panic(err)
-		}
-
-		// Distribute to Gov/Staker
-		if err := pfs.distributeToGovStaker(0, rlm, token, toGovStakerAmount); err != nil {
-			panic(err)
-		}
 	}
-	if err := pfs.clearReservedTokens(0, rlm); err != nil {
+}
+
+// DistributeProtocolFeeByTokenPath distributes collected protocol fees for one token path.
+func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	prev := rlm.Previous()
+	assertIsAdminOrGovStaker(prev.Address())
+
+	if halt.IsHaltedWithdraw() {
+		return
+	}
+
+	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+	pfs := pf.getProtocolFeeState()
+
+	if !pfs.store.HasReservedToken(tokenPath) {
+		return
+	}
+
+	pf.distributeProtocolFeeForToken(
+		0,
+		rlm,
+		pfs,
+		protocolFeeAddr,
+		tokenPath,
+	)
+}
+
+// distributeProtocolFeeForToken validates and distributes one reserved token's pending fees.
+func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *protocolFeeState, protocolFeeAddr address, tokenPath string) {
+	toDevOpsAmount := gnsmath.SafeSubInt64(
+		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),
+		pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath),
+	)
+	toGovStakerAmount := gnsmath.SafeSubInt64(
+		pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath),
+		pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath),
+	)
+
+	amount := gnsmath.SafeAddInt64(toDevOpsAmount, toGovStakerAmount)
+	balance := common.BalanceOf(tokenPath, protocolFeeAddr)
+
+	// amount should be less than or equal to balance
+	if amount > balance {
+		panic(makeErrorWithDetail(
+			errInvalidAmount,
+			ufmt.Sprintf("amount: %d should be less than or equal to balance: %d", amount, balance),
+		))
+	}
+
+	if err := pfs.removeReservedToken(0, rlm, tokenPath); err != nil {
 		panic(err)
 	}
+
+	if amount <= 0 {
+		return
+	}
+
+	// distributeToDevOps and distributeToGovStaker record history before transferring.
+	if err := pfs.distributeToDevOps(0, rlm, tokenPath, toDevOpsAmount); err != nil {
+		panic(err)
+	}
+	if err := pfs.distributeToGovStaker(0, rlm, tokenPath, toGovStakerAmount); err != nil {
+		panic(err)
+	}
+
+	prev := rlm.Previous()
 
 	chain.Emit(
 		"TransferProtocolFee",
 		"prevAddr", prev.Address().String(),
 		"prevRealm", prev.PkgPath(),
+		"tokenPath", tokenPath,
+		"toDevOpsAmount", strconv.FormatInt(toDevOpsAmount, 10),
+		"toGovStakerAmount", strconv.FormatInt(toGovStakerAmount, 10),
+		"amount", strconv.FormatInt(amount, 10),
 	)
-}
-
-// DistributeProtocolFeeByTokenPath is retained for ABI compatibility while token-path distribution is deferred.
-func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
-	assertNotImplementYet()
 }
 
 // SetDevOpsPct sets the devOpsPct.
@@ -97,9 +133,7 @@ func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, toke
 // Only callable by admin or governance.
 // Note: GovStaker percentage is automatically adjusted to (10000 - devOpsPct).
 func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -136,9 +170,7 @@ func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
 // Only callable by admin or governance.
 // Note: DevOps percentage is automatically adjusted to (10000 - govStakerPct).
 func (pf *protocolFeeV1) SetGovStakerPct(_ int, rlm realm, pct int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedProtocolFee()
 
@@ -205,7 +237,7 @@ func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, am
 
 	pf.reserveCollectedProtocolFee(0, rlm, tokenPath, amount)
 	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	common.SafeGRC20TransferFrom(cross(rlm), tokenPath, caller, protocolFeeAddr, amount)
+	common.SafeGRC20TransferFrom(0, rlm, tokenPath, caller, protocolFeeAddr, amount)
 
 	chain.Emit(
 		"AddToProtocolFee",
@@ -234,4 +266,75 @@ func (pf *protocolFeeV1) reserveCollectedProtocolFee(_ int, rlm realm, tokenPath
 	if err := pfs.store.AddReservedToken(0, rlm, tokenPath); err != nil {
 		panic(err)
 	}
+
+	// Bucket the gov/staker share under the accrual epoch in force so that gov/staker
+	// can later fold it against the stake distribution that was live when it arrived.
+	// A split that leaves gov/staker nothing moves no accumulator, so it is not bucketed.
+	if toGovStakerAmount > 0 {
+		epoch := pfs.store.GetAccrualEpoch()
+		if err := pfs.store.AddAccrualBucket(0, rlm, tokenPath, epoch, toGovStakerAmount); err != nil {
+			panic(err)
+		}
+		if err := pfs.store.AddAccrualPendingToken(0, rlm, tokenPath); err != nil {
+			panic(err)
+		}
+	}
+}
+
+// AdvanceAccrualEpoch closes the accrual epoch in force and returns the new one.
+//
+// gov/staker calls it on every stake change, before it records the new stake
+// distribution, so every fee bucketed from now on is attributed to that distribution.
+// Restricted to gov/staker: an epoch advanced by anyone else would fragment the buckets
+// without a matching stake record on the gov/staker side.
+func (pf *protocolFeeV1) AdvanceAccrualEpoch(_ int, rlm realm) int64 {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	prev := rlm.Previous()
+	access.AssertIsGovStaker(prev.Address())
+
+	pfs := pf.getProtocolFeeState()
+	epoch := gnsmath.SafeAddInt64(pfs.store.GetAccrualEpoch(), 1)
+	if err := pfs.store.SetAccrualEpoch(0, rlm, epoch); err != nil {
+		panic(err)
+	}
+
+	return epoch
+}
+
+// ConsumeAccrualBuckets returns and clears up to limit of the oldest pending buckets of
+// tokenPath, as parallel epoch and amount slices in epoch order. A limit of zero or
+// less consumes every pending bucket. Once no bucket remains the token leaves the
+// pending set.
+//
+// Restricted to gov/staker: clearing a bucket without folding it into an accumulator
+// would strand that fee share.
+func (pf *protocolFeeV1) ConsumeAccrualBuckets(_ int, rlm realm, tokenPath string, limit int) ([]int64, []int64) {
+	if !rlm.IsCurrent() {
+		panic(errors.New(errSpoofedRealm))
+	}
+
+	prev := rlm.Previous()
+	access.AssertIsGovStaker(prev.Address())
+
+	pfs := pf.getProtocolFeeState()
+	epochs, amounts := pfs.store.GetAccrualBuckets(tokenPath, limit)
+	if len(epochs) == 0 {
+		return epochs, amounts
+	}
+
+	if err := pfs.store.RemoveAccrualBuckets(0, rlm, tokenPath, epochs); err != nil {
+		panic(err)
+	}
+
+	remainingEpochs, _ := pfs.store.GetAccrualBuckets(tokenPath, 1)
+	if len(remainingEpochs) == 0 {
+		if err := pfs.store.RemoveAccrualPendingToken(0, rlm, tokenPath); err != nil {
+			panic(err)
+		}
+	}
+
+	return epochs, amounts
 }

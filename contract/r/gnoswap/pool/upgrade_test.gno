@@ -80,6 +80,25 @@ func TestRegisterInitializer(cur realm, t *testing.T) {
 	}
 }
 
+func invokePoolInitializerWithStaleRealm(cur realm, stale realm, initializer func(_ int, rlm realm, store any) any, store any) {
+	initializer(0, stale, store)
+}
+
+func TestRegisterInitializerRejectsSpoofedInitializerRealm(cur realm, t *testing.T) {
+	resetTestState(t)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+	initializer := versionManager.GetInitializers()[versionManager.GetCurrentPackagePath()]
+	stale := cur
+	store := initializeDomainStore(0, cur, kvStore)
+
+	uassert.AbortsContains(t, cur, ErrSpoofedRealm, func() {
+		invokePoolInitializerWithStaleRealm(cross(cur), stale, initializer, store)
+	})
+}
+
 // TestUpgradeImpl tests the pool upgrade implementation
 func TestUpgradeImpl(cur realm, t *testing.T) {
 	tests := []struct {
@@ -130,6 +149,26 @@ func TestUpgradeImpl(cur realm, t *testing.T) {
 			expectedVersion:      "v1",
 			expectedHasAbort:     true,
 			expectedAbortMessage: "version_manager: initializer not found for package path:gno.land/r/gnoswap/pool/nonexistent",
+		},
+		{
+			name: "upgrade impl is failed while pool is locked",
+			setup: func(cur realm, t *testing.T) {
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/new_version"))
+				RegisterInitializer(cross(cur), makeMockInitializer("new_version"))
+
+				// Simulate a swap holding the reentrancy lock, e.g. a swapCallback
+				// reentering through governance.Execute before the swap unlocks.
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool"))
+				NewPoolStore(kvStore).SetUnlocked(0, cur, false)
+			},
+			packagePath:          "gno.land/r/gnoswap/pool/new_version",
+			callerRealm:          testing.NewUserRealm(adminAddr),
+			expectedVersion:      "v1",
+			expectedHasAbort:     true,
+			expectedAbortMessage: errUpgradeWhileLocked,
 		},
 	}
 
@@ -367,7 +406,7 @@ func TestBurn(cur realm, t *testing.T) {
 	}
 }
 
-// TestCollect tests the Collect proxy function
+// TestCollect tests the CollectSwapFee and Collect proxy functions
 func TestCollect(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
@@ -417,10 +456,14 @@ func TestCollect(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
+		CollectSwapFee(cross(cur), tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.tickLower, tt.tickUpper, tt.amount0Requested, tt.amount1Requested)
 		Collect(cross(cur), tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.tickLower, tt.tickUpper, tt.amount0Requested, tt.amount1Requested)
 
 		// Assert
 		mockPool := implementation.(*MockPool)
+		if mockPool.Response.CallCount("CollectSwapFee") != 1 {
+			t.Error("CollectSwapFee was not called on the implementation")
+		}
 		if mockPool.Response.CallCount("Collect") != 1 {
 			t.Error("Collect was not called on the implementation")
 		}
@@ -533,7 +576,7 @@ func TestSwap(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		Swap(cross(cur), tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.zeroForOne, tt.amountSpecified, tt.sqrtPriceLimitX96, tt.caller, func(cur realm, amount0Delta int64, amount1Delta int64, _ *CallbackMarker) error {
+		Swap(cross(cur), tt.token0Path, tt.token1Path, tt.fee, tt.recipient, tt.zeroForOne, tt.amountSpecified, tt.sqrtPriceLimitX96, func(cur realm, amount0Delta int64, amount1Delta int64, _ *CallbackMarker) error {
 			return nil
 		})
 
@@ -680,7 +723,7 @@ func TestGetSlot0SqrtPriceX96(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		sqrtPrice := GetSlot0SqrtPriceX96(tt.poolPath)
+		sqrtPrice, _ := GetSlot0SqrtPriceX96(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetSlot0SqrtPriceX96") != 1 {
@@ -728,7 +771,7 @@ func TestGetSlot0Tick(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		tick := GetSlot0Tick(tt.poolPath)
+		tick, _ := GetSlot0Tick(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetSlot0Tick") != 1 {
@@ -777,7 +820,7 @@ func TestGetLiquidity(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		liquidity := GetLiquidity(tt.poolPath)
+		liquidity, _ := GetLiquidity(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetLiquidity") != 1 {
@@ -826,7 +869,7 @@ func TestGetBalanceToken0(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		balance := GetBalanceToken0(tt.poolPath)
+		balance, _ := GetBalanceToken0(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetBalanceToken0") != 1 {
@@ -875,7 +918,7 @@ func TestGetBalanceToken1(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		balance := GetBalanceToken1(tt.poolPath)
+		balance, _ := GetBalanceToken1(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetBalanceToken1") != 1 {
@@ -926,7 +969,7 @@ func TestGetFeeGrowthGlobalX128(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		fee0, fee1 := GetFeeGrowthGlobalX128(tt.poolPath)
+		fee0, fee1, _ := GetFeeGrowthGlobalX128(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetFeeGrowthGlobalX128") != 1 {
@@ -979,7 +1022,7 @@ func TestGetPositionFeeGrowthInsideLastX128(cur realm, t *testing.T) {
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		fee0, fee1 := GetPositionFeeGrowthInsideLastX128(tt.poolPath, tt.key)
+		fee0, fee1, _ := GetPositionFeeGrowthInsideLastX128(tt.poolPath, tt.key)
 
 		// Assert
 		if mockPool.Response.CallCount("GetPositionFeeGrowthInsideLastX128") != 1 {
@@ -987,72 +1030,6 @@ func TestGetPositionFeeGrowthInsideLastX128(cur realm, t *testing.T) {
 		}
 		if fee0 == "" || fee1 == "" {
 			t.Error("GetPositionFeeGrowthInsideLastX128() returned empty string")
-		}
-	}
-}
-
-// TestGetObservation tests the GetObservation proxy function
-func TestGetObservation(cur realm, t *testing.T) {
-	tests := []struct {
-		name              string
-		setup             func(cur realm, t *testing.T)
-		poolPath          string
-		secondsAgo        int64
-		callerRealm       runtime.Realm
-		expectedTick      int64
-		expectedSqrt      string
-		expectedLiquidity string
-		expectedTimestamp int64
-	}{
-		{
-			name: "get observation is success",
-			setup: func(cur realm, t *testing.T) {
-				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
-				RegisterInitializer(cross(cur), makeMockInitializer("v1"))
-				testing.SetRealm(testing.NewUserRealm(adminAddr))
-				UpgradeImpl(cross(cur), "gno.land/r/gnoswap/pool/v1")
-			},
-			poolPath:          "mock_pool_path",
-			secondsAgo:        3600,
-			callerRealm:       testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedTick:      0,
-			expectedSqrt:      "0",
-			expectedLiquidity: "0",
-			expectedTimestamp: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		// Setup
-		resetTestState(t)
-
-		if tt.setup != nil {
-			tt.setup(cur, t)
-		}
-
-		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetObservation", tt.expectedTick, tt.expectedSqrt, tt.expectedLiquidity, tt.expectedTimestamp)
-
-		testing.SetRealm(tt.callerRealm)
-
-		// Action
-		tick, sqrt, liquidity, timestamp := GetObservation(tt.poolPath, tt.secondsAgo)
-
-		// Assert
-		if mockPool.Response.CallCount("GetObservation") != 1 {
-			t.Error("GetObservation was not called on the implementation")
-		}
-		if tick != tt.expectedTick {
-			t.Errorf("GetObservation() tick = %v, want %v", tick, tt.expectedTick)
-		}
-		if sqrt != tt.expectedSqrt {
-			t.Errorf("GetObservation() sqrt = %v, want %v", sqrt, tt.expectedSqrt)
-		}
-		if liquidity != tt.expectedLiquidity {
-			t.Errorf("GetObservation() liquidity = %v, want %v", liquidity, tt.expectedLiquidity)
-		}
-		if timestamp != tt.expectedTimestamp {
-			t.Errorf("GetObservation() timestamp = %v, want %v", timestamp, tt.expectedTimestamp)
 		}
 	}
 }
@@ -1106,15 +1083,55 @@ func TestExistsPoolPath(cur realm, t *testing.T) {
 	}
 }
 
-// TestGetTWAP tests the GetTWAP proxy function
-func TestGetTWAP(cur realm, t *testing.T) {
+// TestSnapshotCumulativesInside tests the SnapshotCumulativesInside proxy function.
+func TestSnapshotCumulativesInside(cur realm, t *testing.T) {
+	resetTestState(t)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	UpgradeImpl(cross(cur), "gno.land/r/gnoswap/pool/v1")
+
+	mockPool := implementation.(*MockPool)
+	mockPool.Response.Set(
+		"SnapshotCumulativesInside",
+		int64(7),
+		u256.MustFromDecimal("8000"),
+		uint32(9),
+		nil,
+	)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/pool"))
+
+	// Action
+	tickCumulativeInside, secondsPerLiquidityInsideX128, secondsInside, err := SnapshotCumulativesInside("mock_pool_path", -100, 100)
+	// Assert
+	if err != nil {
+		t.Fatalf("SnapshotCumulativesInside() error = %v", err)
+	}
+	if mockPool.Response.CallCount("SnapshotCumulativesInside") != 1 {
+		t.Error("SnapshotCumulativesInside was not called on the implementation")
+	}
+	if tickCumulativeInside != 7 {
+		t.Errorf("SnapshotCumulativesInside() tick = %v, want %v", tickCumulativeInside, int64(7))
+	}
+	if secondsPerLiquidityInsideX128 != "8000" {
+		t.Errorf("SnapshotCumulativesInside() secondsPerLiquidity = %v, want %v", secondsPerLiquidityInsideX128, "8000")
+	}
+	if secondsInside != 9 {
+		t.Errorf("SnapshotCumulativesInside() seconds = %v, want %v", secondsInside, uint32(9))
+	}
+}
+
+// TestOracleConsult tests the OracleConsult proxy function.
+func TestOracleConsult(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		setup        func(cur realm, t *testing.T)
 		poolPath     string
 		secondsAgo   uint32
 		callerRealm  runtime.Realm
-		expectedTWAP int32
+		expectedTick int32
 	}{
 		{
 			name: "api get twap is success",
@@ -1127,7 +1144,7 @@ func TestGetTWAP(cur realm, t *testing.T) {
 			poolPath:     "mock_pool_path",
 			secondsAgo:   3600,
 			callerRealm:  testing.NewCodeRealm("gno.land/r/gnoswap/pool"),
-			expectedTWAP: 0,
+			expectedTick: 0,
 		},
 	}
 
@@ -1140,19 +1157,19 @@ func TestGetTWAP(cur realm, t *testing.T) {
 		}
 
 		mockPool := implementation.(*MockPool)
-		mockPool.Response.Set("GetTWAP", tt.expectedTWAP, u256.Zero(), errors.New(""))
+		mockPool.Response.Set("OracleConsult", tt.expectedTick, u256.Zero(), errors.New(""))
 
 		testing.SetRealm(tt.callerRealm)
 
 		// Action
-		twap, _, _ := GetTWAP(tt.poolPath, tt.secondsAgo)
+		arithmeticMeanTick, _, _ := OracleConsult(tt.poolPath, tt.secondsAgo)
 
 		// Assert
-		if mockPool.Response.CallCount("GetTWAP") != 1 {
-			t.Error("GetTWAP was not called on the implementation")
+		if mockPool.Response.CallCount("OracleConsult") != 1 {
+			t.Error("OracleConsult was not called on the implementation")
 		}
-		if twap != tt.expectedTWAP {
-			t.Errorf("GetTWAP() = %v, want %v", twap, tt.expectedTWAP)
+		if arithmeticMeanTick != tt.expectedTick {
+			t.Errorf("OracleConsult() = %v, want %v", arithmeticMeanTick, tt.expectedTick)
 		}
 	}
 }
@@ -1530,7 +1547,7 @@ func TestGetFee(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetFee", tt.expectedFee)
 
 		// Action
-		fee := GetFee(tt.poolPath)
+		fee, _ := GetFee(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetFee") != 1 {
@@ -1575,7 +1592,7 @@ func TestGetFeeAmountTickSpacing(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetFeeAmountTickSpacing", tt.expectedSpacing)
 
 		// Action
-		spacing := GetFeeAmountTickSpacing(tt.fee)
+		spacing, _ := GetFeeAmountTickSpacing(tt.fee)
 
 		// Assert
 		if mockPool.Response.CallCount("GetFeeAmountTickSpacing") != 1 {
@@ -1620,7 +1637,7 @@ func TestGetSlot0FeeProtocol(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetSlot0FeeProtocol", tt.expectedFeeProtocol)
 
 		// Action
-		feeProtocol := GetSlot0FeeProtocol(tt.poolPath)
+		feeProtocol, _ := GetSlot0FeeProtocol(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetSlot0FeeProtocol") != 1 {
@@ -1665,7 +1682,7 @@ func TestGetSlot0Unlocked(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetSlot0Unlocked", tt.expectedUnlocked)
 
 		// Action
-		unlocked := GetSlot0Unlocked(tt.poolPath)
+		unlocked, _ := GetSlot0Unlocked(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetSlot0Unlocked") != 1 {
@@ -1710,7 +1727,7 @@ func TestGetToken0Path(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetToken0Path", tt.expectedPath)
 
 		// Action
-		path := GetToken0Path(tt.poolPath)
+		path, _ := GetToken0Path(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetToken0Path") != 1 {
@@ -1755,7 +1772,7 @@ func TestGetToken1Path(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetToken1Path", tt.expectedPath)
 
 		// Action
-		path := GetToken1Path(tt.poolPath)
+		path, _ := GetToken1Path(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetToken1Path") != 1 {
@@ -1800,7 +1817,7 @@ func TestGetTickSpacing(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetTickSpacing", tt.expectedSpacing)
 
 		// Action
-		spacing := GetTickSpacing(tt.poolPath)
+		spacing, _ := GetTickSpacing(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetTickSpacing") != 1 {
@@ -1845,7 +1862,7 @@ func TestGetProtocolFeesToken0(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetProtocolFeesToken0", tt.expectedFee)
 
 		// Action
-		fee := GetProtocolFeesToken0(tt.poolPath)
+		fee, _ := GetProtocolFeesToken0(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetProtocolFeesToken0") != 1 {
@@ -1890,7 +1907,7 @@ func TestGetProtocolFeesToken1(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetProtocolFeesToken1", tt.expectedFee)
 
 		// Action
-		fee := GetProtocolFeesToken1(tt.poolPath)
+		fee, _ := GetProtocolFeesToken1(tt.poolPath)
 
 		// Assert
 		if mockPool.Response.CallCount("GetProtocolFeesToken1") != 1 {
@@ -1937,7 +1954,7 @@ func TestGetPositionLiquidity(cur realm, t *testing.T) {
 		mockPool.Response.Set("GetPositionLiquidity", tt.expectedLiquidity)
 
 		// Action
-		liquidity := GetPositionLiquidity(tt.poolPath, tt.key)
+		liquidity, _ := GetPositionLiquidity(tt.poolPath, tt.key)
 
 		// Assert
 		if mockPool.Response.CallCount("GetPositionLiquidity") != 1 {

@@ -9,6 +9,7 @@ import (
 	_ "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -29,6 +30,18 @@ func countDelegationIDs(tree *bptree.BPTree) int {
 		return false
 	})
 	return total
+}
+
+func mustAddDelegation(_ int, rlm realm, gs *govStakerV1, delegationID int64, delegation *staker.Delegation) {
+	if err := gs.addDelegation(0, rlm, delegationID, delegation); err != nil {
+		panic(err)
+	}
+}
+
+func mustSetLaunchpadProjectDeposit(_ int, rlm realm, gs *govStakerV1, ownerAddress string, deposit int64) {
+	if err := gs.setLaunchpadProjectDeposit(0, rlm, ownerAddress, deposit); err != nil {
+		panic(err)
+	}
 }
 
 // Test lockup period management
@@ -111,11 +124,11 @@ func TestDelegationManagement(cur realm, t *testing.T) {
 			)
 
 			// When: Add delegation
-			result := gs.addDelegation(0, cur, delegationID, delegation)
+			err := gs.addDelegation(0, cur, delegationID, delegation)
 
 			// Then: Should succeed
 			if tt.expectSuccess {
-				uassert.True(t, result)
+				uassert.NoError(t, err)
 
 				// Verify delegation was stored
 				storedDelegation := gs.getDelegation(delegationID)
@@ -124,7 +137,7 @@ func TestDelegationManagement(cur realm, t *testing.T) {
 				uassert.Equal(t, storedDelegation.DelegateTo(), tt.delegateTo)
 				uassert.Equal(t, storedDelegation.TotalDelegatedAmount(), tt.delegateAmount)
 			} else {
-				uassert.False(t, result)
+				uassert.Error(t, err)
 			}
 		})
 	}
@@ -154,7 +167,7 @@ func TestGetUserDelegations(cur realm, t *testing.T) {
 						100,
 						100,
 					)
-					gs.addDelegation(0, cur, delegationID, delegation)
+					uassert.NoError(t, gs.addDelegation(0, cur, delegationID, delegation))
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 				return user, delegationIDs
@@ -226,7 +239,7 @@ func TestRemoveDelegation(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(0, cur, delegationID, delegation)
+				uassert.NoError(t, gs.addDelegation(0, cur, delegationID, delegation))
 				return delegationID
 			},
 			expectSuccess: true,
@@ -249,10 +262,14 @@ func TestRemoveDelegation(cur realm, t *testing.T) {
 			delegationID := tt.setupState(gs)
 
 			// When: Remove delegation
-			result := gs.removeDelegation(0, cur, delegationID)
+			err := gs.removeDelegation(0, cur, delegationID)
 
 			// Then: Should return expected result
-			uassert.Equal(t, result, tt.expectSuccess)
+			if tt.expectSuccess {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
+			}
 
 			if tt.expectSuccess {
 				// Verify delegation was removed
@@ -414,10 +431,14 @@ func TestLaunchpadProjectDeposits(cur realm, t *testing.T) {
 			gs := createTestGovStaker()
 
 			// When: Set launchpad project deposit
-			result := gs.setLaunchpadProjectDeposit(0, cur, tt.ownerAddress, tt.depositAmount)
+			err := gs.setLaunchpadProjectDeposit(0, cur, tt.ownerAddress, tt.depositAmount)
 
 			// Then: Should succeed
-			uassert.Equal(t, result, tt.expectSuccess)
+			if tt.expectSuccess {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
+			}
 
 			if tt.expectSuccess {
 				// Verify deposit was stored
@@ -462,6 +483,30 @@ func TestMakeLaunchpadRewardID(cur realm, t *testing.T) {
 	}
 }
 
+func TestClaimTokenReward_NoAccrualDoesNotMaterializeTokenState(cur realm, t *testing.T) {
+	gs := createTestGovStaker()
+	caller := makeFakeAddress("f2-no-distribution")
+	stakerAddress := caller.String()
+	tokenPath := GNS_PATH
+
+	manager := gs.store.GetProtocolFeeRewardManager()
+	managerResolver := NewProtocolFeeRewardManagerResolver(manager)
+	err := managerResolver.addStake(stakerAddress, 100, 1)
+	uassert.NoError(t, err)
+
+	reward, err := managerResolver.claimTokenReward(stakerAddress, tokenPath, 0)
+
+	uassert.NoError(t, err)
+	uassert.Equal(t, reward, int64(0))
+	uassert.Equal(t, len(managerResolver.GetTokenPaths()), 0)
+
+	rewardState, ok, err := managerResolver.GetRewardState(stakerAddress)
+	uassert.NoError(t, err)
+	uassert.True(t, ok)
+	uassert.Equal(t, len(rewardState.GetTokenPaths()), 0)
+	uassert.Equal(t, rewardState.GetStakeEventCount(), int64(1))
+}
+
 // Test launchpad stake operations
 func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 	tests := []struct {
@@ -471,7 +516,7 @@ func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 		currentHeight int64
 	}{
 		{
-			name:          "Add stake from launchpad",
+			name:          "Reject launchpad removal without matching stake",
 			address:       "g1projectowner1234567890abcdefghijklm",
 			amount:        2000,
 			currentHeight: 100,
@@ -487,7 +532,7 @@ func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 			launchpadRewardID := gs.makeLaunchpadRewardID(tt.address)
 			testing.SetRealm(adminRealm)
 			func(cur realm) {
-				gs.setLaunchpadProjectDeposit(0, cur, launchpadRewardID, tt.amount)
+				mustSetLaunchpadProjectDeposit(0, cur, gs, launchpadRewardID, tt.amount)
 			}(cross(cur))
 
 			// Then: Should create deposit record
@@ -495,14 +540,15 @@ func TestLaunchpadStakeOperations(cur realm, t *testing.T) {
 			uassert.True(t, exists)
 			uassert.Equal(t, deposit, tt.amount)
 
-			// When: Clear deposit via production launchpad path
+			// Removing an orphaned deposit must not silently corrupt reward accounting.
 			testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 			testing.SetRealm(testing.NewUserRealm(launchpadAddr))
-			staker.SetAmountByProjectWallet(cross(cur), address(tt.address), tt.amount, false)
+			uassert.AbortsWithMessage(t, cur, errRemoveAmountExceedsStaked, func() {
+				staker.SetAmountByProjectWallet(cross(cur), address(tt.address), tt.amount, false)
+			})
 
-			// Then:
-			launchpadDepositAmount, _ := staker.GetLaunchpadProjectDeposit(tt.address)
-			uassert.Equal(t, launchpadDepositAmount, int64(0))
+			launchpadDepositAmount, _ := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+			uassert.Equal(t, launchpadDepositAmount, tt.amount)
 		})
 	}
 }
@@ -520,7 +566,7 @@ func TestRemoveLaunchpadProjectDeposit(cur realm, t *testing.T) {
 				ownerAddress := "g1projectowner9876543210abcdefghijklm"
 				testing.SetRealm(adminRealm)
 				func(cur realm) {
-					gs.setLaunchpadProjectDeposit(0, cur, ownerAddress, 3000)
+					mustSetLaunchpadProjectDeposit(0, cur, gs, ownerAddress, 3000)
 				}(cross(cur))
 				return ownerAddress
 			},
@@ -617,7 +663,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 						100,
 						100,
 					)
-					gs.addDelegation(0, cur, delegationID, delegation)
+					mustAddDelegation(0, cur, gs, delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 				return user, delegatee, delegationIDs
@@ -644,7 +690,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 						100,
 						100,
 					)
-					gs.addDelegation(0, cur, delegationID, delegation)
+					mustAddDelegation(0, cur, gs, delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 
@@ -659,7 +705,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 						100,
 						100,
 					)
-					gs.addDelegation(0, cur, delegationID, delegation)
+					mustAddDelegation(0, cur, gs, delegationID, delegation)
 				}
 
 				delegationID := gs.nextDelegationID()
@@ -671,7 +717,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(0, cur, delegationID, delegation)
+				mustAddDelegation(0, cur, gs, delegationID, delegation)
 
 				return user, targetDelegatee, delegationIDs
 			},
@@ -694,7 +740,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(0, cur, delegationID, delegation)
+				mustAddDelegation(0, cur, gs, delegationID, delegation)
 
 				return user, targetDelegatee, []int64{}
 			},
@@ -727,7 +773,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 						100,
 						100,
 					)
-					gs.addDelegation(0, cur, delegationID, delegation)
+					mustAddDelegation(0, cur, gs, delegationID, delegation)
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 				return user, delegatee, delegationIDs
@@ -751,7 +797,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(0, cur, delegationID1, delegation1)
+				mustAddDelegation(0, cur, gs, delegationID1, delegation1)
 				delegationIDs = append(delegationIDs, delegationID1)
 
 				// Add delegation with small amount
@@ -764,7 +810,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(0, cur, delegationID2, delegation2)
+				mustAddDelegation(0, cur, gs, delegationID2, delegation2)
 				delegationIDs = append(delegationIDs, delegationID2)
 
 				// Add delegation with large amount
@@ -777,7 +823,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				gs.addDelegation(0, cur, delegationID3, delegation3)
+				mustAddDelegation(0, cur, gs, delegationID3, delegation3)
 				delegationIDs = append(delegationIDs, delegationID3)
 
 				return user, delegatee, delegationIDs

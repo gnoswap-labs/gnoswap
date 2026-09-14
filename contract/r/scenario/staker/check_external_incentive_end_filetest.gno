@@ -18,12 +18,13 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -38,6 +39,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -71,7 +73,7 @@ var (
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	depositGnsAmount int64 = 1_000_000_000
+	depositGnsAmount int64 = 100_000_000_000
 
 	INCENTIVE_DURATION int64 = 90 * 24 * 60 * 60 // 90 days
 	REWARD_AMOUNT      int64 = 1_500_000_000     // 1500 GNS
@@ -157,8 +159,8 @@ func createAndStartIncentive(cur realm) {
 
 	createTimestamp := time.Now().Unix()
 
-	// Start at the next UTC midnight to satisfy start-time validation
-	startTime := ((createTimestamp / 86400) + 1) * 86400
+	// Start at the first UTC midnight past the 24h minimum to satisfy start-time validation
+	startTime := ((createTimestamp / 86400) + 2) * 86400
 	endTime := startTime + INCENTIVE_DURATION
 
 	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)
@@ -236,14 +238,14 @@ func endExternalIncentive(cur realm) {
 func checkCollectableExternalIncentive(cur realm, positionId uint64) {
 	testing.SetRealm(userRealm)
 
-	endTime := sr.GetIncentiveEndTimestamp("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
+	endTime, _ := sr.GetIncentiveEndTimestamp("gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100", actualIncentiveID)
 	currentTime := time.Now().Unix()
 	isEnded := currentTime > endTime
 	if !isEnded {
 		panic("incentive is not ended")
 	}
 
-	collectableExternalIncentive := sr.CollectableExternalIncentiveReward(positionId, actualIncentiveID)
+	collectableExternalIncentive, _ := sr.CollectableExternalIncentiveReward(positionId, actualIncentiveID)
 	ufmt.Printf("[INFO] position %d collectable external incentive: %d GNS\n", positionId, collectableExternalIncentive)
 }
 
@@ -285,9 +287,9 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] external incentive ended via refund path
 //
 // [SCENARIO] 7. User collects after end (should clean up incentive)
-// [INFO] position 1 collectable external incentive: 604281247 GNS
+// [INFO] position 1 collectable external incentive: 610114581 GNS
 // [INFO] position 2 collectable external incentive: 604166181 GNS
 //
 // [SCENARIO] 8. User collects external incentive
-// [INFO] position 1 collected 604281247 GNS after incentive end (incentive should be removed)
+// [INFO] position 1 collected 610114581 GNS after incentive end (incentive should be removed)
 // [INFO] position 2 collected 604166181 GNS after incentive end (incentive should be removed)

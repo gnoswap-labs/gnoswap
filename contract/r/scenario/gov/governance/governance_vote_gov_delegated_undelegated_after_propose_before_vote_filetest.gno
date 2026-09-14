@@ -14,6 +14,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -29,8 +30,8 @@ import (
 )
 
 var (
-	adminAddr        = access.MustGetAddress(prbac.ROLE_ADMIN.String())
-	govStakerAddr    = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	adminAddr     = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 
 	dummyAddr        = testutils.TestAddress("dummyAddr")
 	currentBlockTime = int64(2)
@@ -38,7 +39,10 @@ var (
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	println("[SCENARIO] 1. Delegate gns to admin and dummy")
 	delegateGnsToAdminAndDummy(cur)
@@ -119,4 +123,3 @@ func voteProposalWithDummy(cur realm, proposalId int64) {
 //
 // [SCENARIO] 6. Vote for the proposal with dummy
 // [EXPECTED] after voting - active
-

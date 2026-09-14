@@ -5,6 +5,8 @@ import (
 	"chain/runtime"
 	"time"
 
+	"gno.land/r/gnoswap/access"
+
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
@@ -23,9 +25,7 @@ import (
 //
 // Returns deposit ID.
 func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string {
-	if !rlm.IsCurrent() {
-		panic(errSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedLaunchpad()
 
@@ -93,10 +93,10 @@ func (lp *launchpadV1) depositGns(
 	tierDuration int64,
 	depositAmount int64,
 	callerAddress address,
-) (*launchpad.Deposit, *launchpad.RewardState, bool, string, error) {
+) (launchpad.Deposit, *launchpad.RewardState, bool, string, error) {
 	project, err := lp.getProject(projectID)
 	if err != nil {
-		return nil, nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	balanceOfFn := func(tokenPath string, caller address) int64 {
@@ -109,23 +109,23 @@ func (lp *launchpadV1) depositGns(
 
 	err = checkProjectConditions(project, callerAddress, balanceOfFn)
 	if err != nil {
-		return nil, nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	projectTier, err := getProjectTier(project, tierDuration)
 	if err != nil {
-		return nil, nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 
 	if !projectTier.IsActivated(currentTime) {
-		return nil, nil, false, "", makeErrorWithDetails(errInactiveProject, projectID)
+		return launchpad.DefaultDeposit(), nil, false, "", makeErrorWithDetails(errInactiveProject, projectID)
 	}
 
 	depositID := lp.nextDepositID()
-	deposit := launchpad.NewDeposit(
+	deposit := launchpad.MakeDeposit(
 		depositID,
 		projectID,
 		tierDuration,
@@ -136,15 +136,14 @@ func (lp *launchpadV1) depositGns(
 		projectTier.EndTime(),
 	)
 
-	// Get state and store deposit
+	// Store a value in the deposits tree and persist later updates explicitly.
 	deposits := lp.store.GetDeposits()
 	deposits.Set(depositID, deposit)
-
 	depositToTier(projectTier, deposit)
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {
-		return nil, nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	isFirstDeposit := !isRewardManagerInitialized(rewardManager)
@@ -153,12 +152,12 @@ func (lp *launchpadV1) depositGns(
 
 	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
 	if err != nil {
-		return nil, nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	// Save the modified state back
 	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {
-		return nil, nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	return deposit,

@@ -190,6 +190,65 @@ func TestStakerReward_CollectRewardFromLaunchPad(cur realm, t *testing.T) {
 	}
 }
 
+func TestStakerReward_CollectSplitRewardFromLaunchPad_Guards(cur realm, t *testing.T) {
+	tests := []struct {
+		name          string
+		caller        address
+		to            address
+		collectFn     func(cur realm, gs *govStakerV1, caller address, to address)
+		expectedError string
+	}{
+		{
+			name:   "emission reward rejects non-launchpad caller",
+			caller: testutils.TestAddress("alice"),
+			to:     testutils.TestAddress("project1"),
+			collectFn: func(cur realm, gs *govStakerV1, caller address, to address) {
+				callMockCollectEmissionRewardFromLaunchPad(cur, gs, caller, to)
+			},
+			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not launchpad",
+		},
+		{
+			name:   "protocol fee reward rejects non-launchpad caller",
+			caller: testutils.TestAddress("alice"),
+			to:     testutils.TestAddress("project1"),
+			collectFn: func(cur realm, gs *govStakerV1, caller address, to address) {
+				callMockCollectProtocolFeeRewardFromLaunchPad(cur, gs, caller, to, GNS_PATH)
+			},
+			expectedError: "unauthorized: caller " + testutils.TestAddress("alice").String() + " is not launchpad",
+		},
+		{
+			name:   "emission reward rejects missing project wallet",
+			caller: launchpadAddr,
+			to:     testutils.TestAddress("nonexistent"),
+			collectFn: func(cur realm, gs *govStakerV1, caller address, to address) {
+				callMockCollectEmissionRewardFromLaunchPad(cur, gs, caller, to)
+			},
+			expectedError: "[GNOSWAP-GOV_STAKER-003] zero delegated amount || " + testutils.TestAddress("nonexistent").String() + " is not project wallet from launchpad",
+		},
+		{
+			name:   "protocol fee reward rejects missing project wallet",
+			caller: launchpadAddr,
+			to:     testutils.TestAddress("nonexistent"),
+			collectFn: func(cur realm, gs *govStakerV1, caller address, to address) {
+				callMockCollectProtocolFeeRewardFromLaunchPad(cur, gs, caller, to, GNS_PATH)
+			},
+			expectedError: "[GNOSWAP-GOV_STAKER-003] zero delegated amount || " + testutils.TestAddress("nonexistent").String() + " is not project wallet from launchpad",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			gs := createTestGovStaker()
+			cleanupStakerRewardTest(cur, t)
+			defer cleanupStakerRewardTest(cur, t)
+
+			uassert.AbortsWithMessage(t, cur, tt.expectedError, func() {
+				tt.collectFn(cur, gs, tt.caller, tt.to)
+			})
+		})
+	}
+}
+
 // Test SetAmountByProjectWallet function
 func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 	tests := []struct {
@@ -254,7 +313,7 @@ func TestStakerReward_SetAmountByProjectWallet(cur realm, t *testing.T) {
 			amount:        0,
 			add:           true,
 			expectPanic:   true,
-			expectedError: "amount must be positive",
+			expectedError: errAmountMustBePositive,
 			setupMocks: func(cur realm, _ *govStakerV1) {
 				cleanupStakerRewardTest(cur, t)
 			},
@@ -779,8 +838,12 @@ func setupStakerRewardTestEmissionRewards(cur realm, t *testing.T, gs *govStaker
 func setupStakerRewardTestProtocolFeeRewards(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64, protocolFeeReward map[string]int64, currentHeight int64) {
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
-	resolvedManager.updateAccumulatedProtocolFeeX128PerStake(protocolFeeReward, currentHeight)
-	resolvedManager.addStake(addr.String(), amount, currentHeight)
+	// Fees collected before the stake fall into the epoch in force and, with nothing
+	// staked yet, are dropped; the stake then opens the next epoch.
+	for tokenPath, amount := range protocolFeeReward {
+		resolvedManager.applyAccrualBuckets(tokenPath, []int64{resolvedManager.GetCurrentEpoch()}, []int64{amount}, true, currentHeight)
+	}
+	resolvedManager.addStake(addr.String(), amount, resolvedManager.GetCurrentEpoch()+1)
 	testing.SetRealm(adminRealm)
 	func(cur realm) {
 		gs.store.SetProtocolFeeRewardManager(0, cur, protocolFeeRewardManager)
@@ -800,7 +863,15 @@ func setupStakerRewardTestAccumulateEmissionRewards(cur realm, t *testing.T, gs 
 func setupStakerRewardTestAccumulateProtocolFeeRewards(cur realm, t *testing.T, gs *govStakerV1, distributedAmounts map[string]int64, currentHeight int64) {
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 	resolvedManager := &ProtocolFeeRewardManagerResolver{protocolFeeRewardManager}
-	resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
+	// distributedAmounts are cumulative totals, so only the delta since the last
+	// accumulation is folded, under the epoch in force.
+	for tokenPath, cumulative := range distributedAmounts {
+		delta := cumulative - resolvedManager.GetProtocolFeeAmount(tokenPath)
+		if delta <= 0 {
+			continue
+		}
+		resolvedManager.applyAccrualBuckets(tokenPath, []int64{resolvedManager.GetCurrentEpoch()}, []int64{delta}, true, currentHeight)
+	}
 	testing.SetRealm(adminRealm)
 	func(cur realm) {
 		gs.store.SetProtocolFeeRewardManager(0, cur, protocolFeeRewardManager)
@@ -811,7 +882,7 @@ func setupStakerRewardTestLaunchpadDeposit(cur realm, t *testing.T, gs *govStake
 	launchpadRewardID := gs.makeLaunchpadRewardID(addr.String())
 	testing.SetRealm(adminRealm)
 	func(cur realm) {
-		gs.setLaunchpadProjectDeposit(0, cur, launchpadRewardID, amount)
+		uassert.NoError(t, gs.setLaunchpadProjectDeposit(0, cur, launchpadRewardID, amount))
 	}(cross(cur))
 }
 
@@ -845,6 +916,18 @@ func callMockCollectRewardFromLaunchPad(cur realm, gs *govStakerV1, caller, to a
 	testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
 	testing.SetRealm(testing.NewUserRealm(caller))
 	staker.CollectRewardFromLaunchPad(cross(cur), to)
+}
+
+func callMockCollectEmissionRewardFromLaunchPad(cur realm, gs *govStakerV1, caller, to address) {
+	testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+	testing.SetRealm(testing.NewUserRealm(caller))
+	staker.CollectEmissionRewardFromLaunchPad(cross(cur), to)
+}
+
+func callMockCollectProtocolFeeRewardFromLaunchPad(cur realm, gs *govStakerV1, caller, to address, tokenPath string) {
+	testing.SetRealm(testing.NewCodeRealm(GOV_STAKER_PKG_PATH))
+	testing.SetRealm(testing.NewUserRealm(caller))
+	staker.CollectProtocolFeeRewardFromLaunchPad(cross(cur), to, tokenPath)
 }
 
 func callMockSetAmountByProjectWallet(cur realm, gs *govStakerV1, caller, addr address, amount int64, add bool) {

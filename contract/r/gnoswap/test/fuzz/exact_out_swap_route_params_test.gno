@@ -240,7 +240,8 @@ func (p *exactOutSwapRouteParams) updateAmountInByPreDrySwap(cur realm) {
 
 func (p *exactOutSwapRouteParams) drySwapRoute(cur realm) (amountIn string, amountOut string, success bool) {
 	r := revive(func() {
-		amountIn, amountOut, success = router.DrySwapRoute(
+		var err error
+		amountIn, amountOut, err = router.DrySwapRoute(
 			p.inputToken,
 			p.outputToken,
 			p.amountOut,
@@ -249,13 +250,16 @@ func (p *exactOutSwapRouteParams) drySwapRoute(cur realm) (amountIn string, amou
 			p.quoteArr,
 			u256.NewUintFromInt64(math.MaxInt64).ToString(),
 		)
+		if err != nil {
+			panic(err)
+		}
 	})
 
 	if r != nil {
 		return "0", "0", false
 	}
 
-	return amountIn, amountOut, success
+	return amountIn, amountOut, true
 }
 
 func NewValidExactOutSwapRouteParams(t *fuzz.T) *exactOutSwapRouteParams {

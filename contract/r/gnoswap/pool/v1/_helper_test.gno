@@ -16,6 +16,7 @@ import (
 
 	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -50,13 +51,22 @@ var (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")
+
+	testObservationTrees = make(map[string]*pl.ObservationTree)
 )
 
-var (
-	fooToken = common.GetToken(fooPath)
-	barToken = common.GetToken(barPath)
-	bazToken = common.GetToken(bazPath)
-)
+// mustGetPositionByPool returns the position info for a given key.
+func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
+	positionInfo, err := p.GetPosition(positionKey)
+	if err != nil {
+		panic(newErrorWithDetail(
+			errDataNotFound,
+			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
+		))
+	}
+
+	return &positionInfo
+}
 
 var (
 	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
@@ -436,10 +446,10 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -448,6 +458,11 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 func initPoolTest(cur realm, t *testing.T) {
 	t.Helper()
 	const mockPoolPath = "gno.land/r/gnoswap/pool/mock"
+
+	// Observation trees are stored independently from pools. Reset the
+	// test-only fixture registry with the mock implementation so no tree from
+	// an earlier test can be reused for a pool path in a new fixture.
+	testObservationTrees = make(map[string]*pl.ObservationTree)
 
 	if !initializedPool {
 		initializedPool = true
@@ -490,7 +505,7 @@ type createMockPoolParams struct {
 	ticks                *bptree.BPTree
 	tickBitmaps          map[int16]string
 	positions            *bptree.BPTree
-	observationState     *pl.ObservationState
+	observations         *pl.ObservationTree
 }
 
 func makeMockPool(params createMockPoolParams) *pl.Pool {
@@ -551,11 +566,100 @@ func makeMockPool(params createMockPoolParams) *pl.Pool {
 	if params.positions != nil {
 		pool.SetPositions(params.positions)
 	}
-	if params.observationState != nil {
-		pool.SetObservationState(params.observationState)
+	if params.observations != nil {
+		setObservationsForTest(pool, params.observations)
+	} else {
+		setObservationsForTest(pool, pl.NewPoolObservationsTree(0))
 	}
 
 	return pool
+}
+
+func testObservationSlot0(index, cardinality, cardinalityNext uint16) pl.Slot0 {
+	slot0 := pl.NewSlot0(u256.One(), 0, 0, true)
+	slot0.SetObservationIndex(index)
+	slot0.SetObservationCardinality(cardinality)
+	slot0.SetObservationCardinalityNext(cardinalityNext)
+	return slot0
+}
+
+// writeObservationWithSlot0 keeps unit-test setup concise while production
+// callers use writeObservation's Uniswap-shaped cursor input/output directly.
+func writeObservationWithSlot0(
+	observations *pl.ObservationTree,
+	slot0 *pl.Slot0,
+	currentTime int64,
+	tick int32,
+	liquidity *u256.Uint,
+) error {
+	observationIndex, observationCardinality, err := writeObservation(
+		observations,
+		slot0.ObservationIndex(),
+		currentTime,
+		tick,
+		liquidity,
+		slot0.ObservationCardinality(),
+		slot0.ObservationCardinalityNext(),
+	)
+	if err != nil {
+		return err
+	}
+	slot0.SetObservationIndex(observationIndex)
+	slot0.SetObservationCardinality(observationCardinality)
+	return nil
+}
+
+func increaseObservationCardinalityNextForTest(p *pl.Pool, cardinalityNext uint16) error {
+	observations := observationsForTest(p)
+	slot0 := p.Slot0()
+	cardinalityNextNew, err := grow(observations, slot0.ObservationCardinalityNext(), cardinalityNext)
+	if err != nil {
+		return err
+	}
+	slot0.SetObservationCardinalityNext(cardinalityNextNew)
+	p.SetSlot0(slot0)
+	return nil
+}
+
+func observationsForTest(pool *pl.Pool) *pl.ObservationTree {
+	observations, ok := testObservationTrees[pool.PoolPath()]
+	if ok && observations != nil {
+		return observations
+	}
+
+	if mockInstance != nil {
+		value := mockInstance.store.GetObservations().Get(pool.PoolPath())
+		if observations, ok := value.(*pl.ObservationTree); ok && observations != nil {
+			testObservationTrees[pool.PoolPath()] = observations
+			return observations
+		}
+	}
+
+	observations = pl.NewPoolObservationsTree(0)
+	setObservationsForTest(pool, observations)
+	return observations
+}
+
+func mustObservation(observations *pl.ObservationTree, index uint16) pl.Observation {
+	observation, ok := observations.Get(index)
+	if !ok {
+		panic("missing observation test fixture")
+	}
+	return observation
+}
+
+func setObservationsForTest(pool *pl.Pool, observations *pl.ObservationTree) {
+	if observations == nil {
+		delete(testObservationTrees, pool.PoolPath())
+		if mockInstance != nil {
+			mockInstance.store.GetObservations().Remove(pool.PoolPath())
+		}
+		return
+	}
+	testObservationTrees[pool.PoolPath()] = observations
+	if mockInstance != nil {
+		mockInstance.store.GetObservations().Set(pool.PoolPath(), observations)
+	}
 }
 
 func getMockInstance() *poolV1 {
@@ -564,7 +668,6 @@ func getMockInstance() *poolV1 {
 			store: mock.NewMockPoolStore(),
 		}
 	}
-
 	return mockInstance
 }
 
@@ -611,6 +714,10 @@ func mockInstanceBurn(_ int, rlm realm, token0Path string, token1Path string, fe
 	return pl.Burn(cross(rlm), token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
+func mockInstanceCollectSwapFee(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string, string, string) {
+	return pl.CollectSwapFee(cross(rlm), token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+}
+
 func mockInstanceCollect(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
 	return pl.Collect(cross(rlm), token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
 }
@@ -619,12 +726,8 @@ func mockInstanceCollectProtocol(_ int, rlm realm, token0Path string, token1Path
 	return pl.CollectProtocol(cross(rlm), token0Path, token1Path, fee, recipient, amount0Requested, amount1Requested)
 }
 
-func mockInstanceSwap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error) (string, string) {
-	return pl.Swap(cross(rlm), token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
-}
-
-func mockInstanceHandleWithdrawalFee(_ int, rlm realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
-	return pl.HandleWithdrawalFee(cross(rlm), token0Path, amount0, token1Path, amount1, positionCaller)
+func mockInstanceSwap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, swapCallback func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error) (string, string) {
+	return pl.Swap(cross(rlm), token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, swapCallback)
 }
 
 func mockInstanceSetWithdrawalFee(_ int, rlm realm, fee uint64) {

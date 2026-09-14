@@ -114,7 +114,42 @@ func Burn(
 	)
 }
 
-// Collect transfers owed tokens from a position to recipient.
+// CollectSwapFee pays accrued swap fees for a position out to recipient,
+// net of the withdrawal fee.
+//
+// Returns:
+//   - string: collected amount of token0, before the withdrawal fee
+//   - string: collected amount of token1, before the withdrawal fee
+//   - string: withdrawal fee withheld from token0
+//   - string: withdrawal fee withheld from token1
+func CollectSwapFee(
+	cur realm,
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient address,
+	tickLower int32,
+	tickUpper int32,
+	amount0Requested string,
+	amount1Requested string,
+) (amount0, amount1, fee0, fee1 string) {
+	return getImplementation().CollectSwapFee(
+		0,
+		cur,
+		token0Path,
+		token1Path,
+		fee,
+		recipient,
+		tickLower,
+		tickUpper,
+		amount0Requested,
+		amount1Requested,
+	)
+}
+
+// Collect pays tokens owed to a position out to recipient in full. No
+// withdrawal fee is charged on this path; see CollectSwapFee for the
+// fee-bearing path.
 func Collect(
 	cur realm,
 	token0Path string,
@@ -148,39 +183,6 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 	getImplementation().SetWithdrawalFee(0, cur, fee)
 }
 
-// HandleWithdrawalFee processes withdrawal fees for a position.
-//
-// Parameters:
-//   - token0Path: path of the first token
-//   - amount0: amount of token0 to withdraw
-//   - token1Path: path of the second token
-//   - amount1: amount of token1 to withdraw
-//   - positionCaller: caller address for the position
-//
-// Returns:
-//   - string: withdrawal fee amount of token0
-//   - string: withdrawal fee amount of token1
-//   - string: net amount of token0 after fees
-//   - string: net amount of token1 after fees
-func HandleWithdrawalFee(
-	cur realm,
-	token0Path string,
-	amount0 string,
-	token1Path string,
-	amount1 string,
-	positionCaller address,
-) (string, string, string, string) {
-	return getImplementation().HandleWithdrawalFee(
-		0,
-		cur,
-		token0Path,
-		amount0,
-		token1Path,
-		amount1,
-		positionCaller,
-	)
-}
-
 // Swap executes a token swap in the pool.
 //
 // Parameters:
@@ -191,7 +193,6 @@ func HandleWithdrawalFee(
 //   - zeroForOne: true if swapping token0 for token1
 //   - amountSpecified: amount to swap (positive for exact input, negative for exact output)
 //   - sqrtPriceLimitX96: price limit for the swap
-//   - payer: address that will pay for the swap
 //   - swapCallback: callback function for token transfer, callbackMarker is used to identify the callback
 //
 // Returns:
@@ -206,7 +207,6 @@ func Swap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-	payer address,
 	swapCallback func(cur realm, amount0Delta, amount1Delta int64, callbackMarker *CallbackMarker) error,
 ) (string, string) {
 	return getImplementation().Swap(
@@ -219,7 +219,6 @@ func Swap(
 		zeroForOne,
 		amountSpecified,
 		sqrtPriceLimitX96,
-		payer,
 		swapCallback,
 	)
 }
@@ -240,7 +239,7 @@ func Swap(
 // Returns:
 //   - string: amount of token0 delta
 //   - string: amount of token1 delta
-//   - bool: swap success status
+//   - error: nil on success
 func DrySwap(
 	token0Path string,
 	token1Path string,
@@ -248,7 +247,7 @@ func DrySwap(
 	zeroForOne bool,
 	amountSpecified string,
 	sqrtPriceLimitX96 string,
-) (string, string, bool) {
+) (string, string, error) {
 	return getImplementation().DrySwap(token0Path, token1Path, fee, zeroForOne, amountSpecified, sqrtPriceLimitX96)
 }
 

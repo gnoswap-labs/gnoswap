@@ -13,6 +13,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -251,7 +252,7 @@ func TestExactInZeroForOneFalse(cur realm, t *testing.T) {
 			quoteArr:         "100",
 			amountOutMin:     "85",
 			expectedAmount0:  "100",
-			expectedAmount1:  "-98",
+			expectedAmount1:  "98",
 			expectPanic:      false,
 		},
 	}

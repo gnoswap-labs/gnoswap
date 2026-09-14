@@ -23,6 +23,7 @@ const (
 	errRouteHopDisconnected   = "[GNOSWAP-ROUTER-017] route hop disconnected"
 	errInsufficientBalance    = "[GNOSWAP-ROUTER-018] insufficient balance for swap"
 	errSpoofedRealm           = "[GNOSWAP-ROUTER-019] rlm does not match the current crossing frame"
+	errInsufficientLiquidity  = "[GNOSWAP-ROUTER-020] insufficient liquidity for swap"
 )
 
 // addDetailToError adds detail to an error message.

@@ -5,18 +5,21 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
@@ -92,6 +95,7 @@ func main(cur realm) {
 
 func initEmission(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 
@@ -126,8 +130,8 @@ func createPoolByAdmin(cur realm, token0, token1 string, fee int64) {
 func mintPositionByAdmin(cur realm, token0, token1 string, fee int64) {
 	testing.SetRealm(adminRealm)
 
-	common.SafeGRC20Approve(cross(cur), token0, poolAddr, math.MaxInt64)
-	common.SafeGRC20Approve(cross(cur), token1, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, token0, poolAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, token1, poolAddr, math.MaxInt64)
 
 	positionId, liquidity, amount0, amount1 := position.Mint(
 		cross(cur),

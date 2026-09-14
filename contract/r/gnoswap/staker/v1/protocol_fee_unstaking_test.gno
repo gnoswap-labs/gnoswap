@@ -7,9 +7,11 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/onbloc/foo"
 
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 )
@@ -37,7 +39,7 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 		},
 		{
 			name:          "Standard fee",
-			tokenPath:     gnsPath,
+			tokenPath:     fooPath,
 			amount:        10000,
 			stakerBalance: 100,
 			internal:      false,
@@ -46,7 +48,7 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 		},
 		{
 			name:             "Standard fee but staker balance is insufficient",
-			tokenPath:        gnsPath,
+			tokenPath:        fooPath,
 			amount:           10000,
 			stakerBalance:    0,
 			internal:         false,
@@ -65,10 +67,10 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 
 			if tc.stakerBalance > 0 {
 				testing.SetRealm(adminRealm)
-				gns.Transfer(cross(cur), stakerAddr, tc.stakerBalance)
+				foo.Transfer(cross(cur), stakerAddr, tc.stakerBalance)
 				// The local mock instance pays the protocol fee from the
 				// staker/v1 realm (the cross(rlm) transfer actor), so fund it too.
-				gns.Transfer(cross(cur), stakerV1Addr, tc.stakerBalance)
+				foo.Transfer(cross(cur), stakerV1Addr, tc.stakerBalance)
 			}
 
 			// Set the caller identity on the test frame's own cur so the
@@ -78,7 +80,7 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 			testing.SetRealm(stakerRealm)
 
 			handleStakingRewardFeeFn := func() (int64, int64, error) {
-				return getMockInstance().handleStakingRewardFee(0, cur, tc.tokenPath, tc.amount, tc.internal)
+				return getMockInstance().handleStakingRewardFee(0, cur, tc.tokenPath, tc.amount, tc.internal, getMockInstance().GetUnstakingFee())
 			}
 
 			if tc.expectedHasPanic {
@@ -119,17 +121,14 @@ func TestAddPendingProtocolFee(cur realm, t *testing.T) {
 func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	instance := getMockInstance()
-	originalPendingProtocolFees := map[string]int64{
-		barPath: 0,
-		gnsPath: -10,
-	}
-	instance.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
+	instance.store.SetPendingProtocolFee(0, cur, barPath, 0)
+	instance.store.SetPendingProtocolFee(0, cur, gnsPath, -10)
 
-	instance.addToProtocolFee(0, cur)
+	instance.settleProtocolFee(0, cur, barPath, 0)
+	instance.settleProtocolFee(0, cur, gnsPath, 0)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)
-	uassert.Equal(t, len(originalPendingProtocolFees), 2)
 }
 
 func TestSetUnStakingFee(cur realm, t *testing.T) {
@@ -392,7 +391,7 @@ func TestHandleStakingRewardFeeEdgeCases(cur realm, t *testing.T) {
 			}
 
 			testing.SetRealm(stakerRealm)
-			netAmount, feeAmount, err := instance.handleStakingRewardFee(0, cur, tt.tokenPath, tt.amount, tt.internal)
+			netAmount, feeAmount, err := instance.handleStakingRewardFee(0, cur, tt.tokenPath, tt.amount, tt.internal, instance.GetUnstakingFee())
 
 			if tt.expectError {
 				uassert.Error(t, err)

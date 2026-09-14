@@ -1,8 +1,9 @@
 package staker
 
 import (
-	"errors"
 	"time"
+
+	"gno.land/r/gnoswap/access"
 
 	"gno.land/r/gnoswap/emission"
 
@@ -10,14 +11,12 @@ import (
 )
 
 const (
-	defaultDepositGnsAmount    = int64(1_000_000_000)
+	defaultDepositGnsAmount    = int64(100_000_000_000)
 	defaultMinimumRewardAmount = int64(1_000_000_000)
 
 	// unstakingFee is the fee charged when unstaking positions.
 	// This parameter can be modified through governance.
 	defaultUnstakingFee = uint64(100) // 1%
-
-	defaultInitialPoolTierPath = "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
 )
 
 func init(cur realm) {
@@ -26,9 +25,7 @@ func init(cur realm) {
 
 func registerStakerV1(cur realm) {
 	sr.RegisterInitializer(cross(cur), func(_ int, rlm realm, stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) sr.IStaker {
-		if !rlm.IsCurrent() {
-			panic(errors.New(errSpoofedRealm))
-		}
+		access.AssertIsRlmCurrent(0, rlm)
 
 		err := initStoreData(0, rlm, stakerStore, emissionAccessor)
 		if err != nil {
@@ -111,8 +108,23 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		}
 	}
 
-	if !stakerStore.HasPendingProtocolFeesStoreKey() {
-		err := stakerStore.SetPendingProtocolFees(0, rlm, make(map[string]int64))
+	pendingProtocolFees := make(map[string]int64)
+	if stakerStore.HasPendingProtocolFeesStoreKey() {
+		pendingProtocolFees = stakerStore.GetPendingProtocolFees()
+	}
+	if err := stakerStore.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
+		return err
+	}
+
+	if !stakerStore.HasUnstakedPositionsStoreKey() {
+		err := stakerStore.SetUnstakedPositions(0, rlm, sr.NewBPTreeN(16))
+		if err != nil {
+			return err
+		}
+	}
+
+	if !stakerStore.HasUncollectedIncentiveCountsStoreKey() {
+		err := stakerStore.SetUncollectedIncentiveCounts(0, rlm, sr.NewBPTreeN(16))
 		if err != nil {
 			return err
 		}
@@ -125,20 +137,13 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		}
 	}
 
-	if !stakerStore.HasExternalIncentivesByCreationTimeStoreKey() {
-		err := stakerStore.SetExternalIncentivesByCreationTime(0, rlm, sr.NewUintTree())
-		if err != nil {
-			return err
-		}
-	}
-
 	initializedPoolTier, initializedPools, initialPoolTierTime, initialTierRewards := initializePoolTier(stakerStore)
 
 	previousRealm := rlm.Previous()
 	emitSetPoolTier(
 		previousRealm.Address().String(),
 		previousRealm.PkgPath(),
-		defaultInitialPoolTierPath,
+		emission.DefaultInitialPoolTierPath,
 		uint64(Tier1),
 		initializedPoolTier.currentEmission,
 		initialTierRewards,
@@ -189,7 +194,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	}
 
 	if !stakerStore.HasPoolTierGetEmissionStoreKey() {
-		getEmissionFn := func() int64 {
+		getEmissionFn := func() (int64, error) {
 			return emissionAccessor.GetStakerEmissionAmountPerSecond()
 		}
 
@@ -200,7 +205,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	}
 
 	if !stakerStore.HasPoolTierGetHalvingBlocksInRangeStoreKey() {
-		getHalvingBlocksInRangeFn := func(start, end int64) ([]int64, []int64) {
+		getHalvingBlocksInRangeFn := func(start, end int64) ([]int64, []int64, error) {
 			return emissionAccessor.GetStakerEmissionAmountPerSecondInRange(start, end)
 		}
 
@@ -220,20 +225,31 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	return nil
 }
 
+// initializePoolTier seeds the staker's pool tiering state on first init.
+//
+// The default pool is the canonical WUGNOT:GNS:3000 pool, sourced from the
+// emission realm's DefaultInitialPoolTierPath constant so that the staker's
+// tier-1 base pool is guaranteed to match the pool emission distributes to.
+//
+// When SetDistributionStartTime executes, emission distributes to this default
+// pool and the staker uses the same path as the base tier-1 pool for reward
+// accrual. Keeping both sides on emission's single constant structurally
+// enforces that invariant and removes any risk of the two realms drifting
+// apart on the canonical default pool identity.
 func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools, int64, map[uint64]int64) {
 	pools := NewPools()
 	currentTime := time.Now().Unix()
 
-	pl := NewPools().GetPoolOrNil(defaultInitialPoolTierPath)
+	pl := NewPools().GetPoolOrNil(emission.DefaultInitialPoolTierPath)
 	if pl == nil {
-		pl = sr.NewPool(defaultInitialPoolTierPath, currentTime)
-		pools.set(defaultInitialPoolTierPath, pl)
+		pl = sr.NewPool(emission.DefaultInitialPoolTierPath, currentTime)
+		pools.set(emission.DefaultInitialPoolTierPath, pl)
 	}
 
 	poolTier := NewPoolTier(
 		pools,
 		currentTime,
-		defaultInitialPoolTierPath,
+		emission.DefaultInitialPoolTierPath,
 		emission.GetStakerEmissionAmountPerSecond,
 		emission.GetStakerEmissionAmountPerSecondInRange,
 	)

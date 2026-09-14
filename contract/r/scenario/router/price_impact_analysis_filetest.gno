@@ -2,13 +2,15 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -139,7 +141,7 @@ func testPriceImpactSmall(cur realm) {
 
 	// Get initial price
 	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
-	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
+	initialPrice, _ := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
 	// Execute swap
@@ -151,7 +153,7 @@ func testPriceImpactSmall(cur realm) {
 	)
 
 	// Get final price
-	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath)
+	finalPrice, _ := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Final sqrt price: %s\n", finalPrice)
 
 	// Calculate actual price impact
@@ -169,7 +171,7 @@ func testPriceImpactMedium(cur realm) {
 	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
-	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
+	initialPrice, _ := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
 	_, amountOut := router.ExactInSwapRoute(
@@ -177,7 +179,7 @@ func testPriceImpactMedium(cur realm) {
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath)
+	finalPrice, _ := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Final sqrt price: %s\n", finalPrice)
 
 	priceImpact := calculatePriceImpact(cur, initialPrice, finalPrice)
@@ -194,7 +196,7 @@ func testPriceImpactLarge(cur realm) {
 	route := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 
 	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
-	initialPrice := pool.GetSlot0SqrtPriceX96(poolPath)
+	initialPrice, _ := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Initial sqrt price: %s\n", initialPrice)
 
 	_, amountOut := router.ExactInSwapRoute(
@@ -202,7 +204,7 @@ func testPriceImpactLarge(cur realm) {
 		time.Now().Add(time.Hour).Unix(), "",
 	)
 
-	finalPrice := pool.GetSlot0SqrtPriceX96(poolPath)
+	finalPrice, _ := pool.GetSlot0SqrtPriceX96(poolPath)
 	ufmt.Printf("[INFO] Final sqrt price: %s\n", finalPrice)
 
 	priceImpact := calculatePriceImpact(cur, initialPrice, finalPrice)
@@ -219,8 +221,8 @@ func testPriceImpactFeeTiers(cur realm) {
 
 	barFoo500Path := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	barFoo3000Path := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000"
-	initialPrice500 := pool.GetSlot0SqrtPriceX96(barFoo500Path)
-	initialPrice3000 := pool.GetSlot0SqrtPriceX96(barFoo3000Path)
+	initialPrice500, _ := pool.GetSlot0SqrtPriceX96(barFoo500Path)
+	initialPrice3000, _ := pool.GetSlot0SqrtPriceX96(barFoo3000Path)
 
 	// Test 0.05% fee pool
 	route500 := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
@@ -238,8 +240,8 @@ func testPriceImpactFeeTiers(cur realm) {
 	)
 	ufmt.Printf("[EXPECTED] 0.3%% fee pool output: %s\n", amountOut3000)
 
-	finalPrice500 := pool.GetSlot0SqrtPriceX96(barFoo500Path)
-	finalPrice3000 := pool.GetSlot0SqrtPriceX96(barFoo3000Path)
+	finalPrice500, _ := pool.GetSlot0SqrtPriceX96(barFoo500Path)
+	finalPrice3000, _ := pool.GetSlot0SqrtPriceX96(barFoo3000Path)
 
 	priceImpact500 := calculatePriceImpact(cur, initialPrice500, finalPrice500)
 	priceImpact3000 := calculatePriceImpact(cur, initialPrice3000, finalPrice3000)
@@ -361,38 +363,38 @@ func calculatePriceImpact(cur realm, initialPriceStr, finalPriceStr string) stri
 // [INFO] Testing small trade (0.01% of liquidity)
 // [INFO] Initial sqrt price: 79228162514264337593543950336
 // [INFO] Final sqrt price: 79227921418862449018200183058
-// [EXPECTED] Small trade amountOut: -9979977
+// [EXPECTED] Small trade amountOut: 9979977
 // [EXPECTED] Price impact should be < 0.01%, actual: 0.00%
 //
 // [INFO] Testing medium trade (1% of liquidity)
 // [INFO] Initial sqrt price: 79227921418862449018200183058
 // [INFO] Final sqrt price: 79203819286443894850535749976
-// [EXPECTED] Medium trade amountOut: -997691074
+// [EXPECTED] Medium trade amountOut: 997691074
 // [EXPECTED] Price impact should be 0.01~0.1%, actual: 0.03%
 //
 // [INFO] Testing large trade (10% of liquidity)
 // [INFO] Initial sqrt price: 79203819286443894850535749976
 // [INFO] Final sqrt price: 78963602055082262766367635762
-// [EXPECTED] Large trade amountOut: -9943625870
+// [EXPECTED] Large trade amountOut: 9943625870
 // [EXPECTED] Price impact should be > 0.1%, actual: 0.30%
 //
 // [SCENARIO] 2. Price Impact Across Different Fee Tiers
 // [INFO] Comparing price impact across fee tiers
-// [EXPECTED] 0.05% fee pool output: -991046211
-// [EXPECTED] 0.3% fee pool output: -990386319
-// [EXPECTED] 0.05% fee pool output: -991046211
-// [EXPECTED] 0.3% fee pool output: -990386319
+// [EXPECTED] 0.05% fee pool output: 991046211
+// [EXPECTED] 0.3% fee pool output: 990386319
+// [EXPECTED] 0.05% fee pool output: 991046211
+// [EXPECTED] 0.3% fee pool output: 990386319
 // [EXPECTED] Lower fee tier should give better output (less price impact)
 // [EXPECTED] Price impact actual: 0.03%
 // [EXPECTED] Price impact actual: 0.51%
 //
 // [SCENARIO] 3. Multi-hop Price Impact Analysis
 // [INFO] Testing multi-hop price impact
-// [EXPECTED] Single hop output: -990445427
+// [EXPECTED] Single hop output: 990445427
 // [INFO] Multi-hop swaps aggregate price impact from each hop
 //
 // [SCENARIO] 4. Price Impact at Tick Boundaries
 // [INFO] Testing price impact at tick boundaries
-// [EXPECTED] Within tick output: -990145
-// [EXPECTED] Cross-tick output: -47801658638
+// [EXPECTED] Within tick output: 990145
+// [EXPECTED] Cross-tick output: 47801658638
 // [INFO] Crossing tick boundaries increases price impact non-linearly

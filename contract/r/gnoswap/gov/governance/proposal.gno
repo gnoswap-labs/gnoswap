@@ -40,6 +40,11 @@ func (p *Proposal) Proposer() address {
 	return p.proposer
 }
 
+// CreatedHeight returns the block height the proposal was created at.
+func (p *Proposal) CreatedHeight() int64 {
+	return p.createdHeight
+}
+
 // CreatedAt returns the creation timestamp of the proposal.
 func (p *Proposal) CreatedAt() int64 {
 	return p.status.schedule.createTime
@@ -143,7 +148,13 @@ func NewProposal(
 	}
 }
 
-// Clone creates a deep copy of the Proposal.
+// Clone copies a proposal's own fields and leaves its type-specific data nil.
+//
+// The copy is shallow because the read-only proposal view clones every entry a
+// caller reads, and ProposalData carries the execution message slice, so
+// copying it would copy every message for each entry on a page. Read the data
+// through its own lookups instead: GetProposalTypeByProposalId,
+// GetProposalCommunityPoolSpendInfo, and GetProposalExecutionInfo.
 func (p *Proposal) Clone() *Proposal {
 	if p == nil {
 		return nil

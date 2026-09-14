@@ -2,6 +2,7 @@ package pool
 
 import (
 	"testing"
+	"time"
 
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -317,14 +318,11 @@ func TestSwapComputation_CoreEngine(cur realm, t *testing.T) {
 					protocolFee:              u256.Zero(),
 					liquidity:                mockPool.Liquidity(),
 				},
-				Cache: &SwapCache{
-					feeProtocol:    0,
-					liquidityStart: mockPool.Liquidity(),
-				},
+				Cache: newSwapCache(0, mockPool.Liquidity(), time.Now().Unix(), mockPool.Slot0()),
 			}
 
 			// When: Execute swap computation
-			result, err := getMockInstance().computeSwap(mockPool, computation, nil)
+			result, err := getMockInstance().computeSwap(mockPool, observationsForTest(mockPool), computation, nil)
 			// Then: Verify computation result
 			if err != nil {
 				t.Fatalf("Unexpected error during swap computation: %v", err)
@@ -358,7 +356,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 			protocolFee:              u256.Zero(),
 			liquidity:                new(u256.Uint).Sub(maxUint128, u256.One()),
 		}
-		cache := &SwapCache{}
+		cache := newSwapCache(0, pool.Liquidity(), time.Now().Unix(), pool.Slot0())
 
 		setMockPoolTick(pool, 1, mockTickInfo{
 			liquidityGross: u256.One(),
@@ -367,7 +365,8 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 		})
 
 		step := StepComputations{initialized: true, tickNext: 1}
-		newState := getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+		newState, err := getMockInstance().tickTransition(step, false, state, pool, observationsForTest(pool), cache, nil)
+		uassert.NoError(t, err)
 
 		uassert.Equal(t, maxUint128.ToString(), newState.liquidity.ToString())
 	})
@@ -383,7 +382,7 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 			protocolFee:              u256.Zero(),
 			liquidity:                maxUint128.Clone(),
 		}
-		cache := &SwapCache{}
+		cache := newSwapCache(0, pool.Liquidity(), time.Now().Unix(), pool.Slot0())
 
 		setMockPoolTick(pool, 1, mockTickInfo{
 			liquidityGross: u256.One(),
@@ -393,9 +392,51 @@ func TestSwap_TickTransitionLiquidityBoundary(cur realm, t *testing.T) {
 
 		step := StepComputations{initialized: true, tickNext: 1}
 		uassert.PanicsContains(t, cur, "result exceeds uint128 range", func() {
-			getMockInstance().tickTransition(step, false, state, pool, cache, nil)
+			_, _ = getMockInstance().tickTransition(step, false, state, pool, observationsForTest(pool), cache, nil)
 		})
 	})
+}
+
+func TestSwap_TickTransitionUsesSwapStartTickForOracle(cur realm, t *testing.T) {
+	pool := pl.NewPool("token0", "token1", FeeTier500, u256.One(), 1, 0, 0)
+	setObservationsForTest(pool, pl.NewPoolObservationsTree(100))
+
+	tickInfo := pl.NewTickInfo()
+	tickInfo.SetInitialized(true)
+	pool.SetTick(20, tickInfo)
+
+	slot0 := pool.Slot0()
+	slot0.SetObservationIndex(0)
+	slot0.SetObservationCardinality(1)
+	slot0.SetObservationCardinalityNext(1)
+	pool.SetSlot0(slot0)
+
+	state := newSwapState(i256.Zero(), u256.Zero(), u256.NewUint(100), slot0)
+	state.setTick(10) // simulate an earlier uninitialized crossing in this swap
+	cache := newSwapCache(0, u256.NewUint(100), 200, slot0)
+	step := StepComputations{initialized: true, tickNext: 20}
+
+	_, err := getMockInstance().tickTransition(step, false, state, pool, observationsForTest(pool), cache, nil)
+	uassert.NoError(t, err)
+	tickInfoAfter, err := pool.GetTick(20)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), tickInfoAfter.TickCumulativeOutside())
+}
+
+func TestSwap_TickTransitionPropagatesOracleError(cur realm, t *testing.T) {
+	pool := pl.NewPool("token0", "token1", FeeTier500, u256.One(), 1, 0, 0)
+	setObservationsForTest(pool, nil)
+	tickInfo := pl.NewTickInfo()
+	tickInfo.SetInitialized(true)
+	pool.SetTick(20, tickInfo)
+
+	slot0 := pool.Slot0()
+	cache := newSwapCache(0, u256.NewUint(100), time.Now().Unix(), slot0)
+	state := newSwapState(i256.Zero(), u256.Zero(), u256.NewUint(100), slot0)
+	step := StepComputations{initialized: true, tickNext: 20}
+
+	_, err := getMockInstance().tickTransition(step, false, state, pool, nil, cache, nil)
+	uassert.ErrorContains(t, err, "observations not initialized")
 }
 
 func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
@@ -436,8 +477,8 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 			riskAssessment: "Protect system resources",
 		},
 		{
-			name:        "insufficient_balance_protection",
-			description: "Protect against insufficient balance",
+			name:        "dry_swap_does_not_require_caller_balance",
+			description: "Allow quote generation without caller balance",
 			swapBuilder: func() SwapParams {
 				return NewSwapBuilder().
 					InPool(barTokenPath, bazTokenPath, FeeTier100).
@@ -446,9 +487,9 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 					WithPriceLimit(MAX_PRICE_IMPACT).
 					Build()
 			},
-			expectSuccess:  false,
-			failureReason:  "Block transactions exceeding user balance",
-			riskAssessment: "Protect user assets and prevent transaction failure",
+			expectSuccess:  true,
+			failureReason:  "DrySwap does not transfer caller tokens",
+			riskAssessment: "Allow quote generation before a user funds a swap",
 		},
 	}
 
@@ -456,7 +497,7 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 		t.Run(test.name, func(cur realm, t *testing.T) {
 			// When: DrySwap for pre-transaction validation using DSL parameters
 			swapParams := test.swapBuilder()
-			amount0, amount1, success := pl.DrySwap(
+			amount0, amount1, err := pl.DrySwap(
 				swapParams.token0,
 				swapParams.token1,
 				swapParams.fee,
@@ -466,8 +507,11 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 			)
 
 			// Then: Verify expected validation result
-			uassert.Equal(t, test.expectSuccess, success,
-				ufmt.Sprintf("DrySwap result differs from expected: %s", test.description))
+			if test.expectSuccess {
+				uassert.NoError(t, err, ufmt.Sprintf("DrySwap result differs from expected: %s", test.description))
+			} else {
+				uassert.Error(t, err, ufmt.Sprintf("DrySwap result differs from expected: %s", test.description))
+			}
 
 			if !test.expectSuccess {
 				uassert.Equal(t, "0", amount0, "In failed swap, token0 movement should be zero")
@@ -478,6 +522,86 @@ func TestDrySwap_ValidationAndFailures(cur realm, t *testing.T) {
 		})
 	}
 
+	_, _, err := pl.DrySwap(barTokenPath, bazTokenPath, FeeTier100, true, "invalid", MAX_PRICE_IMPACT)
+	uassert.Error(t, err, "DrySwap must return an error instead of panicking on an invalid amount")
+}
+
+func TestSwap_ZeroActiveLiquidityCrossesIntoRange(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	burnTokens(cur, t)
+	InitialisePoolTest(cur, t)
+
+	pool := getMockInstance().mustGetPoolBy(barPath, bazPath, fee3000)
+	uassert.True(t, pool.Liquidity().IsZero(), "Test pool must start with no active liquidity")
+
+	callbackCalled := false
+	var receivedAmount0Delta, receivedAmount1Delta int64
+
+	testing.SetRealm(rouRealm)
+	amount0, amount1 := mockInstanceSwap(
+		0,
+		cur,
+		barPath,
+		bazPath,
+		fee3000,
+		alice,
+		false,
+		"1000",
+		"1461446703485210103287273052203988822378723970341",
+		func(_ realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+			callbackCalled = true
+			receivedAmount0Delta = amount0Delta
+			receivedAmount1Delta = amount1Delta
+			return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
+		},
+	)
+
+	uassert.True(t, callbackCalled, "Swap must invoke the callback after crossing into liquidity")
+	uassert.True(t, receivedAmount1Delta > 0, "Pool must receive token1 after entering the active range")
+	uassert.True(t, receivedAmount0Delta < 0, "Pool must send token0 after entering the active range")
+	uassert.True(t, amount0 != "0", "Swap must produce token0 output after crossing into liquidity")
+	uassert.True(t, amount1 != "0", "Swap must consume token1 after crossing into liquidity")
+}
+
+func TestSwap_NoReachableLiquidityInvokesZeroDeltaCallback(cur realm, t *testing.T) {
+	resetObject(cur, t)
+	burnTokens(cur, t)
+	InitialisePoolTest(cur, t)
+
+	testing.SetRealm(adminRealm)
+	mockInstanceSetPoolCreationFee(0, cur, 0)
+	mockInstanceCreatePool(0, cur, barTokenPath, fooTokenPath, 500, EQUAL_PRICE_RATIO)
+
+	pool := getMockInstance().mustGetPoolBy(barTokenPath, fooTokenPath, 500)
+	uassert.True(t, pool.Liquidity().IsZero(), "Test pool must have no active liquidity")
+
+	callbackCalled := false
+	var receivedAmount0Delta, receivedAmount1Delta int64
+
+	testing.SetRealm(rouRealm)
+	amount0, amount1 := mockInstanceSwap(
+		0,
+		cur,
+		barTokenPath,
+		fooTokenPath,
+		500,
+		alice,
+		true,
+		"1000",
+		"4295128740",
+		func(_ realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+			callbackCalled = true
+			receivedAmount0Delta = amount0Delta
+			receivedAmount1Delta = amount1Delta
+			return nil
+		},
+	)
+
+	uassert.True(t, callbackCalled, "Swap must invoke the callback when no liquidity is reachable")
+	uassert.Equal(t, int64(0), receivedAmount0Delta)
+	uassert.Equal(t, int64(0), receivedAmount1Delta)
+	uassert.Equal(t, "0", amount0)
+	uassert.Equal(t, "0", amount1)
 }
 
 func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
@@ -519,6 +643,54 @@ func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
 			expectedError: "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
 			riskFactor:    "Prevent gas waste and system load from meaningless trade",
 		},
+		{
+			name:        "zero_amount_with_leading_zero_swap_prevention",
+			description: "Prevent meaningless zero swap encoded with leading zeros",
+			setupCondition: func(cur realm, t *testing.T) *pl.Pool {
+				InitialisePoolTest(cur, t)
+				return getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
+			},
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: "00",
+				priceLimit:      EQUAL_PRICE_RATIO,
+			},
+			expectSuccess: false,
+			expectedError: "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
+			riskFactor:    "Prevent gas waste and system load from meaningless trade",
+		},
+		{
+			name:        "zero_amount_with_positive_sign_swap_prevention",
+			description: "Prevent meaningless zero swap encoded with a positive sign",
+			setupCondition: func(cur realm, t *testing.T) *pl.Pool {
+				InitialisePoolTest(cur, t)
+				return getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
+			},
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: "+0",
+				priceLimit:      EQUAL_PRICE_RATIO,
+			},
+			expectSuccess: false,
+			expectedError: "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
+			riskFactor:    "Prevent gas waste and system load from meaningless trade",
+		},
+		{
+			name:        "zero_amount_with_negative_sign_swap_prevention",
+			description: "Prevent meaningless zero swap encoded with a negative sign",
+			setupCondition: func(cur realm, t *testing.T) *pl.Pool {
+				InitialisePoolTest(cur, t)
+				return getMockInstance().mustGetPoolBy(barPath, bazPath, STANDARD_FEE_TIER)
+			},
+			swapParams: SwapScenario{
+				zeroForOne:      true,
+				amountSpecified: "-0",
+				priceLimit:      EQUAL_PRICE_RATIO,
+			},
+			expectSuccess: false,
+			expectedError: "[GNOSWAP-POOL-011] invalid swap amount || amountSpecified == 0",
+			riskFactor:    "Prevent gas waste and system load from meaningless trade",
+		},
 	}
 
 	for _, test := range securityTests {
@@ -547,7 +719,7 @@ func TestSwap_ExecutionAndSecurity(cur realm, t *testing.T) {
 			uassert.AbortsContains(t, cur, test.expectedError, func() {
 				mockInstanceSwap(0, cur, pool.Token0Path(), pool.Token1Path(), pool.Fee(),
 					alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
-					test.swapParams.priceLimit, routerAddr,
+					test.swapParams.priceLimit,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(cur, pool.Token0Path(), pool.Token1Path(), amount0Delta, amount1Delta)
 					})
@@ -753,7 +925,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			test.setupScenario(cur, t)
 
 			// When: DrySwap for pre-calculation
-			dryAmount0, dryAmount1, drySuccess := getMockInstance().DrySwap(
+			dryAmount0, dryAmount1, dryErr := getMockInstance().DrySwap(
 				barPath, bazPath, test.fee,
 				test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit,
@@ -769,15 +941,13 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 
 			actualAmount0, actualAmount1 := mockInstanceSwap(0, cur, barPath, bazPath, test.fee,
 				routerAddr, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
-				test.swapParams.priceLimit, routerAddr,
+				test.swapParams.priceLimit,
 				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 					return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 				})
 
 			// Then: Verify consistency between prediction and actual result
-			if !drySuccess {
-				t.Error("DrySwap failed but actual Swap succeeded - consistency issue")
-			}
+			uassert.NoError(t, dryErr, "DrySwap failed but actual Swap succeeded - consistency issue")
 
 			uassert.Equal(t, dryAmount0, actualAmount0,
 				"Token0 amount prediction differs from actual")
@@ -894,11 +1064,12 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 			tradingContext:  "User wants to acquire exactly 200 token0",
 		},
 		{
-			name:        "zero_liquidity_graceful_handling",
-			description: "Graceful handling of zero liquidity",
+			name:        "zero_active_liquidity_crosses_into_range",
+			description: "Crosses an inactive range into available liquidity",
 			setupLiquidity: func(cur realm, t *testing.T) {
 				InitialisePoolTest(cur, t)
-				// MintPositionAll is not called (zero liquidity)
+				// The initial position starts above the current tick, so active
+				// liquidity is zero until the swap crosses into its range.
 				TokenFaucet(cur, t, barPath, routerAddr)
 				TokenApprove(cur, t, barPath, routerAddr, poolAddr, maxApprove)
 			},
@@ -907,8 +1078,8 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 				amountSpecified: "1000",
 				priceLimit:      gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
 			},
-			expectedAmounts: []string{"0", "0"},
-			tradingContext:  "Swap attempt in zero liquidity situation",
+			expectedAmounts: []string{"-173", "236"},
+			tradingContext:  "Swap crosses an inactive range before trading",
 		},
 		{
 			name:        "sqrt_price_limit_over_tick_range_termination",
@@ -950,7 +1121,7 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 				uassert.AbortsContains(t, cur, pattern.expectedPanicMessage, func() {
 					mockInstanceSwap(0, cur, barPath, bazPath, STANDARD_FEE_TIER,
 						alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
-						pattern.swapParams.priceLimit, routerAddr,
+						pattern.swapParams.priceLimit,
 						func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 							return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 						})
@@ -958,7 +1129,7 @@ func TestSwap_TradingPatterns(cur realm, t *testing.T) {
 			} else {
 				actualAmount0, actualAmount1 := mockInstanceSwap(0, cur, barPath, bazPath, STANDARD_FEE_TIER,
 					alice, pattern.swapParams.zeroForOne, pattern.swapParams.amountSpecified,
-					pattern.swapParams.priceLimit, routerAddr,
+					pattern.swapParams.priceLimit,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 					})
@@ -1034,7 +1205,7 @@ func TestSwap_ExtremeMarketConditions(cur realm, t *testing.T) {
 
 			actualAmount0, actualAmount1 := mockInstanceSwap(0, cur, barPath, bazPath, STANDARD_FEE_TIER,
 				alice, test.swapParams.zeroForOne, test.swapParams.amountSpecified,
-				test.swapParams.priceLimit, routerAddr,
+				test.swapParams.priceLimit,
 				func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 					return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 				})
@@ -1068,7 +1239,7 @@ func TestSwap_FeeTierOptimization(cur realm, t *testing.T) {
 
 		actualAmount0, actualAmount1 := mockInstanceSwap(0, cur, barPath, bazPath, ULTRA_LOW_FEE_TIER,
 			adminAddr, true, "40012000",
-			gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(), routerAddr,
+			gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
 			func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 				return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 			})
@@ -1385,7 +1556,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 	amounts := i256.MustFromDecimal(amountSpecified)
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), 0)
+	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), 0, slot0Start)
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{
@@ -1397,7 +1568,7 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 		Cache:             cache,
 	}
 
-	result, _ := getMockInstance().computeSwap(pool, comp, nil)
+	result, _ := getMockInstance().computeSwap(pool, observationsForTest(pool), comp, nil)
 	uassert.Equal(t, "0", result.Amount0.ToString(), "DrySwap should return amount0=0")
 	uassert.Equal(t, "2", result.Amount1.ToString(), "DrySwap should return amount1=2")
 
@@ -1411,7 +1582,6 @@ func TestSwap_PriceLimitEdgeCase_ZeroAmount(cur realm, t *testing.T) {
 		zeroForOne,
 		amountSpecified,
 		sqrtPriceLimitX96,
-		adminAddr,
 		swapCallback,
 	)
 
@@ -1479,7 +1649,6 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 							barPath, bazPath, STANDARD_FEE_TIER,
 							routerAddr, false, "50",
 							gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
-							routerAddr,
 							func(cur realm, a0, a1 int64, _ *pl.CallbackMarker) error { return nil },
 						)
 					})
@@ -1533,7 +1702,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					})
 					uassert.PanicsContains(t, cur, "[GNOSWAP-POOL-014] cannot modify pool while locked", func() {
 						testing.SetRealm(posRealm)
-						getMockInstance().HandleWithdrawalFee(0, cur, barPath, "1", bazPath, "1", adminAddr)
+						getMockInstance().CollectSwapFee(0, cur, barPath, bazPath, STANDARD_FEE_TIER, adminAddr, -887220, 887220, "1", "1")
 					})
 
 					// Step 6: Complete original swap payment
@@ -1546,8 +1715,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					0, cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "100",
-					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
-					routerAddr, maliciousCallback,
+					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(), maliciousCallback,
 				)
 
 				uassert.True(t, amount0 != "0" || amount1 != "0",
@@ -1594,7 +1762,6 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "100",
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
-					routerAddr,
 					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 					},
@@ -1610,7 +1777,6 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "50",
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
-					routerAddr,
 					func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 					},
@@ -1664,8 +1830,7 @@ func TestSwap_ReentrancyProtection(cur realm, t *testing.T) {
 					0, cur,
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "100",
-					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
-					routerAddr, callbackWithLockCheck,
+					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(), callbackWithLockCheck,
 				)
 
 				uassert.True(t, amount0 != "0" || amount1 != "0", "Swap should succeed")
@@ -1705,7 +1870,6 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 					barPath, bazPath, STANDARD_FEE_TIER,
 					routerAddr, false, "50",
 					gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
-					routerAddr,
 					func(cur realm, amount0Delta int64, amount1Delta int64, _ *pl.CallbackMarker) error {
 						return mockSwapCallback(cur, barPath, bazPath, amount0Delta, amount1Delta)
 					},
@@ -1821,12 +1985,12 @@ func TestPoolLock_BlocksMutationEntrypoints(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name: "handle withdrawal fee",
+			name: "collect swap fee",
 			setRealm: func() {
 				testing.SetRealm(posRealm)
 			},
 			action: func(cur realm, t *testing.T) {
-				mockInstanceHandleWithdrawalFee(0, cur, barPath, "1", bazPath, "1", adminAddr)
+				mockInstanceCollectSwapFee(0, cur, barPath, bazPath, STANDARD_FEE_TIER, adminAddr, -887220, 887220, "1", "1")
 			},
 		},
 	}
@@ -1982,7 +2146,7 @@ func TestSwapCallback_DeltaConvention(cur realm, t *testing.T) {
 				0, cur,
 				barPath, bazPath, STANDARD_FEE_TIER,
 				routerAddr, tt.zeroForOne, tt.amountSpecified,
-				priceLimit, routerAddr, callbackCapturingDeltas,
+				priceLimit, callbackCapturingDeltas,
 			)
 
 			if tt.isFailCase {
@@ -2061,8 +2225,7 @@ func TestSwapCallback_CallbackUsage(cur realm, t *testing.T) {
 		0, cur,
 		barPath, bazPath, STANDARD_FEE_TIER,
 		routerAddr, true, "10000",
-		gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
-		routerAddr, genericCallback,
+		gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(), genericCallback,
 	)
 
 	uassert.True(t, token0Transferred > 0, "zeroForOne: should transfer token0 (positive delta)")
@@ -2076,8 +2239,7 @@ func TestSwapCallback_CallbackUsage(cur realm, t *testing.T) {
 		0, cur,
 		barPath, bazPath, STANDARD_FEE_TIER,
 		routerAddr, false, "10000",
-		gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(),
-		routerAddr, genericCallback,
+		gnsmath.TickMathGetSqrtRatioAtTick(887220).ToString(), genericCallback,
 	)
 
 	uassert.Equal(t, int64(0), token0Transferred, "oneForZero: should not transfer token0 (negative delta)")
@@ -2175,7 +2337,7 @@ func TestSwap_FlashSwapPattern(cur realm, t *testing.T) {
 				0, cur,
 				barPath, bazPath, STANDARD_FEE_TIER,
 				routerAddr, tt.zeroForOne, "10000",
-				priceLimit, routerAddr, flashSwapCallback,
+				priceLimit, flashSwapCallback,
 			)
 
 			// Verify: recipient balance during callback should be GREATER than initial
@@ -2238,8 +2400,7 @@ func TestSwap_FlashSwapArbitragePattern(cur realm, t *testing.T) {
 		0, cur,
 		barPath, bazPath, STANDARD_FEE_TIER,
 		routerAddr, true, "10000", // zeroForOne: swap token0 for token1
-		gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(),
-		routerAddr, arbitrageCallback,
+		gnsmath.TickMathGetSqrtRatioAtTick(-887220).ToString(), arbitrageCallback,
 	)
 
 	// Verify flash swap pattern worked

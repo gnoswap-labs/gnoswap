@@ -8,6 +8,7 @@ import (
 
 type MockPoolStore struct {
 	pools                *bptree.BPTree
+	observations         *bptree.BPTree
 	feeAmountTickSpacing map[uint32]int32
 	slot0FeeProtocol     uint8
 	poolCreationFee      int64
@@ -32,6 +33,19 @@ func (s *MockPoolStore) GetPools() *bptree.BPTree {
 // SetPools stores the map containing all pool data.
 func (s *MockPoolStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
 	s.pools = pools
+	return nil
+}
+
+func (s *MockPoolStore) HasObservations() bool {
+	return s.observations != nil
+}
+
+func (s *MockPoolStore) GetObservations() *bptree.BPTree {
+	return s.observations
+}
+
+func (s *MockPoolStore) SetObservations(_ int, rlm realm, observations *bptree.BPTree) error {
+	s.observations = observations
 	return nil
 }
 
@@ -91,6 +105,20 @@ func (s *MockPoolStore) GetPendingProtocolFees() map[string]int64 {
 
 func (s *MockPoolStore) SetPendingProtocolFees(_ int, rlm realm, pendingProtocolFees map[string]int64) error {
 	s.pendingProtocolFees = pendingProtocolFees
+	return nil
+}
+
+func (s *MockPoolStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.pendingProtocolFees[tokenPath]
+}
+
+func (s *MockPoolStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	s.pendingProtocolFees[tokenPath] = amount
+	return nil
+}
+
+func (s *MockPoolStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(s.pendingProtocolFees, tokenPath)
 	return nil
 }
 
@@ -188,6 +216,7 @@ func NewMockPoolStoreWithHook(
 
 	return &MockPoolStore{
 		pools:                pool.NewPoolsTree(),
+		observations:         pool.NewObservationsTree(),
 		feeAmountTickSpacing: feeAmountTickSpacing,
 		slot0FeeProtocol:     0,
 		poolCreationFee:      100_000_000,

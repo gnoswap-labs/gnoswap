@@ -1,0 +1,1 @@
+../../../../../gnoswap/launchpad/v1/getter_utils.gno

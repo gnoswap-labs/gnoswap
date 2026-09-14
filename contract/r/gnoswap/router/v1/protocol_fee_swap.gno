@@ -2,7 +2,6 @@ package router
 
 import (
 	"chain"
-	"errors"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -44,9 +43,7 @@ func (r *routerV1) GetSwapFee() uint64 {
 //   - Fee > 1000 bps (10%)
 //   - Router or ProtocolFee is halted
 func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedRouter()
 	halt.AssertIsNotHaltedProtocolFee()
@@ -84,17 +81,16 @@ func (r *routerV1) handleSwapFee(
 	outputToken string,
 	amount int64,
 ) int64 {
+	currentTokenPath := outputToken
+
 	swapFee := r.store.GetSwapFee()
 	if swapFee <= 0 {
-		r.addToProtocolFee(0, rlm)
+		r.settleProtocolFee(0, rlm, currentTokenPath, 0)
 		return amount
 	}
 
-	currentTokenPath := outputToken
-
 	feeAmountInt64 := calculateRouterFee(amount, swapFee)
-	r.addPendingProtocolFee(0, rlm, currentTokenPath, feeAmountInt64)
-	r.addToProtocolFee(0, rlm)
+	r.settleProtocolFee(0, rlm, currentTokenPath, feeAmountInt64)
 
 	previousRealm := rlm.Previous()
 	chain.Emit(
@@ -108,47 +104,54 @@ func (r *routerV1) handleSwapFee(
 	return gnsmath.SafeSubInt64(amount, feeAmountInt64)
 }
 
+// GetPendingProtocolFees returns the pending protocol fee amount per token path.
+func (r *routerV1) GetPendingProtocolFees() map[string]int64 {
+	return r.store.GetPendingProtocolFees()
+}
+
 func (r *routerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if amount <= 0 {
 		return
 	}
 
-	existingProtocolFees := r.store.GetPendingProtocolFees()
-	pendingProtocolFees := make(map[string]int64)
-	for pendingTokenPath, pendingAmount := range existingProtocolFees {
-		pendingProtocolFees[pendingTokenPath] = pendingAmount
-	}
-	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
-	if err := r.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
+	pendingAmount := gnsmath.SafeAddInt64(r.store.GetPendingProtocolFee(tokenPath), amount)
+	if err := r.store.SetPendingProtocolFee(0, rlm, tokenPath, pendingAmount); err != nil {
 		panic(err)
 	}
 }
 
-// addToProtocolFee sends pending router protocol fees to the protocol fee realm.
-// It is best-effort: when protocol fee collection is halted, it keeps pending
-// storage unchanged; otherwise it rebuilds pending storage with only entries
-// that could not be added, removing successful and non-positive entries.
-func (r *routerV1) addToProtocolFee(_ int, rlm realm) {
-	pendingProtocolFees := r.store.GetPendingProtocolFees()
-	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
+// settleProtocolFee forwards amount, plus anything already pending for tokenPath, to
+// the protocol fee realm. When collection is halted or the transfer fails, the amount
+// is recorded as pending instead and settled by a later call for the same token, which
+// every fee path makes even when the fee is zero.
+//
+// Only tokenPath is touched, so an unrelated token can never block settlement. The
+// pending entry is written only when the fee cannot be forwarded, so the common path
+// performs no store write at all.
+func (r *routerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
+	if halt.IsHaltedProtocolFee() {
+		r.addPendingProtocolFee(0, rlm, tokenPath, amount)
 		return
 	}
 
-	protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
-	remainingProtocolFees := make(map[string]int64)
-	for tokenPath, amount := range pendingProtocolFees {
-		if amount <= 0 {
-			continue
-		}
+	pendingAmount := r.store.GetPendingProtocolFee(tokenPath)
+	totalAmount := gnsmath.SafeAddInt64(pendingAmount, amount)
 
-		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, amount)
-		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, amount); err != nil {
-			remainingProtocolFees[tokenPath] = amount
-			continue
+	if totalAmount > 0 {
+		protocolFeeAddr := access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+		common.SafeGRC20Approve(0, rlm, tokenPath, protocolFeeAddr, totalAmount)
+
+		// AddToProtocolFee only reports an error for a halted realm, which is handled
+		// above. The branch keeps the amount pending should that ever change, and
+		// withdraws the approval so no unspent allowance outlives the call.
+		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, totalAmount); err != nil {
+			common.SafeGRC20Approve(0, rlm, tokenPath, protocolFeeAddr, 0)
+			r.addPendingProtocolFee(0, rlm, tokenPath, amount)
+			return
 		}
 	}
 
-	if err := r.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
+	if err := r.store.RemovePendingProtocolFee(0, rlm, tokenPath); err != nil {
 		panic(err)
 	}
 }

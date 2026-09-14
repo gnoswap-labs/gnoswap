@@ -5,16 +5,18 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -38,10 +40,10 @@ const (
 
 // Variables for test addresses and realms
 var (
-	adminAddr, _         = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm           = testing.NewUserRealm(adminAddr)
-	poolAddr, _         = access.GetAddress(prbac.ROLE_POOL.String())
-	positionAddr, _     = access.GetAddress(prbac.ROLE_POSITION.String())
+	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm      = testing.NewUserRealm(adminAddr)
+	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
+	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
 
 	aliceAddr  = testutils.TestAddress("alice")
 	aliceRealm = testing.NewUserRealm(aliceAddr)
@@ -176,7 +178,8 @@ func testAddLiquiditySuccess(cur realm) {
 	println("[EXPECTED] Additional amount0:", amount0)
 	println("[EXPECTED] Additional amount1:", amount1)
 	println("[EXPECTED] Pool path:", poolPath)
-	println("[EXPECTED] Total liquidity after addition:", pn.GetPositionLiquidity(positionId))
+	liquidity, _ := pn.GetPositionLiquidity(positionId)
+	println("[EXPECTED] Total liquidity after addition:", liquidity)
 }
 
 func testAddLiquidityWithInvalidSlippage(cur realm) {
@@ -374,7 +377,7 @@ func testDecreaseLiquiditySuccess(cur realm) {
 	)
 
 	println("[INFO] Verifying position exists before decrease")
-	existsBefore := pn.IsBurned(positionId)
+	existsBefore, _ := pn.IsBurned(positionId)
 
 	// alice is position owner, so she can approve gnft
 	testing.SetRealm(aliceRealm)
@@ -392,7 +395,7 @@ func testDecreaseLiquiditySuccess(cur realm) {
 	)
 
 	println("[INFO] Verifying position after decrease")
-	existsAfter := pn.IsBurned(positionId)
+	existsAfter, _ := pn.IsBurned(positionId)
 
 	// then
 	println("[EXPECTED] Liquidity decreased successfully")
@@ -402,7 +405,8 @@ func testDecreaseLiquiditySuccess(cur realm) {
 	println("[EXPECTED] Collected fee1:", fee1)
 	println("[EXPECTED] Collected amount0:", amount0)
 	println("[EXPECTED] Collected amount1:", amount1)
-	println("[EXPECTED] Remaining liquidity:", pn.GetPositionLiquidity(positionId))
+	liquidity, _ := pn.GetPositionLiquidity(positionId)
+	println("[EXPECTED] Remaining liquidity:", liquidity)
 }
 
 func testDecreaseLiquidityWithOverRemoval(cur realm) {

@@ -5,11 +5,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -22,6 +23,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -143,8 +145,10 @@ func testBasicPositionMinting(cur realm) {
 	println("[EXPECTED] Liquidity:", liquidity)
 	println("[EXPECTED] Amount0:", amount0)
 	println("[EXPECTED] Amount1:", amount1)
-	println("[EXPECTED] Position is not burned:", !pn.IsBurned(positionId))
-	println("[EXPECTED] Position is in range:", pn.IsInRange(positionId))
+	burned, _ := pn.IsBurned(positionId)
+	inRange, _ := pn.IsInRange(positionId)
+	println("[EXPECTED] Position is not burned:", !burned)
+	println("[EXPECTED] Position is in range:", inRange)
 }
 
 func testZeroLiquidityMintingFailure(cur realm) {

@@ -57,7 +57,8 @@ func newModifyPositionParams(
 	}
 }
 
-// SwapCache holds data that remains constant throughout a swap.
+// SwapCache holds immutable swap-start inputs and oracle cumulatives that are
+// populated lazily when the swap first crosses an initialized tick.
 type SwapCache struct {
 	feeProtocol                       uint8      // protocol fee for the input token
 	liquidityStart                    *u256.Uint // liquidity at the beginning of the swap
@@ -65,12 +66,14 @@ type SwapCache struct {
 	tickCumulative                    int64      // current tick accumulator value
 	secondsPerLiquidityCumulativeX128 *u256.Uint // current seconds per liquidity accumulator
 	computedLatestObservation         bool       // whether we've computed the above accumulators
+	slot0Start                        pl.Slot0   // immutable Slot0 snapshot captured at swap start
 }
 
 func newSwapCache(
 	feeProtocol uint8,
 	liquidityStart *u256.Uint,
 	blockTimestamp int64,
+	slot0Start pl.Slot0,
 ) *SwapCache {
 	return &SwapCache{
 		feeProtocol:                       feeProtocol,
@@ -79,6 +82,7 @@ func newSwapCache(
 		tickCumulative:                    0,
 		secondsPerLiquidityCumulativeX128: u256.Zero(),
 		computedLatestObservation:         false,
+		slot0Start:                        slot0Start.Clone(),
 	}
 }
 

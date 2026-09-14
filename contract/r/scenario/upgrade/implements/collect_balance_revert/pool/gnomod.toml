@@ -1,0 +1,2 @@
+module = "gno.land/r/gnoswap/pool/collect_balance_revert"
+gno = "0.9"

@@ -5,9 +5,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -20,6 +21,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -204,4 +206,4 @@ func exactOutSwapRouteBy(cur realm,
 // [INFO] queryRatios: 40,40,20
 // [INFO] amountInMax: 10000000
 // [EXPECTED] inputTokenAmount: 1005548
-// [EXPECTED] outputTokenAmount: -1001502
+// [EXPECTED] outputTokenAmount: 1001502

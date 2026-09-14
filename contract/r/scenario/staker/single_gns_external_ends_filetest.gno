@@ -12,13 +12,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"fmt"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -33,6 +34,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -64,7 +66,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 
@@ -213,13 +215,13 @@ func createExternalIncentiveQux(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/qux.QUX:100",
 		quxPath,
 		9000000000,
-		1234569600,
-		1234569600+TIMESTAMP_90DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_90DAYS,
 	)
 }
 
 func startExternalIncentive(cur realm) {
-	externalStartTime := int64(1234569600)
+	externalStartTime := int64(1234742400)
 	nowTime := time.Now().Unix()
 	timeLeft := externalStartTime - nowTime
 
@@ -262,7 +264,7 @@ func collectRewardsForBothPositions(cur realm) {
 }
 
 func endExternalQuxIncentive(cur realm) {
-	externalEndTime := (1234569600 + TIMESTAMP_90DAYS)
+	externalEndTime := (1234742400 + TIMESTAMP_90DAYS)
 	nowTime := time.Now().Unix()
 	timeLeft := externalEndTime - nowTime
 
@@ -345,7 +347,7 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 //
 // [SCENARIO] 6. Start external incentive
 // [INFO] skip blocks until external incentive starts
-// [INFO] external incentive started at timestamp: 1234569600
+// [INFO] external incentive started at timestamp: 1234742400
 //
 // [SCENARIO] 7. Stake position 01
 // [INFO] stake position 01
@@ -365,11 +367,11 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] QUX balance after ending: 9000005788
 // [INFO] staker QUX before ending: 8999996529
 // [EXPECTED] creator receives remaining reward token: 5788
-// [EXPECTED] creator receives fixed GNS deposit: 1000000000
+// [EXPECTED] creator receives fixed GNS deposit: 100000000000
 //
 // [SCENARIO] 11. Verify no rewards after external incentive ends
 // [INFO] collect rewards after external incentive ends
-// [INFO] GNS balance before collection: 99998000000000
-// [INFO] GNS balance after collection: 99998000000000
+// [INFO] GNS balance before collection: 99800000000000
+// [INFO] GNS balance after collection: 99800000000000
 // [INFO] total reward collected: 0
 // [EXPECTED] no additional GNS rewards after external incentive ends

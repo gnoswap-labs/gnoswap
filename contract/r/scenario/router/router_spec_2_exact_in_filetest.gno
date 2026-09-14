@@ -14,6 +14,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -67,7 +68,7 @@ func main(cur realm) {
 	println("[INFO] Minting position in bar-foo pool")
 	pn.Mint(cross(cur), barPath, token0Path, 3000, min_tick, max_tick, "1000000", "1000000", "0", "0", max_timeout, adminAddr, "")
 
-	pool, _ := pl.GetPool(barPath, token0Path, FEE_MEDIUM)
+	pool, _ := pl.GetPools().Get(pl.GetPoolPath(barPath, token0Path, FEE_MEDIUM)).(*pl.Pool)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 1000000")
 
@@ -100,7 +101,7 @@ func main(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 3")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -1")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 1")
 
 	println("[INFO] Checking balances after swap")
 	poolToken0After := bar.BalanceOf(poolAddr)
@@ -132,7 +133,7 @@ func main(cur realm) {
 // [INFO] admin foo balance: 99999999000000
 // [INFO] Executing ExactIn swap (3 bar → foo)
 // [EXPECTED] amountIn: 3 expected: 3
-// [EXPECTED] amountOut: -1 expected: -1
+// [EXPECTED] amountOut: 1 expected: 1
 // [INFO] Checking balances after swap
 // [EXPECTED] admin bar balance change: 99999999000001 expected: 99999999000001
 // [EXPECTED] admin foo balance change: 99999998999997 expected: 99999998999997

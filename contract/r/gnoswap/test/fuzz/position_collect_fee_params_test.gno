@@ -2,6 +2,7 @@ package fuzz
 
 import (
 	"gno.land/p/gnoswap/fuzz"
+	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/pool"
@@ -19,12 +20,15 @@ func (p *positionCollectFeeParams) IsValid() bool {
 		return false
 	}
 
-	_, err := position.GetPosition(p.positionId)
-	if err != nil {
+	_, ok := position.GetPositions().Get(utils.Uint64ToString(p.positionId)).(position.Position)
+	if !ok {
 		return false
 	}
 
-	poolPath := position.GetPositionPoolKey(p.positionId)
+	poolPath, err := position.GetPositionPoolKey(p.positionId)
+	if err != nil {
+		return false
+	}
 	if poolPath == "" {
 		return false
 	}
@@ -75,7 +79,10 @@ func NewRandomizedPositionCollectFeeParams(t *fuzz.T, existingPositionId uint64)
 }
 
 func newExistingPositionCollectFeeParams(positionId uint64) *positionCollectFeeParams {
-	poolPath := position.GetPositionPoolKey(positionId)
+	poolPath, err := position.GetPositionPoolKey(positionId)
+	if err != nil {
+		panic(err)
+	}
 	return &positionCollectFeeParams{
 		positionId: positionId,
 		poolPath:   poolPath,

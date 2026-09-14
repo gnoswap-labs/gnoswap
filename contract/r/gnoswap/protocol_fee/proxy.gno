@@ -44,6 +44,20 @@ func AddToProtocolFee(cur realm, tokenPath string, amount int64) error {
 	return getImplementation().AddToProtocolFee(0, cur, tokenPath, amount)
 }
 
+// AdvanceAccrualEpoch closes the current accrual epoch and returns the new one. Fees
+// arriving from now on are bucketed under the returned epoch. Only gov/staker may call
+// it, on every stake change.
+func AdvanceAccrualEpoch(cur realm) int64 {
+	return getImplementation().AdvanceAccrualEpoch(0, cur)
+}
+
+// ConsumeAccrualBuckets returns and clears up to limit of the oldest pending buckets
+// of tokenPath as parallel epoch and amount slices. A limit of zero or less consumes
+// every pending bucket. Only gov/staker may call it.
+func ConsumeAccrualBuckets(cur realm, tokenPath string, limit int) ([]int64, []int64) {
+	return getImplementation().ConsumeAccrualBuckets(0, cur, tokenPath, limit)
+}
+
 // GetDevOpsPct returns the DevOps fee percentage.
 //
 // Returns:
@@ -58,6 +72,23 @@ func GetDevOpsPct() int64 {
 //   - pct: GovStaker fee percentage in basis points (0-10000)
 func GetGovStakerPct() int64 {
 	return getImplementation().GetGovStakerPct()
+}
+
+// GetAccrualEpoch returns the accrual epoch fees are currently bucketed under.
+func GetAccrualEpoch() int64 {
+	return getImplementation().GetAccrualEpoch()
+}
+
+// GetAccrualPendingTokens returns the token paths that still own pending accrual buckets.
+func GetAccrualPendingTokens() []string {
+	return cloneStringSlice(getImplementation().GetAccrualPendingTokens())
+}
+
+// GetAccrualBuckets returns up to limit of the oldest pending buckets of tokenPath
+// without clearing them. A limit of zero or less returns every pending bucket.
+func GetAccrualBuckets(tokenPath string, limit int) ([]int64, []int64) {
+	epochs, amounts := getImplementation().GetAccrualBuckets(tokenPath, limit)
+	return cloneInt64Slice(epochs), cloneInt64Slice(amounts)
 }
 
 // GetReservedTokens returns token paths reserved for distribution.

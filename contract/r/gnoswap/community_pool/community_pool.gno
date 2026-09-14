@@ -16,12 +16,16 @@ import (
 // Parameters:
 //   - tokenPath: the path to the token contract (e.g., "gno.land/r/gnoswap/gns")
 //
-// Returns:
-//   - balance: the balance of the specified token held by the community pool
-func GetBalanceOf(tokenPath string) int64 {
+// Returns the balance of the specified token held by the community pool, or an error
+// if the token is not registered.
+func GetBalanceOf(tokenPath string) (int64, error) {
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
-	return common.BalanceOf(tokenPath, communityPoolAddr)
+	if err := common.IsRegistered(tokenPath); err != nil {
+		return 0, err
+	}
+
+	return common.BalanceOf(tokenPath, communityPoolAddr), nil
 }
 
 // TransferToken transfers tokens from the community pool.
@@ -40,7 +44,7 @@ func TransferToken(cur realm, tokenPath string, to address, amount int64) {
 	caller := prevRealm.Address()
 	access.AssertIsAdminOrGovernance(caller)
 
-	common.SafeGRC20Transfer(cross(cur), tokenPath, to, amount)
+	common.SafeGRC20Transfer(0, cur, tokenPath, to, amount)
 
 	chain.Emit(
 		"TransferToken",

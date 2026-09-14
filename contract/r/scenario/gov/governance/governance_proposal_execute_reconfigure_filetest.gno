@@ -13,6 +13,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -35,7 +36,10 @@ var (
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	println("[SCENARIO] 1. Delegate gns to admin")
 	delegateGnsToAdmin(cur)
@@ -103,11 +107,17 @@ func vote(cur realm, proposalID int64, yea bool) {
 
 func executeReconfigureGovernance(cur realm, proposalID int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	prevGovConfig := governance.GetLatestConfig()
+	prevGovConfig, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	governance.Execute(cross(cur), proposalID)
 
-	afterGovConfig := governance.GetLatestConfig()
+	afterGovConfig, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	ufmt.Printf("[EXPECTED] before proposal %d executing - voting start delay: %d, voting period: %d, quorum: %d\n", proposalID, prevGovConfig.VotingStartDelay, prevGovConfig.VotingPeriod, prevGovConfig.Quorum)
 	ufmt.Printf("[EXPECTED] after proposal %d executing - voting start delay: %d, voting period: %d, quorum: %d\n", proposalID, afterGovConfig.VotingStartDelay, afterGovConfig.VotingPeriod, afterGovConfig.Quorum)

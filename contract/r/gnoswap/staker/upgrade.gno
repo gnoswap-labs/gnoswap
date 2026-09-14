@@ -1,8 +1,6 @@
 package staker
 
 import (
-	"errors"
-
 	"gno.land/r/gnoswap/access"
 )
 
@@ -17,9 +15,7 @@ import (
 // Each package path can only register once to prevent duplicate registrations.
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, stakerStore IStakerStore, poolAccessor PoolAccessor, emissionAccessor EmissionAccessor, nftAccessor NFTAccessor) IStaker) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
-		if !rlm.IsCurrent() {
-			panic(errors.New(ErrSpoofedRealm))
-		}
+		access.AssertIsRlmCurrent(0, rlm)
 
 		currentStakerStore, ok := domainStore.(IStakerStore)
 		if !ok {

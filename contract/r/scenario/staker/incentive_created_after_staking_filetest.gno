@@ -19,12 +19,13 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -39,6 +40,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -80,7 +82,7 @@ var (
 	maxTimeout int64 = 9999999999
 	maxInt64   int64 = 9223372036854775807
 
-	depositGnsAmount int64 = 1_000_000_000
+	depositGnsAmount int64 = 100_000_000_000
 
 	INCENTIVE_DURATION int64 = 90 * 24 * 60 * 60 // 90 days
 	REWARD_AMOUNT      int64 = 3000000000        // 3000 GNS
@@ -235,7 +237,7 @@ func createAndStartIncentive(cur realm) {
 
 	gns.Approve(cross(cur), stakerAddr, maxInt64)
 
-	startTime := int64(1234569600) // +1 day midnight
+	startTime := int64(1234742400) // +2 day midnight
 	endTime := startTime + INCENTIVE_DURATION
 
 	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, time.Now().Unix(), 1)
@@ -385,17 +387,17 @@ func positionIdFrom(cur realm, positionId int) grc721.TokenID {
 // [INFO] skipped 30 days
 //
 // [SCENARIO] 7. User1 collects rewards (lazy sync should discover incentive)
-// [INFO] user1 collected 188976625 GNS (lazy sync discovered incentive)
+// [INFO] user1 collected 197865514 GNS (lazy sync discovered incentive)
 //
 // [SCENARIO] 8. User2 collects rewards (lazy sync should discover incentive)
-// [INFO] user2 collected 188976368 GNS (lazy sync discovered incentive)
+// [INFO] user2 collected 197865256 GNS (lazy sync discovered incentive)
 //
 // [SCENARIO] 9. User3 collects rewards (already knows about incentive)
 // [INFO] user3 collected 188888887 GNS (already knew about incentive)
 //
 // [SCENARIO] 10. Skip to end and collect final rewards
 // [INFO] skipped to end of incentive
-// [INFO] user1 final rewards: 616731609 GNS
-// [INFO] user2 final rewards: 616731416 GNS
+// [INFO] user1 final rewards: 623398276 GNS
+// [INFO] user2 final rewards: 623398083 GNS
 // [INFO] user3 final rewards: 616666022 GNS
-// [VERIFIED] all users collected final rewards, total: 1850129047 GNS
+// [VERIFIED] all users collected final rewards, total: 1863462381 GNS

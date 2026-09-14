@@ -19,6 +19,7 @@ import (
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
 	position_v1 "gno.land/r/gnoswap/position/v1"
 
+	_ "gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -115,7 +116,8 @@ func CreateSecondPoolWithoutFee(cur realm, t *testing.T) {
 	testing.SetRealm(adminRealm)
 	pl.SetPoolCreationFee(cross(cur), 0)
 
-	CreatePool(cur,
+	CreatePool(
+		cur,
 		barPath,
 		bazPath,
 		fee3000,
@@ -396,6 +398,22 @@ func initStakerTest(cur realm, t *testing.T) {
 	initStakerProxyTest(cur, t)
 }
 
+func createDefaultInitialPoolForStakerTest(cur realm, t *testing.T) {
+	t.Helper()
+
+	testing.SetRealm(adminRealm)
+	pl.SetPoolCreationFee(cross(cur), 0)
+
+	CreatePool(
+		cur,
+		wugnotPath,
+		gnsPath,
+		fee3000,
+		gnsmath.TickMathGetSqrtRatioAtTick(0).ToString(),
+		adminAddr,
+	)
+}
+
 func initStakerProxyTest(cur realm, t *testing.T) {
 	t.Helper()
 	const mockStakerPath = "gno.land/r/gnoswap/staker/mock"
@@ -515,6 +533,10 @@ func mockInstanceEndExternalIncentive(cur realm, poolPath string, incentiveId st
 	getMockInstance().EndExternalIncentive(0, cur, poolPath, incentiveId, refundAddress)
 }
 
+func mockInstanceCancelExternalIncentive(cur realm, poolPath string, incentiveId string) {
+	getMockInstance().CancelExternalIncentive(0, cur, poolPath, incentiveId)
+}
+
 func mockInstanceCollectExternalIncentivePenalty(cur realm, poolPath string, incentiveId string, refundAddress address) int64 {
 	return getMockInstance().CollectExternalIncentivePenalty(0, cur, poolPath, incentiveId, refundAddress)
 }
@@ -531,7 +553,11 @@ func mockNFTApprove(cur realm, approved address, positionId uint64) {
 
 func getPositionOperator(positionId uint64) address {
 	testing.SetRealm(adminRealm)
-	return pn.GetPositionOperator(positionId)
+	operator, err := pn.GetPositionOperator(positionId)
+	if err != nil {
+		panic(err)
+	}
+	return operator
 }
 
 // rewardPerSecondFromX128 returns the floored integer reward-per-second

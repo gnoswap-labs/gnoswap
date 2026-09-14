@@ -18,12 +18,13 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -38,6 +39,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -154,8 +156,8 @@ func createAndStartIncentive(cur realm) {
 
 	createTimestamp := time.Now().Unix()
 
-	// Start at the next UTC midnight to satisfy start-time validation
-	startTime := ((createTimestamp / 86400) + 1) * 86400
+	// Start at the first UTC midnight past the 24h minimum to satisfy start-time validation
+	startTime := ((createTimestamp / 86400) + 2) * 86400
 	endTime := startTime + INCENTIVE_DURATION
 
 	actualIncentiveID = ufmt.Sprintf("%s:%d:%d", adminAddr, createTimestamp, 1)

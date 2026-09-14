@@ -5,12 +5,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -26,6 +28,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -79,6 +82,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -132,7 +136,7 @@ func mintPosition01(cur realm) {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, positionId))
+	owner := mustOwnerOf(positionIdFrom(cur, positionId))
 	ufmt.Printf("[EXPECTED] initial position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
@@ -142,7 +146,7 @@ func stakeAndUnstakeInSameBlock(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] check initial state before staking")
-	initialOwner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	initialOwner := mustOwnerOf(positionIdFrom(cur, 1))
 	initialGnsBalance := gns.BalanceOf(adminUser)
 
 	ufmt.Printf("[INFO] initial owner: %s\n", initialOwner)
@@ -154,7 +158,7 @@ func stakeAndUnstakeInSameBlock(cur realm) {
 	println("[INFO] stake position 01")
 	sr.StakeToken(cross(cur), 1, "")
 
-	ownerAfterStake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterStake := mustOwnerOf(positionIdFrom(cur, 1))
 
 	ufmt.Printf("[EXPECTED] owner after stake: %s\n", ownerAfterStake)
 
@@ -164,8 +168,9 @@ func stakeAndUnstakeInSameBlock(cur realm) {
 
 	println("[INFO] immediately unstake position 01 (same block)")
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 
-	ownerAfterUnstake := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	ownerAfterUnstake := mustOwnerOf(positionIdFrom(cur, 1))
 	gnsAfterUnstake := gns.BalanceOf(adminUser)
 
 	ufmt.Printf("[EXPECTED] owner after unstake: %s\n", ownerAfterUnstake)
@@ -193,7 +198,7 @@ func verifyFinalState(cur realm) {
 
 	println("[INFO] verify final state after same block operations")
 
-	finalOwner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	finalOwner := mustOwnerOf(positionIdFrom(cur, 1))
 
 	ufmt.Printf("[EXPECTED] final position owner: %s\n", finalOwner)
 
@@ -210,7 +215,7 @@ func verifyFinalState(cur realm) {
 
 	testing.SkipHeights(1)
 
-	verifyOwner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	verifyOwner := mustOwnerOf(positionIdFrom(cur, 1))
 
 	ufmt.Printf("[EXPECTED] verification - owner after normal stake: %s\n", verifyOwner)
 
@@ -238,6 +243,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	default:
 		panic("unsupported positionId type")
 	}
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

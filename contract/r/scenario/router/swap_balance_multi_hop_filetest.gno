@@ -6,9 +6,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -21,6 +22,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -33,10 +35,10 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prabc.ROLE_POOL.String())
-	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
+	adminAddr, _       = access.GetAddress(prabc.ROLE_ADMIN.String())
+	adminRealm         = testing.NewUserRealm(adminAddr)
+	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
+	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 	userAddr  = testutils.TestAddress("user")
@@ -56,24 +58,24 @@ var (
 )
 
 type BalanceSnapshot struct {
-	userBar          int64
-	userBaz          int64
-	userFoo          int64
-	userQux          int64
-	poolBarFooBar    int64
-	poolBarFooFoo    int64
-	poolFooBazFoo    int64
-	poolFooBazBaz    int64
-	poolBazQuxBaz    int64
-	poolBazQuxQux    int64
-	routerBar        int64
-	routerBaz        int64
-	routerFoo        int64
-	routerQux        int64
-	protocolFeeBar   int64
-	protocolFeeBaz   int64
-	protocolFeeFoo   int64
-	protocolFeeQux   int64
+	userBar        int64
+	userBaz        int64
+	userFoo        int64
+	userQux        int64
+	poolBarFooBar  int64
+	poolBarFooFoo  int64
+	poolFooBazFoo  int64
+	poolFooBazBaz  int64
+	poolBazQuxBaz  int64
+	poolBazQuxQux  int64
+	routerBar      int64
+	routerBaz      int64
+	routerFoo      int64
+	routerQux      int64
+	protocolFeeBar int64
+	protocolFeeBaz int64
+	protocolFeeFoo int64
+	protocolFeeQux int64
 }
 
 func main(cur realm) {
@@ -477,7 +479,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 3. Single Hop Swap (BAR -> FOO)
 // [INFO] Single Hop: Swapping 10000000000 BAR -> FOO
-// [INFO] Single Hop - In: 10000000000 Out: -9602386497
+// [INFO] Single Hop - In: 10000000000 Out: 9602386497
 // [BALANCE] After Single Hop
 //   User - BAR: 390000000000 FOO: 309602386497 BAZ: 300000000000 QUX: 400000000000
 //   Pools - BAR: 110000000000 FOO: 190383188286 BAZ: 200000000000 QUX: 100000000000
@@ -495,7 +497,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 4. Two Hop Swap (BAR -> FOO -> BAZ)
 // [INFO] Two Hop: Swapping 5000000000 BAR -> FOO -> BAZ
-// [INFO] Two Hop - In: 5000000000 Out: -4451991291
+// [INFO] Two Hop - In: 5000000000 Out: 4451991291
 // [INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2)
 // [BALANCE] After Two Hop
 //   User - BAR: 385000000000 FOO: 309602386497 BAZ: 304451991291 QUX: 400000000000
@@ -516,7 +518,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 5. Three Hop Swap (BAR -> FOO -> BAZ -> QUX)
 // [INFO] Three Hop: Swapping 3000000000 BAR -> FOO -> BAZ -> QUX
-// [INFO] Three Hop - In: 3000000000 Out: -2495426539
+// [INFO] Three Hop - In: 3000000000 Out: 2495426539
 // [INFO] Route: BAR -> FOO (pool 1) -> BAZ (pool 2) -> QUX (pool 3)
 // [BALANCE] After Three Hop
 //   User - BAR: 382000000000 FOO: 309602386497 BAZ: 304451991291 QUX: 402495426539
@@ -537,7 +539,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 6. Reverse Three Hop Swap (QUX -> BAZ -> FOO -> BAR)
 // [INFO] Reverse Three Hop: Swapping 2000000000 QUX -> BAZ -> FOO -> BAR
-// [INFO] Reverse Three Hop - In: 2000000000 Out: -2404819407
+// [INFO] Reverse Three Hop - In: 2000000000 Out: 2404819407
 // [INFO] Route: QUX -> BAZ (pool 3) -> FOO (pool 2) -> BAR (pool 1)
 // [BALANCE] After Reverse Three Hop
 //   User - BAR: 384404819407 FOO: 309602386497 BAZ: 304451991291 QUX: 400495426539

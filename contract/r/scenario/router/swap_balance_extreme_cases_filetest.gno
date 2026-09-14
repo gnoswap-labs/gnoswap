@@ -6,9 +6,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -21,6 +22,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -31,10 +33,10 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prabc.ROLE_POOL.String())
-	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
+	adminAddr, _       = access.GetAddress(prabc.ROLE_ADMIN.String())
+	adminRealm         = testing.NewUserRealm(adminAddr)
+	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
+	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 	userAddr  = testutils.TestAddress("user")
@@ -52,14 +54,14 @@ var (
 )
 
 type BalanceSnapshot struct {
-	userBar          int64
-	userFoo          int64
-	poolBar          int64
-	poolFoo          int64
-	routerBar        int64
-	routerFoo        int64
-	protocolFeeBar   int64
-	protocolFeeFoo   int64
+	userBar        int64
+	userFoo        int64
+	poolBar        int64
+	poolFoo        int64
+	routerBar      int64
+	routerFoo      int64
+	protocolFeeBar int64
+	protocolFeeFoo int64
 }
 
 func main(cur realm) {
@@ -105,14 +107,14 @@ func main(cur realm) {
 
 func getBalanceSnapshot(cur realm) BalanceSnapshot {
 	snapshot := BalanceSnapshot{
-		userBar:          bar.BalanceOf(userAddr),
-		userFoo:          foo.BalanceOf(userAddr),
-		poolBar:          bar.BalanceOf(poolAddr),
-		poolFoo:          foo.BalanceOf(poolAddr),
-		routerBar:        bar.BalanceOf(routerAddr),
-		routerFoo:        foo.BalanceOf(routerAddr),
-		protocolFeeBar:   bar.BalanceOf(protocolFeeAddr),
-		protocolFeeFoo:   foo.BalanceOf(protocolFeeAddr),
+		userBar:        bar.BalanceOf(userAddr),
+		userFoo:        foo.BalanceOf(userAddr),
+		poolBar:        bar.BalanceOf(poolAddr),
+		poolFoo:        foo.BalanceOf(poolAddr),
+		routerBar:      bar.BalanceOf(routerAddr),
+		routerFoo:      foo.BalanceOf(routerAddr),
+		protocolFeeBar: bar.BalanceOf(protocolFeeAddr),
+		protocolFeeFoo: foo.BalanceOf(protocolFeeAddr),
 	}
 
 	return snapshot
@@ -394,7 +396,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 3. Extreme Case 1: Very Large Swap (90% of liquidity)
 // [INFO] Extreme Swap: Swapping 450000000000 FOO -> BAR (90% of liquidity)
-// [INFO] Large Swap - In: 450000000000 Out: -245987862163
+// [INFO] Large Swap - In: 450000000000 Out: 245987862163
 // [INFO] Expected: Massive price impact and slippage
 // [INFO] After Large Swap
 // [EXPECTED] User BAR balance: 745987862163
@@ -416,7 +418,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 4. Extreme Case 2: Swap Back with High Slippage
 // [INFO] Reverse Swap: Getting 200000000000 FOO back
-// [INFO] Reverse Swap - In: 75286230276 Out: -200000000000
+// [INFO] Reverse Swap - In: 75286230276 Out: 200000000000
 // [INFO] After Reverse Swap
 // [EXPECTED] User BAR balance: 670701631887
 // [EXPECTED] User FOO balance: 250000000000
@@ -437,7 +439,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 5. Extreme Case 3: Small Swap After Large Price Movement
 // [INFO] Small Swap: Swapping 1000000 FOO -> BAR (after extreme movement)
-// [INFO] Small Swap - In: 1000000 Out: -469486
+// [INFO] Small Swap - In: 1000000 Out: 469486
 // [INFO] After Small Swap
 // [EXPECTED] User BAR balance: 670702101373
 // [EXPECTED] User FOO balance: 249999000000

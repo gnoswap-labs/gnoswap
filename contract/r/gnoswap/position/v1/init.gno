@@ -1,7 +1,7 @@
 package position
 
 import (
-	"errors"
+	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/position"
 )
 
@@ -13,9 +13,7 @@ func registerPositionV1(cur realm) {
 	position.RegisterInitializer(
 		cross(cur),
 		func(_ int, rlm realm, positionStore position.IPositionStore) position.IPosition {
-			if !rlm.IsCurrent() {
-				panic(errors.New(errSpoofedRealm))
-			}
+			access.AssertIsRlmCurrent(0, rlm)
 
 			err := initStoreData(0, rlm, positionStore)
 			if err != nil {

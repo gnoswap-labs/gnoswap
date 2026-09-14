@@ -100,6 +100,21 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 			}
+
+			recipient := testutils.TestAddress("project_recipient")
+			recipients := NewBPTreeN(16)
+			recipients.Set(recipient.String(), true)
+			err = ls.SetProjectRecipients(0, cur, recipients)
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+				uassert.False(t, ls.HasProjectRecipientsKey())
+			} else {
+				uassert.NoError(t, err)
+				// Membership belongs to the persistent store, not an implementation.
+				stored := NewLaunchpadStore(kvStore).GetProjectRecipients()
+				uassert.True(t, stored.Has(recipient.String()))
+				uassert.False(t, stored.Has(testutils.TestAddress("other").String()))
+			}
 		})
 	}
 }

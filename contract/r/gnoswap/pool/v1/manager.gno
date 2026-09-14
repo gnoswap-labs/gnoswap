@@ -3,6 +3,7 @@ package pool
 import (
 	"chain"
 	"errors"
+	"time"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/p/gnoswap/utils"
@@ -62,9 +63,7 @@ func (i *poolV1) CreatePool(
 	fee uint32,
 	sqrtPriceX96 string,
 ) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
@@ -79,16 +78,21 @@ func (i *poolV1) CreatePool(
 
 	slot0FeeProtocol := i.store.GetSlot0FeeProtocol()
 
+	tickSpacing, err := i.GetFeeAmountTickSpacing(fee)
+	if err != nil {
+		panic(err)
+	}
+
 	poolInfo := newPoolParams(
 		token0Path,
 		token1Path,
 		fee,
 		sqrtPriceX96,
-		i.GetFeeAmountTickSpacing(fee),
+		tickSpacing,
 		slot0FeeProtocol,
 	)
 
-	err := poolInfo.update()
+	err = poolInfo.update()
 	if err != nil {
 		panic(err)
 	}
@@ -110,6 +114,12 @@ func (i *poolV1) CreatePool(
 		panic(err)
 	}
 
+	observations := i.store.GetObservations()
+	observations.Set(poolPath, pl.NewPoolObservationsTree(time.Now().Unix()))
+	if err := i.store.SetObservations(0, rlm, observations); err != nil {
+		panic(err)
+	}
+
 	poolCreationFee := i.store.GetPoolCreationFee()
 
 	if poolCreationFee > 0 {
@@ -117,7 +127,6 @@ func (i *poolV1) CreatePool(
 		previousRealmAddr := previousRealm.Address()
 		poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
 		gns.TransferFrom(cross(rlm), previousRealmAddr, poolAddr, poolCreationFee)
-		i.addPendingProtocolFee(0, rlm, GNS_TOKEN_KEY, poolCreationFee)
 
 		chain.Emit(
 			"PoolCreationFee",
@@ -128,17 +137,18 @@ func (i *poolV1) CreatePool(
 			"feeAmount", utils.FormatInt(poolCreationFee),
 		)
 	}
-	i.addToProtocolFee(0, rlm)
+
+	i.settleProtocolFee(0, rlm, GNS_TOKEN_KEY, poolCreationFee)
 
 	previousRealm := rlm.Previous()
 	chain.Emit(
 		"CreatePool",
 		"prevAddr", previousRealm.Address().String(),
 		"prevRealm", previousRealm.PkgPath(),
-		"token0Path", token0Path,
-		"token1Path", token1Path,
+		"token0Path", poolInfo.Token0Path(),
+		"token1Path", poolInfo.Token1Path(),
 		"fee", utils.FormatUint(fee),
-		"sqrtPriceX96", sqrtPriceX96,
+		"sqrtPriceX96", poolInfo.SqrtPriceX96().ToString(),
 		"poolPath", poolPath,
 		"tick", utils.FormatInt(pool.Slot0Tick()),
 		"tickSpacing", utils.FormatInt(poolInfo.TickSpacing()),
@@ -152,9 +162,7 @@ func (i *poolV1) CreatePool(
 //
 // Only callable by admin or governance.
 func (i *poolV1) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
@@ -208,6 +216,29 @@ func (i *poolV1) mustGetPool(poolPath string) (pool *pl.Pool) {
 func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	return i.mustGetPool(poolPath)
+}
+
+func (i *poolV1) getObservations(poolPath string) (*pl.ObservationTree, error) {
+	observations := i.store.GetObservations()
+	value := observations.Get(poolPath)
+	if value == nil {
+		return nil, ufmt.Errorf("expected observations for poolPath(%s) to exist", poolPath)
+	}
+
+	tree, ok := value.(*pl.ObservationTree)
+	if !ok {
+		return nil, ufmt.Errorf("failed to cast observations for poolPath(%s): %T", poolPath, value)
+	}
+
+	return tree, nil
+}
+
+func (i *poolV1) mustGetObservations(poolPath string) *pl.ObservationTree {
+	tree, err := i.getObservations(poolPath)
+	if err != nil {
+		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
+	}
+	return tree
 }
 
 // savePool updates a pool in the pools map and persists to storage.

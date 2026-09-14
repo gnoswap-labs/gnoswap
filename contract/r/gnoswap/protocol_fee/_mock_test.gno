@@ -79,6 +79,46 @@ func (m *MockProtocolFee) GetGovStakerPct() int64 {
 	return res[0].(int64)
 }
 
+func (m *MockProtocolFee) AdvanceAccrualEpoch(_ int, rlm realm) int64 {
+	res, ok := m.Response.Get("AdvanceAccrualEpoch")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockProtocolFee) ConsumeAccrualBuckets(_ int, rlm realm, tokenPath string, limit int) ([]int64, []int64) {
+	res, ok := m.Response.Get("ConsumeAccrualBuckets")
+	if !ok {
+		return []int64{}, []int64{}
+	}
+	return res[0].([]int64), res[1].([]int64)
+}
+
+func (m *MockProtocolFee) GetAccrualEpoch() int64 {
+	res, ok := m.Response.Get("GetAccrualEpoch")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
+func (m *MockProtocolFee) GetAccrualPendingTokens() []string {
+	res, ok := m.Response.Get("GetAccrualPendingTokens")
+	if !ok {
+		return []string{}
+	}
+	return res[0].([]string)
+}
+
+func (m *MockProtocolFee) GetAccrualBuckets(tokenPath string, limit int) ([]int64, []int64) {
+	res, ok := m.Response.Get("GetAccrualBuckets")
+	if !ok {
+		return []int64{}, []int64{}
+	}
+	return res[0].([]int64), res[1].([]int64)
+}
+
 func (m *MockProtocolFee) GetReservedTokens() []string {
 	res, ok := m.Response.Get("GetReservedTokens")
 	if !ok {

@@ -10,18 +10,21 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -81,6 +84,7 @@ func main(cur realm) {
 
 func setup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	pool.SetPoolCreationFee(cross(cur), 0)
 
@@ -106,7 +110,8 @@ func setup(cur realm) {
 		"10000000", "10000000",
 		"1", "1",
 		maxTimeout,
-		aliceAddr, "")
+		aliceAddr, "",
+	)
 	positionId = id
 
 	println("[EXPECTED] Position ID:", positionId)
@@ -117,7 +122,7 @@ func aliceTransfersToBob(cur realm) {
 	testing.SetRealm(aliceRealm)
 	gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, positionId))
 
-	owner := gnft.MustOwnerOf(tokenIdOf(cur, positionId))
+	owner := mustOwnerOf(tokenIdOf(cur, positionId))
 	println("[EXPECTED] Owner after transfer is bob:", owner == bobAddr)
 }
 
@@ -165,7 +170,7 @@ func bobIncreases(cur realm) {
 	bar.Approve(cross(cur), poolAddr, maxInt64)
 	foo.Approve(cross(cur), poolAddr, maxInt64)
 
-	liquidityBefore := position.GetPositionLiquidity(positionId)
+	liquidityBefore, _ := position.GetPositionLiquidity(positionId)
 	_, liquidityAdded, _, _, _ := position.IncreaseLiquidity(
 		cross(cur),
 		positionId,
@@ -173,7 +178,7 @@ func bobIncreases(cur realm) {
 		"0", "0",
 		maxTimeout,
 	)
-	liquidityAfter := position.GetPositionLiquidity(positionId)
+	liquidityAfter, _ := position.GetPositionLiquidity(positionId)
 
 	println("[EXPECTED] Liquidity before:", liquidityBefore)
 	println("[EXPECTED] Liquidity added:", liquidityAdded)
@@ -183,7 +188,7 @@ func bobIncreases(cur realm) {
 func bobDecreases(cur realm) {
 	testing.SetRealm(bobRealm)
 
-	liquidityBefore := position.GetPositionLiquidity(positionId)
+	liquidityBefore, _ := position.GetPositionLiquidity(positionId)
 	_, liquidityRemoved, _, _, _, _, _ := position.DecreaseLiquidity(
 		cross(cur),
 		positionId,
@@ -191,7 +196,7 @@ func bobDecreases(cur realm) {
 		"0", "0",
 		maxTimeout,
 	)
-	liquidityAfter := position.GetPositionLiquidity(positionId)
+	liquidityAfter, _ := position.GetPositionLiquidity(positionId)
 
 	println("[EXPECTED] Liquidity before:", liquidityBefore)
 	println("[EXPECTED] Liquidity removed:", liquidityRemoved)
@@ -200,6 +205,14 @@ func bobDecreases(cur realm) {
 
 func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(id, 10))
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

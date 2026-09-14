@@ -7,12 +7,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -30,6 +32,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -106,7 +109,8 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 7. ExactInSwapRoute BAR -> BAZ, bar:baz:100 to out-of-range")
-	exactInSingleSwapRouteBy(cur,
+	exactInSingleSwapRouteBy(
+		cur,
 		poolPath1,
 		barPath,
 		bazPath,
@@ -124,7 +128,8 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range", position2)
-	exactInSingleSwapRouteBy(cur,
+	exactInSingleSwapRouteBy(
+		cur,
 		poolPath1,
 		bazPath,
 		barPath,
@@ -147,6 +152,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -377,7 +383,7 @@ func exactInSingleSwapRouteBy(cur realm,
 	bar.Approve(cross(cur), routerAddr, maxInt64)
 	baz.Approve(cross(cur), routerAddr, maxInt64)
 
-	beforePoolTick := pl.GetSlot0Tick(poolPath)
+	beforePoolTick, _ := pl.GetSlot0Tick(poolPath)
 
 	// current sqrtPriceX96 is 76228162514264337593543950336
 	inputTokenAmount, outputTokenAmount := router.ExactInSingleSwapRoute(
@@ -395,7 +401,7 @@ func exactInSingleSwapRouteBy(cur realm,
 	afterBARBalance := bar.BalanceOf(adminAddr)
 	afterBAZBalance := baz.BalanceOf(adminAddr)
 
-	afterPoolTick := pl.GetSlot0Tick(poolPath)
+	afterPoolTick, _ := pl.GetSlot0Tick(poolPath)
 
 	ufmt.Printf("[EXPECTED] inputTokenAmount: %s\n", inputTokenAmount)
 	ufmt.Printf("[EXPECTED] outputTokenAmount: %s\n", outputTokenAmount)
@@ -466,14 +472,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 2000
-// [EXPECTED] outputTokenAmount: -1980
+// [EXPECTED] outputTokenAmount: 1980
 // [EXPECTED] BAR balance changed: -2000
 // [EXPECTED] BAZ balance changed: 1980
 // [EXPECTED] pool tick changed: 0 to -197
 //
 // [SCENARIO] 8. Collect rewards from one position 1
 // [INFO] collect reward by tokenID: 1
-// [EXPECTED] reward: 802652 (should be > 0)
+// [EXPECTED] reward: 802653 (should be > 0)
 //
 // [SCENARIO] 9. ExactInSwapRoute BAZ -> BAR, baz:bar:100 to in-range 2
 // [INFO] ExactInSwapRoute
@@ -484,7 +490,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 2000
-// [EXPECTED] outputTokenAmount: -2006
+// [EXPECTED] outputTokenAmount: 2006
 // [EXPECTED] BAR balance changed: 2006
 // [EXPECTED] BAZ balance changed: -2000
 // [EXPECTED] pool tick changed: -197 to 0

@@ -38,6 +38,21 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			expectedLastOut: "98",
 			expectError:     false,
 		},
+		{
+			name: "two hop swap BAR -> BAZ -> QUX",
+			params: NewSwapParams().
+				Recipient(routerAddr).
+				TokenIn(barPath).
+				TokenOut(bazPath).
+				Fee(3000).
+				ExactInput("100").
+				Build(),
+			numPools:        2,
+			swapPath:        barPath + ":" + bazPath + ":3000" + POOL_SEPARATOR + bazPath + ":" + quxPath + ":3000",
+			expectedFirstIn: "100",
+			expectedLastOut: "96",
+			expectError:     false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -49,6 +64,18 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			testing.SetRealm(adminRealm)
 			env.GivenPoolCreated(cur, barPath, bazPath, 3000, "79228162514264337593543950336").
 				AndPositionMinted(cur)
+			if tt.numPools == 2 {
+				TokenApprove(cur, t, bazPath, adminAddr, poolAddr, maxApprove)
+				TokenApprove(cur, t, quxPath, adminAddr, poolAddr, maxApprove)
+				env.GivenPoolCreated(cur, bazPath, quxPath, 3000, "79228162514264337593543950336").
+					AndLiquidityProvided(cur, adminAddr, NewPositionBuilder().
+						Tokens(bazPath, quxPath).
+						Fee(3000).
+						Range(-887220, 887220).
+						Amounts("50000", "50000").
+						MinAmounts("0", "0").
+						Build())
+			}
 			testing.SetRealm(testing.NewUserRealm(user1Addr))
 			env.AndUserFundedAndApproved(cur, user1Addr, routerAddr, barPath, bazPath)
 
@@ -61,8 +88,8 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			// (cur.Previous()) resolves to user1 and the pool can pull the
 			// input token. Mirrors TestSingleSwap.
 			testing.SetRealm(testing.NewUserRealm(user1Addr))
-			common.Approve(cross(cur), tt.params.tokenIn, poolAddr, maxApprove)
-			common.Approve(cross(cur), tt.params.tokenOut, poolAddr, maxApprove)
+			common.Approve(0, cur, tt.params.tokenIn, poolAddr, maxApprove)
+			common.Approve(0, cur, tt.params.tokenOut, poolAddr, maxApprove)
 
 			firstAmountIn, lastAmountOut := multiSwapFn(cross(cur))
 
@@ -70,4 +97,18 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			uassert.Equal(t, strconv.FormatInt(lastAmountOut, 10), tt.expectedLastOut)
 		})
 	}
+}
+
+func TestAssertHopFullyConsumed(cur realm, t *testing.T) {
+	uassert.NotPanics(t, cur, func() {
+		assertHopFullyConsumed(0, 1000, 1000)
+	})
+
+	uassert.PanicsWithMessage(
+		t, cur,
+		"[GNOSWAP-ROUTER-020] insufficient liquidity for swap || partial fill on hop(1): requested=1000, consumed=900",
+		func() {
+			assertHopFullyConsumed(1, 1000, 900)
+		},
+	)
 }

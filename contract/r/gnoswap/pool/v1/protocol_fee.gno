@@ -21,59 +21,28 @@ const (
 	ZeroBps     = uint64(0)
 )
 
-// HandleWithdrawalFee settles collected fees from the pool and returns the amount after the fee.
-// Only position contract can call this function
-// Input:
-// - token0Path: the path of the token0
-// - amount0: the amount of token0
-// - token1Path: the path of the token1
-// - amount1: the amount of token1
-// - positionCaller: the original caller of the position contract
-// Output:
-// - the fee amount of token0
-// - the fee amount of token1
-// - the amount of token0 after the fee
-// - the amount of token1 after the fee
-func (i *poolV1) HandleWithdrawalFee(
-	_ int,
-	rlm realm,
-	token0Path string,
-	amount0 string, // uint256
-	token1Path string,
-	amount1 string, // uint256
-	positionCaller address,
-) (string, string, string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
+// deductWithdrawalFee splits amount into the fee withheld for the protocol and
+// the remainder paid out to the collector.
+//
+// Rounding favours the collector: the fee is truncated. The two results always
+// sum back to amount, so a caller that debits amount and pays out
+// amountAfterFee never leaves the pool short.
+func deductWithdrawalFee(amount int64, withdrawalFeeBPS uint64) (feeAmount, amountAfterFee int64) {
+	if amount <= 0 || withdrawalFeeBPS == ZeroBps {
+		return 0, amount
 	}
 
-	i.assertPoolUnlocked()
-	halt.AssertIsNotHaltedWithdraw()
+	fee, afterFee := calculateAmountWithFee(
+		u256.NewUint(uint64(amount)),
+		u256.NewUint(withdrawalFeeBPS),
+	)
 
-	// only position contract can call this function
-	previousRealm := rlm.Previous()
-	caller := previousRealm.Address()
-	access.AssertIsPosition(caller)
+	return gnsmath.SafeConvertToInt64(fee), gnsmath.SafeConvertToInt64(afterFee)
+}
 
-	common.MustRegistered(token0Path, token1Path)
-
-	i.lockPool(0, rlm)
-	defer i.unlockPool(0, rlm)
-
-	fee := u256.NewUint(i.store.GetWithdrawalFeeBPS())
-	fee0, amount0WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount0), fee)
-	fee1, amount1WithoutFee := calculateAmountWithFee(u256.MustFromDecimal(amount1), fee)
-
-	fee0Int64 := gnsmath.SafeConvertToInt64(fee0)
-	fee1Int64 := gnsmath.SafeConvertToInt64(fee1)
-
-	i.addPendingProtocolFee(0, rlm, token0Path, fee0Int64)
-	i.addPendingProtocolFee(0, rlm, token1Path, fee1Int64)
-	i.addToProtocolFee(0, rlm)
-	common.SafeGRC20Transfer(cross(rlm), token0Path, positionCaller, gnsmath.SafeConvertToInt64(amount0WithoutFee))
-	common.SafeGRC20Transfer(cross(rlm), token1Path, positionCaller, gnsmath.SafeConvertToInt64(amount1WithoutFee))
-
-	return fee0.ToString(), fee1.ToString(), amount0WithoutFee.ToString(), amount1WithoutFee.ToString()
+// GetPendingProtocolFees returns the pending protocol fee amount per token path.
+func (i *poolV1) GetPendingProtocolFees() map[string]int64 {
+	return i.store.GetPendingProtocolFees()
 }
 
 func (i *poolV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
@@ -81,42 +50,44 @@ func (i *poolV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amoun
 		return
 	}
 
-	existingProtocolFees := i.store.GetPendingProtocolFees()
-	pendingProtocolFees := make(map[string]int64)
-	for pendingTokenPath, pendingAmount := range existingProtocolFees {
-		pendingProtocolFees[pendingTokenPath] = pendingAmount
-	}
-	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
-	if err := i.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
+	pendingAmount := gnsmath.SafeAddInt64(i.store.GetPendingProtocolFee(tokenPath), amount)
+	if err := i.store.SetPendingProtocolFee(0, rlm, tokenPath, pendingAmount); err != nil {
 		panic(err)
 	}
 }
 
-// addToProtocolFee sends pending pool protocol fees to the protocol fee realm.
-// It is best-effort: when protocol fee collection is halted, it keeps pending
-// storage unchanged; otherwise it rebuilds pending storage with only entries
-// that could not be added, removing successful and non-positive entries.
-func (i *poolV1) addToProtocolFee(_ int, rlm realm) {
-	pendingProtocolFees := i.store.GetPendingProtocolFees()
-	if len(pendingProtocolFees) == 0 || halt.IsHaltedProtocolFee() {
+// settleProtocolFee forwards amount, plus anything already pending for tokenPath, to
+// the protocol fee realm. When collection is halted or the transfer fails, the amount
+// is recorded as pending instead and settled by a later call for the same token, which
+// every fee path makes even when the fee is zero.
+//
+// Only tokenPath is touched, so an unrelated token can never block settlement. The
+// pending entry is written only when the fee cannot be forwarded, so the common path
+// performs no store write at all.
+func (i *poolV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
+	if halt.IsHaltedProtocolFee() {
+		i.addPendingProtocolFee(0, rlm, tokenPath, amount)
 		return
 	}
 
-	protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
-	remainingProtocolFees := make(map[string]int64)
-	for tokenPath, amount := range pendingProtocolFees {
-		if amount <= 0 {
-			continue
-		}
+	pendingAmount := i.store.GetPendingProtocolFee(tokenPath)
+	totalAmount := gnsmath.SafeAddInt64(pendingAmount, amount)
 
-		common.SafeGRC20Approve(cross(rlm), tokenPath, protocolFeeAddr, amount)
-		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, amount); err != nil {
-			remainingProtocolFees[tokenPath] = amount
-			continue
+	if totalAmount > 0 {
+		protocolFeeAddr := access.MustGetAddress(prabc.ROLE_PROTOCOL_FEE.String())
+		common.SafeGRC20Approve(0, rlm, tokenPath, protocolFeeAddr, totalAmount)
+
+		// AddToProtocolFee only reports an error for a halted realm, which is handled
+		// above. The branch keeps the amount pending should that ever change, and
+		// withdraws the approval so no unspent allowance outlives the call.
+		if err := pf.AddToProtocolFee(cross(rlm), tokenPath, totalAmount); err != nil {
+			common.SafeGRC20Approve(0, rlm, tokenPath, protocolFeeAddr, 0)
+			i.addPendingProtocolFee(0, rlm, tokenPath, amount)
+			return
 		}
 	}
 
-	if err := i.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
+	if err := i.store.RemovePendingProtocolFee(0, rlm, tokenPath); err != nil {
 		panic(err)
 	}
 }
@@ -124,9 +95,7 @@ func (i *poolV1) addToProtocolFee(_ int, rlm realm) {
 // SetPoolCreationFee sets the poolCreationFee.
 // Only admin or governance can call this function.
 func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
@@ -156,9 +125,7 @@ func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 // SetWithdrawalFee sets the withdrawal fee.
 // Only admin or governance can call this function.
 func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()

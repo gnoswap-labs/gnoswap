@@ -10,6 +10,7 @@ import (
 // ErrorMessages define all error message templates used throughout the router
 const (
 	// slippage validation
+	errExactInAmountMismatch  = "consumed input does not match requested (requested=%d, consumed=%d)"
 	errExactOutAmountExceeded = "received more than requested in requested=%d, actual=%d"
 
 	// route validation
@@ -52,6 +53,15 @@ func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount int64, swap
 	return nil
 }
 
+// exactInAmount checks that the swap consumed exactly the requested input amount.
+func (v *SwapValidator) exactInAmount(resultAmount, specifiedAmount int64) error {
+	if resultAmount != specifiedAmount {
+		return ufmt.Errorf(errExactInAmountMismatch, specifiedAmount, resultAmount)
+	}
+
+	return nil
+}
+
 // slippage ensures swap amounts meet slippage requirements.
 func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit int64) error {
 	switch swapType {
@@ -84,14 +94,6 @@ func (v *SwapValidator) amount(amount int64) (int64, error) {
 		return 0, ufmt.Errorf(ErrInvalidPositiveAmount, amount)
 	}
 	return amount, nil
-}
-
-// amountLimit ensures the amount limit is properly formatted and non-zero.
-func (v *SwapValidator) amountLimit(amountLimit int64) (int64, error) {
-	if amountLimit <= 0 {
-		return 0, ufmt.Errorf(ErrInvalidZeroAmountLimit, amountLimit)
-	}
-	return amountLimit, nil
 }
 
 // RouteParser handles parsing and validation of routes and quotes
@@ -197,6 +199,14 @@ func (r *routerV1) finalizeSwap(
 	if swapType == ExactOut && !isSetSqrtPriceLimitX96 {
 		if err := validator.exactOutAmount(resultAmountOutWithoutFee, amountSpecified, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))
+		}
+	}
+
+	// Validate exact in amount if applicable
+	// If sqrtPriceLimitX96 is set, partial consumption up to the price limit is intended
+	if swapType == ExactIn && !isSetSqrtPriceLimitX96 {
+		if err := validator.exactInAmount(resultAmountIn, amountSpecified); err != nil {
+			panic(addDetailToError(errInsufficientLiquidity, err.Error()))
 		}
 	}
 

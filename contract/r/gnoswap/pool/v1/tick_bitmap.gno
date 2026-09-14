@@ -3,7 +3,6 @@ package pool
 import (
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
-	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
 )
 
@@ -51,7 +50,13 @@ func tickBitmapFlipTick(
 
 	mask := u256.Zero().Lsh(u256.One(), uint(bitPos))
 	current := getTickBitmap(p, wordPos)
-	setTickBitmap(p, wordPos, u256.Zero().Xor(current, mask))
+	next := u256.Zero().Xor(current, mask)
+	if next.IsZero() {
+		deleteTickBitmap(p, wordPos)
+		return
+	}
+
+	setTickBitmap(p, wordPos, next)
 }
 
 // tickBitmapNextInitializedTickWithInOneWord finds the next initialized tick within
@@ -77,27 +82,25 @@ func tickBitmapNextInitializedTickWithInOneWord(
 	return nextTick, initialized
 }
 
-// getTickBitmap gets the tick bitmap for the given word position
-// if the tick bitmap is not initialized, initialize it to zero
+// getTickBitmap gets the tick bitmap for the given word position.
+// Missing words are implicit zeroes.
 func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 	value, exist := p.TickBitmaps()[wordPos]
 	if !exist {
-		setTickBitmap(p, wordPos, u256.Zero())
-		value, exist = p.TickBitmaps()[wordPos]
-		if !exist {
-			panic(newErrorWithDetail(
-				errDataNotFound,
-				ufmt.Sprintf("failed to initialize tickBitmap(%d)", wordPos),
-			))
-		}
+		return u256.Zero()
 	}
 
 	return u256.MustFromDecimal(value)
 }
 
-// setTickBitmap sets the tick bitmap for the given word position
+// setTickBitmap sets the tick bitmap for the given word position.
 func setTickBitmap(p *pl.Pool, wordPos int16, tickBitmap *u256.Uint) {
 	p.SetTickBitmap(wordPos, tickBitmap.ToString())
+}
+
+// deleteTickBitmap deletes the tick bitmap for the given word position.
+func deleteTickBitmap(p *pl.Pool, wordPos int16) {
+	p.DeleteTickBitmap(wordPos)
 }
 
 // tickBitmapPosition calculates the word and bit position for a given tick

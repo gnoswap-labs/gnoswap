@@ -8,18 +8,21 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -50,9 +53,9 @@ var (
 	token1Path = "gno.land/r/onbloc/foo.FOO"
 	fee        = uint32(3000)
 
-	maxInt64    int64 = 9223372036854775807
-	maxTimeout  int64 = 9999999999
-	positionId  uint64
+	maxInt64   int64 = 9223372036854775807
+	maxTimeout int64 = 9999999999
+	positionId uint64
 )
 
 func main(cur realm) {
@@ -79,6 +82,7 @@ func main(cur realm) {
 
 func initPoolAndCreatePosition(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	pool.SetPoolCreationFee(cross(cur), 0)
 
@@ -133,7 +137,7 @@ func initPoolAndCreatePosition(cur realm) {
 	println("[EXPECTED] Amount0:", amount0)
 	println("[EXPECTED] Amount1:", amount1)
 
-	owner := gnft.MustOwnerOf(positionIdToTokenId(cur, positionId))
+	owner := mustOwnerOf(positionIdToTokenId(cur, positionId))
 	println("[EXPECTED] Position owner before staking:", owner.String())
 }
 
@@ -150,7 +154,7 @@ func stakePosition(cur realm) {
 }
 
 func verifyPositionIsStaked(cur realm) {
-	owner := gnft.MustOwnerOf(positionIdToTokenId(cur, positionId))
+	owner := mustOwnerOf(positionIdToTokenId(cur, positionId))
 
 	println("[EXPECTED] Position owner after staking:", owner.String())
 	println("[EXPECTED] Staker contract address:", stakerAddr.String())
@@ -199,6 +203,14 @@ func testCollectFeeOnStakedPosition(cur realm) {
 
 func positionIdToTokenId(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.Itoa(int(id)))
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

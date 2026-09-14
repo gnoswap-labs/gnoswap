@@ -7,42 +7,51 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// ProtocolFeeRewardManager manages the distribution of protocol fee rewards to stakers.
-// Unlike emission rewards, protocol fees can come from multiple tokens, requiring
-// separate tracking and distribution mechanisms for each token type.
+// ProtocolFeeRewardManager distributes protocol fees to stakers.
+//
+// Protocol fees arrive in many tokens, so the manager keeps one accumulator per token
+// instead of a single one. A stake change never touches those accumulators: it only
+// advances the accrual epoch, records the total stake in force from that epoch and
+// appends one event to the staker's own history. The per-token work happens when a
+// token is collected, so the cost of Delegate, Undelegate and Redelegate does not
+// depend on how many tokens ever collected a fee.
 type ProtocolFeeRewardManager struct {
-	// rewardStates maps address to ProtocolFeeRewardState for tracking individual staker rewards
-	rewardStates *bptree.BPTree // address -> ProtocolFeeRewardState
-
-	// accumulatedProtocolFeeX128PerStake maps token path to accumulated fee per stake with 128-bit precision
-	accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
-	// protocolFeeAmounts maps token path to total distributed protocol fee amounts
-	protocolFeeAmounts map[string]int64
-	// accumulatedTimestamp tracks the last timestamp when fees were accumulated
-	accumulatedTimestamp int64
-	// totalStakedAmount tracks the total amount of tokens staked in the system
+	// rewardStates maps a reward ID to the ProtocolFeeRewardState tracking that staker
+	rewardStates *bptree.BPTree // rewardID -> *ProtocolFeeRewardState
+	// tokenAccumulators maps a token path to its ProtocolFeeTokenAccumulator
+	tokenAccumulators *bptree.BPTree // tokenPath -> *ProtocolFeeTokenAccumulator
+	// currentEpoch is the accrual epoch in force, mirrored from protocol_fee
+	currentEpoch int64
+	// totalStakedAmount is the total amount currently staked
 	totalStakedAmount int64
+	// totalStakedHistory records the total staked amount in force from each epoch
+	totalStakedHistory *UintTree // epoch -> int64
+	// accumulatedTimestamp is the last timestamp at which the accrual state moved: a fold or a stake change
+	accumulatedTimestamp int64
 }
 
 // NewProtocolFeeRewardManager creates a new instance of ProtocolFeeRewardManager.
-// This factory function initializes all tracking structures for multi-token protocol fee reward management.
 //
 // Returns:
 //   - *ProtocolFeeRewardManager: new protocol fee reward manager instance
 func NewProtocolFeeRewardManager() *ProtocolFeeRewardManager {
+	totalStakedHistory := NewUintTree()
+	totalStakedHistory.Set(0, int64(0))
+
 	return &ProtocolFeeRewardManager{
-		rewardStates:                       bptree.NewBPTreeN(16),
-		protocolFeeAmounts:                 make(map[string]int64),
-		accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
-		accumulatedTimestamp:               0,
-		totalStakedAmount:                  0,
+		rewardStates:         bptree.NewBPTreeN(16),
+		tokenAccumulators:    bptree.NewBPTreeN(16),
+		currentEpoch:         0,
+		totalStakedAmount:    0,
+		totalStakedHistory:   totalStakedHistory,
+		accumulatedTimestamp: 0,
 	}
 }
 
 /* Getters */
 
-func (p *ProtocolFeeRewardManager) GetRewardState(addr string) (*ProtocolFeeRewardState, bool, error) {
-	ri := p.rewardStates.Get(addr)
+func (p *ProtocolFeeRewardManager) GetRewardState(rewardID string) (*ProtocolFeeRewardState, bool, error) {
+	ri := p.rewardStates.Get(rewardID)
 	if ri == nil {
 		return nil, false, nil
 	}
@@ -53,84 +62,104 @@ func (p *ProtocolFeeRewardManager) GetRewardState(addr string) (*ProtocolFeeRewa
 	return rs, true, nil
 }
 
-// GetAccumulatedProtocolFeeX128PerStake returns the accumulated protocol fee per stake for a specific token.
-//
-// Parameters:
-//   - token: token path to get accumulated fee for
-//
-// Returns:
-//   - *u256.Uint: accumulated protocol fee per stake for the token (scaled by 2^128)
-func (p *ProtocolFeeRewardManager) GetAccumulatedProtocolFeeX128PerStake(token string) *u256.Uint {
-	return p.accumulatedProtocolFeeX128PerStake[token]
+// GetTokenAccumulator returns the accumulator of tokenPath, or false when the token
+// never had a fee folded in.
+func (p *ProtocolFeeRewardManager) GetTokenAccumulator(tokenPath string) (*ProtocolFeeTokenAccumulator, bool) {
+	ai := p.tokenAccumulators.Get(tokenPath)
+	if ai == nil {
+		return nil, false
+	}
+	accumulator, castOk := ai.(*ProtocolFeeTokenAccumulator)
+	if !castOk {
+		panic(ufmt.Sprintf("failed to cast token accumulator: %T", ai))
+	}
+	return accumulator, true
 }
 
-func (p *ProtocolFeeRewardManager) GetProtocolFeeAmounts() map[string]int64 {
-	return p.protocolFeeAmounts
+// GetTokenPaths returns every token path that had a fee folded in, in key order.
+func (p *ProtocolFeeRewardManager) GetTokenPaths() []string {
+	tokenPaths := make([]string, 0, p.tokenAccumulators.Size())
+	p.tokenAccumulators.Iterate("", "", func(key string, _ any) bool {
+		tokenPaths = append(tokenPaths, key)
+		return false
+	})
+	return tokenPaths
 }
 
-// GetAccumulatedTimestamp returns the last timestamp when protocol fees were accumulated.
-//
-// Returns:
-//   - int64: last accumulated timestamp
-func (p *ProtocolFeeRewardManager) GetAccumulatedTimestamp() int64 {
-	return p.accumulatedTimestamp
+// GetAccumulatedProtocolFeeX128PerStake returns the accumulated fee per stake of tokenPath
+// (scaled by 2^128), or nil when the token never had a fee folded in.
+func (p *ProtocolFeeRewardManager) GetAccumulatedProtocolFeeX128PerStake(tokenPath string) *u256.Uint {
+	accumulator, ok := p.GetTokenAccumulator(tokenPath)
+	if !ok {
+		return nil
+	}
+	return accumulator.GetAccumulatedX128PerStake()
+}
+
+// GetProtocolFeeAmount returns the total fee amount folded in for tokenPath.
+func (p *ProtocolFeeRewardManager) GetProtocolFeeAmount(tokenPath string) int64 {
+	accumulator, ok := p.GetTokenAccumulator(tokenPath)
+	if !ok {
+		return 0
+	}
+	return accumulator.GetProtocolFeeAmount()
+}
+
+func (p *ProtocolFeeRewardManager) GetCurrentEpoch() int64 {
+	return p.currentEpoch
 }
 
 func (p *ProtocolFeeRewardManager) GetTotalStakedAmount() int64 {
 	return p.totalStakedAmount
 }
 
+// GetTotalStakedAmountAt returns the total staked amount in force during epoch, that is
+// the amount recorded at the latest stake change at or before epoch.
+func (p *ProtocolFeeRewardManager) GetTotalStakedAmountAt(epoch int64) int64 {
+	if epoch < 0 {
+		return 0
+	}
+
+	totalStakedAmount := int64(0)
+	p.totalStakedHistory.ReverseIterate(0, epoch, func(_ int64, value any) bool {
+		amount, castOk := value.(int64)
+		if !castOk {
+			panic(ufmt.Sprintf("failed to cast total staked amount: %T", value))
+		}
+		totalStakedAmount = amount
+		return true
+	})
+
+	return totalStakedAmount
+}
+
+func (p *ProtocolFeeRewardManager) GetAccumulatedTimestamp() int64 {
+	return p.accumulatedTimestamp
+}
+
 /* Setters */
 
-func (p *ProtocolFeeRewardManager) SetRewardStates(rewardStates *bptree.BPTree) {
-	p.rewardStates = rewardStates
+func (p *ProtocolFeeRewardManager) SetRewardState(rewardID string, rewardState *ProtocolFeeRewardState) {
+	p.rewardStates.Set(rewardID, rewardState)
 }
 
-func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStake(accumulatedProtocolFeeX128PerStake map[string]*u256.Uint) {
-	copied := make(map[string]*u256.Uint, len(accumulatedProtocolFeeX128PerStake))
-	for token, value := range accumulatedProtocolFeeX128PerStake {
-		copied[token] = u256.Zero().Set(value)
-	}
-	p.accumulatedProtocolFeeX128PerStake = copied
+func (p *ProtocolFeeRewardManager) SetTokenAccumulator(tokenPath string, accumulator *ProtocolFeeTokenAccumulator) {
+	p.tokenAccumulators.Set(tokenPath, accumulator)
 }
 
-func (p *ProtocolFeeRewardManager) SetProtocolFeeAmounts(protocolFeeAmounts map[string]int64) {
-	p.protocolFeeAmounts = protocolFeeAmounts
-}
-
-func (p *ProtocolFeeRewardManager) SetAccumulatedProtocolFeeX128PerStakeForToken(token string, value *u256.Uint) {
-	if p.accumulatedProtocolFeeX128PerStake == nil {
-		p.accumulatedProtocolFeeX128PerStake = make(map[string]*u256.Uint)
-	}
-	p.accumulatedProtocolFeeX128PerStake[token] = value
-}
-
-func (p *ProtocolFeeRewardManager) SetProtocolFeeAmountForToken(token string, amount int64) {
-	if p.protocolFeeAmounts == nil {
-		p.protocolFeeAmounts = make(map[string]int64)
-	}
-	p.protocolFeeAmounts[token] = amount
-}
-
-func (p *ProtocolFeeRewardManager) SetAccumulatedTimestamp(accumulatedTimestamp int64) {
-	p.accumulatedTimestamp = accumulatedTimestamp
+func (p *ProtocolFeeRewardManager) SetCurrentEpoch(epoch int64) {
+	p.currentEpoch = epoch
 }
 
 func (p *ProtocolFeeRewardManager) SetTotalStakedAmount(totalStakedAmount int64) {
 	p.totalStakedAmount = totalStakedAmount
 }
 
-// GetAllAccumulatedProtocolFeeX128PerStake returns all accumulated protocol fees per stake
-func (p *ProtocolFeeRewardManager) GetAllAccumulatedProtocolFeeX128PerStake() map[string]*u256.Uint {
-	return p.accumulatedProtocolFeeX128PerStake
+// SetTotalStakedAmountAt records the total staked amount in force from epoch on.
+func (p *ProtocolFeeRewardManager) SetTotalStakedAmountAt(epoch int64, totalStakedAmount int64) {
+	p.totalStakedHistory.Set(epoch, totalStakedAmount)
 }
 
-// GetProtocolFeeAmount returns the protocol fee amount for a specific token
-func (p *ProtocolFeeRewardManager) GetProtocolFeeAmount(token string) int64 {
-	return p.protocolFeeAmounts[token]
-}
-
-// SetRewardState sets the reward state for a specific address
-func (p *ProtocolFeeRewardManager) SetRewardState(address string, rewardState *ProtocolFeeRewardState) {
-	p.rewardStates.Set(address, rewardState)
+func (p *ProtocolFeeRewardManager) SetAccumulatedTimestamp(accumulatedTimestamp int64) {
+	p.accumulatedTimestamp = accumulatedTimestamp
 }

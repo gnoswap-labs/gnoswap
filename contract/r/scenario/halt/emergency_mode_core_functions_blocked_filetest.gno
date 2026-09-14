@@ -5,20 +5,22 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
@@ -81,6 +83,7 @@ func main(cur realm) {
 
 func setupScenario(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 	pool.SetPoolCreationFee(cross(cur), 0)
@@ -151,27 +154,34 @@ func testBlockedEntriesOneByOne(cur realm) {
 
 	printBlockedScenario(cur, "pool", "Swap")
 	uassert.AbortsContains(t, cur, "halted: pool", func() {
-		pool.Swap(cross(cur), barPath, fooPath, fee, aliceAddr, true, "1000", "0", aliceAddr, nil)
+		pool.Swap(cross(cur), barPath, fooPath, fee, aliceAddr, true, "1000", "0", nil)
 	})
 	printBlockedExpected(cur, "pool", "Swap", "pool")
 
-	printBlockedScenario(cur, "pool", "SetSwapEndHook")
-	uassert.AbortsContains(t, cur, "halted: pool", func() {
+	testing.SetRealm(testing.NewUserRealm(stakerAddr))
+	ufmt.Printf("[SCENARIO] %d. pool.SetSwapEndHook succeeds during pool halt\n", blockedScenarioNo)
+	blockedScenarioNo++
+	uassert.NotPanics(t, cur, func() {
 		pool.SetSwapEndHook(cross(cur), nil)
 	})
-	printBlockedExpected(cur, "pool", "SetSwapEndHook", "pool")
+	ufmt.Println("[EXPECTED] pool.SetSwapEndHook available to staker during pool halt")
+	println()
 
-	printBlockedScenario(cur, "pool", "SetSwapStartHook")
-	uassert.AbortsContains(t, cur, "halted: pool", func() {
+	ufmt.Printf("[SCENARIO] %d. pool.SetSwapStartHook succeeds during pool halt\n", blockedScenarioNo)
+	blockedScenarioNo++
+	uassert.NotPanics(t, cur, func() {
 		pool.SetSwapStartHook(cross(cur), nil)
 	})
-	printBlockedExpected(cur, "pool", "SetSwapStartHook", "pool")
+	ufmt.Println("[EXPECTED] pool.SetSwapStartHook available to staker during pool halt")
+	println()
 
-	printBlockedScenario(cur, "pool", "SetTickCrossHook")
-	uassert.AbortsContains(t, cur, "halted: pool", func() {
+	ufmt.Printf("[SCENARIO] %d. pool.SetTickCrossHook succeeds during pool halt\n", blockedScenarioNo)
+	blockedScenarioNo++
+	uassert.NotPanics(t, cur, func() {
 		pool.SetTickCrossHook(cross(cur), nil)
 	})
-	printBlockedExpected(cur, "pool", "SetTickCrossHook", "pool")
+	ufmt.Println("[EXPECTED] pool.SetTickCrossHook available to staker during pool halt")
+	println()
 
 	testing.SetRealm(aliceRealm)
 	printBlockedScenario(cur, "position", "Mint")
@@ -374,6 +384,7 @@ func testBlockedEntriesOneByOne(cur realm) {
 
 	printBlockedScenario(cur, "emission", "SetDistributionStartTime")
 	uassert.AbortsContains(t, cur, "halted: emission", func() {
+		scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 		emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1000)
 	})
 	printBlockedExpected(cur, "emission", "SetDistributionStartTime", "emission")
@@ -461,14 +472,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [SCENARIO] 6. pool.Swap is blocked
 // [EXPECTED] pool.Swap blocked by pool halt
 //
-// [SCENARIO] 7. pool.SetSwapEndHook is blocked
-// [EXPECTED] pool.SetSwapEndHook blocked by pool halt
+// [SCENARIO] 7. pool.SetSwapEndHook succeeds during pool halt
+// [EXPECTED] pool.SetSwapEndHook available to staker during pool halt
 //
-// [SCENARIO] 8. pool.SetSwapStartHook is blocked
-// [EXPECTED] pool.SetSwapStartHook blocked by pool halt
+// [SCENARIO] 8. pool.SetSwapStartHook succeeds during pool halt
+// [EXPECTED] pool.SetSwapStartHook available to staker during pool halt
 //
-// [SCENARIO] 9. pool.SetTickCrossHook is blocked
-// [EXPECTED] pool.SetTickCrossHook blocked by pool halt
+// [SCENARIO] 9. pool.SetTickCrossHook succeeds during pool halt
+// [EXPECTED] pool.SetTickCrossHook available to staker during pool halt
 //
 // [SCENARIO] 10. position.Mint is blocked
 // [EXPECTED] position.Mint blocked by position halt

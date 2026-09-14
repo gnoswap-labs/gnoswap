@@ -96,9 +96,8 @@ func TestHalvingYearGetters(cur realm, t *testing.T) {
 			// MaxAmount should match GetHalvingAmountsPerYear
 			uassert.Equal(t, GetHalvingAmountsPerYear(year), GetHalvingYearMaxAmount(year))
 
-			// MintAmount and AccuAmount should be 0 initially
-			uassert.Equal(t, int64(0), GetHalvingYearMintAmount(year))
-			uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(year))
+			// Minted amount should be 0 initially.
+			uassert.Equal(t, int64(0), GetHalvingYearMintedAmount(year))
 		}
 	})
 
@@ -106,16 +105,14 @@ func TestHalvingYearGetters(cur realm, t *testing.T) {
 		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(0))
 		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(0))
 		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(0))
-		uassert.Equal(t, int64(0), GetHalvingYearMintAmount(0))
-		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(0))
+		uassert.Equal(t, int64(0), GetHalvingYearMintedAmount(0))
 	})
 
 	t.Run("invalid year 13", func(cur realm, t *testing.T) {
 		uassert.Equal(t, int64(0), GetHalvingYearStartTimestamp(13))
 		uassert.Equal(t, int64(0), GetHalvingYearEndTimestamp(13))
 		uassert.Equal(t, int64(0), GetHalvingYearMaxAmount(13))
-		uassert.Equal(t, int64(0), GetHalvingYearMintAmount(13))
-		uassert.Equal(t, int64(0), GetHalvingYearAccuAmount(13))
+		uassert.Equal(t, int64(0), GetHalvingYearMintedAmount(13))
 	})
 }
 
@@ -224,9 +221,8 @@ func TestHalvingDataGettersWithInvalidYear(cur realm, t *testing.T) {
 		startTimestamps: make([]int64, HALVING_END_YEAR),
 		endTimestamps:   make([]int64, HALVING_END_YEAR),
 		maxAmount:       make([]int64, HALVING_END_YEAR),
-		mintedAmount:    make([]int64, HALVING_END_YEAR),
 		leftAmount:      make([]int64, HALVING_END_YEAR),
-		accumAmount:     make([]int64, HALVING_END_YEAR),
+		mintedAmount:    make([]int64, HALVING_END_YEAR),
 		amountPerSecond: make([]int64, HALVING_END_YEAR),
 	}
 
@@ -235,9 +231,8 @@ func TestHalvingDataGettersWithInvalidYear(cur realm, t *testing.T) {
 		hd.startTimestamps[i] = 1000 + i*100
 		hd.endTimestamps[i] = 2000 + i*100
 		hd.maxAmount[i] = 4000 + i*100
-		hd.mintedAmount[i] = 5000 + i*100
 		hd.leftAmount[i] = 6000 + i*100
-		hd.accumAmount[i] = 7000 + i*100
+		hd.mintedAmount[i] = 7000 + i*100
 		hd.amountPerSecond[i] = 8000 + i*100
 	}
 
@@ -251,9 +246,8 @@ func TestHalvingDataGettersWithInvalidYear(cur realm, t *testing.T) {
 		{"StartTimestamp with year 0", 0, hd.getStartTimestamp, 0},
 		{"EndTimestamp with year 0", 0, hd.getEndTimestamp, 0},
 		{"MaxAmount with year 0", 0, hd.getMaxAmount, 0},
-		{"MintedAmount with year 0", 0, hd.getMintedAmount, 0},
 		{"LeftAmount with year 0", 0, hd.getLeftAmount, 0},
-		{"AccumAmount with year 0", 0, hd.getAccumAmount, 0},
+		{"MintedAmount with year 0", 0, hd.getMintedAmount, 0},
 		{"AmountPerSeconds with year 0", 0, hd.getAmountPerSecond, 0},
 
 		// Year -1 tests (negative year, should return 0)
@@ -273,18 +267,16 @@ func TestHalvingDataGettersWithInvalidYear(cur realm, t *testing.T) {
 		{"StartTimestamp with year 1", 1, hd.getStartTimestamp, 1000},
 		{"EndTimestamp with year 1", 1, hd.getEndTimestamp, 2000},
 		{"MaxAmount with year 1", 1, hd.getMaxAmount, 4000},
-		{"MintedAmount with year 1", 1, hd.getMintedAmount, 5000},
 		{"LeftAmount with year 1", 1, hd.getLeftAmount, 6000},
-		{"AccumAmount with year 1", 1, hd.getAccumAmount, 7000},
+		{"MintedAmount with year 1", 1, hd.getMintedAmount, 7000},
 		{"AmountPerSeconds with year 1", 1, hd.getAmountPerSecond, 8000},
 
 		// Last valid year tests
 		{"StartTimestamp with year 12", 12, hd.getStartTimestamp, 2100},
 		{"EndTimestamp with year 12", 12, hd.getEndTimestamp, 3100},
 		{"MaxAmount with year 12", 12, hd.getMaxAmount, 5100},
-		{"MintedAmount with year 12", 12, hd.getMintedAmount, 6100},
 		{"LeftAmount with year 12", 12, hd.getLeftAmount, 7100},
-		{"AccumAmount with year 12", 12, hd.getAccumAmount, 8100},
+		{"MintedAmount with year 12", 12, hd.getMintedAmount, 8100},
 		{"AmountPerSeconds with year 12", 12, hd.getAmountPerSecond, 9100},
 	}
 
@@ -312,10 +304,9 @@ func TestHalvingDataSettersWithInvalidYear(cur realm, t *testing.T) {
 		{"setEndTimestamp with year 0", 0, func(y int64) error { return hd.setEndTimestamp(y, 2000) }, true},
 		{"setMaxAmount with year 0", 0, func(y int64) error { return hd.setMaxAmount(y, 1000) }, true},
 		{"setMintedAmount with year 0", 0, func(y int64) error { return hd.setMintedAmount(y, 1000) }, true},
-		{"setAccumAmount with year 0", 0, func(y int64) error { return hd.setAccumAmount(y, 1000) }, true},
 		{"setLeftAmount with year 0", 0, func(y int64) error { return hd.setLeftAmount(y, 1000) }, true},
 		{"setAmountPerSecond with year 0", 0, func(y int64) error { return hd.setAmountPerSecond(y, 1000) }, true},
-		{"addAccumAmount with year 0", 0, func(y int64) error { return hd.addAccumAmount(y, 1000) }, true},
+		{"addMintedAmount with year 0", 0, func(y int64) error { return hd.addMintedAmount(y, 1000) }, true},
 
 		// Negative year tests
 		{"setStartTimestamp with year -1", -1, func(y int64) error { return hd.setStartTimestamp(y, 2000) }, true},
@@ -414,16 +405,16 @@ func TestHalvingDataAmountOperations(cur realm, t *testing.T) {
 		validateAmount func(*testing.T)
 	}{
 		{
-			name: "Add accumAmount multiple times",
+			name: "Add mintedAmount multiple times",
 			year: 1,
 			operation: func() {
-				hd.addAccumAmount(1, 100)
-				hd.addAccumAmount(1, 200)
-				hd.addAccumAmount(1, 300)
+				hd.addMintedAmount(1, 100)
+				hd.addMintedAmount(1, 200)
+				hd.addMintedAmount(1, 300)
 			},
 			validateAmount: func(t *testing.T) {
-				amount := hd.getAccumAmount(1)
-				uassert.Equal(t, int64(600), amount, "Accumulated amount should be sum of additions")
+				amount := hd.getMintedAmount(1)
+				uassert.Equal(t, int64(600), amount, "Minted amount should be sum of additions")
 			},
 		},
 		{
@@ -468,8 +459,8 @@ func TestHalvingDataAmountOperations(cur realm, t *testing.T) {
 	}
 }
 
-// TestHalvingDataAddAccumAmountOverflow tests overflow protection in HalvingData.addAccumAmount
-func TestHalvingDataAddAccumAmountOverflow(cur realm, t *testing.T) {
+// TestHalvingDataAddMintedAmountOverflow tests overflow protection in HalvingData.addMintedAmount
+func TestHalvingDataAddMintedAmountOverflow(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		year         int64
@@ -536,20 +527,20 @@ func TestHalvingDataAddAccumAmountOverflow(cur realm, t *testing.T) {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			hd := NewHalvingData(1000)
 
-			// Set initial accumulated amount
-			hd.setAccumAmount(tt.year, tt.initialValue)
+			// Set initial minted amount
+			hd.setMintedAmount(tt.year, tt.initialValue)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, cur, tt.panicMsg, func() {
-					hd.addAccumAmount(tt.year, tt.addAmount)
+					hd.addMintedAmount(tt.year, tt.addAmount)
 				})
 			} else {
-				err := hd.addAccumAmount(tt.year, tt.addAmount)
+				err := hd.addMintedAmount(tt.year, tt.addAmount)
 				uassert.NoError(t, err)
 
 				// Verify the result
 				expected := tt.initialValue + tt.addAmount
-				actual := hd.getAccumAmount(tt.year)
+				actual := hd.getMintedAmount(tt.year)
 				uassert.Equal(t, expected, actual)
 			}
 		})

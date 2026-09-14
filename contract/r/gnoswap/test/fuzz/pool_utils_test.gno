@@ -25,7 +25,7 @@ func generateTokenPair(f *fuzz.T) (string, string) {
 	token0Path := generateTokenPath(f)
 
 	currentTokenPaths := make(map[string]bool)
-	for tokenPath, _ := range defaultTokenPaths {
+	for tokenPath := range defaultTokenPaths {
 		if tokenPath != token0Path {
 			currentTokenPaths[tokenPath] = true
 		}
@@ -41,7 +41,7 @@ func generateTokenPathByList(f *fuzz.T, tokenPaths map[string]bool) string {
 	tokenPathIndex := fuzz.IntRange(0, len(tokenPaths)-1).Draw(f, "tokenPath").(int)
 
 	currentIndex := 0
-	for tokenPath, _ := range tokenPaths {
+	for tokenPath := range tokenPaths {
 		if currentIndex == tokenPathIndex {
 			return tokenPath
 		}
@@ -204,8 +204,8 @@ func setupMintPosition(
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	poolAddr := access.MustGetAddress(prabc.ROLE_POOL.String())
-	common.SafeGRC20Approve(cross(cur), token0Path, poolAddr, amountDesired)
-	common.SafeGRC20Approve(cross(cur), token1Path, poolAddr, amountDesired)
+	common.SafeGRC20Approve(0, cur, token0Path, poolAddr, amountDesired)
+	common.SafeGRC20Approve(0, cur, token1Path, poolAddr, amountDesired)
 
 	return position.Mint(
 		cross(cur),

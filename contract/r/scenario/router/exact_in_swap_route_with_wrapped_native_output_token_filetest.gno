@@ -5,11 +5,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"strconv"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -24,6 +25,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -152,8 +154,8 @@ func mintPosition(cur realm, token0Path string, token1Path string, fee uint32, m
 	ufmt.Println("[INFO] Minting position")
 
 	testing.SetRealm(adminRealm)
-	common.Approve(cross(cur), token0Path, poolAddr, maxInt64)
-	common.Approve(cross(cur), token1Path, poolAddr, maxInt64)
+	common.Approve(0, cur, token0Path, poolAddr, maxInt64)
+	common.Approve(0, cur, token1Path, poolAddr, maxInt64)
 
 	positionId, liquidity, amount0, amount1 := pn.Mint(
 		cross(cur),
@@ -203,9 +205,9 @@ func exactInSwapRouteBy(cur realm,
 	specifiedAmountInt64, _ := strconv.ParseInt(specifiedAmount, 10, 64)
 
 	if inputToken == wugnotPath {
-		common.SafeGRC20Approve(cross(cur), wugnotPath, routerAddr, specifiedAmountInt64)
+		common.SafeGRC20Approve(0, cur, wugnotPath, routerAddr, specifiedAmountInt64)
 	} else {
-		common.SafeGRC20Approve(cross(cur), inputToken, routerAddr, specifiedAmountInt64)
+		common.SafeGRC20Approve(0, cur, inputToken, routerAddr, specifiedAmountInt64)
 	}
 	inputTokenAmount, outputTokenAmount := router.ExactInSwapRoute(
 		cross(cur),
@@ -270,7 +272,7 @@ func exactInSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -986743
+// [EXPECTED] outputTokenAmount: 986743
 // [EXPECTED] WUGNOT balance changed: 986743
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
@@ -285,7 +287,7 @@ func exactInSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -975329
+// [EXPECTED] outputTokenAmount: 975329
 // [EXPECTED] WUGNOT balance changed: 975329
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0
@@ -300,7 +302,7 @@ func exactInSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -998223
+// [EXPECTED] outputTokenAmount: 998223
 // [EXPECTED] WUGNOT balance changed: 0
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 998223
@@ -315,7 +317,7 @@ func exactInSwapRouteBy(cur realm,
 // [INFO] queryRatios: 100
 // [INFO] minAmountOut: 1
 // [EXPECTED] inputTokenAmount: 1000000
-// [EXPECTED] outputTokenAmount: -1004036
+// [EXPECTED] outputTokenAmount: 1004036
 // [EXPECTED] WUGNOT balance changed: -1000000
 // [EXPECTED] GNOT balance changed: 0
 // [EXPECTED] GNS balance changed: 0

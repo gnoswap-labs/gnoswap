@@ -5,12 +5,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -19,6 +21,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/common/v1"
 	communitypool "gno.land/r/gnoswap/community_pool"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
@@ -109,6 +112,7 @@ func main(cur realm) {
 
 func setupSafeScenario(cur realm) {
 	testing.SetRealm(adminRealm3)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 	pool.SetPoolCreationFee(cross(cur), 0)
@@ -147,16 +151,16 @@ func setupSafeScenario(cur realm) {
 	testing.SetRealm(govStakerRealm3)
 	emission.MintAndDistributeGns(cross(cur))
 	pf.DistributeProtocolFee(cross(cur))
-	_, claimableLaunchpadProtocolFees, claimableLaunchpadErr := govstaker.GetClaimableRewardByLaunchpad(projectAddr3)
-	if claimableLaunchpadErr != nil {
-		panic(claimableLaunchpadErr)
-	}
-	launchpadClaimableBarBeforeSafe = claimableLaunchpadProtocolFees[barPath3]
 	testing.SetRealm(adminRealm3)
 	bar.Transfer(cross(cur), stakerAddr3, pendingProtocolFeeAmount)
 	testing.SetRealm(stakerRealm3)
 	bar.Approve(cross(cur), protocolFeeAddr3, pendingProtocolFeeAmount)
 	pf.AddToProtocolFee(cross(cur), barPath3, pendingProtocolFeeAmount)
+	_, claimableLaunchpadProtocolFees, claimableLaunchpadErr := govstaker.GetClaimableRewardByLaunchpad(projectAddr3)
+	if claimableLaunchpadErr != nil {
+		panic(claimableLaunchpadErr)
+	}
+	launchpadClaimableBarBeforeSafe = claimableLaunchpadProtocolFees[barPath3]
 	protocolFeeBarBeforeSafe = bar.BalanceOf(protocolFeeAddr3)
 	govStakerBarBeforeSafe = bar.BalanceOf(govStakerAddr3)
 	bobBarBeforeSafe = bar.BalanceOf(bobAddr3)
@@ -199,7 +203,7 @@ func testCollectsBlockedInSafeMode(cur realm) {
 		pool.Collect(cross(cur), barPath3, fooPath3, fee3, aliceAddr3, -960, 960, "1", "1")
 	})
 	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
-		pool.HandleWithdrawalFee(cross(cur), barPath3, "1", fooPath3, "1", aliceAddr3)
+		pool.CollectSwapFee(cross(cur), barPath3, fooPath3, fee3, aliceAddr3, -960, 960, "1", "1")
 	})
 	uassert.AbortsContains(t, cur, "halted: withdraw", func() {
 		pool.CollectProtocol(cross(cur), barPath3, fooPath3, fee3, aliceAddr3, "1", "1")
@@ -356,7 +360,7 @@ func positionIdFromSafe(cur realm, positionId any) grc721.TokenID {
 // [INFO] staker collect position id: 2
 // [INFO] pending protocol fee before safe mode: 1000 BAR
 // [INFO] delegated protocol fee stakers: bob=5000000 xGNS, carol=15000000 xGNS
-// [INFO] launchpad claimable BAR before safe mode: 980
+// [INFO] launchpad claimable BAR before safe mode: 1960
 // [INFO] safe mode collect paths prepared
 //
 // [SCENARIO] 2. Enable safe mode

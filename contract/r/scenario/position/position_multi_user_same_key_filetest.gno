@@ -5,9 +5,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -21,6 +22,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -108,7 +110,7 @@ func mintUser1Position(cur realm) {
 		"",
 	)
 
-	positionLiquidity := pool.GetPositionLiquidity(poolPath, computePositionKey(cur, -6960, 6960))
+	positionLiquidity, _ := pool.GetPositionLiquidity(poolPath, computePositionKey(cur, -6960, 6960))
 
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)
@@ -141,7 +143,7 @@ func mintUser2Position(cur realm) {
 		"",
 	)
 
-	positionLiquidity := pool.GetPositionLiquidity(poolPath, computePositionKey(cur, -6960, 6960))
+	positionLiquidity, _ := pool.GetPositionLiquidity(poolPath, computePositionKey(cur, -6960, 6960))
 
 	ufmt.Printf("[EXPECTED] Position ID should be %d\n", positionId)
 	ufmt.Printf("[EXPECTED] Liquidity should be %s\n", liquidity)

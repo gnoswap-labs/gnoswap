@@ -1,833 +1,272 @@
 package staker
 
 import (
-	"math"
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
+
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-func TestNewProtocolFeeRewardState(cur realm, t *testing.T) {
-	tests := []struct {
-		name                               string
-		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
-		expectedTokenCount                 int
-	}{
-		{
-			name:                               "Create with empty protocol fee map",
-			accumulatedProtocolFeeX128PerStake: make(map[string]*u256.Uint),
-			expectedTokenCount:                 0,
-		},
-		{
-			name: "Create with single token",
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(1000),
-			},
-			expectedTokenCount: 1,
-		},
-		{
-			name: "Create with multiple tokens",
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(1000),
-				"token2": u256.NewUintFromInt64(2000),
-				"token3": u256.NewUintFromInt64(3000),
-			},
-			expectedTokenCount: 3,
-		},
+func u256Lsh128(amount int64) *u256.Uint {
+	return u256.Zero().Lsh(u256.NewUintFromInt64(amount), 128)
+}
+
+// newPfTestView builds an accumulator view from (epoch, value) pairs, with the value
+// given in whole units per stake.
+func newPfTestView(foldedEpoch int64, epochs []int64, values []int64) *protocolFeeAccumulatorView {
+	accumulator := staker.NewProtocolFeeTokenAccumulator()
+	for i, epoch := range epochs {
+		accumulator.SetAccumulatedX128PerStakeAt(epoch, u256Lsh128(values[i]))
 	}
+	accumulator.SetFoldedEpoch(foldedEpoch)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// When: Create new protocol fee reward state
-			state := staker.NewProtocolFeeRewardState(tt.accumulatedProtocolFeeX128PerStake)
-			resolver := NewProtocolFeeRewardStateResolver(state)
-
-			// Then: Should initialize correctly
-			uassert.NotEqual(t, resolver, nil)
-			uassert.Equal(t, len(resolver.GetRewardDebtX128()), tt.expectedTokenCount)
-			uassert.Equal(t, resolver.GetAccumulatedTimestamp(), int64(0))
-			uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(0))
-			uassert.Equal(t, resolver.GetStakedAmount(), int64(0))
-
-			// Verify reward debt is properly cloned
-			for token, originalAmount := range tt.accumulatedProtocolFeeX128PerStake {
-				debtAmount := resolver.GetRewardDebtX128ForToken(token)
-				uassert.NotEqual(t, debtAmount, nil)
-				uassert.Equal(t, debtAmount.Cmp(originalAmount), 0)
-			}
-		})
+	return &protocolFeeAccumulatorView{
+		accumulator:  accumulator,
+		extraEpochs:  []int64{},
+		extraValues:  []*u256.Uint{},
+		current:      accumulator.GetAccumulatedX128PerStake().Clone(),
+		firstEpoch:   accumulator.GetFirstEpoch(),
+		foldedEpoch:  foldedEpoch,
+		currentEpoch: foldedEpoch + 1,
 	}
 }
 
-// Test IsClaimable
-func TestProtocolFeeRewardState_IsClaimable(cur realm, t *testing.T) {
-	tests := []struct {
-		name             string
-		claimedTimestamp int64
-		currentTimestamp int64
-		expected         bool
-	}{
-		{
-			name:             "Not claimable when current height equals claimed height",
-			claimedTimestamp: 100,
-			currentTimestamp: 100,
-			expected:         false,
-		},
-		{
-			name:             "Not claimable when current height is less than claimed height",
-			claimedTimestamp: 100,
-			currentTimestamp: 50,
-			expected:         false,
-		},
-		{
-			name:             "Claimable when current height is greater than claimed height",
-			claimedTimestamp: 50,
-			currentTimestamp: 100,
-			expected:         true,
-		},
-		{
-			name:             "Claimable when never claimed before",
-			claimedTimestamp: 0,
-			currentTimestamp: 100,
-			expected:         true,
-		},
-	}
+func TestProtocolFeeRewardState_loadTokenSettlement_NoFeeFolded(cur realm, t *testing.T) {
+	t.Run("skips every event once every closed epoch is folded", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		uassert.NoError(t, resolver.addStake(100, 1))
+		uassert.NoError(t, resolver.addStake(50, 2))
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward state with claimed height
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-			resolver := NewProtocolFeeRewardStateResolver(state)
-			resolver.SetClaimedTimestamp(tt.claimedTimestamp)
+		view := newPfTestView(1, nil, nil)
+		view.currentEpoch = 2
 
-			// When: Check if claimable
-			result := resolver.IsClaimable(tt.currentTimestamp)
-
-			// Then: Should return expected result
-			uassert.Equal(t, result, tt.expected)
-		})
-	}
-}
-
-// Test GetClaimableRewardAmounts
-func TestProtocolFeeRewardState_GetClaimableRewardAmounts(cur realm, t *testing.T) {
-	tests := []struct {
-		name                           string
-		setupState                     func(*ProtocolFeeRewardStateResolver)
-		accumulatedRewardsX128PerStake map[string]*u256.Uint
-		currentTimestamp               int64
-		expectedTokenCount             int
-	}{
-		{
-			name: "No rewards when accumulated height is greater than current height",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetAccumulatedTimestamp(200)
-				s.SetAccumulatedRewards(map[string]int64{
-					"token1": 1000,
-				})
-				s.SetClaimedRewards(map[string]int64{
-					"token1": 400,
-				})
-			},
-			accumulatedRewardsX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(1000),
-			},
-			currentTimestamp:   100,
-			expectedTokenCount: 1, // Returns accumulated rewards
-		},
-		{
-			name: "Calculate rewards when current height is greater",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetAccumulatedTimestamp(50)
-				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
-			},
-			accumulatedRewardsX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(500).Lsh(u256.NewUintFromInt64(500), 128),
-			},
-			currentTimestamp:   100,
-			expectedTokenCount: 1,
-		},
-		{
-			name: "Multiple tokens calculation",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetAccumulatedTimestamp(50)
-				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
-				s.SetRewardDebtX128ForToken("token2", u256.NewUint(0))
-				s.SetRewardDebtX128ForToken("token3", u256.NewUint(0))
-			},
-			accumulatedRewardsX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(100).Lsh(u256.NewUintFromInt64(100), 128),
-				"token2": u256.NewUintFromInt64(200).Lsh(u256.NewUintFromInt64(200), 128),
-				"token3": u256.NewUintFromInt64(300).Lsh(u256.NewUintFromInt64(300), 128),
-			},
-			currentTimestamp:   100,
-			expectedTokenCount: 3,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward state setup
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-			resolver := NewProtocolFeeRewardStateResolver(state)
-			tt.setupState(resolver)
-
-			// When: Get claimable reward amounts
-			result, _ := resolver.GetClaimableRewardAmounts(tt.accumulatedRewardsX128PerStake, tt.currentTimestamp)
-
-			// Then: Should return expected number of tokens
-			uassert.Equal(t, len(result), tt.expectedTokenCount)
-
-			// Verify all amounts are non-negative
-			for token, amount := range result {
-				uassert.True(t, amount >= 0, "Reward amount should be non-negative for token: "+token)
-			}
-
-			if tt.name == "No rewards when accumulated height is greater than current height" {
-				uassert.Equal(t, result["token1"], int64(600))
-			}
-		})
-	}
-}
-
-func TestProtocolFeeRewardState_GetClaimableRewardAmounts_SubtractsClaimedRewards(cur realm, t *testing.T) {
-	state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-	resolver := NewProtocolFeeRewardStateResolver(state)
-	resolver.SetAccumulatedTimestamp(50)
-	resolver.SetStakedAmount(10)
-	resolver.SetAccumulatedRewards(map[string]int64{
-		"token1": 100,
-		"token2": 50,
+		settlement := resolver.loadTokenSettlement(pfTestBar, view)
+		uassert.Equal(t, settlement.eventCursor, int64(2))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(150))
 	})
-	resolver.SetClaimedRewards(map[string]int64{
-		"token1": 30,
-		"token2": 50,
+
+	t.Run("keeps events pending while a closed epoch is not folded", func(cur realm, t *testing.T) {
+		// A bucket from epoch 1 may still be pending, so the events cannot be skipped:
+		// settleEvents settles them, gated by foldedEpoch, once that bucket is folded.
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		uassert.NoError(t, resolver.addStake(100, 1))
+		uassert.NoError(t, resolver.addStake(50, 2))
+
+		view := newPfTestView(0, nil, nil)
+		view.currentEpoch = 2
+
+		settlement := resolver.loadTokenSettlement(pfTestBar, view)
+		uassert.Equal(t, settlement.eventCursor, int64(0))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(0))
+
+		uassert.False(t, resolver.settleEvents(settlement, view, 0))
+		uassert.Equal(t, settlement.eventCursor, int64(1))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(100))
 	})
-	resolver.SetRewardDebtX128ForToken("token1", u256.NewUintFromInt64(5).Lsh(u256.NewUintFromInt64(5), 128))
-	resolver.SetRewardDebtX128ForToken("token2", u256.NewUintFromInt64(2).Lsh(u256.NewUintFromInt64(2), 128))
-
-	result, err := resolver.GetClaimableRewardAmounts(map[string]*u256.Uint{
-		"token1": u256.NewUintFromInt64(8).Lsh(u256.NewUintFromInt64(8), 128),
-		"token2": u256.NewUintFromInt64(4).Lsh(u256.NewUintFromInt64(4), 128),
-	}, 100)
-
-	uassert.NoError(t, err)
-	uassert.Equal(t, result["token1"], int64(100))
-	uassert.Equal(t, result["token2"], int64(20))
 }
 
-// Test addStake
 func TestProtocolFeeRewardState_addStake(cur realm, t *testing.T) {
-	tests := []struct {
-		name          string
-		initialStake  int64
-		addAmount     int64
-		expectedStake int64
-	}{
-		{
-			name:          "Add stake to empty state",
-			initialStake:  0,
-			addAmount:     1000,
-			expectedStake: 1000,
-		},
-		{
-			name:          "Add stake to existing stake",
-			initialStake:  500,
-			addAmount:     300,
-			expectedStake: 800,
-		},
-		{
-			name:          "Add zero stake",
-			initialStake:  1000,
-			addAmount:     0,
-			expectedStake: 1000,
-		},
-	}
+	resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward state with initial stake
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-			resolver := NewProtocolFeeRewardStateResolver(state)
-			resolver.SetStakedAmount(tt.initialStake)
+	uassert.NoError(t, resolver.addStake(100, 1))
+	uassert.NoError(t, resolver.addStake(50, 4))
+	uassert.Equal(t, resolver.GetStakedAmount(), int64(150))
+	uassert.Equal(t, resolver.GetStakeEventCount(), int64(2))
 
-			// When: Add stake
-			resolver.addStake(tt.addAmount)
+	event, ok := resolver.GetStakeEvent(1)
+	uassert.True(t, ok)
+	uassert.Equal(t, event.GetEpoch(), int64(4))
+	uassert.Equal(t, event.GetStakedAmount(), int64(150))
 
-			// Then: Staked amount should be updated
-			uassert.Equal(t, resolver.GetStakedAmount(), tt.expectedStake)
-		})
-	}
+	uassert.ErrorContains(t, resolver.addStake(0, 5), errAmountMustBePositive)
+	uassert.ErrorContains(t, resolver.addStake(-5, 5), errAmountMustBePositive)
 }
 
-// Test removeStake
 func TestProtocolFeeRewardState_removeStake(cur realm, t *testing.T) {
-	tests := []struct {
-		name          string
-		initialStake  int64
-		removeAmount  int64
-		expectedStake int64
-	}{
-		{
-			name:          "Remove partial stake",
-			initialStake:  1000,
-			removeAmount:  300,
-			expectedStake: 700,
-		},
-		{
-			name:          "Remove all stake",
-			initialStake:  1000,
-			removeAmount:  1000,
-			expectedStake: 0,
-		},
-		{
-			name:          "Remove zero stake",
-			initialStake:  1000,
-			removeAmount:  0,
-			expectedStake: 1000,
-		},
-	}
+	resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward state with initial stake
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-			resolver := NewProtocolFeeRewardStateResolver(state)
-			resolver.SetStakedAmount(tt.initialStake)
+	uassert.NoError(t, resolver.addStake(100, 1))
+	uassert.NoError(t, resolver.removeStake(30, 2))
+	uassert.Equal(t, resolver.GetStakedAmount(), int64(70))
+	uassert.Equal(t, resolver.GetStakeEventCount(), int64(2))
 
-			// When: Remove stake
-			resolver.removeStake(tt.removeAmount)
+	uassert.ErrorContains(t, resolver.removeStake(-1, 3), errAmountMustBeNonNegative)
+	uassert.ErrorContains(t, resolver.removeStake(71, 3), errRemoveAmountExceedsStaked)
 
-			// Then: Staked amount should be updated
-			uassert.Equal(t, resolver.GetStakedAmount(), tt.expectedStake)
-		})
-	}
+	// Removing zero is allowed and still records an event.
+	uassert.NoError(t, resolver.removeStake(0, 3))
+	uassert.Equal(t, resolver.GetStakeEventCount(), int64(3))
 }
 
-// Test claimRewards including idempotent no-op cases.
-func TestProtocolFeeRewardState_claimRewards(cur realm, t *testing.T) {
-	tests := []struct {
-		name                      string
-		setupState                func(*ProtocolFeeRewardStateResolver)
-		currentTimestamp          int64
-		expectError               bool
-		expectedClaimedLength     int
-		expectedClaimedPerToken   map[string]int64 // expected returned amounts; nil = skip check
-		expectedNewClaimedTs      int64
-		expectedClaimedStateAfter map[string]int64 // expected resolver.GetClaimedRewards after call; nil = skip check
-	}{
-		{
-			name: "Successful claim advances claimed rewards and timestamp",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetClaimedTimestamp(50)
-				s.SetAccumulatedTimestamp(100)
-				s.SetAccumulatedRewards(map[string]int64{
-					"token1": 1000,
-					"token2": 500,
-				})
-				s.SetClaimedRewards(map[string]int64{
-					"token1": 300,
-					"token2": 0,
-				})
-			},
-			currentTimestamp:      100,
-			expectError:           false,
-			expectedClaimedLength: 2,
-			expectedClaimedPerToken: map[string]int64{
-				"token1": 700,
-				"token2": 500,
-			},
-			expectedNewClaimedTs: 100,
-			expectedClaimedStateAfter: map[string]int64{
-				"token1": 1000,
-				"token2": 500,
-			},
-		},
-		{
-			name: "First-ever claim with no prior claimedRewards",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetClaimedTimestamp(0)
-				s.SetAccumulatedTimestamp(100)
-				s.SetAccumulatedRewards(map[string]int64{
-					"tokenA": 250,
-				})
-			},
-			currentTimestamp:      100,
-			expectError:           false,
-			expectedClaimedLength: 1,
-			expectedClaimedPerToken: map[string]int64{
-				"tokenA": 250,
-			},
-			expectedNewClaimedTs: 100,
-			expectedClaimedStateAfter: map[string]int64{
-				"tokenA": 250,
-			},
-		},
-		{
-			name: "Claim when accumulated timestamp is less than current (reward debt stale)",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetClaimedTimestamp(50)
-				s.SetAccumulatedTimestamp(50)
-				s.SetAccumulatedRewards(map[string]int64{
-					"token1": 1000,
-				})
-			},
-			currentTimestamp: 100,
-			expectError:      true, // Must update reward debt before claiming
-		},
-		{
-			name: "Idempotent no-op when claimedTimestamp equals currentTimestamp",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				// Simulates state after a previous successful claim at the same ts.
-				s.SetClaimedTimestamp(100)
-				s.SetAccumulatedTimestamp(100)
-				s.SetAccumulatedRewards(map[string]int64{
-					"token1": 1000,
-				})
-				s.SetClaimedRewards(map[string]int64{
-					"token1": 1000,
-				})
-			},
-			currentTimestamp:      100,
-			expectError:           false,
-			expectedClaimedLength: 0,
-			expectedNewClaimedTs:  100,
-			expectedClaimedStateAfter: map[string]int64{
-				"token1": 1000,
-			},
-		},
-		{
-			name: "Idempotent no-op preserves unclaimed delta when called in the same second",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				// Pathological state where accumulated > claimed but the claim already
-				// ran in this Unix second. The skip must NOT silently advance claimed.
-				s.SetClaimedTimestamp(100)
-				s.SetAccumulatedTimestamp(100)
-				s.SetAccumulatedRewards(map[string]int64{
-					"token1": 1000,
-					"token2": 500,
-				})
-				s.SetClaimedRewards(map[string]int64{
-					"token1": 400,
-					"token2": 0,
-				})
-			},
-			currentTimestamp:      100,
-			expectError:           false,
-			expectedClaimedLength: 0,
-			expectedNewClaimedTs:  100,
-			expectedClaimedStateAfter: map[string]int64{
-				"token1": 400,
-				"token2": 0,
-			},
-		},
-		{
-			name: "Idempotent no-op when claimedTimestamp is in the future",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetClaimedTimestamp(200)
-				s.SetAccumulatedTimestamp(200)
-				s.SetAccumulatedRewards(map[string]int64{
-					"token1": 800,
-				})
-				s.SetClaimedRewards(map[string]int64{
-					"token1": 800,
-				})
-			},
-			currentTimestamp:      100,
-			expectError:           false,
-			expectedClaimedLength: 0,
-			expectedNewClaimedTs:  200, // untouched
-			expectedClaimedStateAfter: map[string]int64{
-				"token1": 800,
-			},
-		},
-	}
+func TestProtocolFeeRewardState_loadTokenSettlement(cur realm, t *testing.T) {
+	t.Run("with no fee ever folded every event is skipped", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		uassert.NoError(t, resolver.addStake(100, 1))
+		uassert.NoError(t, resolver.addStake(100, 2))
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward state setup
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-			resolver := NewProtocolFeeRewardStateResolver(state)
-			tt.setupState(resolver)
+		settlement := resolver.loadTokenSettlement(pfTestBar, newPfTestView(-1, nil, nil))
+		uassert.Equal(t, settlement.eventCursor, int64(2))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(200))
+		uassert.Equal(t, settlement.segmentStartX128.ToString(), "0")
+	})
 
-			// When: Claim rewards
-			claimedRewards, err := resolver.claimRewards(tt.currentTimestamp)
+	t.Run("events up to the first fee epoch are skipped", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		uassert.NoError(t, resolver.addStake(100, 1))
+		uassert.NoError(t, resolver.addStake(100, 3))
+		uassert.NoError(t, resolver.addStake(100, 7))
 
-			// Then: Check result
-			if tt.expectError {
-				uassert.Error(t, err)
-				uassert.Equal(t, claimedRewards, nil)
-				return
+		// First fee at epoch 3: the event at epoch 3 closes a zero segment, so the open
+		// segment starts there with 200 staked.
+		settlement := resolver.loadTokenSettlement(pfTestBar, newPfTestView(6, []int64{3}, []int64{5}))
+		uassert.Equal(t, settlement.eventCursor, int64(2))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(200))
+		uassert.Equal(t, settlement.segmentStartX128.ToString(), "0")
+	})
+
+	t.Run("a fee before every event starts from the first event", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		uassert.NoError(t, resolver.addStake(100, 5))
+
+		settlement := resolver.loadTokenSettlement(pfTestBar, newPfTestView(6, []int64{2}, []int64{5}))
+		uassert.Equal(t, settlement.eventCursor, int64(0))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(0))
+	})
+
+	t.Run("the boundary event is found across a long history", func(cur realm, t *testing.T) {
+		// Events at epochs 1..40, two of them at the first fee epoch 20: the cursor must
+		// land after the last event at epoch 20 and pick up its stake.
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		for epoch := int64(1); epoch <= 40; epoch++ {
+			uassert.NoError(t, resolver.addStake(1, epoch))
+			if epoch == 20 {
+				uassert.NoError(t, resolver.addStake(5, epoch))
 			}
+		}
 
-			uassert.NoError(t, err)
-			uassert.NotEqual(t, claimedRewards, nil)
-			uassert.Equal(t, len(claimedRewards), tt.expectedClaimedLength)
-			uassert.Equal(t, resolver.GetClaimedTimestamp(), tt.expectedNewClaimedTs)
+		settlement := resolver.loadTokenSettlement(pfTestBar, newPfTestView(39, []int64{20}, []int64{5}))
+		uassert.Equal(t, settlement.eventCursor, int64(21))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(25))
 
-			if tt.expectedClaimedPerToken != nil {
-				for token, expected := range tt.expectedClaimedPerToken {
-					uassert.Equal(t, claimedRewards[token], expected)
-				}
-			}
+		// A first fee after every event skips them all.
+		settlement = resolver.loadTokenSettlement(pfTestBar, newPfTestView(41, []int64{41}, []int64{5}))
+		uassert.Equal(t, settlement.eventCursor, int64(41))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(45))
+	})
 
-			if tt.expectedClaimedStateAfter != nil {
-				actualClaimed := resolver.GetClaimedRewards()
-				for token, expected := range tt.expectedClaimedStateAfter {
-					uassert.Equal(t, actualClaimed[token], expected)
-				}
-			}
-		})
-	}
+	t.Run("a stored token state is loaded as is", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		tokenState := staker.NewProtocolFeeTokenRewardState(3, 40, u256.NewUint(9))
+		tokenState.SetEarnedX128(u256.NewUint(1234))
+		resolver.SetTokenState(pfTestBar, tokenState)
+
+		settlement := resolver.loadTokenSettlement(pfTestBar, newPfTestView(-1, nil, nil))
+		uassert.Equal(t, settlement.eventCursor, int64(3))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(40))
+		uassert.Equal(t, settlement.segmentStartX128.ToString(), "9")
+		uassert.Equal(t, settlement.earnedX128.ToString(), "1234")
+	})
 }
 
-// Test that consecutive claimRewards calls within the same Unix second
-func TestProtocolFeeRewardState_claimRewards_SameSecondIsIdempotent(cur realm, t *testing.T) {
-	state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-	resolver := NewProtocolFeeRewardStateResolver(state)
+func TestProtocolFeeRewardState_settleEvents(cur realm, t *testing.T) {
+	t.Run("folds each closed segment at the accumulator before the event", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		uassert.NoError(t, resolver.addStake(100, 1))
+		uassert.NoError(t, resolver.addStake(200, 3))
+		uassert.NoError(t, resolver.removeStake(300, 5))
 
-	resolver.SetClaimedTimestamp(50)
-	resolver.SetAccumulatedTimestamp(100)
-	resolver.SetAccumulatedRewards(map[string]int64{
-		"token1": 1000,
-		"token2": 300,
-	})
-	resolver.SetClaimedRewards(map[string]int64{
-		"token1": 200,
-		"token2": 0,
+		// per-stake: 10 after epoch 1, 12 after epoch 2, 13 after epoch 4
+		view := newPfTestView(5, []int64{1, 2, 4}, []int64{10, 12, 13})
+		settlement := resolver.loadTokenSettlement(pfTestBar, view)
+		uassert.Equal(t, settlement.eventCursor, int64(1))
+
+		done := resolver.settleEvents(settlement, view, 0)
+		uassert.True(t, done)
+		// 100 * (12 - 0) + 300 * (13 - 12)
+		uassert.Equal(t, settlement.earnedX128.ToString(), x128(1500))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(0))
+		uassert.Equal(t, settlement.segmentStartX128.ToString(), x128(13))
 	})
 
-	// First claim at ts=100 captures the pending delta.
-	first, err := resolver.claimRewards(100)
+	t.Run("stops at maxEvents", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		uassert.NoError(t, resolver.addStake(100, 1))
+		uassert.NoError(t, resolver.addStake(100, 3))
+		uassert.NoError(t, resolver.addStake(100, 5))
+
+		view := newPfTestView(5, []int64{1, 2, 4}, []int64{10, 12, 13})
+		settlement := resolver.loadTokenSettlement(pfTestBar, view)
+
+		uassert.False(t, resolver.settleEvents(settlement, view, 1))
+		uassert.Equal(t, settlement.eventCursor, int64(2))
+		uassert.Equal(t, settlement.earnedX128.ToString(), x128(1200))
+
+		uassert.True(t, resolver.settleEvents(settlement, view, 1))
+		uassert.Equal(t, settlement.eventCursor, int64(3))
+		uassert.Equal(t, settlement.earnedX128.ToString(), x128(1400))
+	})
+
+	t.Run("stops before an event whose previous epoch is not folded", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		uassert.NoError(t, resolver.addStake(100, 1))
+		uassert.NoError(t, resolver.addStake(100, 3))
+		uassert.NoError(t, resolver.addStake(100, 5))
+
+		view := newPfTestView(2, []int64{1, 2}, []int64{10, 12})
+		settlement := resolver.loadTokenSettlement(pfTestBar, view)
+
+		uassert.False(t, resolver.settleEvents(settlement, view, 0))
+		uassert.Equal(t, settlement.eventCursor, int64(2))
+		uassert.Equal(t, settlement.earnedX128.ToString(), x128(1200))
+	})
+}
+
+func TestProtocolFeeRewardState_takeReward(cur realm, t *testing.T) {
+	settlement := &protocolFeeTokenSettlement{
+		earnedX128: u256.Zero().Add(u256Lsh128(7), u256.NewUint(12345)),
+	}
+
+	uassert.Equal(t, takeReward(settlement), int64(7))
+	uassert.Equal(t, settlement.earnedX128.ToString(), "12345")
+	uassert.Equal(t, takeReward(settlement), int64(0))
+}
+
+func TestProtocolFeeRewardState_claimTokenReward(cur realm, t *testing.T) {
+	resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+	uassert.NoError(t, resolver.addStake(100, 1))
+
+	view := newPfTestView(1, []int64{1}, []int64{10})
+	reward, err := resolver.claimTokenReward(pfTestBar, view, 0)
 	uassert.NoError(t, err)
-	uassert.Equal(t, first["token1"], int64(800))
-	uassert.Equal(t, first["token2"], int64(300))
-	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
+	uassert.Equal(t, reward, int64(1000))
+	uassert.Equal(t, resolver.GetClaimedReward(pfTestBar), int64(1000))
 
-	// Second and third calls at the same ts=100 must be no-ops.
-	second, err := resolver.claimRewards(100)
+	tokenState, ok := resolver.GetTokenState(pfTestBar)
+	uassert.True(t, ok)
+	uassert.Equal(t, tokenState.GetEventCursor(), int64(1))
+	uassert.Equal(t, tokenState.GetSegmentStartX128().ToString(), x128(10))
+	uassert.Equal(t, tokenState.GetEarnedX128().ToString(), "0")
+
+	// The query agrees with the claim and does not move state.
+	view = newPfTestView(2, []int64{1, 2}, []int64{10, 15})
+	uassert.Equal(t, resolver.getClaimableReward(pfTestBar, view), int64(500))
+	uassert.Equal(t, tokenState.GetSegmentStartX128().ToString(), x128(10))
+
+	reward, err = resolver.claimTokenReward(pfTestBar, view, 0)
 	uassert.NoError(t, err)
-	uassert.Equal(t, len(second), 0)
-	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
-
-	third, err := resolver.claimRewards(100)
-	uassert.NoError(t, err)
-	uassert.Equal(t, len(third), 0)
-	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(100))
-
-	// State must remain exactly as the first claim left it.
-	claimedAfter := resolver.GetClaimedRewards()
-	uassert.Equal(t, claimedAfter["token1"], int64(1000))
-	uassert.Equal(t, claimedAfter["token2"], int64(300))
-
-	// Advancing to ts=101 with newly accumulated rewards is claimable again.
-	resolver.SetAccumulatedTimestamp(101)
-	resolver.SetAccumulatedRewards(map[string]int64{
-		"token1": 1500,
-		"token2": 300,
-	})
-	fourth, err := resolver.claimRewards(101)
-	uassert.NoError(t, err)
-	uassert.Equal(t, fourth["token1"], int64(500))
-	uassert.Equal(t, fourth["token2"], int64(0))
-	uassert.Equal(t, resolver.GetClaimedTimestamp(), int64(101))
+	uassert.Equal(t, reward, int64(500))
+	uassert.Equal(t, resolver.GetClaimedReward(pfTestBar), int64(1500))
 }
 
-// Test updateRewardDebtX128
-func TestProtocolFeeRewardState_updateRewardDebtX128(cur realm, t *testing.T) {
-	tests := []struct {
-		name                               string
-		setupState                         func(*ProtocolFeeRewardStateResolver)
-		accumulatedProtocolFeeX128PerStake map[string]*u256.Uint
-		currentTimestamp                   int64
-		shouldUpdate                       bool
-	}{
-		{
-			name: "No update when accumulated height is greater than current height",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetAccumulatedTimestamp(200)
-			},
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(1000),
-			},
-			currentTimestamp: 100,
-			shouldUpdate:     false,
-		},
-		{
-			name: "No update when accumulated height equals current height",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetAccumulatedTimestamp(100)
-			},
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(1000),
-			},
-			currentTimestamp: 100,
-			shouldUpdate:     false,
-		},
-		{
-			name: "Update when current height is greater",
-			setupState: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetAccumulatedTimestamp(50)
-				s.SetStakedAmount(1000)
-				s.SetRewardDebtX128ForToken("token1", u256.NewUint(0))
-				s.SetAccumulatedRewards(map[string]int64{
-					"token1": 200,
-				})
-			},
-			accumulatedProtocolFeeX128PerStake: map[string]*u256.Uint{
-				"token1": u256.NewUintFromInt64(500).Lsh(u256.NewUintFromInt64(500), 128),
-			},
-			currentTimestamp: 100,
-			shouldUpdate:     true,
-		},
-	}
+func TestProtocolFeeRewardState_IsClaimable(cur realm, t *testing.T) {
+	resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given: Protocol fee reward state setup
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-			resolver := NewProtocolFeeRewardStateResolver(state)
-			tt.setupState(resolver)
-			startedAt := resolver.GetAccumulatedTimestamp()
-
-			// When: Update reward debt X128
-			resolver.updateRewardDebtX128(tt.accumulatedProtocolFeeX128PerStake, tt.currentTimestamp)
-
-			// Then: Check if state was updated as expected
-			if tt.shouldUpdate {
-				uassert.Equal(t, resolver.GetAccumulatedTimestamp(), tt.currentTimestamp)
-			} else {
-				uassert.Equal(t, resolver.GetAccumulatedTimestamp(), startedAt)
-			}
-		})
-	}
-}
-
-// Test combined operations
-func TestProtocolFeeRewardState_CombinedOperations(cur realm, t *testing.T) {
-	tests := []struct {
-		name        string
-		operations  func(*ProtocolFeeRewardStateResolver)
-		description string
-	}{
-		{
-			name: "Add stake with update reward debt",
-			operations: func(s *ProtocolFeeRewardStateResolver) {
-				accumulatedFees := map[string]*u256.Uint{
-					"token1": u256.NewUintFromInt64(1000),
-				}
-
-				s.addStakeWithUpdateRewardDebtX128(500, accumulatedFees, 100)
-
-				uassert.Equal(t, s.GetStakedAmount(), int64(500))
-				uassert.Equal(t, s.GetAccumulatedTimestamp(), int64(100))
-			},
-			description: "Should add stake and update reward debt",
-		},
-		{
-			name: "Remove stake with update reward debt",
-			operations: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetStakedAmount(1000)
-				accumulatedFees := map[string]*u256.Uint{
-					"token1": u256.NewUintFromInt64(1000),
-				}
-
-				s.removeStakeWithUpdateRewardDebtX128(300, accumulatedFees, 100)
-
-				uassert.Equal(t, s.GetStakedAmount(), int64(700))
-				uassert.Equal(t, s.GetAccumulatedTimestamp(), int64(100))
-			},
-			description: "Should remove stake and update reward debt",
-		},
-		{
-			name: "Claim rewards with update reward debt",
-			operations: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetClaimedTimestamp(50)
-				s.SetStakedAmount(1000)
-				accumulatedFees := map[string]*u256.Uint{
-					"token1": u256.NewUintFromInt64(500).Lsh(u256.NewUintFromInt64(500), 128),
-				}
-
-				rewards, err := s.claimRewardsWithUpdateRewardDebtX128(accumulatedFees, 100)
-
-				uassert.NoError(t, err)
-				uassert.NotEqual(t, rewards, nil)
-				uassert.Equal(t, s.GetAccumulatedTimestamp(), int64(100))
-				uassert.Equal(t, s.GetClaimedTimestamp(), int64(100))
-			},
-			description: "Should claim rewards and update reward debt",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-			resolver := NewProtocolFeeRewardStateResolver(state)
-			tt.operations(resolver)
-		})
-	}
-}
-
-// Test edge cases
-func TestProtocolFeeRewardState_EdgeCases(cur realm, t *testing.T) {
-	tests := []struct {
-		name        string
-		setupTest   func(*ProtocolFeeRewardStateResolver)
-		description string
-	}{
-		{
-			name: "Handle nil reward debt for new token",
-			setupTest: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetStakedAmount(1000)
-				accumulatedRewards := map[string]*u256.Uint{
-					"newtoken": u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128),
-				}
-
-				// Should handle nil reward debt gracefully
-				result, _ := s.calculateClaimableRewards(accumulatedRewards, 100)
-
-				uassert.NotEqual(t, result, nil)
-				uassert.True(t, len(result) > 0)
-			},
-			description: "Should handle nil reward debt for new tokens",
-		},
-		{
-			name: "Multiple claim attempts in the same second are idempotent",
-			setupTest: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetClaimedTimestamp(50)
-				s.SetAccumulatedTimestamp(100)
-				s.SetAccumulatedRewards(map[string]int64{
-					"token1": 1000,
-				})
-				s.SetClaimedRewards(map[string]int64{
-					"token1": 0,
-				})
-
-				// First claim returns the full accumulated reward
-				rewards1, err1 := s.claimRewards(100)
-				uassert.NoError(t, err1)
-				if rewards1["token1"] != 1000 {
-					t.Errorf("Expected 1000, got %d", rewards1["token1"])
-				}
-
-				// Second claim at the same timestamp is an idempotent no-op:
-				// it must not error, and must return no additional rewards.
-				rewards2, err2 := s.claimRewards(100)
-				uassert.NoError(t, err2)
-				if rewards2["token1"] != 0 {
-					t.Errorf("Expected 0 on second claim, got %d", rewards2["token1"])
-				}
-			},
-			description: "Second claim in the same Unix second must be a no-op, not an error",
-		},
-		{
-			name: "Zero staked amount calculation",
-			setupTest: func(s *ProtocolFeeRewardStateResolver) {
-				s.SetStakedAmount(0)
-				accumulatedRewards := map[string]*u256.Uint{
-					"token1": u256.NewUintFromInt64(1000).Lsh(u256.NewUintFromInt64(1000), 128),
-				}
-
-				result, _ := s.calculateClaimableRewards(accumulatedRewards, 100)
-
-				// Should return zero rewards when no stake
-				uassert.Equal(t, result["token1"], int64(0))
-			},
-			description: "Should handle zero staked amount correctly",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-			resolver := NewProtocolFeeRewardStateResolver(state)
-			tt.setupTest(resolver)
-		})
-	}
-}
-
-// Test boundary conditions for safe arithmetic in protocol fee reward operations
-func TestProtocolFeeRewardState_BoundaryConditions(cur realm, t *testing.T) {
-	t.Run("AddStake boundary - large staked amount", func(cur realm, t *testing.T) {
-		// given: protocol fee reward state with large staked amount
-		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-		resolver := NewProtocolFeeRewardStateResolver(state)
-
-		// Set initial large staked amount
-		state.SetStakedAmount(math.MaxInt64 / 2)
-
-		// when: add more stake (uses safeAddInt64 in addStake)
-		accumulatedFees := make(map[string]*u256.Uint)
-		err := resolver.addStakeWithUpdateRewardDebtX128(math.MaxInt64/4, accumulatedFees, 1000)
-
-		// then: should succeed without overflow
-		uassert.NoError(t, err)
-		expected := int64((math.MaxInt64 / 2) + (math.MaxInt64 / 4))
-		uassert.Equal(t, state.GetStakedAmount(), expected)
-	})
-
-	t.Run("AddStake boundary - overflow", func(cur realm, t *testing.T) {
-		// given: protocol fee reward state near max staked amount
-		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-		resolver := NewProtocolFeeRewardStateResolver(state)
-
-		state.SetStakedAmount(math.MaxInt64 - 1000)
-
-		// when: add stake causing overflow (uses safeAddInt64)
-		didPanic := false
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					didPanic = true
-				}
-			}()
-			accumulatedFees := make(map[string]*u256.Uint)
-			_ = resolver.addStakeWithUpdateRewardDebtX128(2000, accumulatedFees, 1000)
-		}()
-
-		// then: should panic on overflow
-		uassert.True(t, didPanic)
-	})
-
-	t.Run("RemoveStake boundary - clamping to zero", func(cur realm, t *testing.T) {
-		// given: protocol fee reward state with some staked amount
-		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-		resolver := NewProtocolFeeRewardStateResolver(state)
-
-		state.SetStakedAmount(1000)
-
-		// when: remove more than available (uses safeSubInt64 with clamping)
-		accumulatedFees := make(map[string]*u256.Uint)
-		err := resolver.removeStakeWithUpdateRewardDebtX128(2000, accumulatedFees, 1000)
-
-		// then: should clamp to zero
-		uassert.NoError(t, err)
-		uassert.Equal(t, state.GetStakedAmount(), int64(0))
-	})
-
-	t.Run("ClaimRewards boundary - exact subtraction", func(cur realm, t *testing.T) {
-		// given: protocol fee reward state with accumulated and claimed equal
-		state := staker.NewProtocolFeeRewardState(make(map[string]*u256.Uint))
-		resolver := NewProtocolFeeRewardStateResolver(state)
-		token := "gno.land/r/demo/foo"
-
-		rewardAmount := int64(1000000)
-		state.SetAccumulatedRewardForToken(token, rewardAmount)
-		state.SetClaimedRewardForToken(token, rewardAmount)
-		currentTimestamp := int64(2000)
-		state.SetAccumulatedTimestamp(currentTimestamp) // Update to match claim timestamp
-		state.SetClaimedTimestamp(500)
-
-		// when: claim rewards (uses safeSubInt64 in claimRewards)
-		claimed, err := resolver.claimRewards(currentTimestamp)
-
-		// then: should result in zero claimable
-		uassert.NoError(t, err)
-		uassert.Equal(t, claimed[token], int64(0))
-	})
+	uassert.True(t, resolver.IsClaimable(1))
+	resolver.SetClaimedTimestamp(10)
+	uassert.False(t, resolver.IsClaimable(10))
+	uassert.False(t, resolver.IsClaimable(9))
+	uassert.True(t, resolver.IsClaimable(11))
 }

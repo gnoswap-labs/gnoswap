@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -65,6 +67,7 @@ func testScenario2SetDistributionStartHeight(cur realm) {
 
 	testing.SetOriginCaller(adminAddr)
 	futureTimestamp := time.Now().Unix() + 10000/defaultBlockTime
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), futureTimestamp)
 
 	// Check if halving years were adjusted
@@ -123,6 +126,7 @@ func testScenario5ReinitializeProtection(cur realm) {
 
 	uassert.AbortsWithMessage(t, cur, expectedPanic, func() {
 		testing.SetOriginCaller(adminAddr)
+		scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 		emission.SetDistributionStartTime(cross(cur), futureTimestamp)
 	})
 

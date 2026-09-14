@@ -53,7 +53,7 @@ func (i *poolV1) safeTransfer(
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(cross(rlm), tokenPath, to, amountInt64)
+	common.SafeGRC20Transfer(0, rlm, tokenPath, to, amountInt64)
 
 	newBalance, err := updatePoolBalance(token0, token1, amountInt64, isToken0)
 	if err != nil {
@@ -108,12 +108,11 @@ func (i *poolV1) safeTransferFrom(
 ) {
 	amountInt64 := gnsmath.SafeConvertToInt64(amount)
 
-	token := common.GetToken(tokenPath)
-	beforeBalance := token.BalanceOf(to)
+	beforeBalance := common.BalanceOf(tokenPath, to)
 
-	common.SafeGRC20TransferFrom(cross(rlm), tokenPath, from, to, amountInt64)
+	common.SafeGRC20TransferFrom(0, rlm, tokenPath, from, to, amountInt64)
 
-	afterBalance := token.BalanceOf(to)
+	afterBalance := common.BalanceOf(tokenPath, to)
 	if gnsmath.SafeAddInt64(beforeBalance, amountInt64) != afterBalance {
 		panic(ufmt.Sprintf(
 			"%v. beforeBalance(%d) + amount(%d) != afterBalance(%d)",

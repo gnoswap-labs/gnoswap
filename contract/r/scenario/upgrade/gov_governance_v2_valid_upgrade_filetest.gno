@@ -46,6 +46,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	govStaker "gno.land/r/gnoswap/gov/staker"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
@@ -152,7 +153,10 @@ func setupVotingPower(cur realm) {
 
 	// Skip the voting weight smoothing duration so the proposal can snapshot
 	// a non-zero voting weight at creation time.
-	config := govGovernance.GetLatestConfig()
+	config, err := govGovernance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
 
 	ufmt.Printf("[EXPECTED] gns delegated to admin (amount: %d)\n", delegatedAmount)
@@ -172,7 +176,10 @@ func createProposalV1(cur realm) int64 {
 	ufmt.Printf("[EXPECTED] v1 created proposal ID: %d\n", proposalID)
 
 	// Skip the voting start delay so the proposal becomes votable.
-	config := govGovernance.GetLatestConfig()
+	config, err := govGovernance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
 	println("[INFO] current height:", runtime.ChainHeight())
 
@@ -224,7 +231,10 @@ func mutateProposalV2Valid(cur realm, proposalID int64) {
 // action status (sets executed=true). A direct-storage write under the upgraded
 // realm would abort with a readonly-taint panic here.
 func executeProposalV2Valid(cur realm, proposalID int64) {
-	config := govGovernance.GetLatestConfig()
+	config, err := govGovernance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	// Advance past votingPeriod + executionDelay (relative to the already-passed
 	// voting start) so the proposal reaches the StatusExecutable window.
@@ -311,7 +321,10 @@ func cancelProposalV2Valid(cur realm, proposalID int64) {
 // proves the per-proposal vote tally / votes map allocated AFTER the upgrade is
 // also writable through the domain realm.
 func voteOnNewProposalV2Valid(cur realm, proposalID int64) {
-	config := govGovernance.GetLatestConfig()
+	config, err := govGovernance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
 	println("[INFO] current height:", runtime.ChainHeight())
 
@@ -341,7 +354,10 @@ func reconfigureV2Valid(cur realm) {
 	)
 	ufmt.Printf("[EXPECTED] reconfigured: prev version %d -> new version %d (no taint panic)\n", prevVersion, newVersion)
 
-	cfg := govGovernance.GetLatestConfig()
+	cfg, err := govGovernance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	ufmt.Printf("[EXPECTED] latest config version: %d\n", govGovernance.GetLatestConfigVersion())
 	ufmt.Printf("[EXPECTED] latest config votingPeriod: %d\n", cfg.VotingPeriod)
 }

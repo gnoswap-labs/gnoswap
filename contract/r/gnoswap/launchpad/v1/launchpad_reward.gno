@@ -3,8 +3,9 @@ package launchpad
 import (
 	"chain"
 	"chain/runtime"
-	"errors"
 	"time"
+
+	"gno.land/r/gnoswap/access"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
@@ -21,11 +22,10 @@ import (
 //
 // Returns:
 //   - amount: reward token amount collected for the deposit
+//
 // Only callable by deposit owner.
 func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -46,7 +46,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 
 	// Transfer reward token to depositor
 	if rewardAmount > 0 {
-		common.SafeGRC20Transfer(cross(rlm), rewardTokenPath, deposit.Depositor(), rewardAmount)
+		common.SafeGRC20Transfer(0, rlm, rewardTokenPath, deposit.Depositor(), rewardAmount)
 	}
 
 	chain.Emit(
@@ -62,7 +62,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.
-func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit *launchpad.Deposit, currentHeight, currentTime int64) (string, int64, error) {
+func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit launchpad.Deposit, currentHeight, currentTime int64) (string, int64, error) {
 	if currentTime <= 0 {
 		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}

@@ -15,6 +15,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 
@@ -93,11 +94,11 @@ func createOBLProject(cur realm) {
 
 	// [INFO] Validate project info
 	testing.SetRealm(launchpadRealm)
-	project, _ := launchpad.GetProject(projectId)
+	project, _ := launchpad.GetProjects().Get(projectId).(*launchpad.Project)
 	println("[EXPECTED] Project name:", project.Name())
 	println("[EXPECTED] Project token path:", project.TokenPath())
 	println("[EXPECTED] Project deposit amount:", project.DepositAmount())
-	tiersRatios := project.TiersRatios()
+	tiersRatios, _ := launchpad.GetProjectTiersRatios(projectId)
 	println("[EXPECTED] Project tier30 ratio:", tiersRatios[30])
 	println("[EXPECTED] Project tier90 ratio:", tiersRatios[90])
 	println("[EXPECTED] Project tier180 ratio:", tiersRatios[180])

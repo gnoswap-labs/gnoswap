@@ -7,6 +7,17 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
+// mustGetTickSpacing returns the tick spacing for a fee tier or panics if the
+// fee tier is not registered. Test-only helper for callers that rely on a
+// valid fee tier.
+func mustGetTickSpacing(fee uint32) int32 {
+	spacing, err := getMockInstance().GetFeeAmountTickSpacing(fee)
+	if err != nil {
+		panic(err)
+	}
+	return spacing
+}
+
 func TestGetPoolPath(cur realm, t *testing.T) {
 	path := GetPoolPath(barTokenPath, fooTokenPath, 500)
 	expected := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
@@ -32,7 +43,7 @@ func TestTickSpacingMap(cur realm, t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		spacing := getMockInstance().GetFeeAmountTickSpacing(tt.fee)
+		spacing, _ := getMockInstance().GetFeeAmountTickSpacing(tt.fee)
 		if spacing != tt.tickSpacing {
 			t.Errorf("For fee %d, expected tick spacing %d, got %d",
 				tt.fee, tt.tickSpacing, spacing)
@@ -49,7 +60,6 @@ func TestCreatePool(cur realm, t *testing.T) {
 		sqrtPrice   string
 		shouldPanic bool
 		panicMsg    string
-		inOrder     bool
 	}{
 		{
 			name:       "success - normal token pair",
@@ -91,7 +101,6 @@ func TestCreatePool(cur realm, t *testing.T) {
 			sqrtPrice:   "4295343490",
 			shouldPanic: false,
 			panicMsg:    "[GNOSWAP-POOL-010] tokens must be in lexicographical order || expected token0Path(gno.land/r/onbloc/foo.FOO) < token1Path(gno.land/r/onbloc/baz.BAZ)",
-			inOrder:     true,
 		},
 		{
 			name:        "fail - pool already exists",
@@ -203,28 +212,43 @@ func TestCreatePool(cur realm, t *testing.T) {
 					mockInstanceCreatePool(0, cur, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 				})
 			} else {
+				expectedPoolInfo := newPoolParams(
+					tt.token0Path,
+					tt.token1Path,
+					tt.fee,
+					tt.sqrtPrice,
+					mustGetTickSpacing(tt.fee),
+					getMockInstance().store.GetSlot0FeeProtocol(),
+				)
+				err := expectedPoolInfo.update()
+				uassert.Nil(t, err, "unexpected pool info update error")
+
 				mockInstanceCreatePool(0, cur, tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
 
 				// verify pool was created correctly
 				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
 				pool := getMockInstance().mustGetPool(poolPath)
+				observations, err := getMockInstance().getObservations(poolPath)
+				uassert.NoError(t, err)
+				initialObservation, ok := observations.Get(0)
+				uassert.True(t, ok)
+				uassert.True(t, initialObservation.Initialized())
 
-				expectedToken0 := tt.token0Path
-				expectedToken1 := tt.token1Path
-				if tt.inOrder {
-					expectedToken0, expectedToken1 = expectedToken1, expectedToken0
+				if pool.Token0Path() != expectedPoolInfo.Token0Path() || pool.Token1Path() != expectedPoolInfo.Token1Path() {
+					t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
+						pool.Token0Path(), pool.Token1Path(), expectedPoolInfo.Token0Path(), expectedPoolInfo.Token1Path())
 				}
 
-				if pool.Token0Path() != expectedToken0 || pool.Token1Path() != expectedToken1 {
-					t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
-						pool.Token0Path(), pool.Token1Path(), expectedToken0, expectedToken1)
+				if pool.Slot0SqrtPriceX96().ToString() != expectedPoolInfo.SqrtPriceX96().ToString() {
+					t.Errorf("incorrect sqrtPriceX96 in pool. got %s want %s",
+						pool.Slot0SqrtPriceX96().ToString(), expectedPoolInfo.SqrtPriceX96().ToString())
 				}
 			}
 		})
 	}
 }
 
-func TestGetPool(cur realm, t *testing.T) {
+func TestGetPoolsGet(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string
 		setupFn     func(cur realm, t *testing.T)
@@ -272,10 +296,13 @@ func TestGetPool(cur realm, t *testing.T) {
 				tt.setupFn(cur, t)
 			}
 
-			pool, err := getMockInstance().GetPool(barPath, fooPath, fee500)
+			poolPath := GetPoolPath(barPath, fooPath, fee500)
+			value := getMockInstance().GetPools().Get(poolPath)
 			if tt.shouldError {
-				uassert.Error(t, err, "expected error")
+				uassert.True(t, value == nil, "expected missing pool")
 			} else {
+				pool, ok := value.(*pl.Pool)
+				uassert.True(t, ok)
 				if tt.verifyFn != nil {
 					tt.verifyFn(t, pool)
 				}

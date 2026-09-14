@@ -29,11 +29,15 @@ type RewardManager struct {
 
 	totalDistributeAmount       int64 // total distributed amount
 	totalClaimedAmount          int64 // total claimed amount
+	activeDepositAmount         int64 // principal represented by active reward states
+	activeClaimedAmount         int64 // claims paid to active reward states
 	distributeStartTime         int64 // start time of reward calculation
 	distributeEndTime           int64 // end time of reward calculation
 	accumulatedDistributeAmount int64 // accumulated distribute amount
 	accumulatedTime             int64 // last time when reward was calculated
 	rewardClaimableDuration     int64 // duration of reward claimable
+
+	activePriceDebtX128 *u256.Uint // sum of active deposit amount × initial reward index
 }
 
 // Rewards returns the rewards tree of the reward manager.
@@ -92,6 +96,30 @@ func (rm *RewardManager) TotalClaimedAmount() int64 {
 // SetTotalClaimedAmount sets the total claimed amount of the reward manager.
 func (rm *RewardManager) SetTotalClaimedAmount(amount int64) {
 	rm.totalClaimedAmount = amount
+}
+
+func (rm *RewardManager) ActiveDepositAmount() int64 {
+	return rm.activeDepositAmount
+}
+
+func (rm *RewardManager) SetActiveDepositAmount(amount int64) {
+	rm.activeDepositAmount = amount
+}
+
+func (rm *RewardManager) ActiveClaimedAmount() int64 {
+	return rm.activeClaimedAmount
+}
+
+func (rm *RewardManager) SetActiveClaimedAmount(amount int64) {
+	rm.activeClaimedAmount = amount
+}
+
+func (rm *RewardManager) ActivePriceDebtX128() *u256.Uint {
+	return rm.activePriceDebtX128
+}
+
+func (rm *RewardManager) SetActivePriceDebtX128(debt *u256.Uint) {
+	rm.activePriceDebtX128 = u256.Zero().Set(debt)
 }
 
 // DistributeStartTime returns the distribute start time of the reward manager.
@@ -161,11 +189,14 @@ func (rm RewardManager) Clone() *RewardManager {
 		accumulatedRewardPerDepositX128: rm.accumulatedRewardPerDepositX128.Clone(),
 		totalDistributeAmount:           rm.totalDistributeAmount,
 		totalClaimedAmount:              rm.totalClaimedAmount,
+		activeDepositAmount:             rm.activeDepositAmount,
+		activeClaimedAmount:             rm.activeClaimedAmount,
 		distributeStartTime:             rm.distributeStartTime,
 		distributeEndTime:               rm.distributeEndTime,
 		accumulatedDistributeAmount:     rm.accumulatedDistributeAmount,
 		accumulatedTime:                 rm.accumulatedTime,
 		rewardClaimableDuration:         rm.rewardClaimableDuration,
+		activePriceDebtX128:             rm.activePriceDebtX128.Clone(),
 	}
 }
 
@@ -181,11 +212,14 @@ func NewRewardManager(
 		distributeStartTime:             distributeStartTime,
 		distributeEndTime:               distributeEndTime,
 		totalClaimedAmount:              0,
+		activeDepositAmount:             0,
+		activeClaimedAmount:             0,
 		accumulatedDistributeAmount:     0,
 		accumulatedTime:                 0,
 		accumulatedRewardPerDepositX128: u256.Zero(),
 		distributeAmountPerSecondX128:   u256.Zero(),
 		rewardClaimableDuration:         rewardCollectableDuration,
+		activePriceDebtX128:             u256.Zero(),
 		rewards:                         bptree.NewBPTreeN(16),
 	}
 }

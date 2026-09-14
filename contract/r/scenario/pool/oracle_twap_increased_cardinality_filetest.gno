@@ -3,14 +3,16 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -82,8 +84,9 @@ func main(cur realm) {
 	println("[INFO] Increasing observation cardinality limit to 100")
 	pool.IncreaseObservationCardinalityNext(cross(cur), barPath, fooPath, fee500, 100)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee500)
-	println("[INFO] Observation cardinality limit:", thisPool.ObservationState().CardinalityNext())
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
+	slot0 := thisPool.Slot0()
+	println("[INFO] Observation cardinality limit:", slot0.ObservationCardinalityNext())
 	println()
 
 	// Add liquidity
@@ -101,7 +104,7 @@ func main(cur realm) {
 		adminAddr,
 	)
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool liquidity:", thisPool.Liquidity().ToString())
 	println("[INFO] Initial pool tick:", thisPool.Slot0Tick())
 	println()
@@ -125,14 +128,13 @@ func main(cur realm) {
 		true,
 		"1000000",
 		minPrice,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool tick after first swap:", thisPool.Slot0Tick())
 	println()
 
@@ -155,14 +157,13 @@ func main(cur realm) {
 		false,
 		"500000",
 		maxPrice,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
 	)
 
 	testing.SetRealm(adminRealm)
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee500)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	println("[INFO] Pool tick after second swap:", thisPool.Slot0Tick())
 	println()
 
@@ -176,15 +177,15 @@ func main(cur realm) {
 	println("[SCENARIO] 9. TWAP Queries at Different Intervals")
 	poolPath := barPath + ":" + fooPath + ":" + "500"
 
-	twapTick1h, twapLiquidity1h, _ := pool.GetTWAP(poolPath, quarterSeconds)
+	twapTick1h, twapLiquidity1h, _ := pool.OracleConsult(poolPath, quarterSeconds)
 	ufmt.Printf("[EXPECTED] TWAP for last 1 hour (3600s ago) - tick: %d, liquidity: %s\n", twapTick1h, twapLiquidity1h)
 	println()
 
-	twapTick2h, twapLiquidity2h, _ := pool.GetTWAP(poolPath, halfSeconds)
+	twapTick2h, twapLiquidity2h, _ := pool.OracleConsult(poolPath, halfSeconds)
 	ufmt.Printf("[EXPECTED] TWAP for last 2 hours (7200s ago) - tick: %d, liquidity: %s\n", twapTick2h, twapLiquidity2h)
 	println()
 
-	twapTick4h, twapLiquidity4h, _ := pool.GetTWAP(poolPath, totalSeconds)
+	twapTick4h, twapLiquidity4h, _ := pool.OracleConsult(poolPath, totalSeconds)
 	ufmt.Printf("[EXPECTED] TWAP for last 4 hours (14400s ago) - tick: %d, liquidity: %s\n", twapTick4h, twapLiquidity4h)
 	println()
 
@@ -196,10 +197,10 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -216,7 +217,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 //
 // [SCENARIO] 2. Increase Observation Cardinality
 // [INFO] Increasing observation cardinality limit to 100
-// [INFO] Observation cardinality limit: 1
+// [INFO] Observation cardinality limit: 100
 //
 // [SCENARIO] 3. Add Liquidity
 // [INFO] Minting position: tick range [-5000, 5000], liquidity: 100000000

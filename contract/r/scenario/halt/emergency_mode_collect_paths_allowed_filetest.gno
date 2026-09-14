@@ -10,9 +10,11 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/r/gnoswap/scenarioutils"
+
 	"gno.land/p/gnoswap/gnsmath"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -22,6 +24,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	_ "gno.land/r/gnoswap/common/v1"
 	communitypool "gno.land/r/gnoswap/community_pool"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
@@ -163,12 +166,12 @@ func main(cur realm) {
 	testPoolBurnAllowed(cur)
 	println()
 
-	println("[SCENARIO] 16. pool.Collect remains allowed")
-	testPoolCollectAllowed(cur)
+	println("[SCENARIO] 16. pool.CollectSwapFee remains allowed")
+	testPoolCollectSwapFeeAllowed(cur)
 	println()
 
-	println("[SCENARIO] 17. pool.HandleWithdrawalFee remains allowed")
-	testPoolHandleWithdrawalFeeAllowed(cur)
+	println("[SCENARIO] 17. pool.Collect remains allowed")
+	testPoolCollectAllowed(cur)
 	println()
 
 	println("[SCENARIO] 18. pool.CollectProtocol remains allowed")
@@ -226,6 +229,7 @@ func main(cur realm) {
 
 func setupCollectScenario(cur realm) {
 	testing.SetRealm(adminRealm2)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 	pool.SetPoolCreationFee(cross(cur), 0)
@@ -297,10 +301,10 @@ func setupCollectScenario(cur realm) {
 
 func executeEmergencyCollectFeeSwaps(cur realm) {
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
-	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, true, "10000000", collectMinPrice, adminAddr2, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
+	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, true, "10000000", collectMinPrice, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 		return emergencyCollectSwapCallback(cur, amount0Delta, amount1Delta)
 	})
-	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, false, "10000000", collectMaxPrice, adminAddr2, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
+	pool.Swap(cross(cur), barPath2, fooPath2, fee2, adminAddr2, false, "10000000", collectMaxPrice, func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 		return emergencyCollectSwapCallback(cur, amount0Delta, amount1Delta)
 	})
 }
@@ -308,10 +312,10 @@ func executeEmergencyCollectFeeSwaps(cur realm) {
 func emergencyCollectSwapCallback(cur realm, amount0Delta, amount1Delta int64) error {
 	testing.SetRealm(adminRealm2)
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), barPath2, poolAddr2, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, barPath2, poolAddr2, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), fooPath2, poolAddr2, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, fooPath2, poolAddr2, amount1Delta)
 	}
 	return nil
 }
@@ -356,7 +360,10 @@ func setEmergencyModeForCollect(cur realm) {
 }
 
 func prepareGovernanceQuorumForEmergencyExecution(cur realm) {
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SetRealm(adminRealm2)
 	governance.Reconfigure(cross(cur), config.VotingStartDelay, config.VotingPeriod, config.VotingWeightSmoothingDuration, 40, config.ProposalCreationThreshold, config.ExecutionDelay, config.ExecutionWindow)
 }
@@ -480,20 +487,22 @@ func testPoolBurnAllowed(cur realm) {
 	ufmt.Println("[EXPECTED] pool.Burn succeeded in emergency mode")
 }
 
-func testPoolCollectAllowed(cur realm) {
+func testPoolCollectSwapFeeAllowed(cur realm) {
 	testing.SetRealm(positionRealm2)
-	amount0, amount1 := pool.Collect(cross(cur), barPath2, fooPath2, fee2, aliceAddr2, directPoolTickLower, directPoolTickUpper, strconv.FormatInt(collectInt64Max, 10), strconv.FormatInt(collectInt64Max, 10))
-	assertPositiveString(cur, amount0, "pool.Collect amount0")
-	assertPositiveString(cur, amount1, "pool.Collect amount1")
-	ufmt.Printf("[EXPECTED] pool.Collect amount0: %s, amount1: %s\n", amount0, amount1)
-	ufmt.Println("[EXPECTED] pool.Collect succeeded in emergency mode")
+	amount0, amount1, fee0, fee1 := pool.CollectSwapFee(cross(cur), barPath2, fooPath2, fee2, aliceAddr2, directPoolTickLower, directPoolTickUpper, strconv.FormatInt(collectInt64Max, 10), strconv.FormatInt(collectInt64Max, 10))
+	assertPositiveString(cur, amount0, "pool.CollectSwapFee amount0")
+	assertPositiveString(cur, amount1, "pool.CollectSwapFee amount1")
+	ufmt.Printf("[EXPECTED] pool.CollectSwapFee amount0: %s, amount1: %s, fee0: %s, fee1: %s\n", amount0, amount1, fee0, fee1)
+	ufmt.Println("[EXPECTED] pool.CollectSwapFee succeeded in emergency mode")
 }
 
-func testPoolHandleWithdrawalFeeAllowed(cur realm) {
+func testPoolCollectAllowed(cur realm) {
+	// The position was drained by the CollectSwapFee call above, so this only
+	// proves the withdraw halt still lets the fee-free path through.
 	testing.SetRealm(positionRealm2)
-	fee0, fee1, net0, net1 := pool.HandleWithdrawalFee(cross(cur), barPath2, "1000", fooPath2, "1000", aliceAddr2)
-	ufmt.Printf("[EXPECTED] pool.HandleWithdrawalFee fee0: %s, fee1: %s, net0: %s, net1: %s\n", fee0, fee1, net0, net1)
-	ufmt.Println("[EXPECTED] pool.HandleWithdrawalFee succeeded in emergency mode")
+	amount0, amount1 := pool.Collect(cross(cur), barPath2, fooPath2, fee2, aliceAddr2, directPoolTickLower, directPoolTickUpper, strconv.FormatInt(collectInt64Max, 10), strconv.FormatInt(collectInt64Max, 10))
+	ufmt.Printf("[EXPECTED] pool.Collect amount0: %s, amount1: %s\n", amount0, amount1)
+	ufmt.Println("[EXPECTED] pool.Collect succeeded in emergency mode")
 }
 
 func testPoolCollectProtocolAllowed(cur realm) {
@@ -572,7 +581,10 @@ func testGovernanceProposeCommunityPoolSpendAllowed(cur realm) {
 }
 
 func testGovernanceProposeParameterChangeAllowed(cur realm) {
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	executions := ufmt.Sprintf(
 		"gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*%d,%d,%d,%d,%d,%d,%d",
 		config.VotingStartDelay,
@@ -591,7 +603,10 @@ func testGovernanceProposeParameterChangeAllowed(cur realm) {
 }
 
 func testGovernanceVoteAllowed(cur realm) {
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingStartDelay) / collectCurrentBlockTime)
 	testing.SetRealm(aliceRealm2)
 	aliceVote := governance.Vote(cross(cur), parameterChangeProposalID, true)
@@ -606,7 +621,10 @@ func testGovernanceVoteAllowed(cur realm) {
 }
 
 func testGovernanceExecuteAllowed(cur realm) {
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingPeriod) / collectCurrentBlockTime)
 	testing.SetRealm(bobRealm2)
 	executedID := governance.Execute(cross(cur), parameterChangeProposalID)
@@ -615,7 +633,10 @@ func testGovernanceExecuteAllowed(cur realm) {
 }
 
 func testGovernanceReconfigureAllowed(cur realm) {
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SetRealm(adminRealm2)
 	version := governance.Reconfigure(cross(cur), config.VotingStartDelay, config.VotingPeriod, config.VotingWeightSmoothingDuration, config.Quorum, config.ProposalCreationThreshold, config.ExecutionDelay, config.ExecutionWindow+100)
 	ufmt.Printf("[EXPECTED] governance.Reconfigure version: %d\n", version)
@@ -706,20 +727,20 @@ func assertPositiveString(cur realm, value string, label string) {
 // [EXPECTED] pool.Burn amount0: 5, amount1: 5
 // [EXPECTED] pool.Burn succeeded in emergency mode
 //
-// [SCENARIO] 16. pool.Collect remains allowed
-// [EXPECTED] pool.Collect amount0: 17, amount1: 17
-// [EXPECTED] pool.Collect succeeded in emergency mode
+// [SCENARIO] 16. pool.CollectSwapFee remains allowed
+// [EXPECTED] pool.CollectSwapFee amount0: 17, amount1: 17, fee0: 0, fee1: 0
+// [EXPECTED] pool.CollectSwapFee succeeded in emergency mode
 //
-// [SCENARIO] 17. pool.HandleWithdrawalFee remains allowed
-// [EXPECTED] pool.HandleWithdrawalFee fee0: 10, fee1: 10, net0: 990, net1: 990
-// [EXPECTED] pool.HandleWithdrawalFee succeeded in emergency mode
+// [SCENARIO] 17. pool.Collect remains allowed
+// [EXPECTED] pool.Collect amount0: 0, amount1: 0
+// [EXPECTED] pool.Collect succeeded in emergency mode
 //
 // [SCENARIO] 18. pool.CollectProtocol remains allowed
 // [EXPECTED] pool.CollectProtocol amount0: 1000, amount1: 1000
 // [EXPECTED] pool.CollectProtocol succeeded in emergency mode
 //
 // [SCENARIO] 19. staker.EndExternalIncentive remains allowed
-// [EXPECTED] staker.EndExternalIncentive BAR delta: 1000000000, GNS delta: 1000000000
+// [EXPECTED] staker.EndExternalIncentive BAR delta: 1000000000, GNS delta: 100000000000
 // [EXPECTED] staker.EndExternalIncentive succeeded in emergency mode
 //
 // [SCENARIO] 20. staker.CollectExternalIncentivePenalty remains allowed

@@ -31,3 +31,14 @@ func TestInit_initStoreDataUsesFreshFeeAmountTickSpacingPerStore(cur realm, t *t
 	uassert.Equal(t, secondStoreFeeAmountTickSpacing[3000], int32(60))
 	uassert.Equal(t, secondStoreFeeAmountTickSpacing[10000], int32(200))
 }
+
+func TestInit_initStoreDataRejectsPoolWithoutObservations(cur realm, t *testing.T) {
+	poolStore := mock.NewMockPoolStore()
+	uassert.NoError(t, initStoreData(0, cur, poolStore))
+
+	pool := createTestPool()
+	poolStore.GetPools().Set(pool.PoolPath(), pool)
+
+	err := initStoreData(0, cur, poolStore)
+	uassert.ErrorContains(t, err, "expected observations for poolPath")
+}

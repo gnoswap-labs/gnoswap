@@ -26,6 +26,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -136,7 +137,7 @@ func singleHopDefaultFee(cur realm) {
 
 	userBarChange := userBarAfter - userBarBefore
 	userBazChange := userBazBefore - userBazAfter // input consumed (positive)
-	poolBarChange := poolBarBefore - poolBarAfter  // pool output (positive)
+	poolBarChange := poolBarBefore - poolBarAfter // pool output (positive)
 	protocolFee := feeBarAfter - feeBarBefore
 
 	ufmt.Printf("[INFO] amountIn: %s, amountOut: %s\n", amountIn, amountOut)
@@ -209,9 +210,9 @@ func multiHopDefaultFee(cur realm) {
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross(cur),
-		barPath,  // inputToken
-		fooPath,  // outputToken
-		"1000",   // user wants exactly 1,000 foo
+		barPath, // inputToken
+		fooPath, // outputToken
+		"1000",  // user wants exactly 1,000 foo
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:3000",
 		"100",
 		"9223372036854775807",
@@ -283,7 +284,7 @@ func multiHop1PercentFee(cur realm) {
 // [INFO] created bar:baz:3000 and baz:foo:3000 pools with 100M liquidity each
 //
 // [SCENARIO] 2. Single-hop ExactOut (0.15% fee, 1,000,000 bar)
-// [INFO] amountIn: 1014679, amountOut: -1000000
+// [INFO] amountIn: 1014679, amountOut: 1000000
 // [INFO] user bar received: 1000000
 // [INFO] user baz consumed: 1014679
 // [INFO] pool bar output: 1001502
@@ -292,7 +293,7 @@ func multiHop1PercentFee(cur realm) {
 // [EXPECTED] protocol fee = pool output - user received: 1502 = 1001502 - 1000000
 //
 // [SCENARIO] 3. Single-hop ExactOut (1% fee, 1,000,000 bar)
-// [INFO] amountIn: 1044400, amountOut: -1000000
+// [INFO] amountIn: 1044400, amountOut: 1000000
 // [INFO] user bar received: 1000000
 // [INFO] pool bar output: 1010101
 // [INFO] protocol fee (bar): 10101
@@ -300,14 +301,14 @@ func multiHop1PercentFee(cur realm) {
 // [EXPECTED] protocol fee = pool output - user received: 10101 = 1010101 - 1000000
 //
 // [SCENARIO] 4. Multi-hop ExactOut (0.15% fee, 1,000 foo via bar→baz→foo)
-// [INFO] amountIn: 969, amountOut: -1000
+// [INFO] amountIn: 969, amountOut: 1000
 // [INFO] user foo received: 1000
 // [INFO] user bar consumed: 969
 // [INFO] protocol fee (foo): 1
 // [EXPECTED] user receives exactly 1,000 foo: 1000
 //
 // [SCENARIO] 5. Multi-hop ExactOut (1% fee, 1,000 foo via bar→baz→foo)
-// [INFO] amountIn: 978, amountOut: -1000
+// [INFO] amountIn: 978, amountOut: 1000
 // [INFO] user foo received: 1000
 // [INFO] user bar consumed: 978
 // [INFO] protocol fee (foo): 10

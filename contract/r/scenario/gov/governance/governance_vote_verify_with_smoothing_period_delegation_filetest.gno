@@ -20,6 +20,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -52,7 +53,10 @@ var (
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	proposalQuorumWeights = make(map[int64]int64)
 
 	// Calculate timing for delegation changes within smoothing period
@@ -172,7 +176,11 @@ func checkCurrentXgnsBalance(cur realm) {
 }
 
 func prepareProposalCreator(cur realm, proposerAddr address) {
-	amount := governance.GetLatestConfig().ProposalCreationThreshold
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
+	amount := config.ProposalCreationThreshold
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Transfer(cross(cur), proposerAddr, amount)
@@ -189,7 +197,11 @@ func proposeText(cur realm, proposerAddr address) int64 {
 	proposalId := governance.ProposeText(cross(cur), "test_title", "test_description")
 	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 	quorumWeight := xgns.TotalSupply()
-	expectedQuorumAmount := quorumWeight * governance.GetLatestConfig().Quorum / 100
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
+	expectedQuorumAmount := quorumWeight * config.Quorum / 100
 	proposalQuorumWeights[proposalId] = quorumWeight
 
 	uassert.Equal(t, expectedQuorumAmount, quorumAmount)
@@ -241,7 +253,11 @@ func verifyVotingWeight(cur realm, proposalId int64, hasVoter2VotingWeight bool)
 	nayWeight, _ := governance.GetNayByProposalId(proposalId)
 	quorumAmount, _ := governance.GetQuorumAmountByProposalId(proposalId)
 	quorumWeight := proposalQuorumWeights[proposalId]
-	expectedQuorumAmount := quorumWeight * governance.GetLatestConfig().Quorum / 100
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
+	expectedQuorumAmount := quorumWeight * config.Quorum / 100
 	uassert.Equal(t, expectedQuorumAmount, quorumAmount)
 
 	// Get xGNS balances

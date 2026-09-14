@@ -10,18 +10,21 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -75,6 +78,7 @@ func main(cur realm) {
 
 func setup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	pool.SetPoolCreationFee(cross(cur), 0)
 
@@ -98,7 +102,8 @@ func setup(cur realm) {
 		"10000000", "10000000",
 		"1", "1",
 		maxTimeout,
-		aliceAddr, "")
+		aliceAddr, "",
+	)
 	positionId1 = id1
 
 	id2, _, _, _ := position.Mint(
@@ -108,7 +113,8 @@ func setup(cur realm) {
 		"10000000", "10000000",
 		"1", "1",
 		maxTimeout,
-		aliceAddr, "")
+		aliceAddr, "",
+	)
 	positionId2 = id2
 
 	println("[EXPECTED] Position 1:", positionId1)
@@ -126,8 +132,8 @@ func operatorTransfersBoth(cur realm) {
 	gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, positionId1))
 	gnft.TransferFrom(cross(cur), aliceAddr, carolAddr, tokenIdOf(cur, positionId2))
 
-	owner1 := gnft.MustOwnerOf(tokenIdOf(cur, positionId1))
-	owner2 := gnft.MustOwnerOf(tokenIdOf(cur, positionId2))
+	owner1 := mustOwnerOf(tokenIdOf(cur, positionId1))
+	owner2 := mustOwnerOf(tokenIdOf(cur, positionId2))
 	println("[EXPECTED] Position 1 owner is bob:", owner1 == bobAddr)
 	println("[EXPECTED] Position 2 owner is carol:", owner2 == carolAddr)
 }
@@ -147,7 +153,8 @@ func revokeOperator(cur realm) {
 		"10000000", "10000000",
 		"1", "1",
 		maxTimeout,
-		aliceAddr, "")
+		aliceAddr, "",
+	)
 
 	gnft.SetApprovalForAll(cross(cur), bobAddr, false)
 	println("[INFO] Alice revoked Bob's operator status")
@@ -166,6 +173,14 @@ func revokeOperator(cur realm) {
 
 func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(id, 10))
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

@@ -3,7 +3,6 @@ package staker
 import (
 	"chain"
 	"chain/runtime"
-	"errors"
 	"time"
 
 	"gno.land/p/gnoswap/utils"
@@ -20,9 +19,7 @@ const (
 // SetPoolTier assigns a tier level to a pool for internal GNS emission rewards.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 
@@ -58,9 +55,7 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 // ChangePoolTier modifies the tier level of an existing pool.
 // Only admin or governance can call this function.
 func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 
@@ -104,9 +99,7 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 // RemovePoolTier removes a pool from internal GNS emission rewards.
 // Only admin or governance can call this function.
 func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 
@@ -147,9 +140,7 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 // SetWarmUp configures the warm-up percentage and duration for rewards.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedStaker()
 

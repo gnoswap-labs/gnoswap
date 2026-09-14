@@ -35,6 +35,7 @@ import (
 //
 // Returns:
 //   - projectID: newly created launchpad project ID
+//
 // Only callable by admin or governance.
 func (lp *launchpadV1) CreateProject(
 	_ int,
@@ -50,9 +51,7 @@ func (lp *launchpadV1) CreateProject(
 	tier180Ratio int64,
 	startTime int64,
 ) string {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedLaunchpad()
 
@@ -101,7 +100,7 @@ func (lp *launchpadV1) CreateProject(
 
 	// Interactions: transfer tokens
 	common.SafeGRC20TransferFrom(
-		cross(rlm),
+		0, rlm,
 		tokenPath,
 		caller,
 		launchpadAddr,
@@ -240,6 +239,11 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 	if err := lp.store.SetProjectTierRewardManagers(0, rlm, projectTierRewardManagers); err != nil {
 		return nil, err
 	}
+	recipients := lp.store.GetProjectRecipients()
+	recipients.Set(project.Recipient().String(), true)
+	if err := lp.store.SetProjectRecipients(0, rlm, recipients); err != nil {
+		return nil, err
+	}
 
 	return project, nil
 }
@@ -254,9 +258,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 // Returns:
 //   - amount: amount of reward tokens transferred to the recipient
 func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64 {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedLaunchpad()
 
@@ -328,21 +330,29 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 	accumLeftReward := int64(0)
 	accumCollectedReward := int64(0)
 	accumCollectableReward := int64(0)
+	refundableAmountsByTier := make(map[int64]int64)
 
-	for _, tier := range project.Tiers() {
-		// Calculate pending rewards for remaining depositors
-		currentDepositCount := getTierCurrentDepositCount(tier)
-
-		if currentDepositCount > 0 {
-			claimableReward, err := lp.applyTierRewardGrowthWithRewards(tier, currentTime)
+	for duration, tier := range project.Tiers() {
+		// Settlement uses tier aggregate accounting, never the unbounded
+		// per-deposit reward tree.
+		tierCollectableReward := int64(0)
+		if getTierCurrentDepositCount(tier) > 0 {
+			var err error
+			tierCollectableReward, err = lp.applyTierRewardGrowthWithRewards(tier, currentTime)
 			if err != nil {
 				return 0, err
 			}
 
-			accumCollectableReward = gnsmath.SafeAddInt64(accumCollectableReward, claimableReward)
+			accumCollectableReward = gnsmath.SafeAddInt64(accumCollectableReward, tierCollectableReward)
 		}
 
 		leftReward := getCalculatedLeftReward(tier)
+		tierRefundableAmount := gnsmath.SafeSubInt64(leftReward, tierCollectableReward)
+		if tierRefundableAmount < 0 {
+			return 0, errors.New(ufmt.Sprintf("tierRefundableAmount(%d) < 0", tierRefundableAmount))
+		}
+
+		refundableAmountsByTier[duration] = tierRefundableAmount
 		accumLeftReward = gnsmath.SafeAddInt64(accumLeftReward, leftReward)
 		accumCollectedReward = gnsmath.SafeAddInt64(accumCollectedReward, tier.TotalCollectedAmount())
 		accumTotalDistributeAmount = gnsmath.SafeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
@@ -357,38 +367,48 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 		return 0, errors.New(ufmt.Sprintf("accumTotalDistributeAmount(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalDistributeAmount, accumCollectedReward, accumLeftReward))
 	}
 
-	// Calculate refundable amount: project remaining minus claimable rewards for remaining depositors
+	// Calculate refundable amount: project remaining minus collectable rewards for remaining depositors
 	projectLeftReward := accumLeftReward
-	refundableAmount := gnsmath.SafeSubInt64(projectLeftReward, accumCollectableReward)
+	projectRefundableAmount := gnsmath.SafeSubInt64(projectLeftReward, accumCollectableReward)
 
-	if refundableAmount < 0 {
-		return 0, errors.New(ufmt.Sprintf("refundableAmount(%d) < 0", refundableAmount))
+	if projectRefundableAmount < 0 {
+		return 0, errors.New(ufmt.Sprintf("projectRefundableAmount(%d) < 0", projectRefundableAmount))
 	}
 
-	if refundableAmount > 0 {
-		common.SafeGRC20Transfer(cross(rlm), project.TokenPath(), recipient, refundableAmount)
+	if projectRefundableAmount > 0 {
+		updatedTiers := make(map[int64]*launchpad.ProjectTier)
+		for duration, tier := range project.Tiers() {
+			tierRefundableAmount := refundableAmountsByTier[duration]
+			if tierRefundableAmount > 0 {
+				tier.SetTotalCollectedAmount(gnsmath.SafeAddInt64(tier.TotalCollectedAmount(), tierRefundableAmount))
+			}
+
+			updatedTiers[duration] = tier
+		}
+		project.SetTiers(updatedTiers)
+
+		common.SafeGRC20Transfer(0, rlm, project.TokenPath(), recipient, projectRefundableAmount)
 	}
 
-	return refundableAmount, nil
+	return projectRefundableAmount, nil
 }
 
-// applyTierRewardGrowthWithRewards calculates the total claimable rewards
-// for all active deposits in a specific tier.
+// applyTierRewardGrowthWithRewards updates a tier index and returns a
+// conservative aggregate reservation for active claims. Rounding dust remains
+// in the project instead of risking an under-reserved depositor claim.
 func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectTier, currentTime int64) (int64, error) {
 	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
 	if err != nil {
 		return 0, err
 	}
 
-	// Update reward accumulation to current time before calculating claimable.
-	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(tier), currentTime)
-	if err != nil {
+	if err := updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(tier), currentTime); err != nil {
 		return 0, err
 	}
 
 	emitUpdateLaunchpadRewardAccumulation(tier.ID(), rewardManager, getTierCurrentDepositAmount(tier))
 
-	return calculateClaimableRewardsForActiveDeposits(rewardManager), nil
+	return calculateMaximumClaimableRewardsForActiveDeposits(rewardManager), nil
 }
 
 // validateTransferLeft validates the transfer of remaining tokens

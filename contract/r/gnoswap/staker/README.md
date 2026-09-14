@@ -4,11 +4,11 @@ Liquidity mining and reward distribution for LP positions.
 
 ## Overview
 
-Staker manages distribution of internal (GNS emission) and external (admin-funded) rewards to staked LP positions, with time-weighted rewards and warmup periods.
+Staker manages distribution of internal (GNS emission) and external (user-provided) rewards to staked LP positions, with time-weighted rewards and warmup periods.
 
 ## Configuration
 
-- **Deposit GNS Amount**: 1,000 GNS for external incentives (default)
+- **Deposit GNS Amount**: 100,000 GNS for external incentives (default)
 - **Minimum Reward Amount**: 1,000 tokens (default)
 - **Unstaking Fee**: 1% (default)
 - **Pool Tiers**: 1, 2, or 3 (assigned per pool)
@@ -24,13 +24,12 @@ Staker manages distribution of internal (GNS emission) and external (admin-funde
 - Distributed proportionally to in-range liquidity
 - Unclaimed rewards go to community pool
 
-### External Rewards (Admin-Funded Incentives)
+### External Rewards (User Incentives)
 
 - Created for specific pools
-- Constant reward per second over the configured incentive window
+- Constant reward per block
 - Proportional to staked liquidity
-- `EndExternalIncentive` refunds the remaining reward balance and the GNS deposit to the explicit refund address
-- Accumulated warmup penalties are collected separately through `CollectExternalIncentivePenalty`
+- Unclaimed rewards returned to creator
 
 ### Warmup Periods
 
@@ -49,23 +48,26 @@ Stakes LP position NFT to earn rewards.
 
 ### `UnStakeToken`
 
-Unstakes position and collects all rewards.
+Unstakes a position and records an exit checkpoint for its rewards. It neither calculates nor
+pays them: withdrawing must never depend on the reward side.
 
 ### `CollectReward`
 
-Collects accumulated rewards without unstaking.
+Collects accumulated rewards. Takes a position that was unstaked without collecting as well as a
+staked one, so withdrawing is `UnStakeToken` plus one collect. A collect on an unstaked position
+is permissionless, since it can only ever pay that position's owner.
 
 ### `CreateExternalIncentive`
 
-Creates external reward program for specific pool. Admin only.
+Creates external reward program for specific pool.
 
 ### `EndExternalIncentive`
 
-Ends incentive program and refunds remaining rewards to the provided refund address.
+Ends incentive program and returns unused rewards.
 
-### `CollectExternalIncentivePenalty`
+### `CancelExternalIncentive`
 
-Collects accumulated warmup penalties for an ended incentive to the provided refund address.
+Removes a not-yet-started incentive and refunds the rewards and GNS deposit to the creator. Callable by admin, governance, or the creator.
 
 ## Reward Calculation Logic
 
@@ -172,33 +174,31 @@ The system maintains:
 
 ```go
 // Stake existing position
-StakeToken(cross, 123, "g1referrer...")
+StakeToken(123, "g1referrer...")
 
 // Create external incentive
 CreateExternalIncentive(
-    cross,
     "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",
     "gno.land/r/demo/reward",
-    1000000000,
+    "1000000000",  // 1000 tokens
     startTime,
     endTime,
 )
 
 // Collect rewards without unstaking
-CollectReward(cross, 123)
+CollectReward(123)
 
-// End an incentive and collect remaining penalties
-EndExternalIncentive(cross, poolPath, incentiveId, refundAddress)
-CollectExternalIncentivePenalty(cross, poolPath, incentiveId, refundAddress)
+// Unstake; rewards are checkpointed, not calculated or paid
+UnStakeToken(123)
 
-// Unstake and collect all rewards
-UnStakeToken(cross, 123)
+// Collect works on the checkpoint too, per source or all at once
+CollectEmissionReward(123)
+CollectExternalIncentiveReward(123, incentiveId)
 ```
 
 ## Security
 
 - Positions locked during staking
-- External incentive creation restricted to admin
 - External incentives require GNS deposit
 - Warmup periods prevent gaming
 - Unclaimed rewards properly redirected

@@ -17,6 +17,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -88,7 +89,7 @@ func mintPosition(cur realm) {
 
 	pn.Mint(cross(cur), barPath, fooPath, 3000, min_tick, max_tick, "100000000", "100000000", "0", "0", max_timeout, adminAddr, "")
 
-	pool, _ := pl.GetPool(barPath, fooPath, FEE_MEDIUM)
+	pool, _ := pl.GetPools().Get(pl.GetPoolPath(barPath, fooPath, FEE_MEDIUM)).(*pl.Pool)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 100000000")
 }
@@ -170,7 +171,7 @@ func swapRouteWithBalanceCheck(cur realm) {
 // [INFO] protocol fee foo balance: 0
 // [INFO] Executing ExactOut swap
 // [EXPECTED] amountIn: 1014679
-// [EXPECTED] amountOut: -1000000
+// [EXPECTED] amountOut: 1000000
 // [EXPECTED] admin bar balance change: 1000000
 // [EXPECTED] admin foo balance change: -1014679
 // [EXPECTED] pool bar balance change: -1001502

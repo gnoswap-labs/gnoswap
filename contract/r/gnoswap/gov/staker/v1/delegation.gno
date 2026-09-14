@@ -115,7 +115,7 @@ func (r *DelegationResolver) processCollection(currentTime int64) (int64, error)
 
 func addToCollectedAmount(collectedAmount, amount int64) (int64, error) {
 	if amount < 0 {
-		return 0, errors.New("amount must be non-negative")
+		return 0, errors.New(errAmountMustBeNonNegative)
 	}
 	return gnsmath.SafeAddInt64(collectedAmount, amount), nil
 }

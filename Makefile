@@ -57,8 +57,8 @@ WORKDIR ?= tmp
 test:
 	@if [ -z "$(PKG)" ]; then \
 		echo "❌ Error: Please specify a package using 'make test PKG=<path>'"; \
-		echo "   Example: make test PKG=gno.land/r/gnoswap/v1/pool"; \
-		echo "   Example: make test PKG=gno.land/r/gnoswap/v1/pool RUN=TestCreatePool"; \
+		echo "   Example: make test PKG=gno.land/r/gnoswap/pool/v1"; \
+		echo "   Example: make test PKG=gno.land/r/gnoswap/pool/v1 RUN=TestCreatePool"; \
 		exit 1; \
 	fi
 	@if [ ! -d "$(WORKDIR)/gno" ]; then \

@@ -108,6 +108,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 			if !ps.HasPoolCreationFee() {
 				ps.SetPoolCreationFee(0, cur, 100)
 			}
+			uassert.NoError(t, ps.SetPendingProtocolFees(0, cur, map[string]int64{"token": 10}))
 
 			testing.SetRealm(tc.callerRealm)
 			if tc.expectedErrorWithRead {
@@ -123,6 +124,25 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
 				uassert.NoError(t, err)
+			}
+
+			err = ps.SetPendingProtocolFee(0, cur, "token", 20)
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+				uassert.Equal(t, int64(10), ps.GetPendingProtocolFee("token"))
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(20), ps.GetPendingProtocolFee("token"))
+			}
+
+			err = ps.RemovePendingProtocolFee(0, cur, "token")
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+				uassert.Equal(t, int64(10), ps.GetPendingProtocolFee("token"))
+			} else {
+				uassert.NoError(t, err)
+				_, exists := ps.GetPendingProtocolFees()["token"]
+				uassert.False(t, exists)
 			}
 		})
 	}

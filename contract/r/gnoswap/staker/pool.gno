@@ -8,6 +8,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -241,12 +242,21 @@ func NewPool(poolPath string, currentTime int64) *Pool {
 //     Maps start timestamp (key) to end timestamp (value)
 //     An end timestamp of 0 indicates an ongoing unclaimable period
 //     Used to track intervals when staking rewards are not claimable
+//
+//   - byStartTime: Per-pool start-time index mapping an incentive's start
+//     timestamp (key) to the incentive IDs that start at that timestamp
+//     (value). This mirrors the lazy-discovery lookup previously served by a
+//     global creation-time index, but scoped to this pool's own incentives, so
+//     discovery cost is bounded by this pool's incentives instead of growing
+//     with the total number of incentives system-wide.
 type Incentives struct {
 	incentives *bptree.BPTree // (incentiveId) => ExternalIncentive
 
 	targetPoolPath string // The target pool path for this incentive collection
 
 	unclaimablePeriods *UintTree // blockTimestamp -> any
+
+	byStartTime *UintTree // startTimestamp -> []incentiveId
 }
 
 // Incentives Getter/Setter methods
@@ -296,6 +306,15 @@ func (i *Incentives) SetIncentive(incentiveId string, incentive *ExternalIncenti
 	i.incentives.Set(incentiveId, incentive)
 }
 
+// RemoveIncentive deletes an incentive by ID.
+//
+// Only an incentive that never started may be removed: once rewards begin
+// accruing, deposits and the refund accounting reference the record, so an
+// ended incentive is marked refunded instead of removed.
+func (i *Incentives) RemoveIncentive(incentiveId string) {
+	i.incentives.Remove(incentiveId)
+}
+
 func (i *Incentives) SetUnclaimablePeriod(startTimestamp int64, endTimestamp int64) {
 	i.unclaimablePeriods.Set(startTimestamp, endTimestamp)
 }
@@ -314,11 +333,76 @@ func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *Ex
 	})
 }
 
+// AddIncentiveByStartTime registers an incentive ID under its start timestamp
+// in the per-pool start-time index. Multiple incentives starting at the same
+// timestamp are accumulated as a list.
+func (i *Incentives) AddIncentiveByStartTime(startTimestamp int64, incentiveId string) {
+	var incentiveIds []string
+	if value, ok := i.byStartTime.Get(startTimestamp); ok {
+		if ids, ok := value.([]string); ok {
+			incentiveIds = ids
+		}
+	}
+	incentiveIds = append(incentiveIds, incentiveId)
+	i.byStartTime.Set(startTimestamp, incentiveIds)
+}
+
+// RemoveIncentiveByStartTime unregisters an incentive ID from the per-pool
+// start-time index. The bucket itself is dropped once its last ID is removed,
+// so the index never keeps an empty entry that discovery would still visit.
+func (i *Incentives) RemoveIncentiveByStartTime(startTimestamp int64, incentiveId string) {
+	value, ok := i.byStartTime.Get(startTimestamp)
+	if !ok {
+		return
+	}
+
+	ids, ok := value.([]string)
+	if !ok {
+		return
+	}
+
+	remaining := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if id == incentiveId {
+			continue
+		}
+		remaining = append(remaining, id)
+	}
+
+	if len(remaining) == 0 {
+		i.byStartTime.Remove(startTimestamp)
+		return
+	}
+
+	i.byStartTime.Set(startTimestamp, remaining)
+}
+
+// IterateIncentiveIdsByTime iterates over the incentive IDs that start within
+// the inclusive [startTime, endTime] range, visiting only the buckets that
+// fall in the range. ReverseIterate is used because it is inclusive on both
+// ends, matching the discovery semantics previously implemented as
+// (startTimestamp >= startTime && startTimestamp <= endTime).
+func (i *Incentives) IterateIncentiveIdsByTime(startTime, endTime int64, fn func(incentiveId string) bool) {
+	i.byStartTime.ReverseIterate(startTime, endTime, func(_ int64, value any) bool {
+		incentiveIds, ok := value.([]string)
+		if !ok {
+			return false
+		}
+		for _, incentiveId := range incentiveIds {
+			if fn(incentiveId) {
+				return true
+			}
+		}
+		return false
+	})
+}
+
 func NewIncentives(targetPoolPath string) *Incentives {
 	result := &Incentives{
 		targetPoolPath:     targetPoolPath,
 		unclaimablePeriods: NewUintTreeN(64),
 		incentives:         bptree.NewBPTreeN(16),
+		byStartTime:        NewUintTreeN(64),
 	}
 
 	// initial unclaimable period starts, as there cannot be any staked positions yet.
@@ -344,6 +428,8 @@ type ExternalIncentive struct {
 	creator                  address    // creator address
 
 	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
+
+	unclaimableSeconds int64 // accumulated seconds of unclaimable periods overlapping the incentive window
 }
 
 // ExternalIncentive Getter/Setter methods
@@ -358,14 +444,12 @@ func (e *ExternalIncentive) SetIncentiveId(incentiveId string) {
 	e.incentiveId = incentiveId
 }
 
-// StartTimestamp returns the start timestamp
+// StartTimestamp returns the start timestamp.
+//
+// It keys the byStartTime discovery index and must stay immutable after the
+// incentive is registered, so no setter is exposed.
 func (e *ExternalIncentive) StartTimestamp() int64 {
 	return e.startTimestamp
-}
-
-// SetStartTimestamp sets the start timestamp
-func (e *ExternalIncentive) SetStartTimestamp(startTimestamp int64) {
-	e.startTimestamp = startTimestamp
 }
 
 // EndTimestamp returns the end timestamp
@@ -499,6 +583,19 @@ func (e *ExternalIncentive) SetRefunded(refunded bool) {
 	e.refunded = refunded
 }
 
+// UnclaimableSeconds returns the accumulated seconds of unclaimable periods
+// that overlap the incentive window. It is updated whenever an unclaimable
+// period closes and is backfilled once from the historical unclaimable
+// periods tree after an upgrade.
+func (e *ExternalIncentive) UnclaimableSeconds() int64 {
+	return e.unclaimableSeconds
+}
+
+// SetUnclaimableSeconds sets the accumulated unclaimable seconds.
+func (e *ExternalIncentive) SetUnclaimableSeconds(unclaimableSeconds int64) {
+	e.unclaimableSeconds = unclaimableSeconds
+}
+
 func (e *ExternalIncentive) Clone() *ExternalIncentive {
 	rewardPerSecondX128 := u256.Zero()
 
@@ -520,6 +617,7 @@ func (e *ExternalIncentive) Clone() *ExternalIncentive {
 		rewardPerSecondX128:      rewardPerSecondX128,
 		creator:                  e.creator,
 		refunded:                 e.refunded,
+		unclaimableSeconds:       e.unclaimableSeconds,
 		distributedRewardAmount:  e.distributedRewardAmount,
 		accumulatedPenaltyAmount: e.accumulatedPenaltyAmount,
 	}
@@ -565,6 +663,7 @@ func NewExternalIncentive(
 		createdTimestamp:         currentTime,
 		depositGnsAmount:         depositGnsAmount,
 		refunded:                 false,
+		unclaimableSeconds:       0,
 	}
 }
 
@@ -585,17 +684,11 @@ func (t *Ticks) SetTree(tree *bptree.BPTree) {
 	t.tree = tree
 }
 
+// Get returns the tick for the given tickId, or nil if it does not exist.
 func (t *Ticks) Get(tickId int32) *Tick {
 	v := t.tree.Get(EncodeInt(tickId))
 	if v == nil {
-		tick := &Tick{
-			id:                   tickId,
-			stakedLiquidityGross: u256.Zero(),
-			stakedLiquidityDelta: i256.Zero(),
-			outsideAccumulation:  NewUintTreeN(64),
-		}
-		t.tree.Set(EncodeInt(tickId), tick)
-		return tick
+		return nil
 	}
 
 	tick, ok := v.(*Tick)
@@ -675,7 +768,7 @@ type Tick struct {
 
 	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
 	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
-	outsideAccumulation *UintTree // timestamp -> *u256.Uint
+	outsideAccumulation *UintTree // timestamp -> fixed 32-byte big-endian string
 }
 
 // Tick Getter/Setter methods
@@ -722,7 +815,7 @@ func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
 
 // SetOutsideAccumulationAt sets the outside accumulation at the timestamp.
 func (t *Tick) SetOutsideAccumulationAt(timestamp int64, acc *u256.Uint) {
-	t.outsideAccumulation.Set(timestamp, u256.Zero().Set(acc))
+	t.outsideAccumulation.Set(timestamp, utils.EncodeUint256(acc))
 }
 
 // Clone returns a deep copy of the tick.
@@ -744,7 +837,7 @@ func NewTick(tickId int32) *Tick {
 		id:                   tickId,
 		stakedLiquidityGross: u256.Zero(),
 		stakedLiquidityDelta: i256.Zero(),
-		outsideAccumulation:  NewUintTreeN(64),
+		outsideAccumulation:  NewUintTreeN(4),
 	}
 }
 

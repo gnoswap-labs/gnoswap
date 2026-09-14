@@ -4,21 +4,10 @@ import (
 	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
-
-func newPoolFixture() *Pool {
-	pool := NewPool("foo", "bar", 500, u256.MustFromDecimal("100"), 10, 5, 6)
-	pool.SetBalanceToken0(1000)
-	pool.SetBalanceToken1(2000)
-	pool.SetProtocolFeesToken0(3000)
-	pool.SetProtocolFeesToken1(4000)
-	pool.SetFeeGrowthGlobal0X128(u256.MustFromDecimal("5000"))
-	pool.SetFeeGrowthGlobal1X128(u256.MustFromDecimal("6000"))
-	pool.SetLiquidity(u256.MustFromDecimal("7000"))
-	pool.SetSlot0(NewSlot0(u256.MustFromDecimal("9000"), 11, 12, true))
-	return pool
-}
 
 func newTickInfoFixture() TickInfo {
 	tickInfo := NewTickInfo()
@@ -33,16 +22,6 @@ func newTickInfoFixture() TickInfo {
 	return tickInfo
 }
 
-func newPositionInfoFixture() PositionInfo {
-	positionInfo := PositionInfo{}
-	positionInfo.SetLiquidity("1000")
-	positionInfo.SetFeeGrowthInside0LastX128("2000")
-	positionInfo.SetFeeGrowthInside1LastX128("3000")
-	positionInfo.SetTokensOwed0(4000)
-	positionInfo.SetTokensOwed1(5000)
-	return positionInfo
-}
-
 func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
@@ -52,21 +31,6 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 		mutate    func(result any)
 		assertRaw func(cur realm, t *testing.T)
 	}{
-		{
-			name:   "GetPoolPaths",
-			setup:  func(m *MockPool) { m.Response.Set("GetPoolPaths", []string{"foo", "bar"}) },
-			getter: func() any { return GetPoolPaths(0, 10) },
-			mutate: func(result any) {
-				values := result.([]string)
-				values[0] = "mutated"
-				_ = append(values, "baz")
-			},
-			assertRaw: func(cur realm, t *testing.T) {
-				values := implementation.(*MockPool).Response.responses["GetPoolPaths"][0].([]string)
-				uassert.Equal(t, "foo", values[0])
-				uassert.Equal(t, 2, len(values))
-			},
-		},
 		{
 			name:   "GetFeeAmountTickSpacings",
 			setup:  func(m *MockPool) { m.Response.Set("GetFeeAmountTickSpacings", map[uint32]int32{500: 10}) },
@@ -89,7 +53,7 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 				m.Response.Set("GetFeeGrowthGlobalX128", u256.MustFromDecimal("1000"), u256.MustFromDecimal("2000"))
 			},
 			getter: func() any {
-				fee0, fee1 := GetFeeGrowthGlobalX128("foo:bar:500")
+				fee0, fee1, _ := GetFeeGrowthGlobalX128("foo:bar:500")
 				return []any{fee0, fee1}
 			},
 			mutate: func(result any) {
@@ -104,9 +68,12 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:   "GetPositionLiquidity",
-			setup:  func(m *MockPool) { m.Response.Set("GetPositionLiquidity", "1000") },
-			getter: func() any { return GetPositionLiquidity("foo:bar:500", "pos") },
+			name:  "GetPositionLiquidity",
+			setup: func(m *MockPool) { m.Response.Set("GetPositionLiquidity", "1000") },
+			getter: func() any {
+				liquidity, _ := GetPositionLiquidity("foo:bar:500", "pos")
+				return liquidity
+			},
 			mutate: func(result any) {},
 			assertRaw: func(cur realm, t *testing.T) {
 				value := implementation.(*MockPool).Response.responses["GetPositionLiquidity"][0].(string)
@@ -117,7 +84,7 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			name:  "GetTickFeeGrowthOutsideX128",
 			setup: func(m *MockPool) { m.Response.Set("GetTickFeeGrowthOutsideX128", "1100", "2200") },
 			getter: func() any {
-				fee0, fee1 := GetTickFeeGrowthOutsideX128("foo:bar:500", 10)
+				fee0, fee1, _ := GetTickFeeGrowthOutsideX128("foo:bar:500", 10)
 				return []any{fee0, fee1}
 			},
 			mutate: func(result any) {
@@ -132,9 +99,12 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:   "GetSlot0SqrtPriceX96",
-			setup:  func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal("3000")) },
-			getter: func() any { return GetSlot0SqrtPriceX96("foo:bar:500") },
+			name:  "GetSlot0SqrtPriceX96",
+			setup: func(m *MockPool) { m.Response.Set("GetSlot0SqrtPriceX96", u256.MustFromDecimal("3000")) },
+			getter: func() any {
+				sqrtPriceX96, _ := GetSlot0SqrtPriceX96("foo:bar:500")
+				return sqrtPriceX96
+			},
 			mutate: func(result any) {},
 			assertRaw: func(cur realm, t *testing.T) {
 				value := implementation.(*MockPool).Response.responses["GetSlot0SqrtPriceX96"][0].(*u256.Uint)
@@ -142,65 +112,77 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:  "GetPool",
-			setup: func(m *MockPool) { m.Response.Set("GetPool", newPoolFixture(), nil) },
-			getter: func() any {
-				pool, err := GetPool("foo", "bar", 500)
-				uassert.NoError(t, err)
-				return pool
+			name: "GetSlot0",
+			setup: func(m *MockPool) {
+				slot0 := NewSlot0(u256.MustFromDecimal("3000"), 12, 34, true)
+				slot0.SetObservationIndex(7)
+				slot0.SetObservationCardinality(8)
+				slot0.SetObservationCardinalityNext(9)
+				m.Response.Set("GetSlot0", slot0)
+			},
+			getter: func() any { return GetSlot0("foo:bar:500") },
+			assertGot: func(t *testing.T, result any) {
+				slot0 := result.(Slot0)
+				uassert.Equal(t, "3000", slot0.SqrtPriceX96().ToString())
+				uassert.Equal(t, int32(12), slot0.Tick())
+				uassert.Equal(t, uint8(34), slot0.FeeProtocol())
+				uassert.Equal(t, true, slot0.Unlocked())
+				uassert.Equal(t, uint16(7), slot0.ObservationIndex())
+				uassert.Equal(t, uint16(8), slot0.ObservationCardinality())
+				uassert.Equal(t, uint16(9), slot0.ObservationCardinalityNext())
 			},
 			mutate: func(result any) {
-				pool := result.(*Pool)
-				pool.SetToken0Path("mutated0")
-				pool.SetToken1Path("mutated1")
-				pool.SetFee(600)
-				pool.SetTickSpacing(20)
-				pool.SetBalanceToken0(1010)
-				pool.SetBalanceToken1(2020)
-				pool.SetProtocolFeesToken0(3030)
-				pool.SetProtocolFeesToken1(4040)
-				pool.SetFeeGrowthGlobal0X128(u256.MustFromDecimal("6060"))
-				pool.SetFeeGrowthGlobal1X128(u256.MustFromDecimal("7070"))
-				pool.SetLiquidity(u256.MustFromDecimal("8080"))
-				slot0 := pool.Slot0()
-				slot0.SetSqrtPriceX96(u256.MustFromDecimal("9090"))
-				slot0.SetTick(12)
-				slot0.SetFeeProtocol(13)
-				slot0.SetUnlocked(false)
-				pool.SetSlot0(slot0)
+				slot0 := result.(Slot0)
+				slot0.SetSqrtPriceX96(u256.MustFromDecimal("9000"))
+				slot0.SetObservationIndex(70)
+				slot0.SetObservationCardinality(80)
+				slot0.SetObservationCardinalityNext(90)
 			},
 			assertRaw: func(cur realm, t *testing.T) {
-				pool := implementation.(*MockPool).Response.responses["GetPool"][0].(*Pool)
-				uassert.Equal(t, "foo", pool.Token0Path())
-				uassert.Equal(t, "bar", pool.Token1Path())
-				uassert.Equal(t, uint32(500), pool.Fee())
-				uassert.Equal(t, int32(10), pool.TickSpacing())
-				uassert.Equal(t, int64(1000), pool.BalanceToken0())
-				uassert.Equal(t, int64(2000), pool.BalanceToken1())
-				uassert.Equal(t, int64(3000), pool.ProtocolFeesToken0())
-				uassert.Equal(t, int64(4000), pool.ProtocolFeesToken1())
-				uassert.Equal(t, "5000", pool.FeeGrowthGlobal0X128().ToString())
-				uassert.Equal(t, "6000", pool.FeeGrowthGlobal1X128().ToString())
-				uassert.Equal(t, "7000", pool.Liquidity().ToString())
-				uassert.Equal(t, "9000", pool.Slot0SqrtPriceX96().ToString())
-				uassert.Equal(t, int32(11), pool.Slot0Tick())
-				uassert.Equal(t, uint8(12), pool.Slot0FeeProtocol())
-				uassert.Equal(t, true, pool.Slot0Unlocked())
+				slot0 := implementation.(*MockPool).Response.responses["GetSlot0"][0].(Slot0)
+				uassert.Equal(t, "3000", slot0.SqrtPriceX96().ToString())
+				uassert.Equal(t, uint16(7), slot0.ObservationIndex())
+				uassert.Equal(t, uint16(8), slot0.ObservationCardinality())
+				uassert.Equal(t, uint16(9), slot0.ObservationCardinalityNext())
 			},
 		},
 		{
-			name:   "GetPoolPositionKeys",
-			setup:  func(m *MockPool) { m.Response.Set("GetPoolPositionKeys", []string{"pos0", "pos1"}) },
-			getter: func() any { return GetPoolPositionKeys("foo:bar:500", 0, 10) },
+			name: "Observe",
+			setup: func(m *MockPool) {
+				m.Response.Set("Observe", []int64{10, 20}, []string{"30", "40"}, error(nil))
+			},
+			getter: func() any {
+				tickCumulatives, secondsPerLiquidityCumulativeX128s, err := Observe(
+					"foo:bar:500",
+					[]uint32{60, 0},
+				)
+				uassert.NoError(t, err)
+				return []any{tickCumulatives, secondsPerLiquidityCumulativeX128s}
+			},
+			assertGot: func(t *testing.T, result any) {
+				values := result.([]any)
+				tickCumulatives := values[0].([]int64)
+				secondsPerLiquidityCumulativeX128s := values[1].([]string)
+				uassert.Equal(t, 2, len(tickCumulatives))
+				uassert.Equal(t, int64(10), tickCumulatives[0])
+				uassert.Equal(t, int64(20), tickCumulatives[1])
+				uassert.Equal(t, 2, len(secondsPerLiquidityCumulativeX128s))
+				uassert.Equal(t, "30", secondsPerLiquidityCumulativeX128s[0])
+				uassert.Equal(t, "40", secondsPerLiquidityCumulativeX128s[1])
+			},
 			mutate: func(result any) {
-				values := result.([]string)
-				values[0] = "mutated"
-				_ = append(values, "pos2")
+				values := result.([]any)
+				values[0].([]int64)[0] = 100
+				values[1].([]string)[0] = "300"
 			},
 			assertRaw: func(cur realm, t *testing.T) {
-				values := implementation.(*MockPool).Response.responses["GetPoolPositionKeys"][0].([]string)
-				uassert.Equal(t, "pos0", values[0])
-				uassert.Equal(t, 2, len(values))
+				values := implementation.(*MockPool).Response.responses["Observe"]
+				tickCumulatives := values[0].([]int64)
+				secondsPerLiquidityCumulativeX128s := values[1].([]string)
+				uassert.Equal(t, int64(10), tickCumulatives[0])
+				uassert.Equal(t, int64(20), tickCumulatives[1])
+				uassert.Equal(t, "30", secondsPerLiquidityCumulativeX128s[0])
+				uassert.Equal(t, "40", secondsPerLiquidityCumulativeX128s[1])
 			},
 		},
 		{
@@ -249,34 +231,12 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:  "GetPosition",
-			setup: func(m *MockPool) { m.Response.Set("GetPosition", newPositionInfoFixture(), nil) },
+			name:  "GetInitializedTicksInRange",
+			setup: func(m *MockPool) { m.Response.Set("GetInitializedTicksInRange", []int32{-10, 10}) },
 			getter: func() any {
-				positionInfo, err := GetPosition("foo:bar:500", "pos")
-				uassert.NoError(t, err)
-				return positionInfo
+				ticks, _ := GetInitializedTicksInRange("foo:bar:500", -20, 20)
+				return ticks
 			},
-			mutate: func(result any) {
-				positionInfo := result.(PositionInfo)
-				positionInfo.SetLiquidity("1111")
-				positionInfo.SetFeeGrowthInside0LastX128("2222")
-				positionInfo.SetFeeGrowthInside1LastX128("3333")
-				positionInfo.SetTokensOwed0(4444)
-				positionInfo.SetTokensOwed1(5555)
-			},
-			assertRaw: func(cur realm, t *testing.T) {
-				positionInfo := implementation.(*MockPool).Response.responses["GetPosition"][0].(PositionInfo)
-				uassert.Equal(t, "1000", positionInfo.Liquidity())
-				uassert.Equal(t, "2000", positionInfo.FeeGrowthInside0LastX128())
-				uassert.Equal(t, "3000", positionInfo.FeeGrowthInside1LastX128())
-				uassert.Equal(t, int64(4000), positionInfo.TokensOwed0())
-				uassert.Equal(t, int64(5000), positionInfo.TokensOwed1())
-			},
-		},
-		{
-			name:   "GetInitializedTicksInRange",
-			setup:  func(m *MockPool) { m.Response.Set("GetInitializedTicksInRange", []int32{-10, 10}) },
-			getter: func() any { return GetInitializedTicksInRange("foo:bar:500", -20, 20) },
 			mutate: func(result any) {
 				values := result.([]int32)
 				values[0] = -99
@@ -289,60 +249,17 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:  "GetTWAP",
-			setup: func(m *MockPool) { m.Response.Set("GetTWAP", int32(5), u256.MustFromDecimal("5000"), error(nil)) },
+			name:  "OracleConsult",
+			setup: func(m *MockPool) { m.Response.Set("OracleConsult", int32(5), u256.MustFromDecimal("5000"), error(nil)) },
 			getter: func() any {
-				_, liquidity, err := GetTWAP("foo:bar:500", 10)
+				_, liquidity, err := OracleConsult("foo:bar:500", 10)
 				uassert.NoError(t, err)
 				return liquidity
 			},
 			mutate: func(result any) {},
 			assertRaw: func(cur realm, t *testing.T) {
-				value := implementation.(*MockPool).Response.responses["GetTWAP"][1].(*u256.Uint)
+				value := implementation.(*MockPool).Response.responses["OracleConsult"][1].(*u256.Uint)
 				uassert.Equal(t, "5000", value.ToString())
-			},
-		},
-		{
-			name: "GetObservationState",
-			setup: func(m *MockPool) {
-				state := NewObservationState(100)
-				state.SetIndex(3)
-				state.SetCardinality(4)
-				state.SetCardinalityNext(5)
-				obs := NewObservation(123, 77, "1000", "2000", true)
-				state.Observations()[7] = obs
-				m.Response.Set("GetObservationState", state, error(nil))
-			},
-			getter: func() any {
-				state, err := GetObservationState("foo:bar:500")
-				uassert.NoError(t, err)
-				return state
-			},
-			assertGot: func(t *testing.T, result any) {
-				state := result.(*ObservationState)
-				uassert.Equal(t, 2, len(state.Observations()))
-				uassert.Equal(t, int64(100), state.Observations()[0].BlockTimestamp())
-				uassert.Equal(t, int64(123), state.Observations()[7].BlockTimestamp())
-			},
-			mutate: func(result any) {
-				state := result.(*ObservationState)
-				state.SetIndex(8)
-				state.SetCardinality(9)
-				state.SetCardinalityNext(10)
-				state.Observations()[8] = NewObservation(1, 2, "3", "4", true)
-			},
-			assertRaw: func(cur realm, t *testing.T) {
-				state := implementation.(*MockPool).Response.responses["GetObservationState"][0].(*ObservationState)
-				uassert.Equal(t, uint16(3), state.Index())
-				uassert.Equal(t, uint16(4), state.Cardinality())
-				uassert.Equal(t, uint16(5), state.CardinalityNext())
-				uassert.Equal(t, int64(123), state.Observations()[7].BlockTimestamp())
-				uassert.Equal(t, int64(77), state.Observations()[7].TickCumulative())
-				uassert.Equal(t, "1000", state.Observations()[7].LiquidityCumulative())
-				uassert.Equal(t, "2000", state.Observations()[7].SecondsPerLiquidityCumulativeX128())
-				uassert.Equal(t, true, state.Observations()[7].Initialized())
-				_, ok := state.Observations()[8]
-				uassert.Equal(t, false, ok)
 			},
 		},
 	}
@@ -361,4 +278,74 @@ func TestMutablePoolGetterIsolation(cur realm, t *testing.T) {
 			tt.assertRaw(cur, t)
 		})
 	}
+}
+
+func TestReadOnlyTreeGetters(cur realm, t *testing.T) {
+	tests := []struct {
+		name     string
+		method   string
+		getter   func() *rotree.ReadOnlyTree
+		wantKeys []string
+	}{
+		{
+			name:     "GetPools",
+			method:   "GetPools",
+			getter:   func() *rotree.ReadOnlyTree { return GetPools() },
+			wantKeys: []string{"foo:bar:500", "foo:baz:3000"},
+		},
+		{
+			name:     "GetPoolPositions",
+			method:   "GetPoolPositions",
+			getter:   func() *rotree.ReadOnlyTree { return GetPoolPositions("foo:bar:500") },
+			wantKeys: []string{"pos0", "pos1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(t)
+			mockPool := newMockPool("v1")
+			implementation = mockPool
+
+			tree := bptree.NewBPTree32()
+			for i, key := range tt.wantKeys {
+				tree.Set(key, i)
+			}
+			mockPool.Response.Set(tt.method, rotree.Wrap(tree, nil))
+
+			got := tt.getter()
+			uassert.Equal(t, len(tt.wantKeys), got.Size())
+
+			keys := make([]string, 0, got.Size())
+			got.IterateByOffset(0, got.Size(), func(key string, value any) bool {
+				keys = append(keys, key)
+				return false
+			})
+			uassert.Equal(t, len(tt.wantKeys), len(keys))
+			for i, want := range tt.wantKeys {
+				uassert.Equal(t, want, keys[i])
+			}
+
+			uassert.True(t, got.Has(tt.wantKeys[0]))
+			uassert.Equal(t, 0, got.Get(tt.wantKeys[0]).(int))
+
+			// The view refuses writes, so the underlying tree stays untouched.
+			uassert.PanicsWithMessage(t, cur, "Set operation not supported on ReadOnlyTree", func() {
+				got.Set("mutated", 0)
+			})
+			uassert.PanicsWithMessage(t, cur, "Remove operation not supported on ReadOnlyTree", func() {
+				got.Remove(tt.wantKeys[0])
+			})
+			uassert.Equal(t, len(tt.wantKeys), tree.Size())
+		})
+	}
+}
+
+func TestReadOnlyTreeGetters_NoImplementationResponse(cur realm, t *testing.T) {
+	resetTestState(t)
+	mockPool := newMockPool("v1")
+	implementation = mockPool
+
+	uassert.True(t, GetPools() == nil)
+	uassert.True(t, GetPoolPositions("foo:bar:500") == nil)
 }

@@ -3,6 +3,7 @@ package v3_valid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"
@@ -47,6 +48,10 @@ func (t *TestPool) Burn(_ int, rlm realm, token0Path string, token1Path string, 
 	return t.instance.Burn(0, rlm, token0Path, token1Path, fee, tickLower, tickUpper, liquidityAmount, positionCaller)
 }
 
+func (t *TestPool) CollectSwapFee(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string, string, string) {
+	return t.instance.CollectSwapFee(0, rlm, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
+}
+
 func (t *TestPool) Collect(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, tickLower int32, tickUpper int32, amount0Requested string, amount1Requested string) (string, string) {
 	return t.instance.Collect(0, rlm, token0Path, token1Path, fee, recipient, tickLower, tickUpper, amount0Requested, amount1Requested)
 }
@@ -55,13 +60,9 @@ func (t *TestPool) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 	t.instance.SetWithdrawalFee(0, rlm, fee)
 }
 
-func (t *TestPool) HandleWithdrawalFee(_ int, rlm realm, token0Path string, amount0 string, token1Path string, amount1 string, positionCaller address) (string, string, string, string) {
-	return t.instance.HandleWithdrawalFee(0, rlm, token0Path, amount0, token1Path, amount1, positionCaller)
-}
-
 // IPoolSwap interface
-func (t *TestPool) Swap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, payer address, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
-	return t.instance.Swap(0, rlm, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, payer, swapCallback)
+func (t *TestPool) Swap(_ int, rlm realm, token0Path string, token1Path string, fee uint32, recipient address, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string, swapCallback func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error) (string, string) {
+	return t.instance.Swap(0, rlm, token0Path, token1Path, fee, recipient, zeroForOne, amountSpecified, sqrtPriceLimitX96, swapCallback)
 }
 
 func (t *TestPool) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
@@ -85,7 +86,7 @@ func (t *TestPool) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 u
 }
 
 // IPoolGetter interface
-func (t *TestPool) DrySwap(token0Path string, token1Path string, fee uint32, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string) (string, string, bool) {
+func (t *TestPool) DrySwap(token0Path string, token1Path string, fee uint32, zeroForOne bool, amountSpecified string, sqrtPriceLimitX96 string) (string, string, error) {
 	return t.instance.DrySwap(token0Path, token1Path, fee, zeroForOne, amountSpecified, sqrtPriceLimitX96)
 }
 
@@ -93,143 +94,143 @@ func (t *TestPool) ExistsPoolPath(poolPath string) bool {
 	return t.instance.ExistsPoolPath(poolPath)
 }
 
-func (t *TestPool) GetPool(token0Path, token1Path string, fee uint32) (*pool.Pool, error) {
-	return t.instance.GetPool(token0Path, token1Path, fee)
-}
-
-func (t *TestPool) GetBalanceToken0(poolPath string) int64 {
+func (t *TestPool) GetBalanceToken0(poolPath string) (int64, error) {
 	return t.instance.GetBalanceToken0(poolPath)
 }
 
-func (t *TestPool) GetBalanceToken1(poolPath string) int64 {
+func (t *TestPool) GetBalanceToken1(poolPath string) (int64, error) {
 	return t.instance.GetBalanceToken1(poolPath)
 }
 
-func (t *TestPool) GetFee(poolPath string) uint32 {
+func (t *TestPool) GetFee(poolPath string) (uint32, error) {
 	return t.instance.GetFee(poolPath)
 }
 
-func (t *TestPool) GetFeeAmountTickSpacing(fee uint32) int32 {
+func (t *TestPool) GetFeeAmountTickSpacing(fee uint32) (int32, error) {
 	return t.instance.GetFeeAmountTickSpacing(fee)
 }
 
-func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint {
+func (t *TestPool) GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error) {
 	return t.instance.GetFeeGrowthGlobal0X128(poolPath)
 }
 
-func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint {
+func (t *TestPool) GetFeeGrowthGlobal1X128(poolPath string) (*u256.Uint, error) {
 	return t.instance.GetFeeGrowthGlobal1X128(poolPath)
 }
 
-func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint) {
+func (t *TestPool) GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint, error) {
 	return t.instance.GetFeeGrowthGlobalX128(poolPath)
 }
 
-func (t *TestPool) GetLiquidity(poolPath string) *u256.Uint {
+func (t *TestPool) GetLiquidity(poolPath string) (*u256.Uint, error) {
 	return t.instance.GetLiquidity(poolPath)
-}
-
-func (t *TestPool) GetObservation(poolPath string, secondsAgo int64) (int64, string, string, int64) {
-	return t.instance.GetObservation(poolPath, secondsAgo)
 }
 
 func (t *TestPool) GetPoolCreationFee() int64 {
 	return t.instance.GetPoolCreationFee()
 }
 
-func (t *TestPool) GetPositionFeeGrowthInside0LastX128(poolPath, key string) string {
+func (t *TestPool) GetPositionFeeGrowthInside0LastX128(poolPath, key string) (string, error) {
 	return t.instance.GetPositionFeeGrowthInside0LastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
+func (t *TestPool) GetPositionFeeGrowthInside1LastX128(poolPath, key string) (string, error) {
 	return t.instance.GetPositionFeeGrowthInside1LastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string) {
+func (t *TestPool) GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string, error) {
 	return t.instance.GetPositionFeeGrowthInsideLastX128(poolPath, key)
 }
 
-func (t *TestPool) GetPositionLiquidity(poolPath, key string) string {
+func (t *TestPool) GetPositionLiquidity(poolPath, key string) (string, error) {
 	return t.instance.GetPositionLiquidity(poolPath, key)
 }
 
-func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) int64 {
+func (t *TestPool) GetPositionTokensOwed0(poolPath, key string) (int64, error) {
 	return t.instance.GetPositionTokensOwed0(poolPath, key)
 }
 
-func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) int64 {
+func (t *TestPool) GetPositionTokensOwed1(poolPath, key string) (int64, error) {
 	return t.instance.GetPositionTokensOwed1(poolPath, key)
 }
 
-func (t *TestPool) GetProtocolFeesToken0(poolPath string) int64 {
+func (t *TestPool) GetProtocolFeesToken0(poolPath string) (int64, error) {
 	return t.instance.GetProtocolFeesToken0(poolPath)
 }
 
-func (t *TestPool) GetProtocolFeesToken1(poolPath string) int64 {
+func (t *TestPool) GetProtocolFeesToken1(poolPath string) (int64, error) {
 	return t.instance.GetProtocolFeesToken1(poolPath)
 }
 
-func (t *TestPool) GetSlot0FeeProtocol(poolPath string) uint8 {
+func (t *TestPool) GetSlot0FeeProtocol(poolPath string) (uint8, error) {
 	return t.instance.GetSlot0FeeProtocol(poolPath)
 }
 
-func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
+func (t *TestPool) GetSlot0(poolPath string) pool.Slot0 {
+	return t.instance.GetSlot0(poolPath)
+}
+
+func (t *TestPool) GetObservationAt(poolPath string, index uint16) (pool.Observation, error) {
+	return t.instance.GetObservationAt(poolPath, index)
+}
+
+func (t *TestPool) GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error) {
 	return t.instance.GetSlot0SqrtPriceX96(poolPath)
 }
 
-func (t *TestPool) GetSlot0Tick(poolPath string) int32 {
+func (t *TestPool) GetSlot0Tick(poolPath string) (int32, error) {
 	return t.instance.GetSlot0Tick(poolPath)
 }
 
-func (t *TestPool) GetSlot0Unlocked(poolPath string) bool {
+func (t *TestPool) GetSlot0Unlocked(poolPath string) (bool, error) {
 	return t.instance.GetSlot0Unlocked(poolPath)
 }
 
-func (t *TestPool) GetTickCumulativeOutside(poolPath string, tick int32) int64 {
+func (t *TestPool) GetTickCumulativeOutside(poolPath string, tick int32) (int64, error) {
 	return t.instance.GetTickCumulativeOutside(poolPath, tick)
 }
 
-func (t *TestPool) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) string {
+func (t *TestPool) GetTickFeeGrowthOutside0X128(poolPath string, tick int32) (string, error) {
 	return t.instance.GetTickFeeGrowthOutside0X128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
+func (t *TestPool) GetTickFeeGrowthOutside1X128(poolPath string, tick int32) (string, error) {
 	return t.instance.GetTickFeeGrowthOutside1X128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string) {
+func (t *TestPool) GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string, error) {
 	return t.instance.GetTickFeeGrowthOutsideX128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickInitialized(poolPath string, tick int32) bool {
+func (t *TestPool) GetTickInitialized(poolPath string, tick int32) (bool, error) {
 	return t.instance.GetTickInitialized(poolPath, tick)
 }
 
-func (t *TestPool) GetTickLiquidityGross(poolPath string, tick int32) string {
+func (t *TestPool) GetTickLiquidityGross(poolPath string, tick int32) (string, error) {
 	return t.instance.GetTickLiquidityGross(poolPath, tick)
 }
 
-func (t *TestPool) GetTickLiquidityNet(poolPath string, tick int32) string {
+func (t *TestPool) GetTickLiquidityNet(poolPath string, tick int32) (string, error) {
 	return t.instance.GetTickLiquidityNet(poolPath, tick)
 }
 
-func (t *TestPool) GetTickSecondsOutside(poolPath string, tick int32) uint32 {
+func (t *TestPool) GetTickSecondsOutside(poolPath string, tick int32) (uint32, error) {
 	return t.instance.GetTickSecondsOutside(poolPath, tick)
 }
 
-func (t *TestPool) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string {
+func (t *TestPool) GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) (string, error) {
 	return t.instance.GetTickSecondsPerLiquidityOutsideX128(poolPath, tick)
 }
 
-func (t *TestPool) GetTickSpacing(poolPath string) int32 {
+func (t *TestPool) GetTickSpacing(poolPath string) (int32, error) {
 	return t.instance.GetTickSpacing(poolPath)
 }
 
-func (t *TestPool) GetToken0Path(poolPath string) string {
+func (t *TestPool) GetToken0Path(poolPath string) (string, error) {
 	return t.instance.GetToken0Path(poolPath)
 }
 
-func (t *TestPool) GetToken1Path(poolPath string) string {
+func (t *TestPool) GetToken1Path(poolPath string) (string, error) {
 	return t.instance.GetToken1Path(poolPath)
 }
 
@@ -237,34 +238,32 @@ func (t *TestPool) GetWithdrawalFee() uint64 {
 	return t.instance.GetWithdrawalFee()
 }
 
-func (t *TestPool) GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
-	return t.instance.GetTWAP(poolPath, secondsAgo)
+func (t *TestPool) OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error) {
+	return t.instance.OracleConsult(poolPath, secondsAgo)
 }
 
-// Pool enumeration
-func (t *TestPool) GetPoolCount() int {
-	return t.instance.GetPoolCount()
+func (t *TestPool) SnapshotCumulativesInside(
+	poolPath string,
+	tickLower int32,
+	tickUpper int32,
+) (int64, *u256.Uint, uint32, error) {
+	return t.instance.SnapshotCumulativesInside(poolPath, tickLower, tickUpper)
 }
 
-func (t *TestPool) GetPoolPaths(offset, count int) []string {
-	return t.instance.GetPoolPaths(offset, count)
+func (t *TestPool) GetPools() *rotree.ReadOnlyTree {
+	return t.instance.GetPools()
 }
 
 func (t *TestPool) GetFeeAmountTickSpacings() map[uint32]int32 {
 	return t.instance.GetFeeAmountTickSpacings()
 }
 
-// Position enumeration
-func (t *TestPool) GetPoolPositionCount(poolPath string) int {
-	return t.instance.GetPoolPositionCount(poolPath)
-}
-
-func (t *TestPool) GetPoolPositionKeys(poolPath string, offset, count int) []string {
-	return t.instance.GetPoolPositionKeys(poolPath, offset, count)
+func (t *TestPool) GetPoolPositions(poolPath string) *rotree.ReadOnlyTree {
+	return t.instance.GetPoolPositions(poolPath)
 }
 
 // Tick enumeration
-func (t *TestPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32 {
+func (t *TestPool) GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) ([]int32, error) {
 	return t.instance.GetInitializedTicksInRange(poolPath, tickLower, tickUpper)
 }
 
@@ -277,10 +276,10 @@ func (t *TestPool) GetTickBitmaps(poolPath string, wordPos int16) (string, error
 	return t.instance.GetTickBitmaps(poolPath, wordPos)
 }
 
-func (t *TestPool) GetPosition(poolPath, key string) (pool.PositionInfo, error) {
-	return t.instance.GetPosition(poolPath, key)
+func (t *TestPool) Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error) {
+	return t.instance.Observe(poolPath, secondsAgos)
 }
 
-func (t *TestPool) GetObservationState(poolPath string) (*pool.ObservationState, error) {
-	return t.instance.GetObservationState(poolPath)
+func (t *TestPool) GetPendingProtocolFees() map[string]int64 {
+	return t.instance.GetPendingProtocolFees()
 }

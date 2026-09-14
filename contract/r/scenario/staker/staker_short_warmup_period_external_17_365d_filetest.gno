@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -22,6 +22,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -121,10 +122,26 @@ func mintBarBaz3000_1_4(cur realm) {
 	pn.Mint(cross(cur), barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, adminAddr, "")
 	testing.SkipHeights(1)
 
-	t1Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(1))
-	t2Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(2))
-	t3Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(3))
-	t4Liq := u256.MustFromDecimal(pn.GetPositionLiquidity(4))
+	t1LiqStr, err := pn.GetPositionLiquidity(1)
+	if err != nil {
+		panic(err)
+	}
+	t2LiqStr, err := pn.GetPositionLiquidity(2)
+	if err != nil {
+		panic(err)
+	}
+	t3LiqStr, err := pn.GetPositionLiquidity(3)
+	if err != nil {
+		panic(err)
+	}
+	t4LiqStr, err := pn.GetPositionLiquidity(4)
+	if err != nil {
+		panic(err)
+	}
+	t1Liq := u256.MustFromDecimal(t1LiqStr)
+	t2Liq := u256.MustFromDecimal(t2LiqStr)
+	t3Liq := u256.MustFromDecimal(t3LiqStr)
+	t4Liq := u256.MustFromDecimal(t4LiqStr)
 
 	all := u256.Zero()
 	all.Add(all, t1Liq)
@@ -158,8 +175,8 @@ func createExternalIncentiveQux365(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000",
 		quxPath,
 		100_000_000_000_000,
-		1234569600,
-		1234569600+TIMESTAMP_365DAYS,
+		1234742400,
+		1234742400+TIMESTAMP_365DAYS,
 	)
 
 	ufmt.Printf("[EXPECTED] external incentive QUX created for 365 days\n")
@@ -192,8 +209,8 @@ func beforeActive(cur realm) {
 }
 
 func rewardFor1Block(cur realm) {
-	testing.SkipHeights(849) // in active
-	testing.SkipHeights(1)   // active // but no block passed since active
+	testing.SkipHeights(35409) // in active
+	testing.SkipHeights(1)     // active // but no block passed since active
 	testing.SetRealm(adminRealm)
 
 	sr.CollectReward(cross(cur), 1)

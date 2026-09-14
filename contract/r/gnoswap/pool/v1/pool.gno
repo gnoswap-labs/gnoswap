@@ -12,6 +12,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -53,9 +54,7 @@ func (i *poolV1) Mint(
 	liquidityAmount string,
 	positionCaller address,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
@@ -80,7 +79,8 @@ func (i *poolV1) Mint(
 
 	liquidityDelta := gnsmath.SafeConvertToInt128(liquidity)
 	positionParam := newModifyPositionParams(positionCaller, tickLower, tickUpper, liquidityDelta)
-	_, amount0, amount1, err := modifyPosition(pool, positionParam)
+	observations := i.mustGetObservations(pool.PoolPath())
+	_, amount0, amount1, err := modifyPosition(pool, observations, positionParam)
 	if err != nil {
 		panic(err)
 	}
@@ -134,9 +134,7 @@ func (i *poolV1) Burn(
 	liquidityAmount string, // uint128
 	positionCaller address,
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
@@ -154,7 +152,8 @@ func (i *poolV1) Burn(
 
 	posParams := newModifyPositionParams(positionCaller, tickLower, tickUpper, liqDelta)
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
-	position, amount0, amount1, err := modifyPosition(pool, posParams)
+	observations := i.mustGetObservations(pool.PoolPath())
+	position, amount0, amount1, err := modifyPosition(pool, observations, posParams)
 	if err != nil {
 		panic(err)
 	}
@@ -180,10 +179,12 @@ func (i *poolV1) Burn(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Collect transfers owed tokens from a position to recipient.
+// CollectSwapFee pays out accrued swap fees for a position.
 //
-// Claims tokens from burned liquidity and accumulated fees.
-// Supports partial collection via amount limits.
+// The withdrawal fee is deducted from the collected amount and settled to the
+// protocol fee realm; the remainder is transferred to recipient. Only accrued
+// swap fees belong on this path - principal returned by Burn is not fee
+// bearing and must go through Collect.
 //
 // Parameters:
 //   - token0Path, token1Path: Token contract paths
@@ -193,10 +194,51 @@ func (i *poolV1) Burn(
 //   - amount0Requested, amount1Requested: Max amounts to collect (use MAX_UINT128 for all)
 //
 // Returns:
-//   - amount0: Token0 amount transferred (before any withdrawal fees)
-//   - amount1: Token1 amount transferred (before any withdrawal fees)
+//   - amount0, amount1: Collected amounts, before the withdrawal fee
+//   - fee0, fee1: Withdrawal fee withheld from each amount
 //
-// Note: Withdrawal fees are applied by the position contract, not here.
+// Only callable by position contract.
+func (i *poolV1) CollectSwapFee(
+	_ int,
+	rlm realm,
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient address,
+	tickLower int32,
+	tickUpper int32,
+	amount0Requested string,
+	amount1Requested string,
+) (amount0, amount1, fee0, fee1 string) {
+	collected0, collected1, withheld0, withheld1 := i.collect(
+		0, rlm,
+		token0Path, token1Path, fee,
+		recipient,
+		tickLower, tickUpper,
+		amount0Requested, amount1Requested,
+		true,
+	)
+
+	return utils.FormatInt(collected0), utils.FormatInt(collected1),
+		utils.FormatInt(withheld0), utils.FormatInt(withheld1)
+}
+
+// Collect pays out tokens owed to a position, transferring the full amount to
+// recipient.
+//
+// No withdrawal fee is charged: this path carries principal credited by Burn,
+// which the protocol does not tax. Accrued swap fees belong on CollectSwapFee.
+//
+// Parameters:
+//   - token0Path, token1Path: Token contract paths
+//   - fee: Fee tier of the pool
+//   - recipient: Address to receive tokens
+//   - tickLower, tickUpper: Position's price range
+//   - amount0Requested, amount1Requested: Max amounts to collect (use MAX_UINT128 for all)
+//
+// Returns:
+//   - amount0, amount1: Amounts transferred to recipient
+//
 // Only callable by position contract.
 func (i *poolV1) Collect(
 	_ int,
@@ -209,10 +251,48 @@ func (i *poolV1) Collect(
 	tickUpper int32,
 	amount0Requested string,
 	amount1Requested string,
-) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+) (amount0, amount1 string) {
+	collected0, collected1, _, _ := i.collect(
+		0, rlm,
+		token0Path, token1Path, fee,
+		recipient,
+		tickLower, tickUpper,
+		amount0Requested, amount1Requested,
+		false,
+	)
+
+	return utils.FormatInt(collected0), utils.FormatInt(collected1)
+}
+
+// collect settles the pool ledger for a position and pays the recipient.
+//
+// The payout is capped by the position's tokensOwed, never by a caller
+// supplied number, and the ledger is written before any token leaves the
+// realm. Both happen under a single pool lock, so the pool's accounting and
+// its token balance are never observably out of step.
+//
+// The collected amount is NOT capped by the pool's internal balance: a balance
+// short of the owed amount means the internal ledger has drifted, so the call
+// reverts rather than silently paying out less.
+//
+// applyWithdrawalFee selects the fee policy; pass false for a fee-free payout.
+// It is the entry point, not the configured rate, that decides whether the
+// protocol fee is settled: a rate of zero must still flush a backlog left
+// pending by an earlier halted settlement.
+func (i *poolV1) collect(
+	_ int,
+	rlm realm,
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient address,
+	tickLower int32,
+	tickUpper int32,
+	amount0Requested string,
+	amount1Requested string,
+	applyWithdrawalFee bool,
+) (amount0, amount1, fee0, fee1 int64) {
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
@@ -236,37 +316,69 @@ func (i *poolV1) Collect(
 	// The key is composed of the position contract's address and the tick boundaries,
 	// allowing the pool to uniquely identify and access position data.
 	positionKey := getPositionKey(tickLower, tickUpper)
-	position := mustGetPositionByPool(pool, positionKey)
+	position, err := pool.GetPosition(positionKey)
+	if err != nil {
+		panic(newErrorWithDetail(
+			errDataNotFound,
+			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
+		))
+	}
 
-	amount0 := minRequestedAmount(amount0Req, position.TokensOwed0())
-	amount1 := minRequestedAmount(amount1Req, position.TokensOwed1())
-
-	positionAddr := access.MustGetAddress(prabc.ROLE_POSITION.String())
+	amount0 = minRequestedAmount(amount0Req, position.TokensOwed0())
+	amount1 = minRequestedAmount(amount1Req, position.TokensOwed1())
 
 	if amount0 > 0 {
 		tokenOwed0 := gnsmath.SafeSubInt64(position.TokensOwed0(), amount0)
-		token0Balance := gnsmath.SafeSubInt64(pool.BalanceToken0(), amount0)
+		token0Balance, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
+		if err != nil {
+			panic(err)
+		}
 
 		position.SetTokensOwed0(tokenOwed0)
 		pool.SetBalanceToken0(token0Balance)
-		common.SafeGRC20Approve(cross(rlm), pool.Token0Path(), positionAddr, amount0)
 	}
 	if amount1 > 0 {
 		tokenOwed1 := gnsmath.SafeSubInt64(position.TokensOwed1(), amount1)
-		token1Balance := gnsmath.SafeSubInt64(pool.BalanceToken1(), amount1)
+		token1Balance, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
+		if err != nil {
+			panic(err)
+		}
 
 		position.SetTokensOwed1(tokenOwed1)
 		pool.SetBalanceToken1(token1Balance)
-		common.SafeGRC20Approve(cross(rlm), pool.Token1Path(), positionAddr, amount1)
 	}
 
-	setPosition(pool, positionKey, *position)
+	setPosition(pool, positionKey, position)
 
 	if err := i.savePool(0, rlm, pool); err != nil {
 		panic(err)
 	}
 
-	return utils.FormatInt(amount0), utils.FormatInt(amount1)
+	withdrawalFeeBPS := ZeroBps
+	if applyWithdrawalFee {
+		withdrawalFeeBPS = i.store.GetWithdrawalFeeBPS()
+	}
+
+	// Effects are persisted above; everything below leaves the realm.
+	fee0, amount0AfterFee := deductWithdrawalFee(amount0, withdrawalFeeBPS)
+	fee1, amount1AfterFee := deductWithdrawalFee(amount1, withdrawalFeeBPS)
+
+	if applyWithdrawalFee {
+		// Called even for a zero fee, and for a zero withdrawal fee rate, so that
+		// anything left pending for these tokens by an earlier halted settlement
+		// is flushed.
+		i.settleProtocolFee(0, rlm, token0Path, fee0)
+		i.settleProtocolFee(0, rlm, token1Path, fee1)
+	}
+
+	if amount0AfterFee > 0 {
+		common.SafeGRC20Transfer(0, rlm, token0Path, recipient, amount0AfterFee)
+	}
+	if amount1AfterFee > 0 {
+		common.SafeGRC20Transfer(0, rlm, token1Path, recipient, amount1AfterFee)
+	}
+
+	return amount0, amount1, fee0, fee1
 }
 
 // CollectProtocol collects accumulated protocol fees from swap operations.
@@ -282,9 +394,7 @@ func (i *poolV1) CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedWithdraw()
@@ -368,8 +478,8 @@ func (i *poolV1) collectProtocol(
 		panic(err)
 	}
 
-	common.SafeGRC20Transfer(cross(rlm), pool.Token0Path(), recipient, amount0)
-	common.SafeGRC20Transfer(cross(rlm), pool.Token1Path(), recipient, amount1)
+	common.SafeGRC20Transfer(0, rlm, pool.Token0Path(), recipient, amount0)
+	common.SafeGRC20Transfer(0, rlm, pool.Token1Path(), recipient, amount1)
 
 	return utils.FormatInt(amount0), utils.FormatInt(amount1)
 }
@@ -406,29 +516,42 @@ func (i *poolV1) IncreaseObservationCardinalityNext(
 	fee uint32,
 	cardinalityNext uint16,
 ) {
-	if !rlm.IsCurrent() {
-		panic(errors.New(errSpoofedRealm))
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	i.assertPoolUnlocked()
 	halt.AssertIsNotHaltedPool()
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
+	slot0Before := pool.Slot0()
+	observationCardinalityNextOld := slot0Before.ObservationCardinalityNext()
 
 	i.lockPool(0, rlm)
 	defer i.unlockPool(0, rlm)
 
-	err := increaseObservationCardinalityNextByPool(pool, cardinalityNext)
+	observations := i.mustGetObservations(pool.PoolPath())
+	if cardinalityNext > maxObservationCardinality {
+		panic("observation cardinality next exceeds maximum")
+	}
+	observationCardinalityNextNew, err := grow(
+		observations,
+		slot0Before.ObservationCardinalityNext(),
+		cardinalityNext,
+	)
 	if err != nil {
 		panic(err)
 	}
+	slot0After := pool.Slot0()
+	slot0After.SetObservationCardinalityNext(observationCardinalityNextNew)
+	pool.SetSlot0(slot0After)
 
-	previousRealm := rlm.Previous()
-	chain.Emit(
-		"IncreaseObservationCardinalityNext",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"poolPath", pool.PoolPath(),
-		"cardinalityNext", utils.FormatUint(cardinalityNext),
-	)
+	if observationCardinalityNextOld != observationCardinalityNextNew {
+		previousRealm := rlm.Previous()
+		chain.Emit(
+			"IncreaseObservationCardinalityNext",
+			"prevAddr", previousRealm.Address().String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"poolPath", pool.PoolPath(),
+			"cardinalityNext", utils.FormatUint(observationCardinalityNextNew),
+		)
+	}
 }

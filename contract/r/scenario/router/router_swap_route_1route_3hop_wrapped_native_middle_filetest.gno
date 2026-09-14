@@ -17,6 +17,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -139,7 +140,7 @@ func testDrySwapRouteGnsBarExactIn(cur realm) {
 
 	println("[INFO] Executing dry swap route (gns → wugnot → bar)")
 	_, dryResult, _ := func(cur realm) (string, string, bool) {
-		return router.DrySwapRoute(
+		rIn, rOut, rErr := router.DrySwapRoute(
 			gnsPath,    // inputToken
 			barPath,    // outputToken
 			"1000",     // amountSpecified
@@ -148,6 +149,7 @@ func testDrySwapRouteGnsBarExactIn(cur realm) {
 			"100", // quoteArr
 			"1",
 		)
+		return rIn, rOut, rErr == nil
 	}(cross(cur))
 	println("[EXPECTED] dry swap result:", dryResult, "expected: 7317")
 	println()
@@ -178,7 +180,7 @@ func testSwapRouteGnsBarExactIn(cur realm) {
 	println("[INFO] amountOut:", amountOut)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 1000")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -7317")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 7317")
 	println()
 }
 
@@ -224,8 +226,8 @@ func testSwapRouteGnsBarExactIn(cur realm) {
 // [INFO] Approving tokens for swap
 // [INFO] Executing ExactIn swap (1000 gns → wugnot → bar)
 // [INFO] amountIn: 1000
-// [INFO] amountOut: -7317
+// [INFO] amountOut: 7317
 // [EXPECTED] amountIn: 1000 expected: 1000
-// [EXPECTED] amountOut: -7317 expected: -7317
+// [EXPECTED] amountOut: 7317 expected: 7317
 //
 // [INFO] Scenario completed

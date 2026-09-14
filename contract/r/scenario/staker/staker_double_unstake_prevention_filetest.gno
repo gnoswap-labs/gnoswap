@@ -9,7 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -22,8 +24,10 @@ import (
 	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -82,6 +86,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	en.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// override warm-up period for testing
@@ -183,6 +188,7 @@ func firstUnstake(cur realm) {
 
 	// First unstake - should succeed
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 
 	ufmt.Printf("[EXPECTED] first unstake succeeded\n")
 	testing.SkipHeights(1)
@@ -217,8 +223,8 @@ func verifyPositionIntegrity(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Verify position still exists and is accessible
-	position, err := pn.GetPosition(1)
-	if err != nil {
+	position, ok := pn.GetPositions().Get(utils.Uint64ToString(1)).(pn.Position)
+	if !ok {
 		panic("position should still exist")
 	}
 

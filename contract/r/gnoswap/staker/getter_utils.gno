@@ -9,33 +9,6 @@ func cloneStringSlice(src []string) []string {
 	return copied
 }
 
-func cloneUint64Slice(src []uint64) []uint64 {
-	if src == nil {
-		return nil
-	}
-	copied := make([]uint64, len(src))
-	copy(copied, src)
-	return copied
-}
-
-func cloneInt64Slice(src []int64) []int64 {
-	if src == nil {
-		return nil
-	}
-	copied := make([]int64, len(src))
-	copy(copied, src)
-	return copied
-}
-
-func cloneInt32Slice(src []int32) []int32 {
-	if src == nil {
-		return nil
-	}
-	copied := make([]int32, len(src))
-	copy(copied, src)
-	return copied
-}
-
 func cloneStringInt64Map(src map[string]int64) map[string]int64 {
 	if src == nil {
 		return nil

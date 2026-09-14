@@ -265,6 +265,30 @@ func TestGetEmissionAmountPerSecondInRangeBoundary(cur realm, t *testing.T) {
 		times, emissions := GetEmissionAmountPerSecondInRange(year3Start, year5Start-1)
 		verifyResult(t, times, emissions, 2)
 	})
+
+	t.Run("crossing emission end includes zero emission boundary", func(cur realm, t *testing.T) {
+		year12End := GetHalvingYearEndTimestamp(12)
+		times, emissions := GetEmissionAmountPerSecondInRange(year12End-10, year12End+10)
+
+		uassert.Equal(t, 1, len(times))
+		uassert.Equal(t, 1, len(emissions))
+		uassert.Equal(t, year12End+1, times[0])
+		uassert.Equal(t, int64(0), emissions[0])
+	})
+
+	t.Run("starting after emission end excludes zero boundary", func(cur realm, t *testing.T) {
+		year12End := GetHalvingYearEndTimestamp(12)
+		times, emissions := GetEmissionAmountPerSecondInRange(year12End+1, year12End+10)
+
+		verifyResult(t, times, emissions, 0)
+	})
+
+	t.Run("reversed from/to returns empty", func(cur realm, t *testing.T) {
+		times, emissions := GetEmissionAmountPerSecondInRange(100, 50)
+
+		uassert.Equal(t, 0, len(times))
+		uassert.Equal(t, 0, len(emissions))
+	})
 }
 
 func TestGetEmissionFunctionsWithInvalidTimestamps(cur realm, t *testing.T) {
@@ -493,17 +517,15 @@ func TestGetHalvingInfoIsolation(cur realm, t *testing.T) {
 	halvingInfo.startTimestamps[0] = -1
 	halvingInfo.endTimestamps[0] = -2
 	halvingInfo.maxAmount[0] = -3
-	halvingInfo.mintedAmount[0] = -4
 	halvingInfo.leftAmount[0] = -5
-	halvingInfo.accumAmount[0] = -6
+	halvingInfo.mintedAmount[0] = -6
 	halvingInfo.amountPerSecond[0] = -7
 
 	reFetched := GetHalvingInfo()
 	uassert.True(t, reFetched.startTimestamps[0] > 0)
 	uassert.True(t, reFetched.endTimestamps[0] > 0)
 	uassert.True(t, reFetched.maxAmount[0] > 0)
-	uassert.Equal(t, int64(0), reFetched.mintedAmount[0])
 	uassert.True(t, reFetched.leftAmount[0] > 0)
-	uassert.Equal(t, int64(0), reFetched.accumAmount[0])
+	uassert.Equal(t, int64(0), reFetched.mintedAmount[0])
 	uassert.True(t, reFetched.amountPerSecond[0] > 0)
 }

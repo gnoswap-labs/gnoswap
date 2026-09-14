@@ -1,6 +1,7 @@
 package pool
 
 import (
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -17,6 +18,7 @@ type IPool interface {
 	IPoolManager
 	IPoolPosition
 	IPoolSwap
+	IPoolOracle
 	IPoolGetter
 }
 
@@ -35,15 +37,6 @@ type IPoolManager interface {
 
 	// SetPoolCreationFee sets the pool creation fee.
 	SetPoolCreationFee(_ int, rlm realm, fee int64)
-
-	IncreaseObservationCardinalityNext(
-		_ int,
-		rlm realm,
-		token0Path string,
-		token1Path string,
-		fee uint32,
-		cardinalityNext uint16,
-	)
 }
 
 // IPoolPosition interface defines position management operations.
@@ -75,7 +68,20 @@ type IPoolPosition interface {
 		positionCaller address,
 	) (string, string)
 
-	// Collect transfers owed tokens from a position to recipient.
+	// CollectSwapFee and Collect pay owed tokens out to recipient.
+	CollectSwapFee(
+		_ int,
+		rlm realm,
+		token0Path string,
+		token1Path string,
+		fee uint32,
+		recipient address,
+		tickLower int32,
+		tickUpper int32,
+		amount0Requested string,
+		amount1Requested string,
+	) (amount0, amount1, fee0, fee1 string)
+
 	Collect(
 		_ int,
 		rlm realm,
@@ -87,19 +93,9 @@ type IPoolPosition interface {
 		tickUpper int32,
 		amount0Requested string,
 		amount1Requested string,
-	) (string, string)
+	) (amount0, amount1 string)
 
 	SetWithdrawalFee(_ int, rlm realm, fee uint64)
-
-	HandleWithdrawalFee(
-		_ int,
-		rlm realm,
-		token0Path string,
-		amount0 string,
-		token1Path string,
-		amount1 string,
-		positionCaller address,
-	) (string, string, string, string)
 }
 
 // IPoolSwap interface defines swap and protocol fee operations.
@@ -115,7 +111,6 @@ type IPoolSwap interface {
 		zeroForOne bool,
 		amountSpecified string,
 		sqrtPriceLimitX96 string,
-		payer address,
 		swapCallback func(cur realm, amount0Delta, amount1Delta int64, callbackMarker *CallbackMarker) error,
 	) (string, string)
 
@@ -126,7 +121,7 @@ type IPoolSwap interface {
 		zeroForOne bool,
 		amountSpecified string,
 		sqrtPriceLimitX96 string,
-	) (string, string, bool)
+	) (string, string, error)
 
 	SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error)
 
@@ -143,9 +138,70 @@ type IPoolSwap interface {
 		recipient address,
 		amount0Requested string,
 		amount1Requested string,
-	) (string, string)
+	) (amount0, amount1 string)
 
 	SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8)
+}
+
+// IPoolOracle defines the pool's Uniswap V3-aligned oracle surface.
+//
+// Its public methods mirror the relevant Uniswap V3 pool-state, derived-state,
+// and action specifications, adapted for GnoSwap's singleton pool realm: every
+// operation identifies its pool with poolPath, and uint values cross the public
+// boundary using GnoSwap types or decimal strings rather than the EVM ABI.
+//
+// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L21-L32
+// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L18-L39
+type IPoolOracle interface {
+	// GetSlot0 returns a safe copy of a pool's price, tick, protocol-fee, lock,
+	// and oracle cursor/capacity state, corresponding to Uniswap V3 slot0().
+	//
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L21-L32
+	GetSlot0(poolPath string) Slot0
+
+	// GetObservationAt returns the observation stored at index, corresponding to
+	// Uniswap V3 observations(uint256). An in-range uninitialized slot returns a
+	// zero observation; an out-of-range index returns an error.
+	//
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L99-L115
+	GetObservationAt(poolPath string, index uint16) (Observation, error)
+
+	// Observe returns tick and seconds-per-liquidity cumulatives for every
+	// requested lookback, corresponding to Uniswap V3 observe(uint32[]).
+	//
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L18-L21
+	Observe(poolPath string, secondsAgos []uint32) ([]int64, []string, error)
+
+	// SnapshotCumulativesInside returns accumulators accrued while the pool price
+	// was inside [tickLower, tickUpper), corresponding to Uniswap V3
+	// snapshotCumulativesInside(int24,int24).
+	//
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L23-L39
+	SnapshotCumulativesInside(
+		poolPath string,
+		tickLower int32,
+		tickUpper int32,
+	) (int64, *u256.Uint, uint32, error)
+
+	// OracleConsult returns the arithmetic mean tick and harmonic mean liquidity
+	// over secondsAgo, following Uniswap V3 periphery's OracleLibrary.consult.
+	//
+	// ref: https://github.com/Uniswap/v3-periphery/blob/0682387198a24c7cd63566a2c58398533860a5d1/contracts/libraries/OracleLibrary.sol#L16-L41
+	OracleConsult(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
+
+	// IncreaseObservationCardinalityNext schedules growth of the circular
+	// observation buffer, corresponding to Uniswap V3
+	// increaseObservationCardinalityNext(uint16).
+	//
+	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolActions.sol#L98-L102
+	IncreaseObservationCardinalityNext(
+		_ int,
+		rlm realm,
+		token0Path string,
+		token1Path string,
+		fee uint32,
+		cardinalityNext uint16,
+	)
 }
 
 // IPoolGetter interface defines data retrieval operations.
@@ -153,93 +209,85 @@ type IPoolSwap interface {
 type IPoolGetter interface {
 	ExistsPoolPath(poolPath string) bool
 
-	GetBalanceToken0(poolPath string) int64
+	GetBalanceToken0(poolPath string) (int64, error)
 
-	GetBalanceToken1(poolPath string) int64
+	GetBalanceToken1(poolPath string) (int64, error)
 
-	GetFee(poolPath string) uint32
+	GetFee(poolPath string) (uint32, error)
 
-	GetFeeAmountTickSpacing(fee uint32) (spacing int32)
+	GetFeeAmountTickSpacing(fee uint32) (spacing int32, err error)
 
-	GetFeeGrowthGlobal0X128(poolPath string) *u256.Uint
+	GetFeeGrowthGlobal0X128(poolPath string) (*u256.Uint, error)
 
-	GetFeeGrowthGlobal1X128(poolPath string) *u256.Uint
+	GetFeeGrowthGlobal1X128(poolPath string) (*u256.Uint, error)
 
-	GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint)
+	GetFeeGrowthGlobalX128(poolPath string) (*u256.Uint, *u256.Uint, error)
 
-	GetLiquidity(poolPath string) *u256.Uint
+	GetLiquidity(poolPath string) (*u256.Uint, error)
 
-	GetObservation(poolPath string, secondsAgo int64) (tickCumulative int64, liquidityCumulative, secondsPerLiquidityCumulativeX128 string, blockTimestamp int64)
+	GetPendingProtocolFees() map[string]int64
 
 	GetPoolCreationFee() int64
 
-	GetPositionFeeGrowthInside0LastX128(poolPath, key string) string
+	GetPositionFeeGrowthInside0LastX128(poolPath, key string) (string, error)
 
-	GetPositionFeeGrowthInside1LastX128(poolPath, key string) string
+	GetPositionFeeGrowthInside1LastX128(poolPath, key string) (string, error)
 
-	GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string)
+	GetPositionFeeGrowthInsideLastX128(poolPath, key string) (string, string, error)
 
-	GetPositionLiquidity(poolPath, key string) string
+	GetPositionLiquidity(poolPath, key string) (string, error)
 
-	GetPositionTokensOwed0(poolPath, key string) int64
+	GetPositionTokensOwed0(poolPath, key string) (int64, error)
 
-	GetPositionTokensOwed1(poolPath, key string) int64
+	GetPositionTokensOwed1(poolPath, key string) (int64, error)
 
-	GetProtocolFeesToken0(poolPath string) int64
+	GetProtocolFeesToken0(poolPath string) (int64, error)
 
-	GetProtocolFeesToken1(poolPath string) int64
+	GetProtocolFeesToken1(poolPath string) (int64, error)
 
-	GetSlot0FeeProtocol(poolPath string) uint8
+	GetSlot0FeeProtocol(poolPath string) (uint8, error)
 
-	GetSlot0SqrtPriceX96(poolPath string) *u256.Uint
+	GetSlot0SqrtPriceX96(poolPath string) (*u256.Uint, error)
 
-	GetSlot0Tick(poolPath string) int32
+	GetSlot0Tick(poolPath string) (int32, error)
 
-	GetSlot0Unlocked(poolPath string) bool
+	GetSlot0Unlocked(poolPath string) (bool, error)
 
-	GetTickCumulativeOutside(poolPath string, tick int32) int64
+	GetTickCumulativeOutside(poolPath string, tick int32) (int64, error)
 
-	GetTickFeeGrowthOutside0X128(poolPath string, tick int32) string
+	GetTickFeeGrowthOutside0X128(poolPath string, tick int32) (string, error)
 
-	GetTickFeeGrowthOutside1X128(poolPath string, tick int32) string
+	GetTickFeeGrowthOutside1X128(poolPath string, tick int32) (string, error)
 
-	GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string)
+	GetTickFeeGrowthOutsideX128(poolPath string, tick int32) (string, string, error)
 
-	GetTickInitialized(poolPath string, tick int32) bool
+	GetTickInitialized(poolPath string, tick int32) (bool, error)
 
-	GetTickLiquidityGross(poolPath string, tick int32) string
+	GetTickLiquidityGross(poolPath string, tick int32) (string, error)
 
-	GetTickLiquidityNet(poolPath string, tick int32) string
+	GetTickLiquidityNet(poolPath string, tick int32) (string, error)
 
-	GetTickSecondsOutside(poolPath string, tick int32) uint32
+	GetTickSecondsOutside(poolPath string, tick int32) (uint32, error)
 
-	GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string
+	GetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) (string, error)
 
-	GetTickSpacing(poolPath string) int32
+	GetTickSpacing(poolPath string) (int32, error)
 
-	GetToken0Path(poolPath string) string
+	GetToken0Path(poolPath string) (string, error)
 
-	GetToken1Path(poolPath string) string
+	GetToken1Path(poolPath string) (string, error)
 
 	GetWithdrawalFee() uint64
 
-	GetTWAP(poolPath string, secondsAgo uint32) (int32, *u256.Uint, error)
-
-	GetPoolCount() int
-	GetPoolPaths(offset, count int) []string
+	GetPools() *rotree.ReadOnlyTree
 	GetFeeAmountTickSpacings() map[uint32]int32
 
-	GetPoolPositionCount(poolPath string) int
-	GetPoolPositionKeys(poolPath string, offset, count int) []string
+	GetPoolPositions(poolPath string) *rotree.ReadOnlyTree
 
-	GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) []int32
+	GetInitializedTicksInRange(poolPath string, tickLower, tickUpper int32) ([]int32, error)
 
-	// Structure getters
-	GetPool(token0Path, token1Path string, fee uint32) (*Pool, error)
 	GetTickInfo(poolPath string, tick int32) (TickInfo, error)
 	GetTickBitmaps(poolPath string, wordPos int16) (string, error)
-	GetPosition(poolPath, key string) (PositionInfo, error)
-	GetObservationState(poolPath string) (*ObservationState, error)
 }
 
 // IPoolStore interface defines the storage abstraction for pool data.
@@ -252,6 +300,10 @@ type IPoolStore interface {
 	HasPools() bool
 	GetPools() *bptree.BPTree
 	SetPools(_ int, rlm realm, pools *bptree.BPTree) error
+
+	HasObservations() bool
+	GetObservations() *bptree.BPTree
+	SetObservations(_ int, rlm realm, observations *bptree.BPTree) error
 
 	HasFeeAmountTickSpacing() bool
 	GetFeeAmountTickSpacing() map[uint32]int32
@@ -268,6 +320,9 @@ type IPoolStore interface {
 	HasPendingProtocolFees() bool
 	GetPendingProtocolFees() map[string]int64
 	SetPendingProtocolFees(_ int, rlm realm, pendingProtocolFees map[string]int64) error
+	GetPendingProtocolFee(tokenPath string) int64
+	SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error
+	RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error
 
 	HasWithdrawalFeeBPS() bool
 	GetWithdrawalFeeBPS() uint64

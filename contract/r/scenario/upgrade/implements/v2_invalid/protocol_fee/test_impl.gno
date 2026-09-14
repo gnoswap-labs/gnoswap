@@ -149,3 +149,38 @@ func (t *TestProtocolFee) GetActualDistributedToDevOpsByTokenPath(path string) i
 	}
 	return t.instance.GetActualDistributedToDevOpsByTokenPath(path)
 }
+
+func (t *TestProtocolFee) AdvanceAccrualEpoch(_ int, rlm realm) int64 {
+	if !t.isActive("AdvanceAccrualEpoch") {
+		panic("test implementation: AdvanceAccrualEpoch not supported")
+	}
+	return t.instance.AdvanceAccrualEpoch(0, rlm)
+}
+
+func (t *TestProtocolFee) ConsumeAccrualBuckets(_ int, rlm realm, tokenPath string, limit int) ([]int64, []int64) {
+	if !t.isActive("ConsumeAccrualBuckets") {
+		panic("test implementation: ConsumeAccrualBuckets not supported")
+	}
+	return t.instance.ConsumeAccrualBuckets(0, rlm, tokenPath, limit)
+}
+
+func (t *TestProtocolFee) GetAccrualEpoch() int64 {
+	if !t.isActive("GetAccrualEpoch") {
+		panic("test implementation: GetAccrualEpoch not supported")
+	}
+	return t.instance.GetAccrualEpoch()
+}
+
+func (t *TestProtocolFee) GetAccrualPendingTokens() []string {
+	if !t.isActive("GetAccrualPendingTokens") {
+		panic("test implementation: GetAccrualPendingTokens not supported")
+	}
+	return t.instance.GetAccrualPendingTokens()
+}
+
+func (t *TestProtocolFee) GetAccrualBuckets(tokenPath string, limit int) ([]int64, []int64) {
+	if !t.isActive("GetAccrualBuckets") {
+		panic("test implementation: GetAccrualBuckets not supported")
+	}
+	return t.instance.GetAccrualBuckets(tokenPath, limit)
+}

@@ -10,13 +10,16 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -32,6 +35,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -87,7 +91,7 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 3. Skip warmup period")
-	collectEmissionRewardsWithSkipHeights(cur, 86400 * 30)
+	collectEmissionRewardsWithSkipHeights(cur, 86400*30)
 	println()
 
 	println("[SCENARIO] 4. Check tier 1 reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)")
@@ -139,6 +143,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -201,7 +206,7 @@ func setPoolTier(cur realm, tier int) {
 	beforePoolTier := sr.GetPoolTier(barBazPoolPath)
 	beforePoolEmissionReward := int64(0)
 	if beforePoolTier != 0 {
-		beforePoolEmissionReward = sr.GetPoolReward(beforePoolTier)
+		beforePoolEmissionReward, _ = sr.GetPoolReward(beforePoolTier)
 	}
 
 	sr.SetPoolTier(cross(cur), barBazPoolPath, uint64(tier))
@@ -209,7 +214,7 @@ func setPoolTier(cur realm, tier int) {
 	afterPoolTier := sr.GetPoolTier(barBazPoolPath)
 	afterPoolEmissionReward := int64(0)
 	if afterPoolTier != 0 {
-		afterPoolEmissionReward = sr.GetPoolReward(afterPoolTier)
+		afterPoolEmissionReward, _ = sr.GetPoolReward(afterPoolTier)
 	}
 
 	ufmt.Printf("[EXPECTED] %s pool's tier changed: %d -> %d\n", barBazPoolPath, beforePoolTier, afterPoolTier)
@@ -293,7 +298,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] skip 2592000 blocks, current height: 125, current time: 1234567900
 // [EXPECTED] collected GNS amount: 30629272823998 GNS
 // [INFO] skip 1 blocks, current height: 2592125, current time: 1247527900
-// [EXPECTED] reward amount per second: 2675512 GNS
+// [EXPECTED] reward amount per second: 2675513 GNS
 //
 // [SCENARIO] 4. Check tier 1 reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)
 // [SCENARIO] 4.1. Set pool tier to tier 1
@@ -305,7 +310,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] skip 10 blocks, current height: 2592126, current time: 1247527905
 // [EXPECTED] collected GNS amount: 133775649 GNS
 // [INFO] skip 1 blocks, current height: 2592136, current time: 1247527955
-// [EXPECTED] reward amount per second: 2675512 GNS
+// [EXPECTED] reward amount per second: 2675513 GNS
 //
 // [SCENARIO] 5. Check non-tier reward (tier 1: 100%, tier 2: 0%, tier 3: 0%)
 // [SCENARIO] 5.1. Remove pool tier from tier 1
@@ -327,9 +332,9 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [SCENARIO] 6.2. Collect emission rewards in tier 2 with after 10 blocks
 // [INFO] pool tier: 2
 // [INFO] skip 10 blocks, current height: 2592148, current time: 1247528015
-// [EXPECTED] collected GNS amount: 80265399 GNS
+// [EXPECTED] collected GNS amount: 80265400 GNS
 // [INFO] skip 1 blocks, current height: 2592158, current time: 1247528065
-// [EXPECTED] reward amount per second: 1605307 GNS
+// [EXPECTED] reward amount per second: 1605308 GNS
 //
 // [SCENARIO] 6.3. Skip 10 blocks to rewards
 // [INFO] skip 10 blocks, current height: 2592159, current time: 1247528070
@@ -350,4 +355,4 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] skip 10 blocks, current height: 2592179, current time: 1247528170
 // [EXPECTED] collected GNS amount: 133775648 GNS
 // [INFO] skip 1 blocks, current height: 2592189, current time: 1247528220
-// [EXPECTED] reward amount per second: 1070204 GNS
+// [EXPECTED] reward amount per second: 1070205 GNS

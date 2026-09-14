@@ -3,12 +3,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -24,6 +26,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -84,6 +87,7 @@ func initSystem(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set distribution start time")
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -138,6 +142,7 @@ func testPoolInitializationBehavior(cur realm) {
 
 	println("[INFO] unstake position for cleanup")
 	sr.UnStakeToken(cross(cur), positionId)
+	sr.CollectReward(cross(cur), positionId)
 	testing.SkipHeights(5)
 }
 
@@ -202,12 +207,14 @@ func testUnclaimablePeriodRewardDistribution(cur realm) {
 
 	println("[INFO] unstake first position (pool still has liquidity from second position)")
 	sr.UnStakeToken(cross(cur), positionId)
+	sr.CollectReward(cross(cur), positionId)
 
 	println("[INFO] wait 5 blocks with pool still having liquidity")
 	testing.SkipHeights(5)
 
 	println("[INFO] unstake second position to enter true unclaimable period")
 	sr.UnStakeToken(cross(cur), positionId2)
+	sr.CollectReward(cross(cur), positionId2)
 	actualUnclaimableStart := time.Now().Unix()
 	ufmt.Printf("[EXPECTED] unclaimable period start: %d\n", actualUnclaimableStart)
 
@@ -226,6 +233,7 @@ func testUnclaimablePeriodRewardDistribution(cur realm) {
 
 	println("[INFO] unstake first position again to continue unclaimable")
 	sr.UnStakeToken(cross(cur), positionId)
+	sr.CollectReward(cross(cur), positionId)
 
 	println("[INFO] wait 5 more blocks")
 	testing.SkipHeights(5)
@@ -260,6 +268,7 @@ func testUnclaimablePeriodRewardDistribution(cur realm) {
 
 	println("[INFO] unstake positions for cleanup")
 	sr.UnStakeToken(cross(cur), positionId)
+	sr.CollectReward(cross(cur), positionId)
 	// positionId2 is already unstaked
 	testing.SkipHeights(5)
 }
@@ -317,6 +326,7 @@ func testClaimablePeriodCollection(cur realm) {
 
 	println("[INFO] unstake to enter unclaimable period")
 	sr.UnStakeToken(cross(cur), positionId)
+	sr.CollectReward(cross(cur), positionId)
 	actualUnclaimableStart := time.Now().Unix()
 
 	println("[INFO] wait 10 blocks during unclaimable")
@@ -342,6 +352,7 @@ func testClaimablePeriodCollection(cur realm) {
 
 	println("[INFO] unstake position for cleanup")
 	sr.UnStakeToken(cross(cur), positionId)
+	sr.CollectReward(cross(cur), positionId)
 }
 
 func positionIdFrom(cur realm, positionId any) grc721.TokenID {

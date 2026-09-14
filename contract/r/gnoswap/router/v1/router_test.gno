@@ -230,7 +230,7 @@ func TestCompareExactInAndDrySwapWithNoLiquidityChanged(cur realm, t *testing.T)
 			quoteArr:         "100",
 			amountOutMin:     "85000000",
 			expectedAmount0:  "100000000",
-			expectedAmount1:  "-98817367",
+			expectedAmount1:  "98817367",
 			expectPanic:      true,
 		},
 	}
@@ -429,7 +429,7 @@ func TestCompareExactInAndDrySwapWithWhenLiquidityAdded(cur realm, t *testing.T)
 			quoteArr:         "100",
 			amountOutMin:     "20000000",
 			expectedAmount0:  "50000000",
-			expectedAmount1:  "-49776285",
+			expectedAmount1:  "49776285",
 			expectPanic:      true,
 		},
 	}
@@ -626,7 +626,7 @@ func TestCompareExactInAndDrySwapWithWhenZeroForOneIsFalse(cur realm, t *testing
 			quoteArr:         "100",
 			amountOutMin:     "850000",
 			expectedAmount0:  "10000000",
-			expectedAmount1:  "-9875422",
+			expectedAmount1:  "9875422",
 			expectPanic:      true,
 		},
 	}
@@ -901,7 +901,7 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(cross(cur), tt.inputToken, routerAddr, math.MaxInt64)
+			common.SafeGRC20Approve(0, cur, tt.inputToken, routerAddr, math.MaxInt64)
 
 			amountSpecified := utils.SafeParseInt64(tt.amountSpecified)
 
@@ -1016,7 +1016,7 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 			toSwapAmount := utils.SafeParseInt64(tt.toSwap)
 			testing.SetRealm(adminRealm)
 
-			common.SafeGRC20Approve(cross(cur), barPath, routerAddr, math.MaxInt64)
+			common.SafeGRC20Approve(0, cur, barPath, routerAddr, math.MaxInt64)
 
 			router := mockRouter()
 			processRouteFn := func(cur realm) (int64, int64, error) {
@@ -1304,7 +1304,7 @@ func TestSwapProcessor_ValidateSwapResults(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			_, _, success := processor.ValidateSwapResults(
+			_, _, err := processor.ValidateSwapResults(
 				tt.swapType,
 				tt.resultAmountIn,
 				tt.resultAmountOut,
@@ -1313,7 +1313,11 @@ func TestSwapProcessor_ValidateSwapResults(cur realm, t *testing.T) {
 				tt.swapCount,
 			)
 
-			uassert.Equal(t, success, tt.expectedSuccess)
+			if tt.expectedSuccess {
+				uassert.NoError(t, err)
+			} else {
+				uassert.Error(t, err)
+			}
 		})
 	}
 }
@@ -1638,48 +1642,6 @@ func TestSwapValidator_Amount(cur realm, t *testing.T) {
 	}
 }
 
-// Test SwapValidator amountLimit
-func TestSwapValidator_AmountLimit(cur realm, t *testing.T) {
-	validator := &SwapValidator{}
-
-	tests := []struct {
-		name        string
-		amountLimit int64
-		expectError bool
-		expected    int64
-	}{
-		{
-			name:        "positive limit",
-			amountLimit: 1000,
-			expectError: false,
-			expected:    1000,
-		},
-		{
-			name:        "zero limit",
-			amountLimit: 0,
-			expectError: true,
-		},
-		{
-			name:        "negative limit",
-			amountLimit: -100,
-			expectError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			result, err := validator.amountLimit(tt.amountLimit)
-
-			if tt.expectError {
-				uassert.Error(t, err)
-			} else {
-				uassert.NoError(t, err)
-				uassert.Equal(t, result, tt.expected)
-			}
-		})
-	}
-}
-
 // Test SwapValidator swapType
 func TestSwapValidator_SwapType(cur realm, t *testing.T) {
 	validator := &SwapValidator{}
@@ -1825,6 +1787,49 @@ func TestSwapValidator_ExactOutAmount(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			err := validator.exactOutAmount(tt.resultAmount, tt.specifiedAmount, tt.swapCount)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test SwapValidator exactInAmount
+func TestSwapValidator_ExactInAmount(cur realm, t *testing.T) {
+	validator := &SwapValidator{}
+
+	tests := []struct {
+		name            string
+		resultAmount    int64
+		specifiedAmount int64
+		expectError     bool
+	}{
+		{
+			name:            "exact match",
+			resultAmount:    1000,
+			specifiedAmount: 1000,
+			expectError:     false,
+		},
+		{
+			name:            "partial fill (consumed less than requested)",
+			resultAmount:    999,
+			specifiedAmount: 1000,
+			expectError:     true,
+		},
+		{
+			name:            "consumed more than requested",
+			resultAmount:    1001,
+			specifiedAmount: 1000,
+			expectError:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			err := validator.exactInAmount(tt.resultAmount, tt.specifiedAmount)
 
 			if tt.expectError {
 				uassert.Error(t, err)

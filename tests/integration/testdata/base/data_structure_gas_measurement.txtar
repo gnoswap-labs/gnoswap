@@ -289,7 +289,7 @@ func AVLGet10(cur realm) {
 		tree.Set(strconv.Itoa(i), i)
 	}
 	// Single lookup (middle element)
-	_, _ = tree.Get("5")
+	_ = tree.Get("5")
 }
 
 func AVLGet100(cur realm) {
@@ -298,7 +298,7 @@ func AVLGet100(cur realm) {
 		tree.Set(strconv.Itoa(i), i)
 	}
 	// Single lookup (middle element)
-	_, _ = tree.Get("50")
+	_ = tree.Get("50")
 }
 
 func AVLGet1000(cur realm) {
@@ -307,7 +307,7 @@ func AVLGet1000(cur realm) {
 		tree.Set(strconv.Itoa(i), i)
 	}
 	// Single lookup (middle element)
-	_, _ = tree.Get("500")
+	_ = tree.Get("500")
 }
 
 func AVLIterate10(cur realm) {
@@ -363,7 +363,7 @@ func BPTreeGet10(cur realm) {
 		tree.Set(strconv.Itoa(i), i)
 	}
 	// Single lookup (middle element)
-	_, _ = tree.Get("5")
+	_ = tree.Get("5")
 }
 
 func BPTreeGet100(cur realm) {
@@ -372,7 +372,7 @@ func BPTreeGet100(cur realm) {
 		tree.Set(strconv.Itoa(i), i)
 	}
 	// Single lookup (middle element)
-	_, _ = tree.Get("50")
+	_ = tree.Get("50")
 }
 
 func BPTreeGet1000(cur realm) {
@@ -381,7 +381,7 @@ func BPTreeGet1000(cur realm) {
 		tree.Set(strconv.Itoa(i), i)
 	}
 	// Single lookup (middle element)
-	_, _ = tree.Get("500")
+	_ = tree.Get("500")
 }
 
 func BPTreeIterate10(cur realm) {
@@ -437,7 +437,7 @@ func BPTree32Get10(cur realm) {
 		tree.Set(strconv.Itoa(i), i)
 	}
 	// Single lookup (middle element)
-	_, _ = tree.Get("5")
+	_ = tree.Get("5")
 }
 
 func BPTree32Get100(cur realm) {
@@ -446,7 +446,7 @@ func BPTree32Get100(cur realm) {
 		tree.Set(strconv.Itoa(i), i)
 	}
 	// Single lookup (middle element)
-	_, _ = tree.Get("50")
+	_ = tree.Get("50")
 }
 
 func BPTree32Get1000(cur realm) {
@@ -455,7 +455,7 @@ func BPTree32Get1000(cur realm) {
 		tree.Set(strconv.Itoa(i), i)
 	}
 	// Single lookup (middle element)
-	_, _ = tree.Get("500")
+	_ = tree.Get("500")
 }
 
 func BPTree32Iterate10(cur realm) {

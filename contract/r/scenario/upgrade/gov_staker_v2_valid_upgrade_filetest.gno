@@ -17,13 +17,13 @@
 //  4. Upgrade to v2_valid.
 //  5. With v2_valid: MUTATE the v1-created structures via every reachable
 //     state-changing entry point exposed by proxy.gno:
-//       - SetUnDelegationLockupPeriodByAdmin (admin config RMW)
-//       - Delegate            (RMW delegation map/tree + reward state)
-//       - Redelegate          (moves delegation between targets; RMW map/tree)
-//       - Undelegate          (RMW delegation map/tree + undelegation withdraws)
-//       - CollectUndelegatedGns (RMW undelegation withdraw structures)
-//       - CollectReward       (RMW reward-state struct)
-//       - CleanStakerDelegationSnapshotByAdmin (RMW snapshot history trees)
+//     - SetUnDelegationLockupPeriodByAdmin (admin config RMW)
+//     - Delegate            (RMW delegation map/tree + reward state)
+//     - Redelegate          (moves delegation between targets; RMW map/tree)
+//     - Undelegate          (RMW delegation map/tree + undelegation withdraws)
+//     - CollectUndelegatedGns (RMW undelegation withdraw structures)
+//     - CollectReward       (RMW reward-state struct)
+//     - CleanStakerDelegationSnapshotByAdmin (RMW snapshot history trees)
 //     All of these read-modify-write v1-allocated maps / BPTrees / reward
 //     structs; a broken migration would panic here with a readonly-taint error.
 //     SetAmountByProjectWallet and CollectRewardFromLaunchPad are launchpad
@@ -37,9 +37,11 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/r/gnoswap/scenarioutils"
+
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -54,6 +56,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 	_ "gno.land/r/gnoswap/gov/staker/v2_valid"
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -159,6 +162,7 @@ func mintPosition(cur realm) {
 
 func initEmission(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 	staker.SetPoolTier(cross(cur), barFoo3000PoolPath, 1)
@@ -214,7 +218,7 @@ func redelegate(cur realm, from, delegatee, newDelegatee address, amount int64) 
 	testing.SetRealm(testing.NewUserRealm(from))
 	redelegated := govStaker.Redelegate(cross(cur), delegatee, newDelegatee, amount)
 	ufmt.Printf("[EXPECTED] v2_valid redelegated %d GNS from admin to bob\n", redelegated)
-	ufmt.Printf("[EXPECTED] alice->bob delegation count: %d\n", govStaker.GetUserDelegationCount(from, newDelegatee))
+	ufmt.Printf("[EXPECTED] alice->bob delegation count: %d\n", len(govStaker.GetUserDelegationIDs(from, newDelegatee)))
 }
 
 func collectUndelegatedGns(cur realm, addr address) {

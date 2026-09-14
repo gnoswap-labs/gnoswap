@@ -99,7 +99,7 @@ func runTestExactInSwapRoute(cur realm, ft *fuzz.T, params *exactInSwapRoutePara
 
 	// exact in swap route
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	common.SafeGRC20Approve(cross(cur), params.inputToken, routerAddr, math.MaxInt64)
+	common.SafeGRC20Approve(0, cur, params.inputToken, routerAddr, math.MaxInt64)
 
 	router.ExactInSwapRoute(
 		cross(cur),

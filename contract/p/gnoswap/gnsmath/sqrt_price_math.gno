@@ -39,7 +39,10 @@ func getNextPriceAmount0Add(
 
 	// fallback: liquidityShifted / ((liquidityShifted / sqrtPrice) + amount)
 	divValue := u256.Zero().Div(liquidityShifted, currentSqrtPriceX96)
-	denominator := u256.Zero().Add(divValue, amountToAdd)
+	denominator, overflow := u256.Zero().AddOverflow(divValue, amountToAdd)
+	if overflow {
+		panic(errSafeMathOverflow)
+	}
 	return u256.DivRoundingUp(liquidityShifted, denominator)
 }
 

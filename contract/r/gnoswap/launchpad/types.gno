@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"gno.land/p/gnoswap/uint256"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 )
 
@@ -39,9 +40,7 @@ type ILaunchpadDeposit interface {
 }
 
 type ILaunchpadGetter interface {
-	GetProjectCount() int
-	GetProjectIDs(offset, count int) []string
-	GetProject(projectId string) (*Project, error)
+	GetProjects() *rotree.ReadOnlyTree
 	GetProjectName(projectId string) (string, error)
 	GetProjectTokenPath(projectId string) (string, error)
 	GetProjectDepositAmount(projectId string) (int64, error)
@@ -64,10 +63,9 @@ type ILaunchpadGetter interface {
 
 	GetDepositCount() int
 	GetCurrentDepositId() int64
-	GetProjectTierDepositCount(projectId string, tier int64) int
-	GetProjectTierDepositIDs(projectId string, tier int64, offset, count int) []string
+	GetProjectTierRewards(projectId string, tier int64) *rotree.ReadOnlyTree
 
-	GetDeposit(depositId string) (*Deposit, error)
+	GetDeposit(depositId string) (Deposit, error)
 	GetDepositProjectID(depositId string) (string, error)
 	GetDepositTier(depositId string) (int64, error)
 	GetDepositProjectTierID(depositId string) (string, error)
@@ -99,6 +97,10 @@ type ILaunchpadStore interface {
 	HasProjectsKey() bool
 	GetProjects() *bptree.BPTree
 	SetProjects(_ int, rlm realm, projects *bptree.BPTree) error
+
+	HasProjectRecipientsKey() bool
+	GetProjectRecipients() *bptree.BPTree
+	SetProjectRecipients(_ int, rlm realm, recipients *bptree.BPTree) error
 
 	HasProjectTierRewardManagersKey() bool
 	GetProjectTierRewardManagers() *bptree.BPTree

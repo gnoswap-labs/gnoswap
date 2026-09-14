@@ -5,15 +5,15 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/gnoswap/gnsmath"
 
+	"gno.land/p/nt/grc721/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoland/wugnot"
 
@@ -29,6 +29,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -62,7 +63,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 )
@@ -174,12 +175,12 @@ func createExternalIncentiveWithNativeCoin(cur realm) {
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:100", // targetPoolPath
 		wugnotPath,                  // rewardToken (wugnot)
 		1_000_000_000,               // rewardAmount (100 ugnot)
-		1234569600,                  // startTimestamp
-		1234569600+TIMESTAMP_90DAYS, // endTimestamp
+		1234742400,                  // startTimestamp
+		1234742400+TIMESTAMP_90DAYS, // endTimestamp
 	)
 
 	ufmt.Printf("[INFO] native coin external incentive created\n")
-	ufmt.Printf("[INFO] start time: %d, end time: %d\n", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+	ufmt.Printf("[INFO] start time: %d, end time: %d\n", 1234742400, 1234742400+TIMESTAMP_90DAYS)
 
 	testing.SkipHeights(1)
 }
@@ -200,7 +201,7 @@ func collectExternalRewardWithUnwrap(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to accumulate rewards")
-	testing.SkipHeights(900)
+	testing.SkipHeights(35460)
 	sr.CollectReward(cross(cur), 1)
 
 	testing.SkipHeights(1)
@@ -318,7 +319,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] approve wugnot and gns for external incentive
 // [INFO] create external incentive with ugnot (native coin)
 // [INFO] native coin external incentive created
-// [INFO] start time: 1234569600, end time: 1242345600
+// [INFO] start time: 1234742400, end time: 1242518400
 //
 // [SCENARIO] 5. Stake token 01
 // [INFO] approve NFT to staker

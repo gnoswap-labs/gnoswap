@@ -13,6 +13,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -52,12 +53,12 @@ const (
 )
 
 type BalanceSnapshot struct {
-	userBaz         int64
-	userQux         int64
-	poolBaz         int64
-	poolQux         int64
-	protocolFeeBaz  int64
-	protocolFeeQux  int64
+	userBaz        int64
+	userQux        int64
+	poolBaz        int64
+	poolQux        int64
+	protocolFeeBaz int64
+	protocolFeeQux int64
 }
 
 func main(cur realm) {
@@ -141,7 +142,7 @@ func setupPoolWithMixedPositions(cur realm) BalanceSnapshot {
 		adminAddr,
 	)
 
-	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ := pool.GetPools().Get(pool.GetPoolPath(bazPath, quxPath, fee500)).(*pool.Pool)
 	currentLiquidity := pools.Liquidity().ToString()
 
 	println("[INFO] In-range position (-1000 to 1000):", inRangeAmount0, inRangeAmount1)
@@ -154,7 +155,7 @@ func setupPoolWithMixedPositions(cur realm) BalanceSnapshot {
 func testExactInputWithMixedPositions(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ := pool.GetPools().Get(pool.GetPoolPath(bazPath, quxPath, fee500)).(*pool.Pool)
 	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
@@ -172,13 +173,12 @@ func testExactInputWithMixedPositions(cur realm, before BalanceSnapshot) Balance
 		true,
 		"200000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, bazPath, quxPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	pools, _ = pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ = pool.GetPools().Get(pool.GetPoolPath(bazPath, quxPath, fee500)).(*pool.Pool)
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
@@ -192,7 +192,7 @@ func testExactInputWithMixedPositions(cur realm, before BalanceSnapshot) Balance
 func testExactOutputWithMixedPositions(cur realm, before BalanceSnapshot) BalanceSnapshot {
 	testing.SetRealm(adminRealm)
 
-	pools, _ := pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ := pool.GetPools().Get(pool.GetPoolPath(bazPath, quxPath, fee500)).(*pool.Pool)
 	tickBefore := pools.Slot0Tick()
 	liquidityBefore := pools.Liquidity().ToString()
 
@@ -210,13 +210,12 @@ func testExactOutputWithMixedPositions(cur realm, before BalanceSnapshot) Balanc
 		false,
 		"-80000",
 		MAX_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, bazPath, quxPath, amount0Delta, amount1Delta)
 		},
 	)
 
-	pools, _ = pool.GetPool(bazPath, quxPath, fee500)
+	pools, _ = pool.GetPools().Get(pool.GetPoolPath(bazPath, quxPath, fee500)).(*pool.Pool)
 	tickAfter := pools.Slot0Tick()
 	liquidityAfter := pools.Liquidity().ToString()
 
@@ -262,10 +261,10 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

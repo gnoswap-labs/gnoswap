@@ -16,15 +16,15 @@
 //   - CreatePool                          (pools BPTree insert: second pool)
 //   - Mint                                (positions/ticks BPTree + slot0 RMW)
 //   - Swap                                (slot0 + fee growth + bitmaps RMW)
-//   - Burn / Collect / HandleWithdrawalFee (driven via position.DecreaseLiquidity,
-//                                          which is the only legitimate caller of
-//                                          the position-role-gated pool entry points)
+//   - Burn / CollectSwapFee / Collect (driven via position.DecreaseLiquidity,
+//     which is the only legitimate caller of
+//     the position-role-gated pool entry points)
 //   - CollectProtocol                     (protocol fee accounting RMW)
 //   - SetFeeProtocol                      (iterates pools BPTree, RMWs every slot0)
 //   - IncreaseObservationCardinalityNext  (oracle observation array RMW)
 //   - SetPoolCreationFee / SetWithdrawalFee (scalar store writes)
 //   - SetSwapStartHook / SetSwapEndHook / SetTickCrossHook (func store writes,
-//                                          staker-role-gated)
+//     staker-role-gated)
 //
 // Because storage is owned by the domain (proxy) realm and all writes are
 // routed through domain-owned trees/methods, mutating v1-created data through
@@ -48,6 +48,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/pool/v2_valid"
 	_ "gno.land/r/gnoswap/router/v1"
@@ -109,9 +110,9 @@ func main(cur realm) {
 	createSecondPoolV2Valid(cur)
 	println()
 
-	println("[SCENARIO] 7. Burn + Collect + HandleWithdrawalFee through v2_valid")
+	println("[SCENARIO] 7. Burn + Collect through v2_valid")
 	// position.DecreaseLiquidity is the legitimate caller of the position-role-gated
-	// pool entry points Burn, Collect and HandleWithdrawalFee. It drives all three
+	// pool entry points Burn, CollectSwapFee and Collect. It drives all three
 	// in a single call against the v1-created position 1, RMWing the v1 ticks /
 	// positions BPTrees and the protocol-fee accounting.
 	decreaseLiquidityV2Valid(cur)
@@ -213,19 +214,20 @@ func createSecondPoolV2Valid(cur realm) {
 	testing.SetRealm(adminRealm)
 	pool.CreatePool(cross(cur), barPath, fooPath, fee3000, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
 	ufmt.Printf("[EXPECTED] v2_valid created second pool: %s (total pools=%d)\n",
-		pool.GetPoolPath(barPath, fooPath, fee3000), pool.GetPoolCount())
+		pool.GetPoolPath(barPath, fooPath, fee3000), pool.GetPools().Size())
 }
 
 // decreaseLiquidityV2Valid removes part of v1-created position 1 via
 // position.DecreaseLiquidity. That higher-level call legitimately drives the
 // position-role-gated pool entry points Burn (removes liquidity from the v1
 // ticks/positions BPTrees), Collect (transfers owed tokens) and
-// HandleWithdrawalFee (protocol-fee accounting), all against v1-created data.
+// the collect entry points (protocol-fee accounting), all against v1-created data.
 func decreaseLiquidityV2Valid(cur realm) {
 	testing.SetRealm(adminRealm)
 	_, removedLiq, _, _, _, _, _ := position.DecreaseLiquidity(cross(cur), uint64(1), "100000000", "0", "0", time.Now().Unix()+3600)
-	ufmt.Printf("[EXPECTED] v2_valid decreased position 1 (Burn+Collect+HandleWithdrawalFee) removedLiq=%s poolLiq=%s\n",
-		removedLiq, pool.GetLiquidity(barFoo500PoolPath))
+	poolLiquidity, _ := pool.GetLiquidity(barFoo500PoolPath)
+	ufmt.Printf("[EXPECTED] v2_valid decreased position 1 (Burn+Collect) removedLiq=%s poolLiq=%s\n",
+		removedLiq, poolLiquidity)
 }
 
 // setFeeProtocolV2Valid sets the protocol fee. SetFeeProtocol iterates the
@@ -233,17 +235,18 @@ func decreaseLiquidityV2Valid(cur realm) {
 func setFeeProtocolV2Valid(cur realm) {
 	testing.SetRealm(adminRealm)
 	pool.SetFeeProtocol(cross(cur), 6, 6)
+	feeProtocol, _ := pool.GetSlot0FeeProtocol(barFoo500PoolPath)
 	ufmt.Printf("[EXPECTED] v2_valid set fee protocol, slot0FeeProtocol=%d\n",
-		pool.GetSlot0FeeProtocol(barFoo500PoolPath))
+		feeProtocol)
 }
 
 // collectProtocolV2Valid collects accrued protocol fees (admin/governance gated),
 // RMWing the v1-created protocol-fee accounting for the pool.
 func collectProtocolV2Valid(cur realm) {
 	testing.SetRealm(adminRealm)
-	before0, before1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	before0, before1, _ := pool.GetProtocolFeesTokens(barFoo500PoolPath)
 	amt0, amt1 := pool.CollectProtocol(cross(cur), barPath, fooPath, fee500, adminAddr, "1000000000", "1000000000")
-	after0, after1 := pool.GetProtocolFeesTokens(barFoo500PoolPath)
+	after0, after1, _ := pool.GetProtocolFeesTokens(barFoo500PoolPath)
 	ufmt.Printf("[EXPECTED] v2_valid collected protocol fees collected0=%s collected1=%s feesBefore=(%d,%d) feesAfter=(%d,%d)\n",
 		amt0, amt1, before0, before1, after0, after1)
 }
@@ -277,9 +280,9 @@ func setSwapHooksV2Valid(cur realm) {
 
 func printPoolData(cur realm) {
 	testing.SetRealm(adminRealm)
-	p, _ := pool.GetPool(barPath, fooPath, fee500)
+	p, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee500)).(*pool.Pool)
 	ufmt.Printf("[EXPECTED] pool=%s tick=%d liquidity=%s positions=%d\n",
-		p.PoolPath(), p.Slot0Tick(), p.Liquidity().ToString(), pool.GetPoolPositionCount(barFoo500PoolPath))
+		p.PoolPath(), p.Slot0Tick(), p.Liquidity().ToString(), pool.GetPoolPositions(barFoo500PoolPath).Size())
 }
 
 // Output:
@@ -289,7 +292,7 @@ func printPoolData(cur realm) {
 // [SCENARIO] 2. Create v1 data: pool + position + swap
 // [EXPECTED] Created pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500
 // [EXPECTED] v1 minted position id=1 liquidity=1066918731
-// [EXPECTED] v1 swap in=1000000 out=-997067
+// [EXPECTED] v1 swap in=1000000 out=997067
 //
 // [SCENARIO] 3. Read v1-created data via getters
 // [EXPECTED] pool=gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500 tick=18 liquidity=1066918731 positions=1
@@ -299,18 +302,18 @@ func printPoolData(cur realm) {
 //
 // [SCENARIO] 5. Mutate v1 data through v2_valid (taint-prone RMW)
 // [EXPECTED] v2_valid minted position id=2 liquidity=627605406
-// [EXPECTED] v2_valid swap in=1000000 out=-995547
+// [EXPECTED] v2_valid swap in=1000000 out=995547
 // [EXPECTED] v2_valid increased observation cardinality
 //
 // [SCENARIO] 6. CreatePool through v2_valid (pools BPTree RMW)
 // [EXPECTED] v2_valid created second pool: gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:3000 (total pools=2)
 //
-// [SCENARIO] 7. Burn + Collect + HandleWithdrawalFee through v2_valid
-// [EXPECTED] v2_valid decreased position 1 (Burn+Collect+HandleWithdrawalFee) removedLiq=100000000 poolLiq=1594524137
+// [SCENARIO] 7. Burn + Collect through v2_valid
+// [EXPECTED] v2_valid decreased position 1 (Burn+Collect) removedLiq=100000000 poolLiq=1594524137
 //
 // [SCENARIO] 8. SetFeeProtocol + CollectProtocol through v2_valid
 // [EXPECTED] v2_valid set fee protocol, slot0FeeProtocol=102
-// [EXPECTED] v2_valid swap in=1000000 out=-994338
+// [EXPECTED] v2_valid swap in=1000000 out=994338
 // [EXPECTED] v2_valid collected protocol fees collected0=0 collected1=83 feesBefore=(0,83) feesAfter=(0,0)
 //
 // [SCENARIO] 9. Scalar fee setters through v2_valid

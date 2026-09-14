@@ -17,11 +17,13 @@ import (
 	"time"
 
 	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -34,7 +36,10 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 )
+
+var t *testing.T
 
 var (
 	adminAddr     = access.MustGetAddress(prbac.ROLE_ADMIN.String())
@@ -47,7 +52,10 @@ var (
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	maxSmoothingPeriod := governance.GetMaxSmoothingPeriod()
 	ufmt.Printf("[INFO] max smoothing period: %d seconds\n", maxSmoothingPeriod)
 
@@ -71,7 +79,10 @@ func main(cur realm) {
 
 	println("[SCENARIO] 5. Create a proposal (this creates a snapshot reference)")
 	proposalId := createProposal(cur)
-	oldestActiveSnapshotTime, hasActive := governance.GetOldestActiveProposalSnapshotTime()
+	oldestActiveSnapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
+	if err != nil {
+		panic(err)
+	}
 	if hasActive {
 		ufmt.Printf("[INFO] oldest active proposal snapshot time: %d\n", oldestActiveSnapshotTime)
 	}
@@ -94,7 +105,9 @@ func main(cur realm) {
 	safeCleanupTime := firstDelegationTime - 100
 	if safeCleanupTime < validCleanupThreshold {
 		testing.SkipHeights(30 * 60 * 60 * 24 * 365)
-		cleanupSnapshots(cur, 1234783890 + 5)
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		governance.RemoveInactiveProposalFromIndex(cross(cur), proposalId)
+		cleanupSnapshots(cur, 1234783890+5)
 	} else {
 		println("[INFO] safe cleanup time is not old enough, skipping cleanup test")
 	}
@@ -109,6 +122,78 @@ func main(cur realm) {
 	println("[SCENARIO] 10. Verify total delegation preserved")
 	verifyTotalDelegation(cur)
 	println()
+	verifyProposalIndexMaintenance(cur, maxSmoothingPeriod)
+}
+
+func verifyProposalIndexMaintenance(cur realm, maxSmoothingPeriod int64) {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	governance.Reconfigure(cross(cur), 5, 10, maxSmoothingPeriod, 50, 0, 5, 30)
+
+	testing.SetRealm(testing.NewUserRealm(aliceAddr))
+	canceledID := governance.ProposeText(cross(cur), "canceled", "canceled")
+	governance.Cancel(cross(cur), canceledID)
+	snapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
+	println("[EXPECTED] canceled proposal removed:", canceledID, snapshotTime, hasActive, governance.GetProposals().Size())
+
+	proposalID := governance.ProposeCommunityPoolSpend(cross(cur), "maintenance", "maintenance", adminAddr, "gno.land/r/gnoswap/gns.GNS", 1)
+	expectedSnapshot := time.Now().Unix() - maxSmoothingPeriod
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-001]", func() {
+		governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
+	})
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-012]", func() {
+		governance.RemoveInactiveProposalFromIndex(cross(cur), 9999)
+	})
+
+	testing.SetRealm(testing.NewUserRealm(aliceAddr))
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-002]", func() {
+		governance.RemoveInactiveProposalFromIndex(cross(cur), canceledID)
+	})
+	testing.SkipHeights(2)
+	governance.Vote(cross(cur), proposalID, true)
+	testing.SkipHeights(3)
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
+	println("[EXPECTED] executable snapshot:", hasActive, snapshotTime == expectedSnapshot)
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-001]", func() {
+		governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
+	})
+	uassert.AbortsContains(t, cur, "active proposal requires data", func() {
+		gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), expectedSnapshot+1, aliceAddr)
+	})
+	gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), expectedSnapshot, aliceAddr)
+	delegated, exists := gs.GetTotalDelegationAmountAtSnapshot(expectedSnapshot)
+	println("[EXPECTED] delegation at active snapshot:", delegated, exists)
+
+	testing.SkipHeights(7)
+	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
+	uassert.ErrorContains(t, err, "[GNOSWAP-GOVERNANCE-018]")
+	uassert.ErrorContains(t, err, ufmt.Sprintf("proposalID: %d", proposalID))
+	println("[EXPECTED] stale index:", proposalID, snapshotTime, hasActive)
+
+	halt.SetOperationStatus(cross(cur), halt.OpTypeGovernance, true)
+	uassert.AbortsContains(t, cur, "halted: governance", func() {
+		governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
+	})
+	halt.SetOperationStatus(cross(cur), halt.OpTypeGovernance, false)
+	_, _, err = governance.GetOldestActiveProposalSnapshotTime()
+	uassert.ErrorContains(t, err, ufmt.Sprintf("proposalID: %d", proposalID))
+
+	testing.SetRealm(testing.NewUserRealm(aliceAddr))
+
+	governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-002]", func() {
+		governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
+	})
+	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
+	voteWeight, err := governance.GetVoteWeight(proposalID, aliceAddr)
+	uassert.NoError(t, err)
+	println("[EXPECTED] expired proposal removed:", proposalID, snapshotTime, hasActive, governance.GetProposals().Size(), voteWeight)
 }
 
 func setupDelegation(cur realm) {
@@ -201,3 +286,9 @@ func verifyTotalDelegation(cur realm) {
 // [SCENARIO] 10. Verify total delegation preserved
 // [INFO] total delegated amount: 1500000000
 // [EXPECTED] total delegation amount preserved (1,000,000,000 + 500,000,000)
+//
+// [EXPECTED] canceled proposal removed: 2 0 false 2
+// [EXPECTED] executable snapshot: true true
+// [EXPECTED] delegation at active snapshot: 1500000000 true
+// [EXPECTED] stale index: 3 0 false
+// [EXPECTED] expired proposal removed: 3 0 false 3 1500000000

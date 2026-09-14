@@ -5,12 +5,13 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -18,6 +19,7 @@ import (
 	"gno.land/r/gnoswap/gnft"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -98,7 +100,6 @@ func main(cur realm) {
 	CollectFee(cur, "user1", user1Addr, "1")
 	CollectFee(cur, "user1", user1Addr, "2")
 	println()
-
 }
 
 func initPool(cur realm) {
@@ -185,7 +186,7 @@ func transferPositions(cur realm, name string, from address, to address, id int6
 	gnft.Approve(cross(cur), to, positionID)
 
 	ufmt.Printf("[INFO] Transferring position to %s (positionID: %s)\n", name, positionID)
-	gnft.SafeTransferFrom(cross(cur), from, to, positionID)
+	gnft.TransferFrom(cross(cur), from, to, positionID)
 }
 
 func executeSwap(cur realm) {
@@ -205,7 +206,6 @@ func executeSwap(cur realm) {
 		true,
 		"5000000",
 		MIN_PRICE,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta, true)
 		},
@@ -235,11 +235,11 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil

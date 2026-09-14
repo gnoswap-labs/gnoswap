@@ -124,7 +124,44 @@ func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 				{timestamp: 100, tickCumulative: 1000},
 				{timestamp: 150, tickCumulative: 1600},
 			},
+			wantErr: "[GNOSWAP-POOL-025]",
+		},
+		{
+			name:        "window before unix epoch returns pre-epoch error",
+			currentTime: 10,
+			secondsAgo:  11,
+			currentTick: 12,
+			observations: []twapConsistencyObservation{
+				{timestamp: 0, tickCumulative: 0},
+				{timestamp: 10, tickCumulative: 120},
+			},
 			wantErr: "[GNOSWAP-POOL-026]",
+		},
+		{
+			// Timestamps are int64. A uint32-based comparison would sort
+			// 2^32-100 after 2^32+100 and pick the wrong bracket.
+			name:        "observations spanning the uint32 boundary keep natural ordering",
+			currentTime: 1<<32 + 100,
+			secondsAgo:  200,
+			currentTick: 25,
+			observations: []twapConsistencyObservation{
+				{timestamp: 1<<32 - 300, tickCumulative: 0},
+				{timestamp: 1<<32 - 100, tickCumulative: 1000},
+				{timestamp: 1<<32 + 100, tickCumulative: 6000},
+			},
+			wantTick: 25,
+		},
+		{
+			name:        "interpolation across the uint32 boundary keeps natural ordering",
+			currentTime: 1<<32 + 200,
+			secondsAgo:  250,
+			currentTick: 20,
+			observations: []twapConsistencyObservation{
+				{timestamp: 1<<32 - 300, tickCumulative: 0},
+				{timestamp: 1<<32 - 100, tickCumulative: 1000},
+				{timestamp: 1<<32 + 200, tickCumulative: 7000},
+			},
+			wantTick: 20,
 		},
 		{
 			name:        "multi interval weighted average",
@@ -145,7 +182,8 @@ func TestOracle_TWAPConsistencyCases(cur realm, t *testing.T) {
 			restoreContext := setOracleTestContext(tt.currentTime)
 			defer restoreContext()
 
-			got, _, err := getTWAP(newTwapConsistencyPool(tt), tt.secondsAgo)
+			pool := newTwapConsistencyPool(tt)
+			got, _, err := oracleConsult(pool, observationsForTest(pool), tt.secondsAgo)
 			if tt.wantErr != "" {
 				uassert.ErrorContains(t, err, tt.wantErr)
 				return
@@ -174,29 +212,26 @@ func newTwapConsistencyPool(tt twapConsistencyCase) *pl.Pool {
 	slot0.SetTick(tt.currentTick)
 	pool.SetSlot0(slot0)
 	pool.SetLiquidity(u256.MustFromDecimal("1000"))
-	pool.SetObservationState(newTwapConsistencyObservationState(tt.observations))
+	setObservationsForTest(pool, newTwapConsistencyObservationTree(tt.observations))
+	slot0.SetObservationIndex(uint16(len(tt.observations) - 1))
+	slot0.SetObservationCardinality(uint16(len(tt.observations)))
+	slot0.SetObservationCardinalityNext(uint16(len(tt.observations)))
+	pool.SetSlot0(slot0)
 
 	return pool
 }
 
-func newTwapConsistencyObservationState(observations []twapConsistencyObservation) *pl.ObservationState {
-	cardinality := uint16(len(observations))
-	os := pl.NewObservationState(observations[0].timestamp)
-	os.SetCardinality(cardinality)
-	os.SetCardinalityNext(cardinality)
-	os.SetIndex(cardinality - 1)
+func newTwapConsistencyObservationTree(observations []twapConsistencyObservation) *pl.ObservationTree {
+	os := pl.NewPoolObservationsTree(observations[0].timestamp)
 
-	seeded := make(map[uint16]*pl.Observation)
 	for i, observation := range observations {
-		seeded[uint16(i)] = pl.NewObservation(
+		os.Set(uint16(i), pl.MakeObservation(
 			observation.timestamp,
 			observation.tickCumulative,
 			"0",
-			"0",
 			true,
-		)
+		))
 	}
-	os.SetObservations(seeded)
 
 	return os
 }

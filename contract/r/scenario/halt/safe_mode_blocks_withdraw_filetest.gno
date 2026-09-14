@@ -19,10 +19,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -31,6 +33,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -110,6 +113,7 @@ func initPoolAndTokens(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Initialize emission
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 
@@ -314,7 +318,7 @@ func disableSafeModeAndVerify(cur realm) {
 //
 // [STEP 7] Test: Router swap works in Safe Mode
 // [INFO] Attempting router swap in Safe Mode...
-// [SUCCESS] Router swap works in Safe Mode! AmountIn: 100000, AmountOut: -99513
+// [SUCCESS] Router swap works in Safe Mode! AmountIn: 100000, AmountOut: 99513
 //
 // [STEP 8] Disable Safe Mode and verify withdraw works
 // [INFO] Safe Mode disabled. Withdraw halted: false (should be false)

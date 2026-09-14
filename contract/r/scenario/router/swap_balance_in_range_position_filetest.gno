@@ -6,9 +6,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -21,6 +22,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -360,7 +362,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 4. Exact In Swap (FOO -> BAR)
 // [INFO] Swapping 10000000000 FOO -> BAR
-// [INFO] Exact In - In: 10000000000 Out: -9252300294
+// [INFO] Exact In - In: 10000000000 Out: 9252300294
 // [INFO] After Exact In Swap
 // [EXPECTED] User BAR balance: 59252300294
 // [EXPECTED] User FOO balance: 40000000000
@@ -381,7 +383,7 @@ func validateSystemBalance(cur realm, initial, final BalanceSnapshot) {
 //
 // [SCENARIO] 5. Exact Out Swap (BAR -> FOO)
 // [INFO] Swapping BAR -> 5000000000 FOO
-// [INFO] Exact Out - In: 4469297080 Out: -5000000000
+// [INFO] Exact Out - In: 4469297080 Out: 5000000000
 // [INFO] After Exact Out Swap
 // [EXPECTED] User BAR balance: 54783003214
 // [EXPECTED] User FOO balance: 45000000000

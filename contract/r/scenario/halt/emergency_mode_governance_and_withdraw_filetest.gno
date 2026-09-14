@@ -31,10 +31,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -43,6 +45,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
@@ -163,6 +166,7 @@ func initGovernancePoolAndTokens(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Initialize emission
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	testing.SkipHeights(1)
 
@@ -196,7 +200,11 @@ func initGovernancePoolAndTokens(cur realm) {
 }
 
 func setupProposalCreationXGns(cur realm) {
-	threshold := governance.GetLatestConfig().ProposalCreationThreshold
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
+	threshold := config.ProposalCreationThreshold
 	missingAmount := threshold - xgns.BalanceOf(aliceAddr)
 	if missingAmount <= 0 {
 		return
@@ -248,7 +256,10 @@ func createPoolAndPosition(cur realm) {
 	ufmt.Printf("[INFO] Position minted with ID: %d, Liquidity: %s\n", positionId, liquidity)
 
 	// Skip voting weight smoothing duration
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
 }
 
@@ -356,7 +367,10 @@ func testGovernanceProposeTextWorks(cur realm) {
 func testGovernanceVoteTextWorks(cur realm) {
 	// Skip to voting start
 	testing.SetRealm(adminRealm)
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
 
 	ufmt.Println("[INFO] Attempting to vote on TextProposal in Emergency Mode...")
@@ -381,7 +395,10 @@ func testGovernanceVoteTextWorks(cur realm) {
 func testTextProposalExecuteFails(cur realm) {
 	// Skip voting period for ready to execute
 	testing.SetRealm(adminRealm)
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
 
 	ufmt.Println("[INFO] Attempting to execute TextProposal in Emergency Mode (should fail)...")
@@ -416,7 +433,10 @@ func testGovernanceProposeParameterChangeWorks(cur realm) {
 func testGovernanceVoteParameterChangeWorks(cur realm) {
 	// Skip to voting start
 	testing.SetRealm(adminRealm)
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingStartDelay) / currentBlockTime)
 
 	ufmt.Println("[INFO] Attempting to vote on ParameterChange proposal in Emergency Mode...")
@@ -441,7 +461,10 @@ func testGovernanceVoteParameterChangeWorks(cur realm) {
 func testParameterChangeProposalExecuteWorks(cur realm) {
 	// Skip voting period for ready to execute
 	testing.SetRealm(adminRealm)
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 	testing.SkipHeights(int64(config.VotingPeriod) / currentBlockTime)
 
 	ufmt.Println("[INFO] Attempting to execute ParameterChange proposal in Emergency Mode...")

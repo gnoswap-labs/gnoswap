@@ -1,8 +1,6 @@
 package pool
 
 import (
-	"time"
-
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -26,34 +24,46 @@ type Pool struct {
 	ticks                *bptree.BPTree   // tick(int32) -> TickInfo
 	tickBitmaps          map[int16]string // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(string)
 	positions            *bptree.BPTree   // maps the key (caller, lower tick, upper tick) to a unique position
-
-	observationState *ObservationState // oracle state with historical observations
 }
 
 // Pool Getters methods
-func (p *Pool) PoolPath() string                    { return GetPoolPath(p.token0Path, p.token1Path, p.fee) }
-func (p *Pool) Token0Path() string                  { return p.token0Path }
-func (p *Pool) Token1Path() string                  { return p.token1Path }
-func (p *Pool) Fee() uint32                         { return p.fee }
-func (p *Pool) Balances() TokenPair                 { return p.balances }
-func (p *Pool) BalanceToken0() int64                { return p.balances.token0 }
-func (p *Pool) BalanceToken1() int64                { return p.balances.token1 }
-func (p *Pool) TickSpacing() int32                  { return p.tickSpacing }
-func (p *Pool) Slot0() Slot0                        { return p.slot0 }
-func (p *Pool) Slot0SqrtPriceX96() *u256.Uint       { return p.slot0.sqrtPriceX96 }
-func (p *Pool) Slot0Tick() int32                    { return p.slot0.tick }
-func (p *Pool) Slot0FeeProtocol() uint8             { return p.slot0.feeProtocol }
-func (p *Pool) Slot0Unlocked() bool                 { return p.slot0.unlocked }
-func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint    { return p.feeGrowthGlobal0X128 }
-func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint    { return p.feeGrowthGlobal1X128 }
-func (p *Pool) ProtocolFees() TokenPair             { return p.protocolFees }
-func (p *Pool) ProtocolFeesToken0() int64           { return p.protocolFees.token0 }
-func (p *Pool) ProtocolFeesToken1() int64           { return p.protocolFees.token1 }
-func (p *Pool) Liquidity() *u256.Uint               { return p.liquidity }
-func (p *Pool) Ticks() *bptree.BPTree               { return p.ticks }
-func (p *Pool) TickBitmaps() map[int16]string       { return p.tickBitmaps }
-func (p *Pool) Positions() *bptree.BPTree           { return p.positions }
-func (p *Pool) ObservationState() *ObservationState { return p.observationState }
+func (p *Pool) PoolPath() string                 { return GetPoolPath(p.token0Path, p.token1Path, p.fee) }
+func (p *Pool) Token0Path() string               { return p.token0Path }
+func (p *Pool) Token1Path() string               { return p.token1Path }
+func (p *Pool) Fee() uint32                      { return p.fee }
+func (p *Pool) Balances() TokenPair              { return p.balances }
+func (p *Pool) BalanceToken0() int64             { return p.balances.token0 }
+func (p *Pool) BalanceToken1() int64             { return p.balances.token1 }
+func (p *Pool) TickSpacing() int32               { return p.tickSpacing }
+func (p *Pool) Slot0() Slot0                     { return p.slot0 }
+func (p *Pool) Slot0SqrtPriceX96() *u256.Uint    { return p.slot0.sqrtPriceX96 }
+func (p *Pool) Slot0Tick() int32                 { return p.slot0.tick }
+func (p *Pool) Slot0FeeProtocol() uint8          { return p.slot0.feeProtocol }
+func (p *Pool) Slot0Unlocked() bool              { return p.slot0.unlocked }
+func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint { return p.feeGrowthGlobal0X128 }
+func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint { return p.feeGrowthGlobal1X128 }
+func (p *Pool) ProtocolFees() TokenPair          { return p.protocolFees }
+func (p *Pool) ProtocolFeesToken0() int64        { return p.protocolFees.token0 }
+func (p *Pool) ProtocolFeesToken1() int64        { return p.protocolFees.token1 }
+func (p *Pool) Liquidity() *u256.Uint            { return p.liquidity }
+func (p *Pool) Ticks() *bptree.BPTree            { return p.ticks }
+func (p *Pool) TickBitmaps() map[int16]string    { return p.tickBitmaps }
+func (p *Pool) Positions() *bptree.BPTree        { return p.positions }
+
+// GetPosition returns the position information for key.
+func (p *Pool) GetPosition(key string) (PositionInfo, error) {
+	iPositionInfo := p.positions.Get(key)
+	if iPositionInfo == nil {
+		return PositionInfo{}, ufmt.Errorf("position %s not found", key)
+	}
+
+	positionInfo, ok := iPositionInfo.(PositionInfo)
+	if !ok {
+		return PositionInfo{}, ufmt.Errorf("position %s has invalid type", key)
+	}
+
+	return positionInfo, nil
+}
 
 // Pool Setters methods
 func (p *Pool) SetToken0Path(token0Path string) {
@@ -120,6 +130,11 @@ func (p *Pool) SetTickBitmap(wordPos int16, tickBitmap string) {
 	p.tickBitmaps[wordPos] = tickBitmap
 }
 
+// DeleteTickBitmap deletes the tick bitmap for the given word position.
+func (p *Pool) DeleteTickBitmap(wordPos int16) {
+	delete(p.tickBitmaps, wordPos)
+}
+
 func (p *Pool) SetTickBitmaps(tickBitmaps map[int16]string) {
 	p.tickBitmaps = tickBitmaps
 }
@@ -130,10 +145,6 @@ func (p *Pool) SetPositions(positions *bptree.BPTree) {
 
 func (p *Pool) SetPosition(posKey string, positionInfo PositionInfo) {
 	p.positions.Set(posKey, positionInfo)
-}
-
-func (p *Pool) SetObservationState(observationState *ObservationState) {
-	p.observationState = observationState
 }
 
 func (p *Pool) HasTick(tick int32) bool {
@@ -183,27 +194,36 @@ func (p *Pool) IterateTicks(startTick int32, endTick int32, fn func(tick int32, 
 	})
 }
 
+// Clone copies a pool's own fields and leaves its collections nil: ticks,
+// tickBitmaps, and positions are not copied. Oracle observations are stored
+// separately from Pool.
+//
+// The copy is shallow because the read-only pool view clones every entry a
+// caller reads, so copying the collections would walk the whole tick tree for
+// each entry on a page. Read them through their own lookups instead:
+// GetTickInfo / GetInitializedTicksInRange for ticks, GetTickBitmaps for the
+// bitmaps, GetPoolPositions for positions, and GetSlot0 / GetObservationAt for
+// oracle metadata and entries. A caller that needs a working copy of a
+// collection -- DrySwap is the only one -- assembles it from those getters.
 func (p *Pool) Clone() *Pool {
+	if p == nil {
+		return nil
+	}
+
 	return &Pool{
-		token0Path:  p.token0Path,
-		token1Path:  p.token1Path,
-		fee:         p.fee,
-		tickSpacing: p.tickSpacing,
-		slot0: Slot0{
-			sqrtPriceX96: p.slot0.sqrtPriceX96.Clone(),
-			tick:         p.slot0.tick,
-			feeProtocol:  p.slot0.feeProtocol,
-			unlocked:     p.slot0.unlocked,
-		},
+		token0Path:           p.token0Path,
+		token1Path:           p.token1Path,
+		fee:                  p.fee,
+		tickSpacing:          p.tickSpacing,
+		slot0:                p.slot0.Clone(),
 		balances:             p.balances,
 		protocolFees:         p.protocolFees,
 		feeGrowthGlobal0X128: p.feeGrowthGlobal0X128.Clone(),
 		feeGrowthGlobal1X128: p.feeGrowthGlobal1X128.Clone(),
 		liquidity:            p.liquidity.Clone(),
-		ticks:                clonePoolTicks(p.ticks),
-		tickBitmaps:          clonePoolTickBitmaps(p.tickBitmaps),
-		positions:            bptree.NewBPTreeN(16),
-		observationState:     NewObservationState(time.Now().Unix()),
+		ticks:                nil,
+		tickBitmaps:          nil,
+		positions:            nil,
 	}
 }
 
@@ -232,7 +252,6 @@ func NewPool(
 		ticks:                bptree.NewBPTreeN(32),
 		tickBitmaps:          make(map[int16]string),
 		positions:            bptree.NewBPTreeN(16),
-		observationState:     NewObservationState(time.Now().Unix()),
 	}
 }
 
@@ -268,22 +287,56 @@ func (p *TokenPair) Token1() int64          { return p.token1 }
 func (p *TokenPair) SetToken0(token0 int64) { p.token0 = token0 }
 func (p *TokenPair) SetToken1(token1 int64) { p.token1 = token1 }
 
+// Slot0 mirrors Uniswap V3's slot0(): current price/tick/protocol-fee/lock
+// state and the oracle cursor/capacity metadata.
 type Slot0 struct {
-	sqrtPriceX96 *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
-	tick         int32      // current tick of the pool, i.e according to the last tick transition that was run
-	feeProtocol  uint8      // protocol fee for both tokens of the pool
-	unlocked     bool       // whether the pool is currently locked to reentrancy
+	sqrtPriceX96               *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
+	tick                       int32      // current tick of the pool, i.e according to the last tick transition that was run
+	feeProtocol                uint8      // protocol fee for both tokens of the pool
+	unlocked                   bool       // whether the pool is currently locked to reentrancy
+	observationIndex           uint16     // the index of the most-recently written observation
+	observationCardinality     uint16     // the current maximum number of observations stored
+	observationCardinalityNext uint16     // the next maximum number of observations to store
 }
 
-func (s *Slot0) SqrtPriceX96() *u256.Uint { return s.sqrtPriceX96.Clone() }
-func (s *Slot0) Tick() int32              { return s.tick }
-func (s *Slot0) FeeProtocol() uint8       { return s.feeProtocol }
-func (s *Slot0) Unlocked() bool           { return s.unlocked }
+func (s *Slot0) SqrtPriceX96() *u256.Uint           { return s.sqrtPriceX96.Clone() }
+func (s *Slot0) Tick() int32                        { return s.tick }
+func (s *Slot0) FeeProtocol() uint8                 { return s.feeProtocol }
+func (s *Slot0) Unlocked() bool                     { return s.unlocked }
+func (s *Slot0) ObservationIndex() uint16           { return s.observationIndex }
+func (s *Slot0) ObservationCardinality() uint16     { return s.observationCardinality }
+func (s *Slot0) ObservationCardinalityNext() uint16 { return s.observationCardinalityNext }
+
+// Clone returns a value-type copy of Slot0 that shares no mutable state with
+// the original, so callers cannot reach back into pool internals through the
+// returned sqrtPriceX96 pointer.
+func (s *Slot0) Clone() Slot0 {
+	return Slot0{
+		sqrtPriceX96:               s.sqrtPriceX96.Clone(),
+		tick:                       s.tick,
+		feeProtocol:                s.feeProtocol,
+		unlocked:                   s.unlocked,
+		observationIndex:           s.observationIndex,
+		observationCardinality:     s.observationCardinality,
+		observationCardinalityNext: s.observationCardinalityNext,
+	}
+}
 
 func (s *Slot0) SetSqrtPriceX96(sqrtPriceX96 *u256.Uint) { s.sqrtPriceX96 = sqrtPriceX96.Clone() }
 func (s *Slot0) SetTick(tick int32)                      { s.tick = tick }
 func (s *Slot0) SetFeeProtocol(feeProtocol uint8)        { s.feeProtocol = feeProtocol }
 func (s *Slot0) SetUnlocked(unlocked bool)               { s.unlocked = unlocked }
+func (s *Slot0) SetObservationIndex(observationIndex uint16) {
+	s.observationIndex = observationIndex
+}
+
+func (s *Slot0) SetObservationCardinality(observationCardinality uint16) {
+	s.observationCardinality = observationCardinality
+}
+
+func (s *Slot0) SetObservationCardinalityNext(observationCardinalityNext uint16) {
+	s.observationCardinalityNext = observationCardinalityNext
+}
 
 func NewSlot0(
 	sqrtPriceX96 *u256.Uint,
@@ -292,10 +345,13 @@ func NewSlot0(
 	unlocked bool,
 ) Slot0 {
 	return Slot0{
-		sqrtPriceX96: sqrtPriceX96.Clone(),
-		tick:         tick,
-		feeProtocol:  feeProtocol,
-		unlocked:     unlocked,
+		sqrtPriceX96:               sqrtPriceX96.Clone(),
+		tick:                       tick,
+		feeProtocol:                feeProtocol,
+		unlocked:                   unlocked,
+		observationIndex:           0,
+		observationCardinality:     1,
+		observationCardinalityNext: 1,
 	}
 }
 

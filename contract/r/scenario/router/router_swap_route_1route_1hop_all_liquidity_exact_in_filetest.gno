@@ -3,9 +3,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/pool"
@@ -16,6 +17,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -80,12 +82,12 @@ func main(cur realm) {
 	println("[EXPECTED] amount0:", amount0, "expected: 99962")
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
 
-	pool, _ := pl.GetPool(barPath, bazPath, fee500)
+	pool, _ := pl.GetPools().Get(pl.GetPoolPath(barPath, bazPath, fee500)).(*pl.Pool)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 385771")
 
 	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500"
-	poolTick := pl.GetSlot0Tick(poolPath)
+	poolTick, _ := pl.GetSlot0Tick(poolPath)
 	println("[EXPECTED] pool tick:", poolTick, "expected: 1")
 
 	println("[INFO] Setting up additional pools and positions")
@@ -114,14 +116,14 @@ func main(cur realm) {
 	)
 
 	println("[EXPECTED] amountIn:", amountIn, "expected: 140000")
-	println("[EXPECTED] amountOut:", amountOut, "expected: -105765")
+	println("[EXPECTED] amountOut:", amountOut, "expected: 105765")
 
 	println("[INFO] Checking pool state after swap")
-	pool, _ = pl.GetPool(barPath, bazPath, fee500)
+	pool, _ = pl.GetPools().Get(pl.GetPoolPath(barPath, bazPath, fee500)).(*pl.Pool)
 	poolLiq = pool.Liquidity()
 	println("[EXPECTED] pool liquidity after swap:", poolLiq.ToString(), "expected: 435768")
 
-	poolTick = pl.GetSlot0Tick(poolPath)
+	poolTick, _ = pl.GetSlot0Tick(poolPath)
 	println("[EXPECTED] pool tick after swap:", poolTick, "expected: -5569")
 
 	println("[INFO] Scenario completed")
@@ -215,7 +217,7 @@ func bazApprove(cur realm, t *testing.T, owner, spender address, amount int64) {
 // [INFO] Approving tokens for swap
 // [INFO] Executing ExactIn swap (140000 bar → baz)
 // [EXPECTED] amountIn: 140000 expected: 140000
-// [EXPECTED] amountOut: -105765 expected: -105765
+// [EXPECTED] amountOut: 105765 expected: 105765
 // [INFO] Checking pool state after swap
 // [EXPECTED] pool liquidity after swap: 435768 expected: 435768
 // [EXPECTED] pool tick after swap: -5569 expected: -5569

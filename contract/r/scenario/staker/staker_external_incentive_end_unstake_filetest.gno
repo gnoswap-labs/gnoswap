@@ -9,7 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -21,8 +23,10 @@ import (
 	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -50,7 +54,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive parameters
-	depositGnsAmount     int64 = 1_000_000_000     // 1_000 GNS deposit
+	depositGnsAmount     int64 = 100_000_000_000   // 100_000 GNS deposit
 	externalRewardAmount int64 = 10_000_000_000    // 10_000 reward tokens
 	TIMESTAMP_90DAYS     int64 = 90 * 24 * 60 * 60 // Must be 90, 180, or 365 days
 
@@ -97,6 +101,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	en.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	// override warm-up period for testing
@@ -305,12 +310,12 @@ func verifyPositionsRecovered(cur realm) {
 
 	// Verify positions can still be interacted with normally
 	testing.SetRealm(adminRealm)
-	position1, err1 := pn.GetPosition(1)
-	if err1 != nil {
+	position1, ok1 := pn.GetPositions().Get(utils.Uint64ToString(1)).(pn.Position)
+	if !ok1 {
 		panic("position 1 should still exist")
 	}
-	position2, err2 := pn.GetPosition(2)
-	if err2 != nil {
+	position2, ok2 := pn.GetPositions().Get(utils.Uint64ToString(2)).(pn.Position)
+	if !ok2 {
 		panic("position 2 should still exist")
 	}
 

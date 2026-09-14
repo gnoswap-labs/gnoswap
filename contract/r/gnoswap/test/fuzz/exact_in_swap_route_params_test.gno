@@ -216,10 +216,10 @@ func (p *exactInSwapRouteParams) updateDrySwapResult(cur realm) {
 }
 
 func (p *exactInSwapRouteParams) drySwapRoute(cur realm) (string, string, bool) {
-	amountIn, amountOut, success := "0", "0", false
+	amountIn, amountOut, dryErr := "0", "0", error(nil)
 
 	revive(func() {
-		amountIn, amountOut, success = router.DrySwapRoute(
+		amountIn, amountOut, dryErr = router.DrySwapRoute(
 			p.inputToken,
 			p.outputToken,
 			p.amountIn,
@@ -230,11 +230,11 @@ func (p *exactInSwapRouteParams) drySwapRoute(cur realm) (string, string, bool) 
 		)
 	})
 
-	if amountIn == "0" || amountOut == "0" {
+	if dryErr != nil || amountIn == "0" || amountOut == "0" {
 		return "0", "0", false
 	}
 
-	return amountIn, amountOut, success
+	return amountIn, amountOut, true
 }
 
 func NewValidExactInSwapRouteParams(t *fuzz.T) *exactInSwapRouteParams {

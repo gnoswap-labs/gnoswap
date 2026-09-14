@@ -53,7 +53,10 @@ func TestFuzzCollectReward_ExternalIncentive_Stateless(cur realm, t *testing.T) 
 		poolPath, incentiveID, positionID := setupExternalRewardPoolAndPosition(cur, ft)
 		setupStakePosition(cur, ft, positionID)
 
-		incentiveTimestamp := staker.GetIncentiveStartTimestamp(poolPath, incentiveID)
+		incentiveTimestamp, err := staker.GetIncentiveStartTimestamp(poolPath, incentiveID)
+		if err != nil {
+			t.Fatal(err)
+		}
 		params := NewValidCollectRewardParams(ft, positionID, true, incentiveTimestamp)
 		testing.SkipHeights(params.skipBlocks)
 		params.updatePreviousBalances(oblPath)

@@ -35,6 +35,12 @@ Sets xGNS holder percentage.
 ### `AddToProtocolFee`
 Adds fees to distribution queue.
 
+### `AdvanceAccrualEpoch`
+Closes the accrual epoch in force and returns the new one. Called by gov/staker on every stake change, so fees are attributed to the stake distribution live when they arrived.
+
+### `ConsumeAccrualBuckets`
+Returns and clears up to `limit` of the oldest pending buckets of one token, as parallel epoch and amount slices. Called by gov/staker when that token is collected.
+
 ## Usage
 
 ```go
@@ -47,6 +53,11 @@ SetGovStakerPct(cross, 8000)  // 80% to xGNS holders
 
 // View tokens reserved for the next distribution
 GetReservedTokens()
+
+// View what gov/staker has not folded yet
+GetAccrualEpoch()
+GetAccrualPendingTokens()
+GetAccrualBuckets(tokenPath, 0)
 ```
 
 ## Security

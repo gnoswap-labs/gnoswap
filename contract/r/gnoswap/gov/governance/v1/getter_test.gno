@@ -2,6 +2,7 @@ package governance
 
 import (
 	"chain/runtime"
+	"strconv"
 	"testing"
 	"time"
 
@@ -47,9 +48,8 @@ func setupGetterTestWithProposal(cur realm, t *testing.T) *governanceV1 {
 		runtime.ChainHeight(),
 	)
 
-	gv.store.SetProposal(0, cur, 1, proposal)
+	uassert.True(t, gv.addProposal(0, cur, proposal))
 	gv.store.GetProposalCounter().Next()
-	gv.store.AddUserProposal(0, cur, "g1proposer", 1)
 
 	return gv
 }
@@ -130,10 +130,17 @@ func TestGetLatestConfig(cur realm, t *testing.T) {
 	gv := setupGetterTest(cur, t)
 
 	t.Run("returns latest config", func(cur realm, t *testing.T) {
-		config := gv.GetLatestConfig()
+		config, err := gv.GetLatestConfig()
+		uassert.NoError(t, err)
 		uassert.Equal(t, int64(100), config.VotingStartDelay)
 		uassert.Equal(t, int64(200), config.VotingPeriod)
 		uassert.Equal(t, int64(50), config.Quorum)
+	})
+
+	t.Run("returns error when no config exists", func(cur realm, t *testing.T) {
+		emptyGV := newMockGovernance()
+		_, err := emptyGV.GetLatestConfig()
+		uassert.ErrorContains(t, err, errDataNotFound)
 	})
 }
 
@@ -180,7 +187,7 @@ func TestGetConfig(cur realm, t *testing.T) {
 // Proposal Getter Tests
 // ==================================
 
-func TestGetProposalCount(cur realm, t *testing.T) {
+func TestGetProposalsSize(cur realm, t *testing.T) {
 	testCases := []struct {
 		name     string
 		setup    func(cur realm, t *testing.T) *governanceV1
@@ -205,13 +212,13 @@ func TestGetProposalCount(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			count := gv.GetProposalCount()
+			count := gv.GetProposals().Size()
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
 }
 
-func TestGetProposalIDs(cur realm, t *testing.T) {
+func TestGetProposals(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
 		setup          func(cur realm, t *testing.T) *governanceV1
@@ -251,10 +258,31 @@ func TestGetProposalIDs(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			ids := gv.GetProposalIDs(tc.offset, tc.count)
+
+			ids := make([]string, 0)
+			gv.GetProposals().IterateByOffset(tc.offset, tc.count, func(key string, value any) bool {
+				_, ok := value.(*governance.Proposal)
+				uassert.True(t, ok)
+				ids = append(ids, key)
+				return false
+			})
 			uassert.Equal(t, tc.expectedLength, len(ids))
 		})
 	}
+}
+
+func TestGetProposals_EntriesAreCloned(cur realm, t *testing.T) {
+	gv := setupGetterTestWithProposal(cur, t)
+	proposals := gv.GetProposals()
+
+	first, ok := proposals.Get("1").(*governance.Proposal)
+	uassert.True(t, ok)
+	second, ok := proposals.Get("1").(*governance.Proposal)
+	uassert.True(t, ok)
+
+	// Each read hands out a distinct clone, so a reader cannot reach the stored
+	// proposal nor any other reader's copy.
+	uassert.False(t, first == second)
 }
 
 func TestExistsProposal(cur realm, t *testing.T) {
@@ -319,11 +347,11 @@ func TestGetProposal(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			proposal, err := gv.GetProposal(tc.proposalID)
+			proposal, ok := gv.GetProposals().Get(formatProposalKey(tc.proposalID)).(*governance.Proposal)
 			if tc.expectError {
-				uassert.True(t, err != nil)
+				uassert.False(t, ok)
 			} else {
-				uassert.True(t, err == nil)
+				uassert.True(t, ok)
 				uassert.True(t, proposal != nil)
 			}
 		})
@@ -656,13 +684,13 @@ func TestGetVotingInfoCount(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			count := gv.GetVotingInfoCount(tc.proposalID)
+			count := votingInfoCount(gv, tc.proposalID)
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
 }
 
-func TestGetVotingInfoAddresses(cur realm, t *testing.T) {
+func TestGetVotingInfos(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
 		setup          func(cur realm, t *testing.T) *governanceV1
@@ -696,7 +724,18 @@ func TestGetVotingInfoAddresses(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			addrs := gv.GetVotingInfoAddresses(tc.proposalID, tc.offset, tc.count)
+
+			votingInfos := gv.GetVotingInfos(tc.proposalID)
+			if votingInfos == nil {
+				uassert.Equal(t, tc.expectedLength, 0)
+				return
+			}
+
+			addrs := make([]string, 0)
+			votingInfos.IterateByOffset(tc.offset, tc.count, func(key string, _ any) bool {
+				addrs = append(addrs, key)
+				return false
+			})
 			uassert.Equal(t, tc.expectedLength, len(addrs))
 		})
 	}
@@ -752,12 +791,7 @@ func TestGetVotingInfo(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			_, err := gv.GetVotingInfo(tc.proposalID, tc.addr)
-			if tc.expectError {
-				uassert.True(t, err != nil)
-			} else {
-				uassert.True(t, err == nil)
-			}
+			uassert.Equal(t, !tc.expectError, hasVotingInfo(gv, tc.proposalID, tc.addr))
 		})
 	}
 }
@@ -794,19 +828,17 @@ func TestGetUserProposalCount(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			count := gv.GetUserProposalCount(tc.user)
+			count := userProposalCount(gv, tc.user)
 			uassert.Equal(t, tc.expected, count)
 		})
 	}
 }
 
-func TestGetUserProposalIDs(cur realm, t *testing.T) {
+func TestGetUserProposals(cur realm, t *testing.T) {
 	testCases := []struct {
 		name           string
 		setup          func(cur realm, t *testing.T) *governanceV1
 		user           address
-		offset         int
-		count          int
 		expectedLength int
 	}{
 		{
@@ -815,28 +847,14 @@ func TestGetUserProposalIDs(cur realm, t *testing.T) {
 				return setupGetterTestWithProposal(cur, t)
 			},
 			user:           address("g1proposer"),
-			offset:         0,
-			count:          10,
 			expectedLength: 1,
 		},
 		{
-			name: "returns empty for user without proposals",
+			name: "returns nothing for user without proposals",
 			setup: func(cur realm, t *testing.T) *governanceV1 {
 				return setupGetterTestWithProposal(cur, t)
 			},
 			user:           address("g1unknown"),
-			offset:         0,
-			count:          10,
-			expectedLength: 0,
-		},
-		{
-			name: "offset beyond range returns empty",
-			setup: func(cur realm, t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(cur, t)
-			},
-			user:           address("g1proposer"),
-			offset:         100,
-			count:          10,
 			expectedLength: 0,
 		},
 	}
@@ -844,10 +862,32 @@ func TestGetUserProposalIDs(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			ids := gv.GetUserProposalIDs(tc.user, tc.offset, tc.count)
+
+			value := gv.GetUserProposals().Get(tc.user.String())
+			if value == nil {
+				uassert.Equal(t, tc.expectedLength, 0)
+				return
+			}
+
+			ids, ok := value.([]int64)
+			uassert.True(t, ok)
 			uassert.Equal(t, tc.expectedLength, len(ids))
 		})
 	}
+}
+
+func TestGetUserProposals_EntriesAreCopied(cur realm, t *testing.T) {
+	gv := setupGetterTestWithProposal(cur, t)
+	userProposals := gv.GetUserProposals()
+
+	first, ok := userProposals.Get("g1proposer").([]int64)
+	uassert.True(t, ok)
+	first[0] = 9999
+
+	// The stored slice is copied on read, so the write above is not visible.
+	second, ok := userProposals.Get("g1proposer").([]int64)
+	uassert.True(t, ok)
+	uassert.NotEqual(t, int64(9999), second[0])
 }
 
 // ==================================
@@ -855,34 +895,55 @@ func TestGetUserProposalIDs(cur realm, t *testing.T) {
 // ==================================
 
 func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
-	testCases := []struct {
-		name            string
-		setup           func(cur realm, t *testing.T) *governanceV1
-		expectHasActive bool
-	}{
-		{
-			name: "returns false when no proposals",
-			setup: func(cur realm, t *testing.T) *governanceV1 {
-				return setupGetterTest(cur, t)
-			},
-			expectHasActive: false,
-		},
-		{
-			name: "returns true when active proposal exists",
-			setup: func(cur realm, t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(cur, t)
-			},
-			expectHasActive: true,
-		},
-	}
+	gv := setupGetterTest(cur, t)
+	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), snapshotTime)
+	uassert.False(t, hasActive)
 
-	for _, tc := range testCases {
+	for _, tc := range []struct {
+		name           string
+		snapshotOffset int64
+		missing        bool
+		expectedError  string
+	}{
+		{"stale first entry", -1, false, errProposalIndexNeedsCleanup},
+		{"equal snapshots retain both proposals", 0, false, ""},
+		{"later stale entry does not block", 1, false, ""},
+		{"missing first proposal", -1, true, errProposalNotFound},
+	} {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
-			gv := tc.setup(cur, t)
-			snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
-			uassert.Equal(t, tc.expectHasActive, hasActive)
-			if hasActive {
-				uassert.True(t, snapshotTime > 0)
+			gv := setupGetterTest(cur, t)
+			config, _ := gv.getCurrentConfig()
+			now := time.Now().Unix()
+			active := governance.NewProposal(
+				1, NewProposalStatus(config, 1000, false, now, 1000),
+				governance.NewProposalMetadata("active", "active"),
+				governance.NewProposalData(governance.Text, nil, nil),
+				address("g1proposer"), 1, 1000, 100,
+			)
+			stale := governance.NewProposal(
+				2, NewProposalStatus(config, 1000, false, now-config.VotingStartDelay-config.VotingPeriod-1, 1000),
+				active.Metadata(), active.Data(), active.Proposer(),
+				1, active.SnapshotTime()+tc.snapshotOffset, 100,
+			)
+			uassert.True(t, gv.addProposal(0, cur, active))
+			if tc.missing {
+				gv.store.GetActiveProposalsBySnapshot().Set(activeProposalSnapshotKey(stale), stale.ID())
+			} else {
+				uassert.True(t, gv.addProposal(0, cur, stale))
+			}
+
+			snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+			if tc.expectedError != "" {
+				uassert.ErrorContains(t, err, tc.expectedError)
+				uassert.ErrorContains(t, err, "proposalID: 2")
+				uassert.Equal(t, int64(0), snapshotTime)
+				uassert.False(t, hasActive)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(1000), snapshotTime)
+				uassert.True(t, hasActive)
 			}
 		})
 	}
@@ -938,4 +999,40 @@ func TestGetCurrentVotingWeightSnapshot(cur realm, t *testing.T) {
 			}
 		})
 	}
+}
+
+// formatProposalKey mirrors the storage key encoding for proposal IDs.
+func formatProposalKey(proposalID int64) string {
+	return strconv.FormatInt(proposalID, 10)
+}
+
+// votingInfoCount reports how many voters a proposal has through the read-only view.
+func votingInfoCount(gv *governanceV1, proposalID int64) int {
+	votingInfos := gv.GetVotingInfos(proposalID)
+	if votingInfos == nil {
+		return 0
+	}
+
+	return votingInfos.Size()
+}
+
+// hasVotingInfo reports whether the read-only view holds a voter's value.
+func hasVotingInfo(gv *governanceV1, proposalID int64, addr address) bool {
+	votingInfos := gv.GetVotingInfos(proposalID)
+	if votingInfos == nil {
+		return false
+	}
+
+	_, ok := votingInfos.Get(addr.String()).(governance.VotingInfo)
+	return ok
+}
+
+// userProposalCount reports how many proposals a user created through the read-only view.
+func userProposalCount(gv *governanceV1, user address) int {
+	proposalIDs, ok := gv.GetUserProposals().Get(user.String()).([]int64)
+	if !ok {
+		return 0
+	}
+
+	return len(proposalIDs)
 }

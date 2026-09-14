@@ -14,6 +14,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -38,7 +39,10 @@ var (
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	config := governance.GetLatestConfig()
+	config, err := governance.GetLatestConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	println("[SCENARIO] 1. Delegate gns to admin")
 	delegateGnsToAdmin(cur)
@@ -133,4 +137,3 @@ func cancelProposalWithError(cur realm, proposalId int64, hasAborted bool, abort
 //
 // [SCENARIO] 8. Cancel Proposal is aborted by active proposal
 // [EXPECTED] proposal canceled and archived
-

@@ -129,6 +129,12 @@ func Cancel(
 	return getImplementation().Cancel(0, cur, proposalId)
 }
 
+// RemoveInactiveProposalFromIndex removes an inactive proposal from the
+// snapshot index without deleting its proposal or voting history.
+func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
+	getImplementation().RemoveInactiveProposalFromIndex(0, cur, proposalID)
+}
+
 // Reconfigure updates the governance configuration parameters.
 // Only callable by admin or governance.
 //

@@ -3,14 +3,16 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -70,7 +72,7 @@ func main(cur realm) {
 	foo.Approve(cross(cur), poolAddr, maxApprove)
 	bar.Approve(cross(cur), poolAddr, maxApprove)
 
-	thisPool, _ := pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ := pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee100)).(*pool.Pool)
 
 	println("[SCENARIO] 1. Initialize Pool (Create pool with bar/foo tokens, fee 100)")
 	testing.SetRealm(posRealm)
@@ -101,7 +103,6 @@ func main(cur realm) {
 		false,
 		"60183363",
 		maxPrice,
-		adminAddr,
 		func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 			return mockSwapCallback(cur, barPath, fooPath, amount0Delta, amount1Delta)
 		},
@@ -148,7 +149,7 @@ func main(cur realm) {
 
 	println("[SCENARIO] 5. Verify Final State (Check slot tick >= 120)")
 
-	thisPool, _ = pool.GetPool(barPath, fooPath, fee100)
+	thisPool, _ = pool.GetPools().Get(pool.GetPoolPath(barPath, fooPath, fee100)).(*pool.Pool)
 	slotTick := thisPool.Slot0Tick()
 	println("[INFO] slot tick should be >= 120")
 	println("[INFO] Slot tick:", slotTick)
@@ -163,10 +164,10 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 	testing.SetRealm(adminRealm)
 
 	if amount0Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token0Path, poolAddr, amount0Delta)
+		common.SafeGRC20Transfer(0, cur, token0Path, poolAddr, amount0Delta)
 	}
 	if amount1Delta > 0 {
-		common.SafeGRC20Transfer(cross(cur), token1Path, poolAddr, amount1Delta)
+		common.SafeGRC20Transfer(0, cur, token1Path, poolAddr, amount1Delta)
 	}
 
 	return nil
@@ -180,7 +181,7 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 // [SCENARIO] 2. Mint Position (Limit selling 0 for 1 at tick 0 thru 120)
 // [INFO] Swap 1 -> 0
 // [INFO] Swap 0: -59817377
-// [INFO] Swap 1: 60183363
+// [INFO] Swap 1: 60183362
 //
 // [SCENARIO] 3. Burn Position (Burn liquidity from tick 0 to 120)
 // [INFO] Burn 0: 0
@@ -192,6 +193,6 @@ func mockSwapCallback(cur realm, token0Path string, token1Path string, amount0De
 //
 // [SCENARIO] 5. Verify Final State (Check slot tick >= 120)
 // [INFO] slot tick should be >= 120
-// [INFO] Slot tick: 120
+// [INFO] Slot tick: 887271
 //
 // [INFO] Scenario completed

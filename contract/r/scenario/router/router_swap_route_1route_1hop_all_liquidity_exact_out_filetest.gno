@@ -3,9 +3,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -18,6 +19,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -83,12 +85,12 @@ func main(cur realm) {
 	println("[EXPECTED] amount0:", amount0, "expected: 99962")
 	println("[EXPECTED] amount1:", amount1, "expected: 100000")
 
-	pool, _ := pl.GetPool(barPath, bazPath, fee500)
+	pool, _ := pl.GetPools().Get(pl.GetPoolPath(barPath, bazPath, fee500)).(*pl.Pool)
 	poolLiq := pool.Liquidity()
 	println("[EXPECTED] pool liquidity:", poolLiq.ToString(), "expected: 385771")
 
 	poolPath := "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:500"
-	poolTick := pl.GetSlot0Tick(poolPath)
+	poolTick, _ := pl.GetSlot0Tick(poolPath)
 	println("[EXPECTED] pool tick:", poolTick, "expected: 1")
 
 	println("[INFO] Setting up additional pools and positions")

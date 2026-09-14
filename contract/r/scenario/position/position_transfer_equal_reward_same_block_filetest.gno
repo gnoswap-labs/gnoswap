@@ -11,12 +11,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -24,6 +26,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -90,6 +93,7 @@ func main(cur realm) {
 
 func setup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	pool.SetPoolCreationFee(cross(cur), 0)
 	staker.SetUnStakingFee(cross(cur), 0)
@@ -162,7 +166,7 @@ func mintTwoPositions(cur realm) {
 func transferToBob(cur realm) {
 	testing.SetRealm(aliceRealm)
 	gnft.TransferFrom(cross(cur), aliceAddr, bobAddr, tokenIdOf(cur, positionId2))
-	bobOwns := gnft.MustOwnerOf(tokenIdOf(cur, positionId2))
+	bobOwns := mustOwnerOf(tokenIdOf(cur, positionId2))
 	println("[EXPECTED] Position 2 transferred to bob:", bobOwns == bobAddr)
 }
 
@@ -176,14 +180,14 @@ func stakeBothInSameBlock(cur realm) {
 	// Stake position 1 as Alice (no transfer).
 	gnft.Approve(cross(cur), stakerAddr, tokenIdOf(cur, positionId1))
 	staker.StakeToken(cross(cur), positionId1, "")
-	owner1 := staker.GetDepositOwner(positionId1)
+	owner1, _ := staker.GetDepositOwner(positionId1)
 	println("[EXPECTED] Deposit 1 owner is alice:", owner1 == aliceAddr)
 
 	// Bob stakes position 2 in the same block.
 	testing.SetRealm(bobRealm)
 	gnft.Approve(cross(cur), stakerAddr, tokenIdOf(cur, positionId2))
 	staker.StakeToken(cross(cur), positionId2, "")
-	owner2 := staker.GetDepositOwner(positionId2)
+	owner2, _ := staker.GetDepositOwner(positionId2)
 	println("[EXPECTED] Deposit 2 owner is bob:", owner2 == bobAddr)
 }
 
@@ -215,6 +219,14 @@ func verifyEqual(cur realm, aliceReward, bobReward int64) {
 
 func tokenIdOf(cur realm, id uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(id, 10))
+}
+
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
 }
 
 // Output:

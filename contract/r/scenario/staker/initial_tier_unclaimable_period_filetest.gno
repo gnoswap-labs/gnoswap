@@ -3,12 +3,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -23,6 +25,7 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/rbac"
@@ -77,6 +80,7 @@ func initSystem(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] set distribution start time")
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -103,7 +107,7 @@ func testInitialTierInternalRewards(cur realm) {
 
 	// Verify tier assignment
 	tier := sr.GetPoolTier(poolPath1)
-	rewardPerSecond := sr.GetPoolReward(tier)
+	rewardPerSecond, _ := sr.GetPoolReward(tier)
 	ufmt.Printf("[VERIFY] tier assigned: %d, reward per second: %d\n", tier, rewardPerSecond)
 
 	// Verify pool has zero liquidity after tier assignment
@@ -186,21 +190,20 @@ func testInitialTierExternalRewards(cur realm) {
 	testing.SkipHeights(1)
 
 	println("[INFO] approve tokens for external incentive")
-	gns.Approve(cross(cur), stakerAddr, 100_000_000_000) // deposit 100 GNS
+	gns.Approve(cross(cur), stakerAddr, 100_000_000_000) // deposit 100_000 GNS
 	foo.Approve(cross(cur), stakerAddr, maxInt64)        // reward token
 	testing.SkipHeights(1)
 
-	println("[INFO] create external incentive (starts next day midnight)")
+	println("[INFO] create external incentive (starts first midnight past the 24h minimum)")
 	currentTime := time.Now().Unix()
-	// External incentive must start at least at next day midnight
-	// Calculate next day midnight
+	// External incentive must start at midnight at least 24 hours from now
 	dayInSeconds := int64(86400)
 	currentMidnight := (currentTime / dayInSeconds) * dayInSeconds
-	nextDayMidnight := currentMidnight + dayInSeconds
-	incentiveStartTime := nextDayMidnight
+	firstValidMidnight := currentMidnight + 2*dayInSeconds
+	incentiveStartTime := firstValidMidnight
 	// Duration must be exactly 90, 180, or 365 days
 	incentiveDuration := int64(90 * 86400) // 90 days
-	incentiveEndTime := nextDayMidnight + incentiveDuration
+	incentiveEndTime := firstValidMidnight + incentiveDuration
 
 	incentiveRewardAmount := int64(1_000_000_000)
 	testing.SetRealm(adminRealm)
@@ -306,7 +309,7 @@ func testInitialTierExternalRewards(cur realm) {
 // [SCENARIO] 3. Test External Rewards
 // [INFO] create pool foo:qux:100
 // [INFO] approve tokens for external incentive
-// [INFO] create external incentive (starts next day midnight)
+// [INFO] create external incentive (starts first midnight past the 24h minimum)
 // [VERIFY] external incentive created, reward per second: 128
 // [INFO] wait until incentive starts and some time passes (unclaimable period)
 // [EXPECTED] unclaimable period duration: 50 seconds

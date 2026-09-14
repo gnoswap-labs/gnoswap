@@ -1,9 +1,8 @@
 package staker
 
 import (
-	"strconv"
-	"strings"
-
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -13,9 +12,9 @@ import (
 //
 // Methods:
 // - Get: Retrieves a value associated with a uint64 key.
-// - Set: Stores a value with a uint64 key.
+// - set: Stores a value with a uint64 key.
 // - Has: Checks if a uint64 key exists in the tree.
-// - Remove: Removes a uint64 key and its associated value.
+// - remove: Removes a uint64 key and its associated value.
 // - Iterate: Iterates over keys and values in a range.
 // - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
@@ -30,7 +29,7 @@ func NewUintTree() *UintTree {
 }
 
 func (self *UintTree) Get(key int64) (any, bool) {
-	v := self.tree.Get(EncodeInt64(key))
+	v := self.tree.Get(encodeInt64(key))
 	if v == nil {
 		return nil, false
 	}
@@ -38,26 +37,26 @@ func (self *UintTree) Get(key int64) (any, bool) {
 }
 
 func (self *UintTree) Set(key int64, value any) {
-	self.tree.Set(EncodeInt64(key), value)
+	self.tree.Set(encodeInt64(key), value)
 }
 
 func (self *UintTree) Has(key int64) bool {
-	return self.tree.Has(EncodeInt64(key))
+	return self.tree.Has(encodeInt64(key))
 }
 
 func (self *UintTree) Remove(key int64) {
-	self.tree.Remove(EncodeInt64(key))
+	self.tree.Remove(encodeInt64(key))
 }
 
 func (self *UintTree) Iterate(start, end int64, fn func(key int64, value any) bool) {
-	self.tree.Iterate(EncodeInt64(start), EncodeInt64(end), func(key string, value any) bool {
-		return fn(DecodeInt64(key), value)
+	self.tree.Iterate(encodeInt64(start), encodeInt64(end), func(key string, value any) bool {
+		return fn(decodeInt64(key), value)
 	})
 }
 
 func (self *UintTree) ReverseIterate(start, end int64, fn func(key int64, value any) bool) {
-	self.tree.ReverseIterate(EncodeInt64(start), EncodeInt64(end), func(key string, value any) bool {
-		return fn(DecodeInt64(key), value)
+	self.tree.ReverseIterate(encodeInt64(start), encodeInt64(end), func(key string, value any) bool {
+		return fn(decodeInt64(key), value)
 	})
 }
 
@@ -66,79 +65,13 @@ func (self *UintTree) Size() int {
 	return self.tree.Size()
 }
 
-// EncodeUint converts a uint64 number into a zero-padded 20-character string.
-//
-// Parameters:
-//   - num: number to encode
-//
-// Returns:
-//   - encoded: zero-padded string representation of the number
-//
-// Example:
-// Input: 12345
-// Output: "00000000000000012345"
-func EncodeUint(num uint64) string {
-	// Convert the value to a decimal string.
-	s := strconv.FormatUint(num, 10)
-
-	// Zero-pad to a total length of 20 characters.
-	zerosNeeded := 20 - len(s)
-	return strings.Repeat("0", zerosNeeded) + s
-}
-
-// EncodeInt64 converts a non-negative int64 into a zero-padded decimal string.
-//
-// Parameters:
-//   - num: number to encode
-//
-// Returns:
-//   - encoded: zero-padded string representation of the number
-//
-// Panics:
-// - If the number is negative.
-func EncodeInt64(num int64) string {
+func encodeInt64(num int64) string {
 	if num < 0 {
 		panic(ufmt.Sprintf("negative value not supported: %d", num))
 	}
-	return EncodeUint(uint64(num))
+	return utils.EncodeUint64(uint64(num))
 }
 
-// DecodeUint converts a zero-padded string back into a uint64 number.
-//
-// Parameters:
-//   - s: zero-padded string
-//
-// Returns:
-//   - value: decoded number
-//
-// Panics:
-// - If the string cannot be parsed into a uint64.
-//
-// Example:
-// Input: "00000000000000012345"
-// Output: 12345
-func DecodeUint(s string) uint64 {
-	num, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-	return num
-}
-
-// DecodeInt64 converts a zero-padded string back into an int64 number.
-//
-// Parameters:
-//   - s: zero-padded string
-//
-// Returns:
-//   - value: decoded number
-//
-// Panics:
-// - If the string cannot be parsed into an int64.
-func DecodeInt64(s string) int64 {
-	num, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-	return num
+func decodeInt64(s string) int64 {
+	return gnsmath.SafeUint64ToInt64(utils.DecodeUint64(s))
 }

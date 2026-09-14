@@ -7,12 +7,14 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -28,6 +30,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -98,6 +101,7 @@ func main(cur realm) {
 
 func initAndSetup(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] set unstaking fee to 0")
@@ -319,7 +323,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 //
 // [SCENARIO] 6. Second collect after tier removal
 // [INFO] collect remaining rewards from before tier removal
-// [EXPECTED] second collect reward: 12039809 (remaining 5 blocks worth)
+// [EXPECTED] second collect reward: 12039810 (remaining 5 blocks worth)
 // [INFO] confirmed: past rewards can be collected after tier removal
 //
 // [SCENARIO] 7. Wait and collect again (should be 0)
@@ -331,8 +335,8 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [SCENARIO] 8. Verify partial collection logic
 // [INFO] verify partial collection logic
 // [ANALYSIS] first collect: 14447771 GNS (5 blocks)
-// [ANALYSIS] second collect: 12039809 GNS (5 blocks)
+// [ANALYSIS] second collect: 12039810 GNS (5 blocks)
 // [ANALYSIS] third collect: 0 GNS (should be 0)
-// [SUMMARY] total rewards collected: 26487580 GNS (10 blocks in tier 2)
+// [SUMMARY] total rewards collected: 26487581 GNS (10 blocks in tier 2)
 // [INFO] partial collection scenario completed successfully
 // [INFO] confirmed: rewards can be partially collected and tier removal preserves uncollected rewards

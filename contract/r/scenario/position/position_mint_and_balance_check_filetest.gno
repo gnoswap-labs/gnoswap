@@ -5,11 +5,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -17,6 +18,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -195,7 +197,7 @@ func checkPoolBalances(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Checking pool balances")
-	poolInfo, _ := pool.GetPool(token0Path, token1Path, fee)
+	poolInfo, _ := pool.GetPools().Get(pool.GetPoolPath(token0Path, token1Path, fee)).(*pool.Pool)
 
 	ufmt.Printf("[EXPECTED] Pool token0 balance should be %d\n", poolInfo.BalanceToken0())
 	ufmt.Printf("[EXPECTED] Pool token1 balance should be %d\n", poolInfo.BalanceToken1())
@@ -206,10 +208,14 @@ func comparePositionBalances(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	ufmt.Println("[INFO] Comparing position balances")
-	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", position.GetPositionToken0Balance(1))
-	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", position.GetPositionToken1Balance(1))
-	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", position.GetPositionToken0Balance(2))
-	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", position.GetPositionToken1Balance(2))
+	balance10, _ := position.GetPositionToken0Balance(1)
+	balance11, _ := position.GetPositionToken1Balance(1)
+	balance20, _ := position.GetPositionToken0Balance(2)
+	balance21, _ := position.GetPositionToken1Balance(2)
+	ufmt.Printf("[EXPECTED] Position 1 token0 balance should be %d\n", balance10)
+	ufmt.Printf("[EXPECTED] Position 1 token1 balance should be %d\n", balance11)
+	ufmt.Printf("[EXPECTED] Position 2 token0 balance should be %d\n", balance20)
+	ufmt.Printf("[EXPECTED] Position 2 token1 balance should be %d\n", balance21)
 	ufmt.Printf("[EXPECTED] Sum of positions should stay close to pool balances\n")
 }
 

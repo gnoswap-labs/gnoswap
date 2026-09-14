@@ -5,7 +5,6 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"chain/banker"
 	"fmt"
@@ -14,7 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/r/gnoswap/scenarioutils"
+
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoland/wugnot"
@@ -28,6 +31,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -66,7 +70,7 @@ var (
 	maxInt64   int64 = 9223372036854775807
 
 	// external incentive deposit fee
-	depositGnsAmount int64 = 1_000_000_000 // 1_000 GNS
+	depositGnsAmount int64 = 100_000_000_000 // 100_000 GNS
 
 	TIMESTAMP_90DAYS int64 = 90 * 24 * 60 * 60
 )
@@ -137,6 +141,7 @@ func main(cur realm) {
 
 func initWithShortWarmUp(cur realm) {
 	testing.SetRealm(adminRealm)
+	scenarioutils.EnsureCanonicalDefaultPool(cross(cur))
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 
 	println("[INFO] override warm-up periods for testing")
@@ -240,7 +245,7 @@ func mintNativePosition01Post(cur realm) {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, lpTokenId))
+	owner := mustOwnerOf(positionIdFrom(cur, lpTokenId))
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
@@ -290,7 +295,7 @@ func mintNativePosition02Post(cur realm) {
 	ufmt.Printf("[EXPECTED] liquidity: %s\n", liquidity)
 	ufmt.Printf("[EXPECTED] amount0: %s, amount1: %s\n", amount0, amount1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, lpTokenId))
+	owner := mustOwnerOf(positionIdFrom(cur, lpTokenId))
 	ufmt.Printf("[EXPECTED] position owner: %s\n", owner)
 
 	testing.SkipHeights(1)
@@ -323,11 +328,11 @@ func createExternalIncentiveNativePost(cur realm) {
 		"gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500", // targetPoolPath
 		wugnotPath,                  // rewardToken (wugnot)
 		10_000_000_000,              // rewardAmount
-		1234569600,                  // startTimestamp
-		1234569600+TIMESTAMP_90DAYS, // endTimestamp
+		1234742400,                  // startTimestamp
+		1234742400+TIMESTAMP_90DAYS, // endTimestamp
 	)
 
-	ufmt.Printf("[INFO] external incentive created - start: %d, end: %d\n", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+	ufmt.Printf("[INFO] external incentive created - start: %d, end: %d\n", 1234742400, 1234742400+TIMESTAMP_90DAYS)
 
 	adminNewWugnotBalance := wugnot.BalanceOf(adminUser)
 	ufmt.Printf("[EXPECTED] admin wugnot balance after external incentive: %d\n", adminNewWugnotBalance)
@@ -347,7 +352,7 @@ func stakeToken01(cur realm) {
 
 	testing.SkipHeights(1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 1))
+	owner := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] NFT owner after staking: %s\n", owner)
 }
 
@@ -363,7 +368,7 @@ func stakeToken02(cur realm) {
 
 	testing.SkipHeights(1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, 2))
+	owner := mustOwnerOf(positionIdFrom(cur, 2))
 	ufmt.Printf("[EXPECTED] NFT owner after staking: %s\n", owner)
 }
 
@@ -371,7 +376,7 @@ func collectReward01(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	println("[INFO] skip blocks to accumulate rewards")
-	testing.SkipHeights(1000)
+	testing.SkipHeights(35560)
 
 	wugnotBalanceBefore := wugnot.BalanceOf(adminUser)
 	ugnotBalanceBefore := ugnotBalanceOf(cur, adminAddr)
@@ -410,9 +415,10 @@ func unstakeToken(cur realm, tokenId uint64) {
 
 	println("[INFO] unstake token (no unwrap)")
 	sr.UnStakeToken(cross(cur), tokenId)
+	sr.CollectReward(cross(cur), tokenId)
 	testing.SkipHeights(1)
 
-	owner := gnft.MustOwnerOf(positionIdFrom(cur, tokenId))
+	owner := mustOwnerOf(positionIdFrom(cur, tokenId))
 	ufmt.Printf("[EXPECTED] NFT owner after unstaking: %s\n", owner)
 
 	wugnotBalanceAfter := wugnot.BalanceOf(adminUser)
@@ -489,6 +495,14 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 	}
 }
 
+func mustOwnerOf(tid grc721.TokenID) address {
+	owner, err := gnft.OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return owner
+}
+
 // Output:
 // [SCENARIO] 1. Initialize with short warm-up periods
 // [INFO] override warm-up periods for testing
@@ -532,7 +546,7 @@ func positionIdFrom(cur realm, positionId any) grc721.TokenID {
 // [INFO] add token and approve gns
 // [INFO] create external incentive with native coin
 // [INFO] create external incentive with incentiveID:  g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:1234568025:1
-// [INFO] external incentive created - start: 1234569600, end: 1242345600
+// [INFO] external incentive created - start: 1234742400, end: 1242518400
 // [EXPECTED] admin wugnot balance after external incentive: 49999005
 //
 // [SCENARIO] 6. Stake token 01

@@ -592,3 +592,85 @@ func TestCalculateUnclaimableReward_OutsideRangeWindows(t *testing.T) {
 		t.Fatalf("expected unclaimable reward %d for outside-range periods, got %d", expected, got)
 	}
 }
+
+// TestEndUnclaimablePeriod_AccumulatesUnclaimableSeconds verifies that closing
+// an unclaimable period updates the per-incentive accumulator for every
+// non-refunded incentive and that refunded incentives are excluded.
+func TestEndUnclaimablePeriod_AccumulatesUnclaimableSeconds(t *testing.T) {
+	poolPath := "test_pool_accumulate_on_end"
+	creator := testutils.TestAddress("creator")
+	currentTime := time.Now().Unix()
+
+	pool := sr.NewPool(poolPath, currentTime)
+	poolResolver := NewPoolResolver(pool)
+	incentives := poolResolver.IncentivesResolver()
+
+	// Clear the initial pool-creation period so we control all windows.
+	incentives.endUnclaimablePeriod(currentTime)
+
+	activeIncentive := sr.NewExternalIncentive(
+		"incentive_accum_active",
+		poolPath,
+		GNS_TOKEN_KEY,
+		1000,
+		currentTime,
+		currentTime+200,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+	)
+	incentives.create(activeIncentive)
+
+	refundedIncentive := sr.NewExternalIncentive(
+		"incentive_accum_refunded",
+		poolPath,
+		GNS_TOKEN_KEY,
+		1000,
+		currentTime,
+		currentTime+200,
+		creator,
+		100,
+		runtime.ChainHeight(),
+		currentTime,
+	)
+	refundedIncentive.SetRefunded(true)
+	incentives.create(refundedIncentive)
+
+	// One closed window [currentTime+10, currentTime+60] = 50s
+	incentives.startUnclaimablePeriod(currentTime + 10)
+	incentives.endUnclaimablePeriod(currentTime + 60)
+
+	activeRetrieved, _ := incentives.Get(activeIncentive.IncentiveId())
+	if activeRetrieved.UnclaimableSeconds() != 50 {
+		t.Fatalf("expected active incentive accumulator 50, got %d", activeRetrieved.UnclaimableSeconds())
+	}
+
+	refundedRetrieved, _ := incentives.Get(refundedIncentive.IncentiveId())
+	if refundedRetrieved.UnclaimableSeconds() != 0 {
+		t.Fatalf("expected refunded incentive accumulator 0, got %d", refundedRetrieved.UnclaimableSeconds())
+	}
+
+	// Calculation must match the accumulator without double counting.
+	expected := int64(50) * rewardPerSecondFromX128(activeIncentive)
+	got := incentives.calculateUnclaimableReward(activeIncentive.IncentiveId())
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d, got %d", expected, got)
+	}
+
+	// A second, separate window [currentTime+80, currentTime+100] = 20s
+	// accumulates on top of the first.
+	incentives.startUnclaimablePeriod(currentTime + 80)
+	incentives.endUnclaimablePeriod(currentTime + 100)
+
+	activeRetrieved, _ = incentives.Get(activeIncentive.IncentiveId())
+	if activeRetrieved.UnclaimableSeconds() != 70 {
+		t.Fatalf("expected accumulator 70 after two windows, got %d", activeRetrieved.UnclaimableSeconds())
+	}
+
+	got = incentives.calculateUnclaimableReward(activeIncentive.IncentiveId())
+	expected = int64(70) * rewardPerSecondFromX128(activeIncentive)
+	if got != expected {
+		t.Fatalf("expected unclaimable reward %d, got %d", expected, got)
+	}
+}
