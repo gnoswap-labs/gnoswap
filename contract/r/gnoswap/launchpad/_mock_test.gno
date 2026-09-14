@@ -191,15 +191,20 @@ func (m *MockLaunchpad) GetProjectTierRewardManager(projectTierId string) (*Rewa
 	return res[0].(*RewardManager), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetRewardState(projectTierId string, depositId string) (*RewardState, error) {
+func (m *MockLaunchpad) GetRewardState(projectTierId string, depositId string) (RewardState, error) {
 	res, ok := m.Response.Get("GetRewardState")
 	if !ok {
-		return nil, nil
+		return RewardState{}, nil
+	}
+
+	var rewardState RewardState
+	if res[0] != nil {
+		rewardState = res[0].(RewardState).Clone()
 	}
 	if len(res) < 2 || res[1] == nil {
-		return res[0].(*RewardState), nil
+		return rewardState, nil
 	}
-	return res[0].(*RewardState), res[1].(error)
+	return rewardState, res[1].(error)
 }
 
 func (m *MockLaunchpad) GetProjectActiveStatus(projectId string) (bool, error) {

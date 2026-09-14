@@ -193,7 +193,7 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 		{
 			name: "GetRewardState",
 			setup: func(m *MockLaunchpad) {
-				m.Response.Set("GetRewardState", NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100), nil)
+				m.Response.Set("GetRewardState", *NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100), nil)
 			},
 			getter: func(t *testing.T) any {
 				value, err := GetRewardState("project-1:30", "deposit-1")
@@ -201,8 +201,8 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 				return value
 			},
 			mutate: func(result any) {
-				rewardState := result.(*RewardState)
-				rewardState.SetPriceDebtX128(u256.MustFromDecimal("303"))
+				rewardState := result.(RewardState)
+				rewardState.PriceDebtX128().Set(u256.MustFromDecimal("303"))
 				rewardState.SetClaimableTime(1009)
 				rewardState.SetDepositAmount(1010)
 				rewardState.SetDistributeStartTime(1011)
@@ -212,7 +212,7 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 				rewardState.SetClaimedAmount(1016)
 			},
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
-				rewardState := m.Response.data["GetRewardState"][0].(*RewardState)
+				rewardState := m.Response.data["GetRewardState"][0].(RewardState)
 				uassert.Equal(t, "700", rewardState.PriceDebtX128().ToString())
 				uassert.Equal(t, int64(1100), rewardState.ClaimableTime())
 				uassert.Equal(t, int64(800), rewardState.DepositAmount())

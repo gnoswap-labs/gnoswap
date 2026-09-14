@@ -2,8 +2,8 @@ package launchpad
 
 import (
 	"gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type ILaunchpad interface {
@@ -89,7 +89,7 @@ type ILaunchpadGetter interface {
 	GetProjectTierRewardAccumulatedTime(projectTierId string) (int64, error)
 	GetProjectTierRewardClaimableDuration(projectTierId string) (int64, error)
 
-	GetRewardState(projectTierId string, depositId string) (*RewardState, error)
+	GetRewardState(projectTierId string, depositId string) (RewardState, error)
 	GetProjectActiveStatus(projectId string) (bool, error)
 }
 

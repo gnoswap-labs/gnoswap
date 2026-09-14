@@ -57,18 +57,18 @@ func (e *EmissionRewardManager) GetDistributedAmount() int64 {
 	return e.distributedAmount
 }
 
-func (e *EmissionRewardManager) GetRewardState(addr string) (*EmissionRewardState, bool, error) {
+func (e *EmissionRewardManager) GetRewardState(addr string) (EmissionRewardState, bool, error) {
 	ri := e.rewardStates.Get(addr)
 	if ri == nil {
-		return nil, false, nil
+		return EmissionRewardState{}, false, nil
 	}
 
-	switch rewardState := ri.(type) {
-	case EmissionRewardState:
-		return (&rewardState).Clone(), true, nil
-	default:
-		return nil, false, ufmt.Errorf(errFailedToCastRewardState, ri)
+	rewardState, ok := ri.(EmissionRewardState)
+	if !ok {
+		return EmissionRewardState{}, false, ufmt.Errorf(errFailedToCastRewardState, ri)
 	}
+
+	return rewardState.Clone(), true, nil
 }
 
 /* Setters */
@@ -93,11 +93,7 @@ func (e *EmissionRewardManager) SetTotalStakedAmount(totalStakedAmount int64) {
 	e.totalStakedAmount = totalStakedAmount
 }
 
-// SetRewardState stores a detached value copy for a specific address.
-func (e *EmissionRewardManager) SetRewardState(address string, rewardState *EmissionRewardState) {
-	if rewardState == nil {
-		e.rewardStates.Remove(address)
-		return
-	}
-	e.rewardStates.Set(address, *rewardState.Clone())
+// SetRewardState stores an owned copy of the reward state for a specific address.
+func (e *EmissionRewardManager) SetRewardState(address string, rewardState EmissionRewardState) {
+	e.rewardStates.Set(address, rewardState.Clone())
 }

@@ -156,14 +156,10 @@ func NewProtocolFeeRewardState(accumulatedProtocolFeeX128PerStake map[string]*u2
 	}
 }
 
-// Clone creates a detached deep copy of the protocol fee reward state.
+// Clone returns a detached value suitable for BPTree payloads.
 // The nested token maps and fixed-point values are copied so a resolver can
 // mutate its local state before writing it back to the manager tree.
-func (p *ProtocolFeeRewardState) Clone() *ProtocolFeeRewardState {
-	if p == nil {
-		return nil
-	}
-
+func (p ProtocolFeeRewardState) Clone() ProtocolFeeRewardState {
 	var rewardDebtX128 map[string]*u256.Uint
 	if p.rewardDebtX128 != nil {
 		rewardDebtX128 = make(map[string]*u256.Uint, len(p.rewardDebtX128))
@@ -192,7 +188,7 @@ func (p *ProtocolFeeRewardState) Clone() *ProtocolFeeRewardState {
 		}
 	}
 
-	return &ProtocolFeeRewardState{
+	return ProtocolFeeRewardState{
 		rewardDebtX128:       rewardDebtX128,
 		accumulatedRewards:   accumulatedRewards,
 		claimedRewards:       claimedRewards,

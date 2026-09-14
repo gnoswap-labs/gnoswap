@@ -355,17 +355,41 @@ func TestStoreSetAndGetDelegation(cur realm, t *testing.T) {
 				uassert.False(t, gs.HasDelegation(1), "delegation 1 should not exist")
 
 				delegation := NewDelegation(1, address("g1delegator"), address("g1delegateTo"), 1000, 100, 12345)
+				delegation.AddWithdraw(NewDelegationWithdraw(1, 100, 100, 12345, 1000))
 
-				err = gs.SetDelegation(0, cur, 1, delegation)
+				err = gs.SetDelegation(0, cur, 1, *delegation)
 				uassert.NoError(t, err)
 
 				uassert.True(t, gs.HasDelegation(1), "delegation 1 should exist after setting")
 
 				retrieved, exists := gs.GetDelegation(1)
 				uassert.True(t, exists, "delegation 1 should exist")
-				uassert.NotEqual(t, nil, retrieved)
 				uassert.Equal(t, address("g1delegator"), retrieved.DelegateFrom())
 				uassert.Equal(t, int64(1000), retrieved.TotalDelegatedAmount())
+
+				// Mutating the input after SetDelegation must not alter the stored payload.
+				delegation.SetWithdraw(0, NewDelegationWithdraw(1, 500, 100, 12345, 1000))
+				retrieved, exists = gs.GetDelegation(1)
+				uassert.True(t, exists)
+				uassert.Equal(t, int64(100), retrieved.Withdraws()[0].UnDelegateAmount())
+
+				mutable, exists := gs.GetDelegationPtr(1)
+				uassert.True(t, exists)
+				mutable.SetUnDelegateAmount(200)
+				mutable.SetWithdraw(0, NewDelegationWithdraw(1, 200, 100, 12345, 1000))
+
+				retrieved, exists = gs.GetDelegation(1)
+				uassert.True(t, exists)
+				uassert.Equal(t, int64(0), retrieved.UnDelegatedAmount())
+				uassert.Equal(t, int64(100), retrieved.Withdraws()[0].UnDelegateAmount())
+
+				uassert.NoError(t, gs.SetDelegation(0, cur, 1, *mutable))
+				mutable.SetUnDelegateAmount(300)
+				mutable.SetWithdraw(0, NewDelegationWithdraw(1, 300, 100, 12345, 1000))
+				retrieved, exists = gs.GetDelegation(1)
+				uassert.True(t, exists)
+				uassert.Equal(t, int64(200), retrieved.UnDelegatedAmount())
+				uassert.Equal(t, int64(200), retrieved.Withdraws()[0].UnDelegateAmount())
 			},
 		},
 		{
@@ -380,7 +404,7 @@ func TestStoreSetAndGetDelegation(cur realm, t *testing.T) {
 
 				delegation := NewDelegation(1, address("g1delegator"), address("g1delegateTo"), 1000, 100, 12345)
 
-				err = gs.SetDelegation(0, cur, 1, delegation)
+				err = gs.SetDelegation(0, cur, 1, *delegation)
 				uassert.NoError(t, err)
 				uassert.True(t, gs.HasDelegation(1), "delegation 1 should exist")
 

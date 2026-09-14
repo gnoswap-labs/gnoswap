@@ -43,19 +43,14 @@ func NewEmissionRewardState(accumulatedRewardX128PerStake *u256.Uint) *EmissionR
 	}
 }
 
-// Clone creates a detached copy of the reward state. Reward states are stored
-// as values in the manager tree; callers mutate this copy and write it back.
-func (e *EmissionRewardState) Clone() *EmissionRewardState {
-	if e == nil {
-		return nil
-	}
-
+// Clone returns a detached value, including a copy of the reward debt.
+func (e EmissionRewardState) Clone() EmissionRewardState {
 	var rewardDebtX128 *u256.Uint
 	if e.rewardDebtX128 != nil {
 		rewardDebtX128 = e.rewardDebtX128.Clone()
 	}
 
-	return &EmissionRewardState{
+	return EmissionRewardState{
 		rewardDebtX128:          rewardDebtX128,
 		accumulatedRewardAmount: e.accumulatedRewardAmount,
 		accumulatedTimestamp:    e.accumulatedTimestamp,

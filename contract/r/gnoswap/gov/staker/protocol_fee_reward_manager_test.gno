@@ -101,16 +101,31 @@ func TestProtocolFeeRewardManager_RewardState(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			manager := NewProtocolFeeRewardManager()
-			rewardState := NewProtocolFeeRewardState(make(map[string]*u256.Uint))
+			rewardState := NewProtocolFeeRewardState(map[string]*u256.Uint{
+				"token1": u256.NewUint(100),
+			})
 
 			// when
-			manager.SetRewardState(tc.address, rewardState)
+			manager.SetRewardState(tc.address, *rewardState)
 
 			// then
 			result, exists, err := manager.GetRewardState(tc.address)
 			uassert.NoError(t, err)
 			uassert.True(t, exists)
-			uassert.NotNil(t, result)
+			uassert.Equal(t, result.GetRewardDebtX128ForToken("token1").ToString(), "100")
+			// Mutating a retrieved nested value must not alter stored state.
+			result.GetRewardDebtX128ForToken("token1").Set(u256.NewUint(777))
+			result, exists, err = manager.GetRewardState(tc.address)
+			uassert.NoError(t, err)
+			uassert.True(t, exists)
+			uassert.Equal(t, result.GetRewardDebtX128ForToken("token1").ToString(), "100")
+
+			// Mutating the input after SetRewardState must not alter stored nested values.
+			rewardState.SetRewardDebtX128ForToken("token1", u256.NewUint(999))
+			result, exists, err = manager.GetRewardState(tc.address)
+			uassert.NoError(t, err)
+			uassert.True(t, exists)
+			uassert.Equal(t, result.GetRewardDebtX128ForToken("token1").ToString(), "100")
 		})
 	}
 }
@@ -171,7 +186,7 @@ func TestProtocolFeeRewardManager_SetRewardStates(cur realm, t *testing.T) {
 				result, exists, err := manager.GetRewardState(addr)
 				uassert.NoError(t, err)
 				uassert.True(t, exists)
-				uassert.NotNil(t, result)
+				uassert.Equal(t, len(result.GetRewardDebtX128()), 0)
 			}
 		})
 	}
