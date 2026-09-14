@@ -28,6 +28,7 @@ func (s StoreKey) String() string {
 
 const (
 	StoreKeyProjects                  StoreKey = "projects"                  // Projects tree
+	StoreKeyProjectRecipients         StoreKey = "projectRecipients"         // Recipient membership tree
 	StoreKeyProjectTierRewardManagers StoreKey = "projectTierRewardManagers" // Project tier reward managers tree
 	StoreKeyDepositCounter            StoreKey = "depositCounter"            // Deposit counter
 	StoreKeyDeposits                  StoreKey = "deposits"                  // Deposits tree
@@ -65,6 +66,35 @@ func (s *launchpadStore) SetProjects(_ int, rlm realm, projects *bptree.BPTree) 
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyProjects.String(), projects)
+}
+
+// HasProjectRecipientsKey checks if the recipient membership tree exists.
+func (s *launchpadStore) HasProjectRecipientsKey() bool {
+	return s.kvStore.Has(StoreKeyProjectRecipients.String())
+}
+
+// GetProjectRecipients retrieves the recipient address membership tree.
+func (s *launchpadStore) GetProjectRecipients() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyProjectRecipients.String())
+	if err != nil {
+		panic(err)
+	}
+
+	recipients, ok := result.(*bptree.BPTree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
+	}
+
+	return recipients
+}
+
+// SetProjectRecipients stores the recipient membership tree.
+func (s *launchpadStore) SetProjectRecipients(_ int, rlm realm, recipients *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyProjectRecipients.String(), recipients)
 }
 
 // HasProjectTierRewardManagersKey checks if the project tier reward managers key exists in the store.

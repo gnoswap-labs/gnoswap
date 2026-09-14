@@ -316,6 +316,7 @@ var (
 func initTestStore() {
 	testStore = &testLaunchpadStore{
 		projects:                  launchpad.NewBPTreeN(16),
+		projectRecipients:         launchpad.NewBPTreeN(16),
 		projectTierRewardManagers: launchpad.NewBPTreeN(16),
 		depositCounter:            launchpad.NewCounter(),
 		deposits:                  launchpad.NewBPTreeN(16),
@@ -334,6 +335,7 @@ func resetTestStore() {
 
 type testLaunchpadStore struct {
 	projects                  *bptree.BPTree
+	projectRecipients         *bptree.BPTree
 	projectTierRewardManagers *bptree.BPTree
 	depositCounter            *launchpad.Counter
 	deposits                  *bptree.BPTree
@@ -353,6 +355,19 @@ func (s *testLaunchpadStore) GetProjects() *bptree.BPTree {
 
 func (s *testLaunchpadStore) SetProjects(_ int, rlm realm, projects *bptree.BPTree) error {
 	s.projects = projects
+	return nil
+}
+
+func (s *testLaunchpadStore) HasProjectRecipientsKey() bool {
+	return s.projectRecipients != nil
+}
+
+func (s *testLaunchpadStore) GetProjectRecipients() *bptree.BPTree {
+	return s.projectRecipients
+}
+
+func (s *testLaunchpadStore) SetProjectRecipients(_ int, rlm realm, recipients *bptree.BPTree) error {
+	s.projectRecipients = recipients
 	return nil
 }
 
