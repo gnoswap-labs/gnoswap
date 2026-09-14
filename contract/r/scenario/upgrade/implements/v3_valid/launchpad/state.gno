@@ -71,7 +71,7 @@ func (lp *launchpadV1) getDeposit(depositID string) (*launchpad.Deposit, error) 
 	if !ok {
 		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("deposit(%s) not found", depositID))
 	}
-	return deposit.Clone(), nil
+	return &deposit, nil
 }
 
 // nextDepositID increments and returns the next unique deposit ID.

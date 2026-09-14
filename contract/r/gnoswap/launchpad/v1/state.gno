@@ -60,20 +60,6 @@ func (lp *launchpadV1) mustGetDeposit(depositID string) *launchpad.Deposit {
 	return deposit
 }
 
-func (lp *launchpadV1) getDeposit(depositID string) (*launchpad.Deposit, error) {
-	deposits := lp.store.GetDeposits()
-	depositI := deposits.Get(depositID)
-	if depositI == nil {
-		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
-	}
-
-	deposit, ok := depositI.(launchpad.Deposit)
-	if !ok {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("deposit(%s) not found", depositID))
-	}
-	return deposit.Clone(), nil
-}
-
 // nextDepositID increments and returns the next unique deposit ID.
 // This is used when creating new deposits.
 func (lp *launchpadV1) nextDepositID() string {

@@ -250,31 +250,48 @@ func (lp *launchpadV1) GetProjectTierRewards(projectId string, tier int64) *rotr
 	return rotree.Wrap(rewardManager.Rewards(), cloneRewardStateEntry)
 }
 
-// GetDeposit retrieves a detached copy of a deposit by its ID.
-// Returning a copy keeps callers from mutating the value stored in the tree.
-func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) {
-	return lp.getDepositValueForGetter(depositId)
+// GetDeposit retrieves the value payload of a deposit by its ID.
+func (lp *launchpadV1) GetDeposit(depositId string) (launchpad.Deposit, error) {
+	return lp.getDepositValue(depositId)
 }
 
-// getDepositValueForGetter reads the value payload used by the deposits tree
-// and preserves the public getter's existing not-found and invalid-type errors.
-func (lp *launchpadV1) getDepositValueForGetter(depositId string) (*launchpad.Deposit, error) {
+func (lp *launchpadV1) getDepositValue(depositId string) (launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
 	value := deposits.Get(depositId)
 	if value == nil {
-		return nil, errors.New("deposit not found")
+		return emptyDepositValue(), errors.New("deposit not found")
 	}
 
 	deposit, ok := value.(launchpad.Deposit)
 	if !ok {
-		return nil, errors.New("invalid deposit type")
+		return emptyDepositValue(), errors.New("invalid deposit type")
 	}
-	return deposit.Clone(), nil
+	return deposit, nil
+}
+
+func (lp *launchpadV1) getDeposit(depositID string) (*launchpad.Deposit, error) {
+	deposits := lp.store.GetDeposits()
+	depositI := deposits.Get(depositID)
+	if depositI == nil {
+		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
+	}
+
+	deposit, ok := depositI.(launchpad.Deposit)
+	if !ok {
+		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("deposit(%s) not found", depositID))
+	}
+	return &deposit, nil
+}
+
+// emptyDepositValue constructs a zero Deposit in its declaring realm. Gno
+// forbids launchpad v1 from allocating a launchpad.Deposit directly.
+func emptyDepositValue() launchpad.Deposit {
+	return *launchpad.NewDeposit("", "", 0, "", 0, 0, 0, 0)
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.
 func (lp *launchpadV1) GetDepositProjectID(depositId string) (string, error) {
-	deposit, err := lp.getDepositValueForGetter(depositId)
+	deposit, err := lp.getDepositValue(depositId)
 	if err != nil {
 		return "", err
 	}
@@ -283,7 +300,7 @@ func (lp *launchpadV1) GetDepositProjectID(depositId string) (string, error) {
 
 // GetDepositTier returns the tier of a deposit by its ID.
 func (lp *launchpadV1) GetDepositTier(depositId string) (int64, error) {
-	deposit, err := lp.getDepositValueForGetter(depositId)
+	deposit, err := lp.getDepositValue(depositId)
 	if err != nil {
 		return 0, err
 	}
@@ -292,7 +309,7 @@ func (lp *launchpadV1) GetDepositTier(depositId string) (int64, error) {
 
 // GetDepositProjectTierID returns the project tier ID of a deposit by its ID.
 func (lp *launchpadV1) GetDepositProjectTierID(depositId string) (string, error) {
-	deposit, err := lp.getDepositValueForGetter(depositId)
+	deposit, err := lp.getDepositValue(depositId)
 	if err != nil {
 		return "", err
 	}
@@ -301,7 +318,7 @@ func (lp *launchpadV1) GetDepositProjectTierID(depositId string) (string, error)
 
 // GetDepositAmount returns the deposit amount of a deposit by its ID.
 func (lp *launchpadV1) GetDepositAmount(depositId string) (int64, error) {
-	deposit, err := lp.getDepositValueForGetter(depositId)
+	deposit, err := lp.getDepositValue(depositId)
 	if err != nil {
 		return 0, err
 	}
@@ -310,7 +327,7 @@ func (lp *launchpadV1) GetDepositAmount(depositId string) (int64, error) {
 
 // GetDepositWithdrawnHeight returns the withdrawn height of a deposit by its ID.
 func (lp *launchpadV1) GetDepositWithdrawnHeight(depositId string) (int64, error) {
-	deposit, err := lp.getDepositValueForGetter(depositId)
+	deposit, err := lp.getDepositValue(depositId)
 	if err != nil {
 		return 0, err
 	}
@@ -319,7 +336,7 @@ func (lp *launchpadV1) GetDepositWithdrawnHeight(depositId string) (int64, error
 
 // GetDepositWithdrawnTime returns the withdrawn time of a deposit by its ID.
 func (lp *launchpadV1) GetDepositWithdrawnTime(depositId string) (int64, error) {
-	deposit, err := lp.getDepositValueForGetter(depositId)
+	deposit, err := lp.getDepositValue(depositId)
 	if err != nil {
 		return 0, err
 	}
@@ -328,7 +345,7 @@ func (lp *launchpadV1) GetDepositWithdrawnTime(depositId string) (int64, error) 
 
 // GetDepositCreatedHeight returns the created height of a deposit by its ID.
 func (lp *launchpadV1) GetDepositCreatedHeight(depositId string) (int64, error) {
-	deposit, err := lp.getDepositValueForGetter(depositId)
+	deposit, err := lp.getDepositValue(depositId)
 	if err != nil {
 		return 0, err
 	}
@@ -337,7 +354,7 @@ func (lp *launchpadV1) GetDepositCreatedHeight(depositId string) (int64, error) 
 
 // GetDepositCreatedAt returns the created time of a deposit by its ID.
 func (lp *launchpadV1) GetDepositCreatedAt(depositId string) (int64, error) {
-	deposit, err := lp.getDepositValueForGetter(depositId)
+	deposit, err := lp.getDepositValue(depositId)
 	if err != nil {
 		return 0, err
 	}
@@ -346,7 +363,7 @@ func (lp *launchpadV1) GetDepositCreatedAt(depositId string) (int64, error) {
 
 // GetDepositEndTime returns the end time of a deposit by its ID.
 func (lp *launchpadV1) GetDepositEndTime(depositId string) (int64, error) {
-	deposit, err := lp.getDepositValueForGetter(depositId)
+	deposit, err := lp.getDepositValue(depositId)
 	if err != nil {
 		return 0, err
 	}
