@@ -259,14 +259,14 @@ func newMockGovernance() *governanceV1 {
 
 func newMockGovernanceStore() *mockGovernanceStore {
 	return &mockGovernanceStore{
-		configCounter:           governance.NewCounter(),
-		proposalCounter:         governance.NewCounter(),
-		configs:                 governance.NewConfigTree(),
-		proposals:               governance.NewProposalTree(),
+		configCounter:             governance.NewCounter(),
+		proposalCounter:           governance.NewCounter(),
+		configs:                   governance.NewConfigTree(),
+		proposals:                 governance.NewProposalTree(),
 		activeProposalsBySnapshot: governance.NewActiveProposalTree(),
 		activeProposalsByDeadline: governance.NewActiveProposalTree(),
-		proposalUserVotingInfos: governance.NewProposalUserVotingInfoTree(),
-		userProposals:           governance.NewUserProposalTree(),
+		proposalUserVotingInfos:   governance.NewProposalUserVotingInfoTree(),
+		userProposals:             governance.NewUserProposalTree(),
 	}
 }
 
