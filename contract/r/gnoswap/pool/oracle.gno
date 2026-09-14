@@ -20,7 +20,7 @@ func (o Observation) SecondsPerLiquidityCumulativeX128() string {
 }
 func (o Observation) Initialized() bool { return o.initialized }
 
-func NewObservation(
+func MakeObservation(
 	blockTimestamp int64,
 	tickCumulative int64,
 	secondsPerLiquidityCumulativeX128 string,
@@ -35,7 +35,7 @@ func NewObservation(
 }
 
 func NewDefaultObservation() Observation {
-	return NewObservation(
+	return MakeObservation(
 		0,
 		0,
 		"0",
@@ -87,7 +87,7 @@ func NewObservationsTree() *bptree.BPTree {
 // NewPoolObservationsTree creates a pool's circular observation buffer.
 func NewPoolObservationsTree(currentTime int64) *ObservationTree {
 	observations := NewObservationTree()
-	observations.Set(0, NewObservation(
+	observations.Set(0, MakeObservation(
 		currentTime,
 		0,
 		"0",
