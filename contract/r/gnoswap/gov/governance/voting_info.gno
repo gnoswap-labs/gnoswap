@@ -18,9 +18,9 @@ type VotingInfo struct {
 //   - availableVoteWeight: total voting weight available to this user
 //
 // Returns:
-//   - *VotingInfo: newly created voting information structure
-func NewVotingInfo(availableVoteWeight int64) *VotingInfo {
-	return &VotingInfo{
+//   - VotingInfo: newly created voting information value
+func NewVotingInfo(availableVoteWeight int64) VotingInfo {
+	return VotingInfo{
 		availableVoteWeight: availableVoteWeight,
 		// Other fields are initialized to zero values (false, 0)
 		// voted starts as false, indicating no vote has been cast
@@ -31,7 +31,7 @@ func NewVotingInfo(availableVoteWeight int64) *VotingInfo {
 //
 // Returns:
 //   - string: "yes" or "no" based on voting choice
-func (v *VotingInfo) VotingType() string {
+func (v VotingInfo) VotingType() string {
 	if v.votedYes {
 		return "yes"
 	}
@@ -43,7 +43,7 @@ func (v *VotingInfo) VotingType() string {
 //
 // Returns:
 //   - bool: true if user has voted on this proposal
-func (v *VotingInfo) IsVoted() bool {
+func (v VotingInfo) IsVoted() bool {
 	return v.voted
 }
 
@@ -52,7 +52,7 @@ func (v *VotingInfo) IsVoted() bool {
 //
 // Returns:
 //   - bool: true if user voted "yes"
-func (v *VotingInfo) VotedYes() bool {
+func (v VotingInfo) VotedYes() bool {
 	return v.votedYes
 }
 
@@ -61,7 +61,7 @@ func (v *VotingInfo) VotedYes() bool {
 //
 // Returns:
 //   - bool: true if user voted "no"
-func (v *VotingInfo) VotedNo() bool {
+func (v VotingInfo) VotedNo() bool {
 	return !v.votedYes
 }
 
@@ -70,7 +70,7 @@ func (v *VotingInfo) VotedNo() bool {
 //
 // Returns:
 //   - int64: available voting weight
-func (v *VotingInfo) AvailableVoteWeight() int64 {
+func (v VotingInfo) AvailableVoteWeight() int64 {
 	return v.availableVoteWeight
 }
 
@@ -79,7 +79,7 @@ func (v *VotingInfo) AvailableVoteWeight() int64 {
 //
 // Returns:
 //   - int64: weight used for voting, or 0 if not voted
-func (v *VotingInfo) VotedWeight() int64 {
+func (v VotingInfo) VotedWeight() int64 {
 	if !v.voted {
 		return 0
 	}
@@ -92,7 +92,7 @@ func (v *VotingInfo) VotedWeight() int64 {
 //
 // Returns:
 //   - int64: block height when vote was cast
-func (v *VotingInfo) VotedHeight() int64 {
+func (v VotingInfo) VotedHeight() int64 {
 	if !v.voted {
 		return 0
 	}
@@ -105,7 +105,7 @@ func (v *VotingInfo) VotedHeight() int64 {
 //
 // Returns:
 //   - int64: timestamp when vote was cast
-func (v *VotingInfo) VotedAt() int64 {
+func (v VotingInfo) VotedAt() int64 {
 	if !v.voted {
 		return 0
 	}
@@ -113,44 +113,18 @@ func (v *VotingInfo) VotedAt() int64 {
 	return v.votedAt
 }
 
-/* Setter methods */
-func (v *VotingInfo) SetAvailableVoteWeight(availableVoteWeight int64) {
-	v.availableVoteWeight = availableVoteWeight
-}
+// WithVote returns a value-backed record with the vote applied. The boolean is
+// false when the record already contains a vote.
+func (v VotingInfo) WithVote(votedYes bool, weight int64, votedHeight int64, votedAt int64) (VotingInfo, bool) {
+	if v.IsVoted() {
+		return v, false
+	}
 
-func (v *VotingInfo) SetVotedWeight(votedWeight int64) {
-	v.votedWeight = votedWeight
-}
-
-func (v *VotingInfo) SetVotedHeight(votedHeight int64) {
+	v.votedWeight = weight
 	v.votedHeight = votedHeight
-}
-
-func (v *VotingInfo) SetVotedAt(votedAt int64) {
 	v.votedAt = votedAt
-}
-
-func (v *VotingInfo) SetVotedYes(votedYes bool) {
+	v.voted = true
 	v.votedYes = votedYes
-}
 
-func (v *VotingInfo) SetVoted(voted bool) {
-	v.voted = voted
-}
-
-// Clone creates a mutable copy for realm-local vote updates. BPTree entries are
-// value-backed; public read-only getters return those values directly.
-func (v *VotingInfo) Clone() *VotingInfo {
-	if v == nil {
-		return nil
-	}
-
-	return &VotingInfo{
-		availableVoteWeight: v.availableVoteWeight,
-		votedWeight:         v.votedWeight,
-		votedHeight:         v.votedHeight,
-		votedAt:             v.votedAt,
-		votedYes:            v.votedYes,
-		voted:               v.voted,
-	}
+	return v, true
 }

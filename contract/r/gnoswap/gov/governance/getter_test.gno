@@ -3,8 +3,8 @@ package governance
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -18,13 +18,8 @@ func newProposalFixture() *Proposal {
 	return NewProposal(1, status, metadata, data, adminAddr, 2, 80, 100)
 }
 
-func newVotingInfoFixture() *VotingInfo {
-	votingInfo := NewVotingInfo(100)
-	votingInfo.SetVoted(true)
-	votingInfo.SetVotedYes(true)
-	votingInfo.SetVotedWeight(90)
-	votingInfo.SetVotedHeight(80)
-	votingInfo.SetVotedAt(70)
+func newVotingInfoFixture() VotingInfo {
+	votingInfo, _ := NewVotingInfo(100).WithVote(true, 90, 80, 70)
 	return votingInfo
 }
 
@@ -37,7 +32,7 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 		assertRaw func(t *testing.T, m *MockGovernance)
 	}{
 		{
-			name:  "GetProposalCommunityPoolSpendInfo",
+			name: "GetProposalCommunityPoolSpendInfo",
 			setup: func(m *MockGovernance) {
 				stored := newProposalFixture()
 				m.Response.Set("GetProposalCommunityPoolSpendInfo", stored.data.communityPoolSpend, nil)
@@ -60,7 +55,7 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:  "GetProposalExecutionInfo",
+			name: "GetProposalExecutionInfo",
 			setup: func(m *MockGovernance) {
 				stored := newProposalFixture()
 				m.Response.Set("GetProposalExecutionInfo", stored.data.execution, nil)

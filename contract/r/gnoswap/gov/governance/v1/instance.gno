@@ -159,20 +159,6 @@ func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 	return proposal
 }
 
-func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, bool) {
-	votingInfoRaw, exists := g.getProposalUserVotingInfoRaw(proposalID, addr)
-	if !exists {
-		return nil, false
-	}
-
-	votingInfo, ok := votingInfoRaw.(governance.VotingInfo)
-	if !ok {
-		return nil, false
-	}
-
-	return votingInfo.Clone(), true
-}
-
 func (g *governanceV1) getProposalUserVotingInfoRaw(proposalID int64, addr address) (any, bool) {
 	votingInfosTree, exists := g.getProposalUserVotingInfos(proposalID)
 	if !exists {

@@ -20,7 +20,7 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 		yes               bool
 		voter             address
 		setupProposal     *governance.Proposal
-		setupVotingInfos  map[string]*governance.VotingInfo
+		setupVotingInfos  map[string]governance.VotingInfo
 		requiresPriorVote bool
 		// then
 		expectedWeight   string
@@ -48,7 +48,7 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
-			setupVotingInfos: map[string]*governance.VotingInfo{
+			setupVotingInfos: map[string]governance.VotingInfo{
 				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			expectedWeight: "5000000000",
@@ -74,7 +74,7 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
-			setupVotingInfos: map[string]*governance.VotingInfo{
+			setupVotingInfos: map[string]governance.VotingInfo{
 				testutils.TestAddress("voter").String(): governance.NewVotingInfo(3_000_000_000),
 			},
 			expectedWeight: "3000000000",
@@ -108,7 +108,7 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
-			setupVotingInfos: map[string]*governance.VotingInfo{
+			setupVotingInfos: map[string]governance.VotingInfo{
 				testutils.TestAddress("voter_no_weight").String(): governance.NewVotingInfo(0),
 			},
 			expectedHasAbort: true,
@@ -135,7 +135,7 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 				time.Now().Add(-time.Hour*24*8).Unix()-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
-			setupVotingInfos: map[string]*governance.VotingInfo{
+			setupVotingInfos: map[string]governance.VotingInfo{
 				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			expectedHasAbort: true,
@@ -162,7 +162,7 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
 				100,
 			),
-			setupVotingInfos: map[string]*governance.VotingInfo{
+			setupVotingInfos: map[string]governance.VotingInfo{
 				testutils.TestAddress("voter").String(): governance.NewVotingInfo(5_000_000_000),
 			},
 			requiresPriorVote: true,
@@ -230,7 +230,7 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 		votedHeight      int64
 		votedAt          int64
 		setupProposal    *governance.Proposal
-		setupVotingInfo  *governance.VotingInfo
+		setupVotingInfo  any
 		setVotingInfoErr error
 		// then
 		expectedYesWeight int64
@@ -394,7 +394,7 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 				setupTestProposal(cur, t, gov, tt.setupProposal)
 			}
 			if tt.setupVotingInfo != nil {
-				setupTestVotingInfo(cur, t, gov, tt.proposalID, tt.voterAddress.String(), tt.setupVotingInfo)
+				setupTestVotingInfo(cur, t, gov, tt.proposalID, tt.voterAddress.String(), tt.setupVotingInfo.(governance.VotingInfo))
 			}
 			if tt.setVotingInfoErr != nil {
 				store, ok := gov.store.(*mockGovernanceStore)
@@ -403,7 +403,7 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 			}
 
 			// when
-			userVote, totalYesVoteWeight, totalNoVoteWeight, err := gov.vote(
+			votingType, userVoteWeight, totalYesVoteWeight, totalNoVoteWeight, err := gov.vote(
 				0, cur,
 				tt.proposalID,
 				tt.voterAddress,
@@ -423,17 +423,17 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expectedNoWeight, totalNoVoteWeight)
 
 			if tt.votedYes {
-				uassert.Equal(t, "yes", userVote.VotingType())
+				uassert.Equal(t, "yes", votingType)
 			} else {
-				uassert.Equal(t, "no", userVote.VotingType())
+				uassert.Equal(t, "no", votingType)
 			}
 			votingInfos, exists := gov.getProposalUserVotingInfos(tt.proposalID)
 			uassert.True(t, exists)
 			rawVotingInfo := votingInfos.Get(tt.voterAddress.String())
 			storedVotingInfo, storedAsValue := rawVotingInfo.(governance.VotingInfo)
 			uassert.True(t, storedAsValue)
-			uassert.Equal(t, userVote.VotedWeight(), storedVotingInfo.VotedWeight())
-			uassert.Equal(t, userVote.VotedYes(), storedVotingInfo.VotedYes())
+			uassert.Equal(t, userVoteWeight, storedVotingInfo.VotedWeight())
+			uassert.Equal(t, tt.votedYes, storedVotingInfo.VotedYes())
 		})
 	}
 }
@@ -847,7 +847,7 @@ func setupTestProposal(cur realm, t *testing.T, gov *governanceV1, proposal *gov
 	}
 }
 
-func setupVoteTestUserVotesWithDelegation(cur realm, t *testing.T, gov *governanceV1, proposalID int64, userVotes map[string]*governance.VotingInfo, maxVotingWeight int64) {
+func setupVoteTestUserVotesWithDelegation(cur realm, t *testing.T, gov *governanceV1, proposalID int64, userVotes map[string]governance.VotingInfo, maxVotingWeight int64) {
 	// Set up mock accessor to return the expected delegation amounts
 	mockAccessor := &mockGovStakerAccessor{
 		totalDelegation: maxVotingWeight,
@@ -863,14 +863,14 @@ func setupVoteTestUserVotesWithDelegation(cur realm, t *testing.T, gov *governan
 	gov.stakerAccessor = mockAccessor
 }
 
-func setupTestVotingInfo(cur realm, t *testing.T, gov *governanceV1, proposalID int64, voter string, votingInfo *governance.VotingInfo) {
+func setupTestVotingInfo(cur realm, t *testing.T, gov *governanceV1, proposalID int64, voter string, votingInfo governance.VotingInfo) {
 	// Get existing voting infos or create new ones
 	votingInfos, exists := gov.getProposalUserVotingInfos(proposalID)
 
 	if !exists {
 		votingInfos = governance.NewVotingInfoTree()
 	}
-	votingInfos.Set(voter, *votingInfo)
+	votingInfos.Set(voter, votingInfo)
 
 	// Set the voting info for the voter
 	gov.store.SetProposalVotingInfos(0, cur, proposalID, votingInfos)

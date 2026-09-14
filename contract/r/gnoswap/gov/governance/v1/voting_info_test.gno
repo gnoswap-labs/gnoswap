@@ -12,7 +12,7 @@ func TestVotingInfo_NewVotingInfo(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
 		availableWeight    int64
-		expectedVotingInfo *governance.VotingInfo
+		expectedVotingInfo governance.VotingInfo
 	}{
 		{
 			name:               "Create new voting info with positive weight",
@@ -42,89 +42,11 @@ func TestVotingInfo_NewVotingInfo(cur realm, t *testing.T) {
 	}
 }
 
-// TestVotingInfo_VoteExecution tests the voting execution functionality
-func TestVotingInfo_VoteExecution(cur realm, t *testing.T) {
-	tests := []struct {
-		name            string
-		votingInfo      *governance.VotingInfo
-		voteYes         bool
-		weight          int64
-		height          int64
-		timestamp       int64
-		expectedError   string
-		expectedVoted   bool
-		expectedVoteYes bool
-	}{
-		{
-			name:            "Vote yes successfully",
-			votingInfo:      governance.NewVotingInfo(100),
-			voteYes:         true,
-			weight:          50,
-			height:          1000,
-			timestamp:       1234567890,
-			expectedError:   "",
-			expectedVoted:   true,
-			expectedVoteYes: true,
-		},
-		{
-			name:            "Vote no successfully",
-			votingInfo:      governance.NewVotingInfo(100),
-			voteYes:         false,
-			weight:          50,
-			height:          1000,
-			timestamp:       1234567890,
-			expectedError:   "",
-			expectedVoted:   true,
-			expectedVoteYes: false,
-		},
-		{
-			name:            "Cannot vote twice",
-			votingInfo:      newVotedInfo(100, false, 50, 1000, 1234567890),
-			voteYes:         true,
-			weight:          50,
-			height:          1000,
-			timestamp:       1234567890,
-			expectedError:   errAlreadyVoted,
-			expectedVoted:   true,
-			expectedVoteYes: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			// when
-			resolver := NewVotingInfoResolver(tc.votingInfo)
-			err := resolver.vote(tc.voteYes, tc.weight, tc.height, tc.timestamp)
-
-			// then
-			if tc.expectedError == "" {
-				uassert.Equal(t, tc.votingInfo.IsVoted(), tc.expectedVoted)
-				uassert.Equal(t, tc.votingInfo.VotedYes(), tc.expectedVoteYes)
-				uassert.Equal(t, tc.votingInfo.VotedWeight(), tc.weight)
-				uassert.Equal(t, tc.votingInfo.VotedHeight(), tc.height)
-				uassert.Equal(t, tc.votingInfo.VotedAt(), tc.timestamp)
-			} else {
-				uassert.ErrorContains(t, err, tc.expectedError)
-			}
-		})
-	}
-}
-
-func newVotedInfo(availableWeight int64, votedYes bool, votedWeight int64, votedHeight int64, votedAt int64) *governance.VotingInfo {
-	votingInfo := governance.NewVotingInfo(availableWeight)
-	votingInfo.SetVotedWeight(votedWeight)
-	votingInfo.SetVotedHeight(votedHeight)
-	votingInfo.SetVotedAt(votedAt)
-	votingInfo.SetVoted(true)
-	votingInfo.SetVotedYes(votedYes)
-	return votingInfo
-}
-
 // TestVotingInfo_VotingTypeAndStatus tests the voting type and status getters
 func TestVotingInfo_VotingTypeAndStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
-		votingInfo         func() *governance.VotingInfo
+		votingInfo         func() governance.VotingInfo
 		expectedVotingType string
 		expectedIsVoted    bool
 		expectedVotedYes   bool
@@ -132,10 +54,8 @@ func TestVotingInfo_VotingTypeAndStatus(cur realm, t *testing.T) {
 	}{
 		{
 			name: "Yes vote status",
-			votingInfo: func() *governance.VotingInfo {
-				vi := governance.NewVotingInfo(100)
-				vi.SetVoted(true)
-				vi.SetVotedYes(true)
+			votingInfo: func() governance.VotingInfo {
+				vi, _ := governance.NewVotingInfo(100).WithVote(true, 100, 0, 0)
 				return vi
 			},
 			expectedVotingType: "yes",
@@ -145,10 +65,8 @@ func TestVotingInfo_VotingTypeAndStatus(cur realm, t *testing.T) {
 		},
 		{
 			name: "No vote status",
-			votingInfo: func() *governance.VotingInfo {
-				vi := governance.NewVotingInfo(100)
-				vi.SetVoted(true)
-				vi.SetVotedYes(false)
+			votingInfo: func() governance.VotingInfo {
+				vi, _ := governance.NewVotingInfo(100).WithVote(false, 100, 0, 0)
 				return vi
 			},
 			expectedVotingType: "no",
@@ -158,7 +76,7 @@ func TestVotingInfo_VotingTypeAndStatus(cur realm, t *testing.T) {
 		},
 		{
 			name: "Not voted status",
-			votingInfo: func() *governance.VotingInfo {
+			votingInfo: func() governance.VotingInfo {
 				vi := governance.NewVotingInfo(100)
 				return vi
 			},
@@ -184,13 +102,13 @@ func TestVotingInfo_VotingTypeAndStatus(cur realm, t *testing.T) {
 func TestVotingInfo_VoteWeights(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
-		votingInfo              func() *governance.VotingInfo
+		votingInfo              func() governance.VotingInfo
 		expectedAvailableWeight int64
 		expectedVotedWeight     int64
 	}{
 		{
 			name: "Get weights before voting",
-			votingInfo: func() *governance.VotingInfo {
+			votingInfo: func() governance.VotingInfo {
 				vi := governance.NewVotingInfo(100)
 				return vi
 			},
@@ -199,10 +117,8 @@ func TestVotingInfo_VoteWeights(cur realm, t *testing.T) {
 		},
 		{
 			name: "Get weights after voting",
-			votingInfo: func() *governance.VotingInfo {
-				vi := governance.NewVotingInfo(100)
-				vi.SetVoted(true)
-				vi.SetVotedWeight(50)
+			votingInfo: func() governance.VotingInfo {
+				vi, _ := governance.NewVotingInfo(100).WithVote(false, 50, 0, 0)
 				return vi
 			},
 			expectedAvailableWeight: 100,
@@ -210,7 +126,7 @@ func TestVotingInfo_VoteWeights(cur realm, t *testing.T) {
 		},
 		{
 			name: "Get weights with zero available weight",
-			votingInfo: func() *governance.VotingInfo {
+			votingInfo: func() governance.VotingInfo {
 				vi := governance.NewVotingInfo(0)
 				return vi
 			},

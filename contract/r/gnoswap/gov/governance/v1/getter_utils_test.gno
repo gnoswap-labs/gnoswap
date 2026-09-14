@@ -58,15 +58,11 @@ func TestValueVotingInfoEntry(cur realm, t *testing.T) {
 	})
 
 	t.Run("returns a value-backed tree entry", func(cur realm, t *testing.T) {
-		stored := governance.NewVotingInfo(1000)
-		stored.SetVotedYes(true)
+		stored, _ := governance.NewVotingInfo(1000).WithVote(true, 0, 0, 0)
 
-		value, ok := valueVotingInfoEntry(*stored).(governance.VotingInfo)
+		value, ok := valueVotingInfoEntry(stored).(governance.VotingInfo)
 		uassert.True(t, ok)
 		uassert.Equal(t, stored.VotedYes(), value.VotedYes())
-
-		value.SetVotedYes(false)
-		uassert.True(t, stored.VotedYes())
 	})
 }
 
