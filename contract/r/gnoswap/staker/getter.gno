@@ -7,7 +7,14 @@ import (
 
 // IStakerGetter functions
 
-// GetPool returns a copy of the pool for the given path.
+// GetPool returns a copy of the staking state for a pool.
+//
+// Parameters:
+//   - poolPath: pool realm path
+//
+// Returns:
+//   - pool: independent pool copy, or nil when no pool is configured
+//   - err: non-nil when the implementation cannot resolve poolPath
 func GetPool(poolPath string) (*Pool, error) {
 	pool, err := getImplementation().GetPool(poolPath)
 	if err != nil {
@@ -19,7 +26,14 @@ func GetPool(poolPath string) (*Pool, error) {
 	return pool.Clone(), nil
 }
 
-// GetDeposit returns a copy of the deposit for the given position ID.
+// GetDeposit returns a copy of a staked position's deposit.
+//
+// Parameters:
+//   - lpTokenId: staked position NFT token ID
+//
+// Returns:
+//   - deposit: independent deposit copy, or nil when no deposit exists
+//   - err: non-nil when the implementation cannot resolve lpTokenId
 func GetDeposit(lpTokenId uint64) (*Deposit, error) {
 	deposit, err := getImplementation().GetDeposit(lpTokenId)
 	if err != nil {
@@ -31,22 +45,53 @@ func GetDeposit(lpTokenId uint64) (*Deposit, error) {
 	return deposit.Clone(), nil
 }
 
-// CollectableEmissionReward returns the claimable internal reward amount.
+// CollectableEmissionReward returns the claimable internal GNS reward.
+//
+// Parameters:
+//   - positionId: staked position NFT token ID
+//
+// Returns:
+//   - amount: claimable internal reward amount
+//   - err: non-nil when positionId cannot be resolved
 func CollectableEmissionReward(positionId uint64) (int64, error) {
 	return getImplementation().CollectableEmissionReward(positionId)
 }
 
-// CollectableExternalIncentiveReward returns the claimable external reward amount.
+// CollectableExternalIncentiveReward returns a position's claimable external reward.
+//
+// Parameters:
+//   - positionId: staked position NFT token ID
+//   - incentiveId: external incentive identifier
+//
+// Returns:
+//   - amount: claimable external reward amount
+//   - err: non-nil when the position or incentive cannot be resolved
 func CollectableExternalIncentiveReward(positionId uint64, incentiveId string) (int64, error) {
 	return getImplementation().CollectableExternalIncentiveReward(positionId, incentiveId)
 }
 
-// GetCreatedHeightOfIncentive returns the block height when an incentive was created.
+// GetCreatedHeightOfIncentive returns an incentive's creation block height.
+//
+// Parameters:
+//   - poolPath: pool realm path
+//   - incentiveId: external incentive identifier
+//
+// Returns:
+//   - height: creation block height
+//   - err: non-nil when the incentive cannot be resolved
 func GetCreatedHeightOfIncentive(poolPath string, incentiveId string) (int64, error) {
 	return getImplementation().GetCreatedHeightOfIncentive(poolPath, incentiveId)
 }
 
-// GetIncentiveCreatedTimestamp returns the creation timestamp of an incentive.
+// GetIncentiveCreatedTimestamp returns an incentive's creation timestamp.
+//
+// Parameters:
+//   - poolPath: pool realm path
+//   - incentiveId: external incentive identifier
+//
+// Returns:
+//   - timestamp: creation Unix timestamp
+//   - err: non-nil when the incentive cannot be resolved
 func GetIncentiveCreatedTimestamp(poolPath string, incentiveId string) (int64, error) {
 	return getImplementation().GetIncentiveCreatedTimestamp(poolPath, incentiveId)
 }

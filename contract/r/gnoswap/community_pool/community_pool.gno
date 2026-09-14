@@ -11,13 +11,14 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-// GetBalanceOf returns the balance of a specific token held by the community pool.
+// GetBalanceOf returns the community pool's balance for a registered token.
 //
 // Parameters:
-//   - tokenPath: the path to the token contract (e.g., "gno.land/r/gnoswap/gns")
+//   - tokenPath: path of the registered token contract
 //
-// Returns the balance of the specified token held by the community pool, or an error
-// if the token is not registered.
+// Returns:
+//   - balance: token balance held by the community pool
+//   - err: non-nil when tokenPath is not registered
 func GetBalanceOf(tokenPath string) (int64, error) {
 	communityPoolAddr := access.MustGetAddress(prbac.ROLE_COMMUNITY_POOL.String())
 
@@ -28,15 +29,15 @@ func GetBalanceOf(tokenPath string) (int64, error) {
 	return common.BalanceOf(tokenPath, communityPoolAddr), nil
 }
 
-// TransferToken transfers tokens from the community pool.
+// TransferToken transfers a registered token from the community pool.
 //
 // Parameters:
-//   - cur: current realm
-//   - tokenPath: token contract path
+//   - cur: pass `cross` as argument
+//   - tokenPath: path of the registered token contract
 //   - to: recipient address
-//   - amount: transfer amount
+//   - amount: token amount to transfer
 //
-// Only callable by admin or governance.
+// Only callable by admin or governance while withdrawals are not halted.
 func TransferToken(cur realm, tokenPath string, to address, amount int64) {
 	halt.AssertIsNotHaltedWithdraw()
 

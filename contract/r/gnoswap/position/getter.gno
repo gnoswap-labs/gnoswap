@@ -4,28 +4,59 @@ import (
 	rotree "gno.land/p/nt/bptree/rotree/v0"
 )
 
-// GetPositions returns a read-only view of every position, keyed by the decimal
-// string form of the position ID. Callers paginate it themselves through
-// IterateByOffset.
+// GetPositions returns a read-only view of all positions.
+//
+// Returns:
+//   - positions: read-only tree keyed by decimal position ID; callers paginate with IterateByOffset
 func GetPositions() *rotree.ReadOnlyTree {
 	return getImplementation().GetPositions()
 }
 
-// IsBurned returns whether a position has been burned.
+// IsBurned reports whether a position NFT has been burned.
+//
+// Parameters:
+//   - positionId: position NFT token ID
+//
+// Returns:
+//   - burned: whether the position has been burned
+//   - err: non-nil when positionId cannot be resolved
 func IsBurned(positionId uint64) (bool, error) {
 	return getImplementation().IsBurned(positionId)
 }
 
-// IsInRange returns whether a position's ticks are within the current price range.
+// IsInRange reports whether a position's ticks contain the current pool tick.
+//
+// Parameters:
+//   - positionId: position NFT token ID
+//
+// Returns:
+//   - inRange: whether the position is currently in range
+//   - err: non-nil when positionId cannot be resolved
 func IsInRange(positionId uint64) (bool, error) {
 	return getImplementation().IsInRange(positionId)
 }
 
-// GetPositionTokenBalances returns the token0 balance of a position.
+// GetPositionTokenBalances returns both token balances associated with a position.
+//
+// Parameters:
+//   - positionId: position NFT token ID
+//
+// Returns:
+//   - balance0: token0 balance
+//   - balance1: token1 balance
+//   - err: non-nil when positionId cannot be resolved
 func GetPositionTokenBalances(positionId uint64) (int64, int64, error) {
 	return getImplementation().GetPositionTokenBalances(positionId)
 }
 
+// GetPositionToken0Balance returns the token0 balance associated with a position.
+//
+// Parameters:
+//   - positionId: position NFT token ID
+//
+// Returns:
+//   - balance: token0 balance
+//   - err: non-nil when positionId cannot be resolved
 func GetPositionToken0Balance(positionId uint64) (int64, error) {
 	balance0, _, err := GetPositionTokenBalances(positionId)
 	if err != nil {
@@ -35,6 +66,14 @@ func GetPositionToken0Balance(positionId uint64) (int64, error) {
 	return balance0, nil
 }
 
+// GetPositionToken1Balance returns the token1 balance associated with a position.
+//
+// Parameters:
+//   - positionId: position NFT token ID
+//
+// Returns:
+//   - balance: token1 balance
+//   - err: non-nil when positionId cannot be resolved
 func GetPositionToken1Balance(positionId uint64) (int64, error) {
 	_, balance1, err := GetPositionTokenBalances(positionId)
 	if err != nil {
