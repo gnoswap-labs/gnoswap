@@ -68,7 +68,7 @@ gnokey query vm/qeval --data "gno.land/r/test/token_v0.BalanceOf(\"g1jg8mtutu9kh
 stdout '\(1000000100 int64\)'
 
 ! gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "gno.land/r/test/token_v1.TKV1" -args $test1_user_addr -args 100 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stderr 'unknown token\\(gno.land/r/test/token_v1.TKV1\\)'
+stderr 'unknown token\(gno.land/r/test/token_v1.TKV1\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_v1.BalanceOf(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(1000000000 int64\)'
 
@@ -122,7 +122,7 @@ stdout '\(999700 int64\)'
 
 ## Unknown keys still fail after the upgrade
 ! gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "gno.land/r/test/token_v1.NOPE" -args $test1_user_addr -args 1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stderr 'unknown token\\(gno.land/r/test/token_v1.NOPE\\)'
+stderr 'unknown token\(gno.land/r/test/token_v1.NOPE\)'
 
 -- grc20_v1/gnomod.toml --
 module = "gno.land/p/nt/grc20/v1"

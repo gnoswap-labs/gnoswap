@@ -30,17 +30,23 @@ loadpkg gno.land/r/gnoswap/common/v1
 
 loadpkg gno.land/p/nt/grc721/v0
 loadpkg gno.land/r/gnoland/wugnot
+loadpkg gno.land/r/gnoswap/halt
+loadpkg gno.land/r/gnoswap/referral
 loadpkg gno.land/r/gnoswap/gns
 loadpkg gno.land/r/gnoswap/gnft
+loadpkg gno.land/r/gnoswap/gov/xgns
+loadpkg gno.land/r/gnoswap/emission
 loadpkg gno.land/r/gnoswap/protocol_fee
 loadpkg gno.land/r/gnoswap/pool
 loadpkg gno.land/r/gnoswap/position
 loadpkg gno.land/r/gnoswap/router
+loadpkg gno.land/r/gnoswap/staker
 
 loadpkg gno.land/r/gnoswap/protocol_fee/v1
 loadpkg gno.land/r/gnoswap/pool/v1
 loadpkg gno.land/r/gnoswap/position/v1
 loadpkg gno.land/r/gnoswap/router/v1
+loadpkg gno.land/r/gnoswap/staker/v1
 
 gnoland start
 
@@ -112,7 +118,7 @@ stdout '\(\"10000\" string\)'
 stdout '\(\"9857\" string\)'
 stdout 'EVENTS:     .*\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.0000000\"\},\{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"\},\{\"key\":\"to\",\"value\":\"g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp\"\},\{\"key\":\"value\",\"value\":\"9871\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\}.*\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_v0\.TKV0\.0000000\"\},\{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"\},\{\"key\":\"to\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"\},\{\"key\":\"value\",\"value\":\"10000\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\}.*\{\"type\":\"Swap\",\"attrs\":\[.*\{\"key\":\"poolPath\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL:gno\.land/r/test/token_v0\.TKV0:3000\"\}.*\{\"key\":\"token0Amount\",\"value\":\"\-9871\"\}.*\{\"key\":\"token1Amount\",\"value\":\"10000\"\}.*\],\"pkg_path\":\"gno\.land/r/gnoswap/pool/v1\"\}.*\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.0000000\"\},\{\"key\":\"from\",\"value\":\"g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp\"\},\{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"\},\{\"key\":\"value\",\"value\":\"9857\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\}.*\{\"type\":\"ExactInSwap\",\"attrs\":\[.*\{\"key\":\"resultInputAmount\",\"value\":\"10000\"\}.*\{\"key\":\"resultOutputAmount\",\"value\":\"9857\"\}.*\],\"pkg_path\":\"gno\.land/r/gnoswap/router/v1\"\}'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV0(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
-stdout '\(1000009857 int64\)'
+stdout '\(999009857 int64\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV1(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(0 int64\)'
 
@@ -127,7 +133,7 @@ stdout '\(\"990128\" string\)'
 stdout '\(\"1009969\" string\)'
 stdout 'EVENTS:     .*\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_v0\.TKV0\.0000000\"\},\{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"\},\{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"\},\{\"key\":\"value\",\"value\":\"29\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\}.*\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.0000000\"\},\{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"\},\{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"\},\{\"key\":\"value\",\"value\":\"990128\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\}.*\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_v0\.TKV0\.0000000\"\},\{\"key\":\"from\",\"value\":\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\"\},\{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"\},\{\"key\":\"value\",\"value\":\"1009969\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\}.*\{\"type\":\"DecreaseLiquidity\",\"attrs\":\[.*\{\"key\":\"lpPositionId\",\"value\":\"1\"\}.*\{\"key\":\"liquidityDelta\",\"value\":\"1000000\"\}.*\{\"key\":\"amount0\",\"value\":\"990128\"\}.*\{\"key\":\"amount1\",\"value\":\"1009969\"\}.*\],\"pkg_path\":\"gno\.land/r/gnoswap/position/v1\"\}'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV0(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
-stdout '\(1000999985 int64\)'
+stdout '\(999999985 int64\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV1(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(0 int64\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV0(\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
@@ -135,7 +141,7 @@ stdout '\(1 int64\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV1(\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
 stdout '\(0 int64\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_v0.BalanceOf(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
-stdout '\(1000999998 int64\)'
+stdout '\(999999998 int64\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_v0.BalanceOf(\"g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v\")"
 stdout '\(2 int64\)'
 

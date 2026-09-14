@@ -30,6 +30,11 @@ gnoland start
 
 gnokey maketx send -send 15000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 
+## Deploy the second GRC20 generation (mock) and the calling realm
+gnokey maketx addpkg -pkgdir $WORK/grc20_v1 -pkgpath gno.land/p/nt/grc20/v1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir $WORK/grc20reg_v1 -pkgpath gno.land/r/nt/grc20reg/v1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir $WORK/common_caller -pkgpath gno.land/r/test/common_caller -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
 gnokey maketx addpkg -pkgdir $WORK/common_v2 -pkgpath gno.land/r/gnoswap/common/v2 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stdout 'EVENTS:     \[\{\"type\":\"RegisterInitializer\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"registeredPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager\"\}'
 ## Non-admin cannot activate an implementation
@@ -314,6 +319,33 @@ func Register(cur realm, token *grc20.Token) string {
 func Get(key string) *grc20.Token {
 	return registry[key]
 }
+-- common_caller/caller.gno --
+// Stand-in for a core realm: every token operation goes through common with
+// this realm as the token actor.
+package common_caller
+
+import (
+	"gno.land/r/gnoswap/common"
+)
+
+func Transfer(cur realm, tokenKey string, to address, amount int64) {
+	common.SafeGRC20Transfer(0, cur, tokenKey, to, amount)
+}
+
+func TransferFrom(cur realm, tokenKey string, from, to address, amount int64) {
+	common.SafeGRC20TransferFrom(0, cur, tokenKey, from, to, amount)
+}
+
+func Approve(cur realm, tokenKey string, spender address, amount int64) {
+	common.SafeGRC20Approve(0, cur, tokenKey, spender, amount)
+}
+
+func IsRegistered(tokenKey string) bool {
+	return common.IsRegistered(tokenKey) == nil
+}
+-- common_caller/gnomod.toml --
+module = "gno.land/r/test/common_caller"
+gno = "0.9"
 -- common_v2/gnomod.toml --
 module = "gno.land/r/gnoswap/common/v2"
 gno = "0.9"

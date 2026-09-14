@@ -51,7 +51,7 @@ stderr 'invalid token key'
 ! gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "gno.land/r/test/token_v0 TKV0" -args $test1_user_addr -args 1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stderr 'invalid token key'
 ! gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "gno.land/r/test/token_v0" -args $test1_user_addr -args 1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stderr 'unknown token\\(gno.land/r/test/token_v0\\)'
+stderr 'unknown token\(gno.land/r/test/token_v0\)'
 
 gnokey query vm/qeval --data "gno.land/r/test/common_caller.IsRegistered(\"\")"
 stdout '\(false bool\)'

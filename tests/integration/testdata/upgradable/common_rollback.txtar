@@ -66,7 +66,7 @@ gnokey query vm/qeval --data "gno.land/r/test/common_caller.IsRegistered(\"gno.l
 stdout '\(false bool\)'
 
 ! gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "gno.land/r/test/token_v1.TKV1" -args $test1_user_addr -args 1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stderr 'unknown token\\(gno.land/r/test/token_v1.TKV1\\)'
+stderr 'unknown token\(gno.land/r/test/token_v1.TKV1\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_v1.BalanceOf(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(1000000300 int64\)'
 

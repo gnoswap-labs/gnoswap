@@ -30,17 +30,23 @@ loadpkg gno.land/r/gnoswap/common/v1
 
 loadpkg gno.land/p/nt/grc721/v0
 loadpkg gno.land/r/gnoland/wugnot
+loadpkg gno.land/r/gnoswap/halt
+loadpkg gno.land/r/gnoswap/referral
 loadpkg gno.land/r/gnoswap/gns
 loadpkg gno.land/r/gnoswap/gnft
+loadpkg gno.land/r/gnoswap/gov/xgns
+loadpkg gno.land/r/gnoswap/emission
 loadpkg gno.land/r/gnoswap/protocol_fee
 loadpkg gno.land/r/gnoswap/pool
 loadpkg gno.land/r/gnoswap/position
 loadpkg gno.land/r/gnoswap/router
+loadpkg gno.land/r/gnoswap/staker
 
 loadpkg gno.land/r/gnoswap/protocol_fee/v1
 loadpkg gno.land/r/gnoswap/pool/v1
 loadpkg gno.land/r/gnoswap/position/v1
 loadpkg gno.land/r/gnoswap/router/v1
+loadpkg gno.land/r/gnoswap/staker/v1
 
 gnoland start
 
