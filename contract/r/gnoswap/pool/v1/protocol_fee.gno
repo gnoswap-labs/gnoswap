@@ -50,15 +50,8 @@ func (i *poolV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amoun
 		return
 	}
 
-	// The stored map is readonly tainted here, so it is copied before being updated.
-	existingProtocolFees := i.store.GetPendingProtocolFees()
-	pendingProtocolFees := make(map[string]int64)
-	for pendingTokenPath, pendingAmount := range existingProtocolFees {
-		pendingProtocolFees[pendingTokenPath] = pendingAmount
-	}
-
-	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
-	if err := i.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
+	pendingAmount := gnsmath.SafeAddInt64(i.store.GetPendingProtocolFee(tokenPath), amount)
+	if err := i.store.SetPendingProtocolFee(0, rlm, tokenPath, pendingAmount); err != nil {
 		panic(err)
 	}
 }
@@ -77,8 +70,7 @@ func (i *poolV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount in
 		return
 	}
 
-	pendingProtocolFees := i.store.GetPendingProtocolFees()
-	pendingAmount, hasPending := pendingProtocolFees[tokenPath]
+	pendingAmount := i.store.GetPendingProtocolFee(tokenPath)
 	totalAmount := gnsmath.SafeAddInt64(pendingAmount, amount)
 
 	if totalAmount > 0 {
@@ -95,20 +87,7 @@ func (i *poolV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount in
 		}
 	}
 
-	if !hasPending {
-		return
-	}
-
-	remainingProtocolFees := make(map[string]int64)
-	for pendingTokenPath, pending := range pendingProtocolFees {
-		if pendingTokenPath == tokenPath {
-			continue
-		}
-
-		remainingProtocolFees[pendingTokenPath] = pending
-	}
-
-	if err := i.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
+	if err := i.store.RemovePendingProtocolFee(0, rlm, tokenPath); err != nil {
 		panic(err)
 	}
 }
