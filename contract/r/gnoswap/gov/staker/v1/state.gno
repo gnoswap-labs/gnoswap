@@ -40,24 +40,25 @@ func (g *govStakerV1) nextDelegationID() int64 {
 //   - delegationID: unique identifier of the delegation
 //
 // Returns:
-//   - *Delegation: delegation instance or nil if not found
-func (g *govStakerV1) getDelegation(delegationID int64) *staker.Delegation {
-	delegation, exists := g.store.GetDelegation(delegationID)
-	if !exists {
-		return nil
-	}
-	return delegation
+//   - Delegation: delegation value or zero value if not found
+//   - bool: true when the delegation exists
+func (g *govStakerV1) getDelegation(delegationID int64) (staker.Delegation, bool) {
+	return g.store.GetDelegation(delegationID)
+}
+
+func (g *govStakerV1) getDelegationPtr(delegationID int64) (*staker.Delegation, bool) {
+	return g.store.GetDelegationPtr(delegationID)
 }
 
 // setDelegation stores or updates a delegation in the storage tree.
 //
 // Parameters:
 //   - delegationID: unique identifier of the delegation
-//   - delegation: delegation instance to store
+//   - delegation: delegation value to store
 //
 // Returns:
 //   - error: nil on success, otherwise the storage write error
-func (g *govStakerV1) setDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) error {
+func (g *govStakerV1) setDelegation(_ int, rlm realm, delegationID int64, delegation staker.Delegation) error {
 	return g.store.SetDelegation(0, rlm, delegationID, delegation)
 }
 
@@ -65,11 +66,11 @@ func (g *govStakerV1) setDelegation(_ int, rlm realm, delegationID int64, delega
 //
 // Parameters:
 //   - delegationID: unique identifier of the delegation to add
-//   - delegation: delegation instance to add
+//   - delegation: delegation value to add
 //
 // Returns:
 //   - error: nil on success, otherwise the delegation or manager storage error
-func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) error {
+func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delegation staker.Delegation) error {
 	if err := g.setDelegation(0, rlm, delegationID, delegation); err != nil {
 		return err
 	}
@@ -88,13 +89,13 @@ func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delega
 // removeDelegation removes a delegation from storage and updates the delegation manager.
 //
 // Parameters:
-//   - delegationID: unique identifier of the delegation to remove
+//   - delegationID: unique identifier of the delegation
 //
 // Returns:
 //   - error: nil on success, otherwise an error when the delegation is absent or storage fails
 func (g *govStakerV1) removeDelegation(_ int, rlm realm, delegationID int64) error {
-	delegation := g.getDelegation(delegationID)
-	if delegation == nil {
+	delegation, exists := g.getDelegation(delegationID)
+	if !exists {
 		return errors.New(errDelegationNotFound)
 	}
 

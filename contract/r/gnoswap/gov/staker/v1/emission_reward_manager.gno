@@ -36,7 +36,7 @@ func (self *EmissionRewardManagerResolver) GetClaimableRewardAmount(
 		return 0, err
 	}
 
-	resolvedState := NewEmissionRewardStateResolver(rewardState)
+	resolvedState := NewEmissionRewardStateResolver(&rewardState)
 	return resolvedState.GetClaimableRewardAmount(accumulatedRewardX128PerStake, currentTimestamp)
 }
 
@@ -97,7 +97,7 @@ func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 		return err
 	}
 
-	self.setAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake.Clone())
+	self.setAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake)
 	self.setDistributedAmount(currentDistributedAmount)
 	self.setAccumulatedTimestamp(currentTimestamp)
 
@@ -119,10 +119,10 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 		return err
 	}
 	if !ok {
-		rewardState = staker.NewEmissionRewardState(accumulatedReward)
+		rewardState = *staker.NewEmissionRewardState(accumulatedReward)
 	}
 
-	resolvedState := NewEmissionRewardStateResolver(rewardState)
+	resolvedState := NewEmissionRewardStateResolver(&rewardState)
 	err = resolvedState.addStakeWithUpdateRewardDebtX128(amount, accumulatedReward, currentTimestamp)
 	if err != nil {
 		return err
@@ -158,10 +158,10 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 		return err
 	}
 	if !ok {
-		rewardState = staker.NewEmissionRewardState(accumulatedReward)
+		rewardState = *staker.NewEmissionRewardState(accumulatedReward)
 	}
 
-	resolvedState := NewEmissionRewardStateResolver(rewardState)
+	resolvedState := NewEmissionRewardStateResolver(&rewardState)
 
 	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, accumulatedReward, currentTimestamp)
 	if err != nil {
@@ -185,7 +185,7 @@ func (self *EmissionRewardManagerResolver) claimRewards(address string, currentT
 		return 0, err
 	}
 
-	resolvedState := NewEmissionRewardStateResolver(rewardState)
+	resolvedState := NewEmissionRewardStateResolver(&rewardState)
 	claimedRewardAmount, cErr := resolvedState.claimRewardsWithUpdateRewardDebtX128(self.GetAccumulatedRewardX128PerStake(), currentTimestamp)
 	if cErr != nil {
 		return 0, cErr
@@ -195,7 +195,7 @@ func (self *EmissionRewardManagerResolver) claimRewards(address string, currentT
 	return claimedRewardAmount, nil
 }
 
-func (self *EmissionRewardManagerResolver) setRewardStates(address string, rewardState *staker.EmissionRewardState) {
+func (self *EmissionRewardManagerResolver) setRewardStates(address string, rewardState staker.EmissionRewardState) {
 	self.SetRewardState(address, rewardState)
 }
 

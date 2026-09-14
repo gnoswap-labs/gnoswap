@@ -2,6 +2,7 @@ package staker
 
 import (
 	"errors"
+
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
@@ -141,30 +142,39 @@ func (s *govStakerStore) HasDelegation(id int64) bool {
 	return delegations.Get(utils.Int64ToString(id)) != nil
 }
 
-func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
+func (s *govStakerStore) GetDelegation(id int64) (Delegation, bool) {
 	delegations := s.GetAllDelegations()
 
 	result := delegations.Get(utils.Int64ToString(id))
 	if result == nil {
-		return nil, false
+		return Delegation{}, false
 	}
 
-	delegation, ok := result.(*Delegation)
+	delegation, ok := result.(Delegation)
 	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to *Delegation: %T", result))
+		panic(ufmt.Sprintf("failed to cast result to Delegation: %T", result))
 	}
 
-	return delegation, true
+	return delegation.Clone(), true
 }
 
-func (s *govStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *Delegation) error {
+// GetDelegationPtr returns a detached, realm-owned pointer for mutation through
+// delegation resolvers. Changes must be persisted with SetDelegation.
+func (s *govStakerStore) GetDelegationPtr(id int64) (*Delegation, bool) {
+	delegation, exists := s.GetDelegation(id)
+	if !exists {
+		return nil, false
+	}
+	return &delegation, true
+}
+
+func (s *govStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation Delegation) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
 	}
 
 	delegations := s.GetAllDelegations()
-
-	delegations.Set(utils.Int64ToString(id), delegation)
+	delegations.Set(utils.Int64ToString(id), delegation.Clone())
 	return s.kvStore.Set(0, rlm, StoreKeyDelegations, delegations)
 }
 

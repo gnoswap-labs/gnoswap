@@ -528,15 +528,11 @@ func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 	if err != nil {
 		panic(err)
 	}
-	if rewardState != nil {
-		println("[EXPECTED] Reward state details:")
-		println("[EXPECTED] - Deposit Amount:", rewardState.DepositAmount())
-		println("[EXPECTED] - Accumulated Reward Amount:", rewardState.AccumulatedRewardAmount())
-		println("[EXPECTED] - Claimed Amount:", rewardState.ClaimedAmount())
-		println("[EXPECTED] - Claimable Time:", rewardState.ClaimableTime())
-	} else {
-		println("[EXPECTED] No reward state found for deposit")
-	}
+	println("[EXPECTED] Reward state details:")
+	println("[EXPECTED] - Deposit Amount:", rewardState.DepositAmount())
+	println("[EXPECTED] - Accumulated Reward Amount:", rewardState.AccumulatedRewardAmount())
+	println("[EXPECTED] - Claimed Amount:", rewardState.ClaimedAmount())
+	println("[EXPECTED] - Claimable Time:", rewardState.ClaimableTime())
 }
 
 // Output:

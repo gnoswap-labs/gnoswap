@@ -129,7 +129,7 @@ func testGovStakerGetters(cur realm, delegationId1 int64) {
 	println("[EXPECTED] Delegation", delegationId1, "exists:", exists)
 
 	// GetDelegations entry
-	delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationId1, 10)).(*staker.Delegation)
+	delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationId1, 10)).(staker.Delegation)
 	if !ok {
 		panic("delegation not found")
 	}

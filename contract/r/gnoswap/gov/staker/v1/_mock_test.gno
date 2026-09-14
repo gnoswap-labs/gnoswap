@@ -3,7 +3,7 @@ package staker
 import (
 	"errors"
 
-	"gno.land/p/gnoswap/utils"
+	kvstore "gno.land/p/gnoswap/store"
 	bptree "gno.land/p/nt/bptree/v0"
 
 	"gno.land/r/gnoswap/gov/staker"
@@ -17,8 +17,9 @@ type mockGovStakerStore struct {
 	totalDelegatedAmount           int64
 	totalLockedAmount              int64
 
-	// Delegation data
-	delegations      *bptree.BPTree // map[int64]*staker.Delegation
+	// Delegation data is kept by the root store so value records can be
+	// replaced through its realm-owned storage methods.
+	delegationStore  staker.IGovStakerStore
 	delegationNextID *staker.Counter
 	userDelegations  *bptree.BPTree
 
@@ -34,13 +35,21 @@ type mockGovStakerStore struct {
 	launchpadProjectDeposits *staker.LaunchpadProjectDeposits
 }
 
-var _ staker.IGovStakerStore = (*mockGovStakerStore)(nil)
+func (m *mockGovStakerStore) ensureDelegationStore(cur realm) {
+	if m.delegationStore != nil {
+		return
+	}
+
+	m.delegationStore = staker.NewGovStakerStore(kvstore.NewKVStore(cur.Address()))
+	if err := m.delegationStore.SetDelegations(0, cur, staker.NewDelegationTree()); err != nil {
+		panic(err)
+	}
+}
 
 func newMockGovStakerStore() staker.IGovStakerStore {
 	return &mockGovStakerStore{
-		delegations:                  bptree.NewBPTreeN(16),
-		userDelegations:              bptree.NewBPTreeN(16),
 		delegationNextID:             staker.NewCounter(),
+		userDelegations:              bptree.NewBPTreeN(16),
 		totalDelegationHistory:       staker.NewUintTree(),
 		userDelegationHistory:        bptree.NewBPTreeN(16),
 		hasTotalDelegationHistoryKey: true,
@@ -93,40 +102,53 @@ func (m *mockGovStakerStore) SetTotalLockedAmount(_ int, rlm realm, amount int64
 
 // Delegation management methods
 func (m *mockGovStakerStore) HasDelegationsStoreKey() bool {
-	return true // Always available in mock
+	return true // The mock uses a lazily initialized root-backed store.
 }
 
 func (m *mockGovStakerStore) SetDelegations(_ int, rlm realm, delegations *bptree.BPTree) error {
-	m.delegations = delegations
-	return nil
+	m.ensureDelegationStore(cross(rlm))
+	return m.delegationStore.SetDelegations(0, rlm, delegations)
 }
 
 func (m *mockGovStakerStore) HasDelegation(id int64) bool {
-	exists := m.delegations.Get(utils.Uint64ToString(uint64(id))) != nil
-	return exists
+	if m.delegationStore == nil {
+		return false
+	}
+	return m.delegationStore.HasDelegation(id)
 }
 
-func (m *mockGovStakerStore) GetDelegation(id int64) (*staker.Delegation, bool) {
-	value := m.delegations.Get(utils.Uint64ToString(uint64(id)))
-	if value == nil {
+func (m *mockGovStakerStore) GetDelegation(id int64) (staker.Delegation, bool) {
+	if m.delegationStore == nil {
+		var emptyDelegation staker.Delegation
+		return emptyDelegation, false
+	}
+	return m.delegationStore.GetDelegation(id)
+}
+
+func (m *mockGovStakerStore) GetDelegationPtr(id int64) (*staker.Delegation, bool) {
+	if m.delegationStore == nil {
 		return nil, false
 	}
-	return value.(*staker.Delegation), true
+	return m.delegationStore.GetDelegationPtr(id)
 }
 
-func (m *mockGovStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *staker.Delegation) error {
-	m.delegations.Remove(utils.Uint64ToString(uint64(id)))
-	m.delegations.Set(utils.Uint64ToString(uint64(id)), delegation)
-	return nil
+func (m *mockGovStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation staker.Delegation) error {
+	m.ensureDelegationStore(cross(rlm))
+	return m.delegationStore.SetDelegation(0, rlm, id, delegation)
 }
 
 func (m *mockGovStakerStore) RemoveDelegation(_ int, rlm realm, id int64) error {
-	_, _ = m.delegations.Remove(utils.Uint64ToString(uint64(id)))
-	return nil
+	if m.delegationStore == nil {
+		return nil
+	}
+	return m.delegationStore.RemoveDelegation(0, rlm, id)
 }
 
 func (m *mockGovStakerStore) GetAllDelegations() *bptree.BPTree {
-	return m.delegations
+	if m.delegationStore == nil {
+		return staker.NewDelegationTree()
+	}
+	return m.delegationStore.GetAllDelegations()
 }
 
 func (m *mockGovStakerStore) HasDelegationCounterStoreKey() bool {

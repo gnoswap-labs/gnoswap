@@ -36,6 +36,27 @@ func TestNewEmissionRewardManager(cur realm, t *testing.T) {
 	}
 }
 
+// TestEmissionRewardManager_RewardStateValueIsolation verifies value payload
+// setters and getters isolate the nested fixed-point reward debt.
+func TestEmissionRewardManager_RewardStateValueIsolation(cur realm, t *testing.T) {
+	manager := staker.NewEmissionRewardManager()
+	rewardState := staker.NewEmissionRewardState(u256.NewUint(100))
+
+	manager.SetRewardState("addr", *rewardState)
+	rewardState.SetRewardDebtX128(u256.NewUint(200))
+
+	stored, exists, err := manager.GetRewardState("addr")
+	uassert.NoError(t, err)
+	uassert.True(t, exists)
+	uassert.Equal(t, stored.GetRewardDebtX128().ToString(), "100")
+
+	stored.SetRewardDebtX128(u256.NewUint(300))
+	stored, exists, err = manager.GetRewardState("addr")
+	uassert.NoError(t, err)
+	uassert.True(t, exists)
+	uassert.Equal(t, stored.GetRewardDebtX128().ToString(), "100")
+}
+
 // Test GetAccumulatedRewardX128PerStake
 func TestEmissionRewardManager_GetAccumulatedRewardX128PerStake(cur realm, t *testing.T) {
 	tests := []struct {
@@ -209,7 +230,7 @@ func TestEmissionRewardManager_addStake(cur realm, t *testing.T) {
 			rewardState, ok, err := resolver.GetRewardState(tt.address)
 			uassert.NoError(t, err)
 			uassert.True(t, ok)
-			uassert.NotEqual(t, rewardState, nil)
+			uassert.Equal(t, rewardState.GetStakedAmount(), tt.amount)
 		})
 	}
 }
@@ -612,7 +633,6 @@ func TestEmissionRewardManager_removeStake_updatesPersistedState(cur realm, t *t
 	uassert.NoError(t, err)
 	uassert.True(t, ok)
 
-	uassert.NotEqual(t, rs, nil)
 	uassert.Equal(t, rs.GetStakedAmount(), int64(700))
 
 	// Extra check: subsequent operations should remain consistent

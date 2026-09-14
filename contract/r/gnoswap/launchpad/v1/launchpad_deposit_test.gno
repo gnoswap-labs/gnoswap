@@ -437,11 +437,11 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 
 				return projectID + ":30", contractAddr
 			},
-			targetProjectTierID:  "",
-			depositAmount:        1000000,
-			referrer:             "",
-			expectedPanic:        false,
-			expectedDepositID:    true,
+			targetProjectTierID: "",
+			depositAmount:       1000000,
+			referrer:            "",
+			expectedPanic:       false,
+			expectedDepositID:   true,
 			validateFunc: func(t *testing.T, lp *launchpadV1, depositID string) {
 				deposit, err := lp.getDeposit(depositID)
 				uassert.NoError(t, err)
@@ -642,17 +642,17 @@ func initLaunchpadDepositTest(cur realm, t *testing.T) {
 
 	// Setup test project
 	project, _ := lp.createProject(0, cur, &createProjectParams{
-			name:          "Test Project",
-			tokenPath:     "gno.land/r/onbloc/obl.OBL",
-			depositAmount: 1000000,
-			tier30Ratio:   30,
-			tier90Ratio:   30,
-			tier180Ratio:  40,
-			recipient:     testutils.TestAddress("project"),
-			startTime:     currentTime + 10,
-			currentTime:   currentTime,
-			currentHeight: currentHeight,
-		},
+		name:          "Test Project",
+		tokenPath:     "gno.land/r/onbloc/obl.OBL",
+		depositAmount: 1000000,
+		tier30Ratio:   30,
+		tier90Ratio:   30,
+		tier180Ratio:  40,
+		recipient:     testutils.TestAddress("project"),
+		startTime:     currentTime + 10,
+		currentTime:   currentTime,
+		currentHeight: currentHeight,
+	},
 	)
 
 	projects := lp.store.GetProjects()
@@ -998,8 +998,8 @@ func TestDepositGns_RewardDistributionOrder(cur realm, t *testing.T) {
 		// Calculate claimable rewards for both users at this point
 		accumulatedReward := rewardManager.AccumulatedRewardPerDepositX128()
 
-		user1Claimable := calculateClaimableReward(user1State, accumulatedReward)
-		user2Claimable := calculateClaimableReward(user2State, accumulatedReward)
+		user1Claimable := calculateClaimableReward(&user1State, accumulatedReward)
+		user2Claimable := calculateClaimableReward(&user2State, accumulatedReward)
 
 		uassert.True(t, user1Claimable >= 0,
 			"User1 should have non-negative claimable rewards")

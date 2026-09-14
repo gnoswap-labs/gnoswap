@@ -2,8 +2,8 @@ package staker
 
 import (
 	"gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 // Main interface that combines all sub-interfaces
@@ -106,10 +106,10 @@ type IGovStakerStore interface {
 	GetTotalLockedAmount() int64
 	SetTotalLockedAmount(_ int, rlm realm, amount int64) error
 
-	// Delegation management
 	HasDelegation(id int64) bool
-	GetDelegation(id int64) (*Delegation, bool)
-	SetDelegation(_ int, rlm realm, id int64, delegation *Delegation) error
+	GetDelegation(id int64) (Delegation, bool)
+	GetDelegationPtr(id int64) (*Delegation, bool)
+	SetDelegation(_ int, rlm realm, id int64, delegation Delegation) error
 	RemoveDelegation(_ int, rlm realm, id int64) error
 
 	HasDelegationsStoreKey() bool

@@ -16,15 +16,16 @@ func isRewardManagerInitialized(r *launchpad.RewardManager) bool {
 	return r.Rewards().Size() > 0
 }
 
-func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launchpad.RewardState, error) {
+func getDepositRewardState(r *launchpad.RewardManager, depositId string) (launchpad.RewardState, error) {
+	var zeroRewardState launchpad.RewardState
 	rewardStateI := r.Rewards().Get(depositId)
 	if rewardStateI == nil {
-		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositId))
+		return zeroRewardState, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositId))
 	}
 
-	rewardState, ok := rewardStateI.(*launchpad.RewardState)
+	rewardState, ok := rewardStateI.(launchpad.RewardState)
 	if !ok {
-		return nil, ufmt.Errorf("failed to cast rewardState to *launchpad.RewardState: %T", rewardStateI)
+		return zeroRewardState, ufmt.Errorf("failed to cast rewardState to launchpad.RewardState: %T", rewardStateI)
 	}
 
 	return rewardState, nil
@@ -81,7 +82,7 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit *launchpad.Depo
 	}
 
 	rewardState := launchpad.NewRewardState(
-		r.AccumulatedRewardPerDepositX128().Clone(),
+		r.AccumulatedRewardPerDepositX128(),
 		deposit.DepositAmount(),
 		deposit.CreatedAt(),
 		r.DistributeEndTime(),
@@ -101,7 +102,7 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit *launchpad.Depo
 
 func addRewardState(r *launchpad.RewardManager, deposit *launchpad.Deposit, rewardState *launchpad.RewardState) *launchpad.RewardState {
 	addActiveRewardState(r, rewardState)
-	r.SetReward(deposit.ID(), rewardState)
+	r.SetReward(deposit.ID(), *rewardState)
 
 	return rewardState
 }
@@ -112,7 +113,7 @@ func removeRewardState(r *launchpad.RewardManager, depositId string) error {
 		return err
 	}
 
-	removeActiveRewardState(r, rewardState)
+	removeActiveRewardState(r, &rewardState)
 	r.RemoveReward(depositId)
 	return nil
 }
@@ -245,7 +246,7 @@ func collectReward(r *launchpad.RewardManager, depositId string, currentTime int
 		return 0, err
 	}
 
-	if !isRewardStateClaimable(rewardState, currentTime) {
+	if !isRewardStateClaimable(&rewardState, currentTime) {
 		return 0, makeErrorWithDetails(
 			errInvalidRewardState,
 			ufmt.Sprintf("currentTime %d is less than claimableTime %d", currentTime, rewardState.ClaimableTime()),
@@ -259,15 +260,13 @@ func collectReward(r *launchpad.RewardManager, depositId string, currentTime int
 		)
 	}
 
-	claimableReward := calculateClaimableReward(rewardState, r.AccumulatedRewardPerDepositX128())
+	claimableReward := calculateClaimableReward(&rewardState, r.AccumulatedRewardPerDepositX128())
 	if claimableReward == 0 {
 		return 0, nil
 	}
 
 	rewardState.SetClaimedAmount(rewardState.ClaimedAmount() + claimableReward)
-	rewards := r.Rewards()
-	rewards.Set(depositId, rewardState)
-	r.SetRewards(rewards)
+	r.SetReward(depositId, rewardState)
 	r.SetTotalClaimedAmount(r.TotalClaimedAmount() + claimableReward)
 	r.SetActiveClaimedAmount(gnsmath.SafeAddInt64(r.ActiveClaimedAmount(), claimableReward))
 

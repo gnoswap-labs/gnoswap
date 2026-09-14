@@ -19,9 +19,9 @@ func cloneProjectEntry(value any) any {
 }
 
 // cloneRewardStateEntry is the transformation for a project tier's reward
-// tree.
+// tree. Stored values are copied before they cross the read-only API boundary.
 func cloneRewardStateEntry(value any) any {
-	rewardState, ok := value.(*launchpad.RewardState)
+	rewardState, ok := value.(launchpad.RewardState)
 	if !ok {
 		return nil
 	}

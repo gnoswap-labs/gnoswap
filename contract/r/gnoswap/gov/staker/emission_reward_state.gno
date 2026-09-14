@@ -43,9 +43,27 @@ func NewEmissionRewardState(accumulatedRewardX128PerStake *u256.Uint) *EmissionR
 	}
 }
 
+// Clone returns a detached value, including a copy of the reward debt.
+func (e EmissionRewardState) Clone() EmissionRewardState {
+	var rewardDebtX128 *u256.Uint
+	if e.rewardDebtX128 != nil {
+		rewardDebtX128 = e.rewardDebtX128.Clone()
+	}
+
+	return EmissionRewardState{
+		rewardDebtX128:          rewardDebtX128,
+		accumulatedRewardAmount: e.accumulatedRewardAmount,
+		accumulatedTimestamp:    e.accumulatedTimestamp,
+		claimedRewardAmount:     e.claimedRewardAmount,
+		claimedTimestamp:        e.claimedTimestamp,
+		stakedAmount:            e.stakedAmount,
+	}
+}
+
 /* Getters */
 
-func (e *EmissionRewardState) GetRewardDebtX128() *u256.Uint     { return e.rewardDebtX128 }
+func (e *EmissionRewardState) GetRewardDebtX128() *u256.Uint { return e.rewardDebtX128 }
+
 func (e *EmissionRewardState) GetAccumulatedRewardAmount() int64 { return e.accumulatedRewardAmount }
 func (e *EmissionRewardState) GetAccumulatedTimestamp() int64    { return e.accumulatedTimestamp }
 func (e *EmissionRewardState) GetClaimedRewardAmount() int64     { return e.claimedRewardAmount }

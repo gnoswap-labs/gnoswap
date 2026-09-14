@@ -117,8 +117,9 @@ func (rs *RewardState) SetClaimedAmount(amount int64) {
 	rs.claimedAmount = amount
 }
 
-func (rs RewardState) Clone() *RewardState {
-	return &RewardState{
+// Clone returns a detached value, including a copy of the price debt.
+func (rs RewardState) Clone() RewardState {
+	return RewardState{
 		priceDebtX128:           rs.priceDebtX128.Clone(),
 		claimableTime:           rs.claimableTime,
 		depositAmount:           rs.depositAmount,

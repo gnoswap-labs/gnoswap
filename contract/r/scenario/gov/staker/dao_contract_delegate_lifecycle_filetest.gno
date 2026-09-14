@@ -20,14 +20,14 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/staker"
-	"gno.land/r/gnoswap/gov/xgns"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
+	"gno.land/r/gnoswap/gov/xgns"
 )
 
 var (
-	adminAddr     = access.MustGetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm    = testing.NewUserRealm(adminAddr)
-	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
+	adminAddr      = access.MustGetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm     = testing.NewUserRealm(adminAddr)
+	govStakerAddr  = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 	govStakerRealm = testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker")
 
 	originAddr  = testutils.TestAddress("dao-origin")
@@ -45,7 +45,7 @@ var (
 	undelegateAmount  = int64(2_000_000)
 	lockupHeights     = int64(120960)
 
-	initialDaoDelegationID    int64
+	initialDaoDelegationID     int64
 	redelegatedDaoDelegationID int64
 )
 
@@ -120,7 +120,7 @@ func verifyDaoOwnedDelegationAfterDelegate(cur realm) {
 		panic("dao delegation not found")
 	}
 
-	daoDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(daoDelegationIDs[0], 10)).(*staker.Delegation)
+	daoDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(daoDelegationIDs[0], 10)).(staker.Delegation)
 	if !ok {
 		panic("delegation not found")
 	}
@@ -151,7 +151,7 @@ func daoRedelegateToValidator2(cur realm) {
 		panic("dao redelegation ids missing")
 	}
 
-	newDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(newDelegationIDs[0], 10)).(*staker.Delegation)
+	newDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(newDelegationIDs[0], 10)).(staker.Delegation)
 	if !ok {
 		panic("delegation not found")
 	}
@@ -183,7 +183,7 @@ func daoUndelegatePartial(cur realm) {
 		panic("dao delegation missing after undelegate")
 	}
 
-	daoDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(daoDelegationIDs[0], 10)).(*staker.Delegation)
+	daoDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(daoDelegationIDs[0], 10)).(staker.Delegation)
 	if !ok {
 		panic("delegation not found")
 	}

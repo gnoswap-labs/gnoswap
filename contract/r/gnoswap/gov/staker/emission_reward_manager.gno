@@ -7,7 +7,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-const errFailedToCastRewardState = "failed to cast rewardStates's element to *EmissionRewardState: %T"
+const errFailedToCastRewardState = "failed to cast rewardStates's element to reward state value: %T"
 
 // EmissionRewardManager manages the distribution of emission rewards to stakers.
 type EmissionRewardManager struct {
@@ -57,16 +57,18 @@ func (e *EmissionRewardManager) GetDistributedAmount() int64 {
 	return e.distributedAmount
 }
 
-func (e *EmissionRewardManager) GetRewardState(addr string) (*EmissionRewardState, bool, error) {
+func (e *EmissionRewardManager) GetRewardState(addr string) (EmissionRewardState, bool, error) {
 	ri := e.rewardStates.Get(addr)
 	if ri == nil {
-		return nil, false, nil
+		return EmissionRewardState{}, false, nil
 	}
-	rs, castOk := ri.(*EmissionRewardState)
-	if !castOk {
-		return nil, false, ufmt.Errorf(errFailedToCastRewardState, ri)
+
+	rewardState, ok := ri.(EmissionRewardState)
+	if !ok {
+		return EmissionRewardState{}, false, ufmt.Errorf(errFailedToCastRewardState, ri)
 	}
-	return rs, true, nil
+
+	return rewardState.Clone(), true, nil
 }
 
 /* Setters */
@@ -91,7 +93,7 @@ func (e *EmissionRewardManager) SetTotalStakedAmount(totalStakedAmount int64) {
 	e.totalStakedAmount = totalStakedAmount
 }
 
-// SetRewardState sets the reward state for a specific address
-func (e *EmissionRewardManager) SetRewardState(address string, rewardState *EmissionRewardState) {
-	e.rewardStates.Set(address, rewardState)
+// SetRewardState stores an owned copy of the reward state for a specific address.
+func (e *EmissionRewardManager) SetRewardState(address string, rewardState EmissionRewardState) {
+	e.rewardStates.Set(address, rewardState.Clone())
 }
