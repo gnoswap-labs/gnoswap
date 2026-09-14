@@ -255,34 +255,6 @@ func (lp *launchpadV1) GetDeposit(depositId string) (launchpad.Deposit, error) {
 	return lp.getDepositValue(depositId)
 }
 
-func (lp *launchpadV1) getDepositValue(depositId string) (launchpad.Deposit, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return launchpad.DefaultDeposit(), errors.New("deposit not found")
-	}
-
-	deposit, ok := value.(launchpad.Deposit)
-	if !ok {
-		return launchpad.DefaultDeposit(), errors.New("invalid deposit type")
-	}
-	return deposit, nil
-}
-
-func (lp *launchpadV1) getDeposit(depositID string) (*launchpad.Deposit, error) {
-	deposits := lp.store.GetDeposits()
-	depositI := deposits.Get(depositID)
-	if depositI == nil {
-		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
-	}
-
-	deposit, ok := depositI.(launchpad.Deposit)
-	if !ok {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("deposit(%s) not found", depositID))
-	}
-	return &deposit, nil
-}
-
 // GetDepositProjectID returns the project ID of a deposit by its ID.
 func (lp *launchpadV1) GetDepositProjectID(depositId string) (string, error) {
 	deposit, err := lp.getDepositValue(depositId)
