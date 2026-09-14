@@ -5,15 +5,15 @@ import bptree "gno.land/p/nt/bptree/v0"
 // Proposal represents a governance proposal with all its associated data and state.
 // This is the core structure that tracks proposal lifecycle from creation to execution.
 type Proposal struct {
-	id              int64            // Unique identifier for the proposal
-	proposer        address          // The address of the proposer
-	configVersion   int64            // The version of the governance config used
-	status          *ProposalStatus  // Current status and voting information
-	metadata        ProposalMetadata // Title and description, stored inline
-	metadataPresent bool             // Distinguishes absent metadata from zero values
-	data            *ProposalData    // Type-specific proposal data
-	snapshotTime    int64            // Timestamp for voting weight snapshot lookup
-	createdHeight   int64            // Block height at creation
+	id              int64
+	proposer        address
+	configVersion   int64
+	status          ProposalStatus
+	metadata        ProposalMetadata
+	metadataPresent bool
+	data            ProposalData
+	snapshotTime    int64
+	createdHeight   int64
 }
 
 // ID returns the unique identifier of the proposal.
@@ -87,23 +87,20 @@ func (p *Proposal) SnapshotTime() int64 {
 	return p.snapshotTime
 }
 
-// Data returns the proposal data.
+// Data returns the type-specific proposal data.
 func (p *Proposal) Data() *ProposalData {
-	return p.data
+	return &p.data
 }
 
 // Status returns the proposal status.
 func (p *Proposal) Status() *ProposalStatus {
-	return p.status
+	return &p.status
 }
 
-// Metadata returns a detached copy of the proposal metadata, or nil when the
-// proposal was created without metadata.
-func (p *Proposal) Metadata() *ProposalMetadata {
-	if !p.metadataPresent {
-		return nil
-	}
-	return p.metadata.Clone()
+// Metadata returns the inline proposal metadata and whether it was provided.
+// The value return cannot expose realm-owned state.
+func (p *Proposal) Metadata() (ProposalMetadata, bool) {
+	return p.metadata, p.metadataPresent
 }
 
 // IsTextType checks if this is a text proposal.
@@ -147,44 +144,48 @@ func NewProposal(
 	snapshotTime int64,
 	createdHeight int64,
 ) *Proposal {
+	statusValue := ProposalStatus{}
+	if status != nil {
+		statusValue = *status
+	}
 	metadataValue := ProposalMetadata{}
 	metadataPresent := metadata != nil
 	if metadataPresent {
-		metadataValue = *metadata.Clone()
+		metadataValue = *metadata
+	}
+	dataValue := ProposalData{}
+	if data != nil {
+		dataValue = *data
+		if data.executionPresent {
+			dataValue.execution.msgs = append([]string(nil), data.execution.msgs...)
+		}
 	}
 
 	return &Proposal{
 		id:              proposalID,
 		proposer:        proposerAddress,
-		status:          status,
+		status:          statusValue,
 		metadata:        metadataValue,
 		metadataPresent: metadataPresent,
-		data:            data,
+		data:            dataValue,
 		configVersion:   configVersion,
 		snapshotTime:    snapshotTime,
 		createdHeight:   createdHeight,
 	}
 }
 
-// Clone returns a detached proposal copy. Status and type-specific data remain
-// deep-cloned because callers may use their pointer-returning accessors, while
-// inline metadata is copied by value and its presence bit is preserved.
+// Clone returns a detached proposal copy. Only execution messages require
+// copying because all remaining proposal state is stored by value.
 func (p *Proposal) Clone() *Proposal {
 	if p == nil {
 		return nil
 	}
 
-	return &Proposal{
-		id:              p.id,
-		proposer:        p.proposer,
-		configVersion:   p.configVersion,
-		status:          p.status.Clone(),
-		metadata:        p.metadata,
-		metadataPresent: p.metadataPresent,
-		data:            p.data.Clone(),
-		snapshotTime:    p.snapshotTime,
-		createdHeight:   p.createdHeight,
+	cloned := *p
+	if p.data.executionPresent {
+		cloned.data.execution.msgs = append([]string(nil), p.data.execution.msgs...)
 	}
+	return &cloned
 }
 
 func NewProposalTree() *bptree.BPTree {

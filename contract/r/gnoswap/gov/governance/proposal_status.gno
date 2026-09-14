@@ -46,9 +46,9 @@ func (s ProposalStatusType) String() string {
 // ProposalStatus manages the complete status of a proposal including scheduling, voting, and actions.
 // This is the central status tracking structure that coordinates different aspects of proposal state.
 type ProposalStatus struct {
-	schedule     *ProposalScheduleStatus // Time-based scheduling information
-	actionStatus *ProposalActionStatus   // Execution and cancellation status
-	voteStatus   *ProposalVoteStatus     // Voting tallies and requirements
+	schedule     ProposalScheduleStatus // Time-based scheduling information
+	actionStatus ProposalActionStatus   // Execution and cancellation status
+	voteStatus   ProposalVoteStatus     // Voting tallies and requirements
 }
 
 func NewProposalStatusBy(
@@ -57,16 +57,16 @@ func NewProposalStatusBy(
 	voteStatus *ProposalVoteStatus,
 ) *ProposalStatus {
 	return &ProposalStatus{
-		schedule:     schedule,
-		actionStatus: actionStatus,
-		voteStatus:   voteStatus,
+		schedule:     *schedule,
+		actionStatus: *actionStatus,
+		voteStatus:   *voteStatus,
 	}
 }
 
 /* Getter methods */
-func (s *ProposalStatus) Schedule() *ProposalScheduleStatus   { return s.schedule }
-func (s *ProposalStatus) ActionStatus() *ProposalActionStatus { return s.actionStatus }
-func (s *ProposalStatus) VoteStatus() *ProposalVoteStatus     { return s.voteStatus }
+func (s *ProposalStatus) Schedule() *ProposalScheduleStatus   { return &s.schedule }
+func (s *ProposalStatus) ActionStatus() *ProposalActionStatus { return &s.actionStatus }
+func (s *ProposalStatus) VoteStatus() *ProposalVoteStatus     { return &s.voteStatus }
 
 /* Delegation getters for vote data */
 
@@ -84,17 +84,4 @@ func (s *ProposalStatus) YesWeight() int64 {
 //   - int64: total "no" vote weight
 func (s *ProposalStatus) NoWeight() int64 {
 	return s.voteStatus.NoWeight()
-}
-
-// Clone creates a deep copy of the ProposalStatus.
-func (s *ProposalStatus) Clone() *ProposalStatus {
-	if s == nil {
-		return nil
-	}
-
-	return &ProposalStatus{
-		schedule:     s.schedule.Clone(),
-		actionStatus: s.actionStatus.Clone(),
-		voteStatus:   s.voteStatus.Clone(),
-	}
 }

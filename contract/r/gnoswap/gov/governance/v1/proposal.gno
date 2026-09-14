@@ -2,6 +2,7 @@ package governance
 
 import (
 	"errors"
+
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -15,7 +16,8 @@ type ProposalResolver struct {
 func NewProposalResolver(proposal *governance.Proposal) *ProposalResolver {
 	statusResolver := NewProposalStatusResolver(proposal.Status())
 	dataResolver := NewProposalDataResolver(proposal.Data())
-	metadataResolver := NewProposalMetadataResolver(proposal.Metadata())
+	metadata, _ := proposal.Metadata()
+	metadataResolver := NewProposalMetadataResolver(&metadata)
 	return &ProposalResolver{
 		Proposal:         proposal,
 		statusResolver:   statusResolver,

@@ -3,8 +3,8 @@ package governance
 import (
 	"testing"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -37,10 +37,10 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 		assertRaw func(t *testing.T, m *MockGovernance)
 	}{
 		{
-			name:  "GetProposalCommunityPoolSpendInfo",
+			name: "GetProposalCommunityPoolSpendInfo",
 			setup: func(m *MockGovernance) {
 				stored := newProposalFixture()
-				m.Response.Set("GetProposalCommunityPoolSpendInfo", stored.data.communityPoolSpend, nil)
+				m.Response.Set("GetProposalCommunityPoolSpendInfo", &stored.data.communityPoolSpend, nil)
 				m.Response.Set("storedProposal", stored)
 			},
 			getter: func(t *testing.T) any {
@@ -60,10 +60,10 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:  "GetProposalExecutionInfo",
+			name: "GetProposalExecutionInfo",
 			setup: func(m *MockGovernance) {
 				stored := newProposalFixture()
-				m.Response.Set("GetProposalExecutionInfo", stored.data.execution, nil)
+				m.Response.Set("GetProposalExecutionInfo", &stored.data.execution, nil)
 				m.Response.Set("storedProposal", stored)
 			},
 			getter: func(t *testing.T) any {

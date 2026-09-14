@@ -15,7 +15,7 @@ type ProposalMetadata struct {
 //
 // Returns:
 //   - string: proposal title
-func (p *ProposalMetadata) Title() string {
+func (p ProposalMetadata) Title() string {
 	return p.title
 }
 
@@ -23,7 +23,7 @@ func (p *ProposalMetadata) Title() string {
 //
 // Returns:
 //   - string: proposal description
-func (p *ProposalMetadata) Description() string {
+func (p ProposalMetadata) Description() string {
 	return p.description
 }
 
@@ -45,9 +45,11 @@ func NewProposalMetadata(title string, description string) *ProposalMetadata {
 // ProposalData contains the type-specific data for a proposal.
 // This structure holds different data depending on the proposal type.
 type ProposalData struct {
-	proposalType       ProposalType            // Type of proposal (Text, CommunityPoolSpend, ParameterChange)
-	communityPoolSpend *CommunityPoolSpendInfo // Data for community pool spending proposals
-	execution          *ExecutionInfo          // Data for parameter change proposals
+	proposalType              ProposalType
+	communityPoolSpend        CommunityPoolSpendInfo
+	communityPoolSpendPresent bool
+	execution                 ExecutionInfo
+	executionPresent          bool
 }
 
 // ProposalType returns the type of this proposal.
@@ -63,15 +65,17 @@ func (p *ProposalData) ProposalType() ProposalType {
 // Returns:
 //   - *CommunityPoolSpendInfo: community pool spending details
 func (p *ProposalData) CommunityPoolSpend() *CommunityPoolSpendInfo {
-	return p.communityPoolSpend
+	if !p.communityPoolSpendPresent {
+		return nil
+	}
+	return &p.communityPoolSpend
 }
 
-// Execution returns the execution information for parameter changes.
-//
-// Returns:
-//   - *ExecutionInfo: parameter change execution details
 func (p *ProposalData) Execution() *ExecutionInfo {
-	return p.execution
+	if !p.executionPresent {
+		return nil
+	}
+	return &p.execution
 }
 
 // NewProposalData creates a new proposal data instance with the specified components.
@@ -84,11 +88,18 @@ func (p *ProposalData) Execution() *ExecutionInfo {
 // Returns:
 //   - *ProposalData: new proposal data instance
 func NewProposalData(proposalType ProposalType, communityPoolSpend *CommunityPoolSpendInfo, execution *ExecutionInfo) *ProposalData {
-	return &ProposalData{
-		proposalType:       proposalType,
-		communityPoolSpend: communityPoolSpend,
-		execution:          execution,
+	data := &ProposalData{
+		proposalType:              proposalType,
+		communityPoolSpendPresent: communityPoolSpend != nil,
+		executionPresent:          execution != nil,
 	}
+	if communityPoolSpend != nil {
+		data.communityPoolSpend = *communityPoolSpend
+	}
+	if execution != nil {
+		data.execution = ExecutionInfo{num: execution.num, msgs: append([]string(nil), execution.msgs...)}
+	}
+	return data
 }
 
 // CommunityPoolSpendInfo contains information for community pool spending proposals.
@@ -126,8 +137,11 @@ func NewExecutionInfo(num int64, msgs []string) *ExecutionInfo {
 }
 
 /* Getter methods */
-func (i *ExecutionInfo) Num() int64     { return i.num }
-func (i *ExecutionInfo) Msgs() []string { return i.msgs }
+func (i *ExecutionInfo) Num() int64 { return i.num }
+
+func (i *ExecutionInfo) Msgs() []string {
+	return append([]string(nil), i.msgs...)
+}
 
 // ParameterChangeInfo represents a single parameter change to be executed.
 type ParameterChangeInfo struct {
@@ -149,55 +163,16 @@ func (i *ParameterChangeInfo) PkgPath() string  { return i.pkgPath }
 func (i *ParameterChangeInfo) Function() string { return i.function }
 func (i *ParameterChangeInfo) Params() []string { return i.params }
 
-// Clone creates a deep copy of the ProposalMetadata.
-func (p *ProposalMetadata) Clone() *ProposalMetadata {
-	if p == nil {
-		return nil
-	}
-
-	return &ProposalMetadata{
-		title:       p.title,
-		description: p.description,
-	}
-}
-
-// Clone creates a deep copy of the CommunityPoolSpendInfo.
 func (i *CommunityPoolSpendInfo) Clone() *CommunityPoolSpendInfo {
 	if i == nil {
 		return nil
 	}
-
-	return &CommunityPoolSpendInfo{
-		to:        i.to,
-		tokenPath: i.tokenPath,
-		amount:    i.amount,
-	}
+	return &CommunityPoolSpendInfo{to: i.to, tokenPath: i.tokenPath, amount: i.amount}
 }
 
-// Clone creates a deep copy of the ExecutionInfo.
 func (i *ExecutionInfo) Clone() *ExecutionInfo {
 	if i == nil {
 		return nil
 	}
-
-	clonedMsgs := make([]string, len(i.msgs))
-	copy(clonedMsgs, i.msgs)
-
-	return &ExecutionInfo{
-		num:  i.num,
-		msgs: clonedMsgs,
-	}
-}
-
-// Clone creates a deep copy of the ProposalData.
-func (p *ProposalData) Clone() *ProposalData {
-	if p == nil {
-		return nil
-	}
-
-	return &ProposalData{
-		proposalType:       p.proposalType,
-		communityPoolSpend: p.communityPoolSpend.Clone(),
-		execution:          p.execution.Clone(),
-	}
+	return &ExecutionInfo{num: i.num, msgs: append([]string(nil), i.msgs...)}
 }
