@@ -109,63 +109,51 @@ func newTestProposal(
 }
 
 func withProposalStatusVote(proposal governance.Proposal, yes bool, weight int64) governance.Proposal {
-	resolver := MakeProposalStatusResolver(proposal.Status())
-	var err error
-	resolver, err = resolver.vote(yes, weight)
-	if err != nil {
+	resolver := NewProposalStatusResolver(proposal.Status())
+	if err := resolver.vote(yes, weight); err != nil {
 		panic(err)
 	}
-	return proposal.WithStatus(resolver.Value())
+	return proposal.WithStatus(resolver.ProposalStatus)
 }
 
 func withProposalStatusExecute(proposal governance.Proposal, executedAt, executedHeight int64, executedBy address) governance.Proposal {
-	resolver := MakeProposalStatusResolver(proposal.Status())
-	var err error
-	resolver, err = resolver.execute(executedAt, executedHeight, executedBy)
-	if err != nil {
+	resolver := NewProposalStatusResolver(proposal.Status())
+	if err := resolver.execute(executedAt, executedHeight, executedBy); err != nil {
 		panic(err)
 	}
-	return proposal.WithStatus(resolver.Value())
+	return proposal.WithStatus(resolver.ProposalStatus)
 }
 
 func withProposalStatusCancel(proposal governance.Proposal, canceledAt, canceledHeight int64, canceledBy address) governance.Proposal {
-	resolver := MakeProposalStatusResolver(proposal.Status())
-	var err error
-	resolver, err = resolver.cancel(canceledAt, canceledHeight, canceledBy)
-	if err != nil {
+	resolver := NewProposalStatusResolver(proposal.Status())
+	if err := resolver.cancel(canceledAt, canceledHeight, canceledBy); err != nil {
 		panic(err)
 	}
-	return proposal.WithStatus(resolver.Value())
+	return proposal.WithStatus(resolver.ProposalStatus)
 }
 
 func withProposalVote(proposal governance.Proposal, yes bool, weight int64) governance.Proposal {
-	resolver := MakeProposalResolver(proposal)
-	var err error
-	resolver, err = resolver.Vote(yes, weight)
-	if err != nil {
+	resolver := NewProposalResolver(proposal)
+	if err := resolver.Vote(yes, weight); err != nil {
 		panic(err)
 	}
-	return resolver.Proposal()
+	return resolver.Proposal
 }
 
 func withProposalExecute(proposal governance.Proposal, executedAt, executedHeight int64, executedBy address) governance.Proposal {
-	resolver := MakeProposalResolver(proposal)
-	var err error
-	resolver, err = resolver.execute(executedAt, executedHeight, executedBy)
-	if err != nil {
+	resolver := NewProposalResolver(proposal)
+	if err := resolver.execute(executedAt, executedHeight, executedBy); err != nil {
 		panic(err)
 	}
-	return resolver.Proposal()
+	return resolver.Proposal
 }
 
 func withProposalCancel(proposal governance.Proposal, canceledAt, canceledHeight int64, canceledBy address) governance.Proposal {
-	resolver := MakeProposalResolver(proposal)
-	var err error
-	resolver, err = resolver.cancel(canceledAt, canceledHeight, canceledBy)
-	if err != nil {
+	resolver := NewProposalResolver(proposal)
+	if err := resolver.cancel(canceledAt, canceledHeight, canceledBy); err != nil {
 		panic(err)
 	}
-	return resolver.Proposal()
+	return resolver.Proposal
 }
 
 // Crossing test wrappers.

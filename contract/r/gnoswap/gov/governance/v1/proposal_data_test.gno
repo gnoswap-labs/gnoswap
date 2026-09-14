@@ -25,7 +25,7 @@ func TestProposalMetadata_Validation(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			metadata := governance.MakeProposalMetadata(tc.title, tc.description)
-			err := MakeProposalMetadataResolver(metadata).Validate()
+			err := NewProposalMetadataResolver(metadata).Validate()
 			if tc.expectedError {
 				uassert.Error(t, err)
 			} else {
@@ -117,7 +117,7 @@ func TestProposalData_Validation(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			data := governance.MakeProposalData(tc.proposalType, tc.spendInfo, tc.execution)
-			err := MakeProposalDataResolver(data).Validate()
+			err := NewProposalDataResolver(data).Validate()
 			if tc.expectedError {
 				uassert.Error(t, err)
 				uassert.Equal(t, err.Error(), tc.expectedErrorMessage)
@@ -168,7 +168,7 @@ func TestParameterChangeInfo_Parsing(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			info := governance.MakeExecutionInfo(tc.num, tc.msgs)
 			data := governance.MakeProposalData(governance.ParameterChange, governance.DefaultCommunityPoolSpendInfo(), info)
-			infos, err := MakeProposalDataResolver(data).ParameterChangesInfos()
+			infos, err := NewProposalDataResolver(data).ParameterChangesInfos()
 			uassert.NoError(t, err)
 			uassert.Equal(t, len(infos), len(tc.expectedInfos))
 			for i, expectedInfo := range tc.expectedInfos {
@@ -183,7 +183,7 @@ func TestParameterChangeInfo_Parsing(cur realm, t *testing.T) {
 func TestProposalData_ParameterChangesInfos_MalformedMessage(cur realm, t *testing.T) {
 	info := governance.MakeExecutionInfo(1, []string{"pkg1*EXE*func1"})
 	data := governance.MakeProposalData(governance.ParameterChange, governance.DefaultCommunityPoolSpendInfo(), info)
-	infos, err := MakeProposalDataResolver(data).ParameterChangesInfos()
+	infos, err := NewProposalDataResolver(data).ParameterChangesInfos()
 	uassert.Equal(t, len(infos), 0)
 	uassert.ErrorContains(t, err, "malformed execution message")
 }

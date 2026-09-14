@@ -150,12 +150,13 @@ func GetVotedAt(proposalID int64, addr address) (int64, error) {
 	return getImplementation().GetVotedAt(proposalID, addr)
 }
 
-// GetProposalCommunityPoolSpendInfo returns the community pool spend info for a proposal.
+// GetProposalCommunityPoolSpendInfo returns the community pool spend info value
+// for a proposal.
 func GetProposalCommunityPoolSpendInfo(proposalID int64) (CommunityPoolSpendInfo, error) {
 	return getImplementation().GetProposalCommunityPoolSpendInfo(proposalID)
 }
 
-// GetProposalExecutionInfo returns the execution info for a proposal.
+// GetProposalExecutionInfo returns the execution info value for a proposal.
 func GetProposalExecutionInfo(proposalID int64) (ExecutionInfo, error) {
 	return getImplementation().GetProposalExecutionInfo(proposalID)
 }

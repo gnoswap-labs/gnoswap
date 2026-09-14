@@ -28,6 +28,13 @@ func (p ProposalMetadata) Description() string {
 }
 
 // MakeProposalMetadata creates a new proposal metadata value with trimmed input.
+//
+// Parameters:
+//   - title: proposal title
+//   - description: proposal description
+//
+// Returns:
+//   - ProposalMetadata: new metadata value with trimmed whitespace
 func MakeProposalMetadata(title string, description string) ProposalMetadata {
 	return ProposalMetadata{
 		title:       strings.TrimSpace(title),
@@ -38,18 +45,26 @@ func MakeProposalMetadata(title string, description string) ProposalMetadata {
 // ProposalData contains the type-specific data for a proposal.
 // The proposal type determines which payload is present.
 type ProposalData struct {
-	proposalType       ProposalType
-	communityPoolSpend CommunityPoolSpendInfo
-	execution          ExecutionInfo
+	proposalType       ProposalType           // Type of proposal (Text, CommunityPoolSpend, ParameterChange)
+	communityPoolSpend CommunityPoolSpendInfo // Data for community pool spending proposals
+	execution          ExecutionInfo          // Data for parameter change proposals
 }
 
 // ProposalType returns the type of this proposal.
+//
+// Returns:
+//   - ProposalType: the proposal type
 func (p ProposalData) ProposalType() ProposalType {
 	return p.proposalType
 }
 
-// CommunityPoolSpend returns the community pool spending information.
-// The boolean reports whether this payload is present for the proposal type.
+// CommunityPoolSpend returns the community pool spending information as a value.
+// The boolean is true only for CommunityPoolSpend proposals; otherwise the zero
+// value and false are returned.
+//
+// Returns:
+//   - CommunityPoolSpendInfo: community pool spending details
+//   - bool: whether community pool spending information is present
 func (p ProposalData) CommunityPoolSpend() (CommunityPoolSpendInfo, bool) {
 	if p.proposalType != CommunityPoolSpend {
 		return DefaultCommunityPoolSpendInfo(), false
@@ -57,8 +72,13 @@ func (p ProposalData) CommunityPoolSpend() (CommunityPoolSpendInfo, bool) {
 	return p.communityPoolSpend, true
 }
 
-// Execution returns execution information for parameter changes and pool spending.
-// The boolean reports whether this payload is present for the proposal type.
+// Execution returns execution information for parameter changes and community
+// pool spending proposals as a value. The boolean reports whether this payload
+// is present for the proposal type.
+//
+// Returns:
+//   - ExecutionInfo: execution details
+//   - bool: whether execution information is present
 func (p ProposalData) Execution() (ExecutionInfo, bool) {
 	if p.proposalType != ParameterChange && p.proposalType != CommunityPoolSpend {
 		return DefaultExecutionInfo(), false
@@ -67,8 +87,16 @@ func (p ProposalData) Execution() (ExecutionInfo, bool) {
 }
 
 // MakeProposalData creates a new proposal data value with the specified
-// type-specific payloads. The proposal type determines which payload is
-// present; the other payload is ignored by its accessor.
+// components.
+//
+// Parameters:
+//   - proposalType: type of the proposal
+//   - communityPoolSpend: community pool spending information
+//   - execution: parameter change execution information
+//
+// Returns:
+//   - ProposalData: new proposal data value. The proposal type determines
+//     which type-specific payload is returned by its accessor.
 func MakeProposalData(
 	proposalType ProposalType,
 	communityPoolSpend CommunityPoolSpendInfo,
@@ -102,6 +130,14 @@ type CommunityPoolSpendInfo struct {
 }
 
 // MakeCommunityPoolSpendInfo creates a community pool spend information value.
+//
+// Parameters:
+//   - to: recipient address for the token transfer
+//   - tokenPath: path of the token to transfer
+//   - amount: amount of tokens to transfer
+//
+// Returns:
+//   - CommunityPoolSpendInfo: new community pool spend information value
 func MakeCommunityPoolSpendInfo(to address, tokenPath string, amount int64) CommunityPoolSpendInfo {
 	return CommunityPoolSpendInfo{
 		to:        to,

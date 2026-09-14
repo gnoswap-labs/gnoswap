@@ -14,11 +14,17 @@ func (p ProposalVoteStatus) MaxVotingWeight() int64 { return p.maxVotingWeight }
 func (p ProposalVoteStatus) QuorumAmount() int64    { return p.quorumAmount }
 
 // YesWeight returns the total weight of "yes" votes.
+//
+// Returns:
+//   - int64: total "yes" vote weight
 func (p ProposalVoteStatus) YesWeight() int64 {
 	return p.yea
 }
 
 // NoWeight returns the total weight of "no" votes.
+//
+// Returns:
+//   - int64: total "no" vote weight
 func (p ProposalVoteStatus) NoWeight() int64 {
 	return p.nay
 }
@@ -44,8 +50,16 @@ func (p ProposalVoteStatus) WithQuorumAmount(quorumAmount int64) ProposalVoteSta
 	return p
 }
 
-// MakeProposalVoteStatus creates a new vote status value with the supplied
-// voting weight and quorum requirement. Vote tallies start at zero.
+// MakeProposalVoteStatus creates a new vote status value for a proposal.
+// Initializes vote tallies to zero and records the maximum voting weight and
+// quorum requirement.
+//
+// Parameters:
+//   - maxVotingWeight: maximum possible voting weight for this proposal
+//   - quorumAmount: quorum amount required for passage
+//
+// Returns:
+//   - ProposalVoteStatus: new vote status value
 func MakeProposalVoteStatus(
 	maxVotingWeight int64,
 	quorumAmount int64,

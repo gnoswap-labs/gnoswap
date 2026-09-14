@@ -366,14 +366,14 @@ func (gv *governanceV1) createProposal(
 	createdHeight int64,
 ) (governance.Proposal, error) {
 	// Validate proposal metadata (title and description).
-	metadataResolver := MakeProposalMetadataResolver(proposalMetadata)
+	metadataResolver := NewProposalMetadataResolver(proposalMetadata)
 	err := metadataResolver.Validate()
 	if err != nil {
 		return governance.DefaultProposal(), err
 	}
 
 	// Validate proposal data (type-specific validation).
-	dataResolver := MakeProposalDataResolver(proposalData)
+	dataResolver := NewProposalDataResolver(proposalData)
 	err = dataResolver.Validate()
 	if err != nil {
 		return governance.DefaultProposal(), err

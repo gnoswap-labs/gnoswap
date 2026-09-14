@@ -99,7 +99,7 @@ func TestProposal_Validation(cur realm, t *testing.T) {
 			)
 
 			// when
-			err := MakeProposalResolver(proposal).Validate()
+			err := NewProposalResolver(proposal).Validate()
 
 			// then
 			if tc.expectedError {
@@ -171,7 +171,7 @@ func TestProposal_StatusOperations(cur realm, t *testing.T) {
 			}
 
 			// when & then
-			uassert.Equal(t, MakeProposalResolver(proposal).IsActive(tc.currentTime.Unix()), tc.expectedActive)
+			uassert.Equal(t, NewProposalResolver(proposal).IsActive(tc.currentTime.Unix()), tc.expectedActive)
 		})
 	}
 }
@@ -476,7 +476,7 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			}
 
 			// when
-			resolver := MakeProposalResolver(proposal)
+			resolver := NewProposalResolver(proposal)
 			isActive := resolver.IsActive(currentTime)
 			statusType := resolver.StatusType(currentTime)
 
@@ -533,7 +533,7 @@ func TestMakeProposal(cur realm, t *testing.T) {
 			)
 
 			// then
-			resolver := MakeProposalResolver(proposal)
+			resolver := NewProposalResolver(proposal)
 			uassert.NotNil(t, proposal)
 			uassert.Equal(t, resolver.Type().String(), tc.proposalType.String())
 			uassert.Equal(t, resolver.Title(), tc.title)

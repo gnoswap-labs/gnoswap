@@ -102,7 +102,7 @@ func (gv *governanceV1) vote(
 		return governance.DefaultVotingInfo(), 0, 0, makeErrorWithDetails(errDataNotFound, "not found proposal")
 	}
 
-	proposalResolver := MakeProposalResolver(proposal)
+	proposalResolver := NewProposalResolver(proposal)
 
 	// Check if current time is within voting period
 	if !proposalResolver.IsVotingPeriod(votedAt) {
@@ -152,11 +152,11 @@ func (gv *governanceV1) vote(
 	}
 
 	// Update proposal vote tallies on the detached proposal copy.
-	proposalResolver, err = proposalResolver.Vote(votedYes, votingWeight)
+	err = proposalResolver.Vote(votedYes, votingWeight)
 	if err != nil {
 		return governance.DefaultVotingInfo(), 0, 0, err
 	}
-	proposal = proposalResolver.Proposal()
+	proposal = proposalResolver.Proposal
 
 	// Proposal roots are stored as values; persist the updated proposal.
 	err = gv.store.SetProposal(0, rlm, proposalID, proposal)

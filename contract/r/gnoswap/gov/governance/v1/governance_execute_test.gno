@@ -196,7 +196,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expectedProposalId, resultId)
 
 			proposal, _ := gov.getProposal(tt.proposalId)
-			statusResolver := MakeProposalStatusResolver(proposal.Status())
+			statusResolver := NewProposalStatusResolver(proposal.Status())
 			uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
 		})
 	}
@@ -368,7 +368,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 				uassert.Equal(t, int64(tt.proposalId), proposal.ID())
-				statusResolver := MakeProposalStatusResolver(proposal.Status())
+				statusResolver := NewProposalStatusResolver(proposal.Status())
 				uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
 			}
 		})
@@ -538,7 +538,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expectedProposalId, resultId)
 
 			proposal, _ := gov.getProposal(tt.proposalId)
-			statusResolver := MakeProposalStatusResolver(proposal.Status())
+			statusResolver := NewProposalStatusResolver(proposal.Status())
 			uassert.Equal(t, true, statusResolver.ActionStatus().Canceled())
 		})
 	}
@@ -972,7 +972,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 
 				// Verify execution state
 				proposal, _ := gov.getProposal(resultId)
-				statusResolver := MakeProposalStatusResolver(proposal.Status())
+				statusResolver := NewProposalStatusResolver(proposal.Status())
 				uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
 			}
 		})
@@ -1080,7 +1080,7 @@ func TestGovernanceExecute_ParameterChangeExecution(cur realm, t *testing.T) {
 
 				// Verify execution state
 				proposal, _ := gov.getProposal(resultId)
-				statusResolver := MakeProposalStatusResolver(proposal.Status())
+				statusResolver := NewProposalStatusResolver(proposal.Status())
 				uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
 			}
 		})
@@ -1193,7 +1193,7 @@ func TestGovernanceExecute_CancellationScenarios(cur realm, t *testing.T) {
 
 				// Verify cancellation state
 				proposal, _ := gov.getProposal(proposalId)
-				resolver := MakeProposalStatusResolver(proposal.Status())
+				resolver := NewProposalStatusResolver(proposal.Status())
 				uassert.Equal(t, true, resolver.ActionStatus().Canceled())
 			}
 		})

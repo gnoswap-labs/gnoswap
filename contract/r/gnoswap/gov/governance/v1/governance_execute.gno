@@ -29,7 +29,7 @@ import (
 //
 // Requirements:
 //   - Proposal must have passed (majority yes votes)
-//   - Quorum must be reached (50% of xGNS supply)
+//   - Quorum requirement configured for the proposal must be reached
 //   - Timelock period must have elapsed (1 day default)
 //   - Must be within execution window (30 days default)
 //   - Proposal not already executed or cancelled
@@ -102,7 +102,7 @@ func (gv *governanceV1) executeProposal(
 		return governance.DefaultProposal(), errors.New(errTextProposalNotExecutable)
 	}
 
-	proposalResolver := MakeProposalResolver(proposal)
+	proposalResolver := NewProposalResolver(proposal)
 
 	// Verify proposal is in executable state (timing and voting requirements met).
 	if !proposalResolver.IsExecutable(executedAt) {
@@ -110,12 +110,11 @@ func (gv *governanceV1) executeProposal(
 	}
 
 	// Mark proposal as executed in its status.
-	var err error
-	proposalResolver, err = proposalResolver.execute(executedAt, executedHeight, executedBy)
+	err := proposalResolver.execute(executedAt, executedHeight, executedBy)
 	if err != nil {
 		return governance.DefaultProposal(), err
 	}
-	proposal = proposalResolver.Proposal()
+	proposal = proposalResolver.Proposal
 
 	// Persist the status transition before invoking proposal actions.
 	if err := gv.store.SetProposal(0, rlm, proposalID, proposal); err != nil {
@@ -211,7 +210,7 @@ func (gv *governanceV1) RemoveInactiveProposalFromIndex(_ int, rlm realm, propos
 	if !exists {
 		panic(makeErrorWithDetails(errProposalNotFound, ufmt.Sprintf("proposalID: %d", proposalID)))
 	}
-	if MakeProposalResolver(proposal).IsActive(time.Now().Unix()) {
+	if NewProposalResolver(proposal).IsActive(time.Now().Unix()) {
 		panic(makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("proposal %d is still active", proposalID)))
 	}
 	if err := gv.removeActiveProposal(0, rlm, proposal); err != nil {
@@ -241,14 +240,14 @@ func (gv *governanceV1) cancel(
 		return governance.DefaultProposal(), errors.New(errDataNotFound)
 	}
 
-	proposalResolver := MakeProposalResolver(proposal)
+	proposalResolver := NewProposalResolver(proposal)
 
 	// Attempt to cancel the proposal (this validates cancellation conditions).
-	proposalResolver, err = proposalResolver.cancel(canceledAt, canceledHeight, canceledBy)
+	err = proposalResolver.cancel(canceledAt, canceledHeight, canceledBy)
 	if err != nil {
 		return governance.DefaultProposal(), err
 	}
-	proposal = proposalResolver.Proposal()
+	proposal = proposalResolver.Proposal
 
 	// Cancellation mutates a detached value copy, so write the new status back
 	// before returning.
@@ -278,7 +277,7 @@ func executeCommunityPoolSpend(
 	}
 
 	// Execute all parameter changes defined in the proposal
-	dataResolver := MakeProposalDataResolver(proposal.Data())
+	dataResolver := NewProposalDataResolver(proposal.Data())
 	parameterChangesInfos, err := dataResolver.ParameterChangesInfos()
 	if err != nil {
 		return err
@@ -312,7 +311,7 @@ func executeParameterChange(
 	executedBy address,
 ) error {
 	// Execute all parameter changes defined in the proposal
-	dataResolver := MakeProposalDataResolver(proposal.Data())
+	dataResolver := NewProposalDataResolver(proposal.Data())
 	parameterChangesInfos, err := dataResolver.ParameterChangesInfos()
 	if err != nil {
 		return err

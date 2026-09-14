@@ -89,11 +89,17 @@ func (s ProposalStatus) WithVoteStatus(voteStatus ProposalVoteStatus) ProposalSt
 /* Delegation getters for vote data */
 
 // YesWeight returns the total weight of "yes" votes.
+//
+// Returns:
+//   - int64: total "yes" vote weight
 func (s ProposalStatus) YesWeight() int64 {
 	return s.voteStatus.YesWeight()
 }
 
 // NoWeight returns the total weight of "no" votes.
+//
+// Returns:
+//   - int64: total "no" vote weight
 func (s ProposalStatus) NoWeight() int64 {
 	return s.voteStatus.NoWeight()
 }

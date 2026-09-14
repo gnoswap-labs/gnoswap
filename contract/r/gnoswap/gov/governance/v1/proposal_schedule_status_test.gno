@@ -92,7 +92,7 @@ func TestProposalScheduleStatus_TimeChecks(cur realm, t *testing.T) {
 			// when & then
 			for stateName, expectedResult := range tc.expectedStates {
 				var result bool
-				resolver := MakeProposalScheduleStatusResolver(status)
+				resolver := NewProposalScheduleStatusResolver(status)
 				switch stateName {
 				case "IsPassedCreatedAt":
 					result = resolver.IsPassedCreatedAt(tc.currentTime.Unix())

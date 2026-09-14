@@ -7,84 +7,69 @@ import (
 )
 
 type ProposalActionStatusResolver struct {
-	status governance.ProposalActionStatus
+	governance.ProposalActionStatus
 }
 
-func MakeProposalActionStatusResolver(status governance.ProposalActionStatus) ProposalActionStatusResolver {
-	return ProposalActionStatusResolver{status: status}
+// NewProposalActionStatusResolver creates a pointer resolver over a detached action status value.
+func NewProposalActionStatusResolver(status governance.ProposalActionStatus) *ProposalActionStatusResolver {
+	return &ProposalActionStatusResolver{ProposalActionStatus: status}
 }
 
-func (p ProposalActionStatusResolver) Value() governance.ProposalActionStatus {
-	return p.status
-}
-
-func (p ProposalActionStatusResolver) Canceled() bool {
-	return p.status.Canceled()
-}
-
-func (p ProposalActionStatusResolver) CanceledAt() int64 {
-	return p.status.CanceledAt()
-}
-
-func (p ProposalActionStatusResolver) CanceledHeight() int64 {
-	return p.status.CanceledHeight()
-}
-
-func (p ProposalActionStatusResolver) CanceledBy() address {
-	return p.status.CanceledBy()
-}
-
-func (p ProposalActionStatusResolver) IsExecuted() bool {
-	return p.status.IsExecuted()
-}
-
-func (p ProposalActionStatusResolver) ExecutedAt() int64 {
-	return p.status.ExecutedAt()
-}
-
-func (p ProposalActionStatusResolver) ExecutedHeight() int64 {
-	return p.status.ExecutedHeight()
-}
-
-func (p ProposalActionStatusResolver) ExecutedBy() address {
-	return p.status.ExecutedBy()
-}
-
-func (p ProposalActionStatusResolver) IsExecutable() bool {
-	return p.status.IsExecutable()
-}
-
-// cancel marks the proposal as canceled and returns the updated resolver.
-func (p ProposalActionStatusResolver) cancel(
+// cancel marks the proposal as canceled and records cancellation details.
+// This method validates that the proposal is eligible for cancellation.
+//
+// Parameters:
+//   - canceledAt: timestamp when cancellation occurred
+//   - canceledHeight: block height when cancellation occurred
+//   - canceledBy: address performing the cancellation
+//
+// Returns:
+//   - error: already canceled error if proposal action status is already canceled
+func (p *ProposalActionStatusResolver) cancel(
 	canceledAt, canceledHeight int64,
 	canceledBy address,
-) (ProposalActionStatusResolver, error) {
-	if p.status.Canceled() {
-		return p, errors.New(errAlreadyCanceledProposal)
+) error {
+	if p.Canceled() {
+		return errors.New(errAlreadyCanceledProposal)
 	}
 
-	p.status = p.status.WithCanceled(true)
-	p.status = p.status.WithCanceledAt(canceledAt)
-	p.status = p.status.WithCanceledHeight(canceledHeight)
-	p.status = p.status.WithCanceledBy(canceledBy)
-	return p, nil
+	// Record cancellation details.
+	p.ProposalActionStatus = p.ProposalActionStatus.WithCanceled(true)
+	p.ProposalActionStatus = p.ProposalActionStatus.WithCanceledAt(canceledAt)
+	p.ProposalActionStatus = p.ProposalActionStatus.WithCanceledHeight(canceledHeight)
+	p.ProposalActionStatus = p.ProposalActionStatus.WithCanceledBy(canceledBy)
+
+	return nil
 }
 
-// Execute marks the proposal as executed and returns the updated resolver.
-func (p ProposalActionStatusResolver) Execute(
+// Execute marks the proposal as executed and records execution details.
+// This method validates that the proposal is eligible for execution.
+//
+// Parameters:
+//   - executedAt: timestamp when execution occurred
+//   - executedHeight: block height when execution occurred
+//   - executedBy: address performing the execution
+//
+// Returns:
+//   - error: not executable or already canceled error if execution is not allowed
+func (p *ProposalActionStatusResolver) Execute(
 	executedAt, executedHeight int64,
 	executedBy address,
-) (ProposalActionStatusResolver, error) {
-	if !p.status.IsExecutable() {
-		return p, errors.New(errProposalNotExecutable)
-	}
-	if p.status.Canceled() {
-		return p, errors.New(errAlreadyCanceledProposal)
+) error {
+	// Only executable proposals can be executed (text proposals cannot).
+	if !p.IsExecutable() {
+		return errors.New(errProposalNotExecutable)
 	}
 
-	p.status = p.status.WithExecuted(true)
-	p.status = p.status.WithExecutedAt(executedAt)
-	p.status = p.status.WithExecutedHeight(executedHeight)
-	p.status = p.status.WithExecutedBy(executedBy)
-	return p, nil
+	if p.Canceled() {
+		return errors.New(errAlreadyCanceledProposal)
+	}
+
+	// Record execution details.
+	p.ProposalActionStatus = p.ProposalActionStatus.WithExecuted(true)
+	p.ProposalActionStatus = p.ProposalActionStatus.WithExecutedAt(executedAt)
+	p.ProposalActionStatus = p.ProposalActionStatus.WithExecutedHeight(executedHeight)
+	p.ProposalActionStatus = p.ProposalActionStatus.WithExecutedBy(executedBy)
+
+	return nil
 }

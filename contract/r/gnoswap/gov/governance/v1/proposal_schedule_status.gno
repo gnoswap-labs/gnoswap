@@ -7,38 +7,87 @@ import (
 )
 
 type ProposalScheduleStatusResolver struct {
-	status governance.ProposalScheduleStatus
+	governance.ProposalScheduleStatus
 }
 
-func MakeProposalScheduleStatusResolver(status governance.ProposalScheduleStatus) ProposalScheduleStatusResolver {
-	return ProposalScheduleStatusResolver{status: status}
+// NewProposalScheduleStatusResolver creates a pointer resolver over a detached schedule value.
+func NewProposalScheduleStatusResolver(status governance.ProposalScheduleStatus) *ProposalScheduleStatusResolver {
+	return &ProposalScheduleStatusResolver{ProposalScheduleStatus: status}
 }
 
-func (p ProposalScheduleStatusResolver) Value() governance.ProposalScheduleStatus {
-	return p.status
+// IsPassedCreatedAt checks if the current time has passed the proposal creation time.
+// This is always true once a proposal exists.
+//
+// Parameters:
+//   - current: timestamp to check against
+//
+// Returns:
+//   - bool: true if current time is at or after creation time
+func (p *ProposalScheduleStatusResolver) IsPassedCreatedAt(current int64) bool {
+	return p.CreateTime() <= current
 }
 
-func (p ProposalScheduleStatusResolver) IsPassedCreatedAt(current int64) bool {
-	return p.status.CreateTime() <= current
+// IsPassedActiveAt checks if the current time has passed the voting start time.
+// When true, the proposal enters its active voting period.
+//
+// Parameters:
+//   - current: timestamp to check against
+//
+// Returns:
+//   - bool: true if voting period has started
+func (p *ProposalScheduleStatusResolver) IsPassedActiveAt(current int64) bool {
+	return p.ActiveTime() <= current
 }
 
-func (p ProposalScheduleStatusResolver) IsPassedActiveAt(current int64) bool {
-	return p.status.ActiveTime() <= current
+// IsPassedVotingEndedAt checks if the current time has passed the voting end time.
+// When true, no more votes can be cast on the proposal.
+//
+// Parameters:
+//   - current: timestamp to check against
+//
+// Returns:
+//   - bool: true if voting period has ended
+func (p *ProposalScheduleStatusResolver) IsPassedVotingEndedAt(current int64) bool {
+	return p.VotingEndTime() <= current
 }
 
-func (p ProposalScheduleStatusResolver) IsPassedVotingEndedAt(current int64) bool {
-	return p.status.VotingEndTime() <= current
+// IsPassedExecutableAt checks if the current time has passed the execution start time.
+// When true, approved proposals can be executed (after execution delay).
+//
+// Parameters:
+//   - current: timestamp to check against
+//
+// Returns:
+//   - bool: true if execution window has started
+func (p *ProposalScheduleStatusResolver) IsPassedExecutableAt(current int64) bool {
+	return p.ExecutableTime() <= current
 }
 
-func (p ProposalScheduleStatusResolver) IsPassedExecutableAt(current int64) bool {
-	return p.status.ExecutableTime() <= current
+// IsPassedExpiredAt checks if the current time has passed the execution expiration time.
+// When true, the proposal can no longer be executed and has expired.
+//
+// Parameters:
+//   - current: timestamp to check against
+//
+// Returns:
+//   - bool: true if execution window has expired
+func (p *ProposalScheduleStatusResolver) IsPassedExpiredAt(current int64) bool {
+	return p.ExpiredTime() <= current
 }
 
-func (p ProposalScheduleStatusResolver) IsPassedExpiredAt(current int64) bool {
-	return p.status.ExpiredTime() <= current
-}
-
-// MakeProposalScheduleStatus calculates the proposal lifecycle timestamps.
+// MakeProposalScheduleStatus creates a new schedule status with calculated timestamps.
+// This constructor takes the governance timing parameters and calculates all
+// important timestamps for the proposal's lifecycle.
+//
+// Parameters:
+//   - votingStartDelay: delay before voting starts (seconds)
+//   - votingPeriod: duration of voting period (seconds)
+//   - executionDelay: delay before execution can start (seconds)
+//   - executionWindow: window during which execution is allowed (seconds)
+//   - createdAt: timestamp when proposal was created
+//
+// Returns:
+//   - ProposalScheduleStatus: new schedule status with calculated times
 func MakeProposalScheduleStatus(
 	votingStartDelay,
 	votingPeriod,
@@ -46,6 +95,7 @@ func MakeProposalScheduleStatus(
 	executionWindow,
 	createdAt int64,
 ) governance.ProposalScheduleStatus {
+	// Calculate all phase timestamps based on creation time and configuration.
 	createTime := createdAt
 	activeTime := gnsmath.SafeAddInt64(createTime, votingStartDelay)
 	votingEndTime := gnsmath.SafeAddInt64(activeTime, votingPeriod)

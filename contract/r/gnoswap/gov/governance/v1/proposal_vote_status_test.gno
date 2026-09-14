@@ -66,14 +66,14 @@ func TestProposalVoteStatus_VotingOperations(cur realm, t *testing.T) {
 			// given
 			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorum, 100)
 			status := governance.MakeProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
-			resolver := MakeProposalVoteStatusResolver(status)
+			resolver := NewProposalVoteStatusResolver(status)
 
 			// when
 			if tc.yesVotes > 0 {
-				resolver, _ = resolver.AddYesVoteWeight(tc.yesVotes)
+				_ = resolver.AddYesVoteWeight(tc.yesVotes)
 			}
 			if tc.noVotes > 0 {
-				resolver, _ = resolver.AddNoVoteWeight(tc.noVotes)
+				_ = resolver.AddNoVoteWeight(tc.noVotes)
 			}
 
 			// then
@@ -118,7 +118,7 @@ func TestMakeProposalVoteStatus(cur realm, t *testing.T) {
 			// when
 			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorum, 100)
 			status := governance.MakeProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
-			resolver := MakeProposalVoteStatusResolver(status)
+			resolver := NewProposalVoteStatusResolver(status)
 
 			// then
 			uassert.NotNil(t, status)
@@ -215,19 +215,19 @@ func TestProposalVoteStatus_SafeMathOperations(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
 			status := governance.MakeProposalVoteStatus(tc.maxVotingWeight, tc.quorumAmount)
-			resolver := MakeProposalVoteStatusResolver(status)
+			resolver := NewProposalVoteStatusResolver(status)
 
 			// when - add yes votes
 			for _, yesVote := range tc.yesVotes {
 				var err error
-				resolver, err = resolver.AddYesVoteWeight(yesVote)
+				err = resolver.AddYesVoteWeight(yesVote)
 				uassert.Nil(t, err)
 			}
 
 			// when - add no votes
 			for _, noVote := range tc.noVotes {
 				var err error
-				resolver, err = resolver.AddNoVoteWeight(noVote)
+				err = resolver.AddNoVoteWeight(noVote)
 				uassert.Nil(t, err)
 			}
 
@@ -320,11 +320,11 @@ func TestProposalVoteStatus_QuorumCalculation(cur realm, t *testing.T) {
 			// given
 			quorumAmount := gnsmath.SafeMulDivInt64(tc.maxVotingWeight, tc.quorumPercentage, 100)
 			status := governance.MakeProposalVoteStatus(tc.maxVotingWeight, quorumAmount)
-			resolver := MakeProposalVoteStatusResolver(status)
+			resolver := NewProposalVoteStatusResolver(status)
 
 			// when
 			if tc.yesWeight > 0 {
-				resolver, _ = resolver.AddYesVoteWeight(tc.yesWeight)
+				_ = resolver.AddYesVoteWeight(tc.yesWeight)
 			}
 
 			// then

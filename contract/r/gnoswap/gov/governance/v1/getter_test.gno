@@ -293,6 +293,40 @@ func TestGetProposals_EntriesAreValues(cur realm, t *testing.T) {
 	uassert.False(t, stored.Status().ActionStatus().Canceled())
 }
 
+func TestProposalResolverChangesRequireWriteback(cur realm, t *testing.T) {
+	gv := setupGetterTestWithProposal(cur, t)
+	original, ok := gv.store.GetProposal(1)
+	uassert.True(t, ok)
+	resolver := NewProposalResolver(original)
+	independent := NewProposalResolver(original)
+
+	uassert.NoError(t, resolver.Vote(true, 600))
+	uassert.NoError(t, resolver.Vote(false, 100))
+	uassert.Equal(t, int64(700), resolver.VotingTotalWeight())
+	uassert.Equal(t, int64(600), resolver.VotingYesWeight())
+	uassert.Equal(t, int64(100), resolver.VotingNoWeight())
+	uassert.Equal(t, int64(0), independent.VotingTotalWeight())
+	uassert.Equal(t, int64(0), original.VotingYesWeight())
+
+	stored, ok := gv.store.GetProposal(1)
+	uassert.True(t, ok)
+	uassert.Equal(t, int64(0), stored.VotingYesWeight())
+	uassert.Equal(t, int64(0), stored.VotingNoWeight())
+
+	uassert.NoError(t, gv.store.SetProposal(0, cur, 1, resolver.Proposal))
+	yes, err := gv.GetYeaByProposalId(1)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(600), yes)
+	no, err := gv.GetNayByProposalId(1)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(100), no)
+
+	uassert.NoError(t, resolver.Vote(true, 50))
+	yes, err = gv.GetYeaByProposalId(1)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(600), yes)
+}
+
 func TestExistsProposal(cur realm, t *testing.T) {
 	testCases := []struct {
 		name       string

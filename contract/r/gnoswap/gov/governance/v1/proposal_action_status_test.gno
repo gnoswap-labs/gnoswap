@@ -79,13 +79,13 @@ func TestProposalActionStatus_CancelAndExecute(cur realm, t *testing.T) {
 			if tc.canceled {
 				status = status.WithCanceled(true)
 			}
-			resolver := MakeProposalActionStatusResolver(status)
+			resolver := NewProposalActionStatusResolver(status)
 			// when
 			var err error
 			if tc.operation == "cancel" {
-				resolver, err = resolver.cancel(tc.timestamp, tc.height, tc.actor)
+				err = resolver.cancel(tc.timestamp, tc.height, tc.actor)
 			} else {
-				resolver, err = resolver.Execute(tc.timestamp, tc.height, tc.actor)
+				err = resolver.Execute(tc.timestamp, tc.height, tc.actor)
 			}
 
 			// then
@@ -125,7 +125,7 @@ func TestMakeProposalActionStatus(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
 			status := governance.MakeProposalActionStatus(tc.executable)
-			resolver := MakeProposalActionStatusResolver(status)
+			resolver := NewProposalActionStatusResolver(status)
 
 			// then
 			uassert.NotNil(t, status)

@@ -827,7 +827,7 @@ func TestGovernanceVote_QuorumCalculation(cur realm, t *testing.T) {
 			setupTestProposal(cur, t, gov, proposal)
 
 			// then
-			statusResolver := MakeProposalStatusResolver(proposal.Status())
+			statusResolver := NewProposalStatusResolver(proposal.Status())
 			uassert.Equal(t, tt.expectedTotalVoteWeight, statusResolver.TotalVoteWeight())
 			uassert.Equal(t, tt.expectedQuorumAmount, proposal.VotingQuorumAmount())
 		})

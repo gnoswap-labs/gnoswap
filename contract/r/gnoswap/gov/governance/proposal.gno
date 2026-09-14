@@ -5,14 +5,14 @@ import bptree "gno.land/p/nt/bptree/v0"
 // Proposal represents a governance proposal with all its associated data and state.
 // This is the core structure that tracks proposal lifecycle from creation to execution.
 type Proposal struct {
-	id            int64
-	proposer      address
-	configVersion int64
-	status        ProposalStatus
-	metadata      ProposalMetadata
-	data          ProposalData
-	snapshotTime  int64
-	createdHeight int64
+	id            int64            // Unique identifier for the proposal
+	proposer      address          // The address of the proposer
+	configVersion int64            // The version of the governance config used
+	status        ProposalStatus   // Current status and voting information
+	metadata      ProposalMetadata // Title and description
+	data          ProposalData     // Type-specific proposal data
+	snapshotTime  int64            // Timestamp for voting weight snapshot lookup
+	createdHeight int64            // Block height at creation
 }
 
 // ID returns the unique identifier of the proposal.
@@ -134,6 +134,20 @@ func (p Proposal) IsProposer(addr address) bool {
 }
 
 // MakeProposal creates a new proposal value with the provided parameters.
+// MakeProposal is the main constructor for creating governance proposals.
+//
+// Parameters:
+//   - proposalID: unique identifier for the proposal
+//   - status: current status and voting information
+//   - metadata: proposal title and description
+//   - data: type-specific proposal data
+//   - proposerAddress: address of the proposal creator
+//   - configVersion: governance configuration version
+//   - snapshotTime: timestamp for voting weight snapshot lookup
+//   - createdHeight: creation block height
+//
+// Returns:
+//   - Proposal: newly created proposal value
 func MakeProposal(
 	proposalID int64,
 	status ProposalStatus,

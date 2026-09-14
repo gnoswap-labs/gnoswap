@@ -20,19 +20,38 @@ type ProposalActionStatus struct {
 func (p ProposalActionStatus) Canceled() bool        { return p.canceled }
 func (p ProposalActionStatus) CanceledAt() int64     { return p.canceledAt }
 func (p ProposalActionStatus) CanceledHeight() int64 { return p.canceledHeight }
+
+// CanceledBy returns the address that canceled the proposal.
+// Only meaningful if Canceled() returns true.
+//
+// Returns:
+//   - address: address of the canceller
 func (p ProposalActionStatus) CanceledBy() address   { return p.canceledBy }
 func (p ProposalActionStatus) Executed() bool        { return p.executed }
 func (p ProposalActionStatus) ExecutedAt() int64     { return p.executedAt }
 func (p ProposalActionStatus) ExecutedHeight() int64 { return p.executedHeight }
-func (p ProposalActionStatus) ExecutedBy() address   { return p.executedBy }
-func (p ProposalActionStatus) Executable() bool      { return p.executable }
+
+// ExecutedBy returns the address that executed the proposal.
+// Only meaningful if IsExecuted() returns true.
+//
+// Returns:
+//   - address: address of the executor
+func (p ProposalActionStatus) ExecutedBy() address { return p.executedBy }
+func (p ProposalActionStatus) Executable() bool    { return p.executable }
 
 // IsExecuted returns whether the proposal has been executed.
+//
+// Returns:
+//   - bool: true if proposal has been executed
 func (p ProposalActionStatus) IsExecuted() bool {
 	return p.executed
 }
 
 // IsExecutable returns whether this proposal type can be executed.
+// Text proposals return false, while other types return true.
+//
+// Returns:
+//   - bool: true if proposal type supports execution
 func (p ProposalActionStatus) IsExecutable() bool {
 	return p.executable
 }
@@ -83,8 +102,14 @@ func (p ProposalActionStatus) WithExecutable(executable bool) ProposalActionStat
 	return p
 }
 
-// MakeProposalActionStatus creates a new action status value with the
-// executable flag.
+// MakeProposalActionStatus creates a new action status value for a proposal.
+// Initializes the status with default values and the executable flag.
+//
+// Parameters:
+//   - executable: whether this proposal type can be executed
+//
+// Returns:
+//   - ProposalActionStatus: new action status value
 func MakeProposalActionStatus(executable bool) ProposalActionStatus {
 	return ProposalActionStatus{
 		executable: executable,

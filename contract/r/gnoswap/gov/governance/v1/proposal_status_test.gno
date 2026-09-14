@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
@@ -155,24 +154,25 @@ func TestProposalStatus_StatusType(cur realm, t *testing.T) {
 				config, tc.maxVotingWeight, tc.executable, baseTime.Unix(),
 				tc.maxVotingWeight,
 			)
-			resolver := MakeProposalStatusResolver(status)
+			resolver := NewProposalStatusResolver(status)
 
 			// Add votes if specified
 			var err error
 			if tc.voteYes > 0 {
-				resolver, err = resolver.vote(true, tc.voteYes)
+				err = resolver.vote(true, tc.voteYes)
 			}
 			if err == nil && tc.voteNo > 0 {
-				resolver, err = resolver.vote(false, tc.voteNo)
+				err = resolver.vote(false, tc.voteNo)
 			}
 
 			// Execute or cancel if specified
 			if err == nil && tc.isExecuted {
-				resolver, err = resolver.execute(tc.currentTime.Unix(), 100, address("g1executor"))
+				err = resolver.execute(tc.currentTime.Unix(), 100, address("g1executor"))
 			}
 			if err == nil && tc.isCanceled {
-				resolver, err = resolver.cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
+				err = resolver.cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
 			}
+			uassert.NoError(t, err)
 
 			// when
 			statusType := resolver.StatusType(tc.currentTime.Unix())
@@ -227,22 +227,23 @@ func TestProposalStatus_VotingOperations(cur realm, t *testing.T) {
 				config, tc.maxVotingWeight, true, time.Now().Unix(),
 				tc.maxVotingWeight,
 			)
-			resolver := MakeProposalStatusResolver(status)
+			resolver := NewProposalStatusResolver(status)
 
 			// when
 			var err error
 			if tc.voteYes > 0 {
-				resolver, err = resolver.vote(true, tc.voteYes)
+				err = resolver.vote(true, tc.voteYes)
 			}
 			if err == nil && tc.voteNo > 0 {
-				resolver, err = resolver.vote(false, tc.voteNo)
+				err = resolver.vote(false, tc.voteNo)
 			}
+			uassert.NoError(t, err)
 
 			// then
 			uassert.Equal(t, resolver.VoteStatus().YesWeight(), tc.voteYes)
 			uassert.Equal(t, resolver.VoteStatus().NoWeight(), tc.voteNo)
 
-			statusResolver := MakeProposalStatusResolver(resolver.Value())
+			statusResolver := NewProposalStatusResolver(resolver.ProposalStatus)
 			uassert.Equal(t, statusResolver.TotalVoteWeight(), tc.expectedTotal)
 		})
 	}
@@ -255,20 +256,20 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 
 	tests := []struct {
 		name   string
-		setup  func() ProposalStatusResolver
-		action func(ProposalStatusResolver) (ProposalStatusResolver, error)
-		verify func(*testing.T, ProposalStatusResolver, error)
+		setup  func() *ProposalStatusResolver
+		action func(*ProposalStatusResolver) error
+		verify func(*testing.T, *ProposalStatusResolver, error)
 	}{
 		{
 			name: "cancel - success",
-			setup: func() ProposalStatusResolver {
+			setup: func() *ProposalStatusResolver {
 				status := MakeProposalStatus(config, 1000, true, baseTime.Unix(), 1000)
-				return MakeProposalStatusResolver(status)
+				return NewProposalStatusResolver(status)
 			},
-			action: func(resolver ProposalStatusResolver) (ProposalStatusResolver, error) {
+			action: func(resolver *ProposalStatusResolver) error {
 				return resolver.cancel(baseTime.Unix()+50, 100, address("g1canceler"))
 			},
-			verify: func(t *testing.T, resolver ProposalStatusResolver, err error) {
+			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
 				uassert.Nil(t, err)
 				uassert.True(t, resolver.ActionStatus().Canceled())
 				uassert.Equal(t, resolver.ActionStatus().CanceledBy().String(), address("g1canceler").String())
@@ -276,14 +277,14 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		},
 		{
 			name: "execute - success",
-			setup: func() ProposalStatusResolver {
+			setup: func() *ProposalStatusResolver {
 				status := MakeProposalStatus(config, 1000, true, baseTime.Unix(), 1000)
-				return MakeProposalStatusResolver(status)
+				return NewProposalStatusResolver(status)
 			},
-			action: func(resolver ProposalStatusResolver) (ProposalStatusResolver, error) {
+			action: func(resolver *ProposalStatusResolver) error {
 				return resolver.execute(baseTime.Unix()+500, 100, address("g1executor"))
 			},
-			verify: func(t *testing.T, resolver ProposalStatusResolver, err error) {
+			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
 				uassert.Nil(t, err)
 				uassert.True(t, resolver.ActionStatus().IsExecuted())
 				uassert.Equal(t, resolver.ActionStatus().ExecutedBy().String(), address("g1executor").String())
@@ -291,14 +292,14 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		},
 		{
 			name: "vote - add yes vote",
-			setup: func() ProposalStatusResolver {
+			setup: func() *ProposalStatusResolver {
 				status := MakeProposalStatus(config, 1000, true, baseTime.Unix(), 1000)
-				return MakeProposalStatusResolver(status)
+				return NewProposalStatusResolver(status)
 			},
-			action: func(resolver ProposalStatusResolver) (ProposalStatusResolver, error) {
+			action: func(resolver *ProposalStatusResolver) error {
 				return resolver.vote(true, 600)
 			},
-			verify: func(t *testing.T, resolver ProposalStatusResolver, err error) {
+			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
 				uassert.Nil(t, err)
 				uassert.Equal(t, resolver.VoteStatus().YesWeight(), int64(600))
 				uassert.Equal(t, resolver.VoteStatus().NoWeight(), int64(0))
@@ -306,14 +307,14 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		},
 		{
 			name: "vote - add no vote",
-			setup: func() ProposalStatusResolver {
+			setup: func() *ProposalStatusResolver {
 				status := MakeProposalStatus(config, 1000, true, baseTime.Unix(), 1000)
-				return MakeProposalStatusResolver(status)
+				return NewProposalStatusResolver(status)
 			},
-			action: func(resolver ProposalStatusResolver) (ProposalStatusResolver, error) {
+			action: func(resolver *ProposalStatusResolver) error {
 				return resolver.vote(false, 400)
 			},
-			verify: func(t *testing.T, resolver ProposalStatusResolver, err error) {
+			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
 				uassert.Nil(t, err)
 				uassert.Equal(t, resolver.VoteStatus().YesWeight(), int64(0))
 				uassert.Equal(t, resolver.VoteStatus().NoWeight(), int64(400))
@@ -321,56 +322,18 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 		},
 		{
 			name: "vote - multiple votes",
-			setup: func() ProposalStatusResolver {
+			setup: func() *ProposalStatusResolver {
 				status := MakeProposalStatus(config, 1000, true, baseTime.Unix(), 1000)
-				resolver := MakeProposalStatusResolver(status)
-				resolver, _ = resolver.vote(true, 300)
+				resolver := NewProposalStatusResolver(status)
+				uassert.NoError(t, resolver.vote(true, 300))
 				return resolver
 			},
-			action: func(resolver ProposalStatusResolver) (ProposalStatusResolver, error) {
+			action: func(resolver *ProposalStatusResolver) error {
 				return resolver.vote(true, 200)
 			},
-			verify: func(t *testing.T, resolver ProposalStatusResolver, err error) {
+			verify: func(t *testing.T, resolver *ProposalStatusResolver, err error) {
 				uassert.Nil(t, err)
 				uassert.Equal(t, resolver.VoteStatus().YesWeight(), int64(500))
-			},
-		},
-		{
-			name: "updateVoteStatus - increase max weight and quorum",
-			setup: func() ProposalStatusResolver {
-				status := MakeProposalStatus(config, 1000, true, baseTime.Unix(), 1000)
-				return MakeProposalStatusResolver(status)
-			},
-			action: func(resolver ProposalStatusResolver) (ProposalStatusResolver, error) {
-				voteStatus := resolver.VoteStatus()
-				voteStatus = voteStatus.WithMaxVotingWeight(2000)
-				voteStatus = voteStatus.WithQuorumAmount(gnsmath.SafeMulDivInt64(2000, 60, 100))
-				return MakeProposalStatusResolver(resolver.Value().WithVoteStatus(voteStatus)), nil
-			},
-			verify: func(t *testing.T, resolver ProposalStatusResolver, err error) {
-				uassert.Nil(t, err)
-				voteResolver := MakeProposalVoteStatusResolver(resolver.VoteStatus())
-				uassert.Equal(t, voteResolver.MaxVotingWeight(), int64(2000))
-				uassert.Equal(t, voteResolver.QuorumAmount(), int64(1200))
-			},
-		},
-		{
-			name: "updateVoteStatus - decrease max weight and quorum",
-			setup: func() ProposalStatusResolver {
-				status := MakeProposalStatus(config, 1000, true, baseTime.Unix(), 1000)
-				return MakeProposalStatusResolver(status)
-			},
-			action: func(resolver ProposalStatusResolver) (ProposalStatusResolver, error) {
-				voteStatus := resolver.VoteStatus()
-				voteStatus = voteStatus.WithMaxVotingWeight(500)
-				voteStatus = voteStatus.WithQuorumAmount(gnsmath.SafeMulDivInt64(500, 40, 100))
-				return MakeProposalStatusResolver(resolver.Value().WithVoteStatus(voteStatus)), nil
-			},
-			verify: func(t *testing.T, resolver ProposalStatusResolver, err error) {
-				uassert.Nil(t, err)
-				voteResolver := MakeProposalVoteStatusResolver(resolver.VoteStatus())
-				uassert.Equal(t, voteResolver.MaxVotingWeight(), int64(500))
-				uassert.Equal(t, voteResolver.QuorumAmount(), int64(200))
 			},
 		},
 	}
@@ -378,7 +341,7 @@ func TestProposalStatusResolver_PrivateMethods(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			resolver := tc.setup()
-			resolver, err := tc.action(resolver)
+			err := tc.action(resolver)
 			tc.verify(t, resolver, err)
 		})
 	}

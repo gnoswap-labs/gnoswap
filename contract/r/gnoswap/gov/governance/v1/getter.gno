@@ -97,7 +97,8 @@ func (gv *governanceV1) GetProposalCreatedHeight(proposalId int64) (int64, error
 	return proposal.CreatedHeight(), nil
 }
 
-// GetProposalCommunityPoolSpendInfo returns the community pool spend info for a proposal.
+// GetProposalCommunityPoolSpendInfo returns the community pool spend info value
+// for a proposal, or a default value with an error when unavailable.
 func (gv *governanceV1) GetProposalCommunityPoolSpendInfo(proposalID int64) (governance.CommunityPoolSpendInfo, error) {
 	proposal, exists := gv.store.GetProposal(proposalID)
 	if !exists {
@@ -113,7 +114,8 @@ func (gv *governanceV1) GetProposalCommunityPoolSpendInfo(proposalID int64) (gov
 	return communityPoolSpend, nil
 }
 
-// GetProposalExecutionInfo returns the execution info for a proposal.
+// GetProposalExecutionInfo returns the execution info value for a proposal, or
+// a default value with an error when unavailable.
 func (gv *governanceV1) GetProposalExecutionInfo(proposalID int64) (governance.ExecutionInfo, error) {
 	proposal, exists := gv.store.GetProposal(proposalID)
 	if !exists {
@@ -189,7 +191,7 @@ func (gv *governanceV1) GetProposalStatusByProposalId(proposalId int64) (string,
 	if !exists {
 		return "", ufmt.Errorf("proposal %d not found", proposalId)
 	}
-	proposalResolver := MakeProposalResolver(proposal)
+	proposalResolver := NewProposalResolver(proposal)
 	return proposalResolver.Status(time.Now().Unix()), nil
 }
 
@@ -279,7 +281,7 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool, erro
 			errProposalNotFound, ufmt.Sprintf("proposalID: %d", proposalID),
 		)
 	}
-	if !MakeProposalResolver(proposal).IsActive(time.Now().Unix()) {
+	if !NewProposalResolver(proposal).IsActive(time.Now().Unix()) {
 		return 0, false, makeErrorWithDetails(
 			errProposalIndexNeedsCleanup, ufmt.Sprintf("proposalID: %d", proposalID),
 		)
