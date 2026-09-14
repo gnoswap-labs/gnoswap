@@ -280,16 +280,9 @@ func GetProjectTierRewardClaimableDuration(projectTierId string) (int64, error) 
 }
 
 // GetRewardState retrieves a reward state by project tier ID and deposit ID.
-// Returns a cloned reward state to prevent external modification.
-func GetRewardState(projectTierId string, depositId string) (*RewardState, error) {
-	rewardState, err := getImplementation().GetRewardState(projectTierId, depositId)
-	if err != nil {
-		return nil, err
-	}
-	if rewardState == nil {
-		return nil, nil
-	}
-	return rewardState.Clone(), nil
+// Returns an isolated reward state value and an error if it is not found.
+func GetRewardState(projectTierId string, depositId string) (RewardState, error) {
+	return getImplementation().GetRewardState(projectTierId, depositId)
 }
 
 // GetProjectActiveStatus returns whether a project is currently active.

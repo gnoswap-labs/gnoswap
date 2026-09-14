@@ -218,7 +218,7 @@ func TestProtocolFeeRewardManager_addStake(cur realm, t *testing.T) {
 			rewardState, ok, err := resolver.GetRewardState(tt.address)
 			uassert.NoError(t, err)
 			uassert.True(t, ok)
-			uassert.NotEqual(t, rewardState, nil)
+			uassert.Equal(t, rewardState.GetStakedAmount(), tt.amount)
 		})
 	}
 }

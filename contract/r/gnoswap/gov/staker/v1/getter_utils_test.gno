@@ -25,27 +25,32 @@ func TestCloneDelegationEntry(cur realm, t *testing.T) {
 		uassert.Equal(t, nil, cloneDelegationEntry(nil))
 	})
 
-	t.Run("returns a copy the caller cannot write back through", func(cur realm, t *testing.T) {
+	t.Run("returns a detached value with isolated nested state", func(cur realm, t *testing.T) {
 		stored := *newCloneTestDelegation()
 		stored.SetCollectedAmount(300)
+		stored.AddWithdraw(staker.NewDelegationWithdraw(1, 100, 100, 100, 1000))
 
-		cloned, ok := cloneDelegationEntry(stored).(*staker.Delegation)
+		cloned, ok := cloneDelegationEntry(stored).(staker.Delegation)
 		uassert.True(t, ok)
-		uassert.False(t, cloned == &stored)
 		uassert.Equal(t, stored.CollectedAmount(), cloned.CollectedAmount())
 
 		cloned.SetCollectedAmount(999)
+		cloned.SetWithdraw(0, staker.NewDelegationWithdraw(1, 999, 100, 100, 1000))
 		uassert.Equal(t, int64(300), stored.CollectedAmount())
+		uassert.Equal(t, int64(100), stored.Withdraws()[0].UnDelegateAmount())
 	})
 
-	t.Run("returns a distinct copy per read", func(cur realm, t *testing.T) {
+	t.Run("returns an independently detached value per read", func(cur realm, t *testing.T) {
 		stored := *newCloneTestDelegation()
+		stored.AddWithdraw(staker.NewDelegationWithdraw(1, 100, 100, 100, 1000))
 
-		first, ok := cloneDelegationEntry(stored).(*staker.Delegation)
+		first, ok := cloneDelegationEntry(stored).(staker.Delegation)
 		uassert.True(t, ok)
-		second, ok := cloneDelegationEntry(stored).(*staker.Delegation)
+		second, ok := cloneDelegationEntry(stored).(staker.Delegation)
 		uassert.True(t, ok)
-		uassert.False(t, first == second)
+
+		first.SetWithdraw(0, staker.NewDelegationWithdraw(1, 999, 100, 100, 1000))
+		uassert.Equal(t, int64(100), second.Withdraws()[0].UnDelegateAmount())
 	})
 }
 

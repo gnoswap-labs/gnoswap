@@ -123,7 +123,7 @@ func TestStakerDelegate_Delegate_AllowsContractCaller(cur realm, t *testing.T) {
 	delegationIDs := staker.GetUserDelegationIDs(contractCaller, validator)
 	uassert.Equal(t, len(delegationIDs), 1)
 
-	delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationIDs[0], 10)).(*staker.Delegation)
+	delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationIDs[0], 10)).(staker.Delegation)
 	uassert.True(t, ok)
 	uassert.Equal(t, delegation.DelegateFrom(), contractCaller)
 	uassert.Equal(t, delegation.DelegateTo(), validator)
@@ -296,8 +296,8 @@ func TestStakerDelegate_UndelegateMultipleDelegations(cur realm, t *testing.T) {
 				totalUndelegated := int64(0)
 
 				for _, delegationID := range delegationIDs {
-					delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationID, 10)).(*staker.Delegation)
-					if ok && delegation != nil {
+					delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationID, 10)).(staker.Delegation)
+					if ok {
 						totalWithdraws += staker.GetDelegationWithdrawCount(delegationID)
 						totalUndelegated += delegation.UnDelegatedAmount()
 					}
@@ -1045,7 +1045,7 @@ func cleanupStakerDelegateTest(cur realm, t *testing.T, gs *govStakerV1) {
 	func(cur realm) {
 		mockStore := gs.store.(*mockGovStakerStore)
 		mockStore.delegationNextID = staker.NewCounter()
-		mockStore.delegations = bptree.NewBPTreeN(16)
+		mockStore.delegationStore = nil
 		mockStore.totalDelegationHistory = staker.NewUintTree()
 		mockStore.userDelegationHistory = bptree.NewBPTreeN(16)
 		mockStore.userDelegations = bptree.NewBPTreeN(16)
@@ -1099,7 +1099,7 @@ func setupStakerDelegateTestDelegation(cur realm, t *testing.T, gs *govStakerV1,
 
 	testing.SetRealm(testing.NewUserRealm(from))
 	func(cur realm) {
-		if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+		if err := gs.addDelegation(0, cur, delegationID, *delegation); err != nil {
 			panic(err)
 		}
 	}(cross(cur))
@@ -1126,7 +1126,7 @@ func setupStakerDelegateTestCollectableAmount(cur realm, t *testing.T, gs *govSt
 
 	testing.SetRealm(testing.NewUserRealm(user))
 	func(cur realm) {
-		if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+		if err := gs.addDelegation(0, cur, delegationID, *delegation); err != nil {
 			panic(err)
 		}
 	}(cross(cur))
@@ -1239,7 +1239,7 @@ func TestStakerDelegate_collectDelegations_MultipleDelegations(cur realm, t *tes
 
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
-					if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+					if err := gs.addDelegation(0, cur, delegationID, *delegation); err != nil {
 						panic(err)
 					}
 				}(cross(cur))
@@ -1291,7 +1291,7 @@ func TestStakerDelegate_collectDelegations_NoCollectableAmount(cur realm, t *tes
 
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
-					if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+					if err := gs.addDelegation(0, cur, delegationID, *delegation); err != nil {
 						panic(err)
 					}
 				}(cross(cur))
@@ -1313,7 +1313,7 @@ func TestStakerDelegate_collectDelegations_NoCollectableAmount(cur realm, t *tes
 
 				testing.SetRealm(testing.NewUserRealm(user))
 				func(cur realm) {
-					if err := gs.addDelegation(0, cur, delegationID, delegation); err != nil {
+					if err := gs.addDelegation(0, cur, delegationID, *delegation); err != nil {
 						panic(err)
 					}
 				}(cross(cur))

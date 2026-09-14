@@ -4,6 +4,7 @@ import (
 	"chain"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -1082,11 +1083,20 @@ func TestGetRewardState(cur realm, t *testing.T) {
 			// Verify
 			if tt.expectedHasError {
 				uassert.Error(t, err)
-				uassert.True(t, rewardState == nil)
+				uassert.Equal(t, int64(0), rewardState.DepositAmount())
 				uassert.ErrorContains(t, err, tt.expectedError)
 			} else {
 				uassert.NoError(t, err)
-				uassert.NotNil(t, rewardState)
+				uassert.True(t, rewardState.DepositAmount() > 0)
+
+				originalDebt := rewardState.PriceDebtX128().ToString()
+				rewardState.PriceDebtX128().Set(u256.MustFromDecimal("999"))
+				rewardState.SetDepositAmount(1)
+
+				reloaded, reloadErr := lp.GetRewardState(projectTierID, depositID)
+				uassert.NoError(t, reloadErr)
+				uassert.Equal(t, originalDebt, reloaded.PriceDebtX128().ToString())
+				uassert.True(t, reloaded.DepositAmount() > 1)
 			}
 		})
 	}
@@ -1120,7 +1130,7 @@ func TestGetProjectTierRewards(cur realm, t *testing.T) {
 		// Verify
 		ids := make([]string, 0)
 		rewards.IterateByOffset(0, 10, func(key string, value any) bool {
-			_, ok := value.(*launchpad.RewardState)
+			_, ok := value.(launchpad.RewardState)
 			uassert.True(t, ok)
 			ids = append(ids, key)
 			return false

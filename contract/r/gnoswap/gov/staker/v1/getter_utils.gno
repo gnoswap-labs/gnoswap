@@ -13,7 +13,7 @@ import (
 func cloneDelegationEntry(value any) any {
 	switch delegation := value.(type) {
 	case staker.Delegation:
-		return (&delegation).Clone()
+		return delegation.Clone()
 	default:
 		return nil
 	}

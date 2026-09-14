@@ -58,15 +58,16 @@ func TestCloneRewardStateEntry(cur realm, t *testing.T) {
 		uassert.Equal(t, nil, cloneRewardStateEntry(nil))
 	})
 
-	t.Run("returns a copy the caller cannot write back through", func(cur realm, t *testing.T) {
+	t.Run("returns a detached value including its nested debt", func(cur realm, t *testing.T) {
 		stored := *launchpad.NewRewardState(u256.Zero(), 1_000_000, 100, 200, 300)
 
-		cloned, ok := cloneRewardStateEntry(stored).(*launchpad.RewardState)
+		cloned, ok := cloneRewardStateEntry(stored).(launchpad.RewardState)
 		uassert.True(t, ok)
-		uassert.False(t, cloned == &stored)
 		uassert.Equal(t, stored.DepositAmount(), cloned.DepositAmount())
 
+		cloned.PriceDebtX128().Set(u256.NewUintFromInt64(99))
 		cloned.SetDepositAmount(999)
+		uassert.Equal(t, "0", stored.PriceDebtX128().ToString())
 		uassert.Equal(t, int64(1_000_000), stored.DepositAmount())
 	})
 }

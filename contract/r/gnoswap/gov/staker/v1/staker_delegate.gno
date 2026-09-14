@@ -96,7 +96,7 @@ func (gs *govStakerV1) Delegate(
 
 	registeredReferrer := referral.TryRegister(cross(rlm), caller, referrer)
 
-	resolver := NewDelegationResolver(delegation)
+	resolver := NewDelegationResolver(&delegation)
 
 	chain.Emit(
 		"Delegate",
@@ -260,7 +260,7 @@ func (gs *govStakerV1) Redelegate(
 		panic(err)
 	}
 
-	resolver := NewDelegationResolver(delegation)
+	resolver := NewDelegationResolver(&delegation)
 	chain.Emit(
 		"Redelegate",
 		"prevAddr", prev.Address().String(),
@@ -326,9 +326,10 @@ func (gs *govStakerV1) delegate(
 	amount,
 	currentHeight,
 	currentTimestamp int64,
-) (*staker.Delegation, error) {
+) (staker.Delegation, error) {
+	var emptyDelegation staker.Delegation
 	delegationID := gs.nextDelegationID()
-	delegation := staker.NewDelegation(
+	delegation := *staker.NewDelegation(
 		delegationID,
 		from,
 		to,
@@ -336,21 +337,21 @@ func (gs *govStakerV1) delegate(
 		currentHeight,
 		currentTimestamp,
 	)
-	delegationResolver := NewDelegationResolver(delegation)
+	delegationResolver := NewDelegationResolver(&delegation)
 	delegatedAmount := delegationResolver.DelegatedAmount()
 	if delegatedAmount < 0 {
-		return nil, errors.New(errDelegatedAmountNegative)
+		return emptyDelegation, errors.New(errDelegatedAmountNegative)
 	}
 
 	if err := gs.addDelegation(0, rlm, delegationID, delegation); err != nil {
-		return nil, err
+		return emptyDelegation, err
 	}
 	gs.addDelegationRecord(0, rlm, to, delegatedAmount, currentTimestamp)
 	if err := gs.addStakeEmissionReward(0, rlm, from.String(), amount, currentTimestamp); err != nil {
-		return nil, err
+		return emptyDelegation, err
 	}
 	if err := gs.addStakeProtocolFeeReward(0, rlm, from.String(), amount, currentTimestamp); err != nil {
-		return nil, err
+		return emptyDelegation, err
 	}
 
 	return delegation, nil
@@ -378,7 +379,7 @@ func (gs *govStakerV1) unDelegate(
 	delegations := make([]*staker.Delegation, 0, len(delegationIDs))
 
 	for _, id := range delegationIDs {
-		delegation, exists := gs.store.GetDelegation(id)
+		delegation, exists := gs.getDelegationPtr(id)
 		if !exists {
 			continue
 		}
@@ -392,7 +393,8 @@ func (gs *govStakerV1) unDelegate(
 	}
 
 	// Process undelegation across multiple delegation records if necessary
-	for _, delegation := range delegations {
+	for i := range delegations {
+		delegation := delegations[i]
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
 			if err := gs.removeDelegation(0, rlm, delegation.ID()); err != nil {
@@ -422,7 +424,7 @@ func (gs *govStakerV1) unDelegate(
 			lockupPeriod,
 		)
 
-		if err := gs.setDelegation(0, rlm, delegation.ID(), delegation); err != nil {
+		if err := gs.setDelegation(0, rlm, delegation.ID(), *delegation); err != nil {
 			return 0, err
 		}
 		gs.addDelegationRecord(0, rlm, delegatee, -currentUnDelegationAmount, currentTimestamp)
@@ -463,7 +465,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	delegations := make([]*staker.Delegation, 0, len(delegationIDs))
 
 	for _, id := range delegationIDs {
-		delegation, exists := gs.store.GetDelegation(id)
+		delegation, exists := gs.getDelegationPtr(id)
 		if !exists {
 			continue
 		}
@@ -477,7 +479,8 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	}
 
 	// Process undelegation across multiple delegation records if necessary
-	for _, delegation := range delegations {
+	for i := range delegations {
+		delegation := delegations[i]
 		resolver := NewDelegationResolver(delegation)
 		if resolver.IsEmpty() {
 			if err := gs.removeDelegation(0, rlm, delegation.ID()); err != nil {
@@ -506,7 +509,7 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 			if err := gs.removeDelegation(0, rlm, delegation.ID()); err != nil {
 				return 0, err
 			}
-		} else if err := gs.setDelegation(0, rlm, delegation.ID(), delegation); err != nil {
+		} else if err := gs.setDelegation(0, rlm, delegation.ID(), *delegation); err != nil {
 			return 0, err
 		}
 		gs.addDelegationRecord(0, rlm, delegatee, -currentUnDelegationAmount, currentTime)
@@ -596,7 +599,7 @@ func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, curren
 			return false
 		}
 		for _, id := range delegationIDs {
-			delegation, exists := gs.store.GetDelegation(id)
+			delegation, exists := gs.getDelegationPtr(id)
 			if !exists {
 				continue
 			}
@@ -616,7 +619,7 @@ func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, curren
 			if resolver.IsEmpty() {
 				idsToRemove = append(idsToRemove, delegation.ID())
 			} else {
-				if iErr := gs.setDelegation(0, rlm, delegation.ID(), delegation); iErr != nil {
+				if iErr := gs.setDelegation(0, rlm, delegation.ID(), *delegation); iErr != nil {
 					err = iErr
 					return true
 				}

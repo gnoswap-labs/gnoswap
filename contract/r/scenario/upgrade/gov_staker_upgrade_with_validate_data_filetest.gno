@@ -377,10 +377,10 @@ func collectDelegationIDs(offset, count int) []int64 {
 
 // delegationByID reads one delegation through the read-only view.
 func delegationByID(delegationID int64) (*govStaker.Delegation, error) {
-	delegation, ok := govStaker.GetDelegations().Get(strconv.FormatInt(delegationID, 10)).(*govStaker.Delegation)
+	delegation, ok := govStaker.GetDelegations().Get(strconv.FormatInt(delegationID, 10)).(govStaker.Delegation)
 	if !ok {
 		return nil, ufmt.Errorf("delegation %d not found", delegationID)
 	}
 
-	return delegation, nil
+	return &delegation, nil
 }

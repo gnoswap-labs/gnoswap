@@ -999,8 +999,8 @@ func TestDepositGns_RewardDistributionOrder(cur realm, t *testing.T) {
 		// Calculate claimable rewards for both users at this point
 		accumulatedReward := rewardManager.AccumulatedRewardPerDepositX128()
 
-		user1Claimable := calculateClaimableReward(user1State, accumulatedReward)
-		user2Claimable := calculateClaimableReward(user2State, accumulatedReward)
+		user1Claimable := calculateClaimableReward(&user1State, accumulatedReward)
+		user2Claimable := calculateClaimableReward(&user2State, accumulatedReward)
 
 		uassert.True(t, user1Claimable >= 0,
 			"User1 should have non-negative claimable rewards")

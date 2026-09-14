@@ -33,7 +33,7 @@ func countDelegationIDs(tree *bptree.BPTree) int {
 }
 
 func mustAddDelegation(_ int, rlm realm, gs *govStakerV1, delegationID int64, delegation *staker.Delegation) {
-	if err := gs.addDelegation(0, rlm, delegationID, delegation); err != nil {
+	if err := gs.addDelegation(0, rlm, delegationID, *delegation); err != nil {
 		panic(err)
 	}
 }
@@ -124,15 +124,15 @@ func TestDelegationManagement(cur realm, t *testing.T) {
 			)
 
 			// When: Add delegation
-			err := gs.addDelegation(0, cur, delegationID, delegation)
+			err := gs.addDelegation(0, cur, delegationID, *delegation)
 
 			// Then: Should succeed
 			if tt.expectSuccess {
 				uassert.NoError(t, err)
 
 				// Verify delegation was stored
-				storedDelegation := gs.getDelegation(delegationID)
-				uassert.NotEqual(t, storedDelegation, nil)
+				storedDelegation, exists := gs.getDelegation(delegationID)
+				uassert.True(t, exists)
 				uassert.Equal(t, storedDelegation.DelegateFrom(), tt.delegateFrom)
 				uassert.Equal(t, storedDelegation.DelegateTo(), tt.delegateTo)
 				uassert.Equal(t, storedDelegation.TotalDelegatedAmount(), tt.delegateAmount)
@@ -147,12 +147,12 @@ func TestDelegationManagement(cur realm, t *testing.T) {
 func TestGetUserDelegations(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setupState    func(gs *govStakerV1) (address, []int64)
+		setupState    func(cur realm, gs *govStakerV1) (address, []int64)
 		expectedCount int
 	}{
 		{
 			name: "Get delegations for user with multiple delegations",
-			setupState: func(gs *govStakerV1) (address, []int64) {
+			setupState: func(cur realm, gs *govStakerV1) (address, []int64) {
 				user := address("g1testuser1234567890abcdefghijklmnopqr")
 				delegationIDs := make([]int64, 0)
 
@@ -167,7 +167,7 @@ func TestGetUserDelegations(cur realm, t *testing.T) {
 						100,
 						100,
 					)
-					uassert.NoError(t, gs.addDelegation(0, cur, delegationID, delegation))
+					uassert.NoError(t, gs.addDelegation(0, cur, delegationID, *delegation))
 					delegationIDs = append(delegationIDs, delegationID)
 				}
 				return user, delegationIDs
@@ -176,7 +176,7 @@ func TestGetUserDelegations(cur realm, t *testing.T) {
 		},
 		{
 			name: "Get delegations for user with no delegations",
-			setupState: func(gs *govStakerV1) (address, []int64) {
+			setupState: func(_ realm, gs *govStakerV1) (address, []int64) {
 				user := address("g1newuser1234567890abcdefghijklmnopqr")
 				return user, []int64{}
 			},
@@ -190,7 +190,7 @@ func TestGetUserDelegations(cur realm, t *testing.T) {
 			gs := createTestGovStaker()
 
 			// Given: Setup state
-			user, _ := tt.setupState(gs)
+			user, _ := tt.setupState(cur, gs)
 
 			// When: Get user delegations
 			userDelegations := gs.getUserDelegations(user)
@@ -224,12 +224,12 @@ func TestGetUserDelegations(cur realm, t *testing.T) {
 func TestRemoveDelegation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setupState    func(gs *govStakerV1) int64
+		setupState    func(cur realm, gs *govStakerV1) int64
 		expectSuccess bool
 	}{
 		{
 			name: "Remove existing delegation",
-			setupState: func(gs *govStakerV1) int64 {
+			setupState: func(cur realm, gs *govStakerV1) int64 {
 				delegationID := gs.nextDelegationID()
 				delegation := staker.NewDelegation(
 					delegationID,
@@ -239,14 +239,14 @@ func TestRemoveDelegation(cur realm, t *testing.T) {
 					100,
 					100,
 				)
-				uassert.NoError(t, gs.addDelegation(0, cur, delegationID, delegation))
+				uassert.NoError(t, gs.addDelegation(0, cur, delegationID, *delegation))
 				return delegationID
 			},
 			expectSuccess: true,
 		},
 		{
 			name: "Remove non-existent delegation",
-			setupState: func(gs *govStakerV1) int64 {
+			setupState: func(_ realm, gs *govStakerV1) int64 {
 				return 99999 // Non-existent ID
 			},
 			expectSuccess: false,
@@ -259,7 +259,7 @@ func TestRemoveDelegation(cur realm, t *testing.T) {
 			gs := createTestGovStaker()
 
 			// Given: Setup state
-			delegationID := tt.setupState(gs)
+			delegationID := tt.setupState(cur, gs)
 
 			// When: Remove delegation
 			err := gs.removeDelegation(0, cur, delegationID)
@@ -273,8 +273,8 @@ func TestRemoveDelegation(cur realm, t *testing.T) {
 
 			if tt.expectSuccess {
 				// Verify delegation was removed
-				delegation := gs.getDelegation(delegationID)
-				uassert.Equal(t, delegation, nil)
+				_, exists := gs.getDelegation(delegationID)
+				uassert.False(t, exists)
 			}
 		})
 	}
@@ -646,12 +646,12 @@ func TestPartialLaunchpadStakeRemoval(cur realm, t *testing.T) {
 func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		setupState    func(gs *govStakerV1) (address, address, []int64)
+		setupState    func(cur realm, gs *govStakerV1) (address, address, []int64)
 		expectedCount int
 	}{
 		{
 			name: "User with multiple delegations to same delegatee",
-			setupState: func(gs *govStakerV1) (address, address, []int64) {
+			setupState: func(cur realm, gs *govStakerV1) (address, address, []int64) {
 				user := address("g1user1234567890abcdefghijklmnopqrstu")
 				delegatee := address("g1validator1234567890abcdefghijklmno")
 				delegationIDs := make([]int64, 0)
@@ -676,7 +676,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 		},
 		{
 			name: "User with delegations to different delegatees - filter by specific delegatee",
-			setupState: func(gs *govStakerV1) (address, address, []int64) {
+			setupState: func(cur realm, gs *govStakerV1) (address, address, []int64) {
 				user := address("g1user9876543210abcdefghijklmnopqrstu")
 				targetDelegatee := address("g1validator1111111111abcdefghijklm")
 				otherDelegatee1 := address("g1validator2222222222abcdefghijklm")
@@ -729,7 +729,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 		},
 		{
 			name: "User with no delegations to specific delegatee",
-			setupState: func(gs *govStakerV1) (address, address, []int64) {
+			setupState: func(cur realm, gs *govStakerV1) (address, address, []int64) {
 				user := address("g1user5555555555abcdefghijklmnopqrstu")
 				targetDelegatee := address("g1validator9999999999abcdefghijklm")
 				otherDelegatee := address("g1validator8888888888abcdefghijklm")
@@ -752,7 +752,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 		},
 		{
 			name: "User with no delegations at all",
-			setupState: func(gs *govStakerV1) (address, address, []int64) {
+			setupState: func(_ realm, gs *govStakerV1) (address, address, []int64) {
 				user := address("g1newuser6666666666abcdefghijklmnopq")
 				delegatee := address("g1validator7777777777abcdefghijklm")
 				return user, delegatee, []int64{}
@@ -761,7 +761,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 		},
 		{
 			name: "Large number of delegations to same delegatee",
-			setupState: func(gs *govStakerV1) (address, address, []int64) {
+			setupState: func(cur realm, gs *govStakerV1) (address, address, []int64) {
 				user := address("g1poweruser1234567890abcdefghijklmno")
 				delegatee := address("g1bigvalidator1234567890abcdefghij")
 				delegationIDs := make([]int64, 0)
@@ -786,7 +786,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 		},
 		{
 			name: "Delegations with varying amounts including zero undelegated amount",
-			setupState: func(gs *govStakerV1) (address, address, []int64) {
+			setupState: func(cur realm, gs *govStakerV1) (address, address, []int64) {
 				user := address("g1mixeduser1234567890abcdefghijklmno")
 				delegatee := address("g1mixedvalidator1234567890abcdefgh")
 				delegationIDs := make([]int64, 0)
@@ -842,7 +842,7 @@ func TestGetUserDelegationsWithDelegatee(cur realm, t *testing.T) {
 			gs := createTestGovStaker()
 
 			// Given: Setup state
-			user, _, expectedDelegationIDs := tt.setupState(gs)
+			user, _, expectedDelegationIDs := tt.setupState(cur, gs)
 
 			// When: Get user delegations with delegatee
 			delegationTree := gs.getUserDelegations(user)

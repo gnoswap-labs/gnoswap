@@ -14,21 +14,21 @@ import (
 func TestRewardManager_IsInitialized(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
-		rewardStates     map[string]*launchpad.RewardState
+		rewardStates     map[string]launchpad.RewardState
 		expectedResult   bool
 		expectedHasError bool
 		expectedError    string
 	}{
 		{
 			name:             "is initialized return false for empty rewards",
-			rewardStates:     map[string]*launchpad.RewardState{},
+			rewardStates:     map[string]launchpad.RewardState{},
 			expectedResult:   false,
 			expectedHasError: false,
 		},
 		{
 			name: "is initialized return true when rewards exist",
-			rewardStates: map[string]*launchpad.RewardState{
-				"test": launchpad.NewRewardState(u256.Zero(), 1000, 100, 200, 0),
+			rewardStates: map[string]launchpad.RewardState{
+				"test": *launchpad.NewRewardState(u256.Zero(), 1000, 100, 200, 0),
 			},
 			expectedResult:   true,
 			expectedHasError: false,
@@ -977,7 +977,7 @@ func TestRewardManager_ClaimedAmountOverflow(cur realm, t *testing.T) {
 
 			// Setup: Set initial claimed amount
 			rewardState.SetClaimedAmount(tt.initialClaimed)
-			manager.SetReward(deposit.ID(), rewardState)
+			manager.SetReward(deposit.ID(), *rewardState)
 
 			// Setup: Configure accumulated reward to generate exact claimableReward
 			// Using priceDebtX128 for precise calculation

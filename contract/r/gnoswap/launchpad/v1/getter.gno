@@ -464,30 +464,31 @@ func (lp *launchpadV1) GetProjectTierRewardClaimableDuration(projectTierId strin
 }
 
 // GetRewardState retrieves a reward state by project tier ID and deposit ID.
-// Returns nil and error if reward manager or reward state not found.
-func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*launchpad.RewardState, error) {
+// Returns the zero value and an error if the reward manager or reward state is not found.
+func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (launchpad.RewardState, error) {
+	var zeroRewardState launchpad.RewardState
 	managers := lp.store.GetProjectTierRewardManagers()
 	value := managers.Get(projectTierId)
 	if value == nil {
-		return nil, makeErrorWithDetails(errDataNotFound, "reward manager not found")
+		return zeroRewardState, makeErrorWithDetails(errDataNotFound, "reward manager not found")
 	}
 
 	manager, ok := value.(*launchpad.RewardManager)
 	if !ok {
-		return nil, errors.New("invalid reward manager type")
+		return zeroRewardState, errors.New("invalid reward manager type")
 	}
 
 	rewards := manager.Rewards()
 	rewardValue := rewards.Get(depositId)
 	if rewardValue == nil {
-		return nil, makeErrorWithDetails(errDataNotFound, "reward state not found")
+		return zeroRewardState, makeErrorWithDetails(errDataNotFound, "reward state not found")
 	}
 
 	switch rewardState := rewardValue.(type) {
 	case launchpad.RewardState:
 		return rewardState.Clone(), nil
 	default:
-		return nil, errors.New("invalid reward state type")
+		return zeroRewardState, errors.New("invalid reward state type")
 	}
 }
 

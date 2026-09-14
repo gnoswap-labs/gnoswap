@@ -81,16 +81,12 @@ func (d *Delegation) SetWithdraws(withdraws []DelegationWithdraw) {
 	d.withdraws = withdraws
 }
 
-// Clone creates a deep copy of the delegation.
-func (d *Delegation) Clone() *Delegation {
-	if d == nil {
-		return nil
-	}
-
+// Clone returns a detached value, including a copy of the withdraws slice.
+func (d Delegation) Clone() Delegation {
 	clonedWithdraws := make([]DelegationWithdraw, len(d.withdraws))
 	copy(clonedWithdraws, d.withdraws)
 
-	return &Delegation{
+	return Delegation{
 		id:               d.id,
 		delegateAmount:   d.delegateAmount,
 		unDelegateAmount: d.unDelegateAmount,

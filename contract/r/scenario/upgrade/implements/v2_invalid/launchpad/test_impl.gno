@@ -407,7 +407,7 @@ func (t *TestLaunchpad) GetProjectTierRewardClaimableDuration(projectTierId stri
 	return t.instance.GetProjectTierRewardClaimableDuration(projectTierId)
 }
 
-func (t *TestLaunchpad) GetRewardState(projectTierId string, depositId string) (*launchpad.RewardState, error) {
+func (t *TestLaunchpad) GetRewardState(projectTierId string, depositId string) (launchpad.RewardState, error) {
 	if !t.isActive("GetRewardState") {
 		panic("test implementation: GetRewardState not supported")
 	}
