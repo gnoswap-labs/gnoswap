@@ -8,8 +8,8 @@
 // falling short (issuer burn, accounting drift). The guard therefore checks the
 // staker realm's live balance against what both delivery legs will move —
 // including carried-over pending protocol fees of the same token — and skips
-// the delivery instead of letting SafeGRC20Transfer panic inside UnStakeToken's
-// mandatory collect.
+// the delivery instead of letting SafeGRC20Transfer panic; on an exit checkpoint
+// such a panic would lock the position and the incentive refund for good.
 //
 // The file name sorts after staker_collect_reward_split_test.gno; like the rest
 // of this package's tests, every test re-initializes the mock instance through
@@ -136,15 +136,24 @@ func burnStakerBar(cur realm, t *testing.T) int64 {
 }
 
 // An issuer burning the staker realm's balance of the reward token must not
-// block withdrawal: UnStakeToken completes, the position is fully unstaked, the
-// undeliverable reward is skipped without any bookkeeping, and — never having
-// been deducted — stays refundable to the incentive creator.
-func TestExternalRewardGuard_IssuerBurnDoesNotBlockUnstake(cur realm, t *testing.T) {
+// lock the position: UnStakeToken writes its checkpoint, and the permissionless
+// collect that settles it skips the undeliverable BAR leg instead of panicking.
+// The skipped share is forfeited so the checkpoint clears, the position can be
+// staked again, and - never having been deducted - the share stays refundable
+// to the incentive creator, whose EndExternalIncentive is no longer blocked.
+func TestExternalRewardGuard_IssuerBurnDoesNotLockCheckpoint(cur realm, t *testing.T) {
 	positionId, barIncentiveId := setupGuardDeposit(cur, t, 0)
 
 	collectable, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
 	uassert.NoError(t, err)
 	uassert.True(t, collectable > 0)
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	sr.UnStakeToken(cross(cur), positionId)
+
+	uassert.False(t, getMockInstance().getDeposits().Has(positionId))
+	uassert.True(t, sr.HasUnstakedPosition(positionId))
+	uassert.Equal(t, int64(1), sr.GetUncollectedIncentiveCount(barIncentiveId))
 
 	burnStakerBar(cur, t)
 
@@ -152,20 +161,28 @@ func TestExternalRewardGuard_IssuerBurnDoesNotBlockUnstake(cur realm, t *testing
 	incentiveRewardBefore := incentive.RewardAmount()
 	ownerBarBefore := bar.BalanceOf(addr01)
 
-	// The mandatory inline collect must skip the BAR leg instead of panicking.
-	// (The GNS emission leg is orthogonal to the guard — this harness's mock
-	// pool-tier wiring keeps the internal rate at zero, and the internal reward
-	// machinery has its own coverage in calculate_pool_position_reward_test.gno.)
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	sr.UnStakeToken(cross(cur), positionId)
+	// A third party settles the checkpoint. The BAR leg must be skipped and
+	// forfeited instead of panicking. (The GNS emission leg is orthogonal to the
+	// guard - this harness's mock pool-tier wiring keeps the internal rate at
+	// zero, and the internal reward machinery has its own coverage in
+	// calculate_pool_position_reward_test.gno.)
+	testing.SetRealm(testing.NewUserRealm(addr02))
+	sr.CollectReward(cross(cur), positionId)
 
-	uassert.False(t, getMockInstance().getDeposits().Has(positionId))
 	uassert.Equal(t, ownerBarBefore, bar.BalanceOf(addr01))
+	uassert.False(t, sr.HasUnstakedPosition(positionId))
+	uassert.Equal(t, int64(0), sr.GetUncollectedIncentiveCount(barIncentiveId))
 
-	// Nothing was deducted from the incentive: the skipped share remains inside
+	// Nothing was deducted from the incentive: the forfeited share remains inside
 	// it and eventually returns to the creator through EndExternalIncentive.
 	incentive = getMockInstance().getExternalIncentives().get(barIncentiveId)
 	uassert.Equal(t, incentiveRewardBefore, incentive.RewardAmount())
+
+	// The position is free to stake again.
+	mockNFTApprove(cur, stakerAddr, positionId)
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	sr.StakeToken(cross(cur), positionId, "")
+	uassert.True(t, getMockInstance().getDeposits().Has(positionId))
 }
 
 // While the position stays staked, a guard skip is a deferral, not a loss: the
