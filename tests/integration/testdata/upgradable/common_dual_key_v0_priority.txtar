@@ -39,10 +39,10 @@ gnokey maketx addpkg -pkgdir $WORK/grc20_v1 -pkgpath gno.land/p/nt/grc20/v1 -gas
 gnokey maketx addpkg -pkgdir $WORK/grc20reg_v1 -pkgpath gno.land/r/nt/grc20reg/v1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 gnokey maketx addpkg -pkgdir $WORK/common_caller -pkgpath gno.land/r/test/common_caller -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
-## Upgrade common to the multi-generation implementation
+## Register and activate common/v2 (v0 has priority over v1)
 gnokey maketx addpkg -pkgdir $WORK/common_v2 -pkgpath gno.land/r/gnoswap/common/v2 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stdout 'EVENTS:     \[\{\"type\":\"RegisterInitializer\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"registeredPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager\"\}'
-gnokey maketx call -pkgpath gno.land/r/gnoswap/common -func UpgradeImpl -args gno.land/r/gnoswap/common/v2 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/common -func UpgradeImpl -args "gno.land/r/gnoswap/common/v2" -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stdout 'OK!'
 stdout 'EVENTS:     \[\{\"type\":\"ChangeImplementation\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"previousPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v1\"\},\{\"key\":\"newPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager\"\}'
 gnokey query vm/qeval --data "gno.land/r/gnoswap/common.GetImplementationPackagePath()"
@@ -51,7 +51,9 @@ stdout '\(\"gno.land/r/gnoswap/common/v2\" string\)'
 
 ## Case A: v0 registered first, v1 added later under the same key
 gnokey maketx addpkg -pkgdir $WORK/token_dual_v0first -pkgpath gno.land/r/test/token_dual_v0first -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stdout 'EVENTS:     \[\{\"type\":\"NewToken\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.0000000\"\},\{\"key\":\"name\",\"value\":\"Dual\"\},\{\"key\":\"symbol\",\"value\":\"DUAL\"\},\{\"key\":\"decimals\",\"value\":\"6\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\},\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.0000000\"\},\{\"key\":\"from\",\"value\":\"\"\},\{\"key\":\"to\",\"value\":\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\"\},\{\"key\":\"value\",\"value\":\"1000000\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\},\{\"type\":\"register\",\"attrs\":\[\{\"key\":\"token_path\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\"\},\{\"key\":\"pkgpath\",\"value\":\"gno\.land/r/test/token_dual_v0first\"\},\{\"key\":\"slug\",\"value\":\"\"\},\{\"key\":\"symbol\",\"value\":\"DUAL\"\}\],\"pkg_path\":\"gno\.land/r/nt/grc20reg/v0\"\}'
+stdout 'EVENTS:     \[\{\"type\":\"NewToken\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.0000000\"\},\{\"key\":\"name\",\"value\":\"Dual\"\},\{\"key\":\"symbol\",\"value\":\"DUAL\"\},\{\"key\":\"decimals\",\"value\":\"6\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\},\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.0000000\"\},\{\"key\":\"from\",\"value\":\"\"\},\{\"key\":\"to\",\"value\":\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\"\},\{\"key\":\"value\",\"value\":\"1000000\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\},\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.0000000\"\},\{\"key\":\"from\",\"value\":\"\"\},\{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"\},\{\"key\":\"value\",\"value\":\"1000000000\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\},\{\"type\":\"register\",\"attrs\":\[\{\"key\":\"token_path\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\"\},\{\"key\":\"pkgpath\",\"value\":\"gno\.land/r/test/token_dual_v0first\"\},\{\"key\":\"slug\",\"value\":\"\"\},\{\"key\":\"symbol\",\"value\":\"DUAL\"\}\],\"pkg_path\":\"gno\.land/r/nt/grc20reg/v0\"\}'
+gnokey query vm/qeval --data "gno.land/r/test/common_caller.IsRegistered(\"gno.land/r/test/token_dual_v0first.DUAL\")"
+stdout '\(true bool\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV1(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(-1 int64\)'
 
@@ -60,12 +62,14 @@ gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "
 stdout 'OK!'
 stdout 'EVENTS:     \[\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.0000000\"\},\{\"key\":\"from\",\"value\":\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\"\},\{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"\},\{\"key\":\"value\",\"value\":\"10\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\}'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV0(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
-stdout '\(10 int64\)'
+stdout '\(1000000010 int64\)'
 
 ## Issuer registers a v1 token under the very same key
-gnokey maketx call -pkgpath gno.land/r/test/token_dual_v0first -func RegisterV1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/test/token_dual_v0first -func RegisterV1  -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stdout 'OK!'
 stdout 'EVENTS:     \[\{\"type\":\"NewToken\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.v1\"\},\{\"key\":\"name\",\"value\":\"Dual\"\},\{\"key\":\"symbol\",\"value\":\"DUAL\"\},\{\"key\":\"decimals\",\"value\":\"6\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v1\"\},\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.v1\"\},\{\"key\":\"from\",\"value\":\"\"\},\{\"key\":\"to\",\"value\":\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\"\},\{\"key\":\"value\",\"value\":\"1000000\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v1\"\},\{\"type\":\"register\",\"attrs\":\[\{\"key\":\"token_path\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\"\},\{\"key\":\"pkgpath\",\"value\":\"gno\.land/r/test/token_dual_v0first\"\},\{\"key\":\"symbol\",\"value\":\"DUAL\"\}\],\"pkg_path\":\"gno\.land/r/nt/grc20reg/v1\"\}'
+gnokey query vm/qeval --data "gno.land/r/test/common_caller.IsRegistered(\"gno.land/r/test/token_dual_v0first.DUAL\")"
+stdout '\(true bool\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV1(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(0 int64\)'
 
@@ -74,15 +78,19 @@ gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "
 stdout 'OK!'
 stdout 'EVENTS:     \[\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v0first\.DUAL\.0000000\"\},\{\"key\":\"from\",\"value\":\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\"\},\{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"\},\{\"key\":\"value\",\"value\":\"20\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\}'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV0(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
-stdout '\(30 int64\)'
+stdout '\(1000000030 int64\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v0first.BalanceOfV1(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(0 int64\)'
 gnokey query vm/qeval --data "gno.land/r/gnoswap/common.BalanceOf(\"gno.land/r/test/token_dual_v0first.DUAL\", \"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
-stdout '\(30 int64\)'
+stdout '\(1000000030 int64\)'
+gnokey query vm/qeval --data "gno.land/r/gnoswap/common.TotalSupply(\"gno.land/r/test/token_dual_v0first.DUAL\")"
+stdout '\(1001000000 int64\)'
 
 ## Case B: v1 registered first, v0 added later under the same key
 gnokey maketx addpkg -pkgdir $WORK/token_dual_v1first -pkgpath gno.land/r/test/token_dual_v1first -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stdout 'EVENTS:     \[\{\"type\":\"NewToken\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v1first\.DUAL\.v1\"\},\{\"key\":\"name\",\"value\":\"Dual\"\},\{\"key\":\"symbol\",\"value\":\"DUAL\"\},\{\"key\":\"decimals\",\"value\":\"6\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v1\"\},\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v1first\.DUAL\.v1\"\},\{\"key\":\"from\",\"value\":\"\"\},\{\"key\":\"to\",\"value\":\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\"\},\{\"key\":\"value\",\"value\":\"1000000\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v1\"\},\{\"type\":\"register\",\"attrs\":\[\{\"key\":\"token_path\",\"value\":\"gno\.land/r/test/token_dual_v1first\.DUAL\"\},\{\"key\":\"pkgpath\",\"value\":\"gno\.land/r/test/token_dual_v1first\"\},\{\"key\":\"symbol\",\"value\":\"DUAL\"\}\],\"pkg_path\":\"gno\.land/r/nt/grc20reg/v1\"\}'
+gnokey query vm/qeval --data "gno.land/r/test/common_caller.IsRegistered(\"gno.land/r/test/token_dual_v1first.DUAL\")"
+stdout '\(true bool\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v1first.BalanceOfV0(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(-1 int64\)'
 
@@ -92,11 +100,15 @@ stdout 'OK!'
 stdout 'EVENTS:     \[\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v1first\.DUAL\.v1\"\},\{\"key\":\"from\",\"value\":\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\"\},\{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"\},\{\"key\":\"value\",\"value\":\"10\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v1\"\}'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v1first.BalanceOfV1(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(10 int64\)'
+gnokey query vm/qeval --data "gno.land/r/gnoswap/common.TotalSupply(\"gno.land/r/test/token_dual_v1first.DUAL\")"
+stdout '\(1000000 int64\)'
 
 ## Issuer registers a v0 token under the very same key
-gnokey maketx call -pkgpath gno.land/r/test/token_dual_v1first -func RegisterV0 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/test/token_dual_v1first -func RegisterV0  -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stdout 'OK!'
 stdout 'EVENTS:     \[\{\"type\":\"NewToken\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v1first\.DUAL\.0000000\"\},\{\"key\":\"name\",\"value\":\"Dual\"\},\{\"key\":\"symbol\",\"value\":\"DUAL\"\},\{\"key\":\"decimals\",\"value\":\"6\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\},\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_dual_v1first\.DUAL\.0000000\"\},\{\"key\":\"from\",\"value\":\"\"\},\{\"key\":\"to\",\"value\":\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\"\},\{\"key\":\"value\",\"value\":\"1000000\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v0\"\},\{\"type\":\"register\",\"attrs\":\[\{\"key\":\"token_path\",\"value\":\"gno\.land/r/test/token_dual_v1first\.DUAL\"\},\{\"key\":\"pkgpath\",\"value\":\"gno\.land/r/test/token_dual_v1first\"\},\{\"key\":\"slug\",\"value\":\"\"\},\{\"key\":\"symbol\",\"value\":\"DUAL\"\}\],\"pkg_path\":\"gno\.land/r/nt/grc20reg/v0\"\}'
+gnokey query vm/qeval --data "gno.land/r/test/common_caller.IsRegistered(\"gno.land/r/test/token_dual_v1first.DUAL\")"
+stdout '\(true bool\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v1first.BalanceOfV0(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(0 int64\)'
 
@@ -110,6 +122,8 @@ gnokey query vm/qeval --data "gno.land/r/test/token_dual_v1first.BalanceOfV1(\"g
 stdout '\(10 int64\)'
 gnokey query vm/qeval --data "gno.land/r/gnoswap/common.BalanceOf(\"gno.land/r/test/token_dual_v1first.DUAL\", \"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
 stdout '\(20 int64\)'
+gnokey query vm/qeval --data "gno.land/r/gnoswap/common.TotalSupply(\"gno.land/r/test/token_dual_v1first.DUAL\")"
+stdout '\(1000000 int64\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v1first.BalanceOfV0(\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\")"
 stdout '\(999980 int64\)'
 gnokey query vm/qeval --data "gno.land/r/test/token_dual_v1first.BalanceOfV1(\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\")"
@@ -216,6 +230,12 @@ func (t *Token) RealmTeller(_ int, rlm realm) Teller {
 	return &realmTeller{Token: t, actor: rlm.Address()}
 }
 
+// CallerTeller returns a teller whose actor is the caller of the current
+// crossing frame (the user or realm that invoked the token realm).
+func (l *PrivateLedger) CallerTeller() Teller {
+	return &callerTeller{Token: l.token}
+}
+
 func (l *PrivateLedger) Mint(to address, amount int64) error {
 	l.balances[to] += amount
 	l.totalSupply += amount
@@ -285,10 +305,50 @@ func (rt *realmTeller) TransferFrom(_ int, rlm realm, from, to address, amount i
 	return nil
 }
 
+type callerTeller struct {
+	*Token
+}
+
+func (ct *callerTeller) actor(_ int, rlm realm) address {
+	if !rlm.IsCurrent() {
+		panic(ErrSpoofedRealm)
+	}
+	return rlm.Previous().Address()
+}
+
+func (ct *callerTeller) Transfer(_ int, rlm realm, to address, amount int64) error {
+	return ct.ledger.transfer(ct.actor(0, rlm), to, amount)
+}
+
+func (ct *callerTeller) Approve(_ int, rlm realm, spender address, amount int64) error {
+	owner := ct.actor(0, rlm)
+	ct.ledger.allowances[allowanceKey(owner, spender)] = amount
+	chain.Emit(
+		ApprovalEvent,
+		"token", ct.id,
+		"owner", string(owner),
+		"spender", string(spender),
+		"value", strconv.Itoa(int(amount)),
+	)
+	return nil
+}
+
+func (ct *callerTeller) TransferFrom(_ int, rlm realm, from, to address, amount int64) error {
+	spender := ct.actor(0, rlm)
+	key := allowanceKey(from, spender)
+	if ct.ledger.allowances[key] < amount {
+		return ErrInsufficientAllowance
+	}
+	if err := ct.ledger.transfer(from, to, amount); err != nil {
+		return err
+	}
+	ct.ledger.allowances[key] -= amount
+	return nil
+}
+
 func allowanceKey(owner, spender address) string {
 	return string(owner) + ":" + string(spender)
 }
-
 -- grc20reg_v1/gnomod.toml --
 module = "gno.land/r/nt/grc20reg/v1"
 gno = "0.9"
@@ -332,10 +392,6 @@ func Register(cur realm, token *grc20.Token) string {
 func Get(key string) *grc20.Token {
 	return registry[key]
 }
-
--- common_caller/gnomod.toml --
-module = "gno.land/r/test/common_caller"
-gno = "0.9"
 -- common_caller/caller.gno --
 // Stand-in for a core realm: every token operation goes through common with
 // this realm as the token actor.
@@ -349,10 +405,20 @@ func Transfer(cur realm, tokenKey string, to address, amount int64) {
 	common.SafeGRC20Transfer(0, cur, tokenKey, to, amount)
 }
 
+func TransferFrom(cur realm, tokenKey string, from, to address, amount int64) {
+	common.SafeGRC20TransferFrom(0, cur, tokenKey, from, to, amount)
+}
+
+func Approve(cur realm, tokenKey string, spender address, amount int64) {
+	common.SafeGRC20Approve(0, cur, tokenKey, spender, amount)
+}
+
 func IsRegistered(tokenKey string) bool {
 	return common.IsRegistered(tokenKey) == nil
 }
-
+-- common_caller/gnomod.toml --
+module = "gno.land/r/test/common_caller"
+gno = "0.9"
 -- common_v2/gnomod.toml --
 module = "gno.land/r/gnoswap/common/v2"
 gno = "0.9"
@@ -368,7 +434,6 @@ func init(cur realm) {
 		return NewCommonV2()
 	})
 }
-
 -- common_v2/instance.gno --
 // commonV2 consults every registry generation with v0 taking priority: a key
 // present in grc20reg/v0 is always served from the v0 ledger, even if the same
@@ -464,7 +529,6 @@ func (c *commonV2) TransferFrom(_ int, rlm realm, tokenKey string, from, to addr
 func (c *commonV2) Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) error {
 	return c.mustGetToken(tokenKey).realmTeller(0, rlm).Approve(0, rlm, spender, amount)
 }
-
 -- token_dual_v0first/gnomod.toml --
 module = "gno.land/r/test/token_dual_v0first"
 gno = "0.9"
@@ -482,17 +546,29 @@ import (
 	grc20regv1 "gno.land/r/nt/grc20reg/v1"
 )
 
+const admin = address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+
 var (
 	tokenV0  *grc20v0.Token
 	ledgerV0 *grc20v0.PrivateLedger
+	tellerV0 grc20v0.Teller
 	tokenV1  *grc20v1.Token
 	ledgerV1 *grc20v1.PrivateLedger
 )
 
 func init(cur realm) {
 	tokenV0, ledgerV0 = grc20v0.NewToken("Dual", "DUAL", 6, 0, cur)
+	tellerV0 = ledgerV0.CallerTeller()
 	ledgerV0.Mint(chain.PackageAddress("gno.land/r/test/common_caller"), 1_000_000)
+	ledgerV0.Mint(admin, 1_000_000_000)
 	grc20regv0.Register(cross(cur), tokenV0, "")
+}
+
+// ApproveV0 lets an EOA approve a spender on the v0 ledger.
+func ApproveV0(cur realm, spender address, amount int64) {
+	if err := tellerV0.Approve(0, cur, spender, amount); err != nil {
+		panic(err.Error())
+	}
 }
 
 func RegisterV1(cur realm) {
@@ -511,7 +587,6 @@ func BalanceOfV1(owner address) int64 {
 	}
 	return tokenV1.BalanceOf(owner)
 }
-
 -- token_dual_v1first/gnomod.toml --
 module = "gno.land/r/test/token_dual_v1first"
 gno = "0.9"
