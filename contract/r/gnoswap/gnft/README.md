@@ -161,7 +161,7 @@ gnft.Burn(cross(cur), tokenId)
 
 ### Dependencies
 
-- `gno.land/p/demo/tokens/grc721`: GRC721 implementation
+- `gno.land/p/nt/grc721/v0`: GRC721 implementation
 - `gno.land/r/gnoswap/rbac`: Access control
 - `gno.land/r/gnoswap/access`: Position role mirror
 
