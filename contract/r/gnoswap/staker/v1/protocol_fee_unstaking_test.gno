@@ -121,18 +121,14 @@ func TestAddPendingProtocolFee(cur realm, t *testing.T) {
 func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	instance := getMockInstance()
-	originalPendingProtocolFees := map[string]int64{
-		barPath: 0,
-		gnsPath: -10,
-	}
-	instance.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
+	instance.store.SetPendingProtocolFee(0, cur, barPath, 0)
+	instance.store.SetPendingProtocolFee(0, cur, gnsPath, -10)
 
 	instance.settleProtocolFee(0, cur, barPath, 0)
 	instance.settleProtocolFee(0, cur, gnsPath, 0)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)
-	uassert.Equal(t, len(originalPendingProtocolFees), 2)
 }
 
 func TestSetUnStakingFee(cur realm, t *testing.T) {
