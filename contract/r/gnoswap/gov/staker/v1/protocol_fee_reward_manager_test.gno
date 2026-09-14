@@ -369,6 +369,32 @@ func TestProtocolFeeRewardManager_GetClaimableRewardAmount(cur realm, t *testing
 		uassert.Equal(t, claimable, int64(500))
 	})
 
+	t.Run("matches collect after a bounded fold consumed exactly its limit", func(cur realm, t *testing.T) {
+		// A bounded fold that consumes exactly its limit is reported as not exhausted,
+		// so foldedEpoch stays at the last consumed epoch even when nothing is left
+		// pending. Stake changes without fees then move the epoch in force ahead of
+		// it. The query must still report what a collect pays, since a collect starts
+		// with an exhaustive (empty) fold that marks every closed epoch as folded.
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.applyAccrualBuckets(pfTestBar, []int64{1}, []int64{1000}, false, 10))
+		uassert.NoError(t, resolver.addStake("alice", 100, 2))
+		uassert.NoError(t, resolver.addStake("alice", 100, 3))
+
+		accumulator, ok := resolver.GetTokenAccumulator(pfTestBar)
+		uassert.True(t, ok)
+		uassert.Equal(t, accumulator.GetFoldedEpoch(), int64(0))
+
+		claimable, err := resolver.GetClaimableRewardAmount("alice", pfTestBar, nil, nil)
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimable, int64(1000))
+
+		foldAll(t, resolver, pfTestBar, []int64{}, []int64{}, 11)
+		reward, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, claimable)
+	})
+
 	t.Run("unknown staker or token yields zero", func(cur realm, t *testing.T) {
 		resolver := newPfTestManager()
 		claimable, err := resolver.GetClaimableRewardAmount("nobody", pfTestBar, nil, nil)

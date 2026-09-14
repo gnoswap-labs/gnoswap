@@ -41,6 +41,8 @@ type protocolFeeAccumulatorView struct {
 	firstEpoch int64
 	// foldedEpoch is the last epoch whose fees are known to be fully folded, or -1
 	foldedEpoch int64
+	// currentEpoch is the accrual epoch in force on the manager
+	currentEpoch int64
 }
 
 // at returns the accumulated value after the fees of the latest known epoch at or
@@ -73,7 +75,11 @@ type protocolFeeTokenSettlement struct {
 //
 // A fresh state skips every stake event at or before the accumulator's first epoch:
 // the accumulator was zero throughout, so those segments earned nothing and the open
-// segment can start at the last of them.
+// segment can start at the last of them. When no fee was folded at all, the skip
+// covers every event, but only once every closed epoch is known to be folded: a
+// bucket still pending from a closed epoch could later credit one of those events,
+// so until then they are settled one by one through settleEvents, which is gated by
+// foldedEpoch and yields nothing while the accumulator stays at zero.
 func (p *ProtocolFeeRewardStateResolver) loadTokenSettlement(tokenPath string, view *protocolFeeAccumulatorView) *protocolFeeTokenSettlement {
 	if tokenState, ok := p.GetTokenState(tokenPath); ok {
 		return &protocolFeeTokenSettlement{
@@ -93,9 +99,12 @@ func (p *ProtocolFeeRewardStateResolver) loadTokenSettlement(tokenPath string, v
 
 	eventCount := p.GetStakeEventCount()
 	if view.firstEpoch < 0 {
-		// No fee was ever folded, so every recorded event earned nothing.
-		settlement.eventCursor = eventCount
-		settlement.segmentStakedAmount = p.GetStakedAmount()
+		if view.foldedEpoch >= view.currentEpoch-1 {
+			// No fee was ever folded and nothing from a closed epoch is pending, so
+			// every recorded event earned nothing.
+			settlement.eventCursor = eventCount
+			settlement.segmentStakedAmount = p.GetStakedAmount()
+		}
 		return settlement
 	}
 

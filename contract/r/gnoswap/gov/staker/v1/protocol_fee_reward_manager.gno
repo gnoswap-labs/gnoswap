@@ -174,16 +174,23 @@ func (self *ProtocolFeeRewardManagerResolver) applyAccrualBuckets(
 	return nil
 }
 
-// accumulatorView returns a read view of tokenPath's accumulator. When pending buckets
-// are given they are projected on top, as applyAccrualBuckets would fold them, so a
-// query reports what a collect would pay.
-func (self *ProtocolFeeRewardManagerResolver) accumulatorView(tokenPath string, pendingEpochs []int64, pendingAmounts []int64) *protocolFeeAccumulatorView {
+// accumulatorView returns a read view of tokenPath's accumulator.
+//
+// With pendingComplete false the view reflects the accumulator exactly as folded so
+// far, which is what a collect must settle against. With pendingComplete true the
+// given buckets are the whole pending set of the token: they are projected on top, as
+// applyAccrualBuckets would fold them, and every closed epoch counts as folded, which
+// is what an exhaustive fold would leave behind. A query uses the latter so that it
+// reports what a collect would pay even when a previous bounded fold consumed exactly
+// its limit and left foldedEpoch behind the epoch in force.
+func (self *ProtocolFeeRewardManagerResolver) accumulatorView(tokenPath string, pendingEpochs []int64, pendingAmounts []int64, pendingComplete bool) *protocolFeeAccumulatorView {
 	view := &protocolFeeAccumulatorView{
-		extraEpochs: []int64{},
-		extraValues: []*u256.Uint{},
-		current:     u256.Zero(),
-		firstEpoch:  -1,
-		foldedEpoch: -1,
+		extraEpochs:  []int64{},
+		extraValues:  []*u256.Uint{},
+		current:      u256.Zero(),
+		firstEpoch:   -1,
+		foldedEpoch:  -1,
+		currentEpoch: self.GetCurrentEpoch(),
 	}
 
 	if accumulator, ok := self.GetTokenAccumulator(tokenPath); ok {
@@ -193,8 +200,9 @@ func (self *ProtocolFeeRewardManagerResolver) accumulatorView(tokenPath string, 
 		view.foldedEpoch = accumulator.GetFoldedEpoch()
 	}
 
-	if len(pendingEpochs) == 0 {
-		return view
+	if pendingComplete {
+		// Projecting the whole pending set folds every closed epoch.
+		view.foldedEpoch = maxInt64(view.foldedEpoch, view.currentEpoch-1)
 	}
 
 	for i, epoch := range pendingEpochs {
@@ -213,9 +221,6 @@ func (self *ProtocolFeeRewardManagerResolver) accumulatorView(tokenPath string, 
 		}
 	}
 
-	// Projecting every pending bucket folds all closed epochs.
-	view.foldedEpoch = maxInt64(view.foldedEpoch, self.GetCurrentEpoch()-1)
-
 	return view
 }
 
@@ -231,7 +236,7 @@ func (self *ProtocolFeeRewardManagerResolver) claimTokenReward(rewardID string, 
 	}
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
-	reward, err := resolvedState.claimTokenReward(tokenPath, self.accumulatorView(tokenPath, nil, nil), maxEvents)
+	reward, err := resolvedState.claimTokenReward(tokenPath, self.accumulatorView(tokenPath, nil, nil, false), maxEvents)
 	if err != nil {
 		return 0, err
 	}
@@ -261,7 +266,7 @@ func (self *ProtocolFeeRewardManagerResolver) claimRewards(rewardID string, curr
 	}
 
 	for _, tokenPath := range self.GetTokenPaths() {
-		reward, err := resolvedState.claimTokenReward(tokenPath, self.accumulatorView(tokenPath, nil, nil), 0)
+		reward, err := resolvedState.claimTokenReward(tokenPath, self.accumulatorView(tokenPath, nil, nil, false), 0)
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +292,7 @@ func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmount(rewardID 
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
 
-	return resolvedState.getClaimableReward(tokenPath, self.accumulatorView(tokenPath, pendingEpochs, pendingAmounts)), nil
+	return resolvedState.getClaimableReward(tokenPath, self.accumulatorView(tokenPath, pendingEpochs, pendingAmounts, true)), nil
 }
 
 func maxInt64(a, b int64) int64 {

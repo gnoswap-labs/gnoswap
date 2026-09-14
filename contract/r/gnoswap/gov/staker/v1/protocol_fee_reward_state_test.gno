@@ -24,13 +24,48 @@ func newPfTestView(foldedEpoch int64, epochs []int64, values []int64) *protocolF
 	accumulator.SetFoldedEpoch(foldedEpoch)
 
 	return &protocolFeeAccumulatorView{
-		accumulator: accumulator,
-		extraEpochs: []int64{},
-		extraValues: []*u256.Uint{},
-		current:     accumulator.GetAccumulatedX128PerStake().Clone(),
-		firstEpoch:  accumulator.GetFirstEpoch(),
-		foldedEpoch: foldedEpoch,
+		accumulator:  accumulator,
+		extraEpochs:  []int64{},
+		extraValues:  []*u256.Uint{},
+		current:      accumulator.GetAccumulatedX128PerStake().Clone(),
+		firstEpoch:   accumulator.GetFirstEpoch(),
+		foldedEpoch:  foldedEpoch,
+		currentEpoch: foldedEpoch + 1,
 	}
+}
+
+func TestProtocolFeeRewardState_loadTokenSettlement_NoFeeFolded(cur realm, t *testing.T) {
+	t.Run("skips every event once every closed epoch is folded", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		uassert.NoError(t, resolver.addStake(100, 1))
+		uassert.NoError(t, resolver.addStake(50, 2))
+
+		view := newPfTestView(1, nil, nil)
+		view.currentEpoch = 2
+
+		settlement := resolver.loadTokenSettlement(pfTestBar, view)
+		uassert.Equal(t, settlement.eventCursor, int64(2))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(150))
+	})
+
+	t.Run("keeps events pending while a closed epoch is not folded", func(cur realm, t *testing.T) {
+		// A bucket from epoch 1 may still be pending, so the events cannot be skipped:
+		// settleEvents settles them, gated by foldedEpoch, once that bucket is folded.
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		uassert.NoError(t, resolver.addStake(100, 1))
+		uassert.NoError(t, resolver.addStake(50, 2))
+
+		view := newPfTestView(0, nil, nil)
+		view.currentEpoch = 2
+
+		settlement := resolver.loadTokenSettlement(pfTestBar, view)
+		uassert.Equal(t, settlement.eventCursor, int64(0))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(0))
+
+		uassert.False(t, resolver.settleEvents(settlement, view, 0))
+		uassert.Equal(t, settlement.eventCursor, int64(1))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(100))
+	})
 }
 
 func TestProtocolFeeRewardState_addStake(cur realm, t *testing.T) {

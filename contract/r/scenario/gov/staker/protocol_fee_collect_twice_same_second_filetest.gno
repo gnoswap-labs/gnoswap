@@ -3,10 +3,11 @@
 // the all-token collect is gated to once per second; the single-token collect is not
 //
 // Hand check: alice alone with 1_000_000, every fee is 1_000_000 (+1 per stake).
-//   CollectReward -> 1_000_000; CollectReward again in the same second -> nothing.
-//   new fee, CollectReward in the same second -> still nothing (gate),
-//   CollectProtocolFeeReward(BAR) -> 1_000_000.
-//   next block, new fee, CollectReward -> 1_000_000.
+//
+//	CollectReward -> 1_000_000; CollectReward again in the same second -> nothing.
+//	new fee, CollectReward in the same second -> still nothing (gate),
+//	CollectProtocolFeeReward(BAR) -> 1_000_000.
+//	next block, new fee, CollectReward -> 1_000_000.
 package main
 
 import (

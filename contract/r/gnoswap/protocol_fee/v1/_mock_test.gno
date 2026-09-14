@@ -7,15 +7,15 @@ import (
 )
 
 type mockProtocolFeeStore struct {
-	devOpsPct            int64
-	accuToGovStaker      *bptree.BPTree
-	accuToDevOps         *bptree.BPTree
+	devOpsPct                     int64
+	accuToGovStaker               *bptree.BPTree
+	accuToDevOps                  *bptree.BPTree
 	distributedToGovStakerHistory *bptree.BPTree
 	distributedToDevOpsHistory    *bptree.BPTree
-	reservedTokens       *bptree.BPTree
-	accrualEpoch         int64
-	accrualBuckets       map[string]map[int64]int64
-	accrualPendingTokens *bptree.BPTree
+	reservedTokens                *bptree.BPTree
+	accrualEpoch                  int64
+	accrualBuckets                map[string]map[int64]int64
+	accrualPendingTokens          *bptree.BPTree
 }
 
 // handle devOpsPct store data
