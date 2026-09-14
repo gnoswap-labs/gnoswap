@@ -467,6 +467,10 @@ func (s *stakerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, 
 		return errors.New(ErrSpoofedRealm)
 	}
 
+	if rlm.IsCode() && !s.kvStore.IsWriteAuthorized(rlm.Address()) {
+		return errors.New(store.ErrWritePermissionDenied)
+	}
+
 	s.GetPendingProtocolFees()[tokenPath] = amount
 
 	return nil
@@ -475,6 +479,10 @@ func (s *stakerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, 
 func (s *stakerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
+	}
+
+	if rlm.IsCode() && !s.kvStore.IsWriteAuthorized(rlm.Address()) {
+		return errors.New(store.ErrWritePermissionDenied)
 	}
 
 	delete(s.GetPendingProtocolFees(), tokenPath)
