@@ -53,7 +53,7 @@ type IGovernanceManager interface {
 		proposalId int64,
 	) int64
 
-	RemoveInactiveProposalFromIndexByAdmin(_ int, rlm realm, proposalID int64)
+	RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64)
 
 	// Configuration
 	Reconfigure(

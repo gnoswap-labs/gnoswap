@@ -193,11 +193,10 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 	return proposal.ID()
 }
 
-// RemoveInactiveProposalFromIndexByAdmin removes one inactive proposal from the
+// RemoveInactiveProposalFromIndex removes one inactive proposal from the
 // snapshot index without deleting its proposal or voting history.
-func (gv *governanceV1) RemoveInactiveProposalFromIndexByAdmin(_ int, rlm realm, proposalID int64) {
+func (gv *governanceV1) RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64) {
 	access.AssertIsRlmCurrent(0, rlm)
-	access.AssertIsAdmin(rlm.Previous().Address())
 
 	proposal, exists := gv.getProposal(proposalID)
 	if !exists {

@@ -49,9 +49,9 @@ func (t *TestGovernance) Cancel(_ int, rlm realm, proposalId int64) int64 {
 	return t.instance.Cancel(0, rlm, proposalId)
 }
 
-// RemoveInactiveProposalFromIndexByAdmin delegates inactive snapshot-index maintenance to the wrapped implementation.
-func (t *TestGovernance) RemoveInactiveProposalFromIndexByAdmin(_ int, rlm realm, proposalID int64) {
-	t.instance.RemoveInactiveProposalFromIndexByAdmin(0, rlm, proposalID)
+// RemoveInactiveProposalFromIndex delegates inactive snapshot-index maintenance to the wrapped implementation.
+func (t *TestGovernance) RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64) {
+	t.instance.RemoveInactiveProposalFromIndex(0, rlm, proposalID)
 }
 
 func (t *TestGovernance) Reconfigure(_ int, rlm realm, votingStartDelay int64, votingPeriod int64, votingWeightSmoothingDuration int64, quorum int64, proposalCreationThreshold int64, executionDelay int64, executionWindow int64) int64 {

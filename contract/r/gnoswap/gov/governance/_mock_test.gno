@@ -104,7 +104,7 @@ func (m *MockGovernance) Cancel(_ int, rlm realm, proposalId int64) int64 {
 	return res[0].(int64)
 }
 
-func (m *MockGovernance) RemoveInactiveProposalFromIndexByAdmin(_ int, rlm realm, proposalID int64) {}
+func (m *MockGovernance) RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64) {}
 
 func (m *MockGovernance) Reconfigure(
 	_ int, rlm realm,

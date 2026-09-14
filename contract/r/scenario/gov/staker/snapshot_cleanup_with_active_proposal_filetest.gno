@@ -105,7 +105,7 @@ func main(cur realm) {
 	if safeCleanupTime < validCleanupThreshold {
 		testing.SkipHeights(30 * 60 * 60 * 24 * 365)
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalId)
+		governance.RemoveInactiveProposalFromIndex(cross(cur), proposalId)
 		cleanupSnapshots(cur, 1234783890+5)
 	} else {
 		println("[INFO] safe cleanup time is not old enough, skipping cleanup test")
@@ -140,16 +140,14 @@ func verifyProposalIndexMaintenance(cur realm, maxSmoothingPeriod int64) {
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-001]", func() {
-		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalID)
+		governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
 	})
 	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-012]", func() {
-		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), 9999)
+		governance.RemoveInactiveProposalFromIndex(cross(cur), 9999)
 	})
 
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
-	uassert.AbortsContains(t, cur, "unauthorized", func() {
-		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), canceledID)
-	})
+	governance.RemoveInactiveProposalFromIndex(cross(cur), canceledID)
 	testing.SkipHeights(2)
 	governance.Vote(cross(cur), proposalID, true)
 	testing.SkipHeights(3)
@@ -159,7 +157,7 @@ func verifyProposalIndexMaintenance(cur realm, maxSmoothingPeriod int64) {
 	uassert.NoError(t, err)
 	println("[EXPECTED] executable snapshot:", hasActive, snapshotTime == expectedSnapshot)
 	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-001]", func() {
-		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalID)
+		governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
 	})
 	uassert.AbortsContains(t, cur, "active proposal requires data", func() {
 		gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), expectedSnapshot+1, aliceAddr)
@@ -174,7 +172,7 @@ func verifyProposalIndexMaintenance(cur realm, maxSmoothingPeriod int64) {
 	uassert.ErrorContains(t, err, ufmt.Sprintf("proposalID: %d", proposalID))
 	println("[EXPECTED] stale index:", proposalID, snapshotTime, hasActive)
 
-	governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalID)
+	governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
 	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
 	uassert.NoError(t, err)
 	voteWeight, err := governance.GetVoteWeight(proposalID, aliceAddr)
