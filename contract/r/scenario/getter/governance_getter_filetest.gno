@@ -306,7 +306,7 @@ func testVoteGetters(cur realm, proposalId int64) {
 	println("[EXPECTED] Admin voting info exists:", existsVoting)
 
 	// GetVotingInfos entry
-	votingInfo, ok := governance.GetVotingInfos(proposalId).Get(adminAddr.String()).(*governance.VotingInfo)
+	votingInfo, ok := governance.GetVotingInfos(proposalId).Get(adminAddr.String()).(governance.VotingInfo)
 	if !ok {
 		panic("voting info not found")
 	}
