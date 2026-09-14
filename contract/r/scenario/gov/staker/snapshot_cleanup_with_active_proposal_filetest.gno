@@ -36,6 +36,7 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 )
 
 var t *testing.T
@@ -147,7 +148,9 @@ func verifyProposalIndexMaintenance(cur realm, maxSmoothingPeriod int64) {
 	})
 
 	testing.SetRealm(testing.NewUserRealm(aliceAddr))
-	governance.RemoveInactiveProposalFromIndex(cross(cur), canceledID)
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-002]", func() {
+		governance.RemoveInactiveProposalFromIndex(cross(cur), canceledID)
+	})
 	testing.SkipHeights(2)
 	governance.Vote(cross(cur), proposalID, true)
 	testing.SkipHeights(3)
@@ -172,7 +175,20 @@ func verifyProposalIndexMaintenance(cur realm, maxSmoothingPeriod int64) {
 	uassert.ErrorContains(t, err, ufmt.Sprintf("proposalID: %d", proposalID))
 	println("[EXPECTED] stale index:", proposalID, snapshotTime, hasActive)
 
+	halt.SetOperationStatus(cross(cur), halt.OpTypeGovernance, true)
+	uassert.AbortsContains(t, cur, "halted: governance", func() {
+		governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
+	})
+	halt.SetOperationStatus(cross(cur), halt.OpTypeGovernance, false)
+	_, _, err = governance.GetOldestActiveProposalSnapshotTime()
+	uassert.ErrorContains(t, err, ufmt.Sprintf("proposalID: %d", proposalID))
+
+	testing.SetRealm(testing.NewUserRealm(aliceAddr))
+
 	governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-002]", func() {
+		governance.RemoveInactiveProposalFromIndex(cross(cur), proposalID)
+	})
 	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
 	uassert.NoError(t, err)
 	voteWeight, err := governance.GetVoteWeight(proposalID, aliceAddr)

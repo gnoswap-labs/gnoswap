@@ -13,7 +13,7 @@ Governance: proposals, voting, execution.
 
 - Proposal and voting history remain permanent. One snapshot-ordered index tracks potentially active proposals; cancel and execute remove their entries immediately.
 - `GetOldestActiveProposalSnapshotTime()` returns `(snapshotTime, hasActive, err)` after checking only the first entry. An inactive first entry returns a maintenance error containing `proposalID: N`, not an empty result.
-- `RemoveInactiveProposalFromIndex(cur, proposalID)` can be called by anyone and removes only that inactive proposal's index entry. Missing or still-active proposals are rejected.
+- `RemoveInactiveProposalFromIndex(cur, proposalID)` can be called by anyone while governance is not halted and removes only that inactive proposal's index entry. Missing or still-active proposals and already-removed index entries are rejected.
 - Successful maintenance emits `RemoveInactiveProposalFromIndex` with `prevAddr`, `prevRealm`, and `proposalId`. Existing lifecycle event formats are unchanged.
 - Commit each removal separately, query again for any remaining stale entry, then retry delegation-snapshot cleanup. Cleanup never maintains the proposal index and rejects getter errors before deleting history.
 - Each getter or maintenance call examines at most one proposal, not a constant amount of gas. B+Tree lookup/update costs remain; delegation-history deletion is not batched by this change.

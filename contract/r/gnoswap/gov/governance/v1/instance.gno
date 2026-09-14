@@ -108,7 +108,11 @@ func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Propos
 // removeActiveProposal removes a proposal from the active snapshot index.
 func (g *governanceV1) removeActiveProposal(_ int, rlm realm, proposal *governance.Proposal) error {
 	snapshotIndex := g.store.GetActiveProposalsBySnapshot()
-	snapshotIndex.Remove(activeProposalSnapshotKey(proposal))
+	key := activeProposalSnapshotKey(proposal)
+	if !snapshotIndex.Has(key) {
+		return makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("active proposal index entry not found, proposalID: %d", proposal.ID()))
+	}
+	snapshotIndex.Remove(key)
 
 	return g.store.SetActiveProposalsBySnapshot(0, rlm, snapshotIndex)
 }

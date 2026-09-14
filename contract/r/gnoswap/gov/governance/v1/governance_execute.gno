@@ -198,6 +198,8 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 func (gv *governanceV1) RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
+	halt.AssertIsNotHaltedGovernance()
+
 	proposal, exists := gv.getProposal(proposalID)
 	if !exists {
 		panic(makeErrorWithDetails(errProposalNotFound, ufmt.Sprintf("proposalID: %d", proposalID)))
