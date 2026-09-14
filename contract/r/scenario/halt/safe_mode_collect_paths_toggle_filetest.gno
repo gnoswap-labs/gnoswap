@@ -21,6 +21,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/common/v1"
 	communitypool "gno.land/r/gnoswap/community_pool"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
@@ -37,7 +38,6 @@ import (
 	_ "gno.land/r/gnoswap/position/v1"
 	pf "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
-	staker "gno.land/r/gnoswap/staker"
 	_ "gno.land/r/gnoswap/staker/v1"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"

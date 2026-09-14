@@ -33,6 +33,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -43,9 +44,6 @@ import (
 	"gno.land/r/gnoswap/emission"
 	_ "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/pool"
-	"gno.land/r/gnoswap/position"
-	"gno.land/r/gnoswap/router"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"

@@ -6,9 +6,10 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -21,6 +22,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -31,10 +33,10 @@ import (
 )
 
 var (
-	adminAddr, _ = access.GetAddress(prabc.ROLE_ADMIN.String())
-	adminRealm   = testing.NewUserRealm(adminAddr)
-	poolAddr, _  = access.GetAddress(prabc.ROLE_POOL.String())
-	routerAddr, _ = access.GetAddress(prabc.ROLE_ROUTER.String())
+	adminAddr, _       = access.GetAddress(prabc.ROLE_ADMIN.String())
+	adminRealm         = testing.NewUserRealm(adminAddr)
+	poolAddr, _        = access.GetAddress(prabc.ROLE_POOL.String())
+	routerAddr, _      = access.GetAddress(prabc.ROLE_ROUTER.String())
 	protocolFeeAddr, _ = access.GetAddress(prabc.ROLE_PROTOCOL_FEE.String())
 
 	userAddr  = testutils.TestAddress("user")
@@ -52,14 +54,14 @@ var (
 )
 
 type BalanceSnapshot struct {
-	userBar          int64
-	userFoo          int64
-	poolBar          int64
-	poolFoo          int64
-	routerBar        int64
-	routerFoo        int64
-	protocolFeeBar   int64
-	protocolFeeFoo   int64
+	userBar        int64
+	userFoo        int64
+	poolBar        int64
+	poolFoo        int64
+	routerBar      int64
+	routerFoo      int64
+	protocolFeeBar int64
+	protocolFeeFoo int64
 }
 
 func main(cur realm) {
@@ -105,14 +107,14 @@ func main(cur realm) {
 
 func getBalanceSnapshot(cur realm) BalanceSnapshot {
 	snapshot := BalanceSnapshot{
-		userBar:          bar.BalanceOf(userAddr),
-		userFoo:          foo.BalanceOf(userAddr),
-		poolBar:          bar.BalanceOf(poolAddr),
-		poolFoo:          foo.BalanceOf(poolAddr),
-		routerBar:        bar.BalanceOf(routerAddr),
-		routerFoo:        foo.BalanceOf(routerAddr),
-		protocolFeeBar:   bar.BalanceOf(protocolFeeAddr),
-		protocolFeeFoo:   foo.BalanceOf(protocolFeeAddr),
+		userBar:        bar.BalanceOf(userAddr),
+		userFoo:        foo.BalanceOf(userAddr),
+		poolBar:        bar.BalanceOf(poolAddr),
+		poolFoo:        foo.BalanceOf(poolAddr),
+		routerBar:      bar.BalanceOf(routerAddr),
+		routerFoo:      foo.BalanceOf(routerAddr),
+		protocolFeeBar: bar.BalanceOf(protocolFeeAddr),
+		protocolFeeFoo: foo.BalanceOf(protocolFeeAddr),
 	}
 
 	return snapshot

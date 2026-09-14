@@ -32,6 +32,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 	"gno.land/r/gnoswap/staker"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

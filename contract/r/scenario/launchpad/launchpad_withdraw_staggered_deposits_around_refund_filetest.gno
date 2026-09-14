@@ -14,6 +14,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"

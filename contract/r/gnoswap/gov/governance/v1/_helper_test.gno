@@ -9,6 +9,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gov/governance"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -93,6 +94,7 @@ func newTestProposal(
 		100, // createdHeight
 	)
 }
+
 // Crossing test wrappers.
 //
 // The governance impl methods read their caller via rlm.Previous(). To

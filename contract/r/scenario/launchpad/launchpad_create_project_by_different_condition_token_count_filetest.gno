@@ -17,6 +17,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 

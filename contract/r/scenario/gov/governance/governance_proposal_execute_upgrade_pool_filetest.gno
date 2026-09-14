@@ -13,6 +13,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -38,8 +39,8 @@ var (
 )
 
 const (
-	poolV1Path     = "gno.land/r/gnoswap/pool/v1"
-	poolV3Path     = "gno.land/r/gnoswap/pool/v3_valid"
+	poolV1Path = "gno.land/r/gnoswap/pool/v1"
+	poolV3Path = "gno.land/r/gnoswap/pool/v3_valid"
 )
 
 func main(cur realm) {

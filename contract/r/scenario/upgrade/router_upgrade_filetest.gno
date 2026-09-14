@@ -13,6 +13,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/router"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/router/v1"
 	_ "gno.land/r/gnoswap/router/v2_invalid"
 )

@@ -11,6 +11,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -254,11 +255,11 @@ func TestSwap(cur realm) {
 
 	test_price := MIN_PRICE
 	{
-		poolOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(poolAddr)
-		poolOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(poolAddr)
+		poolOldToken0Bal := common.BalanceOf(pool.Token0Path(), poolAddr)
+		poolOldToken1Bal := common.BalanceOf(pool.Token1Path(), poolAddr)
 
-		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
-		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
+		userOldToken0Bal := common.BalanceOf(pool.Token0Path(), adminAddr)
+		userOldToken1Bal := common.BalanceOf(pool.Token1Path(), adminAddr)
 
 		// set current realm and origin caller
 
@@ -282,11 +283,11 @@ func TestSwap(cur realm) {
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
 
-		poolNewToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(poolAddr)
-		poolNewToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(poolAddr)
+		poolNewToken0Bal := common.BalanceOf(pool.Token0Path(), poolAddr)
+		poolNewToken1Bal := common.BalanceOf(pool.Token1Path(), poolAddr)
 
-		userNewToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
-		userNewToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
+		userNewToken0Bal := common.BalanceOf(pool.Token0Path(), adminAddr)
+		userNewToken1Bal := common.BalanceOf(pool.Token1Path(), adminAddr)
 
 		println("[EXPECTED] userOldToken0Bal-userNewToken0Bal:", userOldToken0Bal-userNewToken0Bal, "expected: should be", intAmount0)
 		println("[EXPECTED] userNewToken1Bal-userOldToken1Bal:", userNewToken1Bal-userOldToken1Bal, "expected: should be", -intAmount1)
@@ -295,11 +296,11 @@ func TestSwap(cur realm) {
 	}
 
 	{
-		poolOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(poolAddr)
-		poolOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(poolAddr)
+		poolOldToken0Bal := common.BalanceOf(pool.Token0Path(), poolAddr)
+		poolOldToken1Bal := common.BalanceOf(pool.Token1Path(), poolAddr)
 
-		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
-		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
+		userOldToken0Bal := common.BalanceOf(pool.Token0Path(), adminAddr)
+		userOldToken1Bal := common.BalanceOf(pool.Token1Path(), adminAddr)
 
 		// set current realm and origin caller
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -311,11 +312,11 @@ func TestSwap(cur realm) {
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
 
-		poolNewToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(poolAddr)
-		poolNewToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(poolAddr)
+		poolNewToken0Bal := common.BalanceOf(pool.Token0Path(), poolAddr)
+		poolNewToken1Bal := common.BalanceOf(pool.Token1Path(), poolAddr)
 
-		userNewToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
-		userNewToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
+		userNewToken0Bal := common.BalanceOf(pool.Token0Path(), adminAddr)
+		userNewToken1Bal := common.BalanceOf(pool.Token1Path(), adminAddr)
 
 		println("[EXPECTED] userOldToken0Bal-userNewToken0Bal:", userOldToken0Bal-userNewToken0Bal, "expected: should be", intAmount0)
 		println("[EXPECTED] userNewToken1Bal-userOldToken1Bal:", userNewToken1Bal-userOldToken1Bal, "expected: should be", -intAmount1)
@@ -324,11 +325,11 @@ func TestSwap(cur realm) {
 	}
 
 	{
-		poolOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(poolAddr)
-		poolOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(poolAddr)
+		poolOldToken0Bal := common.BalanceOf(pool.Token0Path(), poolAddr)
+		poolOldToken1Bal := common.BalanceOf(pool.Token1Path(), poolAddr)
 
-		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
-		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
+		userOldToken0Bal := common.BalanceOf(pool.Token0Path(), adminAddr)
+		userOldToken1Bal := common.BalanceOf(pool.Token1Path(), adminAddr)
 
 		// set current realm and origin caller
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -349,11 +350,11 @@ func TestSwap(cur realm) {
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
 
-		poolNewToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(poolAddr)
-		poolNewToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(poolAddr)
+		poolNewToken0Bal := common.BalanceOf(pool.Token0Path(), poolAddr)
+		poolNewToken1Bal := common.BalanceOf(pool.Token1Path(), poolAddr)
 
-		userNewToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
-		userNewToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
+		userNewToken0Bal := common.BalanceOf(pool.Token0Path(), adminAddr)
+		userNewToken1Bal := common.BalanceOf(pool.Token1Path(), adminAddr)
 
 		println("[EXPECTED] userOldToken0Bal-userNewToken0Bal:", userOldToken0Bal-userNewToken0Bal, "expected: should be", intAmount0)
 		println("[EXPECTED] userNewToken1Bal-userOldToken1Bal:", userNewToken1Bal-userOldToken1Bal, "expected: should be", -intAmount1)
@@ -363,11 +364,11 @@ func TestSwap(cur realm) {
 
 	println("[INFO] Swap token1 -> token0")
 	{
-		poolOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(poolAddr)
-		poolOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(poolAddr)
+		poolOldToken0Bal := common.BalanceOf(pool.Token0Path(), poolAddr)
+		poolOldToken1Bal := common.BalanceOf(pool.Token1Path(), poolAddr)
 
-		userOldToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
-		userOldToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
+		userOldToken0Bal := common.BalanceOf(pool.Token0Path(), adminAddr)
+		userOldToken1Bal := common.BalanceOf(pool.Token1Path(), adminAddr)
 
 		// set current realm and origin caller
 		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -378,11 +379,11 @@ func TestSwap(cur realm) {
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
 
-		poolNewToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(poolAddr)
-		poolNewToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(poolAddr)
+		poolNewToken0Bal := common.BalanceOf(pool.Token0Path(), poolAddr)
+		poolNewToken1Bal := common.BalanceOf(pool.Token1Path(), poolAddr)
 
-		userNewToken0Bal := common.GetToken(pool.Token0Path()).BalanceOf(adminAddr)
-		userNewToken1Bal := common.GetToken(pool.Token1Path()).BalanceOf(adminAddr)
+		userNewToken0Bal := common.BalanceOf(pool.Token0Path(), adminAddr)
+		userNewToken1Bal := common.BalanceOf(pool.Token1Path(), adminAddr)
 
 		println("[EXPECTED] userOldToken0Bal-userNewToken0Bal:", userOldToken0Bal-userNewToken0Bal, "expected: should be", intAmount0)
 		println("[EXPECTED] userNewToken1Bal-userOldToken1Bal:", userNewToken1Bal-userOldToken1Bal, "expected: should be", -intAmount1)

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/grc721/v0"
 	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -20,6 +20,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
