@@ -29,6 +29,7 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 - Active window: `startTimestamp <= now < endTimestamp`. Both bounds required.
 - `refunded` flag prevents double-claim on `EndExternalIncentive`. Set atomically.
 - `EndExternalIncentive` needs `now >= endTimestamp` and keeps the record; `CancelExternalIncentive` needs `now < startTimestamp`, removes it from the incentive tree, the per-pool start-time index and the global tree, and refunds the reward tokens plus the GNS deposit to the **creator** (never a caller-supplied address). Callable by admin, governance, or the creator. Removal is only safe before the start: discovery is bounded by the current time, so no deposit can reference a pending incentive.
+- Each start-time bucket is an incentive-ID keyed B+ tree: cancellation removes one key without scanning or copying sibling IDs. Discovery keeps inclusive time bounds and callback early termination; IDs within a timestamp are visited in key order, not creation order. Empty buckets are removed. This layout is for new deployments; no legacy slice migration is provided.
 - `lastCollectTime` tracked **per incentive** (not shared). Updated only after successful transfer.
 - `rewardPerSecond = totalReward / duration` — integer truncation leaves dust. Verify dust does not accumulate into locked balance.
 

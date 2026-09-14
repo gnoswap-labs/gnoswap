@@ -255,7 +255,7 @@ type Incentives struct {
 
 	unclaimablePeriods *UintTree // blockTimestamp -> any
 
-	byStartTime *UintTree // startTimestamp -> []incentiveId
+	byStartTime *UintTree // startTimestamp -> *bptree.BPTree keyed by incentive ID
 }
 
 // Incentives Getter/Setter methods
@@ -333,17 +333,18 @@ func (i *Incentives) IterateIncentives(fn func(incentiveId string, incentive *Ex
 }
 
 // AddIncentiveByStartTime registers an incentive ID under its start timestamp
-// in the per-pool start-time index. Multiple incentives starting at the same
-// timestamp are accumulated as a list.
+// in the per-pool start-time index. Each bucket is a keyed set, so cancelling
+// one incentive does not copy or scan its siblings.
 func (i *Incentives) AddIncentiveByStartTime(startTimestamp int64, incentiveId string) {
-	var incentiveIds []string
-	if value, ok := i.byStartTime.Get(startTimestamp); ok {
-		if ids, ok := value.([]string); ok {
-			incentiveIds = ids
-		}
+	value, ok := i.byStartTime.Get(startTimestamp)
+	var ids *bptree.BPTree
+	if ok {
+		ids = value.(*bptree.BPTree)
+	} else {
+		ids = bptree.NewBPTreeN(16)
+		i.byStartTime.Set(startTimestamp, ids)
 	}
-	incentiveIds = append(incentiveIds, incentiveId)
-	i.byStartTime.Set(startTimestamp, incentiveIds)
+	ids.Set(incentiveId, true)
 }
 
 // RemoveIncentiveByStartTime unregisters an incentive ID from the per-pool
@@ -355,25 +356,11 @@ func (i *Incentives) RemoveIncentiveByStartTime(startTimestamp int64, incentiveI
 		return
 	}
 
-	ids, ok := value.([]string)
-	if !ok {
-		return
-	}
-
-	remaining := make([]string, 0, len(ids))
-	for _, id := range ids {
-		if id == incentiveId {
-			continue
-		}
-		remaining = append(remaining, id)
-	}
-
-	if len(remaining) == 0 {
+	ids := value.(*bptree.BPTree)
+	ids.Remove(incentiveId)
+	if ids.Size() == 0 {
 		i.byStartTime.Remove(startTimestamp)
-		return
 	}
-
-	i.byStartTime.Set(startTimestamp, remaining)
 }
 
 // IterateIncentiveIdsByTime iterates over the incentive IDs that start within
@@ -383,16 +370,13 @@ func (i *Incentives) RemoveIncentiveByStartTime(startTimestamp int64, incentiveI
 // (startTimestamp >= startTime && startTimestamp <= endTime).
 func (i *Incentives) IterateIncentiveIdsByTime(startTime, endTime int64, fn func(incentiveId string) bool) {
 	i.byStartTime.ReverseIterate(startTime, endTime, func(_ int64, value any) bool {
-		incentiveIds, ok := value.([]string)
-		if !ok {
-			return false
-		}
-		for _, incentiveId := range incentiveIds {
-			if fn(incentiveId) {
-				return true
-			}
-		}
-		return false
+		ids := value.(*bptree.BPTree)
+		stopped := false
+		ids.Iterate("", "", func(incentiveId string, _ any) bool {
+			stopped = fn(incentiveId)
+			return stopped
+		})
+		return stopped
 	})
 }
 
