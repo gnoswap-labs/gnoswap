@@ -42,8 +42,8 @@ func TestVotingInfo_NewVotingInfo(cur realm, t *testing.T) {
 	}
 }
 
-func TestVotingInfo_NewDefaultVotingInfo(cur realm, t *testing.T) {
-	votingInfo := governance.NewDefaultVotingInfo()
+func TestVotingInfo_DefaultVotingInfo(cur realm, t *testing.T) {
+	votingInfo := governance.DefaultVotingInfo()
 
 	uassert.Equal(t, int64(0), votingInfo.AvailableVoteWeight())
 	uassert.Equal(t, int64(0), votingInfo.VotedWeight())

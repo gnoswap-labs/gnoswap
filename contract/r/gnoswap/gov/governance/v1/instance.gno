@@ -162,12 +162,12 @@ func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address) (governance.VotingInfo, bool) {
 	votingInfosTree, exists := g.getProposalUserVotingInfos(proposalID)
 	if !exists {
-		return governance.NewDefaultVotingInfo(), false
+		return governance.DefaultVotingInfo(), false
 	}
 
 	votingInfoRaw := votingInfosTree.Get(addr.String())
 	if votingInfoRaw == nil {
-		return governance.NewDefaultVotingInfo(), false
+		return governance.DefaultVotingInfo(), false
 	}
 	votingInfo, ok := votingInfoRaw.(governance.VotingInfo)
 	return votingInfo, ok
