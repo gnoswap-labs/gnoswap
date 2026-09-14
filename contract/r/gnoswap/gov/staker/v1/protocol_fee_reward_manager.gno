@@ -4,358 +4,230 @@ import (
 	"errors"
 	"math"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/gov/staker"
 )
 
+// ProtocolFeeRewardManagerResolver drives the ProtocolFeeRewardManager.
+//
+// Stake changes only move the epoch, the total stake history and the staker's own
+// event list. Fees are folded into a token's accumulator when that token is collected,
+// each accrual bucket against the total stake in force during its epoch.
 type ProtocolFeeRewardManagerResolver struct {
 	*staker.ProtocolFeeRewardManager
 }
 
 func NewProtocolFeeRewardManagerResolver(manager *staker.ProtocolFeeRewardManager) *ProtocolFeeRewardManagerResolver {
-	return &ProtocolFeeRewardManagerResolver{manager}
+	return &ProtocolFeeRewardManagerResolver{
+		ProtocolFeeRewardManager: manager,
+	}
 }
 
-// GetClaimableRewardAmounts calculates the claimable reward amounts for all tokens for a specific address.
-// This method computes rewards based on current protocol fee distribution state and staking history.
+// addStake records that rewardID staked amount more from epoch on.
 //
-// Parameters:
-//   - protocolFeeAmounts: current protocol fee amounts for all tokens
-//   - address: staker's address to calculate rewards for
-//   - currentTimestamp: current timestamp
-//
-// Returns:
-//   - map[string]int64: map of token path to claimable reward amount
-func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmounts(
-	protocolFeeAmounts map[string]int64,
-	address string,
-	currentTimestamp int64,
-) (map[string]int64, error) {
-	rewardState, ok, err := self.GetRewardState(address)
-	if err != nil {
-		return nil, err
+// epoch is the accrual epoch protocol_fee just opened for this change, so it must not
+// be older than the epoch in force.
+func (self *ProtocolFeeRewardManagerResolver) addStake(rewardID string, amount int64, epoch int64) error {
+	if amount <= 0 {
+		return errors.New(errAmountMustBePositive)
 	}
-	if !ok {
-		return make(map[string]int64), nil
+	if epoch < self.GetCurrentEpoch() {
+		return errors.New(errInvalidAccrualEpoch)
 	}
 
-	recalculatedRewardX128PerStake, _, err := self.calculateAccumulatedRewardX128PerStake(
-		protocolFeeAmounts,
-		currentTimestamp,
-	)
-	if err != nil {
-		return nil, err
+	currentTotal := self.GetTotalStakedAmount()
+	if currentTotal > math.MaxInt64-amount {
+		return errors.New(errTotalStakedAmountOverflow)
 	}
 
-	// protocolFeeAmounts only covers the tokens that collected a fee since the last
-	// accrual, so the recalculated rates are layered on the stored ones: reporting them
-	// alone would hide every token already accrued but without a new fee. The merge
-	// builds its own map because GetAll... hands back the stored one, and a query must
-	// not write to the accumulator.
-	accumulatedRewardX128PerStake := make(map[string]*u256.Uint)
-	for token, rate := range self.GetAllAccumulatedProtocolFeeX128PerStake() {
-		accumulatedRewardX128PerStake[token] = rate
-	}
-	for token, rate := range recalculatedRewardX128PerStake {
-		accumulatedRewardX128PerStake[token] = rate
-	}
-
-	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
-
-	return resolvedState.GetClaimableRewardAmounts(accumulatedRewardX128PerStake, currentTimestamp)
-}
-
-// calculateAccumulatedRewardX128PerStake calculates the updated accumulated reward per stake for all tokens.
-// This method computes new accumulated reward rates based on newly distributed protocol fees.
-//
-// Parameters:
-//   - protocolFeeAmounts: current protocol fee amounts for all tokens
-//   - currentTimestamp: current timestamp
-//
-// Returns:
-//   - map[string]*u256.Uint: updated accumulated reward per stake for each token
-//   - map[string]int64: updated protocol fee amounts for each token
-func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerStake(
-	protocolFeeAmounts map[string]int64,
-	currentTimestamp int64,
-) (map[string]*u256.Uint, map[string]int64, error) {
-	// If we're looking at a past timestamp, return current state
-	if self.GetAccumulatedTimestamp() > currentTimestamp {
-		return self.GetAllAccumulatedProtocolFeeX128PerStake(), self.GetProtocolFeeAmounts(), nil
-	}
-
-	accumulatedProtocolFeesX128PerStake := make(map[string]*u256.Uint)
-	changedProtocolFeeAmounts := make(map[string]int64)
-
-	// Process each token's protocol fees
-	for token, protocolFeeAmount := range protocolFeeAmounts {
-		previousProtocolFeeAmount := self.GetProtocolFeeAmount(token)
-
-		protocolFeeDelta := gnsmath.SafeSubInt64(protocolFeeAmount, previousProtocolFeeAmount)
-
-		// If no new fees for this token, keep existing rate
-		if protocolFeeDelta <= 0 {
-			accumulatedProtocolFeesX128PerStake[token] = self.GetAccumulatedProtocolFeeX128PerStake(token)
-			if accumulatedProtocolFeesX128PerStake[token] == nil {
-				accumulatedProtocolFeesX128PerStake[token] = u256.NewUint(0)
-			}
-			changedProtocolFeeAmounts[token] = protocolFeeAmount
-			continue
-		}
-
-		// Scale the fee delta by 2^128 for precision
-		protocolFeeDeltaX128 := u256.NewUintFromInt64(protocolFeeDelta)
-		protocolFeeDeltaX128 = u256.Zero().Lsh(protocolFeeDeltaX128, 128)
-
-		protocolFeeDeltaX128PerStake := u256.Zero()
-
-		// Calculate fee per stake if there are staked tokens. With no stake the delta is
-		// dropped while the cursor below still advances past it, the same policy the
-		// emission accumulator applies.
-		if self.GetTotalStakedAmount() > 0 {
-			feePerStake := u256.Zero().Div(protocolFeeDeltaX128, u256.NewUintFromInt64(self.GetTotalStakedAmount()))
-			protocolFeeDeltaX128PerStake = feePerStake
-		}
-
-		// Get current accumulated fee per stake for this token
-		accumulatedProtocolFeeX128PerStake := u256.Zero()
-		existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(token)
-		if existingAccumulatedFee != nil {
-			accumulatedProtocolFeeX128PerStake = existingAccumulatedFee
-		}
-
-		// Add the new fee per stake to the accumulated amount
-		accumulatedProtocolFeeX128PerStake = u256.Zero().Add(accumulatedProtocolFeeX128PerStake, protocolFeeDeltaX128PerStake)
-		accumulatedProtocolFeesX128PerStake[token] = accumulatedProtocolFeeX128PerStake.Clone()
-
-		changedProtocolFeeAmounts[token] = protocolFeeAmount
-	}
-
-	return accumulatedProtocolFeesX128PerStake, changedProtocolFeeAmounts, nil
-}
-
-// calculateAccumulatedRewardX128PerStakeForToken calculates accumulated reward per stake for exactly one token.
-func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerStakeForToken(
-	tokenPath string,
-	protocolFeeAmount int64,
-) (*u256.Uint, int64, error) {
-	previousProtocolFeeAmount := self.GetProtocolFeeAmount(tokenPath)
-	protocolFeeDelta := gnsmath.SafeSubInt64(protocolFeeAmount, previousProtocolFeeAmount)
-
-	existingAccumulatedFee := self.GetAccumulatedProtocolFeeX128PerStake(tokenPath)
-	if existingAccumulatedFee == nil {
-		existingAccumulatedFee = u256.Zero()
-	}
-
-	if protocolFeeDelta <= 0 {
-		return existingAccumulatedFee.Clone(), protocolFeeAmount, nil
-	}
-
-	protocolFeeDeltaX128 := u256.NewUintFromInt64(protocolFeeDelta)
-	protocolFeeDeltaX128 = u256.Zero().Lsh(protocolFeeDeltaX128, 128)
-
-	protocolFeeDeltaX128PerStake := u256.Zero()
-	if self.GetTotalStakedAmount() > 0 {
-		protocolFeeDeltaX128PerStake = u256.Zero().Div(protocolFeeDeltaX128, u256.NewUintFromInt64(self.GetTotalStakedAmount()))
-	}
-
-	accumulatedProtocolFeeX128PerStake := u256.Zero().Add(existingAccumulatedFee, protocolFeeDeltaX128PerStake)
-
-	return accumulatedProtocolFeeX128PerStake.Clone(), protocolFeeAmount, nil
-}
-
-// updateAccumulatedProtocolFeeX128PerStake updates the internal accumulated protocol fee state.
-// This method should be called before any stake changes to ensure accurate reward calculations.
-//
-// Parameters:
-//   - protocolFeeAmounts: current protocol fee amounts for all tokens
-//   - currentTimestamp: current timestamp
-func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128PerStake(
-	protocolFeeAmounts map[string]int64,
-	currentTimestamp int64,
-) error {
-	// Don't update if we're looking at a past timestamp
-	if self.GetAccumulatedTimestamp() > currentTimestamp {
-		return nil
-	}
-
-	accumulatedProtocolFeeX128PerStake, changedProtocolFeeAmounts, err := self.calculateAccumulatedRewardX128PerStake(
-		protocolFeeAmounts,
-		currentTimestamp,
-	)
+	rewardState, ok, err := self.GetRewardState(rewardID)
 	if err != nil {
 		return err
 	}
+	if !ok {
+		rewardState = staker.NewProtocolFeeRewardState()
+	}
 
-	// Persist only the tokens whose value actually changed instead of replacing the whole map.
-	// calculateAccumulatedRewardX128PerStake returns the previous (identical) accumulator and amount for
-	// tokens that received no new fees this round, so the full-map setters would deep-copy and re-persist
-	// every registered token on every add/remove/claim, growing storage and gas linearly in the number of
-	// registered tokens regardless of how many actually earned fees (gas report issue 1 / §1.2).
-	//
-	// Registered protocol-fee tokens are monotonic (never removed) and the stored maps are
-	// updated per token rather than replaced, so a token missing from protocolFeeAmounts keeps
-	// its stored value; skipping unchanged entries therefore yields the same persisted state
-	// as the previous full-replace, only without the redundant re-writes.
-	for token, newAcc := range accumulatedProtocolFeeX128PerStake {
-		existing := self.GetAccumulatedProtocolFeeX128PerStake(token)
-		if existing == nil || !existing.Eq(newAcc) {
-			self.SetAccumulatedProtocolFeeX128PerStakeForToken(token, newAcc)
-		}
+	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
+	if err := resolvedState.addStake(amount, epoch); err != nil {
+		return err
 	}
-	for token, amount := range changedProtocolFeeAmounts {
-		if self.GetProtocolFeeAmount(token) != amount {
-			self.SetProtocolFeeAmountForToken(token, amount)
-		}
+
+	self.recordTotalStakedAmount(epoch, gnsmath.SafeAddInt64(currentTotal, amount))
+	self.SetRewardState(rewardID, rewardState)
+
+	return nil
+}
+
+// removeStake records that rewardID staked amount less from epoch on.
+func (self *ProtocolFeeRewardManagerResolver) removeStake(rewardID string, amount int64, epoch int64) error {
+	if amount < 0 {
+		return errors.New(errAmountMustBeNonNegative)
 	}
+	if epoch < self.GetCurrentEpoch() {
+		return errors.New(errInvalidAccrualEpoch)
+	}
+
+	updatedTotal := gnsmath.SafeSubInt64(self.GetTotalStakedAmount(), amount)
+	if updatedTotal < 0 {
+		return errors.New(errRemoveAmountExceedsTotalStaked)
+	}
+
+	rewardState, ok, err := self.GetRewardState(rewardID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		rewardState = staker.NewProtocolFeeRewardState()
+	}
+
+	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
+	if err := resolvedState.removeStake(amount, epoch); err != nil {
+		return err
+	}
+
+	self.recordTotalStakedAmount(epoch, updatedTotal)
+	self.SetRewardState(rewardID, rewardState)
+
+	return nil
+}
+
+func (self *ProtocolFeeRewardManagerResolver) recordTotalStakedAmount(epoch int64, totalStakedAmount int64) {
+	self.SetCurrentEpoch(epoch)
+	self.SetTotalStakedAmount(totalStakedAmount)
+	self.SetTotalStakedAmountAt(epoch, totalStakedAmount)
+}
+
+// applyAccrualBuckets folds consumed accrual buckets of tokenPath into its accumulator.
+//
+// epochs and amounts are parallel and in ascending epoch order. Each amount is divided
+// by the total stake in force during its epoch; with nothing staked the amount is
+// dropped, the same policy the emission accumulator applies. exhausted reports that
+// no bucket is left pending, which lets the accumulator mark every closed epoch as
+// fully folded.
+func (self *ProtocolFeeRewardManagerResolver) applyAccrualBuckets(
+	tokenPath string,
+	epochs []int64,
+	amounts []int64,
+	exhausted bool,
+	currentTimestamp int64,
+) error {
+	if len(epochs) != len(amounts) {
+		return errors.New(errInvalidAccrualBuckets)
+	}
+
+	accumulator, ok := self.GetTokenAccumulator(tokenPath)
+	if !ok {
+		if len(epochs) == 0 {
+			return nil
+		}
+		accumulator = staker.NewProtocolFeeTokenAccumulator()
+		self.SetTokenAccumulator(tokenPath, accumulator)
+	}
+
+	currentX128 := accumulator.GetAccumulatedX128PerStake().Clone()
+	feeAmount := accumulator.GetProtocolFeeAmount()
+	lastEpoch := int64(-1)
+
+	for i, epoch := range epochs {
+		if epoch < lastEpoch || epoch > self.GetCurrentEpoch() {
+			return errors.New(errInvalidAccrualBuckets)
+		}
+		lastEpoch = epoch
+
+		amount := amounts[i]
+		if amount < 0 {
+			return errors.New(errInvalidAccrualBuckets)
+		}
+		feeAmount = gnsmath.SafeAddInt64(feeAmount, amount)
+
+		totalStakedAmount := self.GetTotalStakedAmountAt(epoch)
+		if totalStakedAmount <= 0 || amount == 0 {
+			continue
+		}
+
+		// Scale the amount by 2^128 before dividing by the total stake. The amount
+		// fits in 63 bits, so the product fits in 191 bits and cannot overflow.
+		amountX128 := u256.Zero().Lsh(u256.NewUintFromInt64(amount), 128)
+		perStakeX128 := u256.Zero().Div(amountX128, u256.NewUintFromInt64(totalStakedAmount))
+		currentX128 = u256.Zero().Add(currentX128, perStakeX128)
+
+		accumulator.SetAccumulatedX128PerStakeAt(epoch, currentX128)
+	}
+
+	accumulator.SetProtocolFeeAmount(feeAmount)
+
+	// Every epoch before the one in force is closed, so it is fully folded once no bucket
+	// is left. Otherwise only the epochs up to the last consumed bucket are complete.
+	foldedEpoch := accumulator.GetFoldedEpoch()
+	if exhausted {
+		foldedEpoch = maxInt64(foldedEpoch, self.GetCurrentEpoch()-1)
+	} else if lastEpoch >= 0 {
+		foldedEpoch = maxInt64(foldedEpoch, minInt64(lastEpoch, self.GetCurrentEpoch()-1))
+	}
+	accumulator.SetFoldedEpoch(foldedEpoch)
 
 	self.SetAccumulatedTimestamp(currentTimestamp)
 
 	return nil
 }
 
-// updateAccumulatedProtocolFeeX128PerStakeForToken updates manager accumulators for exactly one token.
-func (self *ProtocolFeeRewardManagerResolver) updateAccumulatedProtocolFeeX128PerStakeForToken(
-	tokenPath string,
-	protocolFeeAmount int64,
-	currentTimestamp int64,
-) error {
-	accumulatedProtocolFeeX128PerStake, changedProtocolFeeAmount, err := self.calculateAccumulatedRewardX128PerStakeForToken(
-		tokenPath,
-		protocolFeeAmount,
-	)
-	if err != nil {
-		return err
+// accumulatorView returns a read view of tokenPath's accumulator.
+//
+// With pendingComplete false the view reflects the accumulator exactly as folded so
+// far, which is what a collect must settle against. With pendingComplete true the
+// given buckets are the whole pending set of the token: they are projected on top, as
+// applyAccrualBuckets would fold them, and every closed epoch counts as folded, which
+// is what an exhaustive fold would leave behind. A query uses the latter so that it
+// reports what a collect would pay even when a previous bounded fold consumed exactly
+// its limit and left foldedEpoch behind the epoch in force.
+func (self *ProtocolFeeRewardManagerResolver) accumulatorView(tokenPath string, pendingEpochs []int64, pendingAmounts []int64, pendingComplete bool) *protocolFeeAccumulatorView {
+	view := &protocolFeeAccumulatorView{
+		extraEpochs:  []int64{},
+		extraValues:  []*u256.Uint{},
+		current:      u256.Zero(),
+		firstEpoch:   -1,
+		foldedEpoch:  -1,
+		currentEpoch: self.GetCurrentEpoch(),
 	}
 
-	// Write only what changed, as the all-token path does (gas report issue 1 / §1.2).
-	existing := self.GetAccumulatedProtocolFeeX128PerStake(tokenPath)
-	if existing == nil || !existing.Eq(accumulatedProtocolFeeX128PerStake) {
-		self.SetAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, accumulatedProtocolFeeX128PerStake)
+	if accumulator, ok := self.GetTokenAccumulator(tokenPath); ok {
+		view.accumulator = accumulator
+		view.current = accumulator.GetAccumulatedX128PerStake().Clone()
+		view.firstEpoch = accumulator.GetFirstEpoch()
+		view.foldedEpoch = accumulator.GetFoldedEpoch()
 	}
 
-	if self.GetProtocolFeeAmount(tokenPath) != changedProtocolFeeAmount {
-		self.SetProtocolFeeAmountForToken(tokenPath, changedProtocolFeeAmount)
+	if pendingComplete {
+		// Projecting the whole pending set folds every closed epoch.
+		view.foldedEpoch = maxInt64(view.foldedEpoch, view.currentEpoch-1)
 	}
 
-	return nil
+	for i, epoch := range pendingEpochs {
+		totalStakedAmount := self.GetTotalStakedAmountAt(epoch)
+		if totalStakedAmount <= 0 || pendingAmounts[i] <= 0 {
+			continue
+		}
+
+		amountX128 := u256.Zero().Lsh(u256.NewUintFromInt64(pendingAmounts[i]), 128)
+		perStakeX128 := u256.Zero().Div(amountX128, u256.NewUintFromInt64(totalStakedAmount))
+		view.current = u256.Zero().Add(view.current, perStakeX128)
+		view.extraEpochs = append(view.extraEpochs, epoch)
+		view.extraValues = append(view.extraValues, view.current.Clone())
+		if view.firstEpoch < 0 {
+			view.firstEpoch = epoch
+		}
+	}
+
+	return view
 }
 
-// addStake adds a stake for an address and updates their protocol fee reward state.
-// This method ensures rewards are properly calculated before the stake change.
-//
-// Parameters:
-//   - address: staker's address
-//   - amount: amount of stake to add
-//   - currentTimestamp: current timestamp
-func (self *ProtocolFeeRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
-	if amount <= 0 {
-		return errors.New(errAmountMustBePositive)
-	}
-
-	rewardState, ok, err := self.GetRewardState(address)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		rewardState = staker.NewProtocolFeeRewardState(self.GetAllAccumulatedProtocolFeeX128PerStake())
-	}
-
-	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
-
-	currentTotal := self.GetTotalStakedAmount()
-	if currentTotal > math.MaxInt64-amount {
-		return errors.New(errTotalStakedAmountOverflow)
-	}
-	updatedTotalStakedAmount := gnsmath.SafeAddInt64(currentTotal, amount)
-
-	err = resolvedState.addStakeWithUpdateRewardDebtX128(amount, self.GetAllAccumulatedProtocolFeeX128PerStake(), currentTimestamp)
-	if err != nil {
-		return err
-	}
-
-	self.setRewardState(address, rewardState)
-	self.SetTotalStakedAmount(updatedTotalStakedAmount)
-
-	return nil
-}
-
-// removeStake removes a stake for an address and updates their protocol fee reward state.
-// This method ensures rewards are properly calculated before the stake change.
-//
-// Parameters:
-//   - address: staker's address
-//   - amount: amount of stake to remove
-//   - currentTimestamp: current timestamp
-func (self *ProtocolFeeRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
-	if amount < 0 {
-		return errors.New(errAmountMustBeNonNegative)
-	}
-
-	updatedTotalStakedAmount := gnsmath.SafeSubInt64(self.GetTotalStakedAmount(), amount)
-	if updatedTotalStakedAmount < 0 {
-		return errors.New(errRemoveAmountExceedsTotalStaked)
-	}
-
-	rewardState, ok, err := self.GetRewardState(address)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		rewardState = staker.NewProtocolFeeRewardState(self.GetAllAccumulatedProtocolFeeX128PerStake())
-	}
-
-	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
-
-	err = resolvedState.removeStakeWithUpdateRewardDebtX128(amount, self.GetAllAccumulatedProtocolFeeX128PerStake(), currentTimestamp)
-	if err != nil {
-		return err
-	}
-
-	self.setRewardState(address, rewardState)
-
-	self.SetTotalStakedAmount(updatedTotalStakedAmount)
-
-	return nil
-}
-
-// claimRewards processes protocol fee reward claiming for an address.
-// This method calculates and returns the amounts of rewards claimed for each token.
-//
-// Parameters:
-//   - address: staker's address claiming rewards
-//   - currentTimestamp: current timestamp
-//
-// Returns:
-//   - map[string]int64: map of token path to claimed reward amount
-//   - error: nil on success, error if claiming fails
-func (self *ProtocolFeeRewardManagerResolver) claimRewards(address string, currentTimestamp int64) (map[string]int64, error) {
-	rewardState, ok, err := self.GetRewardState(address)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return make(map[string]int64), nil
-	}
-
-	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
-	claimedRewards, err := resolvedState.claimRewardsWithUpdateRewardDebtX128(
-		self.GetAllAccumulatedProtocolFeeX128PerStake(),
-		currentTimestamp,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	self.setRewardState(address, rewardState)
-
-	return claimedRewards, nil
-}
-
-// claimRewardForToken processes protocol fee reward claiming for exactly one token.
-func (self *ProtocolFeeRewardManagerResolver) claimRewardForToken(address string, tokenPath string, currentTimestamp int64) (int64, error) {
-	rewardState, ok, err := self.GetRewardState(address)
+// claimTokenReward settles tokenPath for rewardID and returns the reward collected.
+// See ProtocolFeeRewardStateResolver.claimTokenReward for the maxEvents bound.
+func (self *ProtocolFeeRewardManagerResolver) claimTokenReward(rewardID string, tokenPath string, maxEvents int64) (int64, error) {
+	rewardState, ok, err := self.GetRewardState(rewardID)
 	if err != nil {
 		return 0, err
 	}
@@ -364,20 +236,75 @@ func (self *ProtocolFeeRewardManagerResolver) claimRewardForToken(address string
 	}
 
 	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
-	claimedReward, err := resolvedState.claimRewardForTokenWithUpdateRewardDebtX128(
-		tokenPath,
-		self.GetAccumulatedProtocolFeeX128PerStake(tokenPath),
-		currentTimestamp,
-	)
+	reward, err := resolvedState.claimTokenReward(tokenPath, self.accumulatorView(tokenPath, nil, nil, false), maxEvents)
 	if err != nil {
 		return 0, err
 	}
 
-	self.setRewardState(address, rewardState)
+	self.SetRewardState(rewardID, rewardState)
 
-	return claimedReward, nil
+	return reward, nil
 }
 
-func (self *ProtocolFeeRewardManagerResolver) setRewardState(address string, rewardState *staker.ProtocolFeeRewardState) {
-	self.SetRewardState(address, rewardState)
+// claimRewards settles every folded token for rewardID and returns the reward
+// collected per token. Its cost grows with the number of tokens that ever collected a
+// fee; claimTokenReward is the bounded alternative.
+func (self *ProtocolFeeRewardManagerResolver) claimRewards(rewardID string, currentTimestamp int64) (map[string]int64, error) {
+	rewards := make(map[string]int64)
+
+	rewardState, ok, err := self.GetRewardState(rewardID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return rewards, nil
+	}
+
+	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
+	if !resolvedState.IsClaimable(currentTimestamp) {
+		return rewards, nil
+	}
+
+	for _, tokenPath := range self.GetTokenPaths() {
+		reward, err := resolvedState.claimTokenReward(tokenPath, self.accumulatorView(tokenPath, nil, nil, false), 0)
+		if err != nil {
+			return nil, err
+		}
+		rewards[tokenPath] = reward
+	}
+
+	resolvedState.SetClaimedTimestamp(currentTimestamp)
+	self.SetRewardState(rewardID, rewardState)
+
+	return rewards, nil
+}
+
+// GetClaimableRewardAmount returns what collecting tokenPath for rewardID would pay,
+// with the given pending buckets projected on top of the accumulator.
+func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmount(rewardID string, tokenPath string, pendingEpochs []int64, pendingAmounts []int64) (int64, error) {
+	rewardState, ok, err := self.GetRewardState(rewardID)
+	if err != nil {
+		return 0, err
+	}
+	if !ok {
+		return 0, nil
+	}
+
+	resolvedState := NewProtocolFeeRewardStateResolver(rewardState)
+
+	return resolvedState.getClaimableReward(tokenPath, self.accumulatorView(tokenPath, pendingEpochs, pendingAmounts, true)), nil
+}
+
+func maxInt64(a, b int64) int64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func minInt64(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
 }

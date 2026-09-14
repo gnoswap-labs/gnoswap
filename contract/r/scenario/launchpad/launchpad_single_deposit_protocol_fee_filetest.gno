@@ -331,10 +331,10 @@ func formatProtocolFees(cur realm, fees map[string]int64) string {
 // [INFO] Distributing protocol fee to gov/staker
 // [INFO] Protocol fee distributed
 // [INFO] Project recipient collecting protocol fee
-// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar.BAR:1499 gno.land/r/onbloc/qux.QUX:2999]
+// [INFO] claimable reward (project recipient): emissionReward=0, protocolFees=map[gno.land/r/onbloc/bar.BAR:1500 gno.land/r/onbloc/qux.QUX:3000]
 // [INFO] BAR balance before: 1099
 // [INFO] QUX balance before: 2199
-// [INFO] BAR balance after: 2598
-// [INFO] QUX balance after: 5198
-// [INFO] BAR collected: 1499
-// [INFO] QUX collected: 2999
+// [INFO] BAR balance after: 2599
+// [INFO] QUX balance after: 5199
+// [INFO] BAR collected: 1500
+// [INFO] QUX collected: 3000

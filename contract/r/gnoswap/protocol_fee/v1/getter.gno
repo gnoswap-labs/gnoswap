@@ -15,10 +15,20 @@ func (pf *protocolFeeV1) GetReservedTokens() []string {
 	return pf.getProtocolFeeState().ReservedTokens()
 }
 
-// GetAccrualPendingProtocolFees returns the same amounts as
-// ConsumeAccrualPendingProtocolFees without clearing the pending list.
-func (pf *protocolFeeV1) GetAccrualPendingProtocolFees() map[string]int64 {
-	return pf.accrualPendingProtocolFees(pf.getProtocolFeeState())
+// GetAccrualEpoch returns the accrual epoch fees are currently bucketed under.
+func (pf *protocolFeeV1) GetAccrualEpoch() int64 {
+	return pf.getProtocolFeeState().store.GetAccrualEpoch()
+}
+
+// GetAccrualPendingTokens returns the token paths that still own pending accrual buckets.
+func (pf *protocolFeeV1) GetAccrualPendingTokens() []string {
+	return pf.getProtocolFeeState().store.GetAccrualPendingTokens()
+}
+
+// GetAccrualBuckets returns up to limit of the oldest pending buckets of tokenPath
+// without clearing them. A limit of zero or less returns every pending bucket.
+func (pf *protocolFeeV1) GetAccrualBuckets(tokenPath string, limit int) ([]int64, []int64) {
+	return pf.getProtocolFeeState().store.GetAccrualBuckets(tokenPath, limit)
 }
 
 // GetAccuTransfersToGovStaker returns all accumulated transfers to gov/staker.

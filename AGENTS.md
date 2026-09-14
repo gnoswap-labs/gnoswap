@@ -171,7 +171,7 @@ Each module's detailed rules, key files, and pitfalls are documented in `docs/`.
 | staker | [`docs/staker.md`](docs/staker.md) | Hooks execute mid-swap. Warmup final tier = `math.MaxInt64`. |
 | emission | [`docs/emission.md`](docs/emission.md) | Always check `bool` return from `MintAndDistributeGns`. |
 | protocol_fee | [`docs/protocol_fee.md`](docs/protocol_fee.md) | Every fee transfer must call `AddToProtocolFee`. |
-| gov | [`docs/gov.md`](docs/gov.md) | Spend amount strictly positive. Snapshot at proposal creation. |
+| gov | [`docs/gov.md`](docs/gov.md) | Spend amount strictly positive. Snapshot at proposal creation. Stake changes never fold protocol fees. |
 | launchpad | [`docs/launchpad.md`](docs/launchpad.md) | Vesting overflow check. Claimable must match balance. |
 | KV store | [`docs/kv_store.md`](docs/kv_store.md) | `RemoveAuthorizedCaller` for `None`. Implementation gets no `Write`. |
 
@@ -200,6 +200,7 @@ Each module's detailed rules, key files, and pitfalls are documented in `docs/`.
 | Upgrade without permission re-registration | Dependent modules lose write access |
 | Halted emission not tolerated | Halt cascades to unrelated modules |
 | Fee transfer without `AddToProtocolFee` | Fees permanently locked |
+| Folding protocol fees inside a gov/staker stake change | Undelegate cost grows with the number of fee tokens |
 | Slippage on owed amounts (not received) | User receives less than minimum |
 | `wugnot.Deposit(cross(cur))` in contract | Panics - `AssertOriginCall` enforced |
 | `TryRegister` return ignored | Inconsistent referral state |

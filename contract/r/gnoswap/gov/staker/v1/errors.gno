@@ -24,6 +24,8 @@ const (
 	errDelegatedAmountNegative        = "[GNOSWAP-GOV_STAKER-017] delegated amount cannot be negative"
 	errUndelegationAmountNegative     = "[GNOSWAP-GOV_STAKER-018] undelegation amount cannot be negative"
 	errDelegationNotFound             = "[GNOSWAP-GOV_STAKER-019] delegation not found"
+	errInvalidAccrualEpoch            = "[GNOSWAP-GOV_STAKER-020] accrual epoch is older than the epoch in force"
+	errInvalidAccrualBuckets          = "[GNOSWAP-GOV_STAKER-021] invalid accrual buckets"
 )
 
 func makeErrorWithDetails(message string, detail string) error {

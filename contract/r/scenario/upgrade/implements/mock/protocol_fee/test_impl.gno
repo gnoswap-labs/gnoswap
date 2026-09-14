@@ -165,26 +165,47 @@ func (t *TestProtocolFee) GetActualDistributedToDevOpsByTokenPath(path string) i
 	).(int64)
 }
 
-func (t *TestProtocolFee) ConsumeAccrualPendingProtocolFees(_ int, rlm realm) map[string]int64 {
+func (t *TestProtocolFee) AdvanceAccrualEpoch(_ int, rlm realm) int64 {
 	return t.ExecuteFn(
-		"ConsumeAccrualPendingProtocolFees",
-		func(args ...any) any { return t.instance.ConsumeAccrualPendingProtocolFees(0, rlm) },
-	).(map[string]int64)
-}
-
-func (t *TestProtocolFee) GetAccrualPendingProtocolFees() map[string]int64 {
-	return t.ExecuteFn(
-		"GetAccrualPendingProtocolFees",
-		func(args ...any) any { return t.instance.GetAccrualPendingProtocolFees() },
-	).(map[string]int64)
-}
-
-func (t *TestProtocolFee) ConsumeAccrualPendingProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) int64 {
-	return t.ExecuteFn(
-		"ConsumeAccrualPendingProtocolFeeByTokenPath",
-		func(args ...any) any {
-			return t.instance.ConsumeAccrualPendingProtocolFeeByTokenPath(0, rlm, args[0].(string))
-		},
-		tokenPath,
+		"AdvanceAccrualEpoch",
+		func(args ...any) any { return t.instance.AdvanceAccrualEpoch(0, rlm) },
 	).(int64)
+}
+
+func (t *TestProtocolFee) ConsumeAccrualBuckets(_ int, rlm realm, tokenPath string, limit int) ([]int64, []int64) {
+	result := t.ExecuteFn(
+		"ConsumeAccrualBuckets",
+		func(args ...any) any {
+			epochs, amounts := t.instance.ConsumeAccrualBuckets(0, rlm, args[0].(string), args[1].(int))
+			return [][]int64{epochs, amounts}
+		},
+		tokenPath, limit,
+	).([][]int64)
+	return result[0], result[1]
+}
+
+func (t *TestProtocolFee) GetAccrualEpoch() int64 {
+	return t.ExecuteFn(
+		"GetAccrualEpoch",
+		func(args ...any) any { return t.instance.GetAccrualEpoch() },
+	).(int64)
+}
+
+func (t *TestProtocolFee) GetAccrualPendingTokens() []string {
+	return t.ExecuteFn(
+		"GetAccrualPendingTokens",
+		func(args ...any) any { return t.instance.GetAccrualPendingTokens() },
+	).([]string)
+}
+
+func (t *TestProtocolFee) GetAccrualBuckets(tokenPath string, limit int) ([]int64, []int64) {
+	result := t.ExecuteFn(
+		"GetAccrualBuckets",
+		func(args ...any) any {
+			epochs, amounts := t.instance.GetAccrualBuckets(args[0].(string), args[1].(int))
+			return [][]int64{epochs, amounts}
+		},
+		tokenPath, limit,
+	).([][]int64)
+	return result[0], result[1]
 }

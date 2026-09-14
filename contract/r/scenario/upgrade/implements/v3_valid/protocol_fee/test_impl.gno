@@ -89,14 +89,22 @@ func (t *TestProtocolFee) GetActualDistributedToDevOpsByTokenPath(path string) i
 	return t.instance.GetActualDistributedToDevOpsByTokenPath(path)
 }
 
-func (t *TestProtocolFee) ConsumeAccrualPendingProtocolFees(_ int, rlm realm) map[string]int64 {
-	return t.instance.ConsumeAccrualPendingProtocolFees(0, rlm)
+func (t *TestProtocolFee) AdvanceAccrualEpoch(_ int, rlm realm) int64 {
+	return t.instance.AdvanceAccrualEpoch(0, rlm)
 }
 
-func (t *TestProtocolFee) GetAccrualPendingProtocolFees() map[string]int64 {
-	return t.instance.GetAccrualPendingProtocolFees()
+func (t *TestProtocolFee) ConsumeAccrualBuckets(_ int, rlm realm, tokenPath string, limit int) ([]int64, []int64) {
+	return t.instance.ConsumeAccrualBuckets(0, rlm, tokenPath, limit)
 }
 
-func (t *TestProtocolFee) ConsumeAccrualPendingProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) int64 {
-	return t.instance.ConsumeAccrualPendingProtocolFeeByTokenPath(0, rlm, tokenPath)
+func (t *TestProtocolFee) GetAccrualEpoch() int64 {
+	return t.instance.GetAccrualEpoch()
+}
+
+func (t *TestProtocolFee) GetAccrualPendingTokens() []string {
+	return t.instance.GetAccrualPendingTokens()
+}
+
+func (t *TestProtocolFee) GetAccrualBuckets(tokenPath string, limit int) ([]int64, []int64) {
+	return t.instance.GetAccrualBuckets(tokenPath, limit)
 }
