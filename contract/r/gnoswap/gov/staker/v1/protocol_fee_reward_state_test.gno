@@ -136,6 +136,27 @@ func TestProtocolFeeRewardState_loadTokenSettlement(cur realm, t *testing.T) {
 		uassert.Equal(t, settlement.segmentStakedAmount, int64(0))
 	})
 
+	t.Run("the boundary event is found across a long history", func(cur realm, t *testing.T) {
+		// Events at epochs 1..40, two of them at the first fee epoch 20: the cursor must
+		// land after the last event at epoch 20 and pick up its stake.
+		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
+		for epoch := int64(1); epoch <= 40; epoch++ {
+			uassert.NoError(t, resolver.addStake(1, epoch))
+			if epoch == 20 {
+				uassert.NoError(t, resolver.addStake(5, epoch))
+			}
+		}
+
+		settlement := resolver.loadTokenSettlement(pfTestBar, newPfTestView(39, []int64{20}, []int64{5}))
+		uassert.Equal(t, settlement.eventCursor, int64(21))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(25))
+
+		// A first fee after every event skips them all.
+		settlement = resolver.loadTokenSettlement(pfTestBar, newPfTestView(41, []int64{41}, []int64{5}))
+		uassert.Equal(t, settlement.eventCursor, int64(41))
+		uassert.Equal(t, settlement.segmentStakedAmount, int64(45))
+	})
+
 	t.Run("a stored token state is loaded as is", func(cur realm, t *testing.T) {
 		resolver := NewProtocolFeeRewardStateResolver(staker.NewProtocolFeeRewardState())
 		tokenState := staker.NewProtocolFeeTokenRewardState(3, 40, u256.NewUint(9))

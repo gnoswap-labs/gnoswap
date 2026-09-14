@@ -108,15 +108,27 @@ func (p *ProtocolFeeRewardStateResolver) loadTokenSettlement(tokenPath string, v
 		return settlement
 	}
 
-	for index := eventCount - 1; index >= 0; index-- {
-		event, ok := p.GetStakeEvent(index)
+	// Stake events are appended in epoch order, so the last event at or before
+	// firstEpoch is found by binary search: the lookup costs O(log n) reads no matter
+	// how many stake changes the staker made since the token's first fee.
+	lo, hi := int64(0), eventCount
+	for lo < hi {
+		mid := lo + (hi-lo)/2
+		event, ok := p.GetStakeEvent(mid)
 		if !ok {
 			break
 		}
 		if event.GetEpoch() <= view.firstEpoch {
-			settlement.eventCursor = index + 1
+			lo = mid + 1
+		} else {
+			hi = mid
+		}
+	}
+
+	if lo > 0 {
+		if event, ok := p.GetStakeEvent(lo - 1); ok {
+			settlement.eventCursor = lo
 			settlement.segmentStakedAmount = event.GetStakedAmount()
-			break
 		}
 	}
 
