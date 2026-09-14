@@ -40,3 +40,28 @@ func TestCommonV1_TransferBindsCaller(cur realm, t *testing.T) {
 	uassert.NoError(t, impl.Approve(0, cur, fooKey, bob, 50))
 	uassert.Equal(t, int64(50), impl.Allowance(fooKey, holder, bob))
 }
+
+func TestCommonV1_ValidateTokenKey(t *testing.T) {
+	impl := NewCommonV1()
+
+	for _, key := range []string{
+		fooKey,
+		"gno.land/r/onbloc/bar.BAR",
+		"gno.land/r/gnoswap/gns.GNS",
+		"gno.land/r/x/y_z/v1.MY-TOKEN_2",
+	} {
+		uassert.NoError(t, impl.ValidateTokenKey(key), key)
+	}
+
+	for _, key := range []string{
+		"",
+		fooKey + ":500",              // pool path separator
+		fooKey + "," + fooKey,        // router route separator
+		fooKey + "*POOL*" + fooKey,   // router pool separator
+		"gno.land/r/demo/defi/foo20 FOO",
+		"gno.land/r/demo/defi/foo20.FOO\n",
+		"gno.land/r/demo/defi/foo20.F\u00d6O",
+	} {
+		uassert.Error(t, impl.ValidateTokenKey(key), key)
+	}
+}

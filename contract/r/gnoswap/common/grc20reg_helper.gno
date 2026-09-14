@@ -2,28 +2,12 @@ package common
 
 import (
 	"errors"
-	"strings"
 
 	"gno.land/p/nt/ufmt/v0"
 )
 
-// Token keys are embedded verbatim in pool paths ("<key0>:<key1>:<fee>"),
-// so a key must never contain the separator.
-const poolPathSeparator = ":"
-
 func validateTokenKey(tokenKey string) error {
-	if tokenKey == "" {
-		return errors.New(newErrorWithDetail(errInvalidTokenKey, "empty token key"))
-	}
-
-	if strings.Contains(tokenKey, poolPathSeparator) {
-		return errors.New(newErrorWithDetail(
-			errInvalidTokenKey,
-			ufmt.Sprintf("token key(%s) contains %q", tokenKey, poolPathSeparator),
-		))
-	}
-
-	return nil
+	return getImplementation().ValidateTokenKey(tokenKey)
 }
 
 func mustValidTokenKey(tokenKey string) {

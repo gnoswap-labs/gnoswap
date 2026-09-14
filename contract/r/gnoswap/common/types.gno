@@ -1,6 +1,12 @@
 package common
 
 type ICommon interface {
+	// ValidateTokenKey returns an error when tokenKey can never be a valid
+	// registry key. The rule lives in the implementation so that a later
+	// GRC20 generation with a different key charset can relax or tighten it
+	// through UpgradeImpl.
+	ValidateTokenKey(tokenKey string) error
+
 	IsRegistered(tokenKey string) bool
 
 	TotalSupply(tokenKey string) int64

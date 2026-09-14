@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	errNotRegistered = "[GNOSWAP-COMMON-001] token is not registered"
+	errNotRegistered   = "[GNOSWAP-COMMON-001] token is not registered"
+	errInvalidTokenKey = "[GNOSWAP-COMMON-003] invalid token key"
 )
 
 func newErrorWithDetail(message string, detail string) string {

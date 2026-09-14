@@ -1,6 +1,9 @@
 package common
 
 import (
+	"errors"
+	"strings"
+
 	"gno.land/p/nt/grc20/v0"
 	"gno.land/r/nt/grc20reg/v0"
 )
@@ -17,6 +20,13 @@ func NewMockCommon(version string, keys ...string) *MockCommon {
 		m.balances[key] = int64(1000 * (i + 1))
 	}
 	return m
+}
+
+func (m *MockCommon) ValidateTokenKey(tokenKey string) error {
+	if tokenKey == "" {
+		return errors.New("mock: empty token key")
+	}
+	return nil
 }
 
 func (m *MockCommon) IsRegistered(tokenKey string) bool {
@@ -51,6 +61,16 @@ func makeMockInitializer(version string, keys ...string) func(_ int, rlm realm) 
 // MockGrc20regCommon mirrors common/v1 against grc20reg so the helper tests
 // exercise real GRC20 tokens without importing common/v1.
 type MockGrc20regCommon struct{}
+
+func (m *MockGrc20regCommon) ValidateTokenKey(tokenKey string) error {
+	if tokenKey == "" {
+		return errors.New("invalid token key: empty")
+	}
+	if strings.ContainsAny(tokenKey, ":,*") {
+		return errors.New("invalid token key: separator")
+	}
+	return nil
+}
 
 func (m *MockGrc20regCommon) IsRegistered(tokenKey string) bool {
 	return grc20reg.Get(tokenKey) != nil

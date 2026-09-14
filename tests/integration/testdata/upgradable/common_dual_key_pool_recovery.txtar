@@ -505,6 +505,8 @@ func init(cur realm) {
 package common
 
 import (
+	"errors"
+
 	"gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/common"
 
@@ -514,7 +516,10 @@ import (
 	grc20regv1 "gno.land/r/nt/grc20reg/v1"
 )
 
-const errNotRegistered = "[GNOSWAP-COMMON-001] token is not registered"
+const (
+	errNotRegistered   = "[GNOSWAP-COMMON-001] token is not registered"
+	errInvalidTokenKey = "[GNOSWAP-COMMON-003] invalid token key"
+)
 
 type commonV2 struct{}
 
@@ -563,6 +568,31 @@ func (c *commonV2) mustGetToken(tokenKey string) token {
 		panic(ufmt.Sprintf("%s || unknown token(%s)", errNotRegistered, tokenKey))
 	}
 	return t
+}
+
+// Same allowlist as common/v1: package-path characters, '.', and the GRC20
+// symbol charset. Separators used by pool paths (':') and router routes
+// (',' and "*POOL*") can never appear in a key.
+func isTokenKeyChar(ch rune) bool {
+	switch {
+	case ch >= 'a' && ch <= 'z', ch >= 'A' && ch <= 'Z', ch >= '0' && ch <= '9':
+		return true
+	case ch == '_', ch == '-', ch == '.', ch == '/':
+		return true
+	}
+	return false
+}
+
+func (c *commonV2) ValidateTokenKey(tokenKey string) error {
+	if tokenKey == "" {
+		return errors.New(ufmt.Sprintf("%s || empty token key", errInvalidTokenKey))
+	}
+	for _, ch := range tokenKey {
+		if !isTokenKeyChar(ch) {
+			return errors.New(ufmt.Sprintf("%s || token key(%s) contains %q", errInvalidTokenKey, tokenKey, string(ch)))
+		}
+	}
+	return nil
 }
 
 func (c *commonV2) IsRegistered(tokenKey string) bool {
