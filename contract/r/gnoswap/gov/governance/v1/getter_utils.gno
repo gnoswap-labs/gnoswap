@@ -23,16 +23,6 @@ func cloneProposalEntry(value any) any {
 	return proposal.Clone()
 }
 
-// valueVotingInfoEntry validates a proposal voting-info tree entry. VotingInfo
-// is stored by value, so returning it does not expose realm-owned state.
-func valueVotingInfoEntry(value any) any {
-	if votingInfo, ok := value.(governance.VotingInfo); ok {
-		return votingInfo
-	}
-
-	return nil
-}
-
 // cloneProposalIDsEntry is the transformation for the user proposal tree. The
 // stored value is a slice, so hand out a copy rather than letting a reader
 // write through the shared backing array.

@@ -213,7 +213,7 @@ func (gv *governanceV1) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 	if !exists {
 		return nil
 	}
-	return rotree.Wrap(votingInfos, valueVotingInfoEntry)
+	return rotree.Wrap(votingInfos, nil)
 }
 
 // ExistsVotingInfo checks if a voting info exists for a user on a proposal.
