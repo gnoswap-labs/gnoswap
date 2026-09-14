@@ -628,6 +628,52 @@ func TestProtocolFeeRewardState_updateRewardDebtX128(cur realm, t *testing.T) {
 	}
 }
 
+func TestProtocolFeeRewardState_SettleMixedTokensBeforeStakeChanges(cur realm, t *testing.T) {
+	rate := u256.Zero().Lsh(u256.NewUint(1), 128)
+	state := staker.NewProtocolFeeRewardState(map[string]*u256.Uint{"settled": rate})
+	resolver := NewProtocolFeeRewardStateResolver(state)
+	resolver.SetStakedAmount(3)
+	rates := map[string]*u256.Uint{
+		"settled":  rate,
+		"earned":   rate,
+		"dust":     u256.Zero().Rsh(rate, 1),
+		"new-zero": u256.Zero(),
+	}
+
+	// Settle old ownership before increasing stake. Unchanged and newly seen
+	// zero-reward tokens must retain their entries in the public claim result.
+	uassert.NoError(t, resolver.addStakeWithUpdateRewardDebtX128(1, rates, 100))
+	first, err := resolver.claimRewardsWithUpdateRewardDebtX128(rates, 101)
+	uassert.NoError(t, err)
+	for token, want := range map[string]int64{
+		"settled": 0, "earned": 3, "dust": 1, "new-zero": 0,
+	} {
+		got, present := first[token]
+		if !present || got != want {
+			t.Errorf("first claim for %s: got %d (present=%t), want %d", token, got, present, want)
+		}
+	}
+
+	// Changed rates must settle with the pre-exit stake, including when the
+	// stake change shares a timestamp with the preceding claim.
+	rates["earned"] = u256.Zero().Lsh(rate, 1)
+	rates["dust"] = rate
+	uassert.NoError(t, resolver.removeStakeWithUpdateRewardDebtX128(4, rates, 101))
+	second, err := resolver.claimRewardsWithUpdateRewardDebtX128(rates, 102)
+	uassert.NoError(t, err)
+	for token, want := range map[string]int64{
+		"settled": 0, "earned": 4, "dust": 2, "new-zero": 0,
+	} {
+		got, present := second[token]
+		if !present || got != want {
+			t.Errorf("post-exit claim for %s: got %d (present=%t), want %d", token, got, present, want)
+		}
+	}
+	repeated, err := resolver.claimRewardsWithUpdateRewardDebtX128(rates, 102)
+	uassert.NoError(t, err)
+	uassert.Equal(t, len(repeated), 0)
+}
+
 // Test combined operations
 func TestProtocolFeeRewardState_CombinedOperations(cur realm, t *testing.T) {
 	tests := []struct {
