@@ -1,9 +1,8 @@
 package common
 
 import (
-	"errors"
-
 	"chain/runtime/unsafe"
+	"errors"
 )
 
 // AssertIsNotHandleNativeCoin validates that no native coins were sent with the transaction.
