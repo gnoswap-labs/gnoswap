@@ -21,7 +21,8 @@ const (
 
 	StoreKeyConfigs StoreKey = "configs" // Configurations BPTree
 
-	StoreKeyProposals                 StoreKey = "proposals"
+	StoreKeyProposals StoreKey = "proposals" // Proposals BPTree
+
 	StoreKeyActiveProposalsBySnapshot StoreKey = "activeProposalsBySnapshot"
 
 	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos BPTree

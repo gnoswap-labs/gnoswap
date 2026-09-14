@@ -895,147 +895,59 @@ func TestGetUserProposals_EntriesAreCopied(cur realm, t *testing.T) {
 // Active Proposal Query Tests
 // ==================================
 
-func newActiveIndexTestProposal(
-	config governance.Config,
-	id int64,
-	createdAt int64,
-	snapshotTime int64,
-	proposalType governance.ProposalType,
-) *governance.Proposal {
-	return governance.NewProposal(
-		id,
-		NewProposalStatus(config, 1000, proposalType.IsExecutable(), createdAt, 1000),
-		governance.NewProposalMetadata("active-index", "active-index"),
-		governance.NewProposalData(proposalType, nil, nil),
-		address("g1proposer"),
-		1,
-		snapshotTime,
-		100,
-	)
-}
-
 func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
 	gv := setupGetterTest(cur, t)
-
 	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
-
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), snapshotTime)
 	uassert.False(t, hasActive)
-}
 
-func TestGetOldestActiveProposalSnapshotTime_StaleFirstEntryNeedsMaintenance(cur realm, t *testing.T) {
-	gv := setupGetterTest(cur, t)
-	store := gv.store.(*mockGovernanceStore)
-	config, _ := store.GetConfig(1)
-	now := time.Now().Unix()
+	for _, tc := range []struct {
+		name           string
+		snapshotOffset int64
+		missing        bool
+		expectedError  string
+	}{
+		{"stale first entry", -1, false, errProposalIndexNeedsCleanup},
+		{"equal snapshots retain both proposals", 0, false, ""},
+		{"later stale entry does not block", 1, false, ""},
+		{"missing first proposal", -1, true, errProposalNotFound},
+	} {
+		t.Run(tc.name, func(cur realm, t *testing.T) {
+			gv := setupGetterTest(cur, t)
+			config, _ := gv.getCurrentConfig()
+			now := time.Now().Unix()
+			active := governance.NewProposal(
+				1, NewProposalStatus(config, 1000, false, now, 1000),
+				governance.NewProposalMetadata("active", "active"),
+				governance.NewProposalData(governance.Text, nil, nil),
+				address("g1proposer"), 1, 1000, 100,
+			)
+			stale := governance.NewProposal(
+				2, NewProposalStatus(config, 1000, false, now-config.VotingStartDelay-config.VotingPeriod-1, 1000),
+				active.Metadata(), active.Data(), active.Proposer(),
+				1, active.SnapshotTime()+tc.snapshotOffset, 100,
+			)
+			uassert.True(t, gv.addProposal(0, cur, active))
+			if tc.missing {
+				gv.store.GetActiveProposalsBySnapshot().Set(activeProposalSnapshotKey(stale), stale.ID())
+			} else {
+				uassert.True(t, gv.addProposal(0, cur, stale))
+			}
 
-	stale := newActiveIndexTestProposal(
-		config,
-		1,
-		now-config.VotingStartDelay-config.VotingPeriod-100,
-		now-2000,
-		governance.Text,
-	)
-	active := newActiveIndexTestProposal(
-		config,
-		2,
-		now-config.VotingStartDelay-10,
-		now-1000,
-		governance.CommunityPoolSpend,
-	)
-	uassert.True(t, gv.addProposal(0, cur, stale))
-	uassert.True(t, gv.addProposal(0, cur, active))
-
-	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
-
-	uassert.Equal(t, int64(0), snapshotTime)
-	uassert.False(t, hasActive)
-	uassert.ErrorContains(t, err, errActiveProposalIndexNeedsPruning)
-}
-
-func TestGetOldestActiveProposalSnapshotTime_ActiveFirstEntryReturnsExactSnapshot(cur realm, t *testing.T) {
-	gv := setupGetterTest(cur, t)
-	store := gv.store.(*mockGovernanceStore)
-	config, _ := store.GetConfig(1)
-	now := time.Now().Unix()
-
-	const expectedSnapshotTime = int64(1000)
-	active := newActiveIndexTestProposal(
-		config,
-		1,
-		now-config.VotingStartDelay-10,
-		expectedSnapshotTime,
-		governance.CommunityPoolSpend,
-	)
-	stale := newActiveIndexTestProposal(
-		config,
-		2,
-		now-config.VotingStartDelay-config.VotingPeriod-100,
-		expectedSnapshotTime+1,
-		governance.Text,
-	)
-	uassert.True(t, gv.addProposal(0, cur, active))
-	uassert.True(t, gv.addProposal(0, cur, stale))
-
-	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
-
-	uassert.NoError(t, err)
-	uassert.True(t, hasActive)
-	uassert.Equal(t, expectedSnapshotTime, snapshotTime)
-}
-
-func TestGetOldestActiveProposalSnapshotTime_MissingFirstEntryReturnsError(cur realm, t *testing.T) {
-	gv := setupGetterTest(cur, t)
-	store := gv.store.(*mockGovernanceStore)
-	config, _ := store.GetConfig(1)
-	now := time.Now().Unix()
-
-	missing := newActiveIndexTestProposal(
-		config,
-		1,
-		now-config.VotingStartDelay-10,
-		now-1000,
-		governance.CommunityPoolSpend,
-	)
-	store.GetActiveProposalsBySnapshot().Set(missing.ActiveProposalSnapshotKey(), missing.ID())
-
-	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
-
-	uassert.Equal(t, int64(0), snapshotTime)
-	uassert.False(t, hasActive)
-	uassert.ErrorContains(t, err, errProposalNotFound)
-}
-
-func TestGetOldestActiveProposalSnapshotTime_TieUsesProposalIDOrdering(cur realm, t *testing.T) {
-	gv := setupGetterTest(cur, t)
-	store := gv.store.(*mockGovernanceStore)
-	config, _ := store.GetConfig(1)
-	now := time.Now().Unix()
-
-	const expectedSnapshotTime = int64(1000)
-	active := newActiveIndexTestProposal(
-		config,
-		1,
-		now-config.VotingStartDelay-10,
-		expectedSnapshotTime,
-		governance.CommunityPoolSpend,
-	)
-	stale := newActiveIndexTestProposal(
-		config,
-		2,
-		now-config.VotingStartDelay-config.VotingPeriod-100,
-		expectedSnapshotTime,
-		governance.Text,
-	)
-	uassert.True(t, gv.addProposal(0, cur, stale))
-	uassert.True(t, gv.addProposal(0, cur, active))
-
-	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
-
-	uassert.NoError(t, err)
-	uassert.True(t, hasActive)
-	uassert.Equal(t, expectedSnapshotTime, snapshotTime)
+			snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+			if tc.expectedError != "" {
+				uassert.ErrorContains(t, err, tc.expectedError)
+				uassert.ErrorContains(t, err, "proposalID: 2")
+				uassert.Equal(t, int64(0), snapshotTime)
+				uassert.False(t, hasActive)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(1000), snapshotTime)
+				uassert.True(t, hasActive)
+			}
+		})
+	}
 }
 
 // ==================================

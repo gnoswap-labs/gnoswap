@@ -13,7 +13,7 @@ type mockGovernanceStore struct {
 	config                    governance.Config
 	configs                   *bptree.BPTree
 	proposals                 *bptree.BPTree
-	activeProposalsBySnapshot *bptree.BPTree
+	activeProposals           *bptree.BPTree
 	proposalUserVotingInfos   *bptree.BPTree
 	userProposals             *bptree.BPTree
 	setProposalVotingInfosErr error
@@ -109,15 +109,15 @@ func (m *mockGovernanceStore) SetProposals(_ int, rlm realm, proposals *bptree.B
 }
 
 func (m *mockGovernanceStore) HasActiveProposalsBySnapshotStoreKey() bool {
-	return m.activeProposalsBySnapshot != nil
+	return m.activeProposals != nil
 }
 
 func (m *mockGovernanceStore) GetActiveProposalsBySnapshot() *bptree.BPTree {
-	return m.activeProposalsBySnapshot
+	return m.activeProposals
 }
 
 func (m *mockGovernanceStore) SetActiveProposalsBySnapshot(_ int, rlm realm, tree *bptree.BPTree) error {
-	m.activeProposalsBySnapshot = tree
+	m.activeProposals = tree
 	return nil
 }
 
@@ -245,13 +245,13 @@ func newMockGovernance() *governanceV1 {
 
 func newMockGovernanceStore() *mockGovernanceStore {
 	return &mockGovernanceStore{
-		configCounter:             governance.NewCounter(),
-		proposalCounter:           governance.NewCounter(),
-		configs:                   governance.NewConfigTree(),
-		proposals:                 governance.NewProposalTree(),
-		activeProposalsBySnapshot: governance.NewActiveProposalTree(),
-		proposalUserVotingInfos:   governance.NewProposalUserVotingInfoTree(),
-		userProposals:             governance.NewUserProposalTree(),
+		configCounter:           governance.NewCounter(),
+		proposalCounter:         governance.NewCounter(),
+		configs:                 governance.NewConfigTree(),
+		proposals:               governance.NewProposalTree(),
+		activeProposals:         governance.NewProposalTree(),
+		proposalUserVotingInfos: governance.NewProposalUserVotingInfoTree(),
+		userProposals:           governance.NewUserProposalTree(),
 	}
 }
 

@@ -273,7 +273,7 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool, erro
 		if !exists {
 			err = makeErrorWithDetails(errProposalNotFound, ufmt.Sprintf("proposalID: %d", proposalID))
 		} else if !NewProposalResolver(proposal).IsActive(time.Now().Unix()) {
-			err = makeErrorWithDetails(errActiveProposalIndexNeedsPruning, ufmt.Sprintf("proposalID: %d", proposalID))
+			err = makeErrorWithDetails(errProposalIndexNeedsCleanup, ufmt.Sprintf("proposalID: %d", proposalID))
 		} else {
 			oldestSnapshotTime = proposal.SnapshotTime()
 			hasActiveProposal = true

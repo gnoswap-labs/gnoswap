@@ -53,8 +53,6 @@ type IGovernanceManager interface {
 		proposalId int64,
 	) int64
 
-	// RemoveInactiveProposalFromIndexByAdmin removes one inactive proposal from
-	// the snapshot index. Only admins may call it; proposal and vote history remain.
 	RemoveInactiveProposalFromIndexByAdmin(_ int, rlm realm, proposalID int64)
 
 	// Configuration
@@ -107,9 +105,7 @@ type IGovernanceGetter interface {
 
 	GetUserProposals() *rotree.ReadOnlyTree
 
-	// GetOldestActiveProposalSnapshotTime returns the oldest active proposal's
-	// snapshot time. An empty index returns (0, false, nil); a stale first entry
-	// returns a maintenance error identifying the proposal that needs admin cleanup.
+	// Active proposal query
 	GetOldestActiveProposalSnapshotTime() (int64, bool, error)
 
 	// Voting weight snapshot getters

@@ -124,9 +124,8 @@ func Cancel(
 	return getImplementation().Cancel(0, cur, proposalId)
 }
 
-// RemoveInactiveProposalFromIndexByAdmin removes one inactive proposal from the
-// snapshot index. Only admins may call it; proposal and vote history remain.
-// Call in a separate transaction before retrying delegation-snapshot cleanup.
+// RemoveInactiveProposalFromIndexByAdmin removes an inactive proposal from the
+// snapshot index without deleting its proposal or voting history.
 func RemoveInactiveProposalFromIndexByAdmin(cur realm, proposalID int64) {
 	getImplementation().RemoveInactiveProposalFromIndexByAdmin(0, cur, proposalID)
 }

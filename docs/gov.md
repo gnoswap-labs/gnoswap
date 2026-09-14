@@ -11,13 +11,11 @@ Governance: proposals, voting, execution.
 
 ## Active Proposal Maintenance
 
-- A single snapshot-ordered B+Tree indexes proposals that may still be active. Proposal and voting history remain permanent.
-- `GetOldestActiveProposalSnapshotTime()` returns `(snapshotTime, hasActive, err)` after checking only the first index entry. An inactive first entry returns a maintenance-required error containing `proposalID: N`, not “no active proposals.”
-- `RemoveInactiveProposalFromIndexByAdmin(cur, proposalID)` removes only the specified inactive proposal's snapshot-index entry. It is admin-only, rejects missing or still-active proposals, and does not delete proposal or voting history.
-- Submit the removal in a separate transaction, then query again. If another stale entry is reported, remove that proposal's index entry before retrying delegation-snapshot cleanup. Separate transactions prevent a cleanup failure from rolling back maintenance progress.
-- Delegation-snapshot cleanup never removes proposal-index entries. It rejects getter errors before deleting history and still protects the oldest active proposal's snapshot.
-- Cancel and execute remove their index entries immediately. Elapsed proposals otherwise require explicit single-item maintenance; there is no deadline index, rescheduling, or batch pruner.
-- Each getter or maintenance call examines at most one proposal, not a constant amount of gas. B+Tree lookup/update costs remain, and delegation-history deletion itself is not batched by this change.
+- Proposal and voting history remain permanent. One snapshot-ordered index tracks potentially active proposals; cancel and execute remove their entries immediately.
+- `GetOldestActiveProposalSnapshotTime()` returns `(snapshotTime, hasActive, err)` after checking only the first entry. An inactive first entry returns a maintenance error containing `proposalID: N`, not an empty result.
+- `RemoveInactiveProposalFromIndexByAdmin(cur, proposalID)` is admin-only and removes only that inactive proposal's index entry. Missing or still-active proposals are rejected.
+- Commit each removal separately, query again for any remaining stale entry, then retry delegation-snapshot cleanup. Cleanup never maintains the proposal index and rejects getter errors before deleting history.
+- Each getter or maintenance call examines at most one proposal, not a constant amount of gas. B+Tree lookup/update costs remain; delegation-history deletion is not batched by this change.
 
 ## Community Pool (`v1/community_pool/`)
 

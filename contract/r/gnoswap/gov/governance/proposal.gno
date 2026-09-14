@@ -1,9 +1,6 @@
 package governance
 
-import (
-	"gno.land/p/gnoswap/utils"
-	bptree "gno.land/p/nt/bptree/v0"
-)
+import bptree "gno.land/p/nt/bptree/v0"
 
 // Proposal represents a governance proposal with all its associated data and state.
 // This is the core structure that tracks proposal lifecycle from creation to execution.
@@ -81,11 +78,6 @@ func (p *Proposal) ConfigVersion() int64 {
 // SnapshotTime returns the snapshot time for voting weight lookup.
 func (p *Proposal) SnapshotTime() int64 {
 	return p.snapshotTime
-}
-
-// ActiveProposalSnapshotKey returns this proposal's chronological snapshot index key.
-func (p *Proposal) ActiveProposalSnapshotKey() string {
-	return utils.EncodeUint64(uint64(p.snapshotTime)) + utils.EncodeUint64(uint64(p.id))
 }
 
 // Data returns the proposal data.
@@ -181,11 +173,6 @@ func (p *Proposal) Clone() *Proposal {
 }
 
 func NewProposalTree() *bptree.BPTree {
-	return bptree.NewBPTreeN(16)
-}
-
-// NewActiveProposalTree creates the snapshot-time ordered index of active proposals.
-func NewActiveProposalTree() *bptree.BPTree {
 	return bptree.NewBPTreeN(16)
 }
 

@@ -105,15 +105,7 @@ func main(cur realm) {
 		testing.SkipHeights(30 * 60 * 60 * 24 * 365)
 		cleanupTime := int64(1234783890 + 5)
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		// Cleanup must not implicitly prune even this one expired proposal.
-		uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-018]", func() {
-			gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), cleanupTime, aliceAddr)
-		})
 		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalId)
-		snapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
-		uassert.NoError(t, err)
-		ufmt.Printf("[INFO] oldest snapshot after maintenance: %d %t\n", snapshotTime, hasActive)
-		println("[INFO] proposal history after maintenance:", governance.GetProposals().Size())
 		cleanupSnapshots(cur, cleanupTime)
 	} else {
 		println("[INFO] safe cleanup time is not old enough, skipping cleanup test")
@@ -124,12 +116,70 @@ func main(cur realm) {
 
 	println("[SCENARIO] 9. Verify proposal is still accessible after cleanup")
 	verifyProposalAccessible(cur, proposalId)
-	println("[INFO] proposal history after cleanup:", governance.GetProposals().Size())
 	println()
 
 	println("[SCENARIO] 10. Verify total delegation preserved")
 	verifyTotalDelegation(cur)
 	println()
+	verifyProposalIndexMaintenance(cur, maxSmoothingPeriod)
+}
+
+func verifyProposalIndexMaintenance(cur realm, maxSmoothingPeriod int64) {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	governance.Reconfigure(cross(cur), 5, 10, maxSmoothingPeriod, 50, 0, 5, 30)
+
+	testing.SetRealm(testing.NewUserRealm(aliceAddr))
+	canceledID := governance.ProposeText(cross(cur), "canceled", "canceled")
+	governance.Cancel(cross(cur), canceledID)
+	snapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
+	println("[EXPECTED] canceled proposal removed:", canceledID, snapshotTime, hasActive, governance.GetProposals().Size())
+
+	proposalID := governance.ProposeCommunityPoolSpend(cross(cur), "maintenance", "maintenance", adminAddr, "gno.land/r/gnoswap/gns.GNS", 1)
+	expectedSnapshot := time.Now().Unix() - maxSmoothingPeriod
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-001]", func() {
+		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalID)
+	})
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-012]", func() {
+		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), 9999)
+	})
+
+	testing.SetRealm(testing.NewUserRealm(aliceAddr))
+	uassert.AbortsContains(t, cur, "unauthorized", func() {
+		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), canceledID)
+	})
+	testing.SkipHeights(2)
+	governance.Vote(cross(cur), proposalID, true)
+	testing.SkipHeights(3)
+
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
+	println("[EXPECTED] executable snapshot:", hasActive, snapshotTime == expectedSnapshot)
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-001]", func() {
+		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalID)
+	})
+	uassert.AbortsContains(t, cur, "active proposal requires data", func() {
+		gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), expectedSnapshot+1, aliceAddr)
+	})
+	gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), expectedSnapshot, aliceAddr)
+	delegated, exists := gs.GetTotalDelegationAmountAtSnapshot(expectedSnapshot)
+	println("[EXPECTED] delegation at active snapshot:", delegated, exists)
+
+	testing.SkipHeights(7)
+	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
+	uassert.ErrorContains(t, err, "[GNOSWAP-GOVERNANCE-018]")
+	uassert.ErrorContains(t, err, ufmt.Sprintf("proposalID: %d", proposalID))
+	println("[EXPECTED] stale index:", proposalID, snapshotTime, hasActive)
+
+	governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalID)
+	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
+	voteWeight, err := governance.GetVoteWeight(proposalID, aliceAddr)
+	uassert.NoError(t, err)
+	println("[EXPECTED] expired proposal removed:", proposalID, snapshotTime, hasActive, governance.GetProposals().Size(), voteWeight)
 }
 
 func setupDelegation(cur realm) {
@@ -212,16 +262,19 @@ func verifyTotalDelegation(cur realm) {
 //
 // [SCENARIO] 8. Cleanup snapshots older than first delegation (safe cleanup)
 // [INFO] before delegation amount: 1500000000
-// [INFO] oldest snapshot after maintenance: 0 false
-// [INFO] proposal history after maintenance: 1
 // [INFO] cleaned snapshots older than 1234783895
 // [EXPECTED] snapshot cleanup succeeded
 // [INFO] after delegation amount: 0
 // [SCENARIO] 9. Verify proposal is still accessible after cleanup
 // [EXPECTED] proposal 1 status: rejected
 // [EXPECTED] proposal is still accessible after cleanup
-// [INFO] proposal history after cleanup: 1
 //
 // [SCENARIO] 10. Verify total delegation preserved
 // [INFO] total delegated amount: 1500000000
 // [EXPECTED] total delegation amount preserved (1,000,000,000 + 500,000,000)
+//
+// [EXPECTED] canceled proposal removed: 2 0 false 2
+// [EXPECTED] executable snapshot: true true
+// [EXPECTED] delegation at active snapshot: 1500000000 true
+// [EXPECTED] stale index: 3 0 false
+// [EXPECTED] expired proposal removed: 3 0 false 3 1500000000

@@ -67,7 +67,7 @@ func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore
 	}
 
 	if !governanceStore.HasActiveProposalsBySnapshotStoreKey() {
-		if err := governanceStore.SetActiveProposalsBySnapshot(0, rlm, governance.NewActiveProposalTree()); err != nil {
+		if err := governanceStore.SetActiveProposalsBySnapshot(0, rlm, governance.NewProposalTree()); err != nil {
 			return err
 		}
 	}

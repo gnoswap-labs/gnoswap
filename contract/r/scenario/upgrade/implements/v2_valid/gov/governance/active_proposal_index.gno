@@ -1,1 +1,0 @@
-../../../../../../gnoswap/gov/governance/v1/active_proposal_index.gno
