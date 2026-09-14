@@ -23,6 +23,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -103,10 +104,9 @@ func main(cur realm) {
 	safeCleanupTime := firstDelegationTime - 100
 	if safeCleanupTime < validCleanupThreshold {
 		testing.SkipHeights(30 * 60 * 60 * 24 * 365)
-		cleanupTime := int64(1234783890 + 5)
 		testing.SetRealm(testing.NewUserRealm(adminAddr))
 		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalId)
-		cleanupSnapshots(cur, cleanupTime)
+		cleanupSnapshots(cur, 1234783890+5)
 	} else {
 		println("[INFO] safe cleanup time is not old enough, skipping cleanup test")
 	}

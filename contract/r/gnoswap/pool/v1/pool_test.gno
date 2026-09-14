@@ -490,7 +490,7 @@ func TestCalculateTickCumulative_PrecisionAndEdgeCases(cur realm, t *testing.T) 
 			pool.SetSlot0(slot0)
 
 			observations := pl.NewPoolObservationsTree(100)
-			obs := pl.NewObservation(
+			obs := pl.MakeObservation(
 				100,
 				5000000000,
 				"0",

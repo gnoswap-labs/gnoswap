@@ -791,8 +791,7 @@ func TestGetVotingInfo(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			_, ok := votingInfoOf(gv, tc.proposalID, tc.addr)
-			uassert.Equal(t, !tc.expectError, ok)
+			uassert.Equal(t, !tc.expectError, hasVotingInfo(gv, tc.proposalID, tc.addr))
 		})
 	}
 }
@@ -1017,16 +1016,15 @@ func votingInfoCount(gv *governanceV1, proposalID int64) int {
 	return votingInfos.Size()
 }
 
-// votingInfoOf reads one voter's info through the read-only view.
-func votingInfoOf(gv *governanceV1, proposalID int64, addr address) (*governance.VotingInfo, bool) {
+// hasVotingInfo reports whether the read-only view holds a voter's value.
+func hasVotingInfo(gv *governanceV1, proposalID int64, addr address) bool {
 	votingInfos := gv.GetVotingInfos(proposalID)
 	if votingInfos == nil {
-		return nil, false
+		return false
 	}
 
-	votingInfo, ok := votingInfos.Get(addr.String()).(*governance.VotingInfo)
-
-	return votingInfo, ok
+	_, ok := votingInfos.Get(addr.String()).(governance.VotingInfo)
+	return ok
 }
 
 // userProposalCount reports how many proposals a user created through the read-only view.

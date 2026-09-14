@@ -11,6 +11,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/common"
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"

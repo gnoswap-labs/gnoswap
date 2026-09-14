@@ -24,6 +24,7 @@ import (
 	govStaker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/staker"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
 	_ "gno.land/r/gnoswap/gov/governance/v2_invalid"
 	_ "gno.land/r/gnoswap/gov/governance/v3_valid"

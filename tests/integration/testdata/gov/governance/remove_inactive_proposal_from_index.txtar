@@ -1,5 +1,6 @@
 # Snapshot cleanup requires explicit single-proposal index maintenance.
 # Removing one index entry at a time preserves proposal history.
+loadpkg gno.land/r/gnoswap/common/v1
 loadpkg gno.land/r/gnoswap/gov/governance/v1
 loadpkg gno.land/r/gnoswap/gov/staker/v1
 loadpkg gno.land/r/gnoswap/protocol_fee/v1

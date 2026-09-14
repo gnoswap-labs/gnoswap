@@ -39,6 +39,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v2_valid"
 	_ "gno.land/r/gnoswap/rbac"

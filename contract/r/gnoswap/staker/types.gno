@@ -36,6 +36,7 @@ type IStakerManager interface {
 	CollectExternalIncentivePenalty(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) int64
 	AddToken(_ int, rlm realm, tokenPath string)
 	RemoveToken(_ int, rlm realm, tokenPath string)
+	SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool)
 
 	SetWarmUp(_ int, rlm realm, pct, timeDuration int64)
 	SetDepositGnsAmount(_ int, rlm realm, amount int64)
@@ -96,9 +97,14 @@ type IStakerGetter interface {
 	GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) (string, error)
 	GetUnstakingFee() uint64
 	GetPendingProtocolFees() map[string]int64
+	HasUnstakedPosition(positionId uint64) bool
+	GetUnstakedPositionExitTime(positionId uint64) (int64, error)
+	GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error)
+	GetUncollectedIncentiveCount(incentiveId string) int64
 	IsStaked(positionId uint64) bool
 	GetTotalEmissionSent() int64
 	GetAllowedTokens() []string
+	GetDeniedRewardTokens() []string
 	GetWarmupTemplate() []Warmup
 }
 
@@ -135,6 +141,12 @@ type IStakerStore interface {
 	AddAllowedToken(_ int, rlm realm, tokenPath string) error
 	RemoveAllowedToken(_ int, rlm realm, tokenPath string) error
 
+	// DeniedRewardTokens
+	HasDeniedRewardTokensStoreKey() bool
+	GetDeniedRewardTokens() []string
+	AddDeniedRewardToken(_ int, rlm realm, tokenPath string) error
+	RemoveDeniedRewardToken(_ int, rlm realm, tokenPath string) error
+
 	// IncentiveCounter
 	HasIncentiveCounterStoreKey() bool
 	GetIncentiveCounter() *Counter
@@ -156,6 +168,16 @@ type IStakerStore interface {
 	HasPendingProtocolFeesStoreKey() bool
 	GetPendingProtocolFees() map[string]int64
 	SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error
+
+	// UnstakedPositions
+	HasUnstakedPositionsStoreKey() bool
+	GetUnstakedPositions() *bptree.BPTree
+	SetUnstakedPositions(_ int, rlm realm, positions *bptree.BPTree) error
+
+	// UncollectedIncentiveCounts
+	HasUncollectedIncentiveCountsStoreKey() bool
+	GetUncollectedIncentiveCounts() *bptree.BPTree
+	SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error
 
 	// Pools
 	HasPoolsStoreKey() bool

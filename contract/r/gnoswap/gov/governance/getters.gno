@@ -124,9 +124,8 @@ func GetVoteStatus(proposalId int64) (quorum, maxVotingWeight, yesWeight, noWeig
 	return getImplementation().GetVoteStatus(proposalId)
 }
 
-// GetVotingInfos returns a read-only view of a proposal's voting infos, keyed by
-// voter address. Reading an entry yields a clone, so the view cannot mutate
-// realm state. nil is returned when the proposal has no votes.
+// GetVotingInfos returns a read-only view of a proposal's value-backed voting
+// infos, keyed by voter address. nil is returned when the proposal has no votes.
 func GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 	return getImplementation().GetVotingInfos(proposalID)
 }

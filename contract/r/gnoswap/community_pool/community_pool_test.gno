@@ -5,6 +5,8 @@ import (
 	"math"
 	"testing"
 
+	_ "gno.land/r/gnoswap/common/v1"
+
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -175,7 +177,7 @@ func TestCommunityPool_TransferToken(cur realm, t *testing.T) {
 			to:          dummyReceiver,
 			amount:      100,
 			shouldPanic: true,
-			panicMsg:    "unknown token",
+			panicMsg:    "invalid token key",
 		},
 		{
 			name: "panic with unregistered token path",
@@ -207,7 +209,6 @@ func TestCommunityPool_TransferToken(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-
 			resetCommunityPoolState(cur, t)
 
 			if tt.setup != nil {
@@ -302,7 +303,7 @@ func TestCommunityPool_GetBalanceOf(cur realm, t *testing.T) {
 			},
 			tokenPath:   "",
 			shouldError: true,
-			errorMsg:    "not registered",
+			errorMsg:    "invalid token key",
 		},
 	}
 
