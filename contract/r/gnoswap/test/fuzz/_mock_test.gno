@@ -1,13 +1,14 @@
 package fuzz
 
 import (
+	"sort"
 	"strconv"
 	"testing"
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/p/nt/grc721/v0"
 	bptree "gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"
@@ -474,7 +475,22 @@ func (s *MockStakerStore) HasAllowedTokensStoreKey() bool {
 }
 
 func (s *MockStakerStore) GetAllowedTokens() []string {
-	return s.allowedTokens
+	if s.allowedTokens == nil {
+		return nil
+	}
+	tokens := make([]string, len(s.allowedTokens))
+	copy(tokens, s.allowedTokens)
+	sort.Strings(tokens)
+	return tokens
+}
+
+func (s *MockStakerStore) HasAllowedToken(tokenPath string) bool {
+	for _, token := range s.allowedTokens {
+		if token == tokenPath {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *MockStakerStore) SetAllowedTokens(_ int, rlm realm, tokens []string) error {
@@ -524,17 +540,9 @@ func (s *MockStakerStore) NextIncentiveID(addr address, timestamp int64) string 
 }
 
 // TokenSpecificMinimumRewards
-func (s *MockStakerStore) HasTokenSpecificMinimumRewardsStoreKey() bool {
-	return s.tokenSpecificMinimumRewards != nil
-}
-
-func (s *MockStakerStore) GetTokenSpecificMinimumRewards() map[string]int64 {
-	return s.tokenSpecificMinimumRewards
-}
-
-func (s *MockStakerStore) SetTokenSpecificMinimumRewards(_ int, rlm realm, rewards map[string]int64) error {
-	s.tokenSpecificMinimumRewards = rewards
-	return nil
+func (s *MockStakerStore) GetTokenSpecificMinimumRewardItem(tokenPath string) (int64, bool) {
+	amount, found := s.tokenSpecificMinimumRewards[tokenPath]
+	return amount, found
 }
 
 func (s *MockStakerStore) SetTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string, amount int64) error {

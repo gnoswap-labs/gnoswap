@@ -21,11 +21,10 @@
 //     a broken migration would panic with a readonly-taint error here.
 //  6. With v2_valid: RMW the v1-created pool-tier maps via ChangePoolTier /
 //     RemovePoolTier (SetPoolTier already populated those maps in v1).
-//  7. With v2_valid: drive the remaining admin config setters that RMW
-//     v1-created config maps/scalars (AddToken / RemoveToken on the allowed-
-//     tokens list, SetUnStakingFee, SetDepositGnsAmount, SetMinimumRewardAmount,
-//     SetWarmUp). SetTokenMinimumRewardAmount is intentionally NOT exercised —
-//     it is taint-unsafe under v2_valid (see the SKIP comment in scenario 7).
+//  7. With v2_valid: drive the remaining admin config setters against
+//     v1-created config storage/scalars (AddToken / RemoveToken on the
+//     keyed allowed-token set, SetUnStakingFee, SetDepositGnsAmount,
+//     SetMinimumRewardAmount, SetTokenMinimumRewardAmount, SetWarmUp).
 //  8. With v2_valid: exercise the external-incentive BPTrees end to end —
 //     CreateExternalIncentive (inserts into the v1-created incentive tree),
 //     then EndExternalIncentive (RMW + refund) and CollectExternalIncentivePenalty
@@ -36,11 +35,12 @@
 //
 //	StakeToken, UnStakeToken, CollectReward, ChangePoolTier, RemovePoolTier,
 //	AddToken, RemoveToken, SetUnStakingFee, SetDepositGnsAmount,
-//	SetMinimumRewardAmount, SetWarmUp, CreateExternalIncentive,
-//	EndExternalIncentive, CollectExternalIncentivePenalty.
+//	SetMinimumRewardAmount, SetTokenMinimumRewardAmount, SetWarmUp,
+//	CreateExternalIncentive, EndExternalIncentive,
+//	CollectExternalIncentivePenalty.
 //
-// Exercised but found taint-UNSAFE under v2_valid (skipped to keep the test
-// green): SetTokenMinimumRewardAmount — see the SKIP comment in scenario 7.
+// Token-specific minimum updates are keyed and exercised post-upgrade through
+// v2_valid without copying a state-wide map.
 //
 // SetPoolTier was exercised in v1 setup to populate the pool-tier maps; those
 // exact v1-created maps are then re-exercised post-upgrade through
@@ -55,9 +55,9 @@ import (
 
 	"gno.land/r/gnoswap/scenarioutils"
 
-	"gno.land/p/nt/grc721/v0"
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -139,19 +139,17 @@ func main(cur realm) {
 	println()
 
 	println("[SCENARIO] 8. Drive admin config setters through v2_valid")
-	addToken(cur, barPath)    // RMW allowed-tokens list
-	removeToken(cur, barPath) // RMW allowed-tokens list
+	addToken(cur, barPath)    // update keyed allowed-token entry
+	removeToken(cur, barPath) // update keyed allowed-token entry
 	setUnStakingFee(cur, 100) // scalar config
 	setDepositGnsAmount(cur, 2_000_000_000)
 	setMinimumRewardAmount(cur, 1_000_000_000)
-	// setTokenMinimumRewardAmount RMWs the token-specific minimum rewards map.
-	// The production write is routed through the domain store setter
-	// (SetTokenSpecificMinimumRewards), so it is taint-safe under v2_valid: the
-	// map is rebuilt as a realm-owned copy and persisted via the domain realm
-	// rather than direct-index-writing the foreign map.
-	setTokenMinimumRewardAmount(cur, barPath, 12345) // RMW token-specific minimum rewards map
+	// setTokenMinimumRewardAmount updates the keyed token-specific minimum entry.
+	// The production write targets only that token's store key, so it remains
+	// taint-safe under v2_valid without copying or mutating a foreign map.
+	setTokenMinimumRewardAmount(cur, barPath, 12345) // keyed token-specific minimum entry
 	setWarmUp(cur, 70, 100)                          // RMW warmup template map
-	addToken(cur, barPath)                           // RMW allowed-tokens list
+	addToken(cur, barPath)                           // update keyed allowed-token entry
 	println()
 
 	println("[SCENARIO] 9. Exercise external-incentive BPTrees through v2_valid")

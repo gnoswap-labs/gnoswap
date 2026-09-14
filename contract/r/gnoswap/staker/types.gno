@@ -2,8 +2,8 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type IStaker interface {
@@ -130,6 +130,7 @@ type IStakerStore interface {
 
 	// AllowedTokens
 	HasAllowedTokensStoreKey() bool
+	HasAllowedToken(tokenPath string) bool
 	GetAllowedTokens() []string
 	SetAllowedTokens(_ int, rlm realm, tokens []string) error
 	AddAllowedToken(_ int, rlm realm, tokenPath string) error
@@ -142,9 +143,7 @@ type IStakerStore interface {
 	NextIncentiveID(creator address, timestamp int64) string
 
 	// TokenSpecificMinimumRewards
-	HasTokenSpecificMinimumRewardsStoreKey() bool
-	GetTokenSpecificMinimumRewards() map[string]int64
-	SetTokenSpecificMinimumRewards(_ int, rlm realm, rewards map[string]int64) error
+	GetTokenSpecificMinimumRewardItem(tokenPath string) (int64, bool)
 	SetTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string, amount int64) error
 	RemoveTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string) error
 

@@ -156,15 +156,17 @@ func TestGetMinimumRewardAmountForToken(cur realm, t *testing.T) {
 	tests := []struct {
 		name           string
 		tokenPath      string
-		setupFunc      func(*stakerV1)
+		setupFunc      func(cur realm, s *stakerV1)
 		expectedAmount int64
 		expectsDefault bool
 	}{
 		{
 			name:      "token with specific minimum",
 			tokenPath: "gno.land/r/onbloc/foo.FOO",
-			setupFunc: func(s *stakerV1) {
-				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/onbloc/foo.FOO"] = int64(5000000)
+			setupFunc: func(cur realm, s *stakerV1) {
+				if err := s.store.SetTokenSpecificMinimumRewardItem(0, cur, "gno.land/r/onbloc/foo.FOO", 5000000); err != nil {
+					panic(err)
+				}
 			},
 			expectedAmount: 5000000,
 			expectsDefault: false,
@@ -172,7 +174,7 @@ func TestGetMinimumRewardAmountForToken(cur realm, t *testing.T) {
 		{
 			name:      "token without specific minimum - returns default",
 			tokenPath: "gno.land/r/onbloc/bar.BAR",
-			setupFunc: func(s *stakerV1) {
+			setupFunc: func(cur realm, s *stakerV1) {
 				// Don't set any specific minimum
 			},
 			expectedAmount: 1_000_000_000, // default minimum reward amount from mock
@@ -181,8 +183,10 @@ func TestGetMinimumRewardAmountForToken(cur realm, t *testing.T) {
 		{
 			name:      "different token with specific minimum",
 			tokenPath: "gno.land/r/onbloc/baz.BAZ",
-			setupFunc: func(s *stakerV1) {
-				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/onbloc/baz.BAZ"] = int64(10000000)
+			setupFunc: func(cur realm, s *stakerV1) {
+				if err := s.store.SetTokenSpecificMinimumRewardItem(0, cur, "gno.land/r/onbloc/baz.BAZ", 10000000); err != nil {
+					panic(err)
+				}
 			},
 			expectedAmount: 10000000,
 			expectsDefault: false,
@@ -196,7 +200,7 @@ func TestGetMinimumRewardAmountForToken(cur realm, t *testing.T) {
 			instance := getMockInstance()
 
 			if tt.setupFunc != nil {
-				tt.setupFunc(instance)
+				tt.setupFunc(cur, instance)
 			}
 
 			result := instance.GetMinimumRewardAmountForToken(tt.tokenPath)
@@ -211,15 +215,17 @@ func TestGetSpecificTokenMinimumRewardAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		tokenPath     string
-		setupFunc     func(*stakerV1)
+		setupFunc     func(cur realm, s *stakerV1)
 		expectedFound bool
 		expectedValue int64
 	}{
 		{
 			name:      "token with specific amount",
 			tokenPath: "gno.land/r/onbloc/foo.FOO",
-			setupFunc: func(s *stakerV1) {
-				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/onbloc/foo.FOO"] = int64(3000000)
+			setupFunc: func(cur realm, s *stakerV1) {
+				if err := s.store.SetTokenSpecificMinimumRewardItem(0, cur, "gno.land/r/onbloc/foo.FOO", 3000000); err != nil {
+					panic(err)
+				}
 			},
 			expectedFound: true,
 			expectedValue: 3000000,
@@ -227,7 +233,7 @@ func TestGetSpecificTokenMinimumRewardAmount(cur realm, t *testing.T) {
 		{
 			name:      "token without specific amount",
 			tokenPath: "gno.land/r/onbloc/bar.BAR",
-			setupFunc: func(s *stakerV1) {
+			setupFunc: func(cur realm, s *stakerV1) {
 				// Don't set anything
 			},
 			expectedFound: false,
@@ -236,8 +242,10 @@ func TestGetSpecificTokenMinimumRewardAmount(cur realm, t *testing.T) {
 		{
 			name:      "zero value set explicitly",
 			tokenPath: "gno.land/r/onbloc/baz.BAZ",
-			setupFunc: func(s *stakerV1) {
-				s.store.GetTokenSpecificMinimumRewards()["gno.land/r/onbloc/baz.BAZ"] = int64(0)
+			setupFunc: func(cur realm, s *stakerV1) {
+				if err := s.store.SetTokenSpecificMinimumRewardItem(0, cur, "gno.land/r/onbloc/baz.BAZ", 0); err != nil {
+					panic(err)
+				}
 			},
 			expectedFound: true,
 			expectedValue: 0,
@@ -251,7 +259,7 @@ func TestGetSpecificTokenMinimumRewardAmount(cur realm, t *testing.T) {
 			instance := getMockInstance()
 
 			if tt.setupFunc != nil {
-				tt.setupFunc(instance)
+				tt.setupFunc(cur, instance)
 			}
 
 			value, found := instance.GetSpecificTokenMinimumRewardAmount(tt.tokenPath)

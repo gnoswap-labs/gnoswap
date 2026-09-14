@@ -514,7 +514,7 @@ func (s *stakerV1) GetTotalEmissionSent() int64 {
 	return s.store.GetTotalEmissionSent()
 }
 
-// GetAllowedTokens returns the allowed external incentive token list.
+// GetAllowedTokens returns the allowed external incentive token list in lexical token-path order.
 func (s *stakerV1) GetAllowedTokens() []string {
 	return s.store.GetAllowedTokens()
 }

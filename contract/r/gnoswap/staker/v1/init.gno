@@ -77,10 +77,7 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 	}
 
 	if !stakerStore.HasAllowedTokensStoreKey() {
-		// Copy the package-level default slice so each store owns its own
-		// allowed-tokens slice. Storing sr.DefaultAllowedTokens directly would
-		// alias the shared (sr-owned) slice across every store, leaking
-		// mutations and tripping the readonly-taint gate on later writes.
+		// Initialize the default external incentive token list for this store.
 		err := stakerStore.SetAllowedTokens(0, rlm, sr.DefaultAllowedTokens())
 		if err != nil {
 			return err
@@ -89,13 +86,6 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 
 	if !stakerStore.HasIncentiveCounterStoreKey() {
 		err := stakerStore.SetIncentiveCounter(0, rlm, sr.NewCounter())
-		if err != nil {
-			return err
-		}
-	}
-
-	if !stakerStore.HasTokenSpecificMinimumRewardsStoreKey() {
-		err := stakerStore.SetTokenSpecificMinimumRewards(0, rlm, make(map[string]int64))
 		if err != nil {
 			return err
 		}

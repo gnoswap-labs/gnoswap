@@ -20,6 +20,11 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 - Hook code reads mid-swap pool state (sqrtPrice, liquidity, tick) — partially updated values. Design hooks to tolerate this.
 - Hook-setting functions must check halt state (audit L-03).
 
+### Configuration Storage (I-02)
+- `GetAllowedTokens` is a read-only, detached, sorted lexical enumeration; use keyed membership and update methods for state changes.
+- Token-specific minimums are keyed independently, and an absent entry falls back to the default minimum.
+- This deployment does not migrate legacy map state.
+
 ### Tiers
 - Tier 1 (50%) / Tier 2 (30%) / Tier 3 (20%).
 - Empty tier redistributes share to remaining tiers.

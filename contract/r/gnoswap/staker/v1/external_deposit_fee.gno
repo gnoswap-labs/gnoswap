@@ -24,7 +24,7 @@ func (s *stakerV1) GetMinimumRewardAmount() int64 {
 
 // GetMinimumRewardAmountForToken returns the minimum reward amount for a specific token.
 func (s *stakerV1) GetMinimumRewardAmountForToken(tokenPath string) int64 {
-	amount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
+	amount, found := s.store.GetTokenSpecificMinimumRewardItem(tokenPath)
 	if found {
 		return amount
 	}
@@ -34,7 +34,7 @@ func (s *stakerV1) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 
 // GetSpecificTokenMinimumRewardAmount returns the explicitly set minimum reward amount for a token.
 func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
-	amount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
+	amount, found := s.store.GetTokenSpecificMinimumRewardItem(tokenPath)
 	if !found {
 		return 0, false
 	}
@@ -116,7 +116,7 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr strin
 		))
 	}
 
-	prevAmount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
+	prevAmount, found := s.store.GetTokenSpecificMinimumRewardItem(tokenPath)
 
 	// If amount is 0, remove the entry; otherwise, set it.
 	if amount64 == 0 {

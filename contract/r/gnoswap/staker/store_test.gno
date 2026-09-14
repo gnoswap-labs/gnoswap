@@ -111,6 +111,26 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 	}
 }
 
+func TestStoreAllowedTokenWritePermission(cur realm, t *testing.T) {
+	resetTestState(t)
+	ss := NewStakerStore(kvStore)
+	initRegisterWritableContract(cur)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
+	err := ss.SetAllowedTokens(0, cur, []string{"gno.land/r/demo/token1"})
+	uassert.NoError(t, err)
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v2"))
+	err = ss.AddAllowedToken(0, cur, "gno.land/r/demo/token2")
+	uassert.ErrorContains(t, err, "write permission denied")
+	err = ss.RemoveAllowedToken(0, cur, "gno.land/r/demo/token1")
+	uassert.ErrorContains(t, err, "write permission denied")
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
+	uassert.True(t, ss.HasAllowedToken("gno.land/r/demo/token1"))
+	uassert.False(t, ss.HasAllowedToken("gno.land/r/demo/token2"))
+}
+
 func TestStoreSetAndGetDepositGnsAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
@@ -402,9 +422,9 @@ func TestStoreSetAndGetAllowedTokens(cur realm, t *testing.T) {
 		panicMessage string
 	}{
 		{
-			name: "set and get allowed tokens successfully",
+			name: "set and get allowed tokens in lexical order",
 			setupFn: func(cur realm, ss IStakerStore) {
-				tokens := []string{"gno.land/r/demo/token1", "gno.land/r/demo/token2"}
+				tokens := []string{"gno.land/r/demo/token2", "gno.land/r/demo/token1"}
 				ss.SetAllowedTokens(0, cur, tokens)
 			},
 			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
@@ -412,6 +432,11 @@ func TestStoreSetAndGetAllowedTokens(cur realm, t *testing.T) {
 				retrieved := ss.GetAllowedTokens()
 				uassert.NotEqual(t, nil, retrieved)
 				uassert.Equal(t, 2, len(retrieved))
+				uassert.Equal(t, "gno.land/r/demo/token1", retrieved[0])
+				uassert.Equal(t, "gno.land/r/demo/token2", retrieved[1])
+				uassert.True(t, ss.HasAllowedToken("gno.land/r/demo/token1"))
+				uassert.True(t, ss.HasAllowedToken("gno.land/r/demo/token2"))
+				uassert.False(t, ss.HasAllowedToken("gno.land/r/demo/missing"))
 			},
 		},
 		{
@@ -455,30 +480,63 @@ func TestStoreAddAndRemoveAllowedToken(cur realm, t *testing.T) {
 	resetTestState(t)
 	ss := NewStakerStore(kvStore)
 
-	defaultTokens := DefaultAllowedTokens()
-	err := ss.SetAllowedTokens(0, cur, defaultTokens)
+	err := ss.SetAllowedTokens(0, cur, DefaultAllowedTokens())
 	uassert.NoError(t, err)
 
-	customToken := "gno.land/r/demo/custom"
-	err = ss.AddAllowedToken(0, cur, customToken)
+	firstCustomToken := "gno.land/r/gnoswap/custom-a"
+	secondCustomToken := "gno.land/r/gnoswap/custom-b"
+	err = ss.AddAllowedToken(0, cur, firstCustomToken)
+	uassert.NoError(t, err)
+	err = ss.AddAllowedToken(0, cur, secondCustomToken)
 	uassert.NoError(t, err)
 
 	tokens := ss.GetAllowedTokens()
-	uassert.Equal(t, 3, len(tokens))
-	uassert.Equal(t, customToken, tokens[2])
+	uassert.Equal(t, 4, len(tokens))
+	uassert.Equal(t, WUGNOT_PATH, tokens[0])
+	uassert.Equal(t, firstCustomToken, tokens[1])
+	uassert.Equal(t, secondCustomToken, tokens[2])
+	uassert.Equal(t, GNS_PATH, tokens[3])
+	uassert.True(t, ss.HasAllowedToken(WUGNOT_PATH))
+	uassert.True(t, ss.HasAllowedToken(firstCustomToken))
+	uassert.True(t, ss.HasAllowedToken(secondCustomToken))
+	uassert.True(t, ss.HasAllowedToken(GNS_PATH))
+	uassert.False(t, ss.HasAllowedToken("gno.land/r/gnoswap/missing"))
 
 	// Idempotent add must not duplicate.
-	err = ss.AddAllowedToken(0, cur, customToken)
+	err = ss.AddAllowedToken(0, cur, firstCustomToken)
 	uassert.NoError(t, err)
+	uassert.Equal(t, 4, len(ss.GetAllowedTokens()))
+
+	// Mutating the returned enumeration must not change stored membership.
+	detached := ss.GetAllowedTokens()
+	detached[0] = "gno.land/r/gnoswap/detached"
+	detached = append(detached, "gno.land/r/gnoswap/appended")
+	uassert.True(t, ss.HasAllowedToken(WUGNOT_PATH))
+	uassert.True(t, ss.HasAllowedToken(firstCustomToken))
+	uassert.True(t, ss.HasAllowedToken(secondCustomToken))
+	uassert.True(t, ss.HasAllowedToken(GNS_PATH))
+	uassert.False(t, ss.HasAllowedToken("gno.land/r/gnoswap/detached"))
+	uassert.False(t, ss.HasAllowedToken("gno.land/r/gnoswap/appended"))
+
+	err = ss.RemoveAllowedToken(0, cur, firstCustomToken)
+	uassert.NoError(t, err)
+	uassert.False(t, ss.HasAllowedToken(firstCustomToken))
+	uassert.True(t, ss.HasAllowedToken(secondCustomToken))
+	uassert.True(t, ss.HasAllowedToken(WUGNOT_PATH))
+	uassert.True(t, ss.HasAllowedToken(GNS_PATH))
 	uassert.Equal(t, 3, len(ss.GetAllowedTokens()))
 
-	err = ss.RemoveAllowedToken(0, cur, customToken)
+	// Removing an absent token is a no-op.
+	err = ss.RemoveAllowedToken(0, cur, firstCustomToken)
 	uassert.NoError(t, err)
-	uassert.Equal(t, 2, len(ss.GetAllowedTokens()))
+	uassert.Equal(t, 3, len(ss.GetAllowedTokens()))
+	uassert.True(t, ss.HasAllowedToken(secondCustomToken))
 
-	// Removing a missing token is a no-op.
-	err = ss.RemoveAllowedToken(0, cur, customToken)
+	err = ss.RemoveAllowedToken(0, cur, secondCustomToken)
 	uassert.NoError(t, err)
+	uassert.False(t, ss.HasAllowedToken(secondCustomToken))
+	uassert.True(t, ss.HasAllowedToken(WUGNOT_PATH))
+	uassert.True(t, ss.HasAllowedToken(GNS_PATH))
 	uassert.Equal(t, 2, len(ss.GetAllowedTokens()))
 }
 
@@ -652,61 +710,61 @@ func TestStoreSetAndGetPools(cur realm, t *testing.T) {
 	}
 }
 
-func TestStoreSetAndGetTokenSpecificMinimumRewards(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		setupFn      func(cur realm, ss IStakerStore)
-		testFn       func(cur realm, t *testing.T, ss IStakerStore)
-		shouldPanic  bool
-		panicMessage string
-	}{
-		{
-			name: "set and get token specific minimum rewards successfully",
-			setupFn: func(cur realm, ss IStakerStore) {
-				rewards := make(map[string]int64)
-				ss.SetTokenSpecificMinimumRewards(0, cur, rewards)
-			},
-			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
-				uassert.True(t, ss.HasTokenSpecificMinimumRewardsStoreKey(), "should have token specific minimum rewards after setting")
-				retrieved := ss.GetTokenSpecificMinimumRewards()
-				uassert.NotEqual(t, nil, retrieved)
-			},
-		},
-		{
-			name: "should not have token specific minimum rewards initially",
-			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
-				uassert.False(t, ss.HasTokenSpecificMinimumRewardsStoreKey(), "should not have token specific minimum rewards initially")
-			},
-		},
-		{
-			name: "panic when getting uninitialized token specific minimum rewards",
-			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
-				ss.GetTokenSpecificMinimumRewards()
-			},
-			shouldPanic:  true,
-			panicMessage: "should panic when getting uninitialized token specific minimum rewards",
-		},
-	}
+func TestStoreSetGetRemoveTokenSpecificMinimumRewardItems(cur realm, t *testing.T) {
+	resetTestState(t)
+	ss := NewStakerStore(kvStore)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			resetTestState(t)
-			ss := NewStakerStore(kvStore)
+	firstToken := "gno.land/r/demo/token1"
+	secondToken := "gno.land/r/demo/token2"
 
-			if tt.setupFn != nil {
-				tt.setupFn(cur, ss)
-			}
+	amount, found := ss.GetTokenSpecificMinimumRewardItem(firstToken)
+	uassert.False(t, found)
+	uassert.Equal(t, int64(0), amount)
 
-			if tt.shouldPanic {
-				defer func() {
-					r := recover()
-					uassert.NotEqual(t, nil, r, tt.panicMessage)
-				}()
-			}
+	err := ss.SetTokenSpecificMinimumRewardItem(0, cur, firstToken, 100)
+	uassert.NoError(t, err)
+	err = ss.SetTokenSpecificMinimumRewardItem(0, cur, secondToken, 200)
+	uassert.NoError(t, err)
 
-			tt.testFn(cur, t, ss)
-		})
-	}
+	amount, found = ss.GetTokenSpecificMinimumRewardItem(firstToken)
+	uassert.True(t, found)
+	uassert.Equal(t, int64(100), amount)
+	amount, found = ss.GetTokenSpecificMinimumRewardItem(secondToken)
+	uassert.True(t, found)
+	uassert.Equal(t, int64(200), amount)
+
+	// Updating one token must preserve the independent entry.
+	err = ss.SetTokenSpecificMinimumRewardItem(0, cur, firstToken, 150)
+	uassert.NoError(t, err)
+	amount, found = ss.GetTokenSpecificMinimumRewardItem(firstToken)
+	uassert.True(t, found)
+	uassert.Equal(t, int64(150), amount)
+	amount, found = ss.GetTokenSpecificMinimumRewardItem(secondToken)
+	uassert.True(t, found)
+	uassert.Equal(t, int64(200), amount)
+
+	// A direct store write of zero remains an explicitly stored value.
+	err = ss.SetTokenSpecificMinimumRewardItem(0, cur, firstToken, 0)
+	uassert.NoError(t, err)
+	amount, found = ss.GetTokenSpecificMinimumRewardItem(firstToken)
+	uassert.True(t, found)
+	uassert.Equal(t, int64(0), amount)
+
+	err = ss.RemoveTokenSpecificMinimumRewardItem(0, cur, firstToken)
+	uassert.NoError(t, err)
+	amount, found = ss.GetTokenSpecificMinimumRewardItem(firstToken)
+	uassert.False(t, found)
+	uassert.Equal(t, int64(0), amount)
+	amount, found = ss.GetTokenSpecificMinimumRewardItem(secondToken)
+	uassert.True(t, found)
+	uassert.Equal(t, int64(200), amount)
+
+	// Removing an absent token is a no-op and does not affect other entries.
+	err = ss.RemoveTokenSpecificMinimumRewardItem(0, cur, firstToken)
+	uassert.NoError(t, err)
+	amount, found = ss.GetTokenSpecificMinimumRewardItem(secondToken)
+	uassert.True(t, found)
+	uassert.Equal(t, int64(200), amount)
 }
 
 func TestStoreSetAndGetPoolTierMemberships(cur realm, t *testing.T) {
@@ -1007,7 +1065,7 @@ func TestStoreSetAndGetPoolTierGetEmission(cur realm, t *testing.T) {
 		{
 			name: "set and get pool tier get emission successfully",
 			setupFn: func(cur realm, ss IStakerStore) {
-			emissionFunc := func() (int64, error) { return 1000, nil }
+				emissionFunc := func() (int64, error) { return 1000, nil }
 				ss.SetPoolTierGetEmission(0, cur, emissionFunc)
 			},
 			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
@@ -1067,8 +1125,8 @@ func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(cur realm, t *testing.T) 
 		{
 			name: "set and get pool tier get halving blocks in range successfully",
 			setupFn: func(cur realm, ss IStakerStore) {
-			halvingFunc := func(start, end int64) ([]int64, []int64, error) {
-				return []int64{100, 200}, []int64{10, 20}, nil
+				halvingFunc := func(start, end int64) ([]int64, []int64, error) {
+					return []int64{100, 200}, []int64{10, 20}, nil
 				}
 				ss.SetPoolTierGetHalvingBlocksInRange(0, cur, halvingFunc)
 			},
@@ -1257,7 +1315,7 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 	err = ss.SetTotalEmissionSent(0, cur, 50000)
 	uassert.NoError(t, err)
 
-	tokens := []string{"token1", "token2"}
+	tokens := []string{"token2", "token1"}
 	err = ss.SetAllowedTokens(0, cur, tokens)
 	uassert.NoError(t, err)
 
@@ -1278,4 +1336,8 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 
 	retrievedTokens := ss.GetAllowedTokens()
 	uassert.Equal(t, 2, len(retrievedTokens))
+	uassert.Equal(t, "token1", retrievedTokens[0])
+	uassert.Equal(t, "token2", retrievedTokens[1])
+	uassert.True(t, ss.HasAllowedToken("token1"))
+	uassert.True(t, ss.HasAllowedToken("token2"))
 }

@@ -18,10 +18,10 @@ func TestInit_initStoreDataUsesFreshAllowedTokensPerStore(cur realm, t *testing.
 	err = initStoreData(0, cur, secondStore, newMockEmissionAccessor())
 	uassert.Nil(t, err)
 
-	secondStoreAllowedTokens := secondStore.GetAllowedTokens()
-	uassert.Equal(t, len(secondStoreAllowedTokens), 2)
-	uassert.Equal(t, secondStoreAllowedTokens[0], GNS_TOKEN_KEY)
-	uassert.Equal(t, secondStoreAllowedTokens[1], WUGNOT_TOKEN_KEY)
+	uassert.True(t, firstStore.HasAllowedToken("gno.land/r/gnoswap/custom"))
+	uassert.False(t, secondStore.HasAllowedToken("gno.land/r/gnoswap/custom"))
+	uassert.True(t, secondStore.HasAllowedToken(GNS_TOKEN_KEY))
+	uassert.True(t, secondStore.HasAllowedToken(WUGNOT_TOKEN_KEY))
 }
 
 func TestInit_initStoreDataAllowsMissingDefaultInitialPool(cur realm, t *testing.T) {

@@ -2,6 +2,7 @@ package staker
 
 import (
 	"errors"
+
 	"gno.land/p/gnoswap/store"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -180,18 +181,28 @@ func (s *stakerStore) HasAllowedTokensStoreKey() bool {
 	return s.kvStore.Has(StoreKeyAllowedTokens.String())
 }
 
+// GetAllowedTokens enumerates a detached list in token-path order.
+// State-changing paths use HasAllowedToken instead of enumerating this tree.
 func (s *stakerStore) GetAllowedTokens() []string {
-	result, err := s.kvStore.Get(StoreKeyAllowedTokens.String())
+	tree := s.getAllowedTokensTree()
+	tokens := make([]string, 0, tree.Size())
+	tree.Iterate("", "", func(tokenPath string, _ any) bool {
+		tokens = append(tokens, tokenPath)
+		return false
+	})
+	return tokens
+}
+
+func (s *stakerStore) getAllowedTokensTree() *bptree.BPTree {
+	tree, err := s.kvStore.GetBPTree(StoreKeyAllowedTokens.String())
 	if err != nil {
 		panic(err)
 	}
+	return tree
+}
 
-	tokens, ok := result.([]string)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to []string: %T", result))
-	}
-
-	return cloneStringSlice(tokens)
+func (s *stakerStore) HasAllowedToken(tokenPath string) bool {
+	return s.getAllowedTokensTree().Has(tokenPath)
 }
 
 func (s *stakerStore) SetAllowedTokens(_ int, rlm realm, tokens []string) error {
@@ -199,40 +210,41 @@ func (s *stakerStore) SetAllowedTokens(_ int, rlm realm, tokens []string) error 
 		return errors.New(ErrSpoofedRealm)
 	}
 
-	return s.kvStore.Set(0, rlm, StoreKeyAllowedTokens.String(), tokens)
+	tree := bptree.NewBPTree32()
+	for _, tokenPath := range tokens {
+		tree.Set(tokenPath, true)
+	}
+	return s.kvStore.Set(0, rlm, StoreKeyAllowedTokens.String(), tree)
 }
 
-// AddAllowedToken appends tokenPath to the allowed-tokens list when absent.
-// The store-owned slice is cloned before mutation to avoid readonly-taint panics.
+// AddAllowedToken inserts one key without copying the configured token set.
 func (s *stakerStore) AddAllowedToken(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
 	}
 
-	tokens := s.GetAllowedTokens()
-	if !contains(tokens, tokenPath) {
-		tokens = append(tokens, tokenPath)
+	// Tree mutations do not call KVStore.Set, so enforce its write ACL here.
+	if rlm.IsCode() && !s.kvStore.IsWriteAuthorized(rlm.Address()) {
+		return errors.New(store.ErrWritePermissionDenied)
 	}
-
-	return s.kvStore.Set(0, rlm, StoreKeyAllowedTokens.String(), tokens)
+	tree := s.getAllowedTokensTree()
+	if !tree.Has(tokenPath) {
+		tree.Set(tokenPath, true)
+	}
+	return nil
 }
 
-// RemoveAllowedToken removes tokenPath from the allowed-tokens list when present.
-// The store-owned slice is cloned before mutation to avoid readonly-taint panics.
+// RemoveAllowedToken deletes one key; a missing token is a no-op.
 func (s *stakerStore) RemoveAllowedToken(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
 	}
 
-	tokens := s.GetAllowedTokens()
-	for i, t := range tokens {
-		if t == tokenPath {
-			tokens = append(tokens[:i], tokens[i+1:]...)
-			break
-		}
+	if rlm.IsCode() && !s.kvStore.IsWriteAuthorized(rlm.Address()) {
+		return errors.New(store.ErrWritePermissionDenied)
 	}
-
-	return s.kvStore.Set(0, rlm, StoreKeyAllowedTokens.String(), tokens)
+	s.getAllowedTokensTree().Remove(tokenPath)
+	return nil
 }
 
 // IncentiveCounter
@@ -267,31 +279,17 @@ func (s *stakerStore) NextIncentiveID(creator address, timestamp int64) string {
 	return makeIncentiveID(creator, timestamp, counter.Next())
 }
 
-// TokenSpecificMinimumRewards
-func (s *stakerStore) HasTokenSpecificMinimumRewardsStoreKey() bool {
-	return s.kvStore.Has(StoreKeyTokenSpecificMinimumRewards.String())
-}
-
-func (s *stakerStore) GetTokenSpecificMinimumRewards() map[string]int64 {
-	result, err := s.kvStore.Get(StoreKeyTokenSpecificMinimumRewards.String())
+// TokenSpecificMinimumRewards are stored as individual KV entries.
+func (s *stakerStore) GetTokenSpecificMinimumRewardItem(tokenPath string) (int64, bool) {
+	key := StoreKeyTokenSpecificMinimumRewards.String() + ":" + tokenPath
+	if !s.kvStore.Has(key) {
+		return 0, false
+	}
+	amount, err := s.kvStore.GetInt64(key)
 	if err != nil {
 		panic(err)
 	}
-
-	rewards, ok := result.(map[string]int64)
-	if !ok {
-		panic(ufmt.Sprintf("failed to cast result to map[string]int64: %T", result))
-	}
-
-	return rewards
-}
-
-func (s *stakerStore) SetTokenSpecificMinimumRewards(_ int, rlm realm, rewards map[string]int64) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
-
-	return s.kvStore.Set(0, rlm, StoreKeyTokenSpecificMinimumRewards.String(), rewards)
+	return amount, true
 }
 
 // SetTokenSpecificMinimumRewardItem sets a single token's minimum reward amount.
@@ -300,16 +298,7 @@ func (s *stakerStore) SetTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenP
 		return errors.New(ErrSpoofedRealm)
 	}
 
-	rewards := s.GetTokenSpecificMinimumRewards()
-
-	owned := make(map[string]int64)
-	for k, v := range rewards {
-		owned[k] = v
-	}
-
-	owned[tokenPath] = amount
-
-	return s.kvStore.Set(0, rlm, StoreKeyTokenSpecificMinimumRewards.String(), owned)
+	return s.kvStore.Set(0, rlm, StoreKeyTokenSpecificMinimumRewards.String()+":"+tokenPath, amount)
 }
 
 // RemoveTokenSpecificMinimumRewardItem removes a single token's minimum reward entry.
@@ -318,18 +307,11 @@ func (s *stakerStore) RemoveTokenSpecificMinimumRewardItem(_ int, rlm realm, tok
 		return errors.New(ErrSpoofedRealm)
 	}
 
-	rewards := s.GetTokenSpecificMinimumRewards()
-
-	owned := make(map[string]int64)
-	for k, v := range rewards {
-		if k == tokenPath {
-			continue
-		}
-
-		owned[k] = v
+	err := s.kvStore.Delete(0, rlm, StoreKeyTokenSpecificMinimumRewards.String()+":"+tokenPath)
+	if err != nil && err.Error() == store.ErrKeyNotFound {
+		return nil
 	}
-
-	return s.kvStore.Set(0, rlm, StoreKeyTokenSpecificMinimumRewards.String(), owned)
+	return err
 }
 
 // UnstakingFee

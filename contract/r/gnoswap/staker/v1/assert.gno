@@ -122,7 +122,7 @@ func assertTier1HasSparePool(currentTier, tier1Count uint64) {
 func assertIsGreaterThanMinimumRewardAmount(s *stakerV1, rewardToken string, rewardAmount int64) {
 	minReward := s.getMinimumRewardAmount()
 
-	if minRewardInt64, found := s.store.GetTokenSpecificMinimumRewards()[rewardToken]; found {
+	if minRewardInt64, found := s.store.GetTokenSpecificMinimumRewardItem(rewardToken); found {
 		minReward = minRewardInt64
 	}
 
@@ -142,8 +142,7 @@ func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
 		return
 	}
 
-	allowed := contains(s.store.GetAllowedTokens(), tokenPath)
-	if allowed {
+	if s.store.HasAllowedToken(tokenPath) {
 		return
 	}
 

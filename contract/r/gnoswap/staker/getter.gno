@@ -292,7 +292,7 @@ func GetTotalEmissionSent() int64 {
 	return getImplementation().GetTotalEmissionSent()
 }
 
-// GetAllowedTokens returns the allowed external incentive tokens.
+// GetAllowedTokens returns a detached list of allowed external incentive tokens in token-path order.
 func GetAllowedTokens() []string {
 	return cloneStringSlice(getImplementation().GetAllowedTokens())
 }
