@@ -184,7 +184,7 @@ func TestGetProposalUserVotingInfoReturnsDetachedValue(cur realm, t *testing.T) 
 
 	detached, found := gv.getProposalUserVotingInfo(1, voter)
 	uassert.True(t, found)
-	detached, _ = detached.WithVote(true, 900, 0, 0)
+	detached, _ = withVote(detached, true, 900, 0, 0)
 
 	storedRaw := votingInfos.Get(voter.String())
 	value, ok := storedRaw.(governance.VotingInfo)

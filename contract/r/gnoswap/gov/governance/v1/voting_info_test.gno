@@ -55,7 +55,7 @@ func TestVotingInfo_VotingTypeAndStatus(cur realm, t *testing.T) {
 		{
 			name: "Yes vote status",
 			votingInfo: func() governance.VotingInfo {
-				vi, _ := governance.NewVotingInfo(100).WithVote(true, 100, 0, 0)
+				vi, _ := withVote(governance.NewVotingInfo(100), true, 100, 0, 0)
 				return vi
 			},
 			expectedVotingType: "yes",
@@ -66,7 +66,7 @@ func TestVotingInfo_VotingTypeAndStatus(cur realm, t *testing.T) {
 		{
 			name: "No vote status",
 			votingInfo: func() governance.VotingInfo {
-				vi, _ := governance.NewVotingInfo(100).WithVote(false, 100, 0, 0)
+				vi, _ := withVote(governance.NewVotingInfo(100), false, 100, 0, 0)
 				return vi
 			},
 			expectedVotingType: "no",
@@ -118,7 +118,7 @@ func TestVotingInfo_VoteWeights(cur realm, t *testing.T) {
 		{
 			name: "Get weights after voting",
 			votingInfo: func() governance.VotingInfo {
-				vi, _ := governance.NewVotingInfo(100).WithVote(false, 50, 0, 0)
+				vi, _ := withVote(governance.NewVotingInfo(100), false, 50, 0, 0)
 				return vi
 			},
 			expectedAvailableWeight: 100,

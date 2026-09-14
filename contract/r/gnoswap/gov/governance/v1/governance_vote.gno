@@ -134,10 +134,10 @@ func (gv *governanceV1) vote(
 		userVote = governance.NewVotingInfo(votingWeight)
 	}
 
-	userVote, voted := userVote.WithVote(votedYes, votingWeight, votedHeight, votedAt)
-	if !voted {
+	if userVote.IsVoted() {
 		return governance.NewVotingInfo(0), 0, 0, makeErrorWithDetails(errAlreadyVoted, "user has already voted")
 	}
+	userVote = governance.NewVotedVotingInfo(votingWeight, votedYes, votingWeight, votedHeight, votedAt)
 
 	votingInfosTree, _ := gv.getProposalUserVotingInfos(proposalID)
 	if votingInfosTree == nil {

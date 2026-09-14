@@ -27,6 +27,18 @@ func NewVotingInfo(availableVoteWeight int64) VotingInfo {
 	}
 }
 
+// NewVotedVotingInfo creates a voting information value with a recorded vote.
+func NewVotedVotingInfo(availableVoteWeight int64, votedYes bool, votedWeight, votedHeight, votedAt int64) VotingInfo {
+	return VotingInfo{
+		availableVoteWeight: availableVoteWeight,
+		votedWeight:         votedWeight,
+		votedHeight:         votedHeight,
+		votedAt:             votedAt,
+		votedYes:            votedYes,
+		voted:               true,
+	}
+}
+
 // VotingType returns a human-readable string representation of the vote choice.
 //
 // Returns:
@@ -111,20 +123,4 @@ func (v VotingInfo) VotedAt() int64 {
 	}
 
 	return v.votedAt
-}
-
-// WithVote returns a value-backed record with the vote applied. The boolean is
-// false when the record already contains a vote.
-func (v VotingInfo) WithVote(votedYes bool, weight int64, votedHeight int64, votedAt int64) (VotingInfo, bool) {
-	if v.IsVoted() {
-		return v, false
-	}
-
-	v.votedWeight = weight
-	v.votedHeight = votedHeight
-	v.votedAt = votedAt
-	v.voted = true
-	v.votedYes = votedYes
-
-	return v, true
 }

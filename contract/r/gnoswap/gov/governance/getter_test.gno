@@ -19,7 +19,7 @@ func newProposalFixture() *Proposal {
 }
 
 func newVotingInfoFixture() VotingInfo {
-	votingInfo, _ := NewVotingInfo(100).WithVote(true, 90, 80, 70)
+	votingInfo := NewVotedVotingInfo(100, true, 90, 80, 70)
 	return votingInfo
 }
 
