@@ -257,20 +257,14 @@ func (lp *launchpadV1) GetDeposit(depositId string) (launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
 	value := deposits.Get(depositId)
 	if value == nil {
-		return emptyDepositValue(), errors.New("deposit not found")
+		return launchpad.NewDefaultDeposit(), errors.New("deposit not found")
 	}
 
 	deposit, ok := value.(launchpad.Deposit)
 	if !ok {
-		return emptyDepositValue(), errors.New("invalid deposit type")
+		return launchpad.NewDefaultDeposit(), errors.New("invalid deposit type")
 	}
 	return deposit, nil
-}
-
-// emptyDepositValue constructs a zero Deposit in its declaring realm. Gno
-// forbids launchpad v1 from allocating a launchpad.Deposit directly.
-func emptyDepositValue() launchpad.Deposit {
-	return launchpad.MakeDeposit("", "", 0, "", 0, 0, 0, 0)
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.

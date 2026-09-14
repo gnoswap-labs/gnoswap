@@ -30,6 +30,15 @@ func TestMakeDepositReturnsValue(cur realm, t *testing.T) {
 	uassert.Equal(t, int64(0), deposit.WithdrawnHeight())
 }
 
+func TestNewDefaultDepositReturnsZeroValue(cur realm, t *testing.T) {
+	deposit := NewDefaultDeposit()
+
+	uassert.Equal(t, "", deposit.ID())
+	uassert.Equal(t, "", deposit.ProjectID())
+	uassert.Equal(t, int64(0), deposit.DepositAmount())
+	uassert.Equal(t, int64(0), deposit.WithdrawnHeight())
+}
+
 func newLaunchpadRewardManager() *RewardManager {
 	manager := NewRewardManager(1000, 10, 20, 30)
 	manager.SetDistributeAmountPerSecondX128(u256.MustFromDecimal("100"))

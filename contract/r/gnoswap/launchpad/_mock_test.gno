@@ -150,7 +150,7 @@ func (m *MockLaunchpad) GetCurrentDepositId() int64 {
 func (m *MockLaunchpad) GetDeposit(depositId string) (Deposit, error) {
 	res, ok := m.Response.Get("GetDeposit")
 	if !ok {
-		return Deposit{}, nil
+		return NewDefaultDeposit(), nil
 	}
 	if len(res) < 2 || res[1] == nil {
 		return res[0].(Deposit), nil

@@ -154,6 +154,11 @@ func MakeDeposit(
 	}
 }
 
+// NewDefaultDeposit returns the zero Deposit value.
+func NewDefaultDeposit() Deposit {
+	return Deposit{}
+}
+
 // NewDeposit returns a pointer to a new Deposit with the given values.
 func NewDeposit(
 	depositID string,
