@@ -181,7 +181,7 @@ func (rm RewardManager) Clone() *RewardManager {
 	rm.rewards.Iterate("", "", func(key string, value interface{}) bool {
 		switch rewardState := value.(type) {
 		case RewardState:
-			rewardStateClone := &RewardState{
+			rewardStateClone := RewardState{
 				priceDebtX128:           rewardState.PriceDebtX128().Clone(),
 				claimableTime:           rewardState.ClaimableTime(),
 				depositAmount:           rewardState.DepositAmount(),

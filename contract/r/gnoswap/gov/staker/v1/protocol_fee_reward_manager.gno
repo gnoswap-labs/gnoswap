@@ -127,7 +127,7 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 		// Add the new fee per stake to the accumulated amount
 		accumulatedProtocolFeeX128PerStake = u256.Zero().Add(accumulatedProtocolFeeX128PerStake, protocolFeeDeltaX128PerStake)
-		accumulatedProtocolFeesX128PerStake[token] = accumulatedProtocolFeeX128PerStake.Clone()
+		accumulatedProtocolFeesX128PerStake[token] = accumulatedProtocolFeeX128PerStake
 
 		changedProtocolFeeAmounts[token] = protocolFeeAmount
 	}
@@ -149,7 +149,7 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 	}
 
 	if protocolFeeDelta <= 0 {
-		return existingAccumulatedFee.Clone(), protocolFeeAmount, nil
+		return existingAccumulatedFee, protocolFeeAmount, nil
 	}
 
 	protocolFeeDeltaX128 := u256.NewUintFromInt64(protocolFeeDelta)
@@ -162,7 +162,7 @@ func (self *ProtocolFeeRewardManagerResolver) calculateAccumulatedRewardX128PerS
 
 	accumulatedProtocolFeeX128PerStake := u256.Zero().Add(existingAccumulatedFee, protocolFeeDeltaX128PerStake)
 
-	return accumulatedProtocolFeeX128PerStake.Clone(), protocolFeeAmount, nil
+	return accumulatedProtocolFeeX128PerStake, protocolFeeAmount, nil
 }
 
 // updateAccumulatedProtocolFeeX128PerStake updates the internal accumulated protocol fee state.

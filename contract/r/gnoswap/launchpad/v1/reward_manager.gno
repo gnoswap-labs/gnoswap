@@ -81,7 +81,7 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit *launchpad.Depo
 	}
 
 	rewardState := launchpad.NewRewardState(
-		r.AccumulatedRewardPerDepositX128().Clone(),
+		r.AccumulatedRewardPerDepositX128(),
 		deposit.DepositAmount(),
 		deposit.CreatedAt(),
 		r.DistributeEndTime(),
