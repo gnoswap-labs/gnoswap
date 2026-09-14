@@ -7,19 +7,19 @@ import (
 
 // Helper functions that access state through launchpadState
 
-func (lp *launchpadV1) getProject(projectID string) (*launchpad.Project, error) {
+func (lp *launchpadV1) getProject(projectID string) (launchpad.Project, error) {
 	projects := lp.store.GetProjects()
 	projectValue := projects.Get(projectID)
 	if projectValue == nil {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
+		return launchpad.Project{}, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
 	}
 
 	project, ok := projectValue.(launchpad.Project)
 	if !ok {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
+		return launchpad.Project{}, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("project(%s) not found", projectID))
 	}
 
-	return &project, nil
+	return project, nil
 }
 
 func (lp *launchpadV1) getProjectTier(projectID string, tierDuration int64) (*launchpad.ProjectTier, error) {

@@ -111,7 +111,7 @@ func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, 
 func (lp *launchpadV1) depositGns(
 	_ int,
 	rlm realm,
-	project *launchpad.Project,
+	project launchpad.Project,
 	tierDuration int64,
 	depositAmount int64,
 	callerAddress address,
@@ -178,7 +178,7 @@ func (lp *launchpadV1) depositGns(
 	project.SetTier(tierDuration, projectTier)
 
 	projects := lp.store.GetProjects()
-	projects.Set(project.ID(), *project)
+	projects.Set(project.ID(), project)
 	if err := lp.store.SetProjects(0, rlm, projects); err != nil {
 		return nil, nil, false, "", err
 	}

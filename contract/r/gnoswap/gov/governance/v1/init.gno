@@ -46,7 +46,7 @@ func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore
 		counter := governanceStore.GetConfigCounter()
 		nextConfigVersion := counter.Next()
 
-		configs.Set(formatConfigKey(nextConfigVersion), governance.NewDefaultConfig())
+		configs.Set(formatConfigKey(nextConfigVersion), governance.DefaultConfig())
 
 		err := governanceStore.SetConfigs(0, rlm, configs)
 		if err != nil {

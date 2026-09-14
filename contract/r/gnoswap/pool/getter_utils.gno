@@ -66,7 +66,7 @@ func cloneStringInt64Map(src map[string]int64) map[string]int64 {
 	return cloned
 }
 
-func NewDefaultPositionInfo() PositionInfo {
+func DefaultPositionInfo() PositionInfo {
 	return PositionInfo{
 		liquidity:                "0",
 		feeGrowthInside0LastX128: "0",

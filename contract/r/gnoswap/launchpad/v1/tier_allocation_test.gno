@@ -95,7 +95,7 @@ func TestTierAllocationNoLeftover(cur realm, t *testing.T) {
 			uassert.NotNil(t, project, "project should not be nil")
 
 			projects := lp.store.GetProjects()
-			projects.Set(project.ID(), *project)
+			projects.Set(project.ID(), project)
 			lp.store.SetProjects(0, cur, projects)
 
 			// get all tiers and calculate total allocated
@@ -158,7 +158,7 @@ func TestTierAllocationRemainder(cur realm, t *testing.T) {
 	uassert.NotNil(t, project, "project should not be nil")
 
 	projects := lp.store.GetProjects()
-	projects.Set(project.ID(), *project)
+	projects.Set(project.ID(), project)
 	lp.store.SetProjects(0, cur, projects)
 
 	tier30, _ := getProjectTier(project, 30)

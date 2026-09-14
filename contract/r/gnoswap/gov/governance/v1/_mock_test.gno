@@ -57,11 +57,11 @@ func (m *mockGovernanceStore) SetConfigs(_ int, rlm realm, configs *bptree.BPTre
 
 func (m *mockGovernanceStore) GetConfig(version int64) (governance.Config, bool) {
 	if m.configs == nil {
-		return governance.NewDefaultConfig(), false
+		return governance.DefaultConfig(), false
 	}
 	result := m.configs.Get(utils.FormatInt(version))
 	if result == nil {
-		return governance.NewDefaultConfig(), false
+		return governance.DefaultConfig(), false
 	}
 	return result.(governance.Config), true
 }

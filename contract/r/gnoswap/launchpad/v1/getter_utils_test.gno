@@ -9,53 +9,25 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func TestCloneProjectEntry(cur realm, t *testing.T) {
-	t.Run("returns nil for a value that is not a project", func(cur realm, t *testing.T) {
-		uassert.Equal(t, nil, cloneProjectEntry("not a project"))
-		uassert.Equal(t, nil, cloneProjectEntry(nil))
-	})
+func TestProjectValuePayloadDoesNotMutateStoredMaps(cur realm, t *testing.T) {
+	stored := launchpad.MakeProject(
+		"Test Project",
+		"gno.land/r/onbloc/obl",
+		1_000_000,
+		address("g1recipient"),
+		100,
+		100,
+	)
+	stored.SetTier(30, launchpad.NewProjectTier("project", 30, 1, 100, 200))
 
-	t.Run("returns a value copy the caller cannot write back through", func(cur realm, t *testing.T) {
-		stored := launchpad.NewProject(
-			"Test Project",
-			"gno.land/r/onbloc/obl",
-			1_000_000,
-			address("g1recipient"),
-			100,
-			100,
-		)
-		stored.SetTier(30, launchpad.NewProjectTier("project", 30, 1, 100, 200))
+	value := stored
+	value.SetName("Mutated")
+	value.SetTier(30, launchpad.NewProjectTier("project", 30, 2, 100, 200))
 
-		cloned, ok := cloneProjectEntry(*stored).(launchpad.Project)
-		uassert.True(t, ok)
-		uassert.Equal(t, stored.Name(), cloned.Name())
-
-		cloned.SetName("Mutated")
-		uassert.Equal(t, "Test Project", stored.Name())
-		cloned.SetTier(30, launchpad.NewProjectTier("project", 30, 2, 100, 200))
-		storedTier, err := stored.GetTier(30)
-		uassert.NoError(t, err)
-		uassert.Equal(t, int64(1), storedTier.TotalDistributeAmount())
-	})
-
-	t.Run("returns an independent value per read", func(cur realm, t *testing.T) {
-		stored := launchpad.NewProject(
-			"Test Project",
-			"gno.land/r/onbloc/obl",
-			1_000_000,
-			address("g1recipient"),
-			100,
-			100,
-		)
-
-		first, ok := cloneProjectEntry(*stored).(launchpad.Project)
-		uassert.True(t, ok)
-		second, ok := cloneProjectEntry(*stored).(launchpad.Project)
-		uassert.True(t, ok)
-
-		first.SetName("Mutated")
-		uassert.Equal(t, "Test Project", second.Name())
-	})
+	uassert.Equal(t, "Test Project", stored.Name())
+	storedTier, err := stored.GetTier(30)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(1), storedTier.TotalDistributeAmount())
 }
 
 func TestCloneRewardStateEntry(cur realm, t *testing.T) {

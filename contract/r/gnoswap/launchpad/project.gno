@@ -104,11 +104,14 @@ func (p *Project) SetConditions(conditions map[string]*ProjectCondition) {
 	p.conditions = owned
 }
 
-// SetCondition sets a single condition by token path. Mutating the map inside
-// the domain method avoids the readonly taint that arises when a caller in
-// another realm round-trips Conditions()/SetConditions().
+// SetCondition adds a condition without sharing the caller's map container.
 func (p *Project) SetCondition(tokenPath string, condition *ProjectCondition) {
-	p.conditions[tokenPath] = condition
+	conditions := make(map[string]*ProjectCondition, len(p.conditions)+1)
+	for key, value := range p.conditions {
+		conditions[key] = value
+	}
+	conditions[tokenPath] = condition
+	p.conditions = conditions
 }
 
 // GetTiers returns the tiers map of the project.
@@ -133,14 +136,22 @@ func (p *Project) SetTiers(tiers map[int64]*ProjectTier) {
 	p.tiers = owned
 }
 
-// GetTiersRatios returns the tiers ratios map of the project.
+// TiersRatios returns an independently owned ratios map.
 func (p *Project) TiersRatios() map[int64]int64 {
-	return p.tiersRatios
+	ratios := make(map[int64]int64, len(p.tiersRatios))
+	for duration, ratio := range p.tiersRatios {
+		ratios[duration] = ratio
+	}
+	return ratios
 }
 
-// SetTiersRatios sets the tiers ratios map of the project.
+// SetTiersRatios sets independently owned tier ratios.
 func (p *Project) SetTiersRatios(tiersRatios map[int64]int64) {
-	p.tiersRatios = tiersRatios
+	ratios := make(map[int64]int64, len(tiersRatios))
+	for duration, ratio := range tiersRatios {
+		ratios[duration] = ratio
+	}
+	p.tiersRatios = ratios
 }
 
 // GetCreatedHeight returns the created height of the project.
@@ -173,7 +184,12 @@ func (p *Project) GetTier(duration int64) (*ProjectTier, error) {
 }
 
 func (p *Project) SetTier(duration int64, tier *ProjectTier) {
-	p.tiers[duration] = tier
+	tiers := make(map[int64]*ProjectTier, len(p.tiers)+1)
+	for key, value := range p.tiers {
+		tiers[key] = value
+	}
+	tiers[duration] = tier
+	p.tiers = tiers
 }
 
 // IsRecipient returns true if the project recipient is the given address.
@@ -181,15 +197,16 @@ func (p *Project) IsRecipient(recipient address) bool {
 	return p.recipient == recipient
 }
 
-func NewProject(
+// MakeProject creates an independently owned Project value.
+func MakeProject(
 	name string,
 	tokenPath string,
 	depositAmount int64,
 	recipient address,
 	createdHeight int64,
 	createdAt int64,
-) *Project {
-	return &Project{
+) Project {
+	return Project{
 		id:            MakeProjectID(tokenPath, createdHeight),
 		name:          name,
 		tokenPath:     tokenPath,

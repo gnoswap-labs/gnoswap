@@ -501,7 +501,7 @@ func NewPositionInfo() PositionInfo {
 	}
 }
 
-func NewDefaultFeeAmountTickSpacing() map[uint32]int32 {
+func DefaultFeeAmountTickSpacing() map[uint32]int32 {
 	return map[uint32]int32{
 		100:   1,
 		500:   10,

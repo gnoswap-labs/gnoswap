@@ -76,7 +76,7 @@ func TestLaunchpadReward_CollectDepositReward(cur realm, t *testing.T) {
 			// Setup project if needed
 			if tt.setupProject {
 				projects := getTestProjects()
-				project := launchpad.NewProject(tt.projectID, GNS_TOKEN_KEY, 1000000, testutils.TestAddress("recipient"), 100, 1000)
+				project := launchpad.MakeProject(tt.projectID, GNS_TOKEN_KEY, 1000000, testutils.TestAddress("recipient"), 100, 1000)
 				project.SetID(tt.projectID)
 
 				projectTier := launchpad.NewProjectTier(tt.projectID, tt.tier, 1000000, 100, 200)
@@ -86,7 +86,7 @@ func TestLaunchpadReward_CollectDepositReward(cur realm, t *testing.T) {
 				tiers := make(map[int64]*launchpad.ProjectTier)
 				tiers[tt.tier] = projectTier
 				project.SetTiers(tiers)
-				projects.Set(tt.projectID, *project)
+				projects.Set(tt.projectID, project)
 				setTestProjects(projects)
 			}
 

@@ -129,7 +129,7 @@ func NewConfigPtr(
 	return &c
 }
 
-func NewDefaultConfig() Config {
+func DefaultConfig() Config {
 	return Config{
 		VotingStartDelay:              86400,         // 1 day - delay before voting starts
 		VotingPeriod:                  604800,        // 7 days - duration for collecting votes

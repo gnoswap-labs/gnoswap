@@ -162,5 +162,6 @@ func newProject(
 	createdHeight int64,
 	createdAt int64,
 ) *launchpad.Project {
-	return launchpad.NewProject(name, tokenPath, depositAmount, recipient, createdHeight, createdAt)
+	project := launchpad.MakeProject(name, tokenPath, depositAmount, recipient, createdHeight, createdAt)
+	return &project
 }

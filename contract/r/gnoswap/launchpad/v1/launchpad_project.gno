@@ -154,13 +154,13 @@ func (lp *launchpadV1) CreateProject(
 // This function validates the input parameters, creates the project structure,
 // and sets up the project tiers and reward managers.
 // Returns the created project and any error.
-func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectParams) (*launchpad.Project, error) {
+func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectParams) (launchpad.Project, error) {
 	if err := params.validate(); err != nil {
-		return nil, err
+		return launchpad.Project{}, err
 	}
 
 	// create project
-	project := launchpad.NewProject(
+	project := launchpad.MakeProject(
 		params.name,
 		params.tokenPath,
 		params.depositAmount,
@@ -175,7 +175,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 
 	// check duplicate project
 	if projects.Has(project.ID()) {
-		return nil, makeErrorWithDetails(
+		return launchpad.Project{}, makeErrorWithDetails(
 			errDuplicateProject,
 			ufmt.Sprintf("project(%s) already exists", project.ID()),
 		)
@@ -183,7 +183,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 
 	projectConditions, err := launchpad.NewProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
 	if err != nil {
-		return nil, err
+		return launchpad.Project{}, err
 	}
 
 	for _, condition := range projectConditions {
@@ -228,14 +228,14 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 	}
 
 	project.SetTiersRatios(projectTierRatios)
-	projects.Set(project.ID(), *project)
+	projects.Set(project.ID(), project)
 
 	// Save the modified state back
 	if err := lp.store.SetProjects(0, rlm, projects); err != nil {
-		return nil, err
+		return launchpad.Project{}, err
 	}
 	if err := lp.store.SetProjectTierRewardManagers(0, rlm, projectTierRewardManagers); err != nil {
-		return nil, err
+		return launchpad.Project{}, err
 	}
 	recipients := lp.store.GetProjectRecipients()
 	recipients.Set(project.Recipient().String(), true)
@@ -310,7 +310,7 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectI
 // This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
 // It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
 // Returns the amount of rewards transferred to the recipient and any error.
-func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launchpad.Project, recipient address, currentTime int64) (int64, error) {
+func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project launchpad.Project, recipient address, currentTime int64) (int64, error) {
 	if err := validateRefundProject(project, recipient, currentTime); err != nil {
 		return 0, err
 	}
@@ -379,7 +379,7 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 		project.SetTiers(updatedTiers)
 
 		projects := lp.store.GetProjects()
-		projects.Set(project.ID(), *project)
+		projects.Set(project.ID(), project)
 		if err := lp.store.SetProjects(0, rlm, projects); err != nil {
 			return 0, err
 		}
@@ -409,7 +409,7 @@ func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectT
 }
 
 // validateTransferLeft validates the transfer of remaining tokens
-func validateRefundProject(project *launchpad.Project, recipient address, currentTime int64) error {
+func validateRefundProject(project launchpad.Project, recipient address, currentTime int64) error {
 	if !recipient.IsValid() {
 		return errors.New(ufmt.Sprintf("invalid recipient address(%s)", recipient.String()))
 	}

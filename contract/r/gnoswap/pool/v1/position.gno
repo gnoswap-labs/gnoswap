@@ -43,7 +43,7 @@ func positionUpdate(
 
 	posLiquidity := u256.MustFromDecimal(position.Liquidity())
 	if posLiquidity.IsZero() && isZeroLiquidityDelta {
-		return pl.NewDefaultPositionInfo(), makeErrorWithDetails(
+		return pl.DefaultPositionInfo(), makeErrorWithDetails(
 			errZeroLiquidity,
 			"both liquidityDelta and current position's liquidity are zero",
 		)
@@ -52,7 +52,7 @@ func positionUpdate(
 	if liquidityDelta.IsNeg() {
 		absDelta := i256.Zero().Set(liquidityDelta).Abs()
 		if absDelta.Gt(posLiquidity) {
-			return pl.NewDefaultPositionInfo(), makeErrorWithDetails(
+			return pl.DefaultPositionInfo(), makeErrorWithDetails(
 				errZeroLiquidity,
 				ufmt.Sprintf("liquidity delta(%s) is greater than current liquidity(%s)",
 					liquidityDelta.ToString(), posLiquidity.ToString()),
@@ -124,12 +124,12 @@ func positionUpdateWithKey(
 	// so there's no need to check for existence in GetPosition.
 	positionToUpdate, err := p.GetPosition(positionKey)
 	if err != nil {
-		positionToUpdate = pl.NewDefaultPositionInfo()
+		positionToUpdate = pl.DefaultPositionInfo()
 	}
 
 	positionAfterUpdate, err := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	if err != nil {
-		return pl.NewDefaultPositionInfo(), err
+		return pl.DefaultPositionInfo(), err
 	}
 
 	setPosition(p, positionKey, positionAfterUpdate)
@@ -160,7 +160,7 @@ func setPosition(p *pl.Pool, posKey string, positionInfo pl.PositionInfo) {
 //   - *u256.Uint: amount of token1 needed/returned
 func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyPositionParams) (pl.PositionInfo, *u256.Uint, *u256.Uint, error) {
 	if err := validateTicks(params.tickLower, params.tickUpper); err != nil {
-		return pl.NewDefaultPositionInfo(), zero, zero, err
+		return pl.DefaultPositionInfo(), zero, zero, err
 	}
 
 	// get current state and price bounds
@@ -168,7 +168,7 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 	// update position state
 	position, err := updatePosition(p, observations, params, tick)
 	if err != nil {
-		return pl.NewDefaultPositionInfo(), zero, zero, err
+		return pl.DefaultPositionInfo(), zero, zero, err
 	}
 
 	liqDelta := params.liquidityDelta
@@ -199,7 +199,7 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 		currentTime := time.Now().Unix()
 		// Update oracle BEFORE liquidity changes
 		if observations == nil {
-			return pl.NewDefaultPositionInfo(), zero, zero, errors.New("observations not initialized")
+			return pl.DefaultPositionInfo(), zero, zero, errors.New("observations not initialized")
 		}
 		slot0 := p.Slot0()
 		observationIndex, observationCardinality, err := writeObservation(
@@ -212,7 +212,7 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 			slot0.ObservationCardinalityNext(),
 		)
 		if err != nil {
-			return pl.NewDefaultPositionInfo(), zero, zero, err
+			return pl.DefaultPositionInfo(), zero, zero, err
 		}
 		slot0.SetObservationIndex(observationIndex)
 		slot0.SetObservationCardinality(observationCardinality)
@@ -283,7 +283,7 @@ func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams
 	if !liquidityDelta.IsZero() {
 		blockTimestamp := time.Now().Unix()
 		if observations == nil {
-			return pl.NewDefaultPositionInfo(), errors.New("observations not initialized")
+			return pl.DefaultPositionInfo(), errors.New("observations not initialized")
 		}
 		slot0 := p.Slot0()
 		tickCumulative, secondsPerLiquidityStr, err := observeSingle(
@@ -296,7 +296,7 @@ func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams
 			slot0.ObservationCardinality(),
 		)
 		if err != nil {
-			return pl.NewDefaultPositionInfo(), err
+			return pl.DefaultPositionInfo(), err
 		}
 
 		secondsPerLiquidityCumulativeX128 := u256.MustFromDecimal(secondsPerLiquidityStr)
@@ -357,7 +357,7 @@ func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams
 		feeGrowthInside1X128.Clone(),
 	)
 	if err != nil {
-		return pl.NewDefaultPositionInfo(), err
+		return pl.DefaultPositionInfo(), err
 	}
 
 	// clear any tick data that is no longer needed

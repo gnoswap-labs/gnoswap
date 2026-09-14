@@ -120,7 +120,7 @@ func TestTierDurationConsistency(cur realm, t *testing.T) {
 			uassert.NotNil(t, project, "project should not be nil")
 
 			projects := lp.store.GetProjects()
-			projects.Set(project.ID(), *project)
+			projects.Set(project.ID(), project)
 			lp.store.SetProjects(0, cur, projects)
 			tier, _ := getProjectTier(project, tt.tierType)
 

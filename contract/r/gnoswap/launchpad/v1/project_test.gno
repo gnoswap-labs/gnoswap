@@ -58,7 +58,7 @@ func TestProject_IsProjectActive(cur realm, t *testing.T) {
 			// Setup
 			tier := launchpad.NewProjectTier("test_project", 180, 1000000, tt.startTime, tt.endTime)
 
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 1000000, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 1000000, testutils.TestAddress("recipient"), 100, 1000)
 			tiers := map[int64]*launchpad.ProjectTier{
 				projectTier180: tier,
 			}
@@ -109,7 +109,7 @@ func TestProject_IsProjectEnded(cur realm, t *testing.T) {
 			// Setup
 			tier := launchpad.NewProjectTier("test_project", 180, 1000000, tt.startTime, tt.endTime)
 
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 1000000, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 1000000, testutils.TestAddress("recipient"), 100, 1000)
 			tiers := map[int64]*launchpad.ProjectTier{
 				projectTier180: tier,
 			}
@@ -151,7 +151,7 @@ func TestProject_IsRecipient(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, tt.recipient, 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, tt.recipient, 100, 1000)
 
 			// Execute
 			result := project.IsRecipient(tt.caller)
@@ -242,7 +242,7 @@ func TestProject_GetProjectRemainingAmount(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
 			// Execute
@@ -312,7 +312,7 @@ func TestProject_GetProjectTotalDepositCount(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
 			// Execute - calculate total deposit count from tiers
@@ -380,7 +380,7 @@ func TestProject_GetProjectCurrentDepositCount(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
 			// Execute - calculate current deposit count from tiers
@@ -453,7 +453,7 @@ func TestProject_GetProjectTotalDepositAmount(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
 			// Execute - calculate total deposit amount from tiers
@@ -521,7 +521,7 @@ func TestProject_GetProjectCurrentDepositAmount(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
 			// Execute - calculate current deposit amount from tiers
@@ -589,7 +589,7 @@ func TestProject_GetProjectTotalCollectedAmount(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
 			// Execute - calculate total collected amount from tiers
@@ -654,7 +654,7 @@ func TestProject_GetProjectTier(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
 			// Execute
@@ -718,7 +718,7 @@ func TestProject_GetStandardTier(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.tiers)
 
 			// Verify
@@ -784,7 +784,7 @@ func TestProject_ValidateRefundRemainingAmount(cur realm, t *testing.T) {
 			tier := launchpad.NewProjectTier("test", 180, tt.totalDistributeAmount, tt.tierStartTime, tt.tierEndTime)
 			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			tiers := map[int64]*launchpad.ProjectTier{
 				projectTier180: tier,
 			}
@@ -885,7 +885,7 @@ func TestProject_AddProjectTier(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetTiers(tt.initialTiers)
 
 			// Execute
@@ -974,7 +974,7 @@ func TestProject_CheckProjectConditions(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			project := launchpad.NewProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
+			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetConditions(tt.conditions)
 
 			caller := testutils.TestAddress("caller")

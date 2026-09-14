@@ -12,8 +12,11 @@ import (
 )
 
 // GetProjects returns a read-only view of every project, keyed by project ID.
+//
+// Project uses copy-on-write map mutators and defensive map accessors, so its
+// value payload can be returned without a per-read resolver.
 func (lp *launchpadV1) GetProjects() *rotree.ReadOnlyTree {
-	return rotree.Wrap(lp.store.GetProjects(), cloneProjectEntry)
+	return rotree.Wrap(lp.store.GetProjects(), nil)
 }
 
 // GetProjectName returns the name of a project by its ID.

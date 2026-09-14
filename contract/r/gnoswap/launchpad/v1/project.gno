@@ -8,15 +8,15 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-func isProjectActive(p *launchpad.Project, currentTime int64) bool {
+func isProjectActive(p launchpad.Project, currentTime int64) bool {
 	return getStandardTier(p).IsActivated(currentTime)
 }
 
-func isProjectEnded(p *launchpad.Project, currentTime int64) bool {
+func isProjectEnded(p launchpad.Project, currentTime int64) bool {
 	return getStandardTier(p).IsEnded(currentTime)
 }
 
-func getProjectRemainingAmount(p *launchpad.Project) int64 {
+func getProjectRemainingAmount(p launchpad.Project) int64 {
 	remainingAmount := int64(0)
 
 	for _, tier := range p.Tiers() {
@@ -26,7 +26,7 @@ func getProjectRemainingAmount(p *launchpad.Project) int64 {
 	return remainingAmount
 }
 
-func checkProjectConditions(p *launchpad.Project, caller address, balanceOfFunc func(tokenPath string, caller address) int64) error {
+func checkProjectConditions(p launchpad.Project, caller address, balanceOfFunc func(tokenPath string, caller address) int64) error {
 	conditions := p.Conditions()
 	if conditions == nil {
 		return makeErrorWithDetails(errInvalidData, "conditions is nil")
@@ -49,7 +49,7 @@ func checkProjectConditions(p *launchpad.Project, caller address, balanceOfFunc 
 	return nil
 }
 
-func getProjectTier(p *launchpad.Project, duration int64) (*launchpad.ProjectTier, error) {
+func getProjectTier(p launchpad.Project, duration int64) (*launchpad.ProjectTier, error) {
 	tier, err := p.GetTier(duration)
 	if err != nil {
 		return nil, makeErrorWithDetails(errDataNotFound, err.Error())
@@ -58,7 +58,7 @@ func getProjectTier(p *launchpad.Project, duration int64) (*launchpad.ProjectTie
 	return tier, nil
 }
 
-func getStandardTier(p *launchpad.Project) *launchpad.ProjectTier {
+func getStandardTier(p launchpad.Project) *launchpad.ProjectTier {
 	projectTier, err := p.GetTier(projectTier180)
 	if err != nil {
 		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
@@ -67,7 +67,7 @@ func getStandardTier(p *launchpad.Project) *launchpad.ProjectTier {
 	return projectTier
 }
 
-func validateRefundRemainingAmount(p *launchpad.Project, currentTime int64) error {
+func validateRefundRemainingAmount(p launchpad.Project, currentTime int64) error {
 	if !isProjectEnded(p, currentTime) {
 		return errors.New(
 			ufmt.Sprintf("project not ended yet(current:%d, endTime: %d)", currentTime, getStandardTier(p).EndTime()),
@@ -83,10 +83,10 @@ func validateRefundRemainingAmount(p *launchpad.Project, currentTime int64) erro
 	return nil
 }
 
-func addProjectTier(p *launchpad.Project, tierDuration int64, projectTier *launchpad.ProjectTier) {
+func addProjectTier(p launchpad.Project, tierDuration int64, projectTier *launchpad.ProjectTier) {
 	p.SetTier(tierDuration, projectTier)
 }
 
-func addProjectCondition(p *launchpad.Project, tokenPath string, condition *launchpad.ProjectCondition) {
+func addProjectCondition(p launchpad.Project, tokenPath string, condition *launchpad.ProjectCondition) {
 	p.SetCondition(tokenPath, condition)
 }
