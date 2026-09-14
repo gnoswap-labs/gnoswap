@@ -449,7 +449,45 @@ func (s *stakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]i
 		return errors.New(ErrSpoofedRealm)
 	}
 
-	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), fees)
+	// The map is copied here so it is allocated by, and therefore mutable from, this realm.
+	owned := make(map[string]int64, len(fees))
+	for tokenPath, amount := range fees {
+		owned[tokenPath] = amount
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), owned)
+}
+
+func (s *stakerStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.GetPendingProtocolFees()[tokenPath]
+}
+
+func (s *stakerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	if rlm.IsCode() && !s.kvStore.IsWriteAuthorized(rlm.Address()) {
+		return errors.New(store.ErrWritePermissionDenied)
+	}
+
+	s.GetPendingProtocolFees()[tokenPath] = amount
+
+	return nil
+}
+
+func (s *stakerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	if rlm.IsCode() && !s.kvStore.IsWriteAuthorized(rlm.Address()) {
+		return errors.New(store.ErrWritePermissionDenied)
+	}
+
+	delete(s.GetPendingProtocolFees(), tokenPath)
+
+	return nil
 }
 
 // UnstakedPositions

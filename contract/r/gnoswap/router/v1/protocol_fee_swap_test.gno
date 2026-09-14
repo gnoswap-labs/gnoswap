@@ -139,18 +139,14 @@ func TestAddPendingProtocolFee(cur realm, t *testing.T) {
 
 func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	router := mockRouter()
-	originalPendingProtocolFees := map[string]int64{
-		barPath: 0,
-		gnsPath: -10,
-	}
-	router.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
+	router.store.SetPendingProtocolFee(0, cur, barPath, 0)
+	router.store.SetPendingProtocolFee(0, cur, gnsPath, -10)
 
 	router.settleProtocolFee(0, cur, barPath, 0)
 	router.settleProtocolFee(0, cur, gnsPath, 0)
 
 	pendingProtocolFees := router.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)
-	uassert.Equal(t, len(originalPendingProtocolFees), 2)
 }
 
 func TestSetSwapFee_MultipleChanges(cur realm, t *testing.T) {
