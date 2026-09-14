@@ -3,23 +3,25 @@ package governance
 import (
 	"time"
 
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 )
 
-// maxProposalsPrunedPerCall bounds how many terminal proposals a single
-// PruneInactiveProposals call removes from the active index. This keeps the
-// call's gas cost predictable even if cleanup is neglected for a long time;
-// gov/staker calls this again on its next cleanup to keep making progress.
+// maxProposalsPrunedPerCall caps deadline entries processed, including active
+// proposals rescheduled from voting end to expiration.
 const maxProposalsPrunedPerCall = 200
 
-// PruneInactiveProposals removes ended proposals from the active proposal index.
-// Proposal records and their voting information remain available as permanent history.
-// Only gov/staker may call this before it cleans delegation snapshots.
-func (gv *governanceV1) PruneInactiveProposals(_ int, rlm realm) {
+// PruneInactiveProposals processes a bounded batch of elapsed lifecycle deadlines.
+// Admins may call it independently so progress persists even when snapshot cleanup
+// is not yet safe. Gov/staker also calls it before delegation-history cleanup.
+// processed counts removals and reschedules; hasMore reports remaining due deadlines.
+func (gv *governanceV1) PruneInactiveProposals(_ int, rlm realm) (processed int, hasMore bool) {
 	access.AssertIsRlmCurrent(0, rlm)
-	access.AssertIsGovStaker(rlm.Previous().Address())
+	access.AssertHasAnyRole(rlm.Previous().Address(), prbac.ROLE_ADMIN.String(), prbac.ROLE_GOV_STAKER.String())
 
-	if err := gv.pruneInactiveProposals(0, rlm, time.Now().Unix(), maxProposalsPrunedPerCall); err != nil {
+	processed, hasMore, err := gv.pruneInactiveProposals(0, rlm, time.Now().Unix(), maxProposalsPrunedPerCall)
+	if err != nil {
 		panic(err)
 	}
+	return processed, hasMore
 }

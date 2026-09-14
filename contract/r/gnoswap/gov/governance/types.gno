@@ -53,8 +53,10 @@ type IGovernanceManager interface {
 		proposalId int64,
 	) int64
 
-	// PruneInactiveProposals removes terminal proposals from the active index.
-	PruneInactiveProposals(_ int, rlm realm)
+	// PruneInactiveProposals processes a bounded batch of elapsed deadlines.
+	// Admins and governance stakers may call it. It returns the number of
+	// processed entries and whether due deadlines remain.
+	PruneInactiveProposals(_ int, rlm realm) (processed int, hasMore bool)
 
 	// Configuration
 	Reconfigure(
@@ -106,8 +108,10 @@ type IGovernanceGetter interface {
 
 	GetUserProposals() *rotree.ReadOnlyTree
 
-	// Active proposal query
-	GetOldestActiveProposalSnapshotTime() (int64, bool)
+	// GetOldestActiveProposalSnapshotTime returns the oldest active proposal's
+	// snapshot time. An empty index returns (0, false, nil); a stale first entry
+	// returns a non-nil maintenance error.
+	GetOldestActiveProposalSnapshotTime() (int64, bool, error)
 
 	// Voting weight snapshot getters
 	GetCurrentVotingWeightSnapshot() (int64, int64, error)

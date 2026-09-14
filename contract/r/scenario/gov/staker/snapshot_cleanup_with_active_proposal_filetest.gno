@@ -74,7 +74,10 @@ func main(cur realm) {
 
 	println("[SCENARIO] 5. Create a proposal (this creates a snapshot reference)")
 	proposalId := createProposal(cur)
-	oldestActiveSnapshotTime, hasActive := governance.GetOldestActiveProposalSnapshotTime()
+	oldestActiveSnapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
+	if err != nil {
+		panic(err)
+	}
 	if hasActive {
 		ufmt.Printf("[INFO] oldest active proposal snapshot time: %d\n", oldestActiveSnapshotTime)
 	}
@@ -97,7 +100,7 @@ func main(cur realm) {
 	safeCleanupTime := firstDelegationTime - 100
 	if safeCleanupTime < validCleanupThreshold {
 		testing.SkipHeights(30 * 60 * 60 * 24 * 365)
-		cleanupSnapshots(cur, 1234783890 + 5)
+		cleanupSnapshots(cur, 1234783890+5)
 	} else {
 		println("[INFO] safe cleanup time is not old enough, skipping cleanup test")
 	}

@@ -1,0 +1,73 @@
+# Independent maintenance commits progress even when combined cleanup aborts.
+# A cap-plus-one backlog must drain in two transactions without losing proposal history.
+loadpkg gno.land/r/gnoswap/gov/governance/v1
+loadpkg gno.land/r/gnoswap/gov/staker/v1
+loadpkg gno.land/r/gnoswap/protocol_fee/v1
+loadpkg gno.land/r/gnoswap/rbac
+
+gnoland start
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Reconfigure -args 0 -args 0 -args 0 -args 50 -args 0 -args 0 -args 0 -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+
+gnokey maketx run -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 -max-deposit 500000000ugnot test1 $WORK/setup.gno
+stdout 'CREATED 201'
+
+gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
+stdout 'active proposal index requires pruning'
+
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CleanStakerDelegationSnapshotByAdmin -args 0 -args $test1_user_addr -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
+stderr 'active proposal index requires pruning'
+
+gnokey maketx run -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1 $WORK/prune_first.gno
+stdout 'FIRST 200 true'
+
+gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
+stdout 'active proposal index requires pruning'
+
+gnokey maketx run -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1 $WORK/prune_last.gno
+stdout 'LAST 1 false'
+
+gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
+stdout 'false'
+! stdout 'active proposal index requires pruning'
+
+gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetProposals().Size()'
+stdout '201'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CleanStakerDelegationSnapshotByAdmin -args 0 -args $test1_user_addr -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+stdout 'OK'
+
+-- setup.gno --
+package main
+import (
+    "gno.land/r/gnoswap/gns"
+    "gno.land/r/gnoswap/gov/governance"
+    gs "gno.land/r/gnoswap/gov/staker"
+    "gno.land/r/gnoswap/access"
+    prbac "gno.land/p/gnoswap/rbac"
+)
+func main(cur realm) {
+    admin := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+    gns.Approve(cross(cur), access.MustGetAddress(prbac.ROLE_GOV_STAKER.String()), 1000000000)
+    gs.Delegate(cross(cur), admin, 1000000000, "")
+    for i := 0; i < 201; i++ {
+        governance.ProposeText(cross(cur), "maintenance", "bounded maintenance transaction smoke")
+    }
+    println("CREATED", governance.GetProposals().Size())
+}
+-- prune_first.gno --
+package main
+import "gno.land/r/gnoswap/gov/governance"
+func main(cur realm) {
+    n, more := governance.PruneInactiveProposals(cross(cur))
+    if n != 200 || !more { panic("first batch did not persist expected progress") }
+    println("FIRST", n, more)
+}
+-- prune_last.gno --
+package main
+import "gno.land/r/gnoswap/gov/governance"
+func main(cur realm) {
+    n, more := governance.PruneInactiveProposals(cross(cur))
+    if n != 1 || more { panic("last batch did not persist expected progress") }
+    println("LAST", n, more)
+}

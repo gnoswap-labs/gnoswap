@@ -895,38 +895,147 @@ func TestGetUserProposals_EntriesAreCopied(cur realm, t *testing.T) {
 // Active Proposal Query Tests
 // ==================================
 
-func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
-	testCases := []struct {
-		name            string
-		setup           func(cur realm, t *testing.T) *governanceV1
-		expectHasActive bool
-	}{
-		{
-			name: "returns false when no proposals",
-			setup: func(cur realm, t *testing.T) *governanceV1 {
-				return setupGetterTest(cur, t)
-			},
-			expectHasActive: false,
-		},
-		{
-			name: "returns true when active proposal exists",
-			setup: func(cur realm, t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(cur, t)
-			},
-			expectHasActive: true,
-		},
-	}
+func newActiveIndexTestProposal(
+	config governance.Config,
+	id int64,
+	createdAt int64,
+	snapshotTime int64,
+	proposalType governance.ProposalType,
+) *governance.Proposal {
+	return governance.NewProposal(
+		id,
+		NewProposalStatus(config, 1000, proposalType.IsExecutable(), createdAt, 1000),
+		governance.NewProposalMetadata("active-index", "active-index"),
+		governance.NewProposalData(proposalType, nil, nil),
+		address("g1proposer"),
+		1,
+		snapshotTime,
+		100,
+	)
+}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(cur realm, t *testing.T) {
-			gv := tc.setup(cur, t)
-			snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
-			uassert.Equal(t, tc.expectHasActive, hasActive)
-			if hasActive {
-				uassert.True(t, snapshotTime > 0)
-			}
-		})
-	}
+func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+
+	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), snapshotTime)
+	uassert.False(t, hasActive)
+}
+
+func TestGetOldestActiveProposalSnapshotTime_StaleFirstEntryNeedsMaintenance(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	stale := newActiveIndexTestProposal(
+		config,
+		1,
+		now-config.VotingStartDelay-config.VotingPeriod-100,
+		now-2000,
+		governance.Text,
+	)
+	active := newActiveIndexTestProposal(
+		config,
+		2,
+		now-config.VotingStartDelay-10,
+		now-1000,
+		governance.CommunityPoolSpend,
+	)
+	uassert.True(t, gv.addProposal(0, cur, stale))
+	uassert.True(t, gv.addProposal(0, cur, active))
+
+	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+
+	uassert.Equal(t, int64(0), snapshotTime)
+	uassert.False(t, hasActive)
+	uassert.ErrorContains(t, err, errActiveProposalIndexNeedsPruning)
+}
+
+func TestGetOldestActiveProposalSnapshotTime_ActiveFirstEntryReturnsExactSnapshot(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	const expectedSnapshotTime = int64(1000)
+	active := newActiveIndexTestProposal(
+		config,
+		1,
+		now-config.VotingStartDelay-10,
+		expectedSnapshotTime,
+		governance.CommunityPoolSpend,
+	)
+	stale := newActiveIndexTestProposal(
+		config,
+		2,
+		now-config.VotingStartDelay-config.VotingPeriod-100,
+		expectedSnapshotTime+1,
+		governance.Text,
+	)
+	uassert.True(t, gv.addProposal(0, cur, active))
+	uassert.True(t, gv.addProposal(0, cur, stale))
+
+	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+
+	uassert.NoError(t, err)
+	uassert.True(t, hasActive)
+	uassert.Equal(t, expectedSnapshotTime, snapshotTime)
+}
+
+func TestGetOldestActiveProposalSnapshotTime_MissingFirstEntryReturnsError(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	missing := newActiveIndexTestProposal(
+		config,
+		1,
+		now-config.VotingStartDelay-10,
+		now-1000,
+		governance.CommunityPoolSpend,
+	)
+	store.GetActiveProposalsBySnapshot().Set(missing.ActiveProposalSnapshotKey(), missing.ID())
+
+	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+
+	uassert.Equal(t, int64(0), snapshotTime)
+	uassert.False(t, hasActive)
+	uassert.ErrorContains(t, err, errProposalNotFound)
+}
+
+func TestGetOldestActiveProposalSnapshotTime_TieUsesProposalIDOrdering(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+	now := time.Now().Unix()
+
+	const expectedSnapshotTime = int64(1000)
+	active := newActiveIndexTestProposal(
+		config,
+		1,
+		now-config.VotingStartDelay-10,
+		expectedSnapshotTime,
+		governance.CommunityPoolSpend,
+	)
+	stale := newActiveIndexTestProposal(
+		config,
+		2,
+		now-config.VotingStartDelay-config.VotingPeriod-100,
+		expectedSnapshotTime,
+		governance.Text,
+	)
+	uassert.True(t, gv.addProposal(0, cur, stale))
+	uassert.True(t, gv.addProposal(0, cur, active))
+
+	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+
+	uassert.NoError(t, err)
+	uassert.True(t, hasActive)
+	uassert.Equal(t, expectedSnapshotTime, snapshotTime)
 }
 
 func TestPruneInactiveProposals_RemovesTerminalIndexEntries(cur realm, t *testing.T) {
@@ -935,33 +1044,34 @@ func TestPruneInactiveProposals_RemovesTerminalIndexEntries(cur realm, t *testin
 	config, _ := store.GetConfig(1)
 	now := time.Now().Unix()
 
-	expired := governance.NewProposal(
+	terminal := newActiveIndexTestProposal(
+		config,
 		1,
-		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000, 1000),
-		governance.NewProposalMetadata("expired", "expired"),
-		governance.NewProposalData(governance.Text, nil, nil),
-		address("g1expired"),
-		1,
-		now-1000,
-		runtime.ChainHeight(),
+		now-config.VotingStartDelay-config.VotingPeriod-100,
+		now-2000,
+		governance.Text,
 	)
-	active := governance.NewProposal(
+	active := newActiveIndexTestProposal(
+		config,
 		2,
-		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now, 1000),
-		governance.NewProposalMetadata("active", "active"),
-		governance.NewProposalData(governance.Text, nil, nil),
-		address("g1active"),
-		1,
-		now,
-		runtime.ChainHeight(),
+		now-config.VotingStartDelay-10,
+		now-1000,
+		governance.CommunityPoolSpend,
 	)
-	uassert.True(t, gv.addProposal(0, cur, expired))
+	uassert.True(t, gv.addProposal(0, cur, terminal))
 	uassert.True(t, gv.addProposal(0, cur, active))
 
-	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall) == nil)
+	processed, hasMore, err := gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall)
 
+	uassert.NoError(t, err)
+	uassert.Equal(t, 1, processed)
+	uassert.False(t, hasMore)
 	uassert.Equal(t, 1, store.GetActiveProposalsBySnapshot().Size())
-	snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
+	uassert.Equal(t, 1, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, 2, store.GetProposals().Size())
+
+	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
 	uassert.True(t, hasActive)
 	uassert.Equal(t, active.SnapshotTime(), snapshotTime)
 }
@@ -973,75 +1083,127 @@ func TestPruneInactiveProposals_BoundsWorkPerCall(cur realm, t *testing.T) {
 	now := time.Now().Unix()
 
 	const (
-		expiredCount = 5
+		expiredCount = 4
 		limit        = 2
 	)
 	for i := int64(0); i < expiredCount; i++ {
-		expired := governance.NewProposal(
+		expired := newActiveIndexTestProposal(
+			config,
 			i+1,
-			NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000+i, 1000),
-			governance.NewProposalMetadata("expired", "expired"),
-			governance.NewProposalData(governance.Text, nil, nil),
-			address("g1expired"),
-			1,
-			now-1000+i,
-			runtime.ChainHeight(),
+			now-config.VotingStartDelay-config.VotingPeriod-1000+i,
+			now-10000+i,
+			governance.Text,
 		)
 		uassert.True(t, gv.addProposal(0, cur, expired))
 	}
 	uassert.Equal(t, expiredCount, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, expiredCount, store.GetActiveProposalsBySnapshot().Size())
 
-	// A single call only removes up to `limit` terminal entries, even though
-	// every entry in the index is already past its deadline.
-	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, limit) == nil)
+	processed, hasMore, err := gv.pruneInactiveProposals(0, cur, now, limit)
+	uassert.NoError(t, err)
+	uassert.Equal(t, limit, processed)
+	uassert.True(t, hasMore)
 	uassert.Equal(t, expiredCount-limit, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, expiredCount-limit, store.GetActiveProposalsBySnapshot().Size())
 
-	// The next call makes further progress on the remaining backlog.
-	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, limit) == nil)
+	processed, hasMore, err = gv.pruneInactiveProposals(0, cur, now, limit)
+	uassert.NoError(t, err)
+	uassert.Equal(t, limit, processed)
+	uassert.False(t, hasMore)
 	uassert.Equal(t, expiredCount-2*limit, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, expiredCount-2*limit, store.GetActiveProposalsBySnapshot().Size())
 
-	// A final call fully drains the backlog.
-	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, limit) == nil)
+	processed, hasMore, err = gv.pruneInactiveProposals(0, cur, now, limit)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 0, processed)
+	uassert.False(t, hasMore)
 	uassert.Equal(t, 0, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, 0, store.GetActiveProposalsBySnapshot().Size())
+	uassert.Equal(t, expiredCount, store.GetProposals().Size())
 }
 
-// TestPruneInactiveProposals_DrainsBacklogLargerThanProductionCap proves that
-// a backlog bigger than the real maxProposalsPrunedPerCall cap is not stuck:
-// it takes exactly the expected number of calls at the production cap to
-// fully drain, rather than requiring one unbounded call.
+// A backlog larger than the production cap needs another call even when only
+// one due entry remains.
 func TestPruneInactiveProposals_DrainsBacklogLargerThanProductionCap(cur realm, t *testing.T) {
 	gv := setupGetterTest(cur, t)
 	store := gv.store.(*mockGovernanceStore)
 	config, _ := store.GetConfig(1)
 	now := time.Now().Unix()
 
-	const backlogSize = maxProposalsPrunedPerCall + 50 // exceeds the real per-call cap
-
+	const backlogSize = maxProposalsPrunedPerCall + 1
 	for i := int64(0); i < backlogSize; i++ {
-		expired := governance.NewProposal(
+		expired := newActiveIndexTestProposal(
+			config,
 			i+1,
-			NewProposalStatus(config, 1000, governance.Text.IsExecutable(), now-1000+i, 1000),
-			governance.NewProposalMetadata("expired", "expired"),
-			governance.NewProposalData(governance.Text, nil, nil),
-			address("g1expired"),
-			1,
-			now-1000+i,
-			runtime.ChainHeight(),
+			now-config.VotingStartDelay-config.VotingPeriod-1000+i,
+			now-100000+i,
+			governance.Text,
 		)
 		uassert.True(t, gv.addProposal(0, cur, expired))
 	}
 	uassert.Equal(t, backlogSize, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, backlogSize, store.GetActiveProposalsBySnapshot().Size())
 
-	// First call hits the production cap and leaves the remainder for the
-	// next call — it is not forced to process the whole backlog at once.
-	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall) == nil)
-	uassert.Equal(t, backlogSize-maxProposalsPrunedPerCall, store.GetActiveProposalsByDeadline().Size())
+	processed, hasMore, err := gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall)
+	uassert.NoError(t, err)
+	uassert.Equal(t, maxProposalsPrunedPerCall, processed)
+	uassert.True(t, hasMore)
+	uassert.Equal(t, 1, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, 1, store.GetActiveProposalsBySnapshot().Size())
 
-	// A second call at the same production cap fully drains what's left,
-	// since the remainder is smaller than the cap.
-	uassert.True(t, gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall) == nil)
+	processed, hasMore, err = gv.pruneInactiveProposals(0, cur, now, maxProposalsPrunedPerCall)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 1, processed)
+	uassert.False(t, hasMore)
 	uassert.Equal(t, 0, store.GetActiveProposalsByDeadline().Size())
 	uassert.Equal(t, 0, store.GetActiveProposalsBySnapshot().Size())
+	uassert.Equal(t, backlogSize, store.GetProposals().Size())
+}
+
+func TestPruneInactiveProposals_ReschedulesPassedProposalUntilExpiration(cur realm, t *testing.T) {
+	gv := setupGetterTest(cur, t)
+	store := gv.store.(*mockGovernanceStore)
+	config, _ := store.GetConfig(1)
+
+	proposal := newActiveIndexTestProposal(
+		config,
+		1,
+		1000,
+		500,
+		governance.CommunityPoolSpend,
+	)
+	resolver := NewProposalStatusResolver(proposal.Status())
+	uassert.NoError(t, resolver.vote(true, 600))
+	uassert.True(t, gv.addProposal(0, cur, proposal))
+
+	votingEndTime := proposal.Status().Schedule().VotingEndTime()
+	expiredTime := proposal.Status().Schedule().ExpiredTime()
+
+	processed, hasMore, err := gv.pruneInactiveProposals(0, cur, votingEndTime, 1)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 1, processed)
+	uassert.False(t, hasMore)
+	uassert.Equal(t, 1, store.GetActiveProposalsBySnapshot().Size())
+	uassert.Equal(t, 1, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, nil, store.GetActiveProposalsByDeadline().Get(proposal.ActiveProposalDeadlineKey(votingEndTime)))
+	rescheduledID, ok := store.GetActiveProposalsByDeadline().Get(proposal.ActiveProposalDeadlineKey(expiredTime)).(int64)
+	uassert.True(t, ok)
+	uassert.Equal(t, proposal.ID(), rescheduledID)
+
+	processed, hasMore, err = gv.pruneInactiveProposals(0, cur, expiredTime-1, 1)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 0, processed)
+	uassert.False(t, hasMore)
+	uassert.Equal(t, 1, store.GetActiveProposalsBySnapshot().Size())
+	uassert.Equal(t, 1, store.GetActiveProposalsByDeadline().Size())
+
+	processed, hasMore, err = gv.pruneInactiveProposals(0, cur, expiredTime, 1)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 1, processed)
+	uassert.False(t, hasMore)
+	uassert.Equal(t, 0, store.GetActiveProposalsBySnapshot().Size())
+	uassert.Equal(t, 0, store.GetActiveProposalsByDeadline().Size())
+	uassert.Equal(t, 1, store.GetProposals().Size())
 }
 
 // ==================================

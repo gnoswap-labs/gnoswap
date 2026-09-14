@@ -42,7 +42,10 @@ func main(cur realm) {
 	println("[INFO] archived proposals:", archivedProposalCount)
 
 	activeProposalID := governance.ProposeCommunityPoolSpend(cross(cur), "active", "active", adminAddr, "gno.land/r/gnoswap/gns.GNS", 100)
-	_, hasActive := governance.GetOldestActiveProposalSnapshotTime()
+	_, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
+	if err != nil {
+		panic(err)
+	}
 
 	println("[INFO] active proposal id:", activeProposalID)
 	println("[EXPECTED] proposal history:", governance.GetProposals().Size())

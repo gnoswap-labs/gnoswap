@@ -385,7 +385,10 @@ func testActiveProposalAndVotingWeight(cur realm) {
 	testing.SetRealm(governanceRealm)
 
 	// GetOldestActiveProposalSnapshotTime
-	snapshotTime, exists := governance.GetOldestActiveProposalSnapshotTime()
+	snapshotTime, exists, err := governance.GetOldestActiveProposalSnapshotTime()
+	if err != nil {
+		panic(err)
+	}
 	println("[EXPECTED] Oldest active proposal snapshot time exists:", exists)
 	if exists {
 		println("[EXPECTED] Oldest active proposal snapshot time:", snapshotTime)

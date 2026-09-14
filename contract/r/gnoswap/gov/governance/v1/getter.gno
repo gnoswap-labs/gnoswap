@@ -255,14 +255,14 @@ func (gv *governanceV1) GetUserProposals() *rotree.ReadOnlyTree {
 	return rotree.Wrap(gv.store.GetUserProposals(), cloneProposalIDsEntry)
 }
 
-// GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
-// This is used by gov/staker to prevent cleanup of delegation history that is still needed
-// by active proposals for voting weight calculation.
-func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+// GetOldestActiveProposalSnapshotTime examines only the first snapshot index entry.
+// If it is inactive, callers must prune before retrying; an error must never be
+// treated as an empty index when deciding whether delegation history can be deleted.
+func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
 	snapshotIndex := gv.store.GetActiveProposalsBySnapshot()
-	current := time.Now().Unix()
 	var oldestSnapshotTime int64
-	hasActiveProposal := false
+	var hasActiveProposal bool
+	var err error
 
 	snapshotIndex.Iterate("", "", func(_ string, value any) bool {
 		proposalID, ok := value.(int64)
@@ -270,14 +270,17 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 			panic(ufmt.Sprintf("failed to cast active proposal ID to int64: %T", value))
 		}
 		proposal, exists := gv.getProposal(proposalID)
-		if !exists || !NewProposalResolver(proposal).IsActive(current) {
-			return false
+		if !exists {
+			err = errors.New(errProposalNotFound)
+		} else if !NewProposalResolver(proposal).IsActive(time.Now().Unix()) {
+			err = errors.New(errActiveProposalIndexNeedsPruning)
+		} else {
+			oldestSnapshotTime = proposal.SnapshotTime()
+			hasActiveProposal = true
 		}
-		oldestSnapshotTime = proposal.SnapshotTime()
-		hasActiveProposal = true
 		return true
 	})
-	return oldestSnapshotTime, hasActiveProposal
+	return oldestSnapshotTime, hasActiveProposal, err
 }
 
 // GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.

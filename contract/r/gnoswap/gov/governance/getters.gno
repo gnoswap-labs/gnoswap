@@ -187,8 +187,11 @@ func GetUserProposals() *rotree.ReadOnlyTree {
 // Active Proposal Query
 // ==================================
 
-// GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
-func GetOldestActiveProposalSnapshotTime() (int64, bool) {
+// GetOldestActiveProposalSnapshotTime returns the oldest active proposal's
+// snapshot time. An empty index returns (0, false, nil). A stale or missing
+// first index entry returns a non-nil error so callers can perform maintenance
+// instead of treating the index as empty.
+func GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
 	return getImplementation().GetOldestActiveProposalSnapshotTime()
 }
 

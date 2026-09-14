@@ -53,8 +53,12 @@ func assertIsValidSnapshotTime(snapshotTime int64) {
 }
 
 // assertIsAvailableCleanupSnapshotTime checks that no active proposals need
+// delegation history older than the cleanup threshold.
 func assertIsAvailableCleanupSnapshotTime(cleanupSnapshotTime int64) {
-	oldestActiveSnapshotTime, hasActiveProposal := governance.GetOldestActiveProposalSnapshotTime()
+	oldestActiveSnapshotTime, hasActiveProposal, err := governance.GetOldestActiveProposalSnapshotTime()
+	if err != nil {
+		panic(err)
+	}
 	if !hasActiveProposal {
 		// No active proposals, cleanup is safe
 		return
