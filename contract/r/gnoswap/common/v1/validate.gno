@@ -17,6 +17,7 @@ func isTokenKeyChar(c rune) bool {
 	case c == '_', c == '-', c == '.', c == '/':
 		return true
 	}
+
 	return false
 }
 
