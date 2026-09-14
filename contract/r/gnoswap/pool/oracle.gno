@@ -34,7 +34,7 @@ func MakeObservation(
 	}
 }
 
-func NewDefaultObservation() Observation {
+func DefaultObservation() Observation {
 	return MakeObservation(
 		0,
 		0,

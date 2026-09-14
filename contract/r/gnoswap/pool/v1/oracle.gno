@@ -137,7 +137,7 @@ func snapshotCumulativesInside(
 func transform(last pl.Observation, blockTimestamp int64, tick int32, liquidity *u256.Uint) (pl.Observation, error) {
 	timeDelta := blockTimestamp - last.BlockTimestamp()
 	if timeDelta < 0 {
-		return pl.NewDefaultObservation(), errors.New("time delta must be greater than 0")
+		return pl.DefaultObservation(), errors.New("time delta must be greater than 0")
 	}
 
 	// calculate cumulative values
@@ -244,11 +244,11 @@ func writeObservation(
 // Returns error if the observation doesn't exist
 func observationAt(observations *pl.ObservationTree, index uint16) (pl.Observation, error) {
 	if observations == nil {
-		return pl.NewDefaultObservation(), errors.New("observations not initialized")
+		return pl.DefaultObservation(), errors.New("observations not initialized")
 	}
 	obs, ok := observations.Get(index)
 	if !ok {
-		return pl.NewDefaultObservation(), errors.New(errNotInitializedObservation)
+		return pl.DefaultObservation(), errors.New(errNotInitializedObservation)
 	}
 
 	return obs, nil
@@ -352,7 +352,7 @@ func getSurroundingObservations(
 	// Optimistically set before to the newest observation
 	beforeOrAt, err := observationAt(observations, index)
 	if err != nil {
-		return pl.NewDefaultObservation(), pl.NewDefaultObservation(), err
+		return pl.DefaultObservation(), pl.DefaultObservation(), err
 	}
 
 	// Timestamps are int64, so natural ordering applies. Uniswap V3 needs a
@@ -361,12 +361,12 @@ func getSurroundingObservations(
 	if beforeOrAt.BlockTimestamp() <= target {
 		if beforeOrAt.BlockTimestamp() == target {
 			// If newest observation equals target, we're in the same block, so we can ignore atOrAfter
-			return beforeOrAt, pl.NewDefaultObservation(), nil
+			return beforeOrAt, pl.DefaultObservation(), nil
 		}
 		// Otherwise, we need to transform
 		atOrAfter, err := transform(beforeOrAt, target, tick, liquidity)
 		if err != nil {
-			return pl.NewDefaultObservation(), pl.NewDefaultObservation(), err
+			return pl.DefaultObservation(), pl.DefaultObservation(), err
 		}
 		return beforeOrAt, atOrAfter, nil
 	}
@@ -377,13 +377,13 @@ func getSurroundingObservations(
 	if err != nil || !beforeOrAt.Initialized() {
 		beforeOrAt, err = observationAt(observations, 0)
 		if err != nil {
-			return pl.NewDefaultObservation(), pl.NewDefaultObservation(), err
+			return pl.DefaultObservation(), pl.DefaultObservation(), err
 		}
 	}
 
 	// Ensure that the target is chronologically at or after the oldest observation
 	if beforeOrAt.BlockTimestamp() > target {
-		return pl.NewDefaultObservation(), pl.NewDefaultObservation(), errors.New(errObservationTooOld)
+		return pl.DefaultObservation(), pl.DefaultObservation(), errors.New(errObservationTooOld)
 	}
 
 	// If we've reached this point, we have to binary search
@@ -416,7 +416,7 @@ func binarySearch(
 		afterIndex := uint16((i + 1) % uint64(cardinality))
 		atOrAfter, err = observationAt(observations, afterIndex)
 		if err != nil {
-			return pl.NewDefaultObservation(), pl.NewDefaultObservation(), err
+			return pl.DefaultObservation(), pl.DefaultObservation(), err
 		}
 
 		targetAtOrAfter := beforeOrAt.BlockTimestamp() <= target
