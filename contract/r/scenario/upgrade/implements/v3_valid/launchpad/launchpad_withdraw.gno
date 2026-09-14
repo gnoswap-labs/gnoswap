@@ -61,12 +61,8 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 }
 
 // withdrawDeposit withdraws a deposit and updates the reward manager.
-func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
+func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
 	// Input validation
-	if deposit == nil {
-		return "", 0, makeErrorWithDetails(errNotExistDeposit, "deposit is nil")
-	}
-
 	if currentTime <= 0 {
 		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}
@@ -113,11 +109,11 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Depo
 	}
 
 	// Finalize withdrawal
-	withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
+	deposit, withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
 
-	// Store the detached copy back as a value so the withdrawal is durable.
+	// Persist the updated value; the caller's deposit value is unchanged.
 	deposits := lp.store.GetDeposits()
-	deposits.Set(deposit.ID(), *deposit)
+	deposits.Set(deposit.ID(), deposit)
 
 	// Save the modified state back
 	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {

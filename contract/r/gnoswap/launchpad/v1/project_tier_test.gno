@@ -284,7 +284,7 @@ func TestProjectTier_DepositAndWithdraw(cur realm, t *testing.T) {
 			if tt.operation == "deposit" {
 				depositToTier(tier, *deposit)
 			} else {
-				withdrawToTier(tier, deposit)
+				withdrawToTier(tier, *deposit)
 			}
 
 			// Verify

@@ -30,7 +30,7 @@ func depositToTier(t *launchpad.ProjectTier, deposit launchpad.Deposit) {
 	t.SetTotalDepositCount(totalDepositCount)
 }
 
-func withdrawToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
+func withdrawToTier(t *launchpad.ProjectTier, deposit launchpad.Deposit) {
 	totalWithdrawAmount := gnsmath.SafeAddInt64(t.TotalWithdrawAmount(), deposit.DepositAmount())
 	totalWithdrawCount := gnsmath.SafeAddInt64(t.TotalWithdrawCount(), 1)
 

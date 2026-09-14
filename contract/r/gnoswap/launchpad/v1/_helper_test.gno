@@ -473,10 +473,33 @@ func setTestProjectTierRewardManagers(tree *bptree.BPTree) {
 	}
 }
 
+func newDeposit(
+	depositID string,
+	projectID string,
+	tier int64,
+	depositor address,
+	depositAmount int64,
+	createdHeight int64,
+	createdTime int64,
+	endTime int64,
+) *launchpad.Deposit {
+	deposit := launchpad.MakeDeposit(
+		depositID,
+		projectID,
+		tier,
+		depositor,
+		depositAmount,
+		createdHeight,
+		createdTime,
+		endTime,
+	)
+	return &deposit
+}
+
 // getDeposit is a test helper to get a deposit by ID
-func getDeposit(depositID string) (*launchpad.Deposit, error) {
+func getDeposit(depositID string) (launchpad.Deposit, error) {
 	if testStore == nil {
-		return nil, makeErrorWithDetails(errNotExistDeposit, "test store not initialized")
+		return launchpad.DefaultDeposit(), makeErrorWithDetails(errNotExistDeposit, "test store not initialized")
 	}
 	lp := getTestImplementation()
 	return lp.getDeposit(depositID)

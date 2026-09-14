@@ -12,7 +12,6 @@ import (
 	"gno.land/r/gnoswap/gns"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
-	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/onbloc/obl"
 
 	prbac "gno.land/p/gnoswap/rbac"
@@ -180,7 +179,6 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 		name           string
 		tierDuration   int64
 		skipHeights    int64
-		useNilDeposit  bool
 		currentTime    func() int64
 		withdrawTwice  bool
 		expectedErr    bool
@@ -192,7 +190,6 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 			name:           "success - withdraw tier 30 deposit after tier ends",
 			tierDuration:   30,
 			skipHeights:    skipHeightTier30,
-			useNilDeposit:  false,
 			currentTime:    func() int64 { return time.Now().Unix() },
 			withdrawTwice:  false,
 			expectedErr:    false,
@@ -202,7 +199,6 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 			name:           "success - withdraw tier 90 deposit after tier ends",
 			tierDuration:   90,
 			skipHeights:    skipHeightTier90,
-			useNilDeposit:  false,
 			currentTime:    func() int64 { return time.Now().Unix() },
 			withdrawTwice:  false,
 			expectedErr:    false,
@@ -212,7 +208,6 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 			name:           "success - withdraw tier 180 deposit after tier ends",
 			tierDuration:   180,
 			skipHeights:    skipHeightTier180,
-			useNilDeposit:  false,
 			currentTime:    func() int64 { return time.Now().Unix() },
 			withdrawTwice:  false,
 			expectedErr:    false,
@@ -223,7 +218,6 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 			name:           "fail - tier 30 deposit not yet ended",
 			tierDuration:   30,
 			skipHeights:    0,
-			useNilDeposit:  false,
 			currentTime:    func() int64 { return time.Now().Unix() },
 			withdrawTwice:  false,
 			expectedErr:    true,
@@ -233,7 +227,6 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 			name:           "fail - tier 90 deposit not yet ended (only 30 days passed)",
 			tierDuration:   90,
 			skipHeights:    skipHeightTier30, // Only skip 30 days, not enough for 90-day tier
-			useNilDeposit:  false,
 			currentTime:    func() int64 { return time.Now().Unix() },
 			withdrawTwice:  false,
 			expectedErr:    true,
@@ -243,7 +236,6 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 			name:           "fail - deposit already withdrawn",
 			tierDuration:   30,
 			skipHeights:    skipHeightTier30,
-			useNilDeposit:  false,
 			currentTime:    func() int64 { return time.Now().Unix() },
 			withdrawTwice:  true,
 			expectedErr:    true,
@@ -253,7 +245,6 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 			name:           "fail - invalid currentTime zero",
 			tierDuration:   30,
 			skipHeights:    skipHeightTier30,
-			useNilDeposit:  false,
 			currentTime:    func() int64 { return 0 },
 			withdrawTwice:  false,
 			expectedErr:    true,
@@ -263,21 +254,10 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 			name:           "fail - invalid currentTime negative",
 			tierDuration:   30,
 			skipHeights:    skipHeightTier30,
-			useNilDeposit:  false,
 			currentTime:    func() int64 { return -100 },
 			withdrawTwice:  false,
 			expectedErr:    true,
 			expectedErrMsg: "currentTime must be positive",
-		},
-		{
-			name:           "fail - nil deposit",
-			tierDuration:   30,
-			skipHeights:    0,
-			useNilDeposit:  true,
-			currentTime:    func() int64 { return time.Now().Unix() },
-			withdrawTwice:  false,
-			expectedErr:    true,
-			expectedErrMsg: "deposit is nil",
 		},
 	}
 
@@ -290,13 +270,8 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 				testing.SkipHeights(tt.skipHeights)
 			}
 
-			var deposit *launchpad.Deposit
-			var err error
-
-			if !tt.useNilDeposit {
-				deposit, err = getDeposit("1")
-				uassert.NoError(t, err)
-			}
+			deposit, err := getDeposit("1")
+			uassert.NoError(t, err)
 
 			currentTime := tt.currentTime()
 
@@ -1001,21 +976,38 @@ func TestLaunchpadWithdraw_CollectDepositGnsDepositStateTransition(cur realm, t 
 	depositBefore, err := getDeposit("1")
 	uassert.NoError(t, err)
 	uassert.False(t, depositBefore.IsWithdrawn(), "deposit should not be withdrawn before collection")
+	uassert.Equal(t, int64(1000000000), depositBefore.DepositAmount(), "deposit amount should be intact before collection")
+	uassert.Equal(t, int64(0), depositBefore.WithdrawnHeight(), "withdrawn height should be unset before collection")
+	uassert.Equal(t, int64(0), depositBefore.WithdrawnTime(), "withdrawn time should be unset before collection")
 
 	// Skip to end time and collect
 	testing.SkipHeights(60*60*24*180/5 + 2)
+	withdrawalHeight := runtime.ChainHeight()
+	withdrawalTime := time.Now().Unix()
 
 	testing.SetRealm(testing.NewUserRealm(userAddr))
 	testing.SetOriginCaller(userAddr)
+	var withdrawnAmount int64
 	func(cur realm) {
 		testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))
-		lp.CollectDepositGns(0, cur, "1")
+		withdrawnAmount, err = lp.CollectDepositGns(0, cur, "1")
 	}(cross(cur))
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(1000000000), withdrawnAmount)
+
+	// The value passed through the public withdrawal path is a caller-local copy.
+	uassert.Equal(t, int64(1000000000), depositBefore.DepositAmount(), "caller deposit value should remain unchanged")
+	uassert.Equal(t, int64(0), depositBefore.WithdrawnHeight(), "caller deposit height should remain unchanged")
+	uassert.Equal(t, int64(0), depositBefore.WithdrawnTime(), "caller deposit time should remain unchanged")
+	uassert.False(t, depositBefore.IsWithdrawn(), "caller deposit should remain unwithdrawn")
 
 	// Get deposit state after collection
 	depositAfter, err := getDeposit("1")
 	uassert.NoError(t, err)
 	uassert.True(t, depositAfter.IsWithdrawn(), "deposit should be withdrawn after collection")
+	uassert.Equal(t, int64(0), depositAfter.DepositAmount(), "stored deposit amount should be zero after collection")
+	uassert.Equal(t, withdrawalHeight, depositAfter.WithdrawnHeight(), "stored withdrawal height should match collection")
+	uassert.Equal(t, withdrawalTime, depositAfter.WithdrawnTime(), "stored withdrawal time should match collection")
 }
 
 func initLaunchpadWithdrawTest(cur realm, t *testing.T, depositor address) {

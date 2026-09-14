@@ -391,12 +391,16 @@ func TestDeposit_Withdraw(cur realm, t *testing.T) {
 				time.Now().Add(time.Hour*24*30).Unix(),
 			)
 			currentHeight := int64(123)
-			amount := withdrawDeposit(deposit, currentHeight, tt.currentTime)
+			updatedDeposit, amount := withdrawDeposit(*deposit, currentHeight, tt.currentTime)
 			uassert.Equal(t, tt.expectedAmount, amount)
-			uassert.Equal(t, tt.currentTime, deposit.WithdrawnTime())
-			uassert.Equal(t, currentHeight, deposit.WithdrawnHeight())
-			uassert.Equal(t, tt.expectedRemaining, deposit.DepositAmount())
-			uassert.Equal(t, tt.expectedWithdrawn, deposit.IsWithdrawn())
+			uassert.Equal(t, tt.currentTime, updatedDeposit.WithdrawnTime())
+			uassert.Equal(t, currentHeight, updatedDeposit.WithdrawnHeight())
+			uassert.Equal(t, tt.expectedRemaining, updatedDeposit.DepositAmount())
+			uassert.Equal(t, tt.expectedWithdrawn, updatedDeposit.IsWithdrawn())
+			uassert.Equal(t, tt.depositAmount, deposit.DepositAmount())
+			uassert.Equal(t, int64(0), deposit.WithdrawnTime())
+			uassert.Equal(t, int64(0), deposit.WithdrawnHeight())
+			uassert.False(t, deposit.IsWithdrawn())
 		})
 	}
 }
