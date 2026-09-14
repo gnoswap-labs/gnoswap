@@ -1282,13 +1282,14 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 }
 
 // poolHasIncentives checks if the pool has any stakeable incentives (internal or external).
-// External incentive eligibility (active or within short future window) is handled inside IsExternallyIncentivizedPool.
+// External eligibility includes active and future incentives.
 func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 	poolPath := pool.PoolPath()
-	hasInternal := s.getPoolTier().IsInternallyIncentivizedPool(poolPath)
-	hasExternal := NewPoolResolver(pool).IsExternallyIncentivizedPool()
+	if s.getPoolTier().IsInternallyIncentivizedPool(poolPath) {
+		return nil
+	}
 
-	if !hasInternal && !hasExternal {
+	if !NewPoolResolver(pool).IsExternallyIncentivizedPool() {
 		return ufmt.Errorf(
 			"%v: cannot stake position to non incentivized pool(%s)",
 			errNonIncentivizedPool, poolPath,
