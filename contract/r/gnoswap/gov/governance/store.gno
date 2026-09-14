@@ -23,6 +23,8 @@ const (
 
 	StoreKeyProposals StoreKey = "proposals" // Proposals BPTree
 
+	StoreKeyActiveProposalsBySnapshot StoreKey = "activeProposalsBySnapshot"
+
 	StoreKeyProposalUserVotingInfos StoreKey = "proposalUserVotingInfos" // Proposal voting infos BPTree
 
 	StoreKeyUserProposals StoreKey = "userProposals" // User proposals mapping BPTree
@@ -200,6 +202,29 @@ func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, propos
 	proposals.Set(formatInt64Key(proposalID), proposal)
 
 	return s.kvStore.Set(0, rlm, StoreKeyProposals.String(), proposals)
+}
+
+func (s *governanceStore) HasActiveProposalsBySnapshotStoreKey() bool {
+	return s.kvStore.Has(StoreKeyActiveProposalsBySnapshot.String())
+}
+
+func (s *governanceStore) GetActiveProposalsBySnapshot() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyActiveProposalsBySnapshot.String())
+	if err != nil {
+		panic(err)
+	}
+	tree, ok := result.(*bptree.BPTree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast active proposal snapshot index: %T", result))
+	}
+	return tree
+}
+
+func (s *governanceStore) SetActiveProposalsBySnapshot(_ int, rlm realm, tree *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+	return s.kvStore.Set(0, rlm, StoreKeyActiveProposalsBySnapshot.String(), tree)
 }
 
 // Proposal User Voting Infos methods
