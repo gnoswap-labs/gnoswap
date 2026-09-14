@@ -13,6 +13,18 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 | `type.gno` | Type definitions |
 | `wrap_unwrap.gno` | Token wrapping utilities |
 
+## Checkpoint Storage Schema
+
+`Tick.outsideAccumulation` checkpoints are stored as strings containing exactly 32
+binary bytes in big-endian uint256 order (most-significant limb first). Readers
+require both the string type and the exact 32-byte length; decimal strings and
+legacy `*uint256.Uint` values are not compatible.
+
+This changes the persisted tick history schema within the staker realm. A
+fresh deployment is required; it is not a v1-only implementation upgrade and
+cannot be applied in place to existing deployments. No migration API is
+provided.
+
 ## Rules
 
 ### Hooks
@@ -27,6 +39,8 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 
 ### External Incentives
 - Active window: `startTimestamp <= now < endTimestamp`. Both bounds required.
+- Stake eligibility short-circuits on a valid internal tier. Otherwise, query the existing start-time index from `max(0, now - 365 days)` through future starts, rather than scanning lifetime incentive records. This relies on the enforced 365-day maximum duration and preserves the existing `now <= endTimestamp` eligibility boundary.
+- Keep ended incentive records and their start-time entries for past reward accounting; eligibility lookup does not prune them or require a new index migration.
 - `refunded` flag prevents double-claim on `EndExternalIncentive`. Set atomically.
 - `EndExternalIncentive` needs `now >= endTimestamp` and keeps the record; `CancelExternalIncentive` needs `now < startTimestamp`, removes it from the incentive tree, the per-pool start-time index and the global tree, and refunds the reward tokens plus the GNS deposit to the **creator** (never a caller-supplied address). Callable by admin, governance, or the creator. Removal is only safe before the start: discovery is bounded by the current time, so no deposit can reference a pending incentive.
 - `lastCollectTime` tracked **per incentive** (not shared). Updated only after successful transfer.

@@ -2,6 +2,7 @@ package staker
 
 import (
 	"errors"
+	"math"
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
@@ -150,14 +151,17 @@ func (self *PoolResolver) initializeNewTickOutsideAccumulation(currentTime int64
 	tick.SetOutsideAccumulationAt(currentTime, globalAcc)
 }
 
-// IsExternallyIncentivizedPool returns true if the pool has any active external incentives.
+// IsExternallyIncentivizedPool returns true if the pool has an external incentive
+// that has not ended, including incentives that have not started yet.
 func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 	currentTime := time.Now().Unix()
 	hasIncentive := false
-	self.Incentives().IncentiveTrees().Iterate("", "", func(key string, value any) bool {
-		incentive, ok := value.(*sr.ExternalIncentive)
+	// With a maximum duration of 365 days, older starts have already ended.
+	// Keep future starts eligible and retain historical records for reward claims.
+	self.Incentives().IterateIncentiveIdsByTime(stakeScanLowerBound(currentTime), math.MaxInt64, func(incentiveId string) bool {
+		incentive, ok := self.Incentives().Incentive(incentiveId)
 		if !ok {
-			panic("failed to cast value to *ExternalIncentive")
+			panic("incentive missing from pool start-time index")
 		}
 
 		resolver := NewExternalIncentiveResolver(incentive)
