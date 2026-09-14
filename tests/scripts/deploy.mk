@@ -32,7 +32,7 @@ deploy-base-contracts: deploy-access deploy-rbac-realm deploy-halt-realm deploy-
 deploy-gnoswap-realms: deploy-protocol_fee deploy-pool deploy-position deploy-router deploy-staker deploy-gov-staker deploy-governance deploy-launchpad
 
 .PHONY: deploy-gnoswap-impl-v1
-deploy-gnoswap-impl-v1: deploy-protocol_fee-v1 deploy-pool-v1 deploy-position-v1 deploy-router-v1 deploy-staker-v1 deploy-gov-staker-v1 deploy-governance-v1 deploy-launchpad-v1
+deploy-gnoswap-impl-v1: deploy-common-v1 deploy-protocol_fee-v1 deploy-pool-v1 deploy-position-v1 deploy-router-v1 deploy-staker-v1 deploy-gov-staker-v1 deploy-governance-v1 deploy-launchpad-v1
 
 deploy-gnsmath:
 	$(info ************ deploy gnsmath ************)
@@ -212,6 +212,11 @@ deploy-usdc:
 deploy-usdt:
 	$(info ************ deploy usdt ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/test_token/test_usdt -pkgpath gno.land/r/gnoswap/test_token/test_usdt -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20350ugnot -gas-wanted 20350000 -memo "" gnoswap_admin
+	@echo
+
+deploy-common-v1:
+	$(info ************ deploy common-v1 ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/common/v1 -pkgpath gno.land/r/gnoswap/common/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 76010ugnot -gas-wanted 76010000 -memo "" gnoswap_admin
 	@echo
 
 deploy-governance-v1:
