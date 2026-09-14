@@ -14,6 +14,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -305,7 +306,7 @@ func testVoteGetters(cur realm, proposalId int64) {
 	println("[EXPECTED] Admin voting info exists:", existsVoting)
 
 	// GetVotingInfos entry
-	votingInfo, ok := governance.GetVotingInfos(proposalId).Get(adminAddr.String()).(*governance.VotingInfo)
+	votingInfo, ok := governance.GetVotingInfos(proposalId).Get(adminAddr.String()).(governance.VotingInfo)
 	if !ok {
 		panic("voting info not found")
 	}

@@ -69,7 +69,7 @@ func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) strin
 	}
 
 	// Emit voting event for tracking and transparency
-	userVoteWeight := utils.FormatInt(userVote.VotedWeight())
+	voteWeight := utils.FormatInt(userVote.VotedWeight())
 	voterStr := voter.String()
 
 	chain.Emit(
@@ -79,12 +79,12 @@ func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) strin
 		"proposalId", utils.FormatInt(proposalID),
 		"voter", voterStr,
 		"yes", userVote.VotingType(),
-		"voteWeight", userVoteWeight,
+		"voteWeight", voteWeight,
 		"voteYes", utils.FormatInt(totalYesVoteWeight),
 		"voteNo", utils.FormatInt(totalNoVoteWeight),
 	)
 
-	return userVoteWeight
+	return voteWeight
 }
 
 // vote handles core voting logic.
@@ -95,24 +95,18 @@ func (gv *governanceV1) vote(
 	votedYes bool,
 	votedHeight,
 	votedAt int64,
-) (*governance.VotingInfo, int64, int64, error) {
+) (governance.VotingInfo, int64, int64, error) {
 	// Retrieve the proposal from storage
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
-		return nil, 0, 0, makeErrorWithDetails(errDataNotFound, "not found proposal")
+		return governance.DefaultVotingInfo(), 0, 0, makeErrorWithDetails(errDataNotFound, "not found proposal")
 	}
 
 	proposalResolver := MakeProposalResolver(proposal)
 
 	// Check if current time is within voting period
 	if !proposalResolver.IsVotingPeriod(votedAt) {
-		return nil, 0, 0, makeErrorWithDetails(errUnableToVoteOutOfPeriod, "cannot vote out of voting period")
-	}
-
-	// Check if user has already voted on this proposal
-	userVote, hasVoted := gv.getProposalUserVotingInfo(proposalID, voterAddress)
-	if hasVoted && userVote.IsVoted() {
-		return nil, 0, 0, makeErrorWithDetails(errAlreadyVoted, "user has already voted")
+		return governance.DefaultVotingInfo(), 0, 0, makeErrorWithDetails(errUnableToVoteOutOfPeriod, "cannot vote out of voting period")
 	}
 
 	// Get user's voting weight using average between proposal time and snapshot time.
@@ -131,48 +125,44 @@ func (gv *governanceV1) vote(
 
 	votingWeight := gnsmath.SafeAddInt64(weightAtSnapshot, weightAtCreated) / 2
 	if votingWeight <= 0 {
-		return nil, 0, 0, makeErrorWithDetails(
+		return governance.DefaultVotingInfo(), 0, 0, makeErrorWithDetails(
 			errNotEnoughVotingWeight, "no voting weight at snapshot time")
 	}
 
-	// Create or update voting info for this user
-	if userVote == nil {
+	userVote, exists := gv.getProposalUserVotingInfo(proposalID, voterAddress)
+	if !exists {
 		userVote = governance.NewVotingInfo(votingWeight)
 	}
 
-	userVoteResolver := NewVotingInfoResolver(userVote)
-	// Record the vote in user's voting info (this also prevents double voting)
-	err := userVoteResolver.vote(votedYes, votingWeight, votedHeight, votedAt)
-	if err != nil {
-		return nil, 0, 0, err
+	if userVote.IsVoted() {
+		return governance.DefaultVotingInfo(), 0, 0, makeErrorWithDetails(errAlreadyVoted, "user has already voted")
 	}
+	userVote = governance.NewVotedVotingInfo(votingWeight, votedYes, votingWeight, votedHeight, votedAt)
 
-	// Store the user's vote in the proposal voting infos
 	votingInfosTree, _ := gv.getProposalUserVotingInfos(proposalID)
 	if votingInfosTree == nil {
-		return nil, 0, 0, makeErrorWithDetails(
+		return governance.DefaultVotingInfo(), 0, 0, makeErrorWithDetails(
 			errDataNotFound, "voting infos tree not found for proposal")
 	}
 
 	votingInfosTree.Set(voterAddress.String(), userVote)
-	err = gv.store.SetProposalVotingInfos(0, rlm, proposalID, votingInfosTree)
+	err := gv.store.SetProposalVotingInfos(0, rlm, proposalID, votingInfosTree)
 	if err != nil {
-		return nil, 0, 0, err
+		return governance.DefaultVotingInfo(), 0, 0, err
 	}
 
 	// Update proposal vote tallies on the detached proposal copy.
 	proposalResolver, err = proposalResolver.Vote(votedYes, votingWeight)
 	if err != nil {
-		return nil, 0, 0, err
+		return governance.DefaultVotingInfo(), 0, 0, err
 	}
 	proposal = proposalResolver.Proposal()
 
 	// Proposal roots are stored as values; persist the updated proposal.
 	err = gv.store.SetProposal(0, rlm, proposalID, proposal)
 	if err != nil {
-		return nil, 0, 0, err
+		return governance.DefaultVotingInfo(), 0, 0, err
 	}
 
-	// Return updated vote information and current tallies
 	return userVote, proposal.VotingYesWeight(), proposal.VotingNoWeight(), nil
 }

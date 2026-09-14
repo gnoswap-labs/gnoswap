@@ -8,6 +8,7 @@ Token distribution and vesting.
 - Claimable amount calculations must match actual contract balance — accounting drift leads to irreversible fund lock.
 - Access control: only authorized addresses can create or modify campaigns.
 - Any `collect` function must follow CEI pattern (state update before transfer).
+- Project creation records recipient membership in a dedicated B+Tree (`address -> true`). Emission and protocol-fee claims use tree lookup rather than scanning projects; shared recipients reuse one entry. Initialization preserves the existing tree. Projects and recipients are not removed or reassigned by the current lifecycle.
 
 ## Pitfalls
 

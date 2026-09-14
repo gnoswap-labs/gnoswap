@@ -15,6 +15,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -24,7 +25,7 @@ import (
 )
 
 const (
-	fee       uint32 = 100
+	fee        uint32 = 100
 	maxApprove int64  = 9223372036854775807
 	minPrice          = "4295128740"
 	maxPrice          = "1461446703485210103287273052203988822378723970341"

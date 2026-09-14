@@ -6,11 +6,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"chain"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"
@@ -23,6 +24,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -133,7 +135,7 @@ func testMintPositionWithGnot(cur realm) {
 		"100000000",  // amount1Desired (GNOT - will be wrapped)
 		"0",          // amount0Min
 		"0",          // amount1Min
-		max_timeout, // deadline
+		max_timeout,  // deadline
 		userAddr,
 		"",
 	)

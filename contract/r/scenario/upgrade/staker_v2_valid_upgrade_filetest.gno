@@ -55,9 +55,9 @@ import (
 
 	"gno.land/r/gnoswap/scenarioutils"
 
-	"gno.land/p/nt/grc721/v0"
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
@@ -70,6 +70,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 	_ "gno.land/r/gnoswap/staker/v2_valid"
 )
@@ -224,6 +225,7 @@ func collectReward(cur realm, positionId uint64) {
 func unStakePosition(cur realm, positionId uint64) {
 	testing.SetRealm(adminRealm)
 	staker.UnStakeToken(cross(cur), positionId)
+	staker.CollectReward(cross(cur), positionId)
 	isStaked := staker.IsStaked(positionId)
 	println("[EXPECTED] UnStaked position ID:", positionId, "isStaked now:", isStaked)
 }

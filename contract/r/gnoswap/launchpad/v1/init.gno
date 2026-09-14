@@ -25,6 +25,13 @@ func initStoreData(_ int, rlm realm, launchpadStore launchpad.ILaunchpadStore) e
 		}
 	}
 
+	if !launchpadStore.HasProjectRecipientsKey() {
+		err := launchpadStore.SetProjectRecipients(0, rlm, launchpad.NewBPTreeN(16))
+		if err != nil {
+			return err
+		}
+	}
+
 	if !launchpadStore.HasProjectTierRewardManagersKey() {
 		err := launchpadStore.SetProjectTierRewardManagers(0, rlm, launchpad.NewBPTreeN(16))
 		if err != nil {

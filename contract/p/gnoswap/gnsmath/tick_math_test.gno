@@ -281,8 +281,22 @@ func TestTickMath_GetTickAtSqrtRatio(cur realm, t *testing.T) {
 			expectedPanicMessage: "",
 		},
 		{
+			name:                 "just below ratio at tick 0",
+			sqrtPriceX96:         "79228162514264337593543950335",
+			expectedTick:         -1,
+			expectedHasPanic:     false,
+			expectedPanicMessage: "",
+		},
+		{
 			name:                 "sqrt ratio at tick 0",
 			sqrtPriceX96:         "79228162514264337593543950336",
+			expectedTick:         0,
+			expectedHasPanic:     false,
+			expectedPanicMessage: "",
+		},
+		{
+			name:                 "just above ratio at tick 0",
+			sqrtPriceX96:         "79228162514264337593543950337",
 			expectedTick:         0,
 			expectedHasPanic:     false,
 			expectedPanicMessage: "",
@@ -747,5 +761,31 @@ func TestTickMath_ExtendedRoundtripAccuracy(t *testing.T) {
 				ufmt.Sprintf("Roundtrip failed: tick %d -> sqrt %s -> tick %d",
 					tick, sqrtRatio.ToString(), recoveredTick))
 		})
+	}
+}
+
+// Every power-of-two price transition changes the MSB used for normalization.
+// Check the public floor contract, independently of the inverse's log algorithm.
+func TestTickMath_PowerOfTwoPriceBoundaries(t *testing.T) {
+	for bit := uint(33); bit < 160; bit++ {
+		power := new(u256.Uint).Lsh(u256.One(), bit)
+		for delta := -1; delta <= 1; delta++ {
+			t.Run(ufmt.Sprintf("bit_%d_delta_%d", bit, delta), func(t *testing.T) {
+				price := power.Clone()
+				if delta < 0 {
+					price.Sub(price, u256.One())
+				} else if delta > 0 {
+					price.Add(price, u256.One())
+				}
+				original := price.Clone()
+				tick := TickMathGetTickAtSqrtRatio(price)
+				uassert.True(t, tick >= MIN_TICK && tick < MAX_TICK)
+				lower := TickMathGetSqrtRatioAtTick(tick)
+				upper := TickMathGetSqrtRatioAtTick(tick + 1)
+				uassert.True(t, lower.Lte(price), "returned tick exceeds price")
+				uassert.True(t, price.Lt(upper), "returned tick is below the greatest valid tick")
+				uassert.True(t, price.Eq(original), "input price was mutated")
+			})
+		}
 	}
 }

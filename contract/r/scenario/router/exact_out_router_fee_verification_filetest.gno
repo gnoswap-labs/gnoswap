@@ -26,6 +26,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -136,7 +137,7 @@ func singleHopDefaultFee(cur realm) {
 
 	userBarChange := userBarAfter - userBarBefore
 	userBazChange := userBazBefore - userBazAfter // input consumed (positive)
-	poolBarChange := poolBarBefore - poolBarAfter  // pool output (positive)
+	poolBarChange := poolBarBefore - poolBarAfter // pool output (positive)
 	protocolFee := feeBarAfter - feeBarBefore
 
 	ufmt.Printf("[INFO] amountIn: %s, amountOut: %s\n", amountIn, amountOut)
@@ -209,9 +210,9 @@ func multiHopDefaultFee(cur realm) {
 
 	amountIn, amountOut := router.ExactOutSwapRoute(
 		cross(cur),
-		barPath,  // inputToken
-		fooPath,  // outputToken
-		"1000",   // user wants exactly 1,000 foo
+		barPath, // inputToken
+		fooPath, // outputToken
+		"1000",  // user wants exactly 1,000 foo
 		"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000*POOL*gno.land/r/onbloc/baz.BAZ:gno.land/r/onbloc/foo.FOO:3000",
 		"100",
 		"9223372036854775807",

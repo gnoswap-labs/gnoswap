@@ -5,9 +5,10 @@
 package main
 
 import (
+	"testing"
+
 	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
-	"testing"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -16,6 +17,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

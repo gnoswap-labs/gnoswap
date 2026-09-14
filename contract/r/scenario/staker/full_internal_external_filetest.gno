@@ -7,10 +7,11 @@ package main
 import (
 	"chain"
 	"chain/banker"
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/gnoswap/scenarioutils"
 
@@ -32,6 +33,7 @@ import (
 	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/rbac"
@@ -445,6 +447,7 @@ func unstakeToken01(cur realm) {
 	println("[INFO] unstake token 01")
 	beforeGns := gns.BalanceOf(adminUser)
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 
 	rewardFromUnstake := afterGns - beforeGns

@@ -18,13 +18,8 @@ func newProposalFixture() Proposal {
 	return MakeProposal(1, status, metadata, data, adminAddr, 2, 80, 100)
 }
 
-func newVotingInfoFixture() *VotingInfo {
-	votingInfo := NewVotingInfo(100)
-	votingInfo.SetVoted(true)
-	votingInfo.SetVotedYes(true)
-	votingInfo.SetVotedWeight(90)
-	votingInfo.SetVotedHeight(80)
-	votingInfo.SetVotedAt(70)
+func newVotingInfoFixture() VotingInfo {
+	votingInfo := NewVotedVotingInfo(100, true, 90, 80, 70)
 	return votingInfo
 }
 

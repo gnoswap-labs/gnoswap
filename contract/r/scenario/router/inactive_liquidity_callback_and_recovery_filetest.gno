@@ -16,6 +16,7 @@ import (
 	pn "gno.land/r/gnoswap/position"
 	rt "gno.land/r/gnoswap/router"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

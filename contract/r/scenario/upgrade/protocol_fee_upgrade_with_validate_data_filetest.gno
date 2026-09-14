@@ -21,6 +21,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v2_invalid"
 	_ "gno.land/r/gnoswap/protocol_fee/v3_valid"

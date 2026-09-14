@@ -12,6 +12,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	govGovernance "gno.land/r/gnoswap/gov/governance"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
 	_ "gno.land/r/gnoswap/gov/governance/v2_invalid"
 )

@@ -13,6 +13,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v2_invalid"
 )
@@ -119,7 +120,6 @@ func verifyTestImplementation(cur realm) {
 		protocolFee.SetGovStakerPct(cross(cur), 50)
 	})
 	ufmt.Println("[EXPECTED] SetGovStakerPct panics correctly")
-
 }
 
 // Output:

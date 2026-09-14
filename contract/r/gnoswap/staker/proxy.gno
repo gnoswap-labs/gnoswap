@@ -138,6 +138,16 @@ func RemoveToken(cur realm, tokenPath string) {
 	getImplementation().RemoveToken(0, cur, tokenPath)
 }
 
+// SetDeniedRewardToken sets or clears the operational deny flag for an external
+// incentive reward token. Pool-pair tokens qualify as reward tokens without the
+// governance allowlist (by design), so this flag is the only lever to stop NEW
+// incentives in a pair token whose issuer turned hostile. Existing incentives
+// and their collection are deliberately unaffected; the ledger-level delivery
+// guard in the implementation bounds their blast radius instead.
+func SetDeniedRewardToken(cur realm, tokenPath string, denied bool) {
+	getImplementation().SetDeniedRewardToken(0, cur, tokenPath, denied)
+}
+
 // SetWarmUp sets the warm-up period parameters for staking.
 func SetWarmUp(cur realm, pct, timeDuration int64) {
 	getImplementation().SetWarmUp(0, cur, pct, timeDuration)

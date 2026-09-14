@@ -78,6 +78,10 @@ func (t *TestStaker) AddToken(_ int, rlm realm, tokenPath string) {
 	t.instance.AddToken(0, rlm, tokenPath)
 }
 
+func (t *TestStaker) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool) {
+	t.instance.SetDeniedRewardToken(0, rlm, tokenPath, denied)
+}
+
 func (t *TestStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
 	t.instance.RemoveToken(0, rlm, tokenPath)
 }
@@ -287,6 +291,22 @@ func (t *TestStaker) GetUnstakingFee() uint64 {
 	return t.instance.GetUnstakingFee()
 }
 
+func (t *TestStaker) HasUnstakedPosition(positionId uint64) bool {
+	return t.instance.HasUnstakedPosition(positionId)
+}
+
+func (t *TestStaker) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
+	return t.instance.GetUnstakedPositionExitTime(positionId)
+}
+
+func (t *TestStaker) GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
+	return t.instance.GetUnstakedPositionPendingIncentives(positionId)
+}
+
+func (t *TestStaker) GetUncollectedIncentiveCount(incentiveId string) int64 {
+	return t.instance.GetUncollectedIncentiveCount(incentiveId)
+}
+
 func (t *TestStaker) IsStaked(positionId uint64) bool {
 	return t.instance.IsStaked(positionId)
 }
@@ -297,6 +317,10 @@ func (t *TestStaker) GetTotalEmissionSent() int64 {
 
 func (t *TestStaker) GetAllowedTokens() []string {
 	return t.instance.GetAllowedTokens()
+}
+
+func (t *TestStaker) GetDeniedRewardTokens() []string {
+	return t.instance.GetDeniedRewardTokens()
 }
 
 func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {

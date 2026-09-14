@@ -29,6 +29,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -201,6 +202,7 @@ func unstakeOperation(cur realm) {
 
 	println("[INFO] unstake position 01")
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 
 	ownerAfterUnstake := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after unstake: %s\n", ownerAfterUnstake)
@@ -258,6 +260,7 @@ func finalUnstakeOperation(cur realm) {
 
 	println("[INFO] final unstake operation")
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 
 	ownerAfterFinalUnstake := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after final unstake: %s\n", ownerAfterFinalUnstake)

@@ -14,6 +14,7 @@ import (
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/mock"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/pool"
 	pl "gno.land/r/gnoswap/pool"
 	pool_v1 "gno.land/r/gnoswap/pool/v1"
