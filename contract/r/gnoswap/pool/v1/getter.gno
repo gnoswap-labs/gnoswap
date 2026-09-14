@@ -5,7 +5,7 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	rotree "gno.land/p/nt/bptree/v0/rotree"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	pl "gno.land/r/gnoswap/pool"
 )

@@ -125,6 +125,12 @@ func (p *SwapProcessor) ValidateSwapResults(
 		}
 	}
 
+	if swapType == ExactIn {
+		if err := validator.exactInAmount(resultAmountIn, amountSpecified); err != nil {
+			return resultAmountIn, resultAmountOut, err
+		}
+	}
+
 	if err := validator.slippage(swapType, resultAmountIn, resultAmountOut, amountLimit); err != nil {
 		return resultAmountIn, resultAmountOut, err
 	}

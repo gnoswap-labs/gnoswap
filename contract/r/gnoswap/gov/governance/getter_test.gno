@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	bptree "gno.land/p/nt/bptree/v0"
-	rotree "gno.land/p/nt/bptree/v0/rotree"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 

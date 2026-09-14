@@ -7,7 +7,7 @@ package v2_invalid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	rotree "gno.land/p/nt/bptree/v0/rotree"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 
 	"gno.land/r/gnoswap/launchpad"
 	v1 "gno.land/r/gnoswap/launchpad/v1"

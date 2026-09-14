@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	bptree "gno.land/p/nt/bptree/v0"
-	rotree "gno.land/p/nt/bptree/v0/rotree"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"

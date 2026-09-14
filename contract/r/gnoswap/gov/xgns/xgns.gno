@@ -5,9 +5,9 @@ import (
 	"errors"
 	"strings"
 
-	"gno.land/p/demo/tokens/grc20"
-	ownable "gno.land/p/nt/ownable/v0"
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/nt/grc20/v0"
+	"gno.land/p/nt/ownable/v0"
+	"gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
