@@ -175,12 +175,12 @@ func (s *governanceStore) GetProposal(proposalID int64) (Proposal, bool) {
 	proposals := s.GetProposals()
 	result := proposals.Get(formatInt64Key(proposalID))
 	if result == nil {
-		return Proposal{}, false
+		return DefaultProposal(), false
 	}
 
 	proposal, ok := result.(Proposal)
 	if !ok {
-		return Proposal{}, false
+		return DefaultProposal(), false
 	}
 
 	return proposal, true

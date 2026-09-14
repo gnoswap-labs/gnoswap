@@ -220,10 +220,10 @@ func (m *MockGovernance) GetProposalCreatedHeight(proposalId int64) (int64, erro
 func (m *MockGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (CommunityPoolSpendInfo, error) {
 	res, ok := m.Response.Get("GetProposalCommunityPoolSpendInfo")
 	if !ok {
-		return CommunityPoolSpendInfo{}, nil
+		return DefaultCommunityPoolSpendInfo(), nil
 	}
 	if res[1] != nil {
-		return CommunityPoolSpendInfo{}, res[1].(error)
+		return DefaultCommunityPoolSpendInfo(), res[1].(error)
 	}
 	return res[0].(CommunityPoolSpendInfo), nil
 }
@@ -231,10 +231,10 @@ func (m *MockGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (Co
 func (m *MockGovernance) GetProposalExecutionInfo(proposalID int64) (ExecutionInfo, error) {
 	res, ok := m.Response.Get("GetProposalExecutionInfo")
 	if !ok {
-		return ExecutionInfo{}, nil
+		return DefaultExecutionInfo(), nil
 	}
 	if res[1] != nil {
-		return ExecutionInfo{}, res[1].(error)
+		return DefaultExecutionInfo(), res[1].(error)
 	}
 	return res[0].(ExecutionInfo), nil
 }

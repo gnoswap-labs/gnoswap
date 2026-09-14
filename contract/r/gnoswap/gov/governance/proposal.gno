@@ -156,6 +156,11 @@ func MakeProposal(
 	}
 }
 
+// DefaultProposal returns an empty proposal value for unsuccessful lookups and operations.
+func DefaultProposal() Proposal {
+	return Proposal{}
+}
+
 func NewProposalTree() *bptree.BPTree {
 	return bptree.NewBPTreeN(16)
 }

@@ -86,18 +86,15 @@ func (m *mockGovernanceStore) GetProposals() *bptree.BPTree {
 
 func (m *mockGovernanceStore) GetProposal(proposalID int64) (governance.Proposal, bool) {
 	if m.proposals == nil {
-		var zero governance.Proposal
-		return zero, false
+		return governance.DefaultProposal(), false
 	}
 	result := m.proposals.Get(utils.FormatInt(proposalID))
 	if result == nil {
-		var zero governance.Proposal
-		return zero, false
+		return governance.DefaultProposal(), false
 	}
 	proposal, ok := result.(governance.Proposal)
 	if !ok {
-		var zero governance.Proposal
-		return zero, false
+		return governance.DefaultProposal(), false
 	}
 	return proposal, true
 }

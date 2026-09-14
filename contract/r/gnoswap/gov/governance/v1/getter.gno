@@ -101,15 +101,13 @@ func (gv *governanceV1) GetProposalCreatedHeight(proposalId int64) (int64, error
 func (gv *governanceV1) GetProposalCommunityPoolSpendInfo(proposalID int64) (governance.CommunityPoolSpendInfo, error) {
 	proposal, exists := gv.store.GetProposal(proposalID)
 	if !exists {
-		var zero governance.CommunityPoolSpendInfo
-		return zero, ufmt.Errorf("proposal %d not found", proposalID)
+		return governance.DefaultCommunityPoolSpendInfo(), ufmt.Errorf("proposal %d not found", proposalID)
 	}
 
 	proposalData := proposal.Data()
 	communityPoolSpend, ok := proposalData.CommunityPoolSpend()
 	if !ok {
-		var zero governance.CommunityPoolSpendInfo
-		return zero, ufmt.Errorf("proposal is not a community pool spend proposal")
+		return governance.DefaultCommunityPoolSpendInfo(), ufmt.Errorf("proposal is not a community pool spend proposal")
 	}
 
 	return communityPoolSpend, nil
@@ -119,15 +117,13 @@ func (gv *governanceV1) GetProposalCommunityPoolSpendInfo(proposalID int64) (gov
 func (gv *governanceV1) GetProposalExecutionInfo(proposalID int64) (governance.ExecutionInfo, error) {
 	proposal, exists := gv.store.GetProposal(proposalID)
 	if !exists {
-		var zero governance.ExecutionInfo
-		return zero, ufmt.Errorf("proposal %d not found", proposalID)
+		return governance.DefaultExecutionInfo(), ufmt.Errorf("proposal %d not found", proposalID)
 	}
 
 	proposalData := proposal.Data()
 	execution, ok := proposalData.Execution()
 	if !ok {
-		var zero governance.ExecutionInfo
-		return zero, ufmt.Errorf("proposal is not a parameter change proposal")
+		return governance.DefaultExecutionInfo(), ufmt.Errorf("proposal is not a parameter change proposal")
 	}
 
 	return execution, nil

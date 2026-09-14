@@ -52,7 +52,7 @@ func (p ProposalData) ProposalType() ProposalType {
 // The boolean reports whether this payload is present for the proposal type.
 func (p ProposalData) CommunityPoolSpend() (CommunityPoolSpendInfo, bool) {
 	if p.proposalType != CommunityPoolSpend {
-		return CommunityPoolSpendInfo{}, false
+		return DefaultCommunityPoolSpendInfo(), false
 	}
 	return p.communityPoolSpend, true
 }
@@ -61,7 +61,7 @@ func (p ProposalData) CommunityPoolSpend() (CommunityPoolSpendInfo, bool) {
 // The boolean reports whether this payload is present for the proposal type.
 func (p ProposalData) Execution() (ExecutionInfo, bool) {
 	if p.proposalType != ParameterChange && p.proposalType != CommunityPoolSpend {
-		return ExecutionInfo{}, false
+		return DefaultExecutionInfo(), false
 	}
 	return p.execution, true
 }

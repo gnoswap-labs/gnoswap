@@ -369,22 +369,19 @@ func (gv *governanceV1) createProposal(
 	metadataResolver := MakeProposalMetadataResolver(proposalMetadata)
 	err := metadataResolver.Validate()
 	if err != nil {
-		var zero governance.Proposal
-		return zero, err
+		return governance.DefaultProposal(), err
 	}
 
 	// Validate proposal data (type-specific validation).
 	dataResolver := MakeProposalDataResolver(proposalData)
 	err = dataResolver.Validate()
 	if err != nil {
-		var zero governance.Proposal
-		return zero, err
+		return governance.DefaultProposal(), err
 	}
 
 	// Check if proposer has enough xGNS balance to create proposal.
 	if proposerXGnsBalance < config.ProposalCreationThreshold {
-		var zero governance.Proposal
-		return zero, errors.New(errNotEnoughBalance)
+		return governance.DefaultProposal(), errors.New(errNotEnoughBalance)
 	}
 
 	// Generate unique proposal ID.
@@ -417,8 +414,7 @@ func (gv *governanceV1) createProposal(
 	// Store the proposal in state.
 	success := gv.addProposal(0, rlm, proposal)
 	if !success {
-		var zero governance.Proposal
-		return zero, errors.New(errDataNotFound)
+		return governance.DefaultProposal(), errors.New(errDataNotFound)
 	}
 
 	return proposal, nil

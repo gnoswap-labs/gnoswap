@@ -94,37 +94,32 @@ func (gv *governanceV1) executeProposal(
 	// Retrieve the proposal from storage.
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
-		var zero governance.Proposal
-		return zero, errors.New(errDataNotFound)
+		return governance.DefaultProposal(), errors.New(errDataNotFound)
 	}
 
 	// Text proposals cannot be executed (they are informational only).
 	if proposal.IsTextType() {
-		var zero governance.Proposal
-		return zero, errors.New(errTextProposalNotExecutable)
+		return governance.DefaultProposal(), errors.New(errTextProposalNotExecutable)
 	}
 
 	proposalResolver := MakeProposalResolver(proposal)
 
 	// Verify proposal is in executable state (timing and voting requirements met).
 	if !proposalResolver.IsExecutable(executedAt) {
-		var zero governance.Proposal
-		return zero, errors.New(errProposalNotExecutable)
+		return governance.DefaultProposal(), errors.New(errProposalNotExecutable)
 	}
 
 	// Mark proposal as executed in its status.
 	var err error
 	proposalResolver, err = proposalResolver.execute(executedAt, executedHeight, executedBy)
 	if err != nil {
-		var zero governance.Proposal
-		return zero, err
+		return governance.DefaultProposal(), err
 	}
 	proposal = proposalResolver.Proposal()
 
 	// Persist the status transition before invoking proposal actions.
 	if err := gv.store.SetProposal(0, rlm, proposalID, proposal); err != nil {
-		var zero governance.Proposal
-		return zero, err
+		return governance.DefaultProposal(), err
 	}
 
 	// Execute proposal based on its type.
@@ -133,15 +128,13 @@ func (gv *governanceV1) executeProposal(
 		// Execute community pool spending (token transfers).
 		err = executeCommunityPoolSpend(0, rlm, proposal, globalParameterRegistry, executedAt, executedHeight, executedBy)
 		if err != nil {
-			var zero governance.Proposal
-			return zero, err
+			return governance.DefaultProposal(), err
 		}
 	case governance.ParameterChange:
 		// Execute parameter changes (governance configuration updates).
 		err = executeParameterChange(0, rlm, proposal, globalParameterRegistry, executedAt, executedHeight, executedBy)
 		if err != nil {
-			var zero governance.Proposal
-			return zero, err
+			return governance.DefaultProposal(), err
 		}
 	}
 
@@ -245,8 +238,7 @@ func (gv *governanceV1) cancel(
 	// detached mutable copy that must be written back after cancellation.
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
-		var zero governance.Proposal
-		return zero, errors.New(errDataNotFound)
+		return governance.DefaultProposal(), errors.New(errDataNotFound)
 	}
 
 	proposalResolver := MakeProposalResolver(proposal)
@@ -254,16 +246,14 @@ func (gv *governanceV1) cancel(
 	// Attempt to cancel the proposal (this validates cancellation conditions).
 	proposalResolver, err = proposalResolver.cancel(canceledAt, canceledHeight, canceledBy)
 	if err != nil {
-		var zero governance.Proposal
-		return zero, err
+		return governance.DefaultProposal(), err
 	}
 	proposal = proposalResolver.Proposal()
 
 	// Cancellation mutates a detached value copy, so write the new status back
 	// before returning.
 	if err = gv.store.SetProposal(0, rlm, proposalID, proposal); err != nil {
-		var zero governance.Proposal
-		return zero, err
+		return governance.DefaultProposal(), err
 	}
 
 	return proposal, nil
