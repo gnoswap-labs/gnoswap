@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721/v0"
+	"gno.land/p/nt/grc721/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 

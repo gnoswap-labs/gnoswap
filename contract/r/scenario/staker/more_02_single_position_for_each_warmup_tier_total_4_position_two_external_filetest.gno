@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721/v0"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 

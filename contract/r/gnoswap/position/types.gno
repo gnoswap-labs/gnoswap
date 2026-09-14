@@ -3,7 +3,7 @@ package position
 import (
 	u256 "gno.land/p/gnoswap/uint256"
 	bptree "gno.land/p/nt/bptree/v0"
-	rotree "gno.land/p/nt/bptree/v0/rotree"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 )
 
 type IPosition interface {
