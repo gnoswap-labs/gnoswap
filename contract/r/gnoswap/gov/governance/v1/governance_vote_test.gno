@@ -403,7 +403,7 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 			}
 
 			// when
-			votingType, userVoteWeight, totalYesVoteWeight, totalNoVoteWeight, err := gov.vote(
+			userVote, totalYesVoteWeight, totalNoVoteWeight, err := gov.vote(
 				0, cur,
 				tt.proposalID,
 				tt.voterAddress,
@@ -423,16 +423,16 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expectedNoWeight, totalNoVoteWeight)
 
 			if tt.votedYes {
-				uassert.Equal(t, "yes", votingType)
+				uassert.Equal(t, "yes", userVote.VotingType())
 			} else {
-				uassert.Equal(t, "no", votingType)
+				uassert.Equal(t, "no", userVote.VotingType())
 			}
 			votingInfos, exists := gov.getProposalUserVotingInfos(tt.proposalID)
 			uassert.True(t, exists)
 			rawVotingInfo := votingInfos.Get(tt.voterAddress.String())
 			storedVotingInfo, storedAsValue := rawVotingInfo.(governance.VotingInfo)
 			uassert.True(t, storedAsValue)
-			uassert.Equal(t, userVoteWeight, storedVotingInfo.VotedWeight())
+			uassert.Equal(t, userVote.VotedWeight(), storedVotingInfo.VotedWeight())
 			uassert.Equal(t, tt.votedYes, storedVotingInfo.VotedYes())
 		})
 	}
