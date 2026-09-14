@@ -167,6 +167,17 @@ func (t *TestStaker) AddToken(_ int, rlm realm, tokenPath string) {
 	)
 }
 
+func (t *TestStaker) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool) {
+	t.ExecuteFn(
+		"SetDeniedRewardToken",
+		func(args ...any) any {
+			t.instance.SetDeniedRewardToken(0, rlm, args[0].(string), args[1].(bool))
+			return nil
+		},
+		tokenPath, denied,
+	)
+}
+
 func (t *TestStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
 	t.ExecuteFn(
 		"RemoveToken",
@@ -400,6 +411,55 @@ func (t *TestStaker) GetUnstakingFee() uint64 {
 	return t.instance.GetUnstakingFee()
 }
 
+func (t *TestStaker) HasUnstakedPosition(positionId uint64) bool {
+	return t.ExecuteFn(
+		"HasUnstakedPosition",
+		func(args ...any) any { return t.instance.HasUnstakedPosition(args[0].(uint64)) },
+		positionId,
+	).(bool)
+}
+
+func (t *TestStaker) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
+	var err error
+	exitTime := t.ExecuteFn(
+		"GetUnstakedPositionExitTime",
+		func(args ...any) any {
+			var result int64
+			result, err = t.instance.GetUnstakedPositionExitTime(args[0].(uint64))
+			return result
+		},
+		positionId,
+	).(int64)
+
+	return exitTime, err
+}
+
+func (t *TestStaker) GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
+	var err error
+	result := t.ExecuteFn(
+		"GetUnstakedPositionPendingIncentives",
+		func(args ...any) any {
+			var incentiveIds []string
+			incentiveIds, err = t.instance.GetUnstakedPositionPendingIncentives(args[0].(uint64))
+			return incentiveIds
+		},
+		positionId,
+	)
+	if result == nil {
+		return nil, err
+	}
+
+	return result.([]string), err
+}
+
+func (t *TestStaker) GetUncollectedIncentiveCount(incentiveId string) int64 {
+	return t.ExecuteFn(
+		"GetUncollectedIncentiveCount",
+		func(args ...any) any { return t.instance.GetUncollectedIncentiveCount(args[0].(string)) },
+		incentiveId,
+	).(int64)
+}
+
 func (t *TestStaker) IsStaked(positionId uint64) bool {
 	return t.instance.IsStaked(positionId)
 }
@@ -410,6 +470,10 @@ func (t *TestStaker) GetTotalEmissionSent() int64 {
 
 func (t *TestStaker) GetAllowedTokens() []string {
 	return t.instance.GetAllowedTokens()
+}
+
+func (t *TestStaker) GetDeniedRewardTokens() []string {
+	return t.instance.GetDeniedRewardTokens()
 }
 
 func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {

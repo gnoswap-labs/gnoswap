@@ -445,6 +445,7 @@ func unstakeToken01(cur realm) {
 	println("[INFO] unstake token 01")
 	beforeGns := gns.BalanceOf(adminUser)
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 	afterGns := gns.BalanceOf(adminUser)
 
 	rewardFromUnstake := afterGns - beforeGns

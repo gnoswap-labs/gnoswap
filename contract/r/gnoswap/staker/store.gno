@@ -2,6 +2,7 @@ package staker
 
 import (
 	"errors"
+
 	"gno.land/p/gnoswap/store"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -20,10 +21,13 @@ const (
 	StoreKeyExternalIncentives               StoreKey = "externalIncentives"
 	StoreKeyTotalEmissionSent                StoreKey = "totalEmissionSent"
 	StoreKeyAllowedTokens                    StoreKey = "allowedTokens"
+	StoreKeyDeniedRewardTokens               StoreKey = "deniedRewardTokens"
 	StoreKeyIncentiveCounter                 StoreKey = "incentiveCounter"
 	StoreKeyTokenSpecificMinimumRewards      StoreKey = "tokenSpecificMinimumRewards"
 	StoreKeyUnstakingFee                     StoreKey = "unstakingFee"
 	StoreKeyPendingProtocolFees              StoreKey = "pendingProtocolFees"
+	StoreKeyUnstakedPositions                StoreKey = "unstakedPositions"
+	StoreKeyUncollectedIncentiveCounts       StoreKey = "uncollectedIncentiveCounts"
 	StoreKeyPools                            StoreKey = "pools"
 	StoreKeyPoolTierMemberships              StoreKey = "poolTierMemberships"
 	StoreKeyPoolTierRatio                    StoreKey = "poolTierRatio"
@@ -235,6 +239,69 @@ func (s *stakerStore) RemoveAllowedToken(_ int, rlm realm, tokenPath string) err
 	return s.kvStore.Set(0, rlm, StoreKeyAllowedTokens.String(), tokens)
 }
 
+// DeniedRewardTokens
+//
+// The deny list is the operational stop switch for the pool-pair reward-token
+// policy: pair tokens qualify as external-incentive reward tokens without going
+// through the governance allowlist (by design), so without this list there is
+// no lever to stop NEW incentives in a pair token whose issuer turned hostile.
+// A missing store key means an empty list, so no initializer seeding and no
+// upgrade migration are needed.
+func (s *stakerStore) HasDeniedRewardTokensStoreKey() bool {
+	return s.kvStore.Has(StoreKeyDeniedRewardTokens.String())
+}
+
+func (s *stakerStore) GetDeniedRewardTokens() []string {
+	if !s.kvStore.Has(StoreKeyDeniedRewardTokens.String()) {
+		return []string{}
+	}
+
+	result, err := s.kvStore.Get(StoreKeyDeniedRewardTokens.String())
+	if err != nil {
+		panic(err)
+	}
+
+	tokens, ok := result.([]string)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to []string: %T", result))
+	}
+
+	return cloneStringSlice(tokens)
+}
+
+// AddDeniedRewardToken appends tokenPath to the denied-reward-tokens list when absent.
+// The store-owned slice is cloned before mutation to avoid readonly-taint panics.
+func (s *stakerStore) AddDeniedRewardToken(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	tokens := s.GetDeniedRewardTokens()
+	if !contains(tokens, tokenPath) {
+		tokens = append(tokens, tokenPath)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyDeniedRewardTokens.String(), tokens)
+}
+
+// RemoveDeniedRewardToken removes tokenPath from the denied-reward-tokens list when present.
+// The store-owned slice is cloned before mutation to avoid readonly-taint panics.
+func (s *stakerStore) RemoveDeniedRewardToken(_ int, rlm realm, tokenPath string) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	tokens := s.GetDeniedRewardTokens()
+	for i, t := range tokens {
+		if t == tokenPath {
+			tokens = append(tokens[:i], tokens[i+1:]...)
+			break
+		}
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyDeniedRewardTokens.String(), tokens)
+}
+
 // IncentiveCounter
 func (s *stakerStore) HasIncentiveCounterStoreKey() bool {
 	return s.kvStore.Has(StoreKeyIncentiveCounter.String())
@@ -383,6 +450,60 @@ func (s *stakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]i
 	}
 
 	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), fees)
+}
+
+// UnstakedPositions
+func (s *stakerStore) HasUnstakedPositionsStoreKey() bool {
+	return s.kvStore.Has(StoreKeyUnstakedPositions.String())
+}
+
+func (s *stakerStore) GetUnstakedPositions() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyUnstakedPositions.String())
+	if err != nil {
+		panic(err)
+	}
+
+	positions, ok := result.(*bptree.BPTree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
+	}
+
+	return positions
+}
+
+func (s *stakerStore) SetUnstakedPositions(_ int, rlm realm, positions *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyUnstakedPositions.String(), positions)
+}
+
+// UncollectedIncentiveCounts
+func (s *stakerStore) HasUncollectedIncentiveCountsStoreKey() bool {
+	return s.kvStore.Has(StoreKeyUncollectedIncentiveCounts.String())
+}
+
+func (s *stakerStore) GetUncollectedIncentiveCounts() *bptree.BPTree {
+	result, err := s.kvStore.Get(StoreKeyUncollectedIncentiveCounts.String())
+	if err != nil {
+		panic(err)
+	}
+
+	counts, ok := result.(*bptree.BPTree)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast result to *bptree.BPTree: %T", result))
+	}
+
+	return counts
+}
+
+func (s *stakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error {
+	if !rlm.IsCurrent() {
+		return errors.New(ErrSpoofedRealm)
+	}
+
+	return s.kvStore.Set(0, rlm, StoreKeyUncollectedIncentiveCounts.String(), counts)
 }
 
 // Pools

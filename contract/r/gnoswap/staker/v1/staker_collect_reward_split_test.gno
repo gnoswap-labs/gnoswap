@@ -384,12 +384,13 @@ func TestDeliverExternalIncentiveReward_ZeroRewardWithPenaltyIsDeferred(cur real
 	barBefore := TokenBalance(t, barPath, addr01)
 
 	ctx := newTestCollectContext(t, s, positionId)
-	rewardToken, rewardAmount, rewardPenalty := s.deliverExternalIncentiveReward(0, cur, ctx, barIncentiveId, 0, 1000)
+	rewardToken, rewardAmount, rewardPenalty, outcome := s.deliverExternalIncentiveReward(0, cur, ctx, barIncentiveId, 0, 1000)
 
-	// A skipped incentive is reported by an empty reward token and zero amounts.
+	// A skipped incentive is reported by an empty reward token, zero amounts and a deferral.
 	uassert.Equal(t, "", rewardToken)
 	uassert.Equal(t, int64(0), rewardAmount)
 	uassert.Equal(t, int64(0), rewardPenalty)
+	uassert.True(t, outcome == externalDeliveryDeferred)
 
 	// Neither the incentive nor the deposit was touched, so nothing was consumed by the skipped call.
 	incentiveResolver = NewExternalIncentiveResolver(s.getExternalIncentives().get(barIncentiveId))

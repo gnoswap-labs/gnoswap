@@ -187,6 +187,7 @@ func firstUnstake(cur realm) {
 
 	// First unstake - should succeed
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 
 	ufmt.Printf("[EXPECTED] first unstake succeeded\n")
 	testing.SkipHeights(1)

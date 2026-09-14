@@ -130,6 +130,10 @@ func (m *MockStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
 	m.Response.Get("RemoveToken")
 }
 
+func (m *MockStaker) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool) {
+	m.Response.Get("SetDeniedRewardToken")
+}
+
 func (m *MockStaker) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	m.Response.Get("SetWarmUp")
 }
@@ -573,6 +577,42 @@ func (m *MockStaker) GetUnstakingFee() uint64 {
 	return res[0].(uint64)
 }
 
+func (m *MockStaker) HasUnstakedPosition(positionId uint64) bool {
+	res, ok := m.Response.Get("HasUnstakedPosition")
+	if !ok {
+		return false
+	}
+
+	return res[0].(bool)
+}
+
+func (m *MockStaker) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
+	res, ok := m.Response.Get("GetUnstakedPositionExitTime")
+	if !ok {
+		return 0, nil
+	}
+
+	return res[0].(int64), nil
+}
+
+func (m *MockStaker) GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
+	res, ok := m.Response.Get("GetUnstakedPositionPendingIncentives")
+	if !ok {
+		return nil, nil
+	}
+
+	return res[0].([]string), nil
+}
+
+func (m *MockStaker) GetUncollectedIncentiveCount(incentiveId string) int64 {
+	res, ok := m.Response.Get("GetUncollectedIncentiveCount")
+	if !ok {
+		return 0
+	}
+
+	return res[0].(int64)
+}
+
 func (m *MockStaker) IsStaked(lpTokenId uint64) bool {
 	res, ok := m.Response.Get("IsStaked")
 	if !ok {
@@ -593,6 +633,15 @@ func (m *MockStaker) GetTotalEmissionSent() int64 {
 
 func (m *MockStaker) GetAllowedTokens() []string {
 	res, ok := m.Response.Get("GetAllowedTokens")
+	if !ok {
+		return nil
+	}
+
+	return res[0].([]string)
+}
+
+func (m *MockStaker) GetDeniedRewardTokens() []string {
+	res, ok := m.Response.Get("GetDeniedRewardTokens")
 	if !ok {
 		return nil
 	}
