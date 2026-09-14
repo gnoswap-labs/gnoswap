@@ -57,6 +57,9 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
+	"gno.land/r/gnoswap/router"
 
 	"gno.land/r/gnoswap/gov/governance"
 	_ "gno.land/r/gnoswap/gov/governance/v1"

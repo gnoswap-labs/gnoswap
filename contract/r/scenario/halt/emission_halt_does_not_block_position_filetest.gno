@@ -42,6 +42,8 @@ import (
 	"gno.land/r/gnoswap/emission"
 	_ "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/pool"
+	"gno.land/r/gnoswap/position"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
