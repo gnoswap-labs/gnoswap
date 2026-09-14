@@ -273,6 +273,20 @@ func (s *MockStakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts
 	return nil
 }
 
+func (s *MockStakerStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.pendingProtocolFees[tokenPath]
+}
+
+func (s *MockStakerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	s.pendingProtocolFees[tokenPath] = amount
+	return nil
+}
+
+func (s *MockStakerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(s.pendingProtocolFees, tokenPath)
+	return nil
+}
+
 // Pools
 func (s *MockStakerStore) HasPoolsStoreKey() bool {
 	return s.pools != nil

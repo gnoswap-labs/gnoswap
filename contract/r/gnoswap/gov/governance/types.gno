@@ -53,6 +53,8 @@ type IGovernanceManager interface {
 		proposalId int64,
 	) int64
 
+	RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64)
+
 	// Configuration
 	Reconfigure(
 		_ int, rlm realm,
@@ -104,7 +106,7 @@ type IGovernanceGetter interface {
 	GetUserProposals() *rotree.ReadOnlyTree
 
 	// Active proposal query
-	GetOldestActiveProposalSnapshotTime() (int64, bool)
+	GetOldestActiveProposalSnapshotTime() (int64, bool, error)
 
 	// Voting weight snapshot getters
 	GetCurrentVotingWeightSnapshot() (int64, int64, error)
@@ -132,6 +134,10 @@ type IGovernanceStore interface {
 	GetProposal(proposalID int64) (Proposal, bool)
 	SetProposal(_ int, rlm realm, proposalID int64, proposal Proposal) error
 	SetProposals(_ int, rlm realm, proposals *bptree.BPTree) error
+
+	HasActiveProposalsBySnapshotStoreKey() bool
+	GetActiveProposalsBySnapshot() *bptree.BPTree
+	SetActiveProposalsBySnapshot(_ int, rlm realm, tree *bptree.BPTree) error
 
 	// Proposal voting info methods
 	HasProposalUserVotingInfosStoreKey() bool

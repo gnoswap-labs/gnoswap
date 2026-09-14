@@ -1,8 +1,8 @@
 package pool
 
 import (
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -320,6 +320,9 @@ type IPoolStore interface {
 	HasPendingProtocolFees() bool
 	GetPendingProtocolFees() map[string]int64
 	SetPendingProtocolFees(_ int, rlm realm, pendingProtocolFees map[string]int64) error
+	GetPendingProtocolFee(tokenPath string) int64
+	SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error
+	RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error
 
 	HasWithdrawalFeeBPS() bool
 	GetWithdrawalFeeBPS() uint64

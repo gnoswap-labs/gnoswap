@@ -1,6 +1,7 @@
 package governance
 
 import (
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gov/governance"
@@ -72,9 +73,20 @@ func (g *governanceV1) getProposal(id int64) (governance.Proposal, bool) {
 	return g.store.GetProposal(id)
 }
 
+func activeProposalSnapshotKey(proposal governance.Proposal) string {
+	return utils.EncodeUint64(uint64(proposal.SnapshotTime())) + utils.EncodeUint64(uint64(proposal.ID()))
+}
+
 func (g *governanceV1) addProposal(_ int, rlm realm, proposal governance.Proposal) bool {
 	// Set the proposal (ID already set in proposal).
 	if err := g.store.SetProposal(0, rlm, proposal.ID(), proposal); err != nil {
+		return false
+	}
+
+	// Add to the active snapshot index.
+	snapshotIndex := g.store.GetActiveProposalsBySnapshot()
+	snapshotIndex.Set(activeProposalSnapshotKey(proposal), proposal.ID())
+	if err := g.store.SetActiveProposalsBySnapshot(0, rlm, snapshotIndex); err != nil {
 		return false
 	}
 
@@ -84,6 +96,18 @@ func (g *governanceV1) addProposal(_ int, rlm realm, proposal governance.Proposa
 	}
 
 	return true
+}
+
+// removeActiveProposal removes a proposal from the active snapshot index.
+func (g *governanceV1) removeActiveProposal(_ int, rlm realm, proposal governance.Proposal) error {
+	snapshotIndex := g.store.GetActiveProposalsBySnapshot()
+	key := activeProposalSnapshotKey(proposal)
+	if !snapshotIndex.Has(key) {
+		return makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("active proposal index entry not found, proposalID: %d", proposal.ID()))
+	}
+	snapshotIndex.Remove(key)
+
+	return g.store.SetActiveProposalsBySnapshot(0, rlm, snapshotIndex)
 }
 
 // User proposals methods

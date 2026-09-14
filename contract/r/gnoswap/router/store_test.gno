@@ -83,6 +83,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 			if !rs.HasSwapFeeKey() {
 				rs.SetSwapFee(0, cur, 25)
 			}
+			uassert.NoError(t, rs.SetPendingProtocolFees(0, cur, map[string]int64{"token": 10}))
 
 			testing.SetRealm(tc.callerRealm)
 			if tc.expectedErrorWithRead {
@@ -98,6 +99,25 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
 				uassert.NoError(t, err)
+			}
+
+			err = rs.SetPendingProtocolFee(0, cur, "token", 20)
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+				uassert.Equal(t, int64(10), rs.GetPendingProtocolFee("token"))
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(20), rs.GetPendingProtocolFee("token"))
+			}
+
+			err = rs.RemovePendingProtocolFee(0, cur, "token")
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+				uassert.Equal(t, int64(10), rs.GetPendingProtocolFee("token"))
+			} else {
+				uassert.NoError(t, err)
+				_, exists := rs.GetPendingProtocolFees()["token"]
+				uassert.False(t, exists)
 			}
 		})
 	}

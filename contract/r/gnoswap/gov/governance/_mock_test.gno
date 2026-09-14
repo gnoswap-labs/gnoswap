@@ -104,6 +104,8 @@ func (m *MockGovernance) Cancel(_ int, rlm realm, proposalId int64) int64 {
 	return res[0].(int64)
 }
 
+func (m *MockGovernance) RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64) {}
+
 func (m *MockGovernance) Reconfigure(
 	_ int, rlm realm,
 	votingStartDelay int64,
@@ -395,12 +397,15 @@ func (m *MockGovernance) GetUserProposals() *rotree.ReadOnlyTree {
 }
 
 // Active proposal query
-func (m *MockGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+func (m *MockGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
 	res, ok := m.Response.Get("GetOldestActiveProposalSnapshotTime")
 	if !ok {
-		return 0, false
+		return 0, false, nil
 	}
-	return res[0].(int64), res[1].(bool)
+	if res[2] != nil {
+		return 0, false, res[2].(error)
+	}
+	return res[0].(int64), res[1].(bool), nil
 }
 
 // Voting weight snapshot getters

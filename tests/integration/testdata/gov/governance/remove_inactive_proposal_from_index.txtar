@@ -1,0 +1,65 @@
+# Snapshot cleanup requires explicit single-proposal index maintenance.
+# Removing one index entry at a time preserves proposal history.
+loadpkg gno.land/r/gnoswap/common/v1
+loadpkg gno.land/r/gnoswap/gov/governance/v1
+loadpkg gno.land/r/gnoswap/gov/staker/v1
+loadpkg gno.land/r/gnoswap/protocol_fee/v1
+loadpkg gno.land/r/gnoswap/rbac
+
+gnoland start
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Reconfigure -args 0 -args 0 -args 0 -args 50 -args 0 -args 0 -args 0 -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+
+gnokey maketx run -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 -max-deposit 500000000ugnot test1 $WORK/setup.gno
+stdout 'CREATED 3'
+
+gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
+stdout 'proposalID: 1'
+
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CleanStakerDelegationSnapshotByAdmin -args 0 -args $test1_user_addr -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
+stderr 'active proposal index requires pruning'
+
+# Remove the non-head entry first; the getter must still identify proposal 1.
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func RemoveInactiveProposalFromIndex -args 2 -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
+stdout '"type":"RemoveInactiveProposalFromIndex".*"key":"proposalId","value":"2"'
+gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
+stdout 'proposalID: 1'
+
+# Remove the head entry; proposal 3 is now the stale head.
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func RemoveInactiveProposalFromIndex -args 1 -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
+gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
+stdout 'proposalID: 3'
+
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CleanStakerDelegationSnapshotByAdmin -args 0 -args $test1_user_addr -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
+stderr 'active proposal index requires pruning'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func RemoveInactiveProposalFromIndex -args 3 -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
+gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
+stdout 'false'
+! stdout 'active proposal index requires pruning'
+
+# Index maintenance must not delete archived proposals.
+gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetProposals().Size()'
+stdout '3'
+
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CleanStakerDelegationSnapshotByAdmin -args 0 -args $test1_user_addr -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+stdout 'OK'
+
+-- setup.gno --
+package main
+import (
+    "gno.land/r/gnoswap/gns"
+    "gno.land/r/gnoswap/gov/governance"
+    gs "gno.land/r/gnoswap/gov/staker"
+    "gno.land/r/gnoswap/access"
+    prbac "gno.land/p/gnoswap/rbac"
+)
+func main(cur realm) {
+    admin := access.MustGetAddress(prbac.ROLE_ADMIN.String())
+    gns.Approve(cross(cur), access.MustGetAddress(prbac.ROLE_GOV_STAKER.String()), 1000000000)
+    gs.Delegate(cross(cur), admin, 1000000000, "")
+    for i := 0; i < 3; i++ {
+        governance.ProposeText(cross(cur), "maintenance", "single-proposal maintenance transaction smoke")
+    }
+    println("CREATED", governance.GetProposals().Size())
+}

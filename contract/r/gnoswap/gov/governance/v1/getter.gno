@@ -262,36 +262,34 @@ func (gv *governanceV1) GetUserProposals() *rotree.ReadOnlyTree {
 	return rotree.Wrap(gv.store.GetUserProposals(), cloneProposalIDsEntry)
 }
 
-// GetOldestActiveProposalSnapshotTime returns the oldest snapshot time among active proposals.
-// This is used by gov/staker to prevent cleanup of delegation history that is still needed
-// by active proposals for voting weight calculation.
-func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
-	currentTime := time.Now().Unix()
-	currentProposalID := gv.getCurrentProposalID()
-
-	var (
-		oldestSnapshotTime int64
-		hasActiveProposal  bool
-	)
-
-	for proposalID := int64(1); proposalID <= currentProposalID; proposalID++ {
-		proposal, exists := gv.store.GetProposal(proposalID)
-		if !exists {
-			continue
-		}
-
-		proposalResolver := MakeProposalResolver(proposal)
-
-		if proposalResolver.IsActive(currentTime) {
-			snapshotTime := proposal.SnapshotTime()
-			if !hasActiveProposal || snapshotTime < oldestSnapshotTime {
-				oldestSnapshotTime = snapshotTime
-				hasActiveProposal = true
-			}
-		}
+// GetOldestActiveProposalSnapshotTime examines only the first snapshot index entry.
+// If it is inactive, the error identifies the proposal requiring admin cleanup.
+// An error must never be treated as an empty index when deleting delegation history.
+func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
+	index := gv.store.GetActiveProposalsBySnapshot()
+	if index.Size() == 0 {
+		return 0, false, nil
 	}
 
-	return oldestSnapshotTime, hasActiveProposal
+	_, value := index.GetByIndex(0)
+	proposalID, ok := value.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast active proposal ID to int64: %T", value))
+	}
+
+	proposal, exists := gv.getProposal(proposalID)
+	if !exists {
+		return 0, false, makeErrorWithDetails(
+			errProposalNotFound, ufmt.Sprintf("proposalID: %d", proposalID),
+		)
+	}
+	if !MakeProposalResolver(proposal).IsActive(time.Now().Unix()) {
+		return 0, false, makeErrorWithDetails(
+			errProposalIndexNeedsCleanup, ufmt.Sprintf("proposalID: %d", proposalID),
+		)
+	}
+
+	return proposal.SnapshotTime(), true, nil
 }
 
 // GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.

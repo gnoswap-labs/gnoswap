@@ -253,7 +253,7 @@ func (t *TestLaunchpad) GetProjectTierRewards(projectId string, tier int64) *rot
 	return t.instance.GetProjectTierRewards(projectId, tier)
 }
 
-func (t *TestLaunchpad) GetDeposit(depositId string) (*launchpad.Deposit, error) {
+func (t *TestLaunchpad) GetDeposit(depositId string) (launchpad.Deposit, error) {
 	if !t.isActive("GetDeposit") {
 		panic("test implementation: GetDeposit not supported")
 	}

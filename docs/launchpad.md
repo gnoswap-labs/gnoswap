@@ -9,6 +9,7 @@ Token distribution and vesting.
 - Access control: only authorized addresses can create or modify campaigns.
 - Any `collect` function must follow CEI pattern (state update before transfer).
 - Project creation records recipient membership in a dedicated B+Tree (`address -> true`). Emission and protocol-fee claims use tree lookup rather than scanning projects; shared recipients reuse one entry. Initialization preserves the existing tree. Projects and recipients are not removed or reassigned by the current lifecycle.
+- Deposit records are stored and passed as values. Withdrawal helpers return the updated value; persist it explicitly in the deposits tree. Mutating a local copy does not update storage or the caller's copy.
 
 ## Pitfalls
 

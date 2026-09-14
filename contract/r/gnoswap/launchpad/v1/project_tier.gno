@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"errors"
+
 	"gno.land/r/gnoswap/launchpad"
 
 	"gno.land/p/gnoswap/consts"
@@ -21,7 +22,7 @@ func getCalculatedLeftReward(t *launchpad.ProjectTier) int64 {
 	return gnsmath.SafeSubInt64(t.TotalDistributeAmount(), t.TotalCollectedAmount())
 }
 
-func depositToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
+func depositToTier(t *launchpad.ProjectTier, deposit launchpad.Deposit) {
 	totalDepositAmount := gnsmath.SafeAddInt64(t.TotalDepositAmount(), deposit.DepositAmount())
 	totalDepositCount := gnsmath.SafeAddInt64(t.TotalDepositCount(), 1)
 
@@ -29,7 +30,7 @@ func depositToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
 	t.SetTotalDepositCount(totalDepositCount)
 }
 
-func withdrawToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
+func withdrawToTier(t *launchpad.ProjectTier, deposit launchpad.Deposit) {
 	totalWithdrawAmount := gnsmath.SafeAddInt64(t.TotalWithdrawAmount(), deposit.DepositAmount())
 	totalWithdrawCount := gnsmath.SafeAddInt64(t.TotalWithdrawCount(), 1)
 
