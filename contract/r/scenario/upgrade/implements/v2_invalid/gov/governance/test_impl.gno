@@ -80,6 +80,13 @@ func (t *TestGovernance) Cancel(_ int, rlm realm, proposalId int64) int64 {
 	return t.instance.Cancel(0, rlm, proposalId)
 }
 
+func (t *TestGovernance) RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64) {
+	if !t.isActive("RemoveInactiveProposalFromIndex") {
+		panic("test implementation: RemoveInactiveProposalFromIndex not supported")
+	}
+	t.instance.RemoveInactiveProposalFromIndex(0, rlm, proposalID)
+}
+
 func (t *TestGovernance) Reconfigure(_ int, rlm realm, votingStartDelay int64, votingPeriod int64, votingWeightSmoothingDuration int64, quorum int64, proposalCreationThreshold int64, executionDelay int64, executionWindow int64) int64 {
 	if !t.isActive("Reconfigure") {
 		panic("test implementation: Reconfigure not supported")
@@ -210,8 +217,8 @@ func (t *TestGovernance) GetUserProposals() *rotree.ReadOnlyTree {
 	return t.instance.GetUserProposals()
 }
 
-// Active proposal query
-func (t *TestGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool) {
+// Active proposal query; stale or missing index entries return an error.
+func (t *TestGovernance) GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
 	return t.instance.GetOldestActiveProposalSnapshotTime()
 }
 

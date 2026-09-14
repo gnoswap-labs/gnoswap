@@ -22,6 +22,7 @@ const (
 	errInvalidConfiguration         = "[GNOSWAP-GOVERNANCE-015] invalid configuration"
 	errInvalidExecution             = "[GNOSWAP-GOVERNANCE-016] invalid execution: handler not found"
 	errInvalidSmoothingPeriod       = "[GNOSWAP-GOVERNANCE-017] invalid smoothing period"
+	errProposalIndexNeedsCleanup    = "[GNOSWAP-GOVERNANCE-018] active proposal index requires pruning"
 )
 
 // makeErrorWithDetails creates an error with additional context.

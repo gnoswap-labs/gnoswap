@@ -51,7 +51,7 @@ func (lp *launchpadV1) getProjectTierRewardManager(projectTierID string) (*launc
 	return manager, nil
 }
 
-func (lp *launchpadV1) mustGetDeposit(depositID string) *launchpad.Deposit {
+func (lp *launchpadV1) mustGetDeposit(depositID string) launchpad.Deposit {
 	deposit, err := lp.getDeposit(depositID)
 	if err != nil {
 		panic(err)
@@ -60,18 +60,17 @@ func (lp *launchpadV1) mustGetDeposit(depositID string) *launchpad.Deposit {
 	return deposit
 }
 
-func (lp *launchpadV1) getDeposit(depositID string) (*launchpad.Deposit, error) {
+func (lp *launchpadV1) getDeposit(depositID string) (launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
 	depositI := deposits.Get(depositID)
 	if depositI == nil {
-		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
+		return launchpad.DefaultDeposit(), makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
 	}
 
-	deposit, ok := depositI.(*launchpad.Deposit)
+	deposit, ok := depositI.(launchpad.Deposit)
 	if !ok {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("deposit(%s) not found", depositID))
+		return launchpad.DefaultDeposit(), makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("deposit(%s) not found", depositID))
 	}
-
 	return deposit, nil
 }
 

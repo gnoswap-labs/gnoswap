@@ -60,7 +60,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.
-func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit *launchpad.Deposit, currentHeight, currentTime int64) (string, int64, error) {
+func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit launchpad.Deposit, currentHeight, currentTime int64) (string, int64, error) {
 	if currentTime <= 0 {
 		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
 	}
