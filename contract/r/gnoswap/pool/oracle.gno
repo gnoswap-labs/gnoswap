@@ -12,22 +12,13 @@ type Observation struct {
 	initialized                       bool   // whether this observation has been initialized
 }
 
-// Observation Getters methods
-func (o *Observation) BlockTimestamp() int64 { return o.blockTimestamp }
-func (o *Observation) TickCumulative() int64 { return o.tickCumulative }
-func (o *Observation) SecondsPerLiquidityCumulativeX128() string {
+// Observation getter methods.
+func (o Observation) BlockTimestamp() int64 { return o.blockTimestamp }
+func (o Observation) TickCumulative() int64 { return o.tickCumulative }
+func (o Observation) SecondsPerLiquidityCumulativeX128() string {
 	return o.secondsPerLiquidityCumulativeX128
 }
-func (o *Observation) Initialized() bool { return o.initialized }
-
-func (o *Observation) Clone() *Observation {
-	return &Observation{
-		blockTimestamp:                    o.blockTimestamp,
-		tickCumulative:                    o.tickCumulative,
-		secondsPerLiquidityCumulativeX128: o.secondsPerLiquidityCumulativeX128,
-		initialized:                       o.initialized,
-	}
-}
+func (o Observation) Initialized() bool { return o.initialized }
 
 func NewObservation(
 	blockTimestamp int64,
@@ -62,19 +53,16 @@ func NewObservationTree() *ObservationTree {
 	return &ObservationTree{tree: bptree.NewBPTreeN(32)}
 }
 
-func (t *ObservationTree) Get(index uint16) (*Observation, bool) {
+func (t *ObservationTree) Get(index uint16) (Observation, bool) {
 	if t == nil || t.tree == nil {
-		return nil, false
+		return Observation{}, false
 	}
 	value := t.tree.Get(utils.EncodeUint16(index))
 	if value == nil {
-		return nil, false
+		return Observation{}, false
 	}
 	observation, ok := value.(Observation)
-	if !ok {
-		return nil, false
-	}
-	return &observation, true
+	return observation, ok
 }
 
 func (t *ObservationTree) Set(index uint16, observation Observation) {

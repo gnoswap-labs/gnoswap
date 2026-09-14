@@ -247,11 +247,11 @@ func observationAt(observations *pl.ObservationTree, index uint16) (*pl.Observat
 		return nil, errors.New("observations not initialized")
 	}
 	obs, ok := observations.Get(index)
-	if !ok || obs == nil {
+	if !ok {
 		return nil, errors.New(errNotInitializedObservation)
 	}
 
-	return obs, nil
+	return &obs, nil
 }
 
 // observeSingle returns the data for a single observation at a specific time ago

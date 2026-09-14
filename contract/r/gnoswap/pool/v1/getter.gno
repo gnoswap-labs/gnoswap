@@ -124,11 +124,11 @@ func (i *poolV1) GetObservationAt(poolPath string, index uint16) (pl.Observation
 	}
 
 	observation, ok := observations.Get(index)
-	if !ok || observation == nil {
+	if !ok {
 		return pl.NewDefaultObservation(), nil
 	}
 
-	return *observation, nil
+	return observation, nil
 }
 
 // Observe returns the tick and seconds-per-liquidity cumulatives for each
