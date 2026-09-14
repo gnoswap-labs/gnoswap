@@ -7,14 +7,15 @@ package main
 import (
 	"chain"
 	"chain/banker"
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
 
+	"gno.land/p/gnoswap/gnsmath"
+
 	"gno.land/r/gnoswap/scenarioutils"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoland/wugnot"

@@ -2,8 +2,8 @@
 package mock
 
 import (
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 	bptree "gno.land/p/nt/bptree/v0"
-	rotree "gno.land/p/nt/bptree/v0/rotree"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	governance "gno.land/r/gnoswap/gov/governance"
 	v1 "gno.land/r/gnoswap/gov/governance/v1"

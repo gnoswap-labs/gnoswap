@@ -39,9 +39,9 @@ import (
 
 	"gno.land/r/gnoswap/scenarioutils"
 
-	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 

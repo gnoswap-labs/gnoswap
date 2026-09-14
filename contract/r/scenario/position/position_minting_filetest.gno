@@ -5,11 +5,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 
-	"gno.land/p/demo/tokens/grc721"
+	"gno.land/p/gnoswap/gnsmath"
+
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"

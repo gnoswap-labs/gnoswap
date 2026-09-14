@@ -6,9 +6,9 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	grc721 "gno.land/p/demo/tokens/grc721"
 	u256 "gno.land/p/gnoswap/uint256"
-	rotree "gno.land/p/nt/bptree/v0/rotree"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
+	grc721 "gno.land/p/nt/grc721/v0"
 
 	gnft "gno.land/r/gnoswap/gnft"
 	position "gno.land/r/gnoswap/position"

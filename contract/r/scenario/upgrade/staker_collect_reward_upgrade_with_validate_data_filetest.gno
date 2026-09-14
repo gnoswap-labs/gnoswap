@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/grc721/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/scenarioutils"
 
@@ -44,7 +44,6 @@ var (
 
 	barFoo500PoolPath = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:500"
 	positionId        = uint64(1)
-
 )
 
 type stakerSnapshot struct {

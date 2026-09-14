@@ -3,7 +3,7 @@ package governance
 import (
 	"testing"
 
-	"gno.land/p/onbloc/json"
+	"gno.land/p/onbloc/json/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
@@ -93,6 +93,7 @@ func newTestProposal(
 		100, // createdHeight
 	)
 }
+
 // Crossing test wrappers.
 //
 // The governance impl methods read their caller via rlm.Previous(). To

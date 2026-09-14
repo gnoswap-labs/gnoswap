@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/r/gnoswap/scenarioutils"
-	"gno.land/p/demo/tokens/grc721"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/grc721/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"

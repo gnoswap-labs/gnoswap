@@ -3,7 +3,7 @@ package v3_valid
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	rotree "gno.land/p/nt/bptree/v0/rotree"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 
 	pool "gno.land/r/gnoswap/pool"
 	v1 "gno.land/r/gnoswap/pool/v1"

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/demo/tokens/grc721"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/grc721/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -34,8 +34,8 @@ const (
 )
 
 var (
-	halvingCacheAdminAddr, _ = access.GetAddress(prbac.ROLE_ADMIN.String())
-	halvingCacheAdminRealm   = testing.NewUserRealm(halvingCacheAdminAddr)
+	halvingCacheAdminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	halvingCacheAdminRealm    = testing.NewUserRealm(halvingCacheAdminAddr)
 	halvingCacheStakerAddr, _ = access.GetAddress(prbac.ROLE_STAKER.String())
 	halvingCachePoolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
 

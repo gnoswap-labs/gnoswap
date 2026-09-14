@@ -1797,6 +1797,49 @@ func TestSwapValidator_ExactOutAmount(cur realm, t *testing.T) {
 	}
 }
 
+// Test SwapValidator exactInAmount
+func TestSwapValidator_ExactInAmount(cur realm, t *testing.T) {
+	validator := &SwapValidator{}
+
+	tests := []struct {
+		name            string
+		resultAmount    int64
+		specifiedAmount int64
+		expectError     bool
+	}{
+		{
+			name:            "exact match",
+			resultAmount:    1000,
+			specifiedAmount: 1000,
+			expectError:     false,
+		},
+		{
+			name:            "partial fill (consumed less than requested)",
+			resultAmount:    999,
+			specifiedAmount: 1000,
+			expectError:     true,
+		},
+		{
+			name:            "consumed more than requested",
+			resultAmount:    1001,
+			specifiedAmount: 1000,
+			expectError:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			err := validator.exactInAmount(tt.resultAmount, tt.specifiedAmount)
+
+			if tt.expectError {
+				uassert.Error(t, err)
+			} else {
+				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
 // Test validateRoutesAndQuotes convenience function
 func TestValidateRoutesAndQuotes(cur realm, t *testing.T) {
 	tests := []struct {
