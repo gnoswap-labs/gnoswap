@@ -147,15 +147,15 @@ func (m *MockLaunchpad) GetCurrentDepositId() int64 {
 	return res[0].(int64)
 }
 
-func (m *MockLaunchpad) GetDeposit(depositId string) (*Deposit, error) {
+func (m *MockLaunchpad) GetDeposit(depositId string) (Deposit, error) {
 	res, ok := m.Response.Get("GetDeposit")
 	if !ok {
-		return nil, nil
+		return DefaultDeposit(), nil
 	}
 	if len(res) < 2 || res[1] == nil {
-		return res[0].(*Deposit), nil
+		return res[0].(Deposit), nil
 	}
-	return res[0].(*Deposit), res[1].(error)
+	return res[0].(Deposit), res[1].(error)
 }
 
 func (m *MockLaunchpad) GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {

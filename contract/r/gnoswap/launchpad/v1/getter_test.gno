@@ -753,11 +753,10 @@ func TestGetDeposit(cur realm, t *testing.T) {
 			// Verify
 			if tt.expectedHasError {
 				uassert.Error(t, err)
-				uassert.True(t, deposit == nil)
 				uassert.ErrorContains(t, err, tt.expectedError)
 			} else {
 				uassert.NoError(t, err)
-				uassert.NotNil(t, deposit)
+				uassert.Equal(t, depositID, deposit.ID())
 			}
 		})
 	}
