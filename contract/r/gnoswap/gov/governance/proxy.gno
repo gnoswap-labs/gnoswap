@@ -124,11 +124,11 @@ func Cancel(
 	return getImplementation().Cancel(0, cur, proposalId)
 }
 
-// PruneInactiveProposals processes a bounded batch of elapsed deadlines.
-// Admins and governance stakers may call it. It returns the number of
-// processed entries and whether due deadlines remain.
-func PruneInactiveProposals(cur realm) (processed int, hasMore bool) {
-	return getImplementation().PruneInactiveProposals(0, cur)
+// PruneInactiveProposals processes up to limit elapsed deadlines (1–200).
+// Admins and governance stakers may call it independently of snapshot cleanup.
+// It returns the processed count and whether due deadlines remain.
+func PruneInactiveProposals(cur realm, limit int) (processed int, hasMore bool) {
+	return getImplementation().PruneInactiveProposals(0, cur, limit)
 }
 
 // Reconfigure updates the governance configuration parameters.

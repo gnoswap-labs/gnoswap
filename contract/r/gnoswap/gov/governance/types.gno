@@ -53,10 +53,10 @@ type IGovernanceManager interface {
 		proposalId int64,
 	) int64
 
-	// PruneInactiveProposals processes a bounded batch of elapsed deadlines.
-	// Admins and governance stakers may call it. It returns the number of
-	// processed entries and whether due deadlines remain.
-	PruneInactiveProposals(_ int, rlm realm) (processed int, hasMore bool)
+	// PruneInactiveProposals processes up to limit elapsed deadlines (1–200).
+	// Admins and governance stakers may call it independently of snapshot cleanup.
+	// It returns the processed count and whether due deadlines remain.
+	PruneInactiveProposals(_ int, rlm realm, limit int) (processed int, hasMore bool)
 
 	// Configuration
 	Reconfigure(

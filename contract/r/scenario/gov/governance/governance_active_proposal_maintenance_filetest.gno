@@ -35,9 +35,10 @@ var (
 	currentBlockTime = int64(5)
 )
 
-// The production cap is currently 200. One extra proposal keeps this scenario
-// small while proving that a second public call is required for overflow.
-const maintenanceBacklog = 201
+// The production cap is currently 200. Three extra proposals let this
+// scenario exercise small batches before a full-cap batch without duplicate
+// fixtures.
+const maintenanceBacklog = 203
 
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -46,7 +47,6 @@ func main(cur realm) {
 		panic(err)
 	}
 
-	println("[SCENARIO] 1. Prepare delegation and short lifecycle")
 	delegateGnsToAdmin(cur)
 	testing.SkipHeights(config.VotingWeightSmoothingDuration/currentBlockTime + 1)
 	maxSmoothingPeriod := governance.GetMaxSmoothingPeriod()
@@ -56,13 +56,11 @@ func main(cur realm) {
 		panic(err)
 	}
 
-	println("[SCENARIO] 2. Build a bounded stale proposal backlog")
 	for i := 0; i < maintenanceBacklog; i++ {
 		governance.ProposeText(cross(cur), "stale", "stale")
 		testing.SkipHeights((shortConfig.VotingStartDelay+shortConfig.VotingPeriod)/currentBlockTime + 1)
 	}
 
-	println("[SCENARIO] 3. Add one active proposal and observe maintenance error")
 	governance.Reconfigure(cross(cur), 1, 100, maxSmoothingPeriod, 50, 0, 1, 1)
 	activeConfig, err := governance.GetLatestConfig()
 	if err != nil {
@@ -88,10 +86,20 @@ func main(cur realm) {
 	uassert.False(t, hasActive)
 	uassert.ErrorContains(t, err, "[GNOSWAP-GOVERNANCE-018]")
 
-	println("[SCENARIO] 4. Enforce roles and bounded public progress")
+	assertInvalidPruneLimit(cur, -1)
+	assertInvalidPruneLimit(cur, 0)
+	assertInvalidPruneLimit(cur, 201)
+	uassert.Equal(t, historySize, governance.GetProposals().Size())
+
+	// Invalid arguments must not hide or mutate the stale first index entry.
+	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
+	uassert.Equal(t, int64(0), snapshotTime)
+	uassert.False(t, hasActive)
+	uassert.ErrorContains(t, err, "[GNOSWAP-GOVERNANCE-018]")
+
 	testing.SetRealm(testing.NewUserRealm(nonAdminAddr))
 	uassert.AbortsContains(t, cur, "unauthorized", func() {
-		_, _ = governance.PruneInactiveProposals(cross(cur))
+		_, _ = governance.PruneInactiveProposals(cross(cur), 1)
 	})
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
@@ -100,12 +108,14 @@ func main(cur realm) {
 		gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), cleanupThreshold, adminAddr)
 	})
 
-	processed, hasMore := governance.PruneInactiveProposals(cross(cur))
-	uassert.True(t, processed > 0)
-	if hasMore {
-		processed, hasMore = governance.PruneInactiveProposals(cross(cur))
-		uassert.True(t, processed > 0)
-	}
+	processed, hasMore := governance.PruneInactiveProposals(cross(cur), 1)
+	uassert.Equal(t, 1, processed)
+	uassert.True(t, hasMore)
+	processed, hasMore = governance.PruneInactiveProposals(cross(cur), 2)
+	uassert.Equal(t, 2, processed)
+	uassert.True(t, hasMore)
+	processed, hasMore = governance.PruneInactiveProposals(cross(cur), 200)
+	uassert.Equal(t, 200, processed)
 	uassert.False(t, hasMore)
 
 	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
@@ -114,7 +124,6 @@ func main(cur realm) {
 	uassert.Equal(t, expectedActiveSnapshot, snapshotTime)
 	uassert.Equal(t, historySize, governance.GetProposals().Size())
 
-	println("[SCENARIO] 5. Preserve active retention, then allow safe cleanup")
 	testing.SkipHeights(activeConfig.VotingStartDelay/currentBlockTime + 2)
 	status, err := governance.GetProposalStatusByProposalId(activeProposalID)
 	uassert.NoError(t, err)
@@ -131,10 +140,9 @@ func main(cur realm) {
 	uassert.Equal(t, expectedActiveSnapshot, snapshotTime)
 	uassert.Equal(t, historySize, governance.GetProposals().Size())
 
-	println("[SCENARIO] 6. Prune terminal proposal and observe empty index")
 	testing.SkipHeights((activeConfig.VotingStartDelay+activeConfig.VotingPeriod)/currentBlockTime + 2)
-	processed, hasMore = governance.PruneInactiveProposals(cross(cur))
-	uassert.True(t, processed > 0)
+	processed, hasMore = governance.PruneInactiveProposals(cross(cur), 1)
+	uassert.Equal(t, 1, processed)
 	uassert.False(t, hasMore)
 
 	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
@@ -144,17 +152,16 @@ func main(cur realm) {
 	uassert.Equal(t, historySize, governance.GetProposals().Size())
 }
 
+func assertInvalidPruneLimit(cur realm, limit int) {
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-001]", func() {
+		_, _ = governance.PruneInactiveProposals(cross(cur), limit)
+	})
+}
+
 func delegateGnsToAdmin(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
 	gs.Delegate(cross(cur), adminAddr, delegatedAmount, "")
 }
-
-// Output:
-// [SCENARIO] 1. Prepare delegation and short lifecycle
-// [SCENARIO] 2. Build a bounded stale proposal backlog
-// [SCENARIO] 3. Add one active proposal and observe maintenance error
-// [SCENARIO] 4. Enforce roles and bounded public progress
-// [SCENARIO] 5. Preserve active retention, then allow safe cleanup
-// [SCENARIO] 6. Prune terminal proposal and observe empty index

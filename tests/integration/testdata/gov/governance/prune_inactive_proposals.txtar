@@ -1,5 +1,5 @@
-# Independent maintenance commits progress even when combined cleanup aborts.
-# A cap-plus-one backlog must drain in two transactions without losing proposal history.
+# Snapshot cleanup requires proposal maintenance but never prunes implicitly.
+# Explicit maintenance batches drain a cap-plus-one backlog without losing proposal history.
 loadpkg gno.land/r/gnoswap/gov/governance/v1
 loadpkg gno.land/r/gnoswap/gov/staker/v1
 loadpkg gno.land/r/gnoswap/protocol_fee/v1
@@ -23,6 +23,9 @@ stdout 'FIRST 200 true'
 
 gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
 stdout 'active proposal index requires pruning'
+
+! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CleanStakerDelegationSnapshotByAdmin -args 0 -args $test1_user_addr -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
+stderr 'active proposal index requires pruning'
 
 gnokey maketx run -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1 $WORK/prune_last.gno
 stdout 'LAST 1 false'
@@ -59,7 +62,7 @@ func main(cur realm) {
 package main
 import "gno.land/r/gnoswap/gov/governance"
 func main(cur realm) {
-    n, more := governance.PruneInactiveProposals(cross(cur))
+    n, more := governance.PruneInactiveProposals(cross(cur), 200)
     if n != 200 || !more { panic("first batch did not persist expected progress") }
     println("FIRST", n, more)
 }
@@ -67,7 +70,7 @@ func main(cur realm) {
 package main
 import "gno.land/r/gnoswap/gov/governance"
 func main(cur realm) {
-    n, more := governance.PruneInactiveProposals(cross(cur))
+    n, more := governance.PruneInactiveProposals(cross(cur), 1)
     if n != 1 || more { panic("last batch did not persist expected progress") }
     println("LAST", n, more)
 }

@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/gnoswap/utils"
 	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/gov/governance"
 	"gno.land/r/gnoswap/halt"
 )
 
@@ -52,6 +51,7 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, peri
 // CleanStakerDelegationSnapshotByAdmin cleans old delegation history records.
 // This administrative function removes delegation history records older than the specified threshold
 // to prevent unlimited growth of historical data and optimize storage usage.
+// Governance index maintenance must be committed separately before cleanup if needed.
 //
 // The cleanup process:
 // 1. Validates the snapshot time is within allowed range
@@ -67,6 +67,7 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, peri
 //   - if caller is not admin
 //   - if snapshotTime is invalid (negative or too recent)
 //   - if active proposals have snapshotTime older than the cleanup threshold
+//   - if the governance snapshot index requires maintenance
 func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, snapshotTime int64, target address) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -77,7 +78,6 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, sn
 	access.AssertIsAdmin(caller)
 
 	assertIsValidSnapshotTime(snapshotTime)
-	governance.PruneInactiveProposals(cross(rlm))
 	assertIsAvailableCleanupSnapshotTime(snapshotTime)
 
 	// Clean total delegation history

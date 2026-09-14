@@ -30,10 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Allow admins to prune inactive governance proposals in independent, bounded batches with progress results.
+- Allow admins to prune inactive governance proposals in independent batches of 1–200 deadline entries, with caller-selected limits and progress results.
 
 ### Changed
 - Return an explicit maintenance-required error when the oldest proposal snapshot cannot be resolved without pruning; delegation cleanup must propagate this error.
+- Separate governance index maintenance from delegation cleanup; cleanup no longer prunes proposals implicitly.
 
 ### Deprecated
 -

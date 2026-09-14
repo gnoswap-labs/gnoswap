@@ -17,7 +17,7 @@ import (
 	"time"
 
 	testutils "gno.land/p/nt/testutils/v0"
-	ufmt "gno.land/p/nt/ufmt/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -36,6 +36,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 )
 
+var t *testing.T
 var (
 	adminAddr     = access.MustGetAddress(prbac.ROLE_ADMIN.String())
 	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
@@ -52,69 +53,57 @@ func main(cur realm) {
 		panic(err)
 	}
 	maxSmoothingPeriod := governance.GetMaxSmoothingPeriod()
-	ufmt.Printf("[INFO] max smoothing period: %d seconds\n", maxSmoothingPeriod)
 
-	println("[SCENARIO] 1. Setup: Delegate GNS to create initial snapshots")
 	setupDelegation(cur)
 	firstDelegationTime := time.Now().Unix()
-	ufmt.Printf("[INFO] first delegation time: %d\n", firstDelegationTime)
-	println()
 
-	println("[SCENARIO] 2. Skip voting weight smoothing duration")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	println()
 
-	println("[SCENARIO] 3. Add more delegation to create additional snapshots")
 	addMoreDelegation(cur)
-	println()
 
-	println("[SCENARIO] 4. Skip voting weight smoothing duration again")
 	testing.SkipHeights(int64(config.VotingWeightSmoothingDuration) / currentBlockTime)
-	println()
 
-	println("[SCENARIO] 5. Create a proposal (this creates a snapshot reference)")
 	proposalId := createProposal(cur)
-	oldestActiveSnapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
+	proposalCreatedAt, err := governance.GetProposalCreatedAt(proposalId)
 	if err != nil {
 		panic(err)
 	}
-	if hasActive {
-		ufmt.Printf("[INFO] oldest active proposal snapshot time: %d\n", oldestActiveSnapshotTime)
-	}
-	println()
+	expectedActiveSnapshot := proposalCreatedAt - config.VotingWeightSmoothingDuration
+	oldestActiveSnapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
+	uassert.True(t, hasActive)
+	uassert.Equal(t, expectedActiveSnapshot, oldestActiveSnapshotTime)
+	historySize := governance.GetProposals().Size()
 
-	println("[SCENARIO] 6. Skip more time for cleanup eligibility (3x smoothing period)")
 	testing.SkipHeights(int64(maxSmoothingPeriod) / currentBlockTime * 3)
 	currentTime := time.Now().Unix()
-	ufmt.Printf("[INFO] current time: %d\n", currentTime)
-	println()
 
-	println("[SCENARIO] 7. Calculate valid cleanup threshold")
 	validCleanupThreshold := currentTime - maxSmoothingPeriod
-	ufmt.Printf("[INFO] valid cleanup threshold (must be less than): %d\n", validCleanupThreshold)
-	println()
 
-	println("[SCENARIO] 8. Cleanup snapshots older than first delegation (safe cleanup)")
 	beforeDelegationAmount, _ := gs.GetTotalDelegationAmountAtSnapshot(1234783890)
-	ufmt.Printf("[INFO] before delegation amount: %d\n", beforeDelegationAmount)
+	uassert.Equal(t, int64(1_500_000_000), beforeDelegationAmount)
 	safeCleanupTime := firstDelegationTime - 100
 	if safeCleanupTime < validCleanupThreshold {
 		testing.SkipHeights(30 * 60 * 60 * 24 * 365)
-		cleanupSnapshots(cur, 1234783890+5)
-	} else {
-		println("[INFO] safe cleanup time is not old enough, skipping cleanup test")
+		cleanupTime := int64(1234783890 + 5)
+		testing.SetRealm(testing.NewUserRealm(adminAddr))
+		// Cleanup must not implicitly prune even this one expired proposal.
+		uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-018]", func() {
+			gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), cleanupTime, aliceAddr)
+		})
+		processed, hasMore := governance.PruneInactiveProposals(cross(cur), 1)
+		uassert.Equal(t, 1, processed)
+		uassert.False(t, hasMore)
+		cleanupSnapshots(cur, cleanupTime)
 	}
 
 	afterDelegationAmount, _ := gs.GetTotalDelegationAmountAtSnapshot(1234783890)
-	ufmt.Printf("[INFO] after delegation amount: %d\n", afterDelegationAmount)
+	uassert.Equal(t, int64(0), afterDelegationAmount)
 
-	println("[SCENARIO] 9. Verify proposal is still accessible after cleanup")
 	verifyProposalAccessible(cur, proposalId)
-	println()
+	uassert.Equal(t, historySize, governance.GetProposals().Size())
 
-	println("[SCENARIO] 10. Verify total delegation preserved")
 	verifyTotalDelegation(cur)
-	println()
 }
 
 func setupDelegation(cur realm) {
@@ -123,8 +112,6 @@ func setupDelegation(cur realm) {
 
 	gns.Approve(cross(cur), govStakerAddr, 1_000_000_000)
 	gs.Delegate(cross(cur), aliceAddr, 1_000_000_000, "")
-
-	ufmt.Printf("[INFO] admin delegated 1,000,000,000 GNS to alice\n")
 }
 
 func addMoreDelegation(cur realm) {
@@ -132,14 +119,11 @@ func addMoreDelegation(cur realm) {
 
 	gns.Approve(cross(cur), govStakerAddr, 500_000_000)
 	gs.Delegate(cross(cur), aliceAddr, 500_000_000, "")
-
-	ufmt.Printf("[INFO] alice delegated additional 500,000,000 GNS\n")
 }
 
 func createProposal(cur realm) int64 {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	proposalId := governance.ProposeText(cross(cur), "Test Proposal for Snapshot Protection", "This proposal tests snapshot protection during cleanup")
-	ufmt.Printf("[INFO] created proposal ID: %d\n", proposalId)
 	return proposalId
 }
 
@@ -147,63 +131,15 @@ func cleanupSnapshots(cur realm, cleanupTime int64) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 
 	gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), cleanupTime, aliceAddr)
-	ufmt.Printf("[INFO] cleaned snapshots older than %d\n", cleanupTime)
-	println("[EXPECTED] snapshot cleanup succeeded")
 }
 
 func verifyProposalAccessible(cur realm, proposalId int64) {
 	status, err := governance.GetProposalStatusByProposalId(proposalId)
-	if err == nil {
-		ufmt.Printf("[EXPECTED] proposal %d status: %s\n", proposalId, status)
-		println("[EXPECTED] proposal is still accessible after cleanup")
-	} else {
-		ufmt.Printf("[FAIL] proposal should still be accessible: %v\n", err)
-	}
+	uassert.NoError(t, err)
+	uassert.Equal(t, "rejected", status)
 }
 
 func verifyTotalDelegation(cur realm) {
 	totalDelegated := gs.GetTotalDelegated()
-	ufmt.Printf("[INFO] total delegated amount: %d\n", totalDelegated)
-
-	if totalDelegated == 1_500_000_000 {
-		println("[EXPECTED] total delegation amount preserved (1,000,000,000 + 500,000,000)")
-	} else {
-		println("[FAIL] total delegation amount mismatch")
-	}
+	uassert.Equal(t, int64(1_500_000_000), totalDelegated)
 }
-
-// Output:
-// [INFO] max smoothing period: 2592000 seconds
-// [SCENARIO] 1. Setup: Delegate GNS to create initial snapshots
-// [INFO] admin delegated 1,000,000,000 GNS to alice
-// [INFO] first delegation time: 1234567890
-//
-// [SCENARIO] 2. Skip voting weight smoothing duration
-//
-// [SCENARIO] 3. Add more delegation to create additional snapshots
-// [INFO] alice delegated additional 500,000,000 GNS
-//
-// [SCENARIO] 4. Skip voting weight smoothing duration again
-//
-// [SCENARIO] 5. Create a proposal (this creates a snapshot reference)
-// [INFO] created proposal ID: 1
-// [INFO] oldest active proposal snapshot time: 1234913490
-//
-// [SCENARIO] 6. Skip more time for cleanup eligibility (3x smoothing period)
-// [INFO] current time: 1254439890
-//
-// [SCENARIO] 7. Calculate valid cleanup threshold
-// [INFO] valid cleanup threshold (must be less than): 1251847890
-//
-// [SCENARIO] 8. Cleanup snapshots older than first delegation (safe cleanup)
-// [INFO] before delegation amount: 1500000000
-// [INFO] cleaned snapshots older than 1234783895
-// [EXPECTED] snapshot cleanup succeeded
-// [INFO] after delegation amount: 0
-// [SCENARIO] 9. Verify proposal is still accessible after cleanup
-// [EXPECTED] proposal 1 status: rejected
-// [EXPECTED] proposal is still accessible after cleanup
-//
-// [SCENARIO] 10. Verify total delegation preserved
-// [INFO] total delegated amount: 1500000000
-// [EXPECTED] total delegation amount preserved (1,000,000,000 + 500,000,000)

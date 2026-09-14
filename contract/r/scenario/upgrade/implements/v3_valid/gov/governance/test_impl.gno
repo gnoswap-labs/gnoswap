@@ -49,8 +49,8 @@ func (t *TestGovernance) Cancel(_ int, rlm realm, proposalId int64) int64 {
 	return t.instance.Cancel(0, rlm, proposalId)
 }
 
-func (t *TestGovernance) PruneInactiveProposals(_ int, rlm realm) (int, bool) {
-	return t.instance.PruneInactiveProposals(0, rlm)
+func (t *TestGovernance) PruneInactiveProposals(_ int, rlm realm, limit int) (int, bool) {
+	return t.instance.PruneInactiveProposals(0, rlm, limit)
 }
 
 func (t *TestGovernance) Reconfigure(_ int, rlm realm, votingStartDelay int64, votingPeriod int64, votingWeightSmoothingDuration int64, quorum int64, proposalCreationThreshold int64, executionDelay int64, executionWindow int64) int64 {
