@@ -90,7 +90,7 @@ func TestGetVotingWeightSnapshot(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetProposalUserVotingInfoRaw(cur realm, t *testing.T) {
+func TestGetProposalUserVotingInfo(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		setupVotingInfos func(cur realm) *mockGovernanceStore
@@ -159,18 +159,17 @@ func TestGetProposalUserVotingInfoRaw(cur realm, t *testing.T) {
 				stakerAccessor: newMockGovStakerAccessor(),
 			}
 
-			votingInfoRaw, found := gv.getProposalUserVotingInfoRaw(tt.proposalID, tt.voterAddr)
+			votingInfo, found := gv.getProposalUserVotingInfo(tt.proposalID, tt.voterAddr)
 
 			uassert.Equal(t, tt.expectedFound, found)
 			if tt.expectedFound {
-				_, isValue := votingInfoRaw.(governance.VotingInfo)
-				uassert.True(t, isValue)
+				uassert.Equal(t, int64(1000), votingInfo.AvailableVoteWeight())
 			}
 		})
 	}
 }
 
-func TestGetProposalUserVotingInfoRawReturnsDetachedValue(cur realm, t *testing.T) {
+func TestGetProposalUserVotingInfoReturnsDetachedValue(cur realm, t *testing.T) {
 	store := newMockGovernanceStore()
 	voter := address("g1voter00000000000000000000000000000001")
 	stored := governance.NewVotingInfo(1000)
@@ -183,14 +182,12 @@ func TestGetProposalUserVotingInfoRawReturnsDetachedValue(cur realm, t *testing.
 		stakerAccessor: newMockGovStakerAccessor(),
 	}
 
-	raw, found := gv.getProposalUserVotingInfoRaw(1, voter)
+	detached, found := gv.getProposalUserVotingInfo(1, voter)
 	uassert.True(t, found)
-	detached, ok := raw.(governance.VotingInfo)
-	uassert.True(t, ok)
 	detached, _ = detached.WithVote(true, 900, 0, 0)
 
-	raw = votingInfos.Get(voter.String())
-	value, ok := raw.(governance.VotingInfo)
+	storedRaw := votingInfos.Get(voter.String())
+	value, ok := storedRaw.(governance.VotingInfo)
 	uassert.True(t, ok)
 	uassert.False(t, value.IsVoted())
 	uassert.Equal(t, int64(0), value.VotedWeight())

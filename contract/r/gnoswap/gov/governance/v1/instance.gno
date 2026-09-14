@@ -159,16 +159,16 @@ func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 	return proposal
 }
 
-func (g *governanceV1) getProposalUserVotingInfoRaw(proposalID int64, addr address) (any, bool) {
+func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address) (governance.VotingInfo, bool) {
 	votingInfosTree, exists := g.getProposalUserVotingInfos(proposalID)
 	if !exists {
-		return nil, false
+		return governance.NewVotingInfo(0), false
 	}
 
 	votingInfoRaw := votingInfosTree.Get(addr.String())
 	if votingInfoRaw == nil {
-		return nil, false
+		return governance.NewVotingInfo(0), false
 	}
-	_, ok := votingInfoRaw.(governance.VotingInfo)
-	return votingInfoRaw, ok
+	votingInfo, ok := votingInfoRaw.(governance.VotingInfo)
+	return votingInfo, ok
 }

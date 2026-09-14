@@ -129,11 +129,8 @@ func (gv *governanceV1) vote(
 			errNotEnoughVotingWeight, "no voting weight at snapshot time")
 	}
 
-	votingInfoRaw, exists := gv.getProposalUserVotingInfoRaw(proposalID, voterAddress)
-	var userVote governance.VotingInfo
-	if exists {
-		userVote = votingInfoRaw.(governance.VotingInfo)
-	} else {
+	userVote, exists := gv.getProposalUserVotingInfo(proposalID, voterAddress)
+	if !exists {
 		userVote = governance.NewVotingInfo(votingWeight)
 	}
 

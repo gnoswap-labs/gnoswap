@@ -218,37 +218,34 @@ func (gv *governanceV1) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 
 // ExistsVotingInfo checks if a voting info exists for a user on a proposal.
 func (gv *governanceV1) ExistsVotingInfo(proposalID int64, addr address) bool {
-	_, exists := gv.getProposalUserVotingInfoRaw(proposalID, addr)
+	_, exists := gv.getProposalUserVotingInfo(proposalID, addr)
 	return exists
 }
 
 // GetVoteWeight returns the voting weight of an address for a proposal.
 func (gv *governanceV1) GetVoteWeight(proposalID int64, addr address) (int64, error) {
-	votingInfoRaw, exists := gv.getProposalUserVotingInfoRaw(proposalID, addr)
+	votingInfo, exists := gv.getProposalUserVotingInfo(proposalID, addr)
 	if !exists {
 		return 0, ufmt.Errorf("voting info not found for proposal %d and address %s", proposalID, addr.String())
 	}
-	votingInfo := votingInfoRaw.(governance.VotingInfo)
 	return votingInfo.VotedWeight(), nil
 }
 
 // GetVotedHeight returns the block height when an address voted on a proposal.
 func (gv *governanceV1) GetVotedHeight(proposalID int64, addr address) (int64, error) {
-	votingInfoRaw, exists := gv.getProposalUserVotingInfoRaw(proposalID, addr)
+	votingInfo, exists := gv.getProposalUserVotingInfo(proposalID, addr)
 	if !exists {
 		return 0, ufmt.Errorf("voting info not found for proposal %d and address %s", proposalID, addr.String())
 	}
-	votingInfo := votingInfoRaw.(governance.VotingInfo)
 	return votingInfo.VotedHeight(), nil
 }
 
 // GetVotedAt returns the timestamp when an address voted on a proposal.
 func (gv *governanceV1) GetVotedAt(proposalID int64, addr address) (int64, error) {
-	votingInfoRaw, exists := gv.getProposalUserVotingInfoRaw(proposalID, addr)
+	votingInfo, exists := gv.getProposalUserVotingInfo(proposalID, addr)
 	if !exists {
 		return 0, ufmt.Errorf("voting info not found for proposal %d and address %s", proposalID, addr.String())
 	}
-	votingInfo := votingInfoRaw.(governance.VotingInfo)
 	return votingInfo.VotedAt(), nil
 }
 
