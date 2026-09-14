@@ -10,7 +10,7 @@
 
 loadpkg gno.land/p/nt/bptree/v0
 loadpkg gno.land/p/nt/ufmt/v0
-loadpkg gno.land/p/onbloc/json
+loadpkg gno.land/p/onbloc/json/v0
 loadpkg gno.land/p/nt/ownable/v0
 loadpkg gno.land/p/nt/grc20/v0
 loadpkg gno.land/p/nt/grc721/v0
