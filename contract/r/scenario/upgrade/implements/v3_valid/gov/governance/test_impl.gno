@@ -49,6 +49,7 @@ func (t *TestGovernance) Cancel(_ int, rlm realm, proposalId int64) int64 {
 	return t.instance.Cancel(0, rlm, proposalId)
 }
 
+// RemoveInactiveProposalFromIndexByAdmin delegates inactive snapshot-index maintenance to the wrapped implementation.
 func (t *TestGovernance) RemoveInactiveProposalFromIndexByAdmin(_ int, rlm realm, proposalID int64) {
 	t.instance.RemoveInactiveProposalFromIndexByAdmin(0, rlm, proposalID)
 }

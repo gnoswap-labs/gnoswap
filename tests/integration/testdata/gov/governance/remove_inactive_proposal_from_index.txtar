@@ -21,6 +21,7 @@ stderr 'active proposal index requires pruning'
 
 # Remove the non-head entry first; the getter must still identify proposal 1.
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func RemoveInactiveProposalFromIndexByAdmin -args 2 -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
+stdout '"type":"RemoveInactiveProposalFromIndex".*"key":"proposalId","value":"2"'
 gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
 stdout 'proposalID: 1'
 

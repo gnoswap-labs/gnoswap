@@ -209,6 +209,14 @@ func (gv *governanceV1) RemoveInactiveProposalFromIndexByAdmin(_ int, rlm realm,
 	if err := gv.removeActiveProposal(0, rlm, proposal); err != nil {
 		panic(err)
 	}
+
+	prev := rlm.Previous()
+	chain.Emit(
+		"RemoveInactiveProposalFromIndex",
+		"prevAddr", prev.Address().String(),
+		"prevRealm", prev.PkgPath(),
+		"proposalId", utils.FormatInt(proposalID),
+	)
 }
 
 // cancel handles core logic of proposal cancellation.
