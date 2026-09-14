@@ -135,7 +135,7 @@ func (gv *governanceV1) vote(
 			errNotEnoughVotingWeight, "no voting weight at snapshot time")
 	}
 
-	// Create or update voting info for this user
+	// Create or update voting info for this user.
 	if userVote == nil {
 		userVote = governance.NewVotingInfo(votingWeight)
 	}
@@ -147,9 +147,7 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, err
 	}
 
-	// Store the detached user's vote as a value. The resolver intentionally
-	// mutates a copy returned by getProposalUserVotingInfo, so persisting the
-	// value here is required for every vote.
+	// Persist the locally mutated voting info value.
 	votingInfosTree, _ := gv.getProposalUserVotingInfos(proposalID)
 	if votingInfosTree == nil {
 		return nil, 0, 0, makeErrorWithDetails(

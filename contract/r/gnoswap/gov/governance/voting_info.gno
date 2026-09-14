@@ -138,7 +138,8 @@ func (v *VotingInfo) SetVoted(voted bool) {
 	v.voted = voted
 }
 
-// Clone creates a deep copy of the VotingInfo.
+// Clone creates a mutable copy for realm-local vote updates. BPTree entries are
+// value-backed; public read-only getters return those values directly.
 func (v *VotingInfo) Clone() *VotingInfo {
 	if v == nil {
 		return nil

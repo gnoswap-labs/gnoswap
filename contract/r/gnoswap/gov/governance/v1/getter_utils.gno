@@ -23,14 +23,11 @@ func cloneProposalEntry(value any) any {
 	return proposal.Clone()
 }
 
-// cloneVotingInfoEntry is the transformation for a proposal's voting info
-// tree. VotingInfo is mutable and its setters are declared in
-// /r/gnoswap/gov/governance, so an external holder of the stored pointer could
-// write realm state through it. The tree stores values; return a detached
-// pointer for compatibility with the existing read-only getter API.
-func cloneVotingInfoEntry(value any) any {
+// valueVotingInfoEntry validates a proposal voting-info tree entry. VotingInfo
+// is stored by value, so returning it does not expose realm-owned state.
+func valueVotingInfoEntry(value any) any {
 	if votingInfo, ok := value.(governance.VotingInfo); ok {
-		return votingInfo.Clone()
+		return votingInfo
 	}
 
 	return nil

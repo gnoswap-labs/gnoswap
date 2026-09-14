@@ -160,6 +160,20 @@ func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 }
 
 func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address) (*governance.VotingInfo, bool) {
+	votingInfoRaw, exists := g.getProposalUserVotingInfoRaw(proposalID, addr)
+	if !exists {
+		return nil, false
+	}
+
+	votingInfo, ok := votingInfoRaw.(governance.VotingInfo)
+	if !ok {
+		return nil, false
+	}
+
+	return votingInfo.Clone(), true
+}
+
+func (g *governanceV1) getProposalUserVotingInfoRaw(proposalID int64, addr address) (any, bool) {
 	votingInfosTree, exists := g.getProposalUserVotingInfos(proposalID)
 	if !exists {
 		return nil, false
@@ -169,13 +183,6 @@ func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address)
 	if votingInfoRaw == nil {
 		return nil, false
 	}
-
-	// Per-proposal voting infos are stored as values so a tree lookup cannot
-	// expose a pointer into realm-owned state. Return a detached pointer to
-	// preserve the resolver/getter API; mutating callers must write it back.
-	if votingInfo, ok := votingInfoRaw.(governance.VotingInfo); ok {
-		return votingInfo.Clone(), true
-	}
-
-	return nil, false
+	_, ok := votingInfoRaw.(governance.VotingInfo)
+	return votingInfoRaw, ok
 }
