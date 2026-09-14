@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 ### Fixed
--
+- Avoid scanning lifetime external incentive history when checking staking eligibility, while preserving pending incentives and past reward claims.
 
 ### Security
 -
