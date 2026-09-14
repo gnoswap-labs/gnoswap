@@ -16,145 +16,140 @@ type Proposal struct {
 }
 
 // ID returns the unique identifier of the proposal.
-func (p *Proposal) ID() int64 {
+func (p Proposal) ID() int64 {
 	return p.id
 }
 
 // Type returns the type of this proposal.
-func (p *Proposal) Type() ProposalType {
+func (p Proposal) Type() ProposalType {
 	return p.data.ProposalType()
 }
 
 // Title returns the proposal title.
-func (p *Proposal) Title() string {
+func (p Proposal) Title() string {
 	return p.metadata.Title()
 }
 
 // Description returns the proposal description.
-func (p *Proposal) Description() string {
+func (p Proposal) Description() string {
 	return p.metadata.Description()
 }
 
 // Proposer returns the address of the proposal creator.
-func (p *Proposal) Proposer() address {
+func (p Proposal) Proposer() address {
 	return p.proposer
 }
 
 // CreatedHeight returns the block height the proposal was created at.
-func (p *Proposal) CreatedHeight() int64 {
+func (p Proposal) CreatedHeight() int64 {
 	return p.createdHeight
 }
 
 // CreatedAt returns the creation timestamp of the proposal.
-func (p *Proposal) CreatedAt() int64 {
-	return p.status.schedule.createTime
+func (p Proposal) CreatedAt() int64 {
+	return p.status.Schedule().CreateTime()
 }
 
 // VotingYesWeight returns the total weight of "yes" votes.
-func (p *Proposal) VotingYesWeight() int64 {
-	return p.status.voteStatus.yea
+func (p Proposal) VotingYesWeight() int64 {
+	return p.status.VoteStatus().YesWeight()
 }
 
 // VotingNoWeight returns the total weight of "no" votes.
-func (p *Proposal) VotingNoWeight() int64 {
-	return p.status.voteStatus.nay
+func (p Proposal) VotingNoWeight() int64 {
+	return p.status.VoteStatus().NoWeight()
 }
 
 // VotingQuorumAmount returns minimum vote weight required for proposal to pass.
-func (p *Proposal) VotingQuorumAmount() int64 {
-	return p.status.voteStatus.quorumAmount
+func (p Proposal) VotingQuorumAmount() int64 {
+	return p.status.VoteStatus().QuorumAmount()
 }
 
 // VotingMaxWeight returns maximum possible voting weight for this proposal.
-func (p *Proposal) VotingMaxWeight() int64 {
-	return p.status.voteStatus.maxVotingWeight
+func (p Proposal) VotingMaxWeight() int64 {
+	return p.status.VoteStatus().MaxVotingWeight()
 }
 
 // ConfigVersion returns the governance configuration version used for this proposal.
-func (p *Proposal) ConfigVersion() int64 {
+func (p Proposal) ConfigVersion() int64 {
 	return p.configVersion
 }
 
 // SnapshotTime returns the snapshot time for voting weight lookup.
-func (p *Proposal) SnapshotTime() int64 {
+func (p Proposal) SnapshotTime() int64 {
 	return p.snapshotTime
 }
 
-// Data returns the type-specific proposal data.
-func (p *Proposal) Data() *ProposalData {
-	return &p.data
+// Data returns the type-specific proposal data value.
+func (p Proposal) Data() ProposalData {
+	return p.data
 }
 
-// Status returns the proposal status.
-func (p *Proposal) Status() *ProposalStatus {
-	return &p.status
+// Status returns the proposal status value.
+func (p Proposal) Status() ProposalStatus {
+	return p.status
 }
 
 // Metadata returns the inline proposal metadata value.
-func (p *Proposal) Metadata() ProposalMetadata {
+func (p Proposal) Metadata() ProposalMetadata {
 	return p.metadata
 }
 
+// WithData returns a copy with updated proposal data.
+func (p Proposal) WithData(data ProposalData) Proposal {
+	p.data = data
+	return p
+}
+
+// WithStatus returns a copy with updated proposal status.
+func (p Proposal) WithStatus(status ProposalStatus) Proposal {
+	p.status = status
+	return p
+}
+
+// WithMetadata returns a copy with updated proposal metadata.
+func (p Proposal) WithMetadata(metadata ProposalMetadata) Proposal {
+	p.metadata = metadata
+	return p
+}
+
 // IsTextType checks if this is a text proposal.
-func (p *Proposal) IsTextType() bool {
+func (p Proposal) IsTextType() bool {
 	return p.Type() == Text
 }
 
 // IsCommunityPoolSpendType checks if this is a community pool spend proposal.
-func (p *Proposal) IsCommunityPoolSpendType() bool {
+func (p Proposal) IsCommunityPoolSpendType() bool {
 	return p.Type() == CommunityPoolSpend
 }
 
 // IsParameterChangeType checks if this is a parameter change proposal.
-func (p *Proposal) IsParameterChangeType() bool {
+func (p Proposal) IsParameterChangeType() bool {
 	return p.Type() == ParameterChange
 }
 
 // IsProposer checks if the given address is the proposer of this proposal.
-func (p *Proposal) IsProposer(addr address) bool {
+func (p Proposal) IsProposer(addr address) bool {
 	return p.proposer == addr
 }
 
-// NewProposal creates a new proposal instance with the provided parameters.
-// NewProposal is the main constructor for creating governance proposals.
-//   - metadata: proposal title and description
-//   - data: type-specific proposal data
-//   - proposerAddress: address of the proposal creator
-//   - configVersion: governance configuration version
-//   - snapshotTime: timestamp for voting weight snapshot lookup
-//   - createdHeight: creation block height
-//
-// Returns:
-//   - *Proposal: newly created proposal instance
-func NewProposal(
+// MakeProposal creates a new proposal value with the provided parameters.
+func MakeProposal(
 	proposalID int64,
-	status *ProposalStatus,
-	metadata *ProposalMetadata,
-	data *ProposalData,
+	status ProposalStatus,
+	metadata ProposalMetadata,
+	data ProposalData,
 	proposerAddress address,
 	configVersion int64,
 	snapshotTime int64,
 	createdHeight int64,
-) *Proposal {
-	statusValue := ProposalStatus{}
-	if status != nil {
-		statusValue = *status
-	}
-	if metadata == nil {
-		panic("proposal metadata is required")
-	}
-	metadataValue := *metadata
-	dataValue := ProposalData{}
-	if data != nil {
-		dataValue = *data
-	}
-
-	return &Proposal{
+) Proposal {
+	return Proposal{
 		id:            proposalID,
 		proposer:      proposerAddress,
-		status:        statusValue,
-		metadata:      metadataValue,
-		data:          dataValue,
+		status:        status,
+		metadata:      metadata,
+		data:          data,
 		configVersion: configVersion,
 		snapshotTime:  snapshotTime,
 		createdHeight: createdHeight,

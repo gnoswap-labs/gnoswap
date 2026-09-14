@@ -75,17 +75,17 @@ func TestProposalActionStatus_CancelAndExecute(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			status := governance.NewProposalActionStatus(tc.executable)
-			resolver := NewProposalActionStatusResolver(status)
+			status := governance.MakeProposalActionStatus(tc.executable)
 			if tc.canceled {
-				resolver.SetCanceled(true)
+				status = status.SetCanceled(true)
 			}
+			resolver := MakeProposalActionStatusResolver(status)
 			// when
 			var err error
 			if tc.operation == "cancel" {
-				err = resolver.cancel(tc.timestamp, tc.height, tc.actor)
+				resolver, err = resolver.cancel(tc.timestamp, tc.height, tc.actor)
 			} else {
-				err = resolver.Execute(tc.timestamp, tc.height, tc.actor)
+				resolver, err = resolver.Execute(tc.timestamp, tc.height, tc.actor)
 			}
 
 			// then
@@ -105,8 +105,8 @@ func TestProposalActionStatus_CancelAndExecute(cur realm, t *testing.T) {
 	}
 }
 
-// TestNewProposalActionStatus tests the creation of new action status
-func TestNewProposalActionStatus(cur realm, t *testing.T) {
+// TestMakeProposalActionStatus tests the creation of a new action status
+func TestMakeProposalActionStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name       string
 		executable bool
@@ -124,8 +124,8 @@ func TestNewProposalActionStatus(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
-			status := governance.NewProposalActionStatus(tc.executable)
-			resolver := NewProposalActionStatusResolver(status)
+			status := governance.MakeProposalActionStatus(tc.executable)
+			resolver := MakeProposalActionStatusResolver(status)
 
 			// then
 			uassert.NotNil(t, status)

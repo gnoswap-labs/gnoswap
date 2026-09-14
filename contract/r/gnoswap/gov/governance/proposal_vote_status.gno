@@ -10,59 +10,48 @@ type ProposalVoteStatus struct {
 }
 
 /* Getter methods */
-func (p *ProposalVoteStatus) MaxVotingWeight() int64 { return p.maxVotingWeight }
-func (p *ProposalVoteStatus) QuorumAmount() int64    { return p.quorumAmount }
+func (p ProposalVoteStatus) MaxVotingWeight() int64 { return p.maxVotingWeight }
+func (p ProposalVoteStatus) QuorumAmount() int64    { return p.quorumAmount }
 
 // YesWeight returns the total weight of "yes" votes.
-//
-// Returns:
-//   - int64: total "yes" vote weight
-func (p *ProposalVoteStatus) YesWeight() int64 {
+func (p ProposalVoteStatus) YesWeight() int64 {
 	return p.yea
 }
 
 // NoWeight returns the total weight of "no" votes.
-//
-// Returns:
-//   - int64: total "no" vote weight
-func (p *ProposalVoteStatus) NoWeight() int64 {
+func (p ProposalVoteStatus) NoWeight() int64 {
 	return p.nay
 }
 
-/* Setter methods */
-func (p *ProposalVoteStatus) SetYesWeight(yes int64) {
+/* Functional updates */
+func (p ProposalVoteStatus) SetYesWeight(yes int64) ProposalVoteStatus {
 	p.yea = yes
+	return p
 }
 
-func (p *ProposalVoteStatus) SetNoWeight(no int64) {
+func (p ProposalVoteStatus) SetNoWeight(no int64) ProposalVoteStatus {
 	p.nay = no
+	return p
 }
 
-func (p *ProposalVoteStatus) SetMaxVotingWeight(maxVotingWeight int64) {
+func (p ProposalVoteStatus) SetMaxVotingWeight(maxVotingWeight int64) ProposalVoteStatus {
 	p.maxVotingWeight = maxVotingWeight
+	return p
 }
 
-func (p *ProposalVoteStatus) SetQuorumAmount(quorumAmount int64) {
+func (p ProposalVoteStatus) SetQuorumAmount(quorumAmount int64) ProposalVoteStatus {
 	p.quorumAmount = quorumAmount
+	return p
 }
 
-// NewProposalVoteStatus creates a new vote status for a proposal.
-// Initializes vote tallies to zero and calculates the quorum requirement.
-//
-// Parameters:
-//   - maxVotingWeight: maximum possible voting weight for this proposal
-//   - quorumAmount: quorum amount required for passage
-//
-// Returns:
-//   - *ProposalVoteStatus: new vote status instance
-func NewProposalVoteStatus(
+// MakeProposalVoteStatus creates a new vote status value with the supplied
+// voting weight and quorum requirement. Vote tallies start at zero.
+func MakeProposalVoteStatus(
 	maxVotingWeight int64,
 	quorumAmount int64,
-) *ProposalVoteStatus {
-	return &ProposalVoteStatus{
-		yea:             0,               // Start with no "yes" votes
-		nay:             0,               // Start with no "no" votes
-		maxVotingWeight: maxVotingWeight, // Set maximum possible votes
-		quorumAmount:    quorumAmount,    // Set required votes for passage
+) ProposalVoteStatus {
+	return ProposalVoteStatus{
+		maxVotingWeight: maxVotingWeight,
+		quorumAmount:    quorumAmount,
 	}
 }

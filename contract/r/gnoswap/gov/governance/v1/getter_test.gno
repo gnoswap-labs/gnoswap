@@ -34,21 +34,21 @@ func setupGetterTestWithProposal(cur realm, t *testing.T) *governanceV1 {
 	baseTime := time.Now().Unix()
 	config, _ := gv.store.GetConfig(1)
 
-	proposal := governance.NewProposal(
+	proposal := governance.MakeProposal(
 		1,
-		NewProposalStatus(
+		MakeProposalStatus(
 			config, 1000, governance.Text.IsExecutable(), baseTime,
 			1000,
 		),
-		governance.NewProposalMetadata("Test Proposal", "Test Description"),
-		governance.NewProposalData(governance.Text, nil, nil),
+		governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+		DefaultProposalTextData(),
 		address("g1proposer"),
 		1,
 		baseTime,
 		runtime.ChainHeight(),
 	)
 
-	gv.store.SetProposal(0, cur, 1, *proposal)
+	gv.store.SetProposal(0, cur, 1, proposal)
 	gv.store.GetProposalCounter().Next()
 	gv.store.AddUserProposal(0, cur, "g1proposer", 1)
 
@@ -283,7 +283,10 @@ func TestGetProposals_EntriesAreValues(cur realm, t *testing.T) {
 
 	// Each read returns a value copy. Mutating one local status cannot affect
 	// another read or the proposal held by the storage tree.
-	first.Status().ActionStatus().SetCanceled(true)
+	firstStatus := first.Status()
+	firstAction := firstStatus.ActionStatus().SetCanceled(true)
+	firstStatus = firstStatus.WithActionStatus(firstAction)
+	first = first.WithStatus(firstStatus)
 	uassert.False(t, second.Status().ActionStatus().Canceled())
 
 	stored, ok := gv.store.GetProposal(1)

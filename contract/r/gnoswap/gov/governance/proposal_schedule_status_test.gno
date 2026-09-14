@@ -78,7 +78,7 @@ func TestProposalScheduleStatus_NewProposalScheduleStatus(cur realm, t *testing.
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// when
-			status := NewProposalScheduleStatus(
+			status := MakeProposalScheduleStatus(
 				tt.createTime,
 				tt.activeTime,
 				tt.votingEndTime,
@@ -182,7 +182,7 @@ func TestProposalScheduleStatus_Setters(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
-			status := NewProposalScheduleStatus(
+			status := MakeProposalScheduleStatus(
 				tt.initialCreate,
 				tt.initialActive,
 				tt.initialVotingEnd,
@@ -191,11 +191,11 @@ func TestProposalScheduleStatus_Setters(cur realm, t *testing.T) {
 			)
 
 			// when
-			status.SetCreateTime(tt.newCreate)
-			status.SetActiveTime(tt.newActive)
-			status.SetVotingEndTime(tt.newVotingEnd)
-			status.SetExecutableTime(tt.newExecutable)
-			status.SetExpiredTime(tt.newExpired)
+			status = status.SetCreateTime(tt.newCreate)
+			status = status.SetActiveTime(tt.newActive)
+			status = status.SetVotingEndTime(tt.newVotingEnd)
+			status = status.SetExecutableTime(tt.newExecutable)
+			status = status.SetExpiredTime(tt.newExpired)
 
 			// then
 			uassert.Equal(t, status.CreateTime(), tt.newCreate)

@@ -24,20 +24,20 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 			name: "success - caller is proposer",
 			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				proposer := testutils.TestAddress("proposer1")
-				proposal := governance.NewProposal(
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Test Title", "Test Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Test Title", "Test Description"),
+					DefaultProposalTextData(),
 					proposer,
 					1, // configVersion
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(0, cur, *proposal)
+				gv.addProposal(0, cur, proposal)
 				return 1
 			},
 			caller:        testutils.TestAddress("proposer1"),
@@ -58,20 +58,20 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 			name: "panic - caller is not proposer",
 			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				proposer := testutils.TestAddress("proposer1")
-				proposal := governance.NewProposal(
+				proposal := governance.MakeProposal(
 					2,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Test Title", "Test Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Test Title", "Test Description"),
+					DefaultProposalTextData(),
 					proposer,
 					1, // configVersion
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(0, cur, *proposal)
+				gv.addProposal(0, cur, proposal)
 				return 2
 			},
 			caller:           testutils.TestAddress("not_proposer"),
@@ -83,20 +83,20 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 			name: "success - different proposer for different proposal",
 			setupProposal: func(cur realm, gv *governanceV1) int64 {
 				proposer := testutils.TestAddress("proposer2")
-				proposal := governance.NewProposal(
+				proposal := governance.MakeProposal(
 					3,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Test Title 2", "Test Description 2"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Test Title 2", "Test Description 2"),
+					DefaultProposalTextData(),
 					proposer,
 					1, // configVersion
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(0, cur, *proposal)
+				gv.addProposal(0, cur, proposal)
 				return 3
 			},
 			caller:        testutils.TestAddress("proposer2"),

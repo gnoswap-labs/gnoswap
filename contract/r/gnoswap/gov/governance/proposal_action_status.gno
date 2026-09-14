@@ -17,98 +17,76 @@ type ProposalActionStatus struct {
 }
 
 /* Getter methods */
-func (p *ProposalActionStatus) Canceled() bool        { return p.canceled }
-func (p *ProposalActionStatus) CanceledAt() int64     { return p.canceledAt }
-func (p *ProposalActionStatus) CanceledHeight() int64 { return p.canceledHeight }
-func (p *ProposalActionStatus) Executed() bool        { return p.executed }
-func (p *ProposalActionStatus) ExecutedAt() int64     { return p.executedAt }
-func (p *ProposalActionStatus) ExecutedHeight() int64 { return p.executedHeight }
-func (p *ProposalActionStatus) Executable() bool      { return p.executable }
-
-/* Setter methods */
-func (p *ProposalActionStatus) SetCanceled(canceled bool) {
-	p.canceled = canceled
-}
-
-func (p *ProposalActionStatus) SetCanceledAt(canceledAt int64) {
-	p.canceledAt = canceledAt
-}
-
-func (p *ProposalActionStatus) SetCanceledHeight(canceledHeight int64) {
-	p.canceledHeight = canceledHeight
-}
-
-func (p *ProposalActionStatus) SetCanceledBy(canceledBy address) {
-	p.canceledBy = canceledBy
-}
-
-func (p *ProposalActionStatus) SetExecuted(executed bool) {
-	p.executed = executed
-}
-
-func (p *ProposalActionStatus) SetExecutedAt(executedAt int64) {
-	p.executedAt = executedAt
-}
-
-func (p *ProposalActionStatus) SetExecutedHeight(executedHeight int64) {
-	p.executedHeight = executedHeight
-}
-
-func (p *ProposalActionStatus) SetExecutedBy(executedBy address) {
-	p.executedBy = executedBy
-}
-
-func (p *ProposalActionStatus) SetExecutable(executable bool) {
-	p.executable = executable
-}
-
-// CanceledBy returns the address that canceled the proposal.
-// Only meaningful if IsCanceled() returns true.
-//
-// Returns:
-//   - std.Address: address of the canceller
-func (p *ProposalActionStatus) CanceledBy() address {
-	return p.canceledBy
-}
+func (p ProposalActionStatus) Canceled() bool        { return p.canceled }
+func (p ProposalActionStatus) CanceledAt() int64     { return p.canceledAt }
+func (p ProposalActionStatus) CanceledHeight() int64 { return p.canceledHeight }
+func (p ProposalActionStatus) CanceledBy() address   { return p.canceledBy }
+func (p ProposalActionStatus) Executed() bool        { return p.executed }
+func (p ProposalActionStatus) ExecutedAt() int64     { return p.executedAt }
+func (p ProposalActionStatus) ExecutedHeight() int64 { return p.executedHeight }
+func (p ProposalActionStatus) ExecutedBy() address   { return p.executedBy }
+func (p ProposalActionStatus) Executable() bool      { return p.executable }
 
 // IsExecuted returns whether the proposal has been executed.
-//
-// Returns:
-//   - bool: true if proposal has been executed
-func (p *ProposalActionStatus) IsExecuted() bool {
+func (p ProposalActionStatus) IsExecuted() bool {
 	return p.executed
 }
 
-// ExecutedBy returns the address that executed the proposal.
-// Only meaningful if IsExecuted() returns true.
-//
-// Returns:
-//   - std.Address: address of the executor
-func (p *ProposalActionStatus) ExecutedBy() address {
-	return p.executedBy
-}
-
 // IsExecutable returns whether this proposal type can be executed.
-// Text proposals return false, while other types return true.
-//
-// Returns:
-//   - bool: true if proposal type supports execution
-func (p *ProposalActionStatus) IsExecutable() bool {
+func (p ProposalActionStatus) IsExecutable() bool {
 	return p.executable
 }
 
-// NewProposalActionStatus creates a new action status for a proposal.
-// Initializes the status with default values and the executable flag.
-//
-// Parameters:
-//   - executable: whether this proposal type can be executed
-//
-// Returns:
-//   - *ProposalActionStatus: new action status instance
-func NewProposalActionStatus(executable bool) *ProposalActionStatus {
-	return &ProposalActionStatus{
-		canceled:   false,      // Proposal starts as not canceled
-		executed:   false,      // Proposal starts as not executed
-		executable: executable, // Set based on proposal type
+/* Functional updates */
+func (p ProposalActionStatus) SetCanceled(canceled bool) ProposalActionStatus {
+	p.canceled = canceled
+	return p
+}
+
+func (p ProposalActionStatus) SetCanceledAt(canceledAt int64) ProposalActionStatus {
+	p.canceledAt = canceledAt
+	return p
+}
+
+func (p ProposalActionStatus) SetCanceledHeight(canceledHeight int64) ProposalActionStatus {
+	p.canceledHeight = canceledHeight
+	return p
+}
+
+func (p ProposalActionStatus) SetCanceledBy(canceledBy address) ProposalActionStatus {
+	p.canceledBy = canceledBy
+	return p
+}
+
+func (p ProposalActionStatus) SetExecuted(executed bool) ProposalActionStatus {
+	p.executed = executed
+	return p
+}
+
+func (p ProposalActionStatus) SetExecutedAt(executedAt int64) ProposalActionStatus {
+	p.executedAt = executedAt
+	return p
+}
+
+func (p ProposalActionStatus) SetExecutedHeight(executedHeight int64) ProposalActionStatus {
+	p.executedHeight = executedHeight
+	return p
+}
+
+func (p ProposalActionStatus) SetExecutedBy(executedBy address) ProposalActionStatus {
+	p.executedBy = executedBy
+	return p
+}
+
+func (p ProposalActionStatus) SetExecutable(executable bool) ProposalActionStatus {
+	p.executable = executable
+	return p
+}
+
+// MakeProposalActionStatus creates a new action status value with the
+// executable flag.
+func MakeProposalActionStatus(executable bool) ProposalActionStatus {
+	return ProposalActionStatus{
+		executable: executable,
 	}
 }

@@ -19,7 +19,7 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 		proposalID        int64
 		yes               bool
 		voter             address
-		setupProposal     *governance.Proposal
+		setupProposal     governance.Proposal
 		setupVotingInfos  map[string]*governance.VotingInfo
 		requiresPriorVote bool
 		// then
@@ -32,17 +32,17 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000, // max voting weight
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Test Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
@@ -58,17 +58,17 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 			proposalID: 1,
 			yes:        false,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Test Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
@@ -92,17 +92,17 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter_no_weight"),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Test Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
@@ -119,17 +119,17 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Add(-time.Second*60*60*24*8).Unix(), // 8 days ago (past voting period)
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Test Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Add(-time.Hour*24*8).Unix()-testConfig.VotingWeightSmoothingDuration,
@@ -146,17 +146,17 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Test Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
@@ -176,7 +176,7 @@ func TestGovernanceVote_Vote(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			if tt.setupProposal != nil {
+			if tt.setupProposal.ID() != 0 {
 				setupTestProposal(cur, t, gov, tt.setupProposal)
 
 				// Use the actual proposal ID from the setup proposal
@@ -229,7 +229,7 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 		votedYes         bool
 		votedHeight      int64
 		votedAt          int64
-		setupProposal    *governance.Proposal
+		setupProposal    governance.Proposal
 		setupVotingInfo  *governance.VotingInfo
 		setVotingInfoErr error
 		// then
@@ -245,17 +245,17 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 			votedYes:     true,
 			votedHeight:  100,
 			votedAt:      time.Now().Unix(),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Test Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
@@ -272,17 +272,17 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 			votedYes:     false,
 			votedHeight:  100,
 			votedAt:      time.Now().Unix(),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Test Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
@@ -309,17 +309,17 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 			votedYes:     true,
 			votedHeight:  100,
 			votedAt:      time.Now().Unix(),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Test Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
@@ -335,17 +335,17 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 			votedYes:     true,
 			votedHeight:  100,
 			votedAt:      time.Now().Unix(),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Test Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
@@ -362,17 +362,17 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 			votedYes:     true,
 			votedHeight:  100,
 			votedAt:      time.Now().Unix(),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-testConfig.VotingStartDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Test Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test Proposal", "Test Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay-testConfig.VotingWeightSmoothingDuration,
@@ -390,7 +390,7 @@ func TestGovernanceVote_VotePrivate(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			if tt.setupProposal != nil {
+			if tt.setupProposal.ID() != 0 {
 				setupTestProposal(cur, t, gov, tt.setupProposal)
 			}
 			if tt.setupVotingInfo != nil {
@@ -438,7 +438,7 @@ func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 		proposalID    int64
 		yes           bool
 		voter         address
-		setupProposal func() *governance.Proposal
+		setupProposal func() governance.Proposal
 		setupHalt     bool
 		expectedError string
 	}{
@@ -461,15 +461,15 @@ func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: func() *governance.Proposal {
-				return governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				return governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Test", "Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Test", "Description"),
+					DefaultProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
@@ -484,23 +484,22 @@ func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Test", "Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Test", "Description"),
+					DefaultProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix()-testConfig.VotingWeightSmoothingDuration,
 					100,
 				)
 
-				resolver := NewProposalStatusResolver(proposal.Status())
-				resolver.cancel(time.Now().Unix(), 100, testutils.TestAddress("canceler"))
+				proposal = withProposalStatusCancel(proposal, time.Now().Unix(), 100, testutils.TestAddress("canceler"))
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-009] unable to vote out of voting period || cannot vote out of voting period",
@@ -510,24 +509,23 @@ func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Test", "Description"),
-					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
+					governance.MakeProposalMetadata("Test", "Description"),
+					MakeProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration,
 					100,
 				)
 
-				resolver := NewProposalStatusResolver(proposal.Status())
-				resolver.vote(true, 6_000_000_000)
-				resolver.execute(time.Now().Unix(), 100, testutils.TestAddress("executor"))
+				proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
+				proposal = withProposalStatusExecute(proposal, time.Now().Unix(), 100, testutils.TestAddress("executor"))
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-009] unable to vote out of voting period || cannot vote out of voting period",
@@ -537,15 +535,15 @@ func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 			proposalID: 1,
 			yes:        true,
 			voter:      testutils.TestAddress("voter"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Test", "Description"),
-					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
+					governance.MakeProposalMetadata("Test", "Description"),
+					MakeProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*40).Unix()-testConfig.VotingWeightSmoothingDuration,
@@ -633,14 +631,14 @@ func TestGovernanceVote_VotePeriod(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			proposal := governance.NewProposal(
+			proposal := governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig, 10_000_000_000, true, tt.proposalTime,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test", "Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test", "Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				tt.proposalTime-testConfig.VotingWeightSmoothingDuration,
@@ -713,14 +711,14 @@ func TestGovernanceVote_VoteWeightCalculation(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			proposal := governance.NewProposal(
+			proposal := governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig, 10_000_000_000, true, time.Now().Unix()-testConfig.VotingStartDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test", "Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test", "Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix()-testConfig.VotingStartDelay,
@@ -798,41 +796,39 @@ func TestGovernanceVote_QuorumCalculation(cur realm, t *testing.T) {
 
 			customConfig := governance.NewConfig(86400, 604800, 86400, tt.quorumPercent, 1_000_000_000, 86400, 2592000)
 
-			proposal := governance.NewProposal(
+			proposal := governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					customConfig, eligibleWeight, true, time.Now().Add(-time.Hour*24*10).Unix(),
 					eligibleWeight,
 				),
-				governance.NewProposalMetadata("Test", "Description"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Test", "Description"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Add(-time.Hour*24*10).Unix()-testConfig.VotingWeightSmoothingDuration,
 				100,
 			)
 
-			resolver := NewProposalStatusResolver(proposal.Status())
-			// Simulate voting
 			if tt.yesVotes > 0 {
-				resolver.vote(true, tt.yesVotes)
+				proposal = withProposalStatusVote(proposal, true, tt.yesVotes)
 			}
 			if tt.noVotes > 0 {
-				resolver.vote(false, tt.noVotes)
+				proposal = withProposalStatusVote(proposal, false, tt.noVotes)
 			}
 
 			setupTestProposal(cur, t, gov, proposal)
 
 			// then
-			statusResolver := NewProposalStatusResolver(proposal.Status())
+			statusResolver := MakeProposalStatusResolver(proposal.Status())
 			uassert.Equal(t, tt.expectedTotalVoteWeight, statusResolver.TotalVoteWeight())
 			uassert.Equal(t, tt.expectedQuorumAmount, proposal.VotingQuorumAmount())
 		})
 	}
 }
 
-func setupTestProposal(cur realm, t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
-	gov.addProposal(0, cur, *proposal)
+func setupTestProposal(cur realm, t *testing.T, gov *governanceV1, proposal governance.Proposal) {
+	gov.addProposal(0, cur, proposal)
 
 	// Initialize empty voting info tree for the proposal if not exists
 	if _, exists := gov.getProposalUserVotingInfos(proposal.ID()); !exists {

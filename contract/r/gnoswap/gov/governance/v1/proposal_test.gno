@@ -56,26 +56,26 @@ func TestProposal_TypeOperations(cur realm, t *testing.T) {
 func TestProposal_Validation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		metadata      *governance.ProposalMetadata
-		data          *governance.ProposalData
+		metadata      governance.ProposalMetadata
+		data          governance.ProposalData
 		expectedError bool
 	}{
 		{
 			name:          "Valid Text proposal",
-			metadata:      governance.NewProposalMetadata("Valid Title", "Valid Description"),
-			data:          governance.NewProposalData(governance.Text, nil, nil),
+			metadata:      governance.MakeProposalMetadata("Valid Title", "Valid Description"),
+			data:          governance.MakeProposalData(governance.Text, governance.DefaultCommunityPoolSpendInfo(), governance.DefaultExecutionInfo()),
 			expectedError: false,
 		},
 		{
 			name:          "Invalid metadata",
-			metadata:      governance.NewProposalMetadata("", "Valid Description"),
-			data:          governance.NewProposalData(governance.Text, nil, nil),
+			metadata:      governance.MakeProposalMetadata("", "Valid Description"),
+			data:          governance.MakeProposalData(governance.Text, governance.DefaultCommunityPoolSpendInfo(), governance.DefaultExecutionInfo()),
 			expectedError: true,
 		},
 		{
 			name:          "Invalid CommunityPoolSpend proposal",
-			metadata:      governance.NewProposalMetadata("Valid Title", "Valid Description"),
-			data:          governance.NewProposalData(governance.CommunityPoolSpend, governance.NewCommunityPoolSpendInfo(address(""), "", 0), nil),
+			metadata:      governance.MakeProposalMetadata("Valid Title", "Valid Description"),
+			data:          governance.MakeProposalData(governance.CommunityPoolSpend, governance.MakeCommunityPoolSpendInfo(address(""), "", 0), governance.DefaultExecutionInfo()),
 			expectedError: true,
 		},
 	}
@@ -87,7 +87,7 @@ func TestProposal_Validation(cur realm, t *testing.T) {
 			config := governance.NewConfig(100, 200, 0, 50, 0, 100, 200)
 			proposal := newTestProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					config, 1000, governance.Text.IsExecutable(), baseTime,
 					1000,
 				),
@@ -99,7 +99,7 @@ func TestProposal_Validation(cur realm, t *testing.T) {
 			)
 
 			// when
-			err := NewProposalResolver(proposal).Validate()
+			err := MakeProposalResolver(proposal).Validate()
 
 			// then
 			if tc.expectedError {
@@ -151,32 +151,27 @@ func TestProposal_StatusOperations(cur realm, t *testing.T) {
 			// given
 			proposal := newTestProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					config, 1000, tc.proposalType.IsExecutable(), baseTime.Unix(),
 					1000,
 				),
-				governance.NewProposalMetadata("Test", "Test"),
-				governance.NewProposalData(tc.proposalType, nil, nil),
+				governance.MakeProposalMetadata("Test", "Test"),
+				governance.MakeProposalData(tc.proposalType, governance.DefaultCommunityPoolSpendInfo(), governance.DefaultExecutionInfo()),
 				address("g1proposer"),
 				1, // configVersion
 				baseTime.Unix(),
 			)
 
 			if tc.isExecuted {
-				resolver := NewProposalResolver(proposal)
-				err := resolver.Vote(true, 600)
-				uassert.NoError(t, err)
-
-				err = NewProposalResolver(proposal).execute(tc.currentTime.Unix(), 100, address("g1executor"))
-				uassert.NoError(t, err)
+				proposal = withProposalVote(proposal, true, 600)
+				proposal = withProposalExecute(proposal, tc.currentTime.Unix(), 100, address("g1executor"))
 			}
 			if tc.isCanceled {
-				err := NewProposalResolver(proposal).cancel(tc.currentTime.Unix(), 100, address("g1canceler"))
-				uassert.NoError(t, err)
+				proposal = withProposalCancel(proposal, tc.currentTime.Unix(), 100, address("g1canceler"))
 			}
 
 			// when & then
-			uassert.Equal(t, NewProposalResolver(proposal).IsActive(tc.currentTime.Unix()), tc.expectedActive)
+			uassert.Equal(t, MakeProposalResolver(proposal).IsActive(tc.currentTime.Unix()), tc.expectedActive)
 		})
 	}
 }
@@ -197,7 +192,7 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 		quorum             int64
 		maxVotingWeight    int64
 		currentTimeOffset  int64 // offset from baseTime
-		setupFunc          func(proposal *governance.Proposal, current int64)
+		setupFunc          func(proposal governance.Proposal, current int64) governance.Proposal
 		expectedActive     bool
 		expectedStatusType governance.ProposalStatusType
 	}{
@@ -275,10 +270,10 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			quorum:            50,
 			maxVotingWeight:   1000,
 			currentTimeOffset: 350, // after voting ends
-			setupFunc: func(proposal *governance.Proposal, current int64) {
+			setupFunc: func(proposal governance.Proposal, current int64) governance.Proposal {
 				// Add enough yes votes to pass
-				resolver := NewProposalResolver(proposal)
-				resolver.Vote(true, 600) // 60% yes
+				proposal = withProposalVote(proposal, true, 600) // 60% yes
+				return proposal
 			},
 			expectedActive:     false,
 			expectedStatusType: governance.StatusPassed,
@@ -294,9 +289,9 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			quorum:            50,
 			maxVotingWeight:   1000,
 			currentTimeOffset: 350, // after voting ends, before executable
-			setupFunc: func(proposal *governance.Proposal, current int64) {
-				resolver := NewProposalResolver(proposal)
-				resolver.Vote(true, 600) // 60% yes
+			setupFunc: func(proposal governance.Proposal, current int64) governance.Proposal {
+				proposal = withProposalVote(proposal, true, 600) // 60% yes
+				return proposal
 			},
 			expectedActive:     true,
 			expectedStatusType: governance.StatusPassed,
@@ -312,9 +307,9 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			quorum:            50,
 			maxVotingWeight:   1000,
 			currentTimeOffset: 350,
-			setupFunc: func(proposal *governance.Proposal, current int64) {
-				resolver := NewProposalResolver(proposal)
-				resolver.Vote(true, 600)
+			setupFunc: func(proposal governance.Proposal, current int64) governance.Proposal {
+				proposal = withProposalVote(proposal, true, 600)
+				return proposal
 			},
 			expectedActive:     true,
 			expectedStatusType: governance.StatusPassed,
@@ -331,9 +326,9 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			quorum:            50,
 			maxVotingWeight:   1000,
 			currentTimeOffset: 450, // after execution delay
-			setupFunc: func(proposal *governance.Proposal, current int64) {
-				resolver := NewProposalResolver(proposal)
-				resolver.Vote(true, 600)
+			setupFunc: func(proposal governance.Proposal, current int64) governance.Proposal {
+				proposal = withProposalVote(proposal, true, 600)
+				return proposal
 			},
 			expectedActive:     true,
 			expectedStatusType: governance.StatusExecutable,
@@ -350,9 +345,9 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			quorum:            50,
 			maxVotingWeight:   1000,
 			currentTimeOffset: 350,
-			setupFunc: func(proposal *governance.Proposal, current int64) {
-				resolver := NewProposalResolver(proposal)
-				resolver.Vote(false, 600) // 60% no
+			setupFunc: func(proposal governance.Proposal, current int64) governance.Proposal {
+				proposal = withProposalVote(proposal, false, 600) // 60% no
+				return proposal
 			},
 			expectedActive:     false,
 			expectedStatusType: governance.StatusRejected,
@@ -368,10 +363,10 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			quorum:            50,
 			maxVotingWeight:   1000,
 			currentTimeOffset: 350,
-			setupFunc: func(proposal *governance.Proposal, current int64) {
-				resolver := NewProposalResolver(proposal)
-				resolver.Vote(true, 400)  // 40% yes - not enough
-				resolver.Vote(false, 500) // 50% no
+			setupFunc: func(proposal governance.Proposal, current int64) governance.Proposal {
+				proposal = withProposalVote(proposal, true, 400)  // 40% yes - not enough
+				proposal = withProposalVote(proposal, false, 500) // 50% no
+				return proposal
 			},
 			expectedActive:     false,
 			expectedStatusType: governance.StatusRejected,
@@ -387,10 +382,10 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			quorum:            50,
 			maxVotingWeight:   1000,
 			currentTimeOffset: 350,
-			setupFunc: func(proposal *governance.Proposal, current int64) {
-				resolver := NewProposalResolver(proposal)
-				resolver.Vote(true, 500)
-				resolver.Vote(false, 500)
+			setupFunc: func(proposal governance.Proposal, current int64) governance.Proposal {
+				proposal = withProposalVote(proposal, true, 500)
+				proposal = withProposalVote(proposal, false, 500)
+				return proposal
 			},
 			expectedActive:     false,
 			expectedStatusType: governance.StatusRejected,
@@ -407,10 +402,10 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			quorum:            50,
 			maxVotingWeight:   1000,
 			currentTimeOffset: 450,
-			setupFunc: func(proposal *governance.Proposal, current int64) {
-				resolver := NewProposalResolver(proposal)
-				resolver.Vote(true, 600)
-				resolver.execute(current, 100, address("g1executor"))
+			setupFunc: func(proposal governance.Proposal, current int64) governance.Proposal {
+				proposal = withProposalVote(proposal, true, 600)
+				proposal = withProposalExecute(proposal, current, 100, address("g1executor"))
+				return proposal
 			},
 			expectedActive:     false,
 			expectedStatusType: governance.StatusExecuted,
@@ -427,9 +422,9 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			quorum:            50,
 			maxVotingWeight:   1000,
 			currentTimeOffset: 50,
-			setupFunc: func(proposal *governance.Proposal, current int64) {
-				resolver := NewProposalResolver(proposal)
-				resolver.cancel(current, 100, address("g1proposer"))
+			setupFunc: func(proposal governance.Proposal, current int64) governance.Proposal {
+				proposal = withProposalCancel(proposal, current, 100, address("g1proposer"))
+				return proposal
 			},
 			expectedActive:     false,
 			expectedStatusType: governance.StatusCanceled,
@@ -446,9 +441,9 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 			quorum:            50,
 			maxVotingWeight:   1000,
 			currentTimeOffset: 700, // after execution window
-			setupFunc: func(proposal *governance.Proposal, current int64) {
-				resolver := NewProposalResolver(proposal)
-				resolver.Vote(true, 600)
+			setupFunc: func(proposal governance.Proposal, current int64) governance.Proposal {
+				proposal = withProposalVote(proposal, true, 600)
+				return proposal
 			},
 			expectedActive:     false,
 			expectedStatusType: governance.StatusExpired,
@@ -462,12 +457,12 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 
 			proposal := newTestProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					config, tc.maxVotingWeight, tc.proposalType.IsExecutable(), baseTime,
 					tc.maxVotingWeight,
 				),
-				governance.NewProposalMetadata("Test Title", "Test Description"),
-				governance.NewProposalData(tc.proposalType, nil, nil),
+				governance.MakeProposalMetadata("Test Title", "Test Description"),
+				governance.MakeProposalData(tc.proposalType, governance.DefaultCommunityPoolSpendInfo(), governance.DefaultExecutionInfo()),
 				address("g1proposer"),
 				1,
 				baseTime,
@@ -477,11 +472,11 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 
 			// Apply setup function if provided
 			if tc.setupFunc != nil {
-				tc.setupFunc(proposal, currentTime)
+				proposal = tc.setupFunc(proposal, currentTime)
 			}
 
 			// when
-			resolver := NewProposalResolver(proposal)
+			resolver := MakeProposalResolver(proposal)
 			isActive := resolver.IsActive(currentTime)
 			statusType := resolver.StatusType(currentTime)
 
@@ -492,8 +487,8 @@ func TestProposal_IsActive_StatusTypeCaching(cur realm, t *testing.T) {
 	}
 }
 
-// // TestNewProposal tests creation of new proposal
-func TestNewProposal(cur realm, t *testing.T) {
+// TestMakeProposal tests creation of a new proposal.
+func TestMakeProposal(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
 		proposalType governance.ProposalType
@@ -526,19 +521,19 @@ func TestNewProposal(cur realm, t *testing.T) {
 			// when
 			proposal := newTestProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					config, 1000, tc.proposalType.IsExecutable(), baseTime,
 					1000,
 				),
-				governance.NewProposalMetadata(tc.title, tc.description),
-				governance.NewProposalData(tc.proposalType, nil, nil),
+				governance.MakeProposalMetadata(tc.title, tc.description),
+				governance.MakeProposalData(tc.proposalType, governance.DefaultCommunityPoolSpendInfo(), governance.DefaultExecutionInfo()),
 				tc.proposer,
 				1, // configVersion
 				baseTime,
 			)
 
 			// then
-			resolver := NewProposalResolver(proposal)
+			resolver := MakeProposalResolver(proposal)
 			uassert.NotNil(t, proposal)
 			uassert.Equal(t, resolver.Type().String(), tc.proposalType.String())
 			uassert.Equal(t, resolver.Title(), tc.title)

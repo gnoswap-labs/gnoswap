@@ -8,14 +8,14 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
-func newProposalFixture() *Proposal {
-	schedule := NewProposalScheduleStatus(10, 20, 30, 40, 50)
-	actionStatus := NewProposalActionStatus(true)
-	voteStatus := NewProposalVoteStatus(100, 60)
-	status := NewProposalStatusBy(schedule, actionStatus, voteStatus)
-	metadata := NewProposalMetadata("title", "description")
-	data := NewProposalData(ParameterChange, NewCommunityPoolSpendInfo(adminAddr, "token", 70), NewExecutionInfo(2, []string{"msg1", "msg2"}))
-	return NewProposal(1, status, metadata, data, adminAddr, 2, 80, 100)
+func newProposalFixture() Proposal {
+	schedule := MakeProposalScheduleStatus(10, 20, 30, 40, 50)
+	actionStatus := MakeProposalActionStatus(true)
+	voteStatus := MakeProposalVoteStatus(100, 60)
+	status := MakeProposalStatusBy(schedule, actionStatus, voteStatus)
+	metadata := MakeProposalMetadata("title", "description")
+	data := MakeProposalData(ParameterChange, MakeCommunityPoolSpendInfo(adminAddr, "token", 70), MakeExecutionInfo(2, []string{"msg1", "msg2"}))
+	return MakeProposal(1, status, metadata, data, adminAddr, 2, 80, 100)
 }
 
 func newVotingInfoFixture() *VotingInfo {
@@ -30,7 +30,7 @@ func newVotingInfoFixture() *VotingInfo {
 
 func TestExecutionMessagesOwnInputAndOutput(t *testing.T) {
 	input := []string{"original"}
-	info := NewExecutionInfo(1, input)
+	info := MakeExecutionInfo(1, input)
 	input[0] = "changed input"
 	uassert.Equal(t, "original", info.Msgs()[0])
 
@@ -186,6 +186,6 @@ func TestReadOnlyTreeGetters_NoImplementationResponse(cur realm, t *testing.T) {
 
 // storedTestProposal returns the proposal the mock's read-only view wraps, so a
 // test can assert the stored copy was not reached through the view.
-func storedTestProposal(m *MockGovernance) *Proposal {
-	return m.Response.data["storedProposal"][0].(*Proposal)
+func storedTestProposal(m *MockGovernance) Proposal {
+	return m.Response.data["storedProposal"][0].(Proposal)
 }

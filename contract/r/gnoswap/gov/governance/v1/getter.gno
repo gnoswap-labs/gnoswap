@@ -106,12 +106,13 @@ func (gv *governanceV1) GetProposalCommunityPoolSpendInfo(proposalID int64) (gov
 	}
 
 	proposalData := proposal.Data()
-	if proposalData == nil || proposalData.CommunityPoolSpend() == nil {
+	communityPoolSpend, ok := proposalData.CommunityPoolSpend()
+	if !ok {
 		var zero governance.CommunityPoolSpendInfo
 		return zero, ufmt.Errorf("proposal is not a community pool spend proposal")
 	}
 
-	return *proposalData.CommunityPoolSpend(), nil
+	return communityPoolSpend, nil
 }
 
 // GetProposalExecutionInfo returns the execution info for a proposal.
@@ -123,12 +124,13 @@ func (gv *governanceV1) GetProposalExecutionInfo(proposalID int64) (governance.E
 	}
 
 	proposalData := proposal.Data()
-	if proposalData == nil || proposalData.Execution() == nil {
+	execution, ok := proposalData.Execution()
+	if !ok {
 		var zero governance.ExecutionInfo
 		return zero, ufmt.Errorf("proposal is not a parameter change proposal")
 	}
 
-	return *proposalData.Execution(), nil
+	return execution, nil
 }
 
 // GetYeaByProposalId returns the yes vote weight of a proposal.
@@ -191,7 +193,7 @@ func (gv *governanceV1) GetProposalStatusByProposalId(proposalId int64) (string,
 	if !exists {
 		return "", ufmt.Errorf("proposal %d not found", proposalId)
 	}
-	proposalResolver := NewProposalResolver(&proposal)
+	proposalResolver := MakeProposalResolver(proposal)
 	return proposalResolver.Status(time.Now().Unix()), nil
 }
 
@@ -278,7 +280,7 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 			continue
 		}
 
-		proposalResolver := NewProposalResolver(&proposal)
+		proposalResolver := MakeProposalResolver(proposal)
 
 		if proposalResolver.IsActive(currentTime) {
 			snapshotTime := proposal.SnapshotTime()

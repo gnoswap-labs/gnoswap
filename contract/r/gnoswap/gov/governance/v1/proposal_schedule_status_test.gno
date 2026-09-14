@@ -81,7 +81,7 @@ func TestProposalScheduleStatus_TimeChecks(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// given
-			status := NewProposalScheduleStatus(
+			status := MakeProposalScheduleStatus(
 				votingStartDelay,
 				votingPeriod,
 				executionDelay,
@@ -92,7 +92,7 @@ func TestProposalScheduleStatus_TimeChecks(cur realm, t *testing.T) {
 			// when & then
 			for stateName, expectedResult := range tc.expectedStates {
 				var result bool
-				resolver := NewProposalScheduleStatusResolver(status)
+				resolver := MakeProposalScheduleStatusResolver(status)
 				switch stateName {
 				case "IsPassedCreatedAt":
 					result = resolver.IsPassedCreatedAt(tc.currentTime.Unix())
@@ -112,8 +112,8 @@ func TestProposalScheduleStatus_TimeChecks(cur realm, t *testing.T) {
 	}
 }
 
-// TestNewProposalScheduleStatus tests the creation of new schedule status
-func TestNewProposalScheduleStatus(cur realm, t *testing.T) {
+// TestMakeProposalScheduleStatus tests the creation of a new schedule status
+func TestMakeProposalScheduleStatus(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
 		votingStartDelay int64
@@ -143,7 +143,7 @@ func TestNewProposalScheduleStatus(cur realm, t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			// when
-			status := NewProposalScheduleStatus(
+			status := MakeProposalScheduleStatus(
 				tc.votingStartDelay,
 				tc.votingPeriod,
 				tc.executionDelay,

@@ -60,18 +60,18 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		{
 			name: "Upcoming proposal should remain active",
 			setup: func(cur realm, gv *governanceV1) {
-				proposal := governance.NewProposal(
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						config, 1000, false, baseCreatedAt,
 						1000,
 					),
-					governance.NewProposalMetadata("Test Title", "Test Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Test Title", "Test Description"),
+					DefaultProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, *proposal)
+				gv.addProposal(0, cur, proposal)
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay - 10,
 			expectedRemainingCount: 1,
@@ -81,18 +81,18 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		{
 			name: "All proposals are active - none should be removed",
 			setup: func(cur realm, gv *governanceV1) {
-				proposal := governance.NewProposal(
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						config, 1000, false, baseCreatedAt,
 						1000,
 					),
-					governance.NewProposalMetadata("Test Title", "Test Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Test Title", "Test Description"),
+					DefaultProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, *proposal)
+				gv.addProposal(0, cur, proposal)
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay + 50, // during voting period
 			expectedRemainingCount: 1,
@@ -102,18 +102,18 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		{
 			name: "All proposals are expired - all should be removed",
 			setup: func(cur realm, gv *governanceV1) {
-				proposal := governance.NewProposal(
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						config, 1000, false, baseCreatedAt,
 						1000,
 					),
-					governance.NewProposalMetadata("Test Title", "Test Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Test Title", "Test Description"),
+					DefaultProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, *proposal)
+				gv.addProposal(0, cur, proposal)
 			},
 			currentTime:            expiredTime + 100, // after expired
 			expectedRemainingCount: 0,
@@ -124,33 +124,33 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 			name: "Mixed active and inactive proposals - only inactive should be removed",
 			setup: func(cur realm, gv *governanceV1) {
 				// Expired proposal
-				oldProposal := governance.NewProposal(
+				oldProposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						config, 1000, false, baseCreatedAt,
 						1000,
 					),
-					governance.NewProposalMetadata("Old Title", "Old Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Old Title", "Old Description"),
+					DefaultProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, *oldProposal)
+				gv.addProposal(0, cur, oldProposal)
 
 				// Active proposal (created after first one expired)
 				newCreatedAt := expiredTime + 50
-				newProposal := governance.NewProposal(
+				newProposal := governance.MakeProposal(
 					2,
-					NewProposalStatus(
+					MakeProposalStatus(
 						config, 1000, false, newCreatedAt,
 						1000,
 					),
-					governance.NewProposalMetadata("New Title", "New Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("New Title", "New Description"),
+					DefaultProposalTextData(),
 					proposerAddr, 1, newCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, *newProposal)
+				gv.addProposal(0, cur, newProposal)
 			},
 			currentTime:            expiredTime + 50 + config.VotingStartDelay + 50, // during new proposal's voting period
 			expectedRemainingCount: 1,
@@ -160,23 +160,22 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		{
 			name: "Canceled proposal should be removed",
 			setup: func(cur realm, gv *governanceV1) {
-				proposal := governance.NewProposal(
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						config, 1000, true, baseCreatedAt,
 						1000,
 					),
-					governance.NewProposalMetadata("Test Title", "Test Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Test Title", "Test Description"),
+					DefaultProposalTextData(),
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, *proposal)
+				gv.addProposal(0, cur, proposal)
 
 				// Cancel the proposal
-				proposalResolver := NewProposalResolver(proposal)
-				_ = proposalResolver.cancel(baseCreatedAt+50, 100, proposerAddr)
-				if err := gv.store.SetProposal(0, cur, proposal.ID(), *proposal); err != nil {
+				proposal = withProposalCancel(proposal, baseCreatedAt+50, 100, proposerAddr)
+				if err := gv.store.SetProposal(0, cur, proposal.ID(), proposal); err != nil {
 					panic(err)
 				}
 			},
@@ -188,14 +187,14 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 		{
 			name: "Executable proposal should remain active",
 			setup: func(cur realm, gv *governanceV1) {
-				proposal := governance.NewProposal(
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						config, 1000, true, baseCreatedAt,
 						1000,
 					),
-					governance.NewProposalMetadata("Test Title", "Test Description"),
-					NewProposalCommunityPoolSpendData(
+					governance.MakeProposalMetadata("Test Title", "Test Description"),
+					MakeProposalCommunityPoolSpendData(
 						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						100,
@@ -205,10 +204,9 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					100,
 				)
 
-				proposalResolver := NewProposalResolver(proposal)
-				_ = proposalResolver.Vote(true, 600)
+				proposal = withProposalVote(proposal, true, 600)
 
-				gv.addProposal(0, cur, *proposal)
+				gv.addProposal(0, cur, proposal)
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay + config.VotingPeriod + config.ExecutionDelay + 50,
 			expectedRemainingCount: 1,
@@ -219,18 +217,18 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 			name: "Multiple expired proposals - all should be removed",
 			setup: func(cur realm, gv *governanceV1) {
 				for i := int64(1); i <= 3; i++ {
-					proposal := governance.NewProposal(
+					proposal := governance.MakeProposal(
 						i,
-						NewProposalStatus(
+						MakeProposalStatus(
 							config, 1000, false, baseCreatedAt,
 							1000,
 						),
-						governance.NewProposalMetadata("Test Title", "Test Description"),
-						NewProposalTextData(),
+						governance.MakeProposalMetadata("Test Title", "Test Description"),
+						DefaultProposalTextData(),
 						proposerAddr, 1, baseCreatedAt,
 						100,
 					)
-					gv.addProposal(0, cur, *proposal)
+					gv.addProposal(0, cur, proposal)
 				}
 			},
 			currentTime:            expiredTime + 100,
@@ -242,18 +240,18 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 			name: "Multiple active proposals - none should be removed",
 			setup: func(cur realm, gv *governanceV1) {
 				for i := int64(1); i <= 3; i++ {
-					proposal := governance.NewProposal(
+					proposal := governance.MakeProposal(
 						i,
-						NewProposalStatus(
+						MakeProposalStatus(
 							config, 1000, false, baseCreatedAt,
 							1000,
 						),
-						governance.NewProposalMetadata("Test Title", "Test Description"),
-						NewProposalTextData(),
+						governance.MakeProposalMetadata("Test Title", "Test Description"),
+						DefaultProposalTextData(),
 						proposerAddr, 1, baseCreatedAt,
 						100,
 					)
-					gv.addProposal(0, cur, *proposal)
+					gv.addProposal(0, cur, proposal)
 				}
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay + 50, // during voting period

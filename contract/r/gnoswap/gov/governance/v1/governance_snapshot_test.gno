@@ -206,7 +206,7 @@ func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 
 			// Create proposal
 			proposal := createTestProposal(tt.proposalID)
-			store.SetProposal(0, cur, tt.proposalID, *proposal)
+			store.SetProposal(0, cur, tt.proposalID, proposal)
 
 			// Create voting infos
 			votingInfos := governance.NewProposalUserVotingInfoTree()
@@ -217,7 +217,7 @@ func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 			}
 
 			// Update votes
-			err := gv.updateProposalUserVotes(0, cur, *proposal, votingInfos)
+			err := gv.updateProposalUserVotes(0, cur, proposal, votingInfos)
 
 			uassert.NoError(t, err)
 
@@ -229,19 +229,19 @@ func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 	}
 }
 
-func createTestProposal(id int64) *governance.Proposal {
+func createTestProposal(id int64) governance.Proposal {
 	config := governance.NewConfig(100, 1000, 50, 30, 100, 100, 500)
 
 	createdAt := int64(1000)
 
-	return governance.NewProposal(
+	return governance.MakeProposal(
 		id,
-		NewProposalStatus(
+		MakeProposalStatus(
 			config, 10000, true, createdAt,
 			10000,
 		),
-		governance.NewProposalMetadata("Test", "Test proposal"),
-		governance.NewProposalData(governance.Text, nil, nil),
+		governance.MakeProposalMetadata("Test", "Test proposal"),
+		governance.MakeProposalData(governance.Text, governance.DefaultCommunityPoolSpendInfo(), governance.DefaultExecutionInfo()),
 		address("g1proposer"),
 		1,
 		createdAt-config.VotingWeightSmoothingDuration,

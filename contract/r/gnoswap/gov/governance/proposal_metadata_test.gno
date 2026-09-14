@@ -7,7 +7,7 @@ import (
 )
 
 func TestProposalMetadataReturnsValue(t *testing.T) {
-	proposal := NewProposal(1, nil, NewProposalMetadata("title", "description"), nil, "", 0, 0, 0)
+	proposal := MakeProposal(1, ProposalStatus{}, MakeProposalMetadata("title", "description"), ProposalData{}, "", 0, 0, 0)
 	metadata := proposal.Metadata()
 	uassert.Equal(t, "title", metadata.Title())
 	uassert.Equal(t, "description", metadata.Description())

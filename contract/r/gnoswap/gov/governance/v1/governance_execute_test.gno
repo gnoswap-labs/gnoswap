@@ -20,7 +20,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 		// given
 		proposalId    int64
 		executor      address
-		setupProposal *governance.Proposal
+		setupProposal governance.Proposal
 		// then
 		expectedProposalId int64
 		expectedHasAbort   bool
@@ -30,27 +30,25 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 			name:       "success - execute parameter change proposal",
 			proposalId: 1,
 			executor:   testutils.TestAddress("executor"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig,
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Hour*24*10).Unix(), // 10 days ago
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
-					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
+					governance.MakeProposalMetadata("Parameter Change", "Change Parameters"),
+					MakeProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
 				// Mark as passed
-				resolver := NewProposalStatusResolver(proposal.Status())
-				// proposal.Status().Vote(true, 6_000_000_000) // 60% yes votes
-				resolver.vote(true, 6_000_000_000)
+				proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 				return proposal
 			}(),
 			expectedProposalId: 1,
@@ -59,18 +57,18 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 			name:       "success - execute community pool spend proposal",
 			proposalId: 1,
 			executor:   testutils.TestAddress("executor"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig,
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Hour*24*10).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Community Pool Spend", "Spend from pool"),
-					NewProposalCommunityPoolSpendData(
+					governance.MakeProposalMetadata("Community Pool Spend", "Spend from pool"),
+					MakeProposalCommunityPoolSpendData(
 						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						1_000_000_000,
@@ -81,8 +79,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.vote(true, 6_000_000_000)
+				proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 				return proposal
 			}(),
 			expectedProposalId: 1,
@@ -98,17 +95,17 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 			name:       "fail - text proposal not executable",
 			proposalId: 1,
 			executor:   testutils.TestAddress("executor"),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					false, // not executable
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Text Proposal", "Text Only"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Text Proposal", "Text Only"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Add(-time.Hour*24*10).Unix(),
@@ -121,25 +118,24 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 			name:       "fail - execution period not started",
 			proposalId: 1,
 			executor:   testutils.TestAddress("executor"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig,
 						10_000_000_000,
 						true,
 						time.Now().Unix(), // Just created
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
-					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
+					governance.MakeProposalMetadata("Parameter Change", "Change Parameters"),
+					MakeProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
 					100,
 				)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.vote(true, 6_000_000_000)
+				proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 				return proposal
 			}(),
 			expectedHasAbort: true,
@@ -149,18 +145,18 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 			name:       "fail - proposal not passed",
 			proposalId: 1,
 			executor:   testutils.TestAddress("executor"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig,
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Second*86400).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
-					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
+					governance.MakeProposalMetadata("Parameter Change", "Change Parameters"),
+					MakeProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Second*86400).Unix(),
@@ -180,7 +176,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 			gov := newMockGovernance()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
-			if tt.setupProposal != nil {
+			if tt.setupProposal.ID() != 0 {
 				setupExecuteTestProposal(cur, t, gov, tt.setupProposal)
 			}
 
@@ -200,7 +196,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expectedProposalId, resultId)
 
 			proposal, _ := gov.getProposal(tt.proposalId)
-			statusResolver := NewProposalStatusResolver(proposal.Status())
+			statusResolver := MakeProposalStatusResolver(proposal.Status())
 			uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
 		})
 	}
@@ -214,7 +210,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 		executedAt     int64
 		executedHeight int64
 		executedBy     address
-		setupProposal  *governance.Proposal
+		setupProposal  governance.Proposal
 		// then
 		expectedHasError     bool
 		expectedErrorMessage string
@@ -225,25 +221,24 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 			executedAt:     time.Now().Unix(),
 			executedHeight: 1000,
 			executedBy:     testutils.TestAddress("executor"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig,
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Hour*24*10).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
-					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
+					governance.MakeProposalMetadata("Parameter Change", "Change Parameters"),
+					MakeProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.vote(true, 6_000_000_000)
+				proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 				return proposal
 			}(),
 			expectedHasError: false,
@@ -254,18 +249,18 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 			executedAt:     time.Now().Unix(),
 			executedHeight: 1000,
 			executedBy:     testutils.TestAddress("executor"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig,
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Hour*24*10).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Community Pool Spend", "Spend from pool"),
-					NewProposalCommunityPoolSpendData(
+					governance.MakeProposalMetadata("Community Pool Spend", "Spend from pool"),
+					MakeProposalCommunityPoolSpendData(
 						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						1_000_000_000,
@@ -276,8 +271,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.vote(true, 6_000_000_000)
+				proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 				return proposal
 			}(),
 			expectedHasError: false,
@@ -297,17 +291,17 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 			executedAt:     time.Now().Unix(),
 			executedHeight: 1000,
 			executedBy:     testutils.TestAddress("executor"),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					false,
 					time.Now().Unix(),
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Text Proposal", "Text Only"),
-				NewProposalTextData(),
+				governance.MakeProposalMetadata("Text Proposal", "Text Only"),
+				DefaultProposalTextData(),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Unix(),
@@ -322,25 +316,24 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 			executedAt:     time.Now().Unix(),
 			executedHeight: 1000,
 			executedBy:     testutils.TestAddress("executor"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig,
 						10_000_000_000,
 						true,
 						time.Now().Unix(), // Just created, not in execution period
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Change Parameters"),
-					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
+					governance.MakeProposalMetadata("Parameter Change", "Change Parameters"),
+					MakeProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
 					100,
 				)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.vote(true, 6_000_000_000)
+				proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 				return proposal
 			}(),
 			expectedHasError:     true,
@@ -354,7 +347,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 			gov := newMockGovernance()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
-			if tt.setupProposal != nil {
+			if tt.setupProposal.ID() != 0 {
 				setupExecuteTestProposal(cur, t, gov, tt.setupProposal)
 			}
 
@@ -375,7 +368,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 				uassert.Equal(t, int64(tt.proposalId), proposal.ID())
-				statusResolver := NewProposalStatusResolver(proposal.Status())
+				statusResolver := MakeProposalStatusResolver(proposal.Status())
 				uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
 			}
 		})
@@ -392,7 +385,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 		// given
 		proposalId    int64
 		canceler      address
-		setupProposal *governance.Proposal
+		setupProposal governance.Proposal
 		// then
 		expectedProposalId int64
 		expectedHasAbort   bool
@@ -402,17 +395,17 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 			name:       "success - cancel proposal by proposer",
 			proposalId: 1,
 			canceler:   testutils.TestAddress("proposer"),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-executableDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Description"),
-				NewProposalCommunityPoolSpendData(
+				governance.MakeProposalMetadata("Test Proposal", "Description"),
+				MakeProposalCommunityPoolSpendData(
 					"gno.land/r/gnoswap/gns.GNS",
 					testutils.TestAddress("recipient"),
 					1_000_000_000,
@@ -429,17 +422,17 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 			name:       "fail - cancel proposal by others when proposer stake below threshold",
 			proposalId: 1,
 			canceler:   testutils.TestAddress("other"),
-			setupProposal: governance.NewProposal(
+			setupProposal: governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig,
 					10_000_000_000,
 					true,
 					time.Now().Unix()-executableDelay,
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Test Proposal", "Description"),
-				NewProposalCommunityPoolSpendData(
+				governance.MakeProposalMetadata("Test Proposal", "Description"),
+				MakeProposalCommunityPoolSpendData(
 					"gno.land/r/gnoswap/gns.GNS",
 					testutils.TestAddress("recipient"),
 					1_000_000_000,
@@ -464,26 +457,25 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 			name:       "fail - proposal already executed",
 			proposalId: 1,
 			canceler:   testutils.TestAddress("proposer"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig,
 						10_000_000_000,
 						true,
 						time.Now().Add(-time.Hour*24*10).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Test Proposal", "Description"),
-					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
+					governance.MakeProposalMetadata("Test Proposal", "Description"),
+					MakeProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
 				// Mark as executed
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.execute(time.Now().Unix(), 1000, testutils.TestAddress("executor"))
+				proposal = withProposalStatusExecute(proposal, time.Now().Unix(), 1000, testutils.TestAddress("executor"))
 				return proposal
 			}(),
 			expectedHasAbort: true,
@@ -493,26 +485,25 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 			name:       "fail - proposal already canceled",
 			proposalId: 1,
 			canceler:   testutils.TestAddress("proposer"),
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig,
 						10_000_000_000,
 						true,
 						time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Test Proposal", "Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Test Proposal", "Description"),
+					DefaultProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
 					100,
 				)
 				// Mark as canceled
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.cancel(time.Now().Unix(), 1000, testutils.TestAddress("canceler"))
+				proposal = withProposalStatusCancel(proposal, time.Now().Unix(), 1000, testutils.TestAddress("canceler"))
 				return proposal
 			}(),
 			expectedHasAbort: true,
@@ -526,7 +517,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 			gov := newMockGovernance()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
-			if tt.setupProposal != nil {
+			if tt.setupProposal.ID() != 0 {
 				setupExecuteTestProposal(cur, t, gov, tt.setupProposal)
 			}
 
@@ -547,7 +538,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.expectedProposalId, resultId)
 
 			proposal, _ := gov.getProposal(tt.proposalId)
-			statusResolver := NewProposalStatusResolver(proposal.Status())
+			statusResolver := MakeProposalStatusResolver(proposal.Status())
 			uassert.Equal(t, true, statusResolver.actionStatusResolver.Canceled())
 		})
 	}
@@ -560,7 +551,7 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
 		proposalId    int64
-		setupProposal func() *governance.Proposal
+		setupProposal func() governance.Proposal
 		expectedError string
 		shouldFail    bool
 	}{
@@ -579,23 +570,22 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 		{
 			name:       "fail - text proposal execution",
 			proposalId: 1,
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, false, time.Now().Add(-time.Hour*24*10).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Text Proposal", "Description"),
-					NewProposalTextData(),
+					governance.MakeProposalMetadata("Text Proposal", "Description"),
+					DefaultProposalTextData(),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
 
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.vote(true, 6_000_000_000)
+				proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-008] cannot execute text proposal",
@@ -604,15 +594,15 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 		{
 			name:       "fail - upcoming proposal execution",
 			proposalId: 1,
-			setupProposal: func() *governance.Proposal {
-				return governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				return governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
+					governance.MakeProposalMetadata("Parameter Change", "Description"),
+					MakeProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
@@ -625,15 +615,15 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 		{
 			name:       "fail - active proposal execution",
 			proposalId: 1,
-			setupProposal: func() *governance.Proposal {
-				return governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				return governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*25).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
+					governance.MakeProposalMetadata("Parameter Change", "Description"),
+					MakeProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*25).Unix(),
@@ -646,22 +636,21 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 		{
 			name:       "fail - rejected proposal execution",
 			proposalId: 1,
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
+					governance.MakeProposalMetadata("Parameter Change", "Description"),
+					MakeProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.vote(false, 6_000_000_000) // Majority no votes
+				proposal = withProposalStatusVote(proposal, false, 6_000_000_000) // Majority no votes
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
@@ -670,23 +659,22 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 		{
 			name:       "fail - tied proposal execution after quorum",
 			proposalId: 1,
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*10).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
+					governance.MakeProposalMetadata("Parameter Change", "Description"),
+					MakeProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*10).Unix(),
 					100,
 				)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.vote(true, 5_000_000_000)
-				statusResolver.vote(false, 5_000_000_000)
+				proposal = withProposalStatusVote(proposal, true, 5_000_000_000)
+				proposal = withProposalStatusVote(proposal, false, 5_000_000_000)
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
@@ -695,23 +683,22 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 		{
 			name:       "fail - already executed proposal",
 			proposalId: 1,
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
+					governance.MakeProposalMetadata("Parameter Change", "Description"),
+					MakeProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*15).Unix(),
 					100,
 				)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.vote(true, 6_000_000_000)
-				statusResolver.execute(time.Now().Unix(), 100, testutils.TestAddress("executor"))
+				proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
+				proposal = withProposalStatusExecute(proposal, time.Now().Unix(), 100, testutils.TestAddress("executor"))
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
@@ -720,15 +707,15 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 		{
 			name:       "fail - expired proposal execution",
 			proposalId: 1,
-			setupProposal: func() *governance.Proposal {
-				return governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				return governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*40).Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
+					governance.MakeProposalMetadata("Parameter Change", "Description"),
+					MakeProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Add(-time.Hour*24*40).Unix(),
@@ -741,22 +728,21 @@ func TestGovernanceExecute_ExecutionValidation(cur realm, t *testing.T) {
 		{
 			name:       "fail - canceled proposal execution",
 			proposalId: 1,
-			setupProposal: func() *governance.Proposal {
-				proposal := governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Description"),
-					NewProposalExecutionData(1, "test*EXE*function*EXE*param"),
+					governance.MakeProposalMetadata("Parameter Change", "Description"),
+					MakeProposalExecutionData(1, "test*EXE*function*EXE*param"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
 					100,
 				)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
-				statusResolver.cancel(time.Now().Unix(), 100, testutils.TestAddress("proposer"))
+				proposal = withProposalStatusCancel(proposal, time.Now().Unix(), 100, testutils.TestAddress("proposer"))
 				return proposal
 			},
 			expectedError: "[GNOSWAP-GOVERNANCE-013] proposal not executable",
@@ -848,21 +834,20 @@ func TestGovernanceExecute_ExecutionTiming(cur realm, t *testing.T) {
 			gov := newMockGovernance()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
-			proposal := governance.NewProposal(
+			proposal := governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig, 10_000_000_000, true, tt.proposalTime.Unix(),
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Parameter Change", "Description"),
-				NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", testutils.TestAddress("recipient"), 100, "gno.land/r/gnoswap/community_pool"),
+				governance.MakeProposalMetadata("Parameter Change", "Description"),
+				MakeProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", testutils.TestAddress("recipient"), 100, "gno.land/r/gnoswap/community_pool"),
 				testutils.TestAddress("proposer"),
 				1,
 				tt.proposalTime.Unix(),
 				100,
 			)
-			statusResolver := NewProposalStatusResolver(proposal.Status())
-			statusResolver.vote(true, 6_000_000_000)
+			proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 			setupExecuteTestProposal(cur, t, gov, proposal)
 
 			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
@@ -948,14 +933,14 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 			gov := newMockGovernance()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
-			proposal := governance.NewProposal(
+			proposal := governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Community Pool Spend", "Description"),
-				NewProposalCommunityPoolSpendData(
+				governance.MakeProposalMetadata("Community Pool Spend", "Description"),
+				MakeProposalCommunityPoolSpendData(
 					tt.tokenPath,
 					tt.recipientAddress,
 					tt.amount,
@@ -966,8 +951,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 				time.Now().Add(-time.Hour*24*15).Unix(),
 				100,
 			)
-			statusResolver := NewProposalStatusResolver(proposal.Status())
-			statusResolver.vote(true, 6_000_000_000)
+			proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 			setupExecuteTestProposal(cur, t, gov, proposal)
 
 			// Mock community pool balance setup would go here
@@ -988,7 +972,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 
 				// Verify execution state
 				proposal, _ := gov.getProposal(resultId)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
+				statusResolver := MakeProposalStatusResolver(proposal.Status())
 				uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
 			}
 		})
@@ -1064,21 +1048,20 @@ func TestGovernanceExecute_ParameterChangeExecution(cur realm, t *testing.T) {
 			gov := newMockGovernance()
 
 			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
-			proposal := governance.NewProposal(
+			proposal := governance.MakeProposal(
 				1,
-				NewProposalStatus(
+				MakeProposalStatus(
 					testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
 					10_000_000_000,
 				),
-				governance.NewProposalMetadata("Parameter Change", "Description"),
-				NewProposalExecutionData(tt.numToExecute, tt.executions),
+				governance.MakeProposalMetadata("Parameter Change", "Description"),
+				MakeProposalExecutionData(tt.numToExecute, tt.executions),
 				testutils.TestAddress("proposer"),
 				1,
 				time.Now().Add(-time.Hour*24*15).Unix(),
 				100,
 			)
-			statusResolver := NewProposalStatusResolver(proposal.Status())
-			statusResolver.vote(true, 6_000_000_000)
+			proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 			setupExecuteTestProposal(cur, t, gov, proposal)
 
 			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
@@ -1097,7 +1080,7 @@ func TestGovernanceExecute_ParameterChangeExecution(cur realm, t *testing.T) {
 
 				// Verify execution state
 				proposal, _ := gov.getProposal(resultId)
-				statusResolver := NewProposalStatusResolver(proposal.Status())
+				statusResolver := MakeProposalStatusResolver(proposal.Status())
 				uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
 			}
 		})
@@ -1180,14 +1163,14 @@ func TestGovernanceExecute_CancellationScenarios(cur realm, t *testing.T) {
 			if tt.description == "Test with proposalId 999 (nonexistent)" {
 				proposalId = 999
 			} else {
-				proposal := governance.NewProposal(
+				proposal := governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, tt.cancellationTime.Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Test Proposal", "Description"),
-					NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", tt.proposer, 100, "gno.land/r/gnoswap/community_pool"),
+					governance.MakeProposalMetadata("Test Proposal", "Description"),
+					MakeProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", tt.proposer, 100, "gno.land/r/gnoswap/community_pool"),
 					tt.proposer,
 					1,
 					tt.cancellationTime.Unix(),
@@ -1210,7 +1193,7 @@ func TestGovernanceExecute_CancellationScenarios(cur realm, t *testing.T) {
 
 				// Verify cancellation state
 				proposal, _ := gov.getProposal(proposalId)
-				resolver := NewProposalStatusResolver(proposal.Status())
+				resolver := MakeProposalStatusResolver(proposal.Status())
 				uassert.Equal(t, true, resolver.actionStatusResolver.Canceled())
 			}
 		})
@@ -1225,21 +1208,20 @@ func TestGovernanceExecute_ReExecutionPrevention(cur realm, t *testing.T) {
 		// given
 		gov := newMockGovernance()
 
-		proposal := governance.NewProposal(
+		proposal := governance.MakeProposal(
 			1,
-			NewProposalStatus(
+			MakeProposalStatus(
 				testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
 				10_000_000_000,
 			),
-			governance.NewProposalMetadata("Parameter Change", "Description"),
-			NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*-1"),
+			governance.MakeProposalMetadata("Parameter Change", "Description"),
+			MakeProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*-1"),
 			testutils.TestAddress("proposer"),
 			1,
 			time.Now().Add(-time.Hour*24*15).Unix(),
 			100,
 		)
-		resolver := NewProposalStatusResolver(proposal.Status())
-		resolver.vote(true, 6_000_000_000)
+		proposal = withProposalStatusVote(proposal, true, 6_000_000_000)
 		setupExecuteTestProposal(cur, t, gov, proposal)
 
 		testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("executor")))
@@ -1266,7 +1248,7 @@ func TestGovernanceExecute_executeCommunityPoolSpend(cur realm, t *testing.T) {
 
 	tests := []struct {
 		name             string
-		setupProposal    func() *governance.Proposal
+		setupProposal    func() governance.Proposal
 		setupRegistry    func() *ParameterRegistry
 		executedAt       int64
 		executedHeight   int64
@@ -1276,15 +1258,15 @@ func TestGovernanceExecute_executeCommunityPoolSpend(cur realm, t *testing.T) {
 	}{
 		{
 			name: "success - valid community pool spend",
-			setupProposal: func() *governance.Proposal {
-				return governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				return governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Community Pool Spend", "Test proposal"),
-					NewProposalCommunityPoolSpendData(
+					governance.MakeProposalMetadata("Community Pool Spend", "Test proposal"),
+					MakeProposalCommunityPoolSpendData(
 						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						1_000_000,
@@ -1318,7 +1300,7 @@ func TestGovernanceExecute_executeCommunityPoolSpend(cur realm, t *testing.T) {
 			testing.SetRealm(govRealm)
 			err = executeCommunityPoolSpend(
 				0, cur,
-				*proposal,
+				proposal,
 				registry,
 				tt.executedAt,
 				tt.executedHeight,
@@ -1340,7 +1322,7 @@ func TestGovernanceExecute_executeCommunityPoolSpend(cur realm, t *testing.T) {
 func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
-		setupProposal    func() *governance.Proposal
+		setupProposal    func() governance.Proposal
 		setupRegistry    func() *ParameterRegistry
 		executedAt       int64
 		executedHeight   int64
@@ -1350,15 +1332,15 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 	}{
 		{
 			name: "success - single parameter change",
-			setupProposal: func() *governance.Proposal {
-				return governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				return governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
-					NewProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*100"),
+					governance.MakeProposalMetadata("Parameter Change", "Test proposal"),
+					MakeProposalExecutionData(1, "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*100"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
@@ -1375,15 +1357,15 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 		},
 		{
 			name: "success - no parameter changes",
-			setupProposal: func() *governance.Proposal {
-				return governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				return governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
-					NewProposalExecutionData(0, ""),
+					governance.MakeProposalMetadata("Parameter Change", "Test proposal"),
+					MakeProposalExecutionData(0, ""),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
@@ -1400,15 +1382,15 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 		},
 		{
 			name: "fail - handler not found",
-			setupProposal: func() *governance.Proposal {
-				return governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				return governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
-					NewProposalExecutionData(1, "gno.land/r/nonexistent/package*EXE*NonExistentFunction*EXE*123"),
+					governance.MakeProposalMetadata("Parameter Change", "Test proposal"),
+					MakeProposalExecutionData(1, "gno.land/r/nonexistent/package*EXE*NonExistentFunction*EXE*123"),
 					testutils.TestAddress("proposer"),
 					1,
 					time.Now().Unix(),
@@ -1426,18 +1408,18 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 		},
 		{
 			name: "fail - malformed execution message",
-			setupProposal: func() *governance.Proposal {
-				return governance.NewProposal(
+			setupProposal: func() governance.Proposal {
+				return governance.MakeProposal(
 					1,
-					NewProposalStatus(
+					MakeProposalStatus(
 						testConfig, 10_000_000_000, true, time.Now().Unix(),
 						10_000_000_000,
 					),
-					governance.NewProposalMetadata("Parameter Change", "Test proposal"),
-					governance.NewProposalData(
+					governance.MakeProposalMetadata("Parameter Change", "Test proposal"),
+					governance.MakeProposalData(
 						governance.ParameterChange,
-						nil,
-						governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee"}),
+						governance.DefaultCommunityPoolSpendInfo(),
+						governance.MakeExecutionInfo(1, []string{"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee"}),
 					),
 					testutils.TestAddress("proposer"),
 					1,
@@ -1467,7 +1449,7 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 			testing.SetRealm(govRealm)
 			err = executeParameterChange(
 				0, cur,
-				*proposal,
+				proposal,
 				registry,
 				tt.executedAt,
 				tt.executedHeight,
@@ -1486,8 +1468,8 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 }
 
 // Helper functions for execute tests
-func setupExecuteTestProposal(cur realm, t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
-	gov.addProposal(0, cur, *proposal)
+func setupExecuteTestProposal(cur realm, t *testing.T, gov *governanceV1, proposal governance.Proposal) {
+	gov.addProposal(0, cur, proposal)
 }
 
 func setupGovernanceExecuteTestCommunityPoolBalance(cur realm, t *testing.T) {

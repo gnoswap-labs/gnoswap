@@ -89,8 +89,8 @@ func (gv *governanceV1) ProposeText(
 		maxVotingWeight,
 		quorumWeight,
 		snapshotTime,
-		governance.NewProposalMetadata(title, description),
-		NewProposalTextData(),
+		governance.MakeProposalMetadata(title, description),
+		DefaultProposalTextData(),
 		callerAddress,
 		xgnsBalance,
 		createdAt,
@@ -202,8 +202,8 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		maxVotingWeight,
 		quorumWeight,
 		snapshotTime,
-		governance.NewProposalMetadata(title, description),
-		NewProposalCommunityPoolSpendData(tokenPath, to, amount, COMMUNITY_POOL_PATH),
+		governance.MakeProposalMetadata(title, description),
+		MakeProposalCommunityPoolSpendData(tokenPath, to, amount, COMMUNITY_POOL_PATH),
 		callerAddress,
 		xgnsBalance,
 		createdAt,
@@ -315,8 +315,8 @@ func (gv *governanceV1) ProposeParameterChange(
 		maxVotingWeight,
 		quorumWeight,
 		snapshotTime,
-		governance.NewProposalMetadata(title, description),
-		NewProposalExecutionData(numToExecute, executions),
+		governance.MakeProposalMetadata(title, description),
+		MakeProposalExecutionData(numToExecute, executions),
 		callerAddress,
 		xgnsBalance,
 		createdAt,
@@ -358,15 +358,15 @@ func (gv *governanceV1) createProposal(
 	maxVotingWeight int64,
 	quorumWeight int64,
 	snapshotTime int64,
-	proposalMetadata *governance.ProposalMetadata,
-	proposalData *governance.ProposalData,
+	proposalMetadata governance.ProposalMetadata,
+	proposalData governance.ProposalData,
 	proposerAddress address,
 	proposerXGnsBalance int64,
 	createdAt int64,
 	createdHeight int64,
 ) (governance.Proposal, error) {
 	// Validate proposal metadata (title and description).
-	metadataResolver := NewProposalMetadataResolver(proposalMetadata)
+	metadataResolver := MakeProposalMetadataResolver(proposalMetadata)
 	err := metadataResolver.Validate()
 	if err != nil {
 		var zero governance.Proposal
@@ -374,7 +374,7 @@ func (gv *governanceV1) createProposal(
 	}
 
 	// Validate proposal data (type-specific validation).
-	dataResolver := NewProposalDataResolver(proposalData)
+	dataResolver := MakeProposalDataResolver(proposalData)
 	err = dataResolver.Validate()
 	if err != nil {
 		var zero governance.Proposal
@@ -391,7 +391,7 @@ func (gv *governanceV1) createProposal(
 	proposalID := gv.nextProposalID(0, rlm)
 
 	// Create proposal status with voting schedule and requirements.
-	proposalStatus := NewProposalStatus(
+	proposalStatus := MakeProposalStatus(
 		config,
 		maxVotingWeight,
 		proposalType.IsExecutable(),
@@ -403,7 +403,7 @@ func (gv *governanceV1) createProposal(
 	configVersion := gv.getCurrentConfigVersion()
 
 	// Create the proposal object with snapshotTime for lazy voting weight lookup.
-	proposal := *governance.NewProposal(
+	proposal := governance.MakeProposal(
 		proposalID,
 		proposalStatus,
 		proposalMetadata,

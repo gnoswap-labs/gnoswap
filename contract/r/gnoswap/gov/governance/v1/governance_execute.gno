@@ -100,7 +100,7 @@ func (gv *governanceV1) executeProposal(
 		return zero, errors.New(errTextProposalNotExecutable)
 	}
 
-	proposalResolver := NewProposalResolver(&proposal)
+	proposalResolver := MakeProposalResolver(proposal)
 
 	// Verify proposal is in executable state (timing and voting requirements met).
 	if !proposalResolver.IsExecutable(executedAt) {
@@ -109,11 +109,13 @@ func (gv *governanceV1) executeProposal(
 	}
 
 	// Mark proposal as executed in its status.
-	err := proposalResolver.execute(executedAt, executedHeight, executedBy)
+	var err error
+	proposalResolver, err = proposalResolver.execute(executedAt, executedHeight, executedBy)
 	if err != nil {
 		var zero governance.Proposal
 		return zero, err
 	}
+	proposal = proposalResolver.Proposal()
 
 	// Persist the status transition before invoking proposal actions.
 	if err := gv.store.SetProposal(0, rlm, proposalID, proposal); err != nil {
@@ -213,14 +215,15 @@ func (gv *governanceV1) cancel(
 		return zero, errors.New(errDataNotFound)
 	}
 
-	proposalResolver := NewProposalResolver(&proposal)
+	proposalResolver := MakeProposalResolver(proposal)
 
 	// Attempt to cancel the proposal (this validates cancellation conditions).
-	err = proposalResolver.cancel(canceledAt, canceledHeight, canceledBy)
+	proposalResolver, err = proposalResolver.cancel(canceledAt, canceledHeight, canceledBy)
 	if err != nil {
 		var zero governance.Proposal
 		return zero, err
 	}
+	proposal = proposalResolver.Proposal()
 
 	// Cancellation mutates a detached value copy, so write the new status back
 	// before returning.
@@ -244,11 +247,14 @@ func executeCommunityPoolSpend(
 ) error {
 	// Verify token registration for community pool spending
 	if proposal.IsCommunityPoolSpendType() {
-		common.MustRegistered(proposal.Data().CommunityPoolSpend().TokenPath())
+		communityPoolSpend, ok := proposal.Data().CommunityPoolSpend()
+		if ok {
+			common.MustRegistered(communityPoolSpend.TokenPath())
+		}
 	}
 
 	// Execute all parameter changes defined in the proposal
-	dataResolver := NewProposalDataResolver(proposal.Data())
+	dataResolver := MakeProposalDataResolver(proposal.Data())
 	parameterChangesInfos, err := dataResolver.ParameterChangesInfos()
 	if err != nil {
 		return err
@@ -282,7 +288,7 @@ func executeParameterChange(
 	executedBy address,
 ) error {
 	// Execute all parameter changes defined in the proposal
-	dataResolver := NewProposalDataResolver(proposal.Data())
+	dataResolver := MakeProposalDataResolver(proposal.Data())
 	parameterChangesInfos, err := dataResolver.ParameterChangesInfos()
 	if err != nil {
 		return err

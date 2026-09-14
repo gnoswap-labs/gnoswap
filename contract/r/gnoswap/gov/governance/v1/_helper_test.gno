@@ -74,15 +74,15 @@ func createMockGovernanceStore() *mockGovernanceStore {
 
 func newTestProposal(
 	id int64,
-	status *governance.ProposalStatus,
-	metadata *governance.ProposalMetadata,
-	data *governance.ProposalData,
+	status governance.ProposalStatus,
+	metadata governance.ProposalMetadata,
+	data governance.ProposalData,
 	proposer address,
 	configVersion int64,
 	snapshotTime int64,
-) *governance.Proposal {
+) governance.Proposal {
 	// Use snapshotTime as the proposal creation time and 100 as default createdHeight for tests
-	return governance.NewProposal(
+	return governance.MakeProposal(
 		id,
 		status,
 		metadata,
@@ -93,6 +93,67 @@ func newTestProposal(
 		100, // createdHeight
 	)
 }
+
+func withProposalStatusVote(proposal governance.Proposal, yes bool, weight int64) governance.Proposal {
+	resolver := MakeProposalStatusResolver(proposal.Status())
+	var err error
+	resolver, err = resolver.vote(yes, weight)
+	if err != nil {
+		panic(err)
+	}
+	return proposal.WithStatus(resolver.Value())
+}
+
+func withProposalStatusExecute(proposal governance.Proposal, executedAt, executedHeight int64, executedBy address) governance.Proposal {
+	resolver := MakeProposalStatusResolver(proposal.Status())
+	var err error
+	resolver, err = resolver.execute(executedAt, executedHeight, executedBy)
+	if err != nil {
+		panic(err)
+	}
+	return proposal.WithStatus(resolver.Value())
+}
+
+func withProposalStatusCancel(proposal governance.Proposal, canceledAt, canceledHeight int64, canceledBy address) governance.Proposal {
+	resolver := MakeProposalStatusResolver(proposal.Status())
+	var err error
+	resolver, err = resolver.cancel(canceledAt, canceledHeight, canceledBy)
+	if err != nil {
+		panic(err)
+	}
+	return proposal.WithStatus(resolver.Value())
+}
+
+func withProposalVote(proposal governance.Proposal, yes bool, weight int64) governance.Proposal {
+	resolver := MakeProposalResolver(proposal)
+	var err error
+	resolver, err = resolver.Vote(yes, weight)
+	if err != nil {
+		panic(err)
+	}
+	return resolver.Proposal()
+}
+
+func withProposalExecute(proposal governance.Proposal, executedAt, executedHeight int64, executedBy address) governance.Proposal {
+	resolver := MakeProposalResolver(proposal)
+	var err error
+	resolver, err = resolver.execute(executedAt, executedHeight, executedBy)
+	if err != nil {
+		panic(err)
+	}
+	return resolver.Proposal()
+}
+
+func withProposalCancel(proposal governance.Proposal, canceledAt, canceledHeight int64, canceledBy address) governance.Proposal {
+	resolver := MakeProposalResolver(proposal)
+	var err error
+	resolver, err = resolver.cancel(canceledAt, canceledHeight, canceledBy)
+	if err != nil {
+		panic(err)
+	}
+	return resolver.Proposal()
+}
+
 // Crossing test wrappers.
 //
 // The governance impl methods read their caller via rlm.Previous(). To

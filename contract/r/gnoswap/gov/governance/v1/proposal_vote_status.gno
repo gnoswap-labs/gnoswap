@@ -7,53 +7,54 @@ import (
 )
 
 type ProposalVoteStatusResolver struct {
-	*governance.ProposalVoteStatus
+	status governance.ProposalVoteStatus
 }
 
-func NewProposalVoteStatusResolver(voteStatus *governance.ProposalVoteStatus) *ProposalVoteStatusResolver {
-	return &ProposalVoteStatusResolver{voteStatus}
+func MakeProposalVoteStatusResolver(status governance.ProposalVoteStatus) ProposalVoteStatusResolver {
+	return ProposalVoteStatusResolver{status: status}
+}
+
+func (p ProposalVoteStatusResolver) Value() governance.ProposalVoteStatus {
+	return p.status
+}
+
+func (p ProposalVoteStatusResolver) MaxVotingWeight() int64 {
+	return p.status.MaxVotingWeight()
+}
+
+func (p ProposalVoteStatusResolver) QuorumAmount() int64 {
+	return p.status.QuorumAmount()
+}
+
+func (p ProposalVoteStatusResolver) YesWeight() int64 {
+	return p.status.YesWeight()
+}
+
+func (p ProposalVoteStatusResolver) NoWeight() int64 {
+	return p.status.NoWeight()
 }
 
 // TotalVoteWeight returns the total weight of all votes cast (yes + no).
-//
-// Returns:
-//   - int64: combined weight of all votes
-func (p *ProposalVoteStatusResolver) TotalVoteWeight() int64 {
-	return gnsmath.SafeAddInt64(p.YesWeight(), p.NoWeight())
+func (p ProposalVoteStatusResolver) TotalVoteWeight() int64 {
+	return gnsmath.SafeAddInt64(p.status.YesWeight(), p.status.NoWeight())
 }
 
-// IsPassed determines if the proposal has passed the voting requirements.
-// A proposal passes when quorum is reached and "yes" votes strictly exceed "no" votes.
-func (p *ProposalVoteStatusResolver) IsPassed() bool {
-	if p.TotalVoteWeight() < p.QuorumAmount() {
+// IsPassed determines if quorum is reached and yes votes exceed no votes.
+func (p ProposalVoteStatusResolver) IsPassed() bool {
+	if p.TotalVoteWeight() < p.status.QuorumAmount() {
 		return false
 	}
-
-	return p.YesWeight() > p.NoWeight()
+	return p.status.YesWeight() > p.status.NoWeight()
 }
 
-// addYesVoteWeight adds the specified weight to the "yes" vote tally.
-// This is called when a user votes "yes" on the proposal.
-//
-// Parameters:
-//   - yea: vote weight to add to "yes" votes
-//
-// Returns:
-//   - error: always nil (reserved for future validation)
-func (p *ProposalVoteStatusResolver) AddYesVoteWeight(yea int64) error {
-	p.SetYesWeight(gnsmath.SafeAddInt64(p.YesWeight(), yea))
-	return nil
+// AddYesVoteWeight returns a resolver with the updated yes tally.
+func (p ProposalVoteStatusResolver) AddYesVoteWeight(yea int64) (ProposalVoteStatusResolver, error) {
+	p.status = p.status.SetYesWeight(gnsmath.SafeAddInt64(p.status.YesWeight(), yea))
+	return p, nil
 }
 
-// addNoVoteWeight adds the specified weight to the "no" vote tally.
-// This is called when a user votes "no" on the proposal.
-//
-// Parameters:
-//   - nay: vote weight to add to "no" votes
-//
-// Returns:
-//   - error: always nil (reserved for future validation)
-func (p *ProposalVoteStatusResolver) AddNoVoteWeight(nay int64) error {
-	p.SetNoWeight(gnsmath.SafeAddInt64(p.NoWeight(), nay))
-	return nil
+// AddNoVoteWeight returns a resolver with the updated no tally.
+func (p ProposalVoteStatusResolver) AddNoVoteWeight(nay int64) (ProposalVoteStatusResolver, error) {
+	p.status = p.status.SetNoWeight(gnsmath.SafeAddInt64(p.status.NoWeight(), nay))
+	return p, nil
 }

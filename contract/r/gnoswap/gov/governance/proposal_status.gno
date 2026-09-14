@@ -51,37 +51,49 @@ type ProposalStatus struct {
 	voteStatus   ProposalVoteStatus     // Voting tallies and requirements
 }
 
-func NewProposalStatusBy(
-	schedule *ProposalScheduleStatus,
-	actionStatus *ProposalActionStatus,
-	voteStatus *ProposalVoteStatus,
-) *ProposalStatus {
-	return &ProposalStatus{
-		schedule:     *schedule,
-		actionStatus: *actionStatus,
-		voteStatus:   *voteStatus,
+func MakeProposalStatusBy(
+	schedule ProposalScheduleStatus,
+	actionStatus ProposalActionStatus,
+	voteStatus ProposalVoteStatus,
+) ProposalStatus {
+	return ProposalStatus{
+		schedule:     schedule,
+		actionStatus: actionStatus,
+		voteStatus:   voteStatus,
 	}
 }
 
 /* Getter methods */
-func (s *ProposalStatus) Schedule() *ProposalScheduleStatus   { return &s.schedule }
-func (s *ProposalStatus) ActionStatus() *ProposalActionStatus { return &s.actionStatus }
-func (s *ProposalStatus) VoteStatus() *ProposalVoteStatus     { return &s.voteStatus }
+func (s ProposalStatus) Schedule() ProposalScheduleStatus   { return s.schedule }
+func (s ProposalStatus) ActionStatus() ProposalActionStatus { return s.actionStatus }
+func (s ProposalStatus) VoteStatus() ProposalVoteStatus     { return s.voteStatus }
+
+// WithSchedule returns a copy with updated scheduling information.
+func (s ProposalStatus) WithSchedule(schedule ProposalScheduleStatus) ProposalStatus {
+	s.schedule = schedule
+	return s
+}
+
+// WithActionStatus returns a copy with updated action status information.
+func (s ProposalStatus) WithActionStatus(actionStatus ProposalActionStatus) ProposalStatus {
+	s.actionStatus = actionStatus
+	return s
+}
+
+// WithVoteStatus returns a copy with updated voting status information.
+func (s ProposalStatus) WithVoteStatus(voteStatus ProposalVoteStatus) ProposalStatus {
+	s.voteStatus = voteStatus
+	return s
+}
 
 /* Delegation getters for vote data */
 
 // YesWeight returns the total weight of "yes" votes.
-//
-// Returns:
-//   - int64: total "yes" vote weight
-func (s *ProposalStatus) YesWeight() int64 {
+func (s ProposalStatus) YesWeight() int64 {
 	return s.voteStatus.YesWeight()
 }
 
 // NoWeight returns the total weight of "no" votes.
-//
-// Returns:
-//   - int64: total "no" vote weight
-func (s *ProposalStatus) NoWeight() int64 {
+func (s ProposalStatus) NoWeight() int64 {
 	return s.voteStatus.NoWeight()
 }

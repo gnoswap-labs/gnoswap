@@ -121,7 +121,7 @@ func (g *governanceV1) removeInactiveUserProposals(_ int, rlm realm, proposerAdd
 	proposals := g.getUserProposals(proposerAddress.String())
 
 	for _, proposal := range proposals {
-		proposalResolver := NewProposalResolver(&proposal)
+		proposalResolver := MakeProposalResolver(proposal)
 
 		if !proposalResolver.IsActive(current) {
 			err := g.store.RemoveUserProposal(0, rlm, proposerAddress.String(), proposal.ID())
