@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	rotree "gno.land/p/nt/bptree/v0/rotree"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 )
 
 // MockResponse tracks method calls for testing purposes
