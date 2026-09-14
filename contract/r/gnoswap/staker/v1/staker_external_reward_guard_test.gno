@@ -8,8 +8,8 @@
 // falling short (issuer burn, accounting drift). The guard therefore checks the
 // staker realm's live balance against what both delivery legs will move —
 // including carried-over pending protocol fees of the same token — and skips
-// the delivery instead of letting SafeGRC20Transfer panic; on an exit checkpoint
-// such a panic would lock the position and the incentive refund for good.
+// the delivery instead of letting SafeGRC20Transfer panic while staked; on an
+// exit checkpoint it aborts explicitly so the fixed claim is never waived.
 //
 // The file name sorts after staker_collect_reward_split_test.gno; like the rest
 // of this package's tests, every test re-initializes the mock instance through
@@ -136,17 +136,17 @@ func burnStakerBar(cur realm, t *testing.T) int64 {
 }
 
 // An issuer burning the staker realm's balance of the reward token must not
-// lock the position: UnStakeToken writes its checkpoint, and the permissionless
-// collect that settles it skips the undeliverable BAR leg instead of panicking.
-// The skipped share is forfeited so the checkpoint clears, the position can be
-// staked again, and - never having been deducted - the share stays refundable
-// to the incentive creator, whose EndExternalIncentive is no longer blocked.
+// lock the position: UnStakeToken writes its checkpoint without touching the
+// token. The permissionless collect that settles the checkpoint aborts instead
+// of forfeiting the fixed claim, and once the balance is restored the same
+// collect pays the owner, clears the checkpoint and frees the position to
+// stake again. The quote getters follow the checkpoint the whole way.
 func TestExternalRewardGuard_IssuerBurnDoesNotLockCheckpoint(cur realm, t *testing.T) {
 	positionId, barIncentiveId := setupGuardDeposit(cur, t, 0)
 
-	collectable, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
+	collectableStaked, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
 	uassert.NoError(t, err)
-	uassert.True(t, collectable > 0)
+	uassert.True(t, collectableStaked > 0)
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	sr.UnStakeToken(cross(cur), positionId)
@@ -155,28 +155,41 @@ func TestExternalRewardGuard_IssuerBurnDoesNotLockCheckpoint(cur realm, t *testi
 	uassert.True(t, sr.HasUnstakedPosition(positionId))
 	uassert.Equal(t, int64(1), sr.GetUncollectedIncentiveCount(barIncentiveId))
 
-	burnStakerBar(cur, t)
+	// The quotes resolve the checkpoint: same block, so the same amount as while staked.
+	collectableCheckpoint, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, collectableStaked, collectableCheckpoint)
+	_, err = sr.CollectableEmissionReward(positionId)
+	uassert.NoError(t, err)
+
+	burned := burnStakerBar(cur, t)
 
 	incentive := getMockInstance().getExternalIncentives().get(barIncentiveId)
 	incentiveRewardBefore := incentive.RewardAmount()
 	ownerBarBefore := bar.BalanceOf(addr01)
 
-	// A third party settles the checkpoint. The BAR leg must be skipped and
-	// forfeited instead of panicking. (The GNS emission leg is orthogonal to the
-	// guard - this harness's mock pool-tier wiring keeps the internal rate at
-	// zero, and the internal reward machinery has its own coverage in
-	// calculate_pool_position_reward_test.gno.)
+	// A third party cannot settle the checkpoint while the balance is short: the collect aborts
+	// before any bookkeeping, so nothing is deducted and the claim stays owed.
+	testing.SetRealm(testing.NewUserRealm(addr02))
+	uassert.AbortsContains(t, cur, "[GNOSWAP-STAKER-027]", func() {
+		sr.CollectExternalIncentiveReward(cross(cur), positionId, barIncentiveId)
+	})
+
+	uassert.True(t, sr.HasUnstakedPosition(positionId))
+	uassert.Equal(t, int64(1), sr.GetUncollectedIncentiveCount(barIncentiveId))
+	incentive = getMockInstance().getExternalIncentives().get(barIncentiveId)
+	uassert.Equal(t, incentiveRewardBefore, incentive.RewardAmount())
+
+	// Restoring the balance lets the same permissionless collect pay the owner.
+	testing.SetRealm(adminRealm)
+	bar.Mint(cross(cur), stakerAddr, burned)
+
 	testing.SetRealm(testing.NewUserRealm(addr02))
 	sr.CollectReward(cross(cur), positionId)
 
-	uassert.Equal(t, ownerBarBefore, bar.BalanceOf(addr01))
+	uassert.Equal(t, ownerBarBefore+collectableCheckpoint, bar.BalanceOf(addr01))
 	uassert.False(t, sr.HasUnstakedPosition(positionId))
 	uassert.Equal(t, int64(0), sr.GetUncollectedIncentiveCount(barIncentiveId))
-
-	// Nothing was deducted from the incentive: the forfeited share remains inside
-	// it and eventually returns to the creator through EndExternalIncentive.
-	incentive = getMockInstance().getExternalIncentives().get(barIncentiveId)
-	uassert.Equal(t, incentiveRewardBefore, incentive.RewardAmount())
 
 	// The position is free to stake again.
 	mockNFTApprove(cur, stakerAddr, positionId)

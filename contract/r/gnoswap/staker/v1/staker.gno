@@ -512,9 +512,8 @@ const (
 	// externalDeliveryDeferred: skipped without bookkeeping and still payable later - the incentive
 	// has not started, or the staker realm's balance of the reward token is short while staked.
 	externalDeliveryDeferred
-	// externalDeliveryUnpayable: skipped without bookkeeping and never payable from this record.
-	// The incentive's reward amount only ever decreases, so a shortfall there is final; on a
-	// checkpoint a realm balance shortfall is final too, since its window can never widen.
+	// externalDeliveryUnpayable: skipped without bookkeeping and never payable from this record,
+	// because the incentive's reward amount only ever decreases.
 	externalDeliveryUnpayable
 )
 
@@ -580,7 +579,7 @@ func (s *stakerV1) emitCheckpointSourceCollected(_ int, rlm realm, target *colle
 		"incentiveId", incentiveId,
 		"exitTime", utils.FormatInt(target.checkpoint.ExitTime()),
 		"emissionCollected", utils.FormatBool(target.checkpoint.EmissionCollected()),
-		"pendingIncentiveCount", utils.FormatInt(int64(len(target.checkpoint.PendingIncentiveIdList()))),
+		"pendingIncentiveCount", utils.FormatInt(int64(target.checkpoint.PendingIncentiveCount())),
 		"currentTime", utils.FormatInt(time.Now().Unix()),
 		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
 	)
@@ -929,9 +928,9 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	// the re-audit trigger live in docs/staker.md.
 	//
 	// Skipping BEFORE any bookkeeping means: while staked the reward simply
-	// stays pending and becomes collectible once the balance is restored; on a
-	// checkpoint it is forfeited by the caller and, having never been deducted,
-	// eventually returns to the incentive creator through EndExternalIncentive.
+	// stays pending and becomes collectible once the balance is restored. A
+	// checkpoint aborts instead: its claim is fixed and must not be waived by
+	// a permissionless caller, so it stays owed until the balance is restored.
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	pendingProtocolFee := s.store.GetPendingProtocolFees()[rewardToken]
 	requiredBalance := gnsmath.SafeAddInt64(totalRewardAmount, pendingProtocolFee)
@@ -951,7 +950,13 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 		)
 
 		if ctx.checkpoint != nil {
-			return "", 0, 0, externalDeliveryUnpayable
+			panic(makeErrorWithDetails(
+				errInsufficientRewardTokenBalance,
+				ufmt.Sprintf(
+					"incentive(%s) owes %d of %s to positionId(%d) but the staker holds %d",
+					incentiveId, requiredBalance, rewardToken, ctx.positionId, common.BalanceOf(rewardToken, stakerAddr),
+				),
+			))
 		}
 
 		return "", 0, 0, externalDeliveryDeferred
@@ -1234,7 +1239,7 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 		"globalRewardRatioAccX128", globalAccX128.ToString(),
 		"exitTime", utils.FormatInt(checkpoint.ExitTime()),
 		"pendingIncentiveIds", strings.Join(checkpoint.PendingIncentiveIdList(), ","),
-		"pendingIncentiveCount", utils.FormatInt(int64(len(checkpoint.PendingIncentiveIdList()))),
+		"pendingIncentiveCount", utils.FormatInt(int64(checkpoint.PendingIncentiveCount())),
 	)
 
 	return poolPath

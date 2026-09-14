@@ -62,10 +62,9 @@ delivery (emitting `UndeliverableExternalReward`) instead of letting
 reports an explicit outcome the checkpoint bookkeeping keys off. While the
 position stays staked, a skip is a deferral: the per-incentive collect cursor
 does not advance and the reward becomes collectible again once the balance is
-restored (anyone may donate). On an exit checkpoint the window can never widen,
-so a skip is **unpayable** and the share is forfeited
-(`ForfeitUncollectedIncentiveReward`); never having been deducted, it stays
-inside the incentive and returns to its creator through `EndExternalIncentive`.
+restored (anyone may donate). On an exit checkpoint the collect **aborts**
+(`[GNOSWAP-STAKER-027]`) instead: the claim is fixed and a permissionless caller
+must not be able to waive it, so it stays owed until the balance is restored.
 
 **Why a balance check is sufficient (the closed failure set).** GnoSwap
 transfers resolve through grc20reg's concrete `*grc20.Token` straight into
