@@ -42,6 +42,14 @@ func TestVotingInfo_NewVotingInfo(cur realm, t *testing.T) {
 	}
 }
 
+func TestVotingInfo_NewDefaultVotingInfo(cur realm, t *testing.T) {
+	votingInfo := governance.NewDefaultVotingInfo()
+
+	uassert.Equal(t, int64(0), votingInfo.AvailableVoteWeight())
+	uassert.Equal(t, int64(0), votingInfo.VotedWeight())
+	uassert.False(t, votingInfo.IsVoted())
+}
+
 // TestVotingInfo_VotingTypeAndStatus tests the voting type and status getters
 func TestVotingInfo_VotingTypeAndStatus(cur realm, t *testing.T) {
 	tests := []struct {

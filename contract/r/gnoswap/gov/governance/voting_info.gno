@@ -27,6 +27,11 @@ func NewVotingInfo(availableVoteWeight int64) VotingInfo {
 	}
 }
 
+// NewDefaultVotingInfo creates an empty voting information value.
+func NewDefaultVotingInfo() VotingInfo {
+	return VotingInfo{}
+}
+
 // NewVotedVotingInfo creates a voting information value with a recorded vote.
 func NewVotedVotingInfo(availableVoteWeight int64, votedYes bool, votedWeight, votedHeight, votedAt int64) VotingInfo {
 	return VotingInfo{
