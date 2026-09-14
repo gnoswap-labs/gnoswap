@@ -1,14 +1,14 @@
 loadpkg gno.land/p/nt/bptree/v0
 loadpkg gno.land/p/nt/ufmt/v0
-loadpkg gno.land/p/onbloc/json
+loadpkg gno.land/p/onbloc/json/v0
 loadpkg gno.land/p/nt/ownable/v0
-loadpkg gno.land/p/demo/tokens/grc20
-loadpkg gno.land/p/demo/tokens/grc721
+loadpkg gno.land/p/nt/grc20/v0
+loadpkg gno.land/p/nt/grc721/v0
 loadpkg gno.land/r/demo/defi/foo20
 
 loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
-loadpkg gno.land/r/demo/defi/grc20reg
+loadpkg gno.land/r/nt/grc20reg/v0
 
 loadpkg gno.land/r/gnoswap/test_token/test_usdc
 loadpkg gno.land/r/onbloc/foo
@@ -99,7 +99,7 @@ gnokey maketx run test1 $WORK/run/create_external_incentive.gno -gas-fee 1000000
 # stdout 'GAS USED:   3[0-9]{7}'
 # stdout 'STORAGE DELTA:  2[0-9]{4} bytes'
 # stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
-# stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot.0000000\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS.0000000\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"value\",\"value\":\"100000000000\"}\],\"pkg_path\":\"gno.land/p/demo/tokens/grc20\"},{\"type\":\"CreateExternalIncentive\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"incentiveId\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:[0-9]+:1\"},{\"key\":\"targetPoolPath\",\"value\":\"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100\"},{\"key\":\"rewardToken\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"rewardAmount\",\"value\":\"1000000000\"},{\"key\":\"startTimestamp\",\"value\":\"[0-9]+\"},{\"key\":\"endTimestamp\",\"value\":\"[0-9]+\"},{\"key\":\"depositGnsAmount\",\"value\":\"100000000000\"},{\"key\":\"currentHeight\",\"value\":\"[0-9]+\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoland/wugnot\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gns\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
+# stdout 'EVENTS:     \[{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot.0000000\"},{\"key\":\"from\",\"value\":\"\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"value\",\"value\":\"1000000000\"}\],\"pkg_path\":\"gno.land/p/nt/grc20/v0\"},{\"type\":\"Transfer\",\"attrs\":\[{\"key\":\"token\",\"value\":\"gno.land/r/gnoswap/gns.GNS.0000000\"},{\"key\":\"from\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"to\",\"value\":\"g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3\"},{\"key\":\"value\",\"value\":\"100000000000\"}\],\"pkg_path\":\"gno.land/p/nt/grc20/v0\"},{\"type\":\"CreateExternalIncentive\",\"attrs\":\[{\"key\":\"prevAddr\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"},{\"key\":\"prevRealm\",\"value\":\"\"},{\"key\":\"incentiveId\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5:[0-9]+:1\"},{\"key\":\"targetPoolPath\",\"value\":\"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100\"},{\"key\":\"rewardToken\",\"value\":\"gno.land/r/gnoland/wugnot.wugnot\"},{\"key\":\"rewardAmount\",\"value\":\"1000000000\"},{\"key\":\"startTimestamp\",\"value\":\"[0-9]+\"},{\"key\":\"endTimestamp\",\"value\":\"[0-9]+\"},{\"key\":\"depositGnsAmount\",\"value\":\"100000000000\"},{\"key\":\"currentHeight\",\"value\":\"[0-9]+\"},{\"key\":\"currentTime\",\"value\":\"[0-9]+\"}\],\"pkg_path\":\"gno.land/r/gnoswap/staker/v1\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoland/wugnot\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/gns\"},{\"bytes_delta\":[0-9]+,\"fee_delta\":{\"denom\":\"ugnot\",\"amount\":[0-9]+},\"pkg_path\":\"gno.land/r/gnoswap/staker\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/staker.GetExternalIncentiveByPoolPath(\"gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/foo.FOO:100\")"
 
