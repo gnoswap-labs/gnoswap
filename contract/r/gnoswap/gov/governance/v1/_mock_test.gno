@@ -14,7 +14,6 @@ type mockGovernanceStore struct {
 	configs                   *bptree.BPTree
 	proposals                 *bptree.BPTree
 	activeProposalsBySnapshot *bptree.BPTree
-	activeProposalsByDeadline *bptree.BPTree
 	proposalUserVotingInfos   *bptree.BPTree
 	userProposals             *bptree.BPTree
 	setProposalVotingInfosErr error
@@ -119,19 +118,6 @@ func (m *mockGovernanceStore) GetActiveProposalsBySnapshot() *bptree.BPTree {
 
 func (m *mockGovernanceStore) SetActiveProposalsBySnapshot(_ int, rlm realm, tree *bptree.BPTree) error {
 	m.activeProposalsBySnapshot = tree
-	return nil
-}
-
-func (m *mockGovernanceStore) HasActiveProposalsByDeadlineStoreKey() bool {
-	return m.activeProposalsByDeadline != nil
-}
-
-func (m *mockGovernanceStore) GetActiveProposalsByDeadline() *bptree.BPTree {
-	return m.activeProposalsByDeadline
-}
-
-func (m *mockGovernanceStore) SetActiveProposalsByDeadline(_ int, rlm realm, tree *bptree.BPTree) error {
-	m.activeProposalsByDeadline = tree
 	return nil
 }
 
@@ -264,7 +250,6 @@ func newMockGovernanceStore() *mockGovernanceStore {
 		configs:                   governance.NewConfigTree(),
 		proposals:                 governance.NewProposalTree(),
 		activeProposalsBySnapshot: governance.NewActiveProposalTree(),
-		activeProposalsByDeadline: governance.NewActiveProposalTree(),
 		proposalUserVotingInfos:   governance.NewProposalUserVotingInfoTree(),
 		userProposals:             governance.NewUserProposalTree(),
 	}

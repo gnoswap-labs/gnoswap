@@ -85,26 +85,7 @@ func (p *Proposal) SnapshotTime() int64 {
 
 // ActiveProposalSnapshotKey returns this proposal's chronological snapshot index key.
 func (p *Proposal) ActiveProposalSnapshotKey() string {
-	return activeProposalIndexKey(p.snapshotTime, p.id)
-}
-
-// ActiveProposalDeadlineKey returns this proposal's chronological lifecycle deadline index key.
-func (p *Proposal) ActiveProposalDeadlineKey(deadline int64) string {
-	return activeProposalIndexKey(deadline, p.id)
-}
-
-// activeProposalIndexKey encodes the ordering timestamp (snapshot time or
-// lifecycle deadline) and proposal ID as fixed-width big-endian integers, so
-// B+Tree byte-ordering matches numeric ordering without decimal zero-padding.
-func activeProposalIndexKey(timestamp int64, proposalID int64) string {
-	return utils.EncodeUint64(uint64(timestamp)) + utils.EncodeUint64(uint64(proposalID))
-}
-
-// ActiveProposalIndexKeyDeadline decodes the timestamp a deadline-index key
-// was built with, so callers can recover the lifecycle stage a stored entry
-// currently represents without recomputing and comparing candidate keys.
-func ActiveProposalIndexKeyDeadline(key string) int64 {
-	return int64(utils.DecodeUint64(key[:8]))
+	return utils.EncodeUint64(uint64(p.snapshotTime)) + utils.EncodeUint64(uint64(p.id))
 }
 
 // Data returns the proposal data.

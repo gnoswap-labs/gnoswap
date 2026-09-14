@@ -1,5 +1,5 @@
-# Snapshot cleanup requires proposal maintenance but never prunes implicitly.
-# Explicit maintenance batches drain a cap-plus-one backlog without losing proposal history.
+# Snapshot cleanup requires explicit single-proposal index maintenance.
+# Removing one index entry at a time preserves proposal history.
 loadpkg gno.land/r/gnoswap/gov/governance/v1
 loadpkg gno.land/r/gnoswap/gov/staker/v1
 loadpkg gno.land/r/gnoswap/protocol_fee/v1
@@ -10,32 +10,35 @@ gnoland start
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func Reconfigure -args 0 -args 0 -args 0 -args 50 -args 0 -args 0 -args 0 -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 
 gnokey maketx run -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 -max-deposit 500000000ugnot test1 $WORK/setup.gno
-stdout 'CREATED 201'
+stdout 'CREATED 3'
 
 gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
-stdout 'active proposal index requires pruning'
+stdout 'proposalID: 1'
 
 ! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CleanStakerDelegationSnapshotByAdmin -args 0 -args $test1_user_addr -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
 stderr 'active proposal index requires pruning'
 
-gnokey maketx run -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1 $WORK/prune_first.gno
-stdout 'FIRST 200 true'
-
+# Remove the non-head entry first; the getter must still identify proposal 1.
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func RemoveInactiveProposalFromIndexByAdmin -args 2 -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
 gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
-stdout 'active proposal index requires pruning'
+stdout 'proposalID: 1'
+
+# Remove the head entry; proposal 3 is now the stale head.
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func RemoveInactiveProposalFromIndexByAdmin -args 1 -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
+gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
+stdout 'proposalID: 3'
 
 ! gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CleanStakerDelegationSnapshotByAdmin -args 0 -args $test1_user_addr -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
 stderr 'active proposal index requires pruning'
 
-gnokey maketx run -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1 $WORK/prune_last.gno
-stdout 'LAST 1 false'
-
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func RemoveInactiveProposalFromIndexByAdmin -args 3 -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 2000000000 test1
 gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetOldestActiveProposalSnapshotTime()'
 stdout 'false'
 ! stdout 'active proposal index requires pruning'
 
+# Index maintenance must not delete archived proposals.
 gnokey query vm/qeval --data 'gno.land/r/gnoswap/gov/governance.GetProposals().Size()'
-stdout '201'
+stdout '3'
 
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/staker -func CleanStakerDelegationSnapshotByAdmin -args 0 -args $test1_user_addr -broadcast -chainid tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
 stdout 'OK'
@@ -53,24 +56,8 @@ func main(cur realm) {
     admin := access.MustGetAddress(prbac.ROLE_ADMIN.String())
     gns.Approve(cross(cur), access.MustGetAddress(prbac.ROLE_GOV_STAKER.String()), 1000000000)
     gs.Delegate(cross(cur), admin, 1000000000, "")
-    for i := 0; i < 201; i++ {
-        governance.ProposeText(cross(cur), "maintenance", "bounded maintenance transaction smoke")
+    for i := 0; i < 3; i++ {
+        governance.ProposeText(cross(cur), "maintenance", "single-proposal maintenance transaction smoke")
     }
     println("CREATED", governance.GetProposals().Size())
-}
--- prune_first.gno --
-package main
-import "gno.land/r/gnoswap/gov/governance"
-func main(cur realm) {
-    n, more := governance.PruneInactiveProposals(cross(cur), 200)
-    if n != 200 || !more { panic("first batch did not persist expected progress") }
-    println("FIRST", n, more)
-}
--- prune_last.gno --
-package main
-import "gno.land/r/gnoswap/gov/governance"
-func main(cur realm) {
-    n, more := governance.PruneInactiveProposals(cross(cur), 1)
-    if n != 1 || more { panic("last batch did not persist expected progress") }
-    println("LAST", n, more)
 }

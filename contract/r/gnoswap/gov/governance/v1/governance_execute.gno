@@ -67,15 +67,7 @@ func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 	if err != nil {
 		panic(err)
 	}
-
-	// Execute only succeeds once voting has ended, but pruneInactiveProposals
-	// may or may not have already rescheduled this entry from VotingEndTime
-	// to ExpiredTime, so both candidate deadline keys must be attempted.
-	if err := gv.removeActiveProposal(
-		0, rlm, proposal,
-		proposal.Status().Schedule().VotingEndTime(),
-		proposal.Status().Schedule().ExpiredTime(),
-	); err != nil {
+	if err := gv.removeActiveProposal(0, rlm, proposal); err != nil {
 		panic(err)
 	}
 
@@ -185,14 +177,7 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 	if err != nil {
 		panic(err)
 	}
-
-	// Cancel only succeeds while a proposal is still upcoming (before voting
-	// starts), so its active index entry can only ever have been stored
-	// under the VotingEndTime deadline key.
-	if err := gv.removeActiveProposal(
-		0, rlm, proposal,
-		proposal.Status().Schedule().VotingEndTime(),
-	); err != nil {
+	if err := gv.removeActiveProposal(0, rlm, proposal); err != nil {
 		panic(err)
 	}
 

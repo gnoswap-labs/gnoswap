@@ -109,8 +109,11 @@ func main(cur realm) {
 		uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-018]", func() {
 			gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), cleanupTime, aliceAddr)
 		})
-		processed, hasMore := governance.PruneInactiveProposals(cross(cur), 1)
-		println("[INFO] pruned expired proposals:", processed, "has more:", hasMore)
+		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalId)
+		snapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
+		uassert.NoError(t, err)
+		ufmt.Printf("[INFO] oldest snapshot after maintenance: %d %t\n", snapshotTime, hasActive)
+		println("[INFO] proposal history after maintenance:", governance.GetProposals().Size())
 		cleanupSnapshots(cur, cleanupTime)
 	} else {
 		println("[INFO] safe cleanup time is not old enough, skipping cleanup test")
@@ -209,7 +212,8 @@ func verifyTotalDelegation(cur realm) {
 //
 // [SCENARIO] 8. Cleanup snapshots older than first delegation (safe cleanup)
 // [INFO] before delegation amount: 1500000000
-// [INFO] pruned expired proposals: 1 has more: false
+// [INFO] oldest snapshot after maintenance: 0 false
+// [INFO] proposal history after maintenance: 1
 // [INFO] cleaned snapshots older than 1234783895
 // [EXPECTED] snapshot cleanup succeeded
 // [INFO] after delegation amount: 0

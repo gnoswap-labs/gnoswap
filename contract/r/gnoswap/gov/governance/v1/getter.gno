@@ -256,8 +256,8 @@ func (gv *governanceV1) GetUserProposals() *rotree.ReadOnlyTree {
 }
 
 // GetOldestActiveProposalSnapshotTime examines only the first snapshot index entry.
-// If it is inactive, callers must prune before retrying; an error must never be
-// treated as an empty index when deciding whether delegation history can be deleted.
+// If it is inactive, the error identifies the proposal requiring admin cleanup.
+// An error must never be treated as an empty index when deleting delegation history.
 func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
 	snapshotIndex := gv.store.GetActiveProposalsBySnapshot()
 	var oldestSnapshotTime int64
@@ -271,9 +271,9 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool, erro
 		}
 		proposal, exists := gv.getProposal(proposalID)
 		if !exists {
-			err = errors.New(errProposalNotFound)
+			err = makeErrorWithDetails(errProposalNotFound, ufmt.Sprintf("proposalID: %d", proposalID))
 		} else if !NewProposalResolver(proposal).IsActive(time.Now().Unix()) {
-			err = errors.New(errActiveProposalIndexNeedsPruning)
+			err = makeErrorWithDetails(errActiveProposalIndexNeedsPruning, ufmt.Sprintf("proposalID: %d", proposalID))
 		} else {
 			oldestSnapshotTime = proposal.SnapshotTime()
 			hasActiveProposal = true

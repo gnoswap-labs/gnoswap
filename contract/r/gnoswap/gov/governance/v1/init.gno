@@ -72,12 +72,6 @@ func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore
 		}
 	}
 
-	if !governanceStore.HasActiveProposalsByDeadlineStoreKey() {
-		if err := governanceStore.SetActiveProposalsByDeadline(0, rlm, governance.NewActiveProposalTree()); err != nil {
-			return err
-		}
-	}
-
 	if !governanceStore.HasProposalUserVotingInfosStoreKey() {
 		err := governanceStore.SetProposalUserVotingInfos(0, rlm, governance.NewProposalUserVotingInfoTree())
 		if err != nil {

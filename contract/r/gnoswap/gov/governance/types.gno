@@ -53,10 +53,9 @@ type IGovernanceManager interface {
 		proposalId int64,
 	) int64
 
-	// PruneInactiveProposals processes up to limit elapsed deadlines (1–200).
-	// Admins and governance stakers may call it independently of snapshot cleanup.
-	// It returns the processed count and whether due deadlines remain.
-	PruneInactiveProposals(_ int, rlm realm, limit int) (processed int, hasMore bool)
+	// RemoveInactiveProposalFromIndexByAdmin removes one inactive proposal from
+	// the snapshot index. Only admins may call it; proposal and vote history remain.
+	RemoveInactiveProposalFromIndexByAdmin(_ int, rlm realm, proposalID int64)
 
 	// Configuration
 	Reconfigure(
@@ -110,7 +109,7 @@ type IGovernanceGetter interface {
 
 	// GetOldestActiveProposalSnapshotTime returns the oldest active proposal's
 	// snapshot time. An empty index returns (0, false, nil); a stale first entry
-	// returns a non-nil maintenance error.
+	// returns a maintenance error identifying the proposal that needs admin cleanup.
 	GetOldestActiveProposalSnapshotTime() (int64, bool, error)
 
 	// Voting weight snapshot getters
@@ -143,9 +142,6 @@ type IGovernanceStore interface {
 	HasActiveProposalsBySnapshotStoreKey() bool
 	GetActiveProposalsBySnapshot() *bptree.BPTree
 	SetActiveProposalsBySnapshot(_ int, rlm realm, tree *bptree.BPTree) error
-	HasActiveProposalsByDeadlineStoreKey() bool
-	GetActiveProposalsByDeadline() *bptree.BPTree
-	SetActiveProposalsByDeadline(_ int, rlm realm, tree *bptree.BPTree) error
 
 	// Proposal voting info methods
 	HasProposalUserVotingInfosStoreKey() bool

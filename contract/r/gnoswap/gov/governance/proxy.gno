@@ -124,11 +124,11 @@ func Cancel(
 	return getImplementation().Cancel(0, cur, proposalId)
 }
 
-// PruneInactiveProposals processes up to limit elapsed deadlines (1–200).
-// Admins and governance stakers may call it independently of snapshot cleanup.
-// It returns the processed count and whether due deadlines remain.
-func PruneInactiveProposals(cur realm, limit int) (processed int, hasMore bool) {
-	return getImplementation().PruneInactiveProposals(0, cur, limit)
+// RemoveInactiveProposalFromIndexByAdmin removes one inactive proposal from the
+// snapshot index. Only admins may call it; proposal and vote history remain.
+// Call in a separate transaction before retrying delegation-snapshot cleanup.
+func RemoveInactiveProposalFromIndexByAdmin(cur realm, proposalID int64) {
+	getImplementation().RemoveInactiveProposalFromIndexByAdmin(0, cur, proposalID)
 }
 
 // Reconfigure updates the governance configuration parameters.

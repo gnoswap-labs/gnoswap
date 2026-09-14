@@ -1,4 +1,4 @@
-// bounded public maintenance keeps stale active-index entries from blocking cleanup
+// admin maintenance removes one inactive proposal from the active snapshot index
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
@@ -10,6 +10,7 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
@@ -35,152 +36,216 @@ var (
 	currentBlockTime = int64(5)
 )
 
-// The production cap is currently 200. Three extra proposals let this
-// scenario exercise small batches before a full-cap batch without duplicate
-// fixtures.
-const maintenanceBacklog = 203
-
 func main(cur realm) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	config, err := governance.GetLatestConfig()
-	if err != nil {
-		panic(err)
-	}
-
-	delegateGnsToAdmin(cur)
-	testing.SkipHeights(config.VotingWeightSmoothingDuration/currentBlockTime + 1)
 	maxSmoothingPeriod := governance.GetMaxSmoothingPeriod()
+
+	delegateGnsToAdminAndUser(cur)
+	testing.SkipHeights(maxSmoothingPeriod/currentBlockTime + 1)
+
+	// Keep the first backlog small, while making every lifecycle boundary
+	// reachable in a few simulated blocks.
 	governance.Reconfigure(cross(cur), 1, 1, maxSmoothingPeriod, 50, 0, 1, 1)
-	shortConfig, err := governance.GetLatestConfig()
+	staleConfig, err := governance.GetLatestConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	for i := 0; i < maintenanceBacklog; i++ {
-		governance.ProposeText(cross(cur), "stale", "stale")
-		testing.SkipHeights((shortConfig.VotingStartDelay+shortConfig.VotingPeriod)/currentBlockTime + 1)
-	}
+	firstID := governance.ProposeText(cross(cur), "stale-first", "stale-first")
+	expireProposal(staleConfig)
+	secondID := governance.ProposeText(cross(cur), "stale-second", "stale-second")
+	expireProposal(staleConfig)
 
+	// Give voting and execution windows room for the five-second test blocks.
+	governance.Reconfigure(cross(cur), 5, 10, maxSmoothingPeriod, 50, 0, 5, 30)
+	executableConfig, err := governance.GetLatestConfig()
+	uassert.NoError(t, err)
+	executableID := governance.ProposeCommunityPoolSpend(
+		cross(cur),
+		"passed executable",
+		"passed executable",
+		adminAddr,
+		"gno.land/r/gnoswap/gns.GNS",
+		1,
+	)
+	testing.SkipHeights(executableConfig.VotingStartDelay/currentBlockTime + 1)
+	governance.Vote(cross(cur), executableID, true)
+	testing.SkipHeights((executableConfig.VotingPeriod+executableConfig.ExecutionDelay)/currentBlockTime + 1)
+	status, err := governance.GetProposalStatusByProposalId(executableID)
+	uassert.NoError(t, err)
+	println("[EXPECTED] executable before expiry:", executableID, status)
+
+	// Use a longer voting period for the second proposer so it remains active
+	// while the passed executable proposal reaches its expiry.
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	governance.Reconfigure(cross(cur), 1, 100, maxSmoothingPeriod, 50, 0, 1, 1)
 	activeConfig, err := governance.GetLatestConfig()
 	if err != nil {
 		panic(err)
 	}
-	activeProposalID := governance.ProposeCommunityPoolSpend(
-		cross(cur),
-		"retained",
-		"retained",
-		adminAddr,
-		"gno.land/r/gnoswap/gns.GNS",
-		1,
-	)
-	activeCreatedAt, err := governance.GetProposalCreatedAt(activeProposalID)
-	if err != nil {
-		panic(err)
-	}
-	expectedActiveSnapshot := activeCreatedAt - activeConfig.VotingWeightSmoothingDuration
-	historySize := governance.GetProposals().Size()
-	println("[INFO] proposal history before maintenance:", historySize)
-
-	snapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
-	println("[EXPECTED] stale snapshot:", snapshotTime, hasActive)
-	uassert.ErrorContains(t, err, "[GNOSWAP-GOVERNANCE-018]")
-
-	assertInvalidPruneLimit(cur, -1)
-	assertInvalidPruneLimit(cur, 0)
-	assertInvalidPruneLimit(cur, 201)
-	println("[EXPECTED] history after invalid limits:", governance.GetProposals().Size())
-
-	// Invalid arguments must not hide or mutate the stale first index entry.
-	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
-	println("[EXPECTED] stale snapshot after invalid limits:", snapshotTime, hasActive)
-	uassert.ErrorContains(t, err, "[GNOSWAP-GOVERNANCE-018]")
-
 	testing.SetRealm(testing.NewUserRealm(nonAdminAddr))
-	uassert.AbortsContains(t, cur, "unauthorized", func() {
-		_, _ = governance.PruneInactiveProposals(cross(cur), 1)
-	})
-	println("[EXPECTED] unauthorized maintenance rejected")
+	activeID := governance.ProposeText(cross(cur), "active", "active")
+	activeStatus, err := governance.GetProposalStatusByProposalId(activeID)
+	uassert.NoError(t, err)
+	println("[EXPECTED] active proposal initially:", activeID, activeStatus)
 
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
-	cleanupThreshold := time.Now().Unix() - maxSmoothingPeriod
+	assertActiveProposal(cur, activeID, activeConfig)
+	assertMissingProposal(cur, 9999)
+	assertUnauthorizedRemoval(cur, executableID)
+
+	// The target ID is not required to be the first index entry.
+	governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), secondID)
+	println("[EXPECTED] removed non-head index entry:", secondID)
+	assertStaleHead(cur, firstID)
+
+	maxSmoothingThreshold := time.Now().Unix() - maxSmoothingPeriod
 	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-018]", func() {
-		gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), cleanupThreshold, adminAddr)
+		gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), maxSmoothingThreshold, adminAddr)
 	})
 	println("[EXPECTED] cleanup with stale index rejected")
 
-	processed, hasMore := governance.PruneInactiveProposals(cross(cur), 1)
-	println("[EXPECTED] limit 1:", processed, hasMore)
-	processed, hasMore = governance.PruneInactiveProposals(cross(cur), 2)
-	println("[EXPECTED] limit 2:", processed, hasMore)
-	processed, hasMore = governance.PruneInactiveProposals(cross(cur), 200)
-	println("[EXPECTED] limit 200:", processed, hasMore)
+	governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), firstID)
+	println("[EXPECTED] removed head index entry:", firstID)
+	executableCreatedAt, err := governance.GetProposalCreatedAt(executableID)
+	uassert.NoError(t, err)
+	snapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
+	println("[EXPECTED] executable snapshot:", hasActive, snapshotTime == executableCreatedAt-executableConfig.VotingWeightSmoothingDuration)
 
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-001]", func() {
+		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), executableID)
+	})
+	println("[EXPECTED] executable proposal protected")
+
+	voteWeight, err := governance.GetYeaByProposalId(executableID)
+	uassert.NoError(t, err)
+	println("[EXPECTED] executable history before expiry:", governance.ExistsProposal(executableID), governance.ExistsVotingInfo(executableID, adminAddr), voteWeight, governance.GetProposals().Size())
+
+	testing.SkipHeights(executableConfig.ExecutionWindow/currentBlockTime + 1)
+	status, err = governance.GetProposalStatusByProposalId(executableID)
+	uassert.NoError(t, err)
+	println("[EXPECTED] executable after expiry:", executableID, status)
+	assertStaleHead(cur, executableID)
+	governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), executableID)
+	println("[EXPECTED] removed expired executable:", executableID)
+
+	activeCreatedAt, err := governance.GetProposalCreatedAt(activeID)
+	uassert.NoError(t, err)
+	expectedActiveSnapshot := activeCreatedAt - activeConfig.VotingWeightSmoothingDuration
 	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
 	uassert.NoError(t, err)
-	println("[EXPECTED] retained snapshot:", hasActive, snapshotTime == expectedActiveSnapshot)
-	println("[EXPECTED] history after maintenance:", governance.GetProposals().Size())
-
-	testing.SkipHeights(activeConfig.VotingStartDelay/currentBlockTime + 2)
-	status, err := governance.GetProposalStatusByProposalId(activeProposalID)
-	uassert.NoError(t, err)
-	println("[EXPECTED] status before cleanup:", status)
+	println("[EXPECTED] active snapshot:", hasActive, snapshotTime == expectedActiveSnapshot)
 
 	uassert.AbortsContains(t, cur, "active proposal requires data", func() {
 		gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), expectedActiveSnapshot+1, adminAddr)
 	})
-	println("[EXPECTED] unsafe cleanup cutoff rejected")
+	println("[EXPECTED] unsafe active snapshot cleanup rejected")
 	gs.CleanStakerDelegationSnapshotByAdmin(cross(cur), expectedActiveSnapshot, adminAddr)
+	println("[EXPECTED] active snapshot cleanup succeeded")
 
 	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
 	uassert.NoError(t, err)
-	println("[EXPECTED] retained snapshot after cleanup:", hasActive, snapshotTime == expectedActiveSnapshot)
-	println("[EXPECTED] history after cleanup:", governance.GetProposals().Size())
+	println("[EXPECTED] active snapshot after cleanup:", hasActive, snapshotTime == expectedActiveSnapshot)
+	delegated, exists := gs.GetTotalDelegationAmountAtSnapshot(expectedActiveSnapshot)
+	println("[EXPECTED] delegation at active snapshot:", delegated, exists)
 
-	testing.SkipHeights((activeConfig.VotingStartDelay+activeConfig.VotingPeriod)/currentBlockTime + 2)
-	processed, hasMore = governance.PruneInactiveProposals(cross(cur), 1)
-	println("[EXPECTED] terminal batch:", processed, hasMore)
+	testing.SkipHeights(activeConfig.VotingPeriod/currentBlockTime + 1)
+	status, err = governance.GetProposalStatusByProposalId(activeID)
+	uassert.NoError(t, err)
+	println("[EXPECTED] active proposal after voting:", activeID, status)
+	governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), activeID)
+	println("[EXPECTED] removed final index entry:", activeID)
 
 	snapshotTime, hasActive, err = governance.GetOldestActiveProposalSnapshotTime()
 	uassert.NoError(t, err)
 	println("[EXPECTED] empty snapshot:", snapshotTime, hasActive)
 	println("[EXPECTED] final proposal history:", governance.GetProposals().Size())
+	println("[EXPECTED] executable history after removal:", governance.ExistsProposal(executableID), governance.ExistsVotingInfo(executableID, adminAddr), governance.GetProposals().Size())
 }
 
-func assertInvalidPruneLimit(cur realm, limit int) {
+func expireProposal(config governance.Config) {
+	testing.SkipHeights((config.VotingStartDelay+config.VotingPeriod)/currentBlockTime + 1)
+}
+
+func assertMissingProposal(cur realm, proposalID int64) {
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-012]", func() {
+		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalID)
+	})
+	println("[EXPECTED] missing proposal rejected:", proposalID)
+}
+
+func assertUnauthorizedRemoval(cur realm, proposalID int64) {
+	testing.SetRealm(testing.NewUserRealm(nonAdminAddr))
+	uassert.AbortsContains(t, cur, "unauthorized", func() {
+		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalID)
+	})
+	println("[EXPECTED] unauthorized maintenance rejected")
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
+}
+
+func assertStaleHead(cur realm, proposalID int64) {
+	snapshotTime, hasActive, err := governance.GetOldestActiveProposalSnapshotTime()
+	uassert.ErrorContains(t, err, "[GNOSWAP-GOVERNANCE-018]")
+	uassert.ErrorContains(t, err, ufmt.Sprintf("proposalID: %d", proposalID))
+	println("[EXPECTED] stale head:", proposalID, snapshotTime, hasActive)
+}
+
+func assertActiveProposal(cur realm, proposalID int64, config governance.Config) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-001]", func() {
-		_, _ = governance.PruneInactiveProposals(cross(cur), limit)
+		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalID)
 	})
-	println("[EXPECTED] rejected limit:", limit)
+	println("[EXPECTED] upcoming proposal protected")
+
+	testing.SkipHeights(config.VotingStartDelay/currentBlockTime + 1)
+	status, err := governance.GetProposalStatusByProposalId(proposalID)
+	uassert.NoError(t, err)
+	println("[EXPECTED] active proposal status:", proposalID, status)
+	uassert.AbortsContains(t, cur, "[GNOSWAP-GOVERNANCE-001]", func() {
+		governance.RemoveInactiveProposalFromIndexByAdmin(cross(cur), proposalID)
+	})
+	println("[EXPECTED] active proposal protected")
 }
 
-func delegateGnsToAdmin(cur realm) {
+func delegateGnsToAdminAndUser(cur realm) {
 	delegatedAmount := int64(1_000_000_000)
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
 	gs.Delegate(cross(cur), adminAddr, delegatedAmount, "")
+
+	gns.Transfer(cross(cur), nonAdminAddr, delegatedAmount)
+	testing.SetRealm(testing.NewUserRealm(nonAdminAddr))
+	gns.Approve(cross(cur), govStakerAddr, delegatedAmount)
+	gs.Delegate(cross(cur), nonAdminAddr, delegatedAmount, "")
+	testing.SetRealm(testing.NewUserRealm(adminAddr))
 }
 
 // Output:
-// [INFO] proposal history before maintenance: 204
-// [EXPECTED] stale snapshot: 0 false
-// [EXPECTED] rejected limit: -1
-// [EXPECTED] rejected limit: 0
-// [EXPECTED] rejected limit: 201
-// [EXPECTED] history after invalid limits: 204
-// [EXPECTED] stale snapshot after invalid limits: 0 false
+// [EXPECTED] executable before expiry: 3 executable
+// [EXPECTED] active proposal initially: 4 upcoming
+// [EXPECTED] upcoming proposal protected
+// [EXPECTED] active proposal status: 4 active
+// [EXPECTED] active proposal protected
+// [EXPECTED] missing proposal rejected: 9999
 // [EXPECTED] unauthorized maintenance rejected
+// [EXPECTED] removed non-head index entry: 2
+// [EXPECTED] stale head: 1 0 false
 // [EXPECTED] cleanup with stale index rejected
-// [EXPECTED] limit 1: 1 true
-// [EXPECTED] limit 2: 2 true
-// [EXPECTED] limit 200: 200 false
-// [EXPECTED] retained snapshot: true true
-// [EXPECTED] history after maintenance: 204
-// [EXPECTED] status before cleanup: active
-// [EXPECTED] unsafe cleanup cutoff rejected
-// [EXPECTED] retained snapshot after cleanup: true true
-// [EXPECTED] history after cleanup: 204
-// [EXPECTED] terminal batch: 1 false
+// [EXPECTED] removed head index entry: 1
+// [EXPECTED] executable snapshot: true true
+// [EXPECTED] executable proposal protected
+// [EXPECTED] executable history before expiry: true true 1000000000 4
+// [EXPECTED] executable after expiry: 3 expired
+// [EXPECTED] stale head: 3 0 false
+// [EXPECTED] removed expired executable: 3
+// [EXPECTED] active snapshot: true true
+// [EXPECTED] unsafe active snapshot cleanup rejected
+// [EXPECTED] active snapshot cleanup succeeded
+// [EXPECTED] active snapshot after cleanup: true true
+// [EXPECTED] delegation at active snapshot: 2000000000 true
+// [EXPECTED] active proposal after voting: 4 rejected
+// [EXPECTED] removed final index entry: 4
 // [EXPECTED] empty snapshot: 0 false
-// [EXPECTED] final proposal history: 204
+// [EXPECTED] final proposal history: 4
+// [EXPECTED] executable history after removal: true true 4
