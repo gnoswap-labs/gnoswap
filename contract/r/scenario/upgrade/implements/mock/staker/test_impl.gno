@@ -420,25 +420,36 @@ func (t *TestStaker) HasUnstakedPosition(positionId uint64) bool {
 }
 
 func (t *TestStaker) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
-	return t.ExecuteFn(
+	var err error
+	exitTime := t.ExecuteFn(
 		"GetUnstakedPositionExitTime",
 		func(args ...any) any {
-			exitTime, _ := t.instance.GetUnstakedPositionExitTime(args[0].(uint64))
-			return exitTime
+			var result int64
+			result, err = t.instance.GetUnstakedPositionExitTime(args[0].(uint64))
+			return result
 		},
 		positionId,
-	).(int64), nil
+	).(int64)
+
+	return exitTime, err
 }
 
 func (t *TestStaker) GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
-	return t.ExecuteFn(
+	var err error
+	result := t.ExecuteFn(
 		"GetUnstakedPositionPendingIncentives",
 		func(args ...any) any {
-			incentiveIds, _ := t.instance.GetUnstakedPositionPendingIncentives(args[0].(uint64))
+			var incentiveIds []string
+			incentiveIds, err = t.instance.GetUnstakedPositionPendingIncentives(args[0].(uint64))
 			return incentiveIds
 		},
 		positionId,
-	).([]string), nil
+	)
+	if result == nil {
+		return nil, err
+	}
+
+	return result.([]string), err
 }
 
 func (t *TestStaker) GetUncollectedIncentiveCount(incentiveId string) int64 {

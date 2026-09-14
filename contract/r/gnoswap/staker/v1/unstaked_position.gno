@@ -1,6 +1,10 @@
 package staker
 
 import (
+	"chain"
+	"chain/runtime"
+	"time"
+
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -109,7 +113,7 @@ func addUncollectedIncentiveCountTo(counts *bptree.BPTree, incentiveId string, d
 // recordUnstakedPosition writes the exit checkpoint before the teardown touches the pool.
 // The deposit's incentive index is brought up to date first, so the checkpoint owes exactly
 // the incentives the position accrued from.
-func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, deposit *sr.Deposit, exitTime int64) {
+func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, deposit *sr.Deposit, exitTime int64) *sr.UnstakedPosition {
 	poolPath := deposit.TargetPoolPath()
 
 	pool, ok := s.getPools().Get(poolPath)
@@ -162,13 +166,29 @@ func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, d
 	for _, incentiveId := range incentiveIds {
 		addUncollectedIncentiveCountTo(counts, incentiveId, 1)
 	}
+
+	return position
 }
 
 // dropUnstakedPositionIfCollected removes the checkpoint once every reward source is collected.
-func (s *stakerV1) dropUnstakedPositionIfCollected(target *collectTarget) {
-	if target.checkpoint.FullyCollected() {
-		s.getUnstakedPositions().remove(target.positionId)
+func (s *stakerV1) dropUnstakedPositionIfCollected(_ int, rlm realm, target *collectTarget) {
+	if !target.checkpoint.FullyCollected() {
+		return
 	}
+
+	s.getUnstakedPositions().remove(target.positionId)
+
+	previousRealm := rlm.Previous()
+	chain.Emit(
+		"ClearUnstakedPosition",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"positionId", utils.FormatUint(target.positionId),
+		"poolPath", target.deposit.TargetPoolPath(),
+		"exitTime", utils.FormatInt(target.checkpoint.ExitTime()),
+		"currentTime", utils.FormatInt(time.Now().Unix()),
+		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
+	)
 }
 
 // HasUnstakedPosition reports whether a position has uncollected rewards from a past stake.

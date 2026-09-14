@@ -101,6 +101,9 @@ func (u *UnstakedPosition) TierCount() uint64 { return u.tierCount }
 // UnstakingFee returns the staking-reward fee rate in force at ExitTime.
 func (u *UnstakedPosition) UnstakingFee() uint64 { return u.unstakingFee }
 
+// EmissionCollected reports whether the emission reward has been collected.
+func (u *UnstakedPosition) EmissionCollected() bool { return u.emissionCollected }
+
 // MarkEmissionCollected records that the emission reward has been collected.
 func (u *UnstakedPosition) MarkEmissionCollected() { u.emissionCollected = true }
 

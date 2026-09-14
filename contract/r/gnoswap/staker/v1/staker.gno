@@ -3,6 +3,7 @@ package staker
 import (
 	"chain"
 	"chain/runtime"
+	"strings"
 	"time"
 
 	bptree "gno.land/p/nt/bptree/v0"
@@ -494,32 +495,55 @@ func (self *collectContext) persistDeposit(s *stakerV1) {
 	s.getDeposits().set(self.positionId, self.deposit)
 }
 
-// markEmissionCollected records the emission collect on the checkpoint.
-func (s *stakerV1) markEmissionCollected(target *collectTarget) {
-	if !target.isCheckpoint() {
+// externalDeliveryOutcome is what deliverExternalIncentiveReward did with one incentive. The
+// checkpoint bookkeeping keys off it instead of re-deriving the decision from incentive state,
+// which a permissionless re-entering collect may already have changed.
+type externalDeliveryOutcome int
+
+const (
+	// externalDeliveryPaid: the incentive was debited, the cursor advanced and the reward moved.
+	externalDeliveryPaid externalDeliveryOutcome = iota
+	// externalDeliveryNothingOwed: the window yielded no reward and no penalty.
+	externalDeliveryNothingOwed
+	// externalDeliveryAlreadyDelivered: a checkpoint cursor already at the window's close, so the
+	// source is settled - by a collect earlier in the exit second, or by an outer call whose
+	// transfer this call re-entered from.
+	externalDeliveryAlreadyDelivered
+	// externalDeliveryDeferred: skipped without bookkeeping and still payable later - the incentive
+	// has not started, or the staker realm's balance of the reward token is short while staked.
+	externalDeliveryDeferred
+	// externalDeliveryUnpayable: skipped without bookkeeping and never payable from this record.
+	// The incentive's reward amount only ever decreases, so a shortfall there is final; on a
+	// checkpoint a realm balance shortfall is final too, since its window can never widen.
+	externalDeliveryUnpayable
+)
+
+// markEmissionCollected records the emission collect on the checkpoint. Idempotent: a
+// re-entering collect may have marked it already.
+func (s *stakerV1) markEmissionCollected(_ int, rlm realm, target *collectTarget) {
+	if !target.isCheckpoint() || target.checkpoint.EmissionCollected() {
 		return
 	}
 
 	target.checkpoint.MarkEmissionCollected()
-	s.dropUnstakedPositionIfCollected(target)
+	s.emitCheckpointSourceCollected(0, rlm, target, "emission", "")
+	s.dropUnstakedPositionIfCollected(0, rlm, target)
 }
 
-// markIncentiveCollected records the incentive collect on the checkpoint. Delivery reports a
-// skip with an empty reward token; a skipped incentive that could still cover the owed amount
-// stays pending, while one that no longer can is forfeited - its reward amount only ever
-// decreases, so waiting cannot help, and a checkpoint pending it forever would lock both this
-// position's re-staking and the incentive's own refund.
-func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarget, incentiveId string, rewardAmount, rewardPenalty int64, rewardToken string) {
+// markIncentiveCollected records the incentive collect on the checkpoint from the delivery's
+// reported outcome. A paid, empty or already-delivered source is done. A deferred one stays
+// pending. An unpayable one is forfeited: keeping it pending forever would lock both this
+// position's re-staking and the incentive's own refund, with no escape path.
+func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarget, incentiveId string, rewardAmount, rewardPenalty int64, outcome externalDeliveryOutcome) {
 	if !target.isCheckpoint() || !target.checkpoint.HasPendingIncentiveId(incentiveId) {
 		return
 	}
 
-	if rewardToken == "" && (rewardAmount > 0 || rewardPenalty > 0) {
+	switch outcome {
+	case externalDeliveryDeferred:
+		return
+	case externalDeliveryUnpayable:
 		incentiveResolver := NewExternalIncentiveResolver(s.getExternalIncentives().get(incentiveId))
-		if incentiveResolver.RewardAmount() >= gnsmath.SafeAddInt64(rewardAmount, rewardPenalty) {
-			return
-		}
-
 		previousRealm := rlm.Previous()
 		chain.Emit(
 			"ForfeitUncollectedIncentiveReward",
@@ -538,7 +562,28 @@ func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarge
 
 	target.checkpoint.MarkIncentiveCollected(incentiveId)
 	s.addUncollectedIncentiveCount(incentiveId, -1)
-	s.dropUnstakedPositionIfCollected(target)
+	s.emitCheckpointSourceCollected(0, rlm, target, "external", incentiveId)
+	s.dropUnstakedPositionIfCollected(0, rlm, target)
+}
+
+// emitCheckpointSourceCollected reports one reward source of a checkpoint as settled, so an
+// indexer can follow what the checkpoint still owes without reading realm state.
+func (s *stakerV1) emitCheckpointSourceCollected(_ int, rlm realm, target *collectTarget, source, incentiveId string) {
+	previousRealm := rlm.Previous()
+	chain.Emit(
+		"CollectUnstakedPositionSource",
+		"prevAddr", previousRealm.Address().String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"positionId", utils.FormatUint(target.positionId),
+		"poolPath", target.deposit.TargetPoolPath(),
+		"source", source,
+		"incentiveId", incentiveId,
+		"exitTime", utils.FormatInt(target.checkpoint.ExitTime()),
+		"emissionCollected", utils.FormatBool(target.checkpoint.EmissionCollected()),
+		"pendingIncentiveCount", utils.FormatInt(int64(len(target.checkpoint.PendingIncentiveIdList()))),
+		"currentTime", utils.FormatInt(time.Now().Unix()),
+		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
+	)
 }
 
 // collectTarget is the record a collect runs against: the live deposit while staked, or the
@@ -651,7 +696,7 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 
 	rewardToUser, rewardPenalty := s.deliverEmissionReward(0, rlm, ctx, reward)
 
-	s.markEmissionCollected(target)
+	s.markEmissionCollected(0, rlm, target)
 
 	return rewardToUser, rewardPenalty
 }
@@ -701,14 +746,14 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 
 	ctx := s.newCollectContext(0, rlm, target, currentTime, blockHeight)
 
-	rewardToken, rewardAmount, rewardPenalty := s.deliverExternalIncentiveReward(
+	_, rewardAmount, rewardPenalty, outcome := s.deliverExternalIncentiveReward(
 		0, rlm, ctx, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId],
 	)
 
 	// Persist the deposit even when nothing was delivered: the incentive-index update above still ran.
 	ctx.persistDeposit(s)
 
-	s.markIncentiveCollected(0, rlm, target, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId], rewardToken)
+	s.markIncentiveCollected(0, rlm, target, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId], outcome)
 
 	return rewardAmount, rewardPenalty
 }
@@ -758,11 +803,11 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	toUserExternalPenalty := make(map[string]int64)
 
 	for _, incentiveId := range rewardUpdate.externalIncentiveIds {
-		rewardToken, rewardAmount, rewardPenalty := s.deliverExternalIncentiveReward(
+		rewardToken, rewardAmount, rewardPenalty, outcome := s.deliverExternalIncentiveReward(
 			0, rlm, ctx, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId],
 		)
 
-		s.markIncentiveCollected(0, rlm, target, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId], rewardToken)
+		s.markIncentiveCollected(0, rlm, target, incentiveId, reward.External[incentiveId], reward.ExternalPenalty[incentiveId], outcome)
 
 		// An empty reward token means the incentive delivered nothing and stays collectible.
 		if rewardToken == "" {
@@ -775,7 +820,7 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 	internalRewardToUser, internalRewardPenalty := s.deliverEmissionReward(0, rlm, ctx, reward)
 
-	s.markEmissionCollected(target)
+	s.markEmissionCollected(0, rlm, target)
 
 	return utils.FormatInt(internalRewardToUser), utils.FormatInt(internalRewardPenalty), toUserExternalReward, toUserExternalPenalty
 }
@@ -785,7 +830,8 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 //
 // The incentive is skipped WITHOUT advancing its lastCollectTime when it yields no user reward or does
 // not hold enough reward token, so the amount stays collectible later. A skipped incentive is reported
-// by an empty reward token.
+// by an empty reward token, and the outcome says why, so a checkpoint can tell a deferral from a debt
+// it will never be able to pay.
 //
 // A warmup ratio below 100% floors the user reward, so a small accrual can yield rewardAmount == 0 while
 // externalPenalty > 0. Such a call is skipped as a whole: the penalty is NOT booked and the cursor is NOT
@@ -794,7 +840,8 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 // amount, and endExternalIncentive refunds the reward amount and the accumulated penalty to the same
 // address.
 //
-// Returns the reward token, the collected reward amount before the staking reward fee, and the penalty.
+// Returns the reward token, the collected reward amount before the staking reward fee, the penalty,
+// and the delivery outcome.
 func (s *stakerV1) deliverExternalIncentiveReward(
 	_ int,
 	rlm realm,
@@ -802,13 +849,13 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	incentiveId string,
 	rewardAmount int64,
 	externalPenalty int64,
-) (string, int64, int64) {
+) (string, int64, int64, externalDeliveryOutcome) {
 	// A checkpoint's window closes at ctx.currentTime, so a cursor already there means this
 	// incentive was delivered. The checkpoint entry points are permissionless, and rewardAmount
 	// was computed before the deliveries ran: without this, a reentrant collect between them
 	// would let the stale amount be paid a second time.
 	if ctx.checkpoint != nil && ctx.depositResolver.ExternalRewardLastCollectTime(incentiveId) >= ctx.currentTime {
-		return "", 0, 0
+		return "", 0, 0, externalDeliveryAlreadyDelivered
 	}
 
 	// Skip when user reward is zero.
@@ -818,7 +865,11 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	// An exit checkpoint has no next collection: it stopped accruing, so a penalty left here
 	// would never be booked and would be dropped with the checkpoint.
 	if rewardAmount == 0 && (ctx.checkpoint == nil || externalPenalty == 0) {
-		return "", 0, 0
+		if externalPenalty == 0 {
+			return "", 0, 0, externalDeliveryNothingOwed
+		}
+
+		return "", 0, 0, externalDeliveryDeferred
 	}
 
 	// get panics on a missing id; incentives are never removed from the tree.
@@ -831,7 +882,7 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	// returns first. Kept so a future caller that supplies a non-zero amount cannot pay out of an
 	// incentive whose distribution window has not opened.
 	if !incentiveResolver.IsStarted(ctx.currentTime) {
-		return "", 0, 0
+		return "", 0, 0, externalDeliveryDeferred
 	}
 
 	totalRewardAmount := gnsmath.SafeAddInt64(rewardAmount, externalPenalty)
@@ -851,7 +902,8 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 			"currentHeight", utils.FormatInt(ctx.blockHeight),
 		)
 
-		return "", 0, 0
+		// The reward amount only ever decreases, so this shortfall cannot be corrected later.
+		return "", 0, 0, externalDeliveryUnpayable
 	}
 
 	// process reward states
@@ -860,9 +912,10 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	// Ledger-level delivery guard (audit finding #4).
 	//
 	// The bookkeeping check above proves the incentive owes this reward; it says
-	// nothing about whether the ledger transfers below can succeed. Both legs run
-	// inside UnStakeToken's mandatory collect, and a panic there holds the NFT
-	// and the underlying liquidity hostage to a third-party token.
+	// nothing about whether the ledger transfers below can succeed. A panic there
+	// would abort the collect: while staked that only delays the payout, but on an
+	// exit checkpoint it would leave the checkpoint in place forever, holding the
+	// position's re-staking and the incentive's refund hostage to a third-party token.
 	//
 	// GnoSwap transfers resolve through grc20reg's concrete *grc20.Token straight
 	// into PrivateLedger, so no token-realm code runs in the path and the
@@ -876,9 +929,9 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 	// the re-audit trigger live in docs/staker.md.
 	//
 	// Skipping BEFORE any bookkeeping means: while staked the reward simply
-	// stays pending and becomes collectible once the balance is restored; at
-	// unstake it is forfeited and, having never been deducted, eventually
-	// returns to the incentive creator through EndExternalIncentive.
+	// stays pending and becomes collectible once the balance is restored; on a
+	// checkpoint it is forfeited by the caller and, having never been deducted,
+	// eventually returns to the incentive creator through EndExternalIncentive.
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	pendingProtocolFee := s.store.GetPendingProtocolFees()[rewardToken]
 	requiredBalance := gnsmath.SafeAddInt64(totalRewardAmount, pendingProtocolFee)
@@ -897,7 +950,11 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 			"currentHeight", utils.FormatInt(ctx.blockHeight),
 		)
 
-		return "", 0, 0
+		if ctx.checkpoint != nil {
+			return "", 0, 0, externalDeliveryUnpayable
+		}
+
+		return "", 0, 0, externalDeliveryDeferred
 	}
 
 	incentive.SetRewardAmount(gnsmath.SafeSubInt64(incentive.RewardAmount(), totalRewardAmount))
@@ -963,7 +1020,7 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 		"upperTickOutsideAccX128", ctx.upperOutsideAccX128.ToString(),
 	)
 
-	return rewardToken, rewardAmount, externalPenalty
+	return rewardToken, rewardAmount, externalPenalty, externalDeliveryPaid
 }
 
 // deliverEmissionReward pays out the already-calculated GNS emission reward: it takes the staking reward
@@ -977,7 +1034,7 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, reward Reward) (int64, int64) {
 	// Same reentrancy backstop as deliverExternalIncentiveReward: a checkpoint whose internal
 	// cursor already reached its window's close has had this delivery, and reward was computed
-	// before the external deliveries ran.
+	// before the external deliveries ran. The source counts as settled either way.
 	if ctx.checkpoint != nil && ctx.depositResolver.InternalRewardLastCollectTime() >= ctx.currentTime {
 		return 0, 0
 	}
@@ -1098,15 +1155,16 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 	return internalRewardToUser, internalRewardPenalty
 }
 
-// UnStakeToken withdraws an LP token from staking, collecting all pending rewards
-// and returning the token to its original owner.
+// UnStakeToken withdraws an LP token from staking and returns the NFT to its original owner.
+// Rewards are not collected here: an exit checkpoint records what the position is still owed,
+// and the Collect* entry points settle it per source.
 //
 // Parameters:
 //   - positionId: LP position NFT token ID to unstake
 //   - unwrapResult: Convert WUGNOT to GNOT if true
 //
 // Process:
-//  1. Collects all pending rewards (GNS + external)
+//  1. Records an exit checkpoint owing every reward source (GNS + external)
 //  2. Transfers NFT ownership back to original owner
 //  3. Clears position operator rights
 //  4. Removes from reward tracking systems
@@ -1131,7 +1189,7 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 	poolPath := deposit.TargetPoolPath()
 
 	// record the exit checkpoint; collecting is left to the Collect* entry points
-	s.recordUnstakedPosition(0, rlm, positionId, deposit, time.Now().Unix())
+	checkpoint := s.recordUnstakedPosition(0, rlm, positionId, deposit, time.Now().Unix())
 
 	if err := s.applyUnStake(positionId); err != nil {
 		panic(err)
@@ -1174,6 +1232,9 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 		"currentTick", utils.FormatInt(currentTick),
 		"stakedLiquidity", stakedLiquidity.ToString(),
 		"globalRewardRatioAccX128", globalAccX128.ToString(),
+		"exitTime", utils.FormatInt(checkpoint.ExitTime()),
+		"pendingIncentiveIds", strings.Join(checkpoint.PendingIncentiveIdList(), ","),
+		"pendingIncentiveCount", utils.FormatInt(int64(len(checkpoint.PendingIncentiveIdList()))),
 	)
 
 	return poolPath

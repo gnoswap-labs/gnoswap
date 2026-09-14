@@ -31,6 +31,7 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 - `EndExternalIncentive` refuses while an unstaked position still owes a reward from **that** incentive: its share has not been drawn down yet, so refunding would pay it to the creator. The count is keyed by incentive id, never by pool - a pool-wide guard would let one blocked incentive take every other incentive in the pool down with it.
 - An incentive's reward amount only ever decreases, so a checkpoint owed more than the incentive holds can never be paid. Such a debt is **forfeited** on collect (`ForfeitUncollectedIncentiveReward`), releasing both the position's re-staking and the incentive's refund; keeping it pending would lock both forever with no escape path.
 - The checkpoint also pins the **unstaking fee rate**: the window closed under it, and collect is permissionless, so a later fee change must not apply retroactively.
+- `UnStakeToken` emits the checkpoint's `exitTime` and `pendingIncentiveIds`; each settled source emits `CollectUnstakedPositionSource` and the drop emits `ClearUnstakedPosition`, so an indexer can follow what a checkpoint owes without reading realm state.
 - A checkpoint delivery refuses when its cursor already reached the window's close. Collect computes amounts once and then transfers per source, and checkpoint collects are permissionless, so a re-entering call between transfers must not get a precomputed amount replayed.
 - **Invariant the deferred collect depends on**: every path that changes the tier layout must materialize the reward cache of all tiered pools first, at the current time (`changeTier` does this via `cacheReward`). A tier change that skips it would let `resolveInternalRewardSegments` re-rate a checkpoint's closed window with the new layout.
 
@@ -47,20 +48,24 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 
 ### External Reward Delivery Guard (audit finding #4)
 
-`UnStakeToken` collects inline, so a panic anywhere in reward delivery holds the
-NFT and the underlying liquidity hostage. `deliverExternalIncentiveReward`
-therefore pre-checks the staker realm's live balance of the reward token against
-what BOTH delivery legs will move — the user payout and the unstaking-fee
-settlement, which also flushes carried-over pending protocol fees of the same
-token — and **skips** the delivery (emitting `UndeliverableExternalReward`)
-instead of letting `SafeGRC20Transfer` panic.
+`UnStakeToken` no longer collects, so a delivery panic cannot lock the NFT. It
+can still lock an exit checkpoint: a checkpoint collect that panics never marks
+its source collected, so the position can never re-stake and the incentive can
+never be refunded. `deliverExternalIncentiveReward` therefore pre-checks the
+staker realm's live balance of the reward token against what BOTH delivery legs
+will move — the user payout and the unstaking-fee settlement, which also flushes
+carried-over pending protocol fees of the same token — and **skips** the
+delivery (emitting `UndeliverableExternalReward`) instead of letting
+`SafeGRC20Transfer` panic.
 
-**Skip semantics.** The guard runs before any bookkeeping. While the position
-stays staked, a skip is a deferral: the per-incentive collect cursor does not
-advance and the reward becomes collectible again once the balance is restored
-(anyone may donate). At unstake, the skipped share is forfeited; never having
-been deducted, it stays inside the incentive and returns to its creator through
-`EndExternalIncentive`.
+**Skip semantics.** The guard runs before any bookkeeping, and the delivery
+reports an explicit outcome the checkpoint bookkeeping keys off. While the
+position stays staked, a skip is a deferral: the per-incentive collect cursor
+does not advance and the reward becomes collectible again once the balance is
+restored (anyone may donate). On an exit checkpoint the window can never widen,
+so a skip is **unpayable** and the share is forfeited
+(`ForfeitUncollectedIncentiveReward`); never having been deducted, it stays
+inside the incentive and returns to its creator through `EndExternalIncentive`.
 
 **Why a balance check is sufficient (the closed failure set).** GnoSwap
 transfers resolve through grc20reg's concrete `*grc20.Token` straight into
@@ -108,4 +113,5 @@ retry with a larger `-max-deposit`.
 - `lastCollectTime` shared across incentives → wrong reward amounts.
 - `referrer` not forwarded → lost referral attribution.
 - `rewardPerSecond` dust not handled → small balance permanently locked.
-- Reward delivery without the balance guard → a third-party token failure aborts `UnStakeToken` and locks the NFT (audit finding #4).
+- Reward delivery without the balance guard → a third-party token failure aborts every collect of an exit checkpoint, locking re-staking and the incentive refund (audit finding #4).
+- Checkpoint bookkeeping that re-derives the delivery decision from incentive state → a permissionless re-entering collect sees state the outer call already changed; key it off the delivery's reported outcome instead, and keep the marks idempotent.

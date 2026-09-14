@@ -429,13 +429,17 @@ func (self *PoolResolver) resolveInternalRewardSegments(poolTier *PoolTier, pool
 // persisted cache entry exists beyond startTime. Over this span tier/count are constant, so the rate
 // changes only at halving boundaries.
 func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier *PoolTier, poolPath string, startTime, endTime, baseReward int64, exit *sr.UnstakedPosition) ([]internalRewardSegment, error) {
-	// A checkpoint reads the tier context it exited under: this window closed at the exit.
-	tier, ratio, count, err := poolTier.tierContextOf(poolPath)
-	if err != nil {
-		return nil, err
-	}
+	// A checkpoint reads the tier context it exited under: this window closed at the exit, and
+	// the live lookup is skipped so a checkpoint collect never depends on live tier state.
+	var tier, ratio, count uint64
 	if exit != nil {
 		tier, ratio, count = exit.Tier(), exit.TierRatio(), exit.TierCount()
+	} else {
+		var err error
+		tier, ratio, count, err = poolTier.tierContextOf(poolPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if tier == 0 || tier >= AllTierCount {
