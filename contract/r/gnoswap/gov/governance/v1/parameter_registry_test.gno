@@ -154,6 +154,8 @@ func TestCreateParameterHandlers(cur realm, t *testing.T) {
 		{"gno.land/r/gnoswap/halt", "SetHaltLevel"},
 		{"gno.land/r/gnoswap/community_pool", "TransferToken"},
 		{"gno.land/r/gnoswap/emission", "ChangeDistributionPct"},
+		{"gno.land/r/gnoswap/protocol_fee", "UpgradeImpl"},
+		{"gno.land/r/gnoswap/common", "UpgradeImpl"},
 	}
 
 	for _, tc := range testCases {

@@ -20,7 +20,7 @@ func isTokenKeyChar(c rune) bool {
 	return false
 }
 
-func (c *commonV1) ValidateTokenKey(tokenKey string) error {
+func validateTokenKey(tokenKey string) error {
 	if tokenKey == "" {
 		return errors.New(newErrorWithDetail(errInvalidTokenKey, "empty token key"))
 	}

@@ -1,6 +1,8 @@
 package common
 
 import (
+	"errors"
+
 	"gno.land/p/nt/grc20/v0"
 	"gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/common"
@@ -14,8 +16,29 @@ func NewCommonV1() common.ICommon {
 	return &commonV1{}
 }
 
-func (c *commonV1) IsRegistered(tokenKey string) bool {
-	return grc20reg.Get(tokenKey) != nil
+func (c *commonV1) IsRegistered(tokenKey string) error {
+	if err := validateTokenKey(tokenKey); err != nil {
+		return err
+	}
+
+	if grc20reg.Get(tokenKey) == nil {
+		return ufmt.Errorf("token(%s) is not registered", tokenKey)
+	}
+
+	return nil
+}
+
+func (c *commonV1) ValidateRegistered(tokenKeys ...string) error {
+	for _, tokenKey := range tokenKeys {
+		if err := c.IsRegistered(tokenKey); err != nil {
+			return errors.New(newErrorWithDetail(
+				errNotRegistered,
+				ufmt.Sprintf("token(%s)", tokenKey),
+			))
+		}
+	}
+
+	return nil
 }
 
 func (c *commonV1) TotalSupply(tokenKey string) int64 {
@@ -43,6 +66,10 @@ func (c *commonV1) Approve(_ int, rlm realm, tokenKey string, spender address, a
 }
 
 func (c *commonV1) mustGetToken(tokenKey string) *grc20.Token {
+	if err := validateTokenKey(tokenKey); err != nil {
+		panic(err.Error())
+	}
+
 	token := grc20reg.Get(tokenKey)
 	if token == nil {
 		panic(newErrorWithDetail(errNotRegistered, ufmt.Sprintf("unknown token(%s)", tokenKey)))

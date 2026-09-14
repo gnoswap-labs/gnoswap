@@ -158,12 +158,11 @@ func TestHelpersRouteThroughImplementation(cur realm, t *testing.T) {
 	})
 }
 
-func TestValidateTokenKeyIsDelegated(cur realm, t *testing.T) {
+func TestTokenKeyValidationLivesInImplementation(cur realm, t *testing.T) {
 	registerGrc20regImpl(cur, t)
 
-	uassert.NoError(t, validateTokenKey("gno.land/r/demo/defi/foo20.FOO"))
-	uassert.Error(t, validateTokenKey(""))
-	uassert.Error(t, validateTokenKey("gno.land/r/demo/defi/foo20.FOO:500"))
+	uassert.NoError(t, IsRegistered("gno.land/r/demo/defi/foo20.FOO"))
+	uassert.Error(t, IsRegistered(""))
 	uassert.Error(t, IsRegistered("gno.land/r/demo/defi/foo20.FOO:500"))
 	uassert.Error(t, ValidateRegistered("gno.land/r/demo/defi/foo20.FOO", "a:b"))
 	uassert.PanicsContains(t, cur, "invalid token key", func() {

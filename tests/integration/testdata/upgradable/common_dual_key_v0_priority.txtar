@@ -499,6 +499,9 @@ func (c *commonV2) lookup(tokenKey string) (token, bool) {
 }
 
 func (c *commonV2) mustGetToken(tokenKey string) token {
+	if err := validateTokenKey(tokenKey); err != nil {
+		panic(err.Error())
+	}
 	t, ok := c.lookup(tokenKey)
 	if !ok {
 		panic(ufmt.Sprintf("%s || unknown token(%s)", errNotRegistered, tokenKey))
@@ -519,7 +522,7 @@ func isTokenKeyChar(ch rune) bool {
 	return false
 }
 
-func (c *commonV2) ValidateTokenKey(tokenKey string) error {
+func validateTokenKey(tokenKey string) error {
 	if tokenKey == "" {
 		return errors.New(ufmt.Sprintf("%s || empty token key", errInvalidTokenKey))
 	}
@@ -531,9 +534,23 @@ func (c *commonV2) ValidateTokenKey(tokenKey string) error {
 	return nil
 }
 
-func (c *commonV2) IsRegistered(tokenKey string) bool {
-	_, ok := c.lookup(tokenKey)
-	return ok
+func (c *commonV2) IsRegistered(tokenKey string) error {
+	if err := validateTokenKey(tokenKey); err != nil {
+		return err
+	}
+	if _, ok := c.lookup(tokenKey); !ok {
+		return ufmt.Errorf("token(%s) is not registered", tokenKey)
+	}
+	return nil
+}
+
+func (c *commonV2) ValidateRegistered(tokenKeys ...string) error {
+	for _, tokenKey := range tokenKeys {
+		if err := c.IsRegistered(tokenKey); err != nil {
+			return errors.New(ufmt.Sprintf("%s || token(%s)", errNotRegistered, tokenKey))
+		}
+	}
+	return nil
 }
 
 func (c *commonV2) TotalSupply(tokenKey string) int64 {

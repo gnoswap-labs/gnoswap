@@ -1,45 +1,21 @@
 package common
 
-import (
-	"errors"
-
-	"gno.land/p/nt/ufmt/v0"
-)
-
-func validateTokenKey(tokenKey string) error {
-	return getImplementation().ValidateTokenKey(tokenKey)
-}
-
-func mustValidTokenKey(tokenKey string) {
-	if err := validateTokenKey(tokenKey); err != nil {
-		panic(err.Error())
-	}
-}
-
-// IsRegistered checks if a token is registered in grc20reg, returning nil if registered or error if not.
+// IsRegistered checks if a token is registered, returning nil if registered or error if not.
 //
 // Parameters:
-//   - tokenKey: GRC20 registry key
+//   - tokenKey: token registry key
 //
 // Returns nil if the token is registered, or an error describing the issue.
 func IsRegistered(tokenKey string) error {
-	if err := validateTokenKey(tokenKey); err != nil {
-		return err
-	}
-
-	if !getImplementation().IsRegistered(tokenKey) {
-		return ufmt.Errorf("token(%s) is not registered", tokenKey)
-	}
-
-	return nil
+	return getImplementation().IsRegistered(tokenKey)
 }
 
 // MustRegistered checks if all provided tokens are registered, panicking if any is not registered.
 //
 // Parameters:
-//   - tokenKeys: variable number of GRC20 registry keys to check
+//   - tokenKeys: variable number of token registry keys to check
 //
-// Panics if any of the provided tokens is not registered in grc20reg.
+// Panics if any of the provided tokens is not registered.
 func MustRegistered(tokenKeys ...string) {
 	if err := ValidateRegistered(tokenKeys...); err != nil {
 		panic(err.Error())
@@ -50,21 +26,12 @@ func MustRegistered(tokenKeys ...string) {
 // error instead of panicking when a token is not registered.
 //
 // Parameters:
-//   - tokenKeys: variable number of GRC20 registry keys to check
+//   - tokenKeys: variable number of token registry keys to check
 //
 // Returns nil when every token is registered, otherwise the first
-// registration failure as an error carrying the same detail format used by
-// MustRegistered.
+// registration failure as an error.
 func ValidateRegistered(tokenKeys ...string) error {
-	for _, tokenKey := range tokenKeys {
-		if err := IsRegistered(tokenKey); err != nil {
-			return errors.New(newErrorWithDetail(
-				errNotRegistered,
-				ufmt.Sprintf("token(%s)", tokenKey),
-			))
-		}
-	}
-	return nil
+	return getImplementation().ValidateRegistered(tokenKeys...)
 }
 
 // TotalSupply returns the total supply of the specified token.
@@ -74,7 +41,6 @@ func ValidateRegistered(tokenKeys ...string) error {
 //
 // Returns the total supply of the token as int64.
 func TotalSupply(tokenKey string) int64 {
-	mustValidTokenKey(tokenKey)
 	return getImplementation().TotalSupply(tokenKey)
 }
 
@@ -86,7 +52,6 @@ func TotalSupply(tokenKey string) int64 {
 //
 // Returns the token balance as int64.
 func BalanceOf(tokenKey string, addr address) int64 {
-	mustValidTokenKey(tokenKey)
 	return getImplementation().BalanceOf(tokenKey, addr)
 }
 
@@ -99,7 +64,6 @@ func BalanceOf(tokenKey string, addr address) int64 {
 //
 // Returns the allowance amount as int64.
 func Allowance(tokenKey string, owner, spender address) int64 {
-	mustValidTokenKey(tokenKey)
 	return getImplementation().Allowance(tokenKey, owner, spender)
 }
 
@@ -113,7 +77,6 @@ func Allowance(tokenKey string, owner, spender address) int64 {
 //
 // Returns an error if the transfer fails, nil otherwise.
 func Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) error {
-	mustValidTokenKey(tokenKey)
 	return getImplementation().Transfer(0, rlm, tokenKey, to, amount)
 }
 
@@ -128,7 +91,6 @@ func Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) error
 //
 // Returns an error if the transfer fails, nil otherwise.
 func TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount int64) error {
-	mustValidTokenKey(tokenKey)
 	return getImplementation().TransferFrom(0, rlm, tokenKey, from, to, amount)
 }
 
@@ -142,7 +104,6 @@ func TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount in
 //
 // Returns an error if the approval fails, nil otherwise.
 func Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) error {
-	mustValidTokenKey(tokenKey)
 	return getImplementation().Approve(0, rlm, tokenKey, spender, amount)
 }
 

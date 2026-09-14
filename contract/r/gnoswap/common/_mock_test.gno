@@ -22,16 +22,20 @@ func NewMockCommon(version string, keys ...string) *MockCommon {
 	return m
 }
 
-func (m *MockCommon) ValidateTokenKey(tokenKey string) error {
-	if tokenKey == "" {
-		return errors.New("mock: empty token key")
+func (m *MockCommon) IsRegistered(tokenKey string) error {
+	if _, ok := m.balances[tokenKey]; !ok {
+		return errors.New("mock: token(" + tokenKey + ") is not registered")
 	}
 	return nil
 }
 
-func (m *MockCommon) IsRegistered(tokenKey string) bool {
-	_, ok := m.balances[tokenKey]
-	return ok
+func (m *MockCommon) ValidateRegistered(tokenKeys ...string) error {
+	for _, k := range tokenKeys {
+		if err := m.IsRegistered(k); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (m *MockCommon) TotalSupply(tokenKey string) int64 { return m.balances[tokenKey] }
@@ -62,18 +66,28 @@ func makeMockInitializer(version string, keys ...string) func(_ int, rlm realm) 
 // exercise real GRC20 tokens without importing common/v1.
 type MockGrc20regCommon struct{}
 
-func (m *MockGrc20regCommon) ValidateTokenKey(tokenKey string) error {
-	if tokenKey == "" {
-		return errors.New("invalid token key: empty")
+// invalidTokenKey mirrors common/v1: empty keys and pool/route separators.
+func invalidTokenKey(tokenKey string) bool {
+	return tokenKey == "" || strings.ContainsAny(tokenKey, ":,*")
+}
+
+func (m *MockGrc20regCommon) IsRegistered(tokenKey string) error {
+	if invalidTokenKey(tokenKey) {
+		return errors.New("invalid token key(" + tokenKey + ")")
 	}
-	if strings.ContainsAny(tokenKey, ":,*") {
-		return errors.New("invalid token key: separator")
+	if grc20reg.Get(tokenKey) == nil {
+		return errors.New("token(" + tokenKey + ") is not registered")
 	}
 	return nil
 }
 
-func (m *MockGrc20regCommon) IsRegistered(tokenKey string) bool {
-	return grc20reg.Get(tokenKey) != nil
+func (m *MockGrc20regCommon) ValidateRegistered(tokenKeys ...string) error {
+	for _, k := range tokenKeys {
+		if err := m.IsRegistered(k); err != nil {
+			return errors.New("[GNOSWAP-COMMON-001] token is not registered || token(" + k + ")")
+		}
+	}
+	return nil
 }
 
 func (m *MockGrc20regCommon) TotalSupply(tokenKey string) int64 {
@@ -101,6 +115,9 @@ func (m *MockGrc20regCommon) Approve(_ int, rlm realm, tokenKey string, spender 
 }
 
 func (m *MockGrc20regCommon) mustGetToken(tokenKey string) *grc20.Token {
+	if invalidTokenKey(tokenKey) {
+		panic("invalid token key(" + tokenKey + ")")
+	}
 	token := grc20reg.Get(tokenKey)
 	if token == nil {
 		panic("unknown token(" + tokenKey + ")")

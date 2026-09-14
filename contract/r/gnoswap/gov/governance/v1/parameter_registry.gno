@@ -6,6 +6,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	cm "gno.land/r/gnoswap/common"
 	cp "gno.land/r/gnoswap/community_pool"
 	en "gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/rbac"
@@ -891,6 +892,19 @@ func CreateParameterHandlers() *ParameterRegistry {
 			handlerFunc: func(_ int, rlm realm, params []string) error {
 				// Upgrade protocol fee implementation
 				pf.UpgradeImpl(cross(rlm), params[0]) // packagePath
+				return nil
+			},
+		},
+		{
+			pkgPath:    COMMON_PATH,
+			function:   "UpgradeImpl",
+			paramCount: 1,
+			paramValidators: []paramValidator{
+				stringValidator, // packagePath
+			},
+			handlerFunc: func(_ int, rlm realm, params []string) error {
+				// Upgrade common (token resolution) implementation
+				cm.UpgradeImpl(cross(rlm), params[0]) // packagePath
 				return nil
 			},
 		},
