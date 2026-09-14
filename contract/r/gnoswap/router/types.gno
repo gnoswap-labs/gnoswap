@@ -23,4 +23,7 @@ type IRouterStore interface {
 	HasPendingProtocolFeesKey() bool
 	GetPendingProtocolFees() map[string]int64
 	SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error
+	GetPendingProtocolFee(tokenPath string) int64
+	SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error
+	RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error
 }
