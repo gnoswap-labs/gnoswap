@@ -70,7 +70,11 @@ func firstRewardState(t *testing.T, rewards *bptree.BPTree) *RewardState {
 
 	var rewardState *RewardState
 	rewards.Iterate("", "", func(_ string, value any) bool {
-		rewardState = value.(*RewardState)
+		stored, ok := value.(RewardState)
+		if !ok {
+			t.Fatalf("expected reward state value, got %T", value)
+		}
+		rewardState = &stored
 		return true
 	})
 

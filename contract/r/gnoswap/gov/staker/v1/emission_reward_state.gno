@@ -166,8 +166,8 @@ func (self *EmissionRewardStateResolver) updateRewardDebtX128(
 		self.SetAccumulatedRewardAmount(gnsmath.SafeAddInt64(self.GetAccumulatedRewardAmount(), rewardAmount))
 	}
 
-	// Deep copy to avoid aliasing with external state
-	self.SetRewardDebtX128(accumulatedRewardX128PerStake.Clone())
+	// SetRewardDebtX128 snapshots the accumulator.
+	self.SetRewardDebtX128(accumulatedRewardX128PerStake)
 	self.SetAccumulatedTimestamp(currentTimestamp)
 	return nil
 }
