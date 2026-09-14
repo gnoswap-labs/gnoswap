@@ -1,6 +1,7 @@
 package common
 
 import (
+	"chain"
 	"testing"
 
 	testutils "gno.land/p/nt/testutils/v0"
@@ -69,4 +70,15 @@ func TestCommonV1_TokenKeyAllowlist(cur realm, t *testing.T) {
 			impl.TotalSupply(key)
 		})
 	}
+}
+
+func TestCommonV1_ValidateNotHandleNativeCoin(cur realm, t *testing.T) {
+	impl := NewCommonV1()
+
+	testing.SetOriginSend(nil)
+	uassert.NoError(t, impl.ValidateNotHandleNativeCoin())
+
+	testing.SetOriginSend(chain.Coins{{Denom: "ugnot", Amount: 1}})
+	uassert.ErrorContains(t, impl.ValidateNotHandleNativeCoin(), "handle native coin is not allowed")
+	testing.SetOriginSend(nil)
 }

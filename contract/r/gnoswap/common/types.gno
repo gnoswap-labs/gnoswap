@@ -1,6 +1,10 @@
 package common
 
 type ICommon interface {
+	// ValidateNotHandleNativeCoin returns an error when the current transaction
+	// carries native coins.
+	ValidateNotHandleNativeCoin() error
+
 	// IsRegistered returns nil when tokenKey is a valid, registered key.
 	IsRegistered(tokenKey string) error
 	// ValidateRegistered returns the first registration failure among tokenKeys.

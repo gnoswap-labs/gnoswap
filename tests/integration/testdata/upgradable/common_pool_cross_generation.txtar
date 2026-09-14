@@ -584,6 +584,7 @@ func init(cur realm) {
 package common
 
 import (
+	"chain/runtime/unsafe"
 	"errors"
 
 	"gno.land/p/nt/ufmt/v0"
@@ -673,6 +674,13 @@ func validateTokenKey(tokenKey string) error {
 		if !isTokenKeyChar(ch) {
 			return errors.New(ufmt.Sprintf("%s || token key(%s) contains %q", errInvalidTokenKey, tokenKey, string(ch)))
 		}
+	}
+	return nil
+}
+
+func (c *commonV2) ValidateNotHandleNativeCoin() error {
+	if len(unsafe.OriginSend()) > 0 {
+		return errors.New("[GNOSWAP-COMMON-002] handle native coin is not allowed")
 	}
 	return nil
 }

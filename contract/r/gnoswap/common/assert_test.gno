@@ -9,6 +9,8 @@ import (
 
 // TestAssert_IsNotHandleNativeCoin tests the AssertIsNotHandleNativeCoin function with various scenarios
 func TestAssert_IsNotHandleNativeCoin(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name             string
 		sendCoins        map[string]int64

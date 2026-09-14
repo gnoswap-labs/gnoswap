@@ -1,6 +1,7 @@
 package common
 
 import (
+	"chain/runtime/unsafe"
 	"errors"
 	"strings"
 
@@ -21,6 +22,8 @@ func NewMockCommon(version string, keys ...string) *MockCommon {
 	}
 	return m
 }
+
+func (m *MockCommon) ValidateNotHandleNativeCoin() error { return nil }
 
 func (m *MockCommon) IsRegistered(tokenKey string) error {
 	if _, ok := m.balances[tokenKey]; !ok {
@@ -69,6 +72,13 @@ type MockGrc20regCommon struct{}
 // invalidTokenKey mirrors common/v1: empty keys and pool/route separators.
 func invalidTokenKey(tokenKey string) bool {
 	return tokenKey == "" || strings.ContainsAny(tokenKey, ":,*")
+}
+
+func (m *MockGrc20regCommon) ValidateNotHandleNativeCoin() error {
+	if len(unsafe.OriginSend()) > 0 {
+		return errors.New("[GNOSWAP-COMMON-002] handle native coin is not allowed")
+	}
+	return nil
 }
 
 func (m *MockGrc20regCommon) IsRegistered(tokenKey string) error {
