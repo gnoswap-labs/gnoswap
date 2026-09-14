@@ -640,7 +640,7 @@ func observationsForTest(pool *pl.Pool) *pl.ObservationTree {
 	return observations
 }
 
-func mustObservation(observations *pl.ObservationTree, index uint16) *pl.Observation {
+func mustObservation(observations *pl.ObservationTree, index uint16) pl.Observation {
 	observation, ok := observations.Get(index)
 	if !ok {
 		panic("missing observation test fixture")

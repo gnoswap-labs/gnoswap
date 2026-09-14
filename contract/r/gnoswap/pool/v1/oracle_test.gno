@@ -455,7 +455,7 @@ func newObservationTreeWithDelta(secondsAgo uint32, tickDelta int64) *pl.Observa
 	start := now - int64(secondsAgo)
 
 	os := pl.NewPoolObservationsTree(start)
-	os.Set(1, pl.NewObservation(
+	os.Set(1, pl.MakeObservation(
 		now,
 		tickDelta,
 		"0",
@@ -471,7 +471,7 @@ func newObservationTreeWithLiquidity(secondsAgo uint32, tickDelta int64, seconds
 	start := now - int64(secondsAgo)
 
 	os := pl.NewPoolObservationsTree(start)
-	os.Set(1, pl.NewObservation(
+	os.Set(1, pl.MakeObservation(
 		now,
 		tickDelta,
 		secondsPerLiquidityDelta.ToString(),

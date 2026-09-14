@@ -186,7 +186,7 @@ func newSnapshotCumulativesInsidePool(
 	pool.SetLiquidity(u256.One())
 
 	observations := pl.NewPoolObservationsTree(observationTimestamp)
-	observations.Set(0, pl.NewObservation(
+	observations.Set(0, pl.MakeObservation(
 		observationTimestamp,
 		observationTickCumulative,
 		observationSecondsPerLiquidityX128,
