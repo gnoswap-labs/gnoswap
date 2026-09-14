@@ -6,152 +6,20 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
-	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/demo/defi/foo20"
 )
 
 var (
 	tokenPath     = "gno.land/r/demo/defi/foo20.FOO"
-	testRealm     = testing.NewCodeRealm("gno.land/r/gnoswap/common")
 	alice         = testutils.TestAddress("alice")
 	bob           = testutils.TestAddress("bob")
 	defaultHolder = address("g1skl80cuz8zq3lul9pgz5pc35l2pfzgxgfpsqkx") // foo20 initial token holder (govdao t1 multisig)
 )
 
-func TestGrc20regHelper_GetToken(t *testing.T) {
-	tests := []struct {
-		name        string
-		path        string
-		shouldPanic bool
-	}{
-		{
-			name:        "get registered token",
-			path:        tokenPath,
-			shouldPanic: false,
-		},
-		{
-			name:        "reject token realm path",
-			path:        "gno.land/r/demo/defi/foo20",
-			shouldPanic: true,
-		},
-		{
-			name:        "get non registered token",
-			path:        "not_registered_token",
-			shouldPanic: true,
-		},
-		{
-			name:        "get token with empty string path",
-			path:        "",
-			shouldPanic: true,
-		},
-		{
-			name:        "get token with invalid path format",
-			path:        "invalid/path/format",
-			shouldPanic: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			if tt.shouldPanic {
-				uassert.AbortsContains(t, cur, "unknown token", func() {
-					GetToken(tt.path)
-				})
-				return
-			}
-
-			token := GetToken(tt.path)
-			if token == nil {
-				t.Error("Expected non-nil token")
-			}
-		})
-	}
-}
-
-func TestGrc20regHelper_TokenMethod(t *testing.T) {
-	token := GetToken(tokenPath)
-
-	t.Run("GetName()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, "Foo", token.GetName())
-	})
-
-	t.Run("GetSymbol()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, "FOO", token.GetSymbol())
-	})
-
-	t.Run("GetDecimals()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, int(4), token.GetDecimals())
-	})
-
-	t.Run("TotalSupply()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, int64(10000000000), token.TotalSupply())
-	})
-
-	t.Run("KnownAccounts()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, int(1), token.KnownAccounts())
-	})
-
-	t.Run("BalanceOf()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, int64(10000000000), token.BalanceOf(defaultHolder))
-	})
-
-	t.Run("Allowance()", func(cur realm, t *testing.T) {
-		uassert.Equal(t, int64(0), token.Allowance(defaultHolder, address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")))
-	})
-
-	t.Run("RenderHome()", func(cur realm, t *testing.T) {
-		expected := ""
-		expected += ufmt.Sprintf("# %s ($%s)\n\n", "Foo", "FOO")
-		expected += ufmt.Sprintf("* **Decimals**: %d\n", 4)
-		expected += ufmt.Sprintf("* **Total supply**: %d\n", 10000000000)
-		expected += ufmt.Sprintf("* **Known accounts**: %d\n", 1)
-		uassert.Equal(t, expected, token.RenderHome())
-	})
-}
-
-func TestGrc20regHelper_GetTokenTeller(cur realm, t *testing.T) {
-	tests := []struct {
-		name        string
-		path        string
-		shouldPanic bool
-	}{
-		{
-			name:        "get registered token teller",
-			path:        tokenPath,
-			shouldPanic: false,
-		},
-		{
-			name:        "get non registered token teller",
-			path:        "not_registered_teller",
-			shouldPanic: true,
-		},
-		{
-			name:        "get token teller with empty string path",
-			path:        "",
-			shouldPanic: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			testing.SetRealm(testing.NewUserRealm(defaultHolder))
-			if tt.shouldPanic {
-				uassert.AbortsContains(t, cur, "unknown token", func() {
-					GetTokenTeller(0, cur, tt.path)
-				})
-				return
-			}
-
-			teller := GetTokenTeller(0, cur, tt.path)
-			if teller == nil {
-				t.Error("Expected non-nil teller")
-			}
-		})
-	}
-}
-
 func TestGrc20regHelper_Transfer(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name          string
 		caller        address
@@ -210,7 +78,7 @@ func TestGrc20regHelper_Transfer(cur realm, t *testing.T) {
 			to:            bob,
 			amount:        1000,
 			shouldAbort:   true,
-			abortContains: "unknown token",
+			abortContains: "invalid token key",
 		},
 		{
 			name:          "transfer to empty address",
@@ -241,7 +109,7 @@ func TestGrc20regHelper_Transfer(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
-				uassert.AbortsContains(t, cur, tt.abortContains, func() {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
 					Transfer(0, cur, tt.path, tt.to, tt.amount)
 				})
 			} else {
@@ -259,6 +127,8 @@ func TestGrc20regHelper_Transfer(cur realm, t *testing.T) {
 }
 
 func TestGrc20regHelper_TransferFrom(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name          string
 		caller        address
@@ -364,7 +234,7 @@ func TestGrc20regHelper_TransferFrom(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
-				uassert.AbortsContains(t, cur, tt.abortContains, func() {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
 					TransferFrom(0, cur, tt.path, tt.from, tt.to, tt.amount)
 				})
 			} else {
@@ -383,6 +253,8 @@ func TestGrc20regHelper_TransferFrom(cur realm, t *testing.T) {
 }
 
 func TestGrc20regHelper_Approve(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name          string
 		caller        address
@@ -449,7 +321,7 @@ func TestGrc20regHelper_Approve(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
-				uassert.AbortsContains(t, cur, tt.abortContains, func() {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
 					Approve(0, cur, tt.path, tt.spender, tt.amount)
 				})
 			} else {
@@ -466,6 +338,8 @@ func TestGrc20regHelper_Approve(cur realm, t *testing.T) {
 }
 
 func TestGrc20regHelper_SafeGRC20Transfer(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name          string
 		caller        address
@@ -518,7 +392,7 @@ func TestGrc20regHelper_SafeGRC20Transfer(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
-				uassert.AbortsContains(t, cur, tt.abortContains, func() {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
 					SafeGRC20Transfer(0, cur, tt.path, tt.to, tt.amount)
 				})
 			} else if tt.shouldPanic {
@@ -535,6 +409,8 @@ func TestGrc20regHelper_SafeGRC20Transfer(cur realm, t *testing.T) {
 }
 
 func TestGrc20regHelper_SafeGRC20TransferBindsCurrentRealm(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	testing.SetRealm(testing.NewUserRealm(defaultHolder))
 	beforeHolder := BalanceOf(tokenPath, defaultHolder)
 	beforeBob := BalanceOf(tokenPath, bob)
@@ -546,6 +422,8 @@ func TestGrc20regHelper_SafeGRC20TransferBindsCurrentRealm(cur realm, t *testing
 }
 
 func TestGrc20regHelper_SafeGRC20TransferFrom(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name          string
 		caller        address
@@ -617,7 +495,7 @@ func TestGrc20regHelper_SafeGRC20TransferFrom(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
-				uassert.AbortsContains(t, cur, tt.abortContains, func() {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
 					SafeGRC20TransferFrom(0, cur, tt.path, tt.from, tt.to, tt.amount)
 				})
 			} else if tt.shouldPanic {
@@ -634,6 +512,8 @@ func TestGrc20regHelper_SafeGRC20TransferFrom(cur realm, t *testing.T) {
 }
 
 func TestGrc20regHelper_SafeGRC20Approve(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name          string
 		caller        address
@@ -685,7 +565,7 @@ func TestGrc20regHelper_SafeGRC20Approve(cur realm, t *testing.T) {
 			testing.SetRealm(testing.NewUserRealm(tt.caller))
 
 			if tt.shouldAbort {
-				uassert.AbortsContains(t, cur, tt.abortContains, func() {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
 					SafeGRC20Approve(0, cur, tt.path, tt.spender, tt.amount)
 				})
 			} else if tt.shouldPanic {
@@ -701,7 +581,9 @@ func TestGrc20regHelper_SafeGRC20Approve(cur realm, t *testing.T) {
 	}
 }
 
-func TestGrc20regHelper_IsRegistered(t *testing.T) {
+func TestGrc20regHelper_IsRegistered(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name          string
 		path          string
@@ -741,7 +623,9 @@ func TestGrc20regHelper_IsRegistered(t *testing.T) {
 	}
 }
 
-func TestGrc20regHelper_MustRegistered(t *testing.T) {
+func TestGrc20regHelper_MustRegistered(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name        string
 		paths       []string
@@ -797,12 +681,15 @@ func TestGrc20regHelper_MustRegistered(t *testing.T) {
 	}
 }
 
-func TestGrc20regHelper_TotalSupply(t *testing.T) {
+func TestGrc20regHelper_TotalSupply(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name           string
 		path           string
 		expectedSupply int64
 		shouldPanic    bool
+		abortContains  string
 	}{
 		{
 			name:           "get total supply for registered token",
@@ -811,21 +698,23 @@ func TestGrc20regHelper_TotalSupply(t *testing.T) {
 			shouldPanic:    false,
 		},
 		{
-			name:        "panic with unregistered token",
-			path:        "not_registered_token",
-			shouldPanic: true,
+			name:          "panic with unregistered token",
+			path:          "not_registered_token",
+			shouldPanic:   true,
+			abortContains: "unknown token",
 		},
 		{
-			name:        "panic with empty string path",
-			path:        "",
-			shouldPanic: true,
+			name:          "panic with empty string path",
+			path:          "",
+			shouldPanic:   true,
+			abortContains: "invalid token key",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.AbortsContains(t, cur, "unknown token", func() {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
 					TotalSupply(tt.path)
 				})
 				return
@@ -837,13 +726,16 @@ func TestGrc20regHelper_TotalSupply(t *testing.T) {
 	}
 }
 
-func TestGrc20regHelper_BalanceOf(t *testing.T) {
+func TestGrc20regHelper_BalanceOf(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	tests := []struct {
 		name            string
 		path            string
 		addr            address
 		expectedBalance int64
 		shouldPanic     bool
+		abortContains   string
 	}{
 		{
 			name:            "get balance for registered token",
@@ -853,16 +745,18 @@ func TestGrc20regHelper_BalanceOf(t *testing.T) {
 			shouldPanic:     false,
 		},
 		{
-			name:        "panic with unregistered token",
-			path:        "not_registered_token",
-			addr:        defaultHolder,
-			shouldPanic: true,
+			name:          "panic with unregistered token",
+			path:          "not_registered_token",
+			addr:          defaultHolder,
+			shouldPanic:   true,
+			abortContains: "unknown token",
 		},
 		{
-			name:        "panic with empty string path",
-			path:        "",
-			addr:        defaultHolder,
-			shouldPanic: true,
+			name:          "panic with empty string path",
+			path:          "",
+			addr:          defaultHolder,
+			shouldPanic:   true,
+			abortContains: "invalid token key",
 		},
 		{
 			name:            "get balance for empty address",
@@ -876,7 +770,7 @@ func TestGrc20regHelper_BalanceOf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.AbortsContains(t, cur, "unknown token", func() {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
 					BalanceOf(tt.path, tt.addr)
 				})
 				return
@@ -888,7 +782,9 @@ func TestGrc20regHelper_BalanceOf(t *testing.T) {
 	}
 }
 
-func TestGrc20regHelper_Allowance(t *testing.T) {
+func TestGrc20regHelper_Allowance(cur realm, t *testing.T) {
+	registerGrc20regImpl(cur, t)
+
 	owner := defaultHolder
 	spender := address("g15vj5q08amlvyd0nx6zjgcvwq2d0gt9fcchrvum")
 
@@ -899,6 +795,7 @@ func TestGrc20regHelper_Allowance(t *testing.T) {
 		spender           address
 		expectedAllowance int64
 		shouldPanic       bool
+		abortContains     string
 	}{
 		{
 			name:              "get allowance for registered token",
@@ -909,18 +806,20 @@ func TestGrc20regHelper_Allowance(t *testing.T) {
 			shouldPanic:       false,
 		},
 		{
-			name:        "panic with unregistered token",
-			path:        "not_registered_token",
-			owner:       owner,
-			spender:     spender,
-			shouldPanic: true,
+			name:          "panic with unregistered token",
+			path:          "not_registered_token",
+			owner:         owner,
+			spender:       spender,
+			shouldPanic:   true,
+			abortContains: "unknown token",
 		},
 		{
-			name:        "panic with empty string path",
-			path:        "",
-			owner:       owner,
-			spender:     spender,
-			shouldPanic: true,
+			name:          "panic with empty string path",
+			path:          "",
+			owner:         owner,
+			spender:       spender,
+			shouldPanic:   true,
+			abortContains: "invalid token key",
 		},
 		{
 			name:              "get allowance with empty owner address",
@@ -943,7 +842,7 @@ func TestGrc20regHelper_Allowance(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			if tt.shouldPanic {
-				uassert.AbortsContains(t, cur, "unknown token", func() {
+				uassert.PanicsContains(t, cur, tt.abortContains, func() {
 					Allowance(tt.path, tt.owner, tt.spender)
 				})
 				return

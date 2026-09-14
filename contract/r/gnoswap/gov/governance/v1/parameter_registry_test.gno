@@ -154,6 +154,8 @@ func TestCreateParameterHandlers(cur realm, t *testing.T) {
 		{"gno.land/r/gnoswap/halt", "SetHaltLevel"},
 		{"gno.land/r/gnoswap/community_pool", "TransferToken"},
 		{"gno.land/r/gnoswap/emission", "ChangeDistributionPct"},
+		{"gno.land/r/gnoswap/protocol_fee", "UpgradeImpl"},
+		{"gno.land/r/gnoswap/common", "UpgradeImpl"},
 	}
 
 	for _, tc := range testCases {
@@ -545,6 +547,12 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 			name:          "Success - staker SetUnStakingFee",
 			numToExecute:  1,
 			executions:    "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*100",
+			expectedError: false,
+		},
+		{
+			name:          "Success - staker SetDeniedRewardToken",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetDeniedRewardToken*EXE*gno.land/r/onbloc/foo.FOO,true",
 			expectedError: false,
 		},
 		{

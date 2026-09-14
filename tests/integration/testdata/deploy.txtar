@@ -138,6 +138,9 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/common -pkgpat
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{5} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{7}ugnot'
 
+### deploy common/v1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/common/v1 -pkgpath gno.land/r/gnoswap/common/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+
 ### deploy gns (expected gas fee: 34075ugnot, gas wanted: 34075000)
 gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/gns -pkgpath gno.land/r/gnoswap/gns -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   31[0-9]{6}'

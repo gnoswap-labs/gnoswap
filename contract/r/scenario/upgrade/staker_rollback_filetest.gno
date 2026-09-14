@@ -12,6 +12,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/staker"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 	_ "gno.land/r/gnoswap/staker/v2_invalid"
 )

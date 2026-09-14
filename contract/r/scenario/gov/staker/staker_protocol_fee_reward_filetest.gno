@@ -15,6 +15,7 @@ import (
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	pf "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -35,7 +36,7 @@ var (
 	stakerAddr  = access.MustGetAddress(prbac.ROLE_STAKER.String())
 	stakerRealm = testing.NewUserRealm(stakerAddr)
 
-	protocolFeeAddr = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
+	protocolFeeAddr    = access.MustGetAddress(prbac.ROLE_PROTOCOL_FEE.String())
 	protocolFeeV1Realm = testing.NewCodeRealm("gno.land/r/gnoswap/protocol_fee/v1")
 
 	gnoStakerAddr  = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())

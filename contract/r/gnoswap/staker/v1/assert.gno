@@ -65,18 +65,42 @@ func assertIsDepositor(s *stakerV1, caller address, positionId uint64) {
 
 // assertIsIncentiveOfDeposit ensures the incentive exists and targets the pool the position is staked
 // in, so a caller cannot ask a deposit to collect an incentive that can never pay it.
-func assertIsIncentiveOfDeposit(s *stakerV1, positionId uint64, incentiveId string) {
-	deposit := s.getDeposits().get(positionId)
+// assertIsIncentiveOfPool ensures the incentive targets the pool the position is staked in.
+func assertIsIncentiveOfPool(s *stakerV1, poolPath string, positionId uint64, incentiveId string) {
 	// get panics with errDataNotFound when the incentive does not exist.
 	incentive := s.getExternalIncentives().get(incentiveId)
 
-	if incentive.TargetPoolPath() != deposit.TargetPoolPath() {
+	if incentive.TargetPoolPath() != poolPath {
 		panic(makeErrorWithDetails(
 			errInvalidInput,
 			ufmt.Sprintf(
 				"incentiveId(%s) targets pool(%s), but positionId(%d) is staked in pool(%s)",
-				incentiveId, incentive.TargetPoolPath(), positionId, deposit.TargetPoolPath(),
+				incentiveId, incentive.TargetPoolPath(), positionId, poolPath,
 			),
+		))
+	}
+}
+
+// assertHasNoExitCheckpoint ensures the position carries no reward from a previous stake.
+// Collecting it here would smuggle an unbounded calculation into staking, and leaving it would
+// let the next unstake overwrite the checkpoint.
+func assertHasNoExitCheckpoint(s *stakerV1, positionId uint64) {
+	if s.HasUnstakedPosition(positionId) {
+		panic(makeErrorWithDetails(
+			errUncollectedPosition,
+			ufmt.Sprintf("positionId(%d) still owes rewards from its previous stake; collect it first", positionId),
+		))
+	}
+}
+
+// assertHasNoUncollectedIncentive ensures no unstaked position still owes a reward from this
+// incentive, which has not been drawn down from it yet.
+func assertHasNoUncollectedIncentive(s *stakerV1, incentiveId string) {
+	count := s.uncollectedIncentiveCountOf(incentiveId)
+	if count > 0 {
+		panic(makeErrorWithDetails(
+			errUncollectedPosition,
+			ufmt.Sprintf("incentive(%s) is owed to %d unstaked position(s)", incentiveId, count),
 		))
 	}
 }
@@ -136,6 +160,18 @@ func assertIsGreaterThanMinimumRewardAmount(s *stakerV1, rewardToken string, rew
 
 // assertIsAllowedForExternalReward ensures the token is allowed for external rewards.
 func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
+	// Operational stop switch: a denied token can never start a NEW incentive,
+	// whether it qualifies as a pool-pair token or through the governance
+	// allowlist. Collection of already-created incentives is deliberately
+	// unaffected; the delivery guard in deliverExternalIncentiveReward bounds
+	// that blast radius instead.
+	if contains(s.store.GetDeniedRewardTokens(), tokenPath) {
+		panic(makeErrorWithDetails(
+			errDeniedRewardToken,
+			ufmt.Sprintf("tokenPath(%s) is denied as an external reward token", tokenPath),
+		))
+	}
+
 	token0, token1, _ := poolPathDivide(poolPath)
 
 	if tokenPath == token0 || tokenPath == token1 {

@@ -50,6 +50,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/router/v1"

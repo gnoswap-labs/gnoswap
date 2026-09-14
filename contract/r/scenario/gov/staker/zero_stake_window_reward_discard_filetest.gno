@@ -19,6 +19,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"

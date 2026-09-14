@@ -16,6 +16,7 @@ import (
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	pf "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
