@@ -266,14 +266,23 @@ func (self *positionRewardContext) computeExternalRewards(param *calculatePositi
 // It is the shared, read-only entry point used by the Collectable* view getters.
 // This keeps the calculation identical for every caller and guarantees views never write.
 func (s *stakerV1) calculateCollectablePositionReward(currentHeight, currentTimestamp int64, positionId uint64) (Reward, error) {
-	rewards, _, err := s.calculatePositionReward(&calculatePositionRewardParam{
+	param := &calculatePositionRewardParam{
 		CurrentHeight: currentHeight,
 		CurrentTime:   currentTimestamp,
 		Deposits:      s.getDeposits(),
 		Pools:         s.getPools(),
 		PoolTier:      s.getPoolTier(),
 		PositionId:    positionId,
-	})
+	}
+
+	// An unstaked position quotes against its exit checkpoint, at its exit time.
+	if checkpoint := s.getUnstakedPositions().get(positionId); checkpoint != nil {
+		param.CurrentTime = checkpoint.ExitTime()
+		param.Deposit = checkpoint.Deposit()
+		param.Exit = checkpoint
+	}
+
+	rewards, _, err := s.calculatePositionReward(param)
 	if err != nil {
 		return Reward{}, err
 	}
