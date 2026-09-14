@@ -125,7 +125,7 @@ func (lp *launchpadV1) depositGns(
 	}
 
 	depositID := lp.nextDepositID()
-	deposit := launchpad.NewDeposit(
+	deposit := launchpad.MakeDeposit(
 		depositID,
 		projectID,
 		tierDuration,
@@ -139,8 +139,8 @@ func (lp *launchpadV1) depositGns(
 	// Store a value in the deposits tree. Mutations use a detached pointer and
 	// write the updated value back explicitly.
 	deposits := lp.store.GetDeposits()
-	deposits.Set(depositID, *deposit)
-	depositToTier(projectTier, deposit)
+	deposits.Set(depositID, deposit)
+	depositToTier(projectTier, &deposit)
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {
@@ -149,7 +149,7 @@ func (lp *launchpadV1) depositGns(
 
 	isFirstDeposit := !isRewardManagerInitialized(rewardManager)
 
-	rewardState := addRewardStateByDeposit(rewardManager, deposit)
+	rewardState := addRewardStateByDeposit(rewardManager, &deposit)
 
 	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
 	if err != nil {
@@ -161,7 +161,7 @@ func (lp *launchpadV1) depositGns(
 		return nil, nil, false, "", err
 	}
 
-	return deposit,
+	return &deposit,
 		rewardState,
 		isFirstDeposit,
 		rewardManager.DistributeAmountPerSecondX128().ToString(),

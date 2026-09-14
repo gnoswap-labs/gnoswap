@@ -130,6 +130,30 @@ func (d *Deposit) SetWithdrawn(withdrawnHeight int64, withdrawnTime int64) {
 	d.withdrawnTime = withdrawnTime
 }
 
+// MakeDeposit returns a new Deposit value with the given values.
+func MakeDeposit(
+	depositID string,
+	projectID string,
+	tier int64,
+	depositor address,
+	depositAmount int64,
+	createdHeight int64,
+	createdTime int64,
+	endTime int64,
+) Deposit {
+	return Deposit{
+		id:              depositID,
+		projectID:       projectID,
+		tier:            tier,
+		depositor:       depositor,
+		depositAmount:   depositAmount,
+		withdrawnHeight: 0,
+		createdHeight:   createdHeight,
+		createdAt:       createdTime,
+		endTime:         endTime,
+	}
+}
+
 // NewDeposit returns a pointer to a new Deposit with the given values.
 func NewDeposit(
 	depositID string,
@@ -141,15 +165,15 @@ func NewDeposit(
 	createdTime int64,
 	endTime int64,
 ) *Deposit {
-	return &Deposit{
-		id:              depositID,
-		projectID:       projectID,
-		tier:            tier,
-		depositor:       depositor,
-		depositAmount:   depositAmount,
-		withdrawnHeight: 0,
-		createdHeight:   createdHeight,
-		createdAt:       createdTime,
-		endTime:         endTime,
-	}
+	deposit := MakeDeposit(
+		depositID,
+		projectID,
+		tier,
+		depositor,
+		depositAmount,
+		createdHeight,
+		createdTime,
+		endTime,
+	)
+	return &deposit
 }

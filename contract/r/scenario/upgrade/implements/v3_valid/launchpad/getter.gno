@@ -270,7 +270,7 @@ func (lp *launchpadV1) GetDeposit(depositId string) (launchpad.Deposit, error) {
 // emptyDepositValue constructs a zero Deposit in its declaring realm. Gno
 // forbids launchpad v1 from allocating a launchpad.Deposit directly.
 func emptyDepositValue() launchpad.Deposit {
-	return *launchpad.NewDeposit("", "", 0, "", 0, 0, 0, 0)
+	return launchpad.MakeDeposit("", "", 0, "", 0, 0, 0, 0)
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.
