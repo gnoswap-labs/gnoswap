@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 
 ### Changed
-- Reduce duplicate governance-staking protocol-fee settlement work without changing public APIs, storage layout, or reward rounding. Settlement still scans the historical token set.
+-
 
 ### Deprecated
 -
