@@ -207,9 +207,7 @@ func TestObservationTree_BoundaryConditions(cur realm, t *testing.T) {
 
 		uassert.NoError(t, err, "Should not error when target equals observation")
 		uassert.Equal(t, currentTime, beforeOrAt2.BlockTimestamp(), "Should return exact observation")
-		if afterOrAt2 != nil {
-			t.Fatalf("afterOrAt should be nil when target equals newest observation")
-		}
+		uassert.False(t, afterOrAt2.Initialized(), "After should be the default observation when target equals newest")
 
 		// Test target > observation timestamp
 		beforeOrAt3, afterOrAt3, err := getSurroundingObservations(
@@ -410,7 +408,6 @@ func TestObservationTree_ObservationAt(cur realm, t *testing.T) {
 	t.Run("Valid observation", func(cur realm, t *testing.T) {
 		obs, err := observationAt(os, 0)
 		uassert.NoError(t, err, "Should return observation at index 0")
-		uassert.NotNil(t, obs, "Observation should not be nil")
 		uassert.True(t, obs.Initialized(), "Observation should be initialized")
 	})
 
@@ -440,7 +437,6 @@ func TestObservationTree_Transform(cur realm, t *testing.T) {
 	t.Run("Transform with same time", func(cur realm, t *testing.T) {
 		obs, err := transform(lastObs, currentTime, 100, u256.MustFromDecimal("1000000"))
 		uassert.NoError(t, err, "Should not error for same time")
-		uassert.NotNil(t, obs, "Should return observation")
 		uassert.Equal(t, currentTime, obs.BlockTimestamp(), "Should return last observation for same time")
 	})
 
@@ -452,7 +448,6 @@ func TestObservationTree_Transform(cur realm, t *testing.T) {
 	t.Run("Transform with zero liquidity", func(cur realm, t *testing.T) {
 		obs, err := transform(lastObs, currentTime+100, 100, u256.Zero())
 		uassert.NoError(t, err, "Should handle zero liquidity")
-		uassert.NotNil(t, obs, "Should return observation")
 		// With zero liquidity, use max(1, liquidity) = 1
 		// secondsPerLiquidity += timeDelta * 2^128 / 1 = 100 * 2^128
 		expected := u256.MulDiv(u256.NewUint(100), consts.Q128(), u256.One())
