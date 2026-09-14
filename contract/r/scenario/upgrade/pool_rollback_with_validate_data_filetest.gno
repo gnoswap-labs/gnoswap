@@ -4,11 +4,12 @@
 package main
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
 	"math"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/utils"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -19,6 +20,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/pool/v2_invalid"
 )

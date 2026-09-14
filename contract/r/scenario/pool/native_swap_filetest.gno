@@ -11,6 +11,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -126,8 +127,8 @@ func TestMint(cur realm) {
 func TestSwapBuyNative(cur realm) {
 	pools, _ := pool.GetPools().Get(pool.GetPoolPath(fooPath, WRAPPED_WUGNOT, fee500)).(*pool.Pool)
 
-	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
-	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
+	adminOldT0Bal := common.BalanceOf(pools.Token0Path(), adminAddr)
+	adminOldT1Bal := common.BalanceOf(pools.Token1Path(), adminAddr)
 	println("[INFO] admin wugnot balance before swap:", adminOldT0Bal)
 	println("[INFO] admin foo balance before swap:", adminOldT1Bal)
 
@@ -153,8 +154,8 @@ func TestSwapBuyNative(cur realm) {
 	println("[EXPECTED] amount0:", amount0, "expected: should be 10000")
 	println("[EXPECTED] amount1:", amount1, "expected: should be -27123")
 
-	adminNewT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
-	adminNewT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
+	adminNewT0Bal := common.BalanceOf(pools.Token0Path(), adminAddr)
+	adminNewT1Bal := common.BalanceOf(pools.Token1Path(), adminAddr)
 	println("[INFO] admin wugnot balance after swap:", adminNewT0Bal)
 	println("[INFO] admin foo balance after swap:", adminNewT1Bal)
 	println("[EXPECTED] admin token0 changed:", adminNewT0Bal-adminOldT0Bal, "expected: should be -10000")
@@ -165,8 +166,8 @@ func TestSwapBuyNative(cur realm) {
 func TestSwapSellNative(cur realm) {
 	pools, _ := pool.GetPools().Get(pool.GetPoolPath(fooPath, WRAPPED_WUGNOT, fee500)).(*pool.Pool)
 
-	adminOldT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
-	adminOldT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
+	adminOldT0Bal := common.BalanceOf(pools.Token0Path(), adminAddr)
+	adminOldT1Bal := common.BalanceOf(pools.Token1Path(), adminAddr)
 	println("[INFO] admin wugnot balance before swap:", adminOldT0Bal)
 	println("[INFO] admin foo balance before swap:", adminOldT1Bal)
 
@@ -192,8 +193,8 @@ func TestSwapSellNative(cur realm) {
 	println("[EXPECTED] amount0:", amount0, "expected: should be -3687")
 	println("[EXPECTED] amount1:", amount1, "expected: should be 10000")
 
-	adminNewT0Bal := common.GetToken(pools.Token0Path()).BalanceOf(adminAddr)
-	adminNewT1Bal := common.GetToken(pools.Token1Path()).BalanceOf(adminAddr)
+	adminNewT0Bal := common.BalanceOf(pools.Token0Path(), adminAddr)
+	adminNewT1Bal := common.BalanceOf(pools.Token1Path(), adminAddr)
 	println("[INFO] admin wugnot balance after swap:", adminNewT0Bal)
 	println("[INFO] admin foo balance after swap:", adminNewT1Bal)
 	println("[EXPECTED] admin token0 changed:", adminNewT0Bal-adminOldT0Bal, "expected: should be 3687")

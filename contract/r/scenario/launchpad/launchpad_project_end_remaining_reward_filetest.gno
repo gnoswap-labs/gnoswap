@@ -11,6 +11,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
 	_ "gno.land/r/gnoswap/gov/staker"
@@ -121,9 +122,9 @@ func createOBLProject(cur realm) {
 	rewardAmount := int64(1_000_000_000)
 	conditionPath := ""
 	conditionsAmount := ""
-	tier30Ratio := int64(10)  // 100,000,000 OBL
-	tier90Ratio := int64(20)  // 200,000,000 OBL
-	tier180Ratio := int64(70) // 700,000,000 OBL
+	tier30Ratio := int64(10)                       // 100,000,000 OBL
+	tier90Ratio := int64(20)                       // 200,000,000 OBL
+	tier180Ratio := int64(70)                      // 700,000,000 OBL
 	startTime := int64(time.Now().Unix() + 604800) // 7 days
 
 	println("[INFO] Admin creating OBL project")

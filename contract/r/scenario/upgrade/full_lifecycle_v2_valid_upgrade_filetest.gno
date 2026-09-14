@@ -64,9 +64,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/grc721/v0"
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -90,6 +90,7 @@ import (
 
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 	_ "gno.land/r/gnoswap/launchpad/v1"

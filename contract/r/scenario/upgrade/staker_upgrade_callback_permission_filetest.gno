@@ -17,6 +17,7 @@ import (
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/staker"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/staker/insecure_staker_callback"
 	_ "gno.land/r/gnoswap/staker/v1"
 )

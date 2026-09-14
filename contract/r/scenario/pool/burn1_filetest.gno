@@ -14,6 +14,7 @@ import (
 
 	"gno.land/r/gnoswap/pool"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 )
 
