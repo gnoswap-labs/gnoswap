@@ -108,11 +108,12 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 		}
 	}
 
-	if !stakerStore.HasPendingProtocolFeesStoreKey() {
-		err := stakerStore.SetPendingProtocolFees(0, rlm, make(map[string]int64))
-		if err != nil {
-			return err
-		}
+	pendingProtocolFees := make(map[string]int64)
+	if stakerStore.HasPendingProtocolFeesStoreKey() {
+		pendingProtocolFees = stakerStore.GetPendingProtocolFees()
+	}
+	if err := stakerStore.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
+		return err
 	}
 
 	if !stakerStore.HasUnstakedPositionsStoreKey() {
