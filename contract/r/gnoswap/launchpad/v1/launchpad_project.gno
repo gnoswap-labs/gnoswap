@@ -240,7 +240,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 	recipients := lp.store.GetProjectRecipients()
 	recipients.Set(project.Recipient().String(), true)
 	if err := lp.store.SetProjectRecipients(0, rlm, recipients); err != nil {
-		return nil, err
+		return launchpad.Project{}, err
 	}
 
 	return project, nil
