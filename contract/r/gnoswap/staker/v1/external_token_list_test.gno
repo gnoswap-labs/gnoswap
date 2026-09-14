@@ -24,11 +24,11 @@ func TestAddToken(cur realm, t *testing.T) {
 		{
 			name:           "add token success by admin",
 			caller:         getAdminAddress(t),
-			inputTokenPath: "gno.land/r/gnoswap/v1/token1",
+			inputTokenPath: fooPath,
 			expectedAllowedTokens: []string{
 				GNS_TOKEN_KEY,
 				WUGNOT_TOKEN_KEY,
-				"gno.land/r/gnoswap/v1/token1",
+				fooPath,
 			},
 			expectedHasAbort: false,
 			expectedAbortMsg: "",
@@ -82,6 +82,31 @@ func TestAddToken(cur realm, t *testing.T) {
 
 			for _, token := range getMockInstance().store.GetAllowedTokens() {
 				uassert.True(t, allowedTokenMap[token])
+			}
+		})
+	}
+}
+
+func TestAddTokenRejectsUnregisteredKey(cur realm, t *testing.T) {
+	for _, tokenKey := range []string{
+		"gno.land/r/onbloc/missing.MISSING",
+		"gno.land/r/onbloc/foo.WRONG",
+	} {
+		t.Run(tokenKey, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
+			instance := getMockInstance()
+			before := instance.store.GetAllowedTokens()
+			testing.SetRealm(testing.NewUserRealm(getAdminAddress(t)))
+
+			uassert.AbortsContains(t, cur, "[GNOSWAP-COMMON-001]", func() {
+				mockInstanceAddToken(cross(cur), tokenKey)
+			})
+
+			uassert.False(t, instance.store.HasAllowedToken(tokenKey))
+			after := instance.store.GetAllowedTokens()
+			uassert.Equal(t, len(before), len(after))
+			for i, token := range before {
+				uassert.Equal(t, token, after[i])
 			}
 		})
 	}

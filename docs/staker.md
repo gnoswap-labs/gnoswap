@@ -22,6 +22,7 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 
 ### Configuration Storage (I-02)
 - `GetAllowedTokens` is a read-only, detached, sorted lexical enumeration; use keyed membership and update methods for state changes.
+- `AddToken` requires an exact token key registered in common's GRC20 registry before changing the allowed set.
 - Token-specific minimums are keyed independently, and an absent entry falls back to the default minimum.
 - This deployment does not migrate legacy map state.
 

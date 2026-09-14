@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Update allowed incentive tokens and token-specific minimum rewards by key instead of copying the entire configuration (I-02).
+- Reject unregistered token keys when adding allowed external incentive tokens.
 
 ### Security
 -
