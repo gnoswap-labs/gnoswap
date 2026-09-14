@@ -539,7 +539,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 
 			proposal, _ := gov.getProposal(tt.proposalId)
 			statusResolver := MakeProposalStatusResolver(proposal.Status())
-			uassert.Equal(t, true, statusResolver.actionStatusResolver.Canceled())
+			uassert.Equal(t, true, statusResolver.ActionStatus().Canceled())
 		})
 	}
 }
@@ -1194,7 +1194,7 @@ func TestGovernanceExecute_CancellationScenarios(cur realm, t *testing.T) {
 				// Verify cancellation state
 				proposal, _ := gov.getProposal(proposalId)
 				resolver := MakeProposalStatusResolver(proposal.Status())
-				uassert.Equal(t, true, resolver.actionStatusResolver.Canceled())
+				uassert.Equal(t, true, resolver.ActionStatus().Canceled())
 			}
 		})
 	}

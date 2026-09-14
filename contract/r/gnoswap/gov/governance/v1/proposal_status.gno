@@ -7,65 +7,55 @@ import (
 )
 
 type ProposalStatusResolver struct {
-	status               governance.ProposalStatus
-	scheduleResolver     ProposalScheduleStatusResolver
-	actionStatusResolver ProposalActionStatusResolver
-	voteStatusResolver   ProposalVoteStatusResolver
+	status governance.ProposalStatus
 }
 
 func MakeProposalStatusResolver(status governance.ProposalStatus) ProposalStatusResolver {
-	return ProposalStatusResolver{
-		status:               status,
-		scheduleResolver:     MakeProposalScheduleStatusResolver(status.Schedule()),
-		actionStatusResolver: MakeProposalActionStatusResolver(status.ActionStatus()),
-		voteStatusResolver:   MakeProposalVoteStatusResolver(status.VoteStatus()),
-	}
+	return ProposalStatusResolver{status: status}
 }
 
 func (p ProposalStatusResolver) Value() governance.ProposalStatus {
-	status := p.status
-	status = status.WithSchedule(p.scheduleResolver.Value())
-	status = status.WithActionStatus(p.actionStatusResolver.Value())
-	status = status.WithVoteStatus(p.voteStatusResolver.Value())
-	return status
+	return p.status
 }
 
 func (p ProposalStatusResolver) Schedule() governance.ProposalScheduleStatus {
-	return p.scheduleResolver.Value()
+	return p.status.Schedule()
 }
 
 func (p ProposalStatusResolver) ActionStatus() governance.ProposalActionStatus {
-	return p.actionStatusResolver.Value()
+	return p.status.ActionStatus()
 }
 
 func (p ProposalStatusResolver) VoteStatus() governance.ProposalVoteStatus {
-	return p.voteStatusResolver.Value()
+	return p.status.VoteStatus()
 }
 
 func (p ProposalStatusResolver) TotalVoteWeight() int64 {
-	return p.voteStatusResolver.TotalVoteWeight()
+	return MakeProposalVoteStatusResolver(p.status.VoteStatus()).TotalVoteWeight()
 }
 
 func (p ProposalStatusResolver) StatusType(current int64) governance.ProposalStatusType {
-	if p.actionStatusResolver.IsExecuted() {
+	actionStatus := p.status.ActionStatus()
+	if actionStatus.IsExecuted() {
 		return governance.StatusExecuted
 	}
-	if p.actionStatusResolver.Canceled() {
+	if actionStatus.Canceled() {
 		return governance.StatusCanceled
 	}
-	if !p.scheduleResolver.IsPassedActiveAt(current) {
+	scheduleResolver := MakeProposalScheduleStatusResolver(p.status.Schedule())
+	if !scheduleResolver.IsPassedActiveAt(current) {
 		return governance.StatusUpcoming
 	}
-	if !p.scheduleResolver.IsPassedVotingEndedAt(current) {
+	if !scheduleResolver.IsPassedVotingEndedAt(current) {
 		return governance.StatusActive
 	}
-	if !p.voteStatusResolver.IsPassed() {
+	if !MakeProposalVoteStatusResolver(p.status.VoteStatus()).IsPassed() {
 		return governance.StatusRejected
 	}
-	if !p.actionStatusResolver.IsExecutable() || !p.scheduleResolver.IsPassedExecutableAt(current) {
+	if !actionStatus.IsExecutable() || !scheduleResolver.IsPassedExecutableAt(current) {
 		return governance.StatusPassed
 	}
-	if !p.scheduleResolver.IsPassedExpiredAt(current) {
+	if !scheduleResolver.IsPassedExpiredAt(current) {
 		return governance.StatusExecutable
 	}
 	return governance.StatusExpired
@@ -104,39 +94,34 @@ func (p ProposalStatusResolver) IsCanceled(current int64) bool {
 }
 
 func (p ProposalStatusResolver) cancel(canceledAt, canceledHeight int64, canceledBy address) (ProposalStatusResolver, error) {
-	actionResolver, err := p.actionStatusResolver.cancel(canceledAt, canceledHeight, canceledBy)
+	actionResolver, err := MakeProposalActionStatusResolver(p.status.ActionStatus()).cancel(canceledAt, canceledHeight, canceledBy)
 	if err != nil {
 		return p, err
 	}
-	p.actionStatusResolver = actionResolver
 	p.status = p.status.WithActionStatus(actionResolver.Value())
 	return p, nil
 }
 
 func (p ProposalStatusResolver) execute(executedAt, executedHeight int64, executedBy address) (ProposalStatusResolver, error) {
-	actionResolver, err := p.actionStatusResolver.Execute(executedAt, executedHeight, executedBy)
+	actionResolver, err := MakeProposalActionStatusResolver(p.status.ActionStatus()).Execute(executedAt, executedHeight, executedBy)
 	if err != nil {
 		return p, err
 	}
-	p.actionStatusResolver = actionResolver
 	p.status = p.status.WithActionStatus(actionResolver.Value())
 	return p, nil
 }
 
 func (p ProposalStatusResolver) vote(votedYes bool, weight int64) (ProposalStatusResolver, error) {
-	var (
-		voteResolver ProposalVoteStatusResolver
-		err          error
-	)
+	voteResolver := MakeProposalVoteStatusResolver(p.status.VoteStatus())
+	var err error
 	if votedYes {
-		voteResolver, err = p.voteStatusResolver.AddYesVoteWeight(weight)
+		voteResolver, err = voteResolver.AddYesVoteWeight(weight)
 	} else {
-		voteResolver, err = p.voteStatusResolver.AddNoVoteWeight(weight)
+		voteResolver, err = voteResolver.AddNoVoteWeight(weight)
 	}
 	if err != nil {
 		return p, err
 	}
-	p.voteStatusResolver = voteResolver
 	p.status = p.status.WithVoteStatus(voteResolver.Value())
 	return p, nil
 }

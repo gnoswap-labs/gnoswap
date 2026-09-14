@@ -24,22 +24,22 @@ func (p ProposalVoteStatus) NoWeight() int64 {
 }
 
 /* Functional updates */
-func (p ProposalVoteStatus) SetYesWeight(yes int64) ProposalVoteStatus {
+func (p ProposalVoteStatus) WithYesWeight(yes int64) ProposalVoteStatus {
 	p.yea = yes
 	return p
 }
 
-func (p ProposalVoteStatus) SetNoWeight(no int64) ProposalVoteStatus {
+func (p ProposalVoteStatus) WithNoWeight(no int64) ProposalVoteStatus {
 	p.nay = no
 	return p
 }
 
-func (p ProposalVoteStatus) SetMaxVotingWeight(maxVotingWeight int64) ProposalVoteStatus {
+func (p ProposalVoteStatus) WithMaxVotingWeight(maxVotingWeight int64) ProposalVoteStatus {
 	p.maxVotingWeight = maxVotingWeight
 	return p
 }
 
-func (p ProposalVoteStatus) SetQuorumAmount(quorumAmount int64) ProposalVoteStatus {
+func (p ProposalVoteStatus) WithQuorumAmount(quorumAmount int64) ProposalVoteStatus {
 	p.quorumAmount = quorumAmount
 	return p
 }

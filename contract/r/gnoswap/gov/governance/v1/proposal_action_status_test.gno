@@ -77,7 +77,7 @@ func TestProposalActionStatus_CancelAndExecute(cur realm, t *testing.T) {
 			// given
 			status := governance.MakeProposalActionStatus(tc.executable)
 			if tc.canceled {
-				status = status.SetCanceled(true)
+				status = status.WithCanceled(true)
 			}
 			resolver := MakeProposalActionStatusResolver(status)
 			// when

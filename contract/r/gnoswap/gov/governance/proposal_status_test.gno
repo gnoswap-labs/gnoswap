@@ -12,8 +12,8 @@ func TestProposalStatusUpdatesPreserveOriginal(t *testing.T) {
 		MakeProposalActionStatus(true),
 		MakeProposalVoteStatus(1000, 50),
 	)
-	updated := original.WithVoteStatus(original.VoteStatus().SetYesWeight(600))
-	updated = updated.WithActionStatus(updated.ActionStatus().SetExecuted(true))
+	updated := original.WithVoteStatus(original.VoteStatus().WithYesWeight(600))
+	updated = updated.WithActionStatus(updated.ActionStatus().WithExecuted(true))
 	uassert.Equal(t, int64(0), original.YesWeight())
 	uassert.Equal(t, int64(600), updated.YesWeight())
 	uassert.False(t, original.ActionStatus().IsExecuted())

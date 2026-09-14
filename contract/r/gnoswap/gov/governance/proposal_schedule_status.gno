@@ -35,27 +35,27 @@ func (p ProposalScheduleStatus) ExecutableTime() int64 { return p.executableTime
 func (p ProposalScheduleStatus) ExpiredTime() int64    { return p.expiredTime }
 
 /* Functional updates */
-func (p ProposalScheduleStatus) SetCreateTime(createTime int64) ProposalScheduleStatus {
+func (p ProposalScheduleStatus) WithCreateTime(createTime int64) ProposalScheduleStatus {
 	p.createTime = createTime
 	return p
 }
 
-func (p ProposalScheduleStatus) SetActiveTime(activeTime int64) ProposalScheduleStatus {
+func (p ProposalScheduleStatus) WithActiveTime(activeTime int64) ProposalScheduleStatus {
 	p.activeTime = activeTime
 	return p
 }
 
-func (p ProposalScheduleStatus) SetVotingEndTime(votingEndTime int64) ProposalScheduleStatus {
+func (p ProposalScheduleStatus) WithVotingEndTime(votingEndTime int64) ProposalScheduleStatus {
 	p.votingEndTime = votingEndTime
 	return p
 }
 
-func (p ProposalScheduleStatus) SetExecutableTime(executableTime int64) ProposalScheduleStatus {
+func (p ProposalScheduleStatus) WithExecutableTime(executableTime int64) ProposalScheduleStatus {
 	p.executableTime = executableTime
 	return p
 }
 
-func (p ProposalScheduleStatus) SetExpiredTime(expiredTime int64) ProposalScheduleStatus {
+func (p ProposalScheduleStatus) WithExpiredTime(expiredTime int64) ProposalScheduleStatus {
 	p.expiredTime = expiredTime
 	return p
 }

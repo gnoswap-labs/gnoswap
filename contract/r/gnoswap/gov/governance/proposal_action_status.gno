@@ -38,47 +38,47 @@ func (p ProposalActionStatus) IsExecutable() bool {
 }
 
 /* Functional updates */
-func (p ProposalActionStatus) SetCanceled(canceled bool) ProposalActionStatus {
+func (p ProposalActionStatus) WithCanceled(canceled bool) ProposalActionStatus {
 	p.canceled = canceled
 	return p
 }
 
-func (p ProposalActionStatus) SetCanceledAt(canceledAt int64) ProposalActionStatus {
+func (p ProposalActionStatus) WithCanceledAt(canceledAt int64) ProposalActionStatus {
 	p.canceledAt = canceledAt
 	return p
 }
 
-func (p ProposalActionStatus) SetCanceledHeight(canceledHeight int64) ProposalActionStatus {
+func (p ProposalActionStatus) WithCanceledHeight(canceledHeight int64) ProposalActionStatus {
 	p.canceledHeight = canceledHeight
 	return p
 }
 
-func (p ProposalActionStatus) SetCanceledBy(canceledBy address) ProposalActionStatus {
+func (p ProposalActionStatus) WithCanceledBy(canceledBy address) ProposalActionStatus {
 	p.canceledBy = canceledBy
 	return p
 }
 
-func (p ProposalActionStatus) SetExecuted(executed bool) ProposalActionStatus {
+func (p ProposalActionStatus) WithExecuted(executed bool) ProposalActionStatus {
 	p.executed = executed
 	return p
 }
 
-func (p ProposalActionStatus) SetExecutedAt(executedAt int64) ProposalActionStatus {
+func (p ProposalActionStatus) WithExecutedAt(executedAt int64) ProposalActionStatus {
 	p.executedAt = executedAt
 	return p
 }
 
-func (p ProposalActionStatus) SetExecutedHeight(executedHeight int64) ProposalActionStatus {
+func (p ProposalActionStatus) WithExecutedHeight(executedHeight int64) ProposalActionStatus {
 	p.executedHeight = executedHeight
 	return p
 }
 
-func (p ProposalActionStatus) SetExecutedBy(executedBy address) ProposalActionStatus {
+func (p ProposalActionStatus) WithExecutedBy(executedBy address) ProposalActionStatus {
 	p.executedBy = executedBy
 	return p
 }
 
-func (p ProposalActionStatus) SetExecutable(executable bool) ProposalActionStatus {
+func (p ProposalActionStatus) WithExecutable(executable bool) ProposalActionStatus {
 	p.executable = executable
 	return p
 }

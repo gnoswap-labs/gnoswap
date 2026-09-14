@@ -49,12 +49,12 @@ func (p ProposalVoteStatusResolver) IsPassed() bool {
 
 // AddYesVoteWeight returns a resolver with the updated yes tally.
 func (p ProposalVoteStatusResolver) AddYesVoteWeight(yea int64) (ProposalVoteStatusResolver, error) {
-	p.status = p.status.SetYesWeight(gnsmath.SafeAddInt64(p.status.YesWeight(), yea))
+	p.status = p.status.WithYesWeight(gnsmath.SafeAddInt64(p.status.YesWeight(), yea))
 	return p, nil
 }
 
 // AddNoVoteWeight returns a resolver with the updated no tally.
 func (p ProposalVoteStatusResolver) AddNoVoteWeight(nay int64) (ProposalVoteStatusResolver, error) {
-	p.status = p.status.SetNoWeight(gnsmath.SafeAddInt64(p.status.NoWeight(), nay))
+	p.status = p.status.WithNoWeight(gnsmath.SafeAddInt64(p.status.NoWeight(), nay))
 	return p, nil
 }

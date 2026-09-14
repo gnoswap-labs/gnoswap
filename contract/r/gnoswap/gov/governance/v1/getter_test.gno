@@ -284,7 +284,7 @@ func TestGetProposals_EntriesAreValues(cur realm, t *testing.T) {
 	// Each read returns a value copy. Mutating one local status cannot affect
 	// another read or the proposal held by the storage tree.
 	firstStatus := first.Status()
-	firstAction := firstStatus.ActionStatus().SetCanceled(true)
+	firstAction := firstStatus.ActionStatus().WithCanceled(true)
 	firstStatus = firstStatus.WithActionStatus(firstAction)
 	first = first.WithStatus(firstStatus)
 	uassert.False(t, second.Status().ActionStatus().Canceled())

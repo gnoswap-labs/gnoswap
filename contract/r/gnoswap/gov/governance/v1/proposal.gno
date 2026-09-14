@@ -7,28 +7,16 @@ import (
 )
 
 type ProposalResolver struct {
-	proposal         governance.Proposal
-	statusResolver   ProposalStatusResolver
-	dataResolver     ProposalDataResolver
-	metadataResolver ProposalMetadataResolver
+	proposal governance.Proposal
 }
 
 func MakeProposalResolver(proposal governance.Proposal) ProposalResolver {
-	return ProposalResolver{
-		proposal:         proposal,
-		statusResolver:   MakeProposalStatusResolver(proposal.Status()),
-		dataResolver:     MakeProposalDataResolver(proposal.Data()),
-		metadataResolver: MakeProposalMetadataResolver(proposal.Metadata()),
-	}
+	return ProposalResolver{proposal: proposal}
 }
 
 // Proposal returns the complete updated proposal value, including nested status changes.
 func (r ProposalResolver) Proposal() governance.Proposal {
-	proposal := r.proposal
-	proposal = proposal.WithStatus(r.statusResolver.Value())
-	proposal = proposal.WithData(r.dataResolver.Value())
-	proposal = proposal.WithMetadata(r.metadataResolver.Value())
-	return proposal
+	return r.proposal
 }
 
 func (r ProposalResolver) ID() int64 {
@@ -68,23 +56,23 @@ func (r ProposalResolver) SnapshotTime() int64 {
 }
 
 func (r ProposalResolver) Data() governance.ProposalData {
-	return r.dataResolver.Value()
+	return r.proposal.Data()
 }
 
 func (r ProposalResolver) StatusValue() governance.ProposalStatus {
-	return r.statusResolver.Value()
+	return r.proposal.Status()
 }
 
 func (r ProposalResolver) Metadata() governance.ProposalMetadata {
-	return r.metadataResolver.Value()
+	return r.proposal.Metadata()
 }
 
 func (r ProposalResolver) VotingTotalWeight() int64 {
-	return r.statusResolver.TotalVoteWeight()
+	return MakeProposalStatusResolver(r.proposal.Status()).TotalVoteWeight()
 }
 
 func (r ProposalResolver) IsActive(current int64) bool {
-	status := r.statusResolver.StatusType(current)
+	status := r.StatusType(current)
 	switch status {
 	case governance.StatusRejected,
 		governance.StatusExpired,
@@ -99,18 +87,18 @@ func (r ProposalResolver) IsActive(current int64) bool {
 }
 
 func (r ProposalResolver) Validate() error {
-	if err := r.dataResolver.Validate(); err != nil {
+	if err := MakeProposalDataResolver(r.proposal.Data()).Validate(); err != nil {
 		return err
 	}
-	return r.metadataResolver.Validate()
+	return MakeProposalMetadataResolver(r.proposal.Metadata()).Validate()
 }
 
 func (r ProposalResolver) Status(current int64) string {
-	return r.statusResolver.StatusType(current).String()
+	return r.StatusType(current).String()
 }
 
 func (r ProposalResolver) StatusType(current int64) governance.ProposalStatusType {
-	return r.statusResolver.StatusType(current)
+	return MakeProposalStatusResolver(r.proposal.Status()).StatusType(current)
 }
 
 func (r ProposalResolver) IsVotingPeriod(votedAt int64) bool {
@@ -118,14 +106,14 @@ func (r ProposalResolver) IsVotingPeriod(votedAt int64) bool {
 }
 
 func (r ProposalResolver) IsExecutable(current int64) bool {
-	if !r.dataResolver.data.ProposalType().IsExecutable() {
+	if !r.proposal.Type().IsExecutable() {
 		return false
 	}
-	return r.statusResolver.IsExecutable(current)
+	return r.StatusType(current) == governance.StatusExecutable
 }
 
 func (r ProposalResolver) CommunityPoolSpendTokenPath() string {
-	communityPoolSpend, ok := r.dataResolver.data.CommunityPoolSpend()
+	communityPoolSpend, ok := r.proposal.Data().CommunityPoolSpend()
 	if !ok {
 		return ""
 	}
@@ -134,11 +122,11 @@ func (r ProposalResolver) CommunityPoolSpendTokenPath() string {
 
 // Vote returns a resolver containing the updated vote tally.
 func (r ProposalResolver) Vote(votedYes bool, weight int64) (ProposalResolver, error) {
-	statusResolver, err := r.statusResolver.vote(votedYes, weight)
+	statusResolver, err := MakeProposalStatusResolver(r.proposal.Status()).vote(votedYes, weight)
 	if err != nil {
 		return r, err
 	}
-	r.statusResolver = statusResolver
+	r.proposal = r.proposal.WithStatus(statusResolver.Value())
 	return r, nil
 }
 
@@ -150,11 +138,11 @@ func (r ProposalResolver) execute(
 	if !r.IsExecutable(executedAt) {
 		return r, errors.New(errProposalNotExecutable)
 	}
-	statusResolver, err := r.statusResolver.execute(executedAt, executedHeight, executedBy)
+	statusResolver, err := MakeProposalStatusResolver(r.proposal.Status()).execute(executedAt, executedHeight, executedBy)
 	if err != nil {
 		return r, err
 	}
-	r.statusResolver = statusResolver
+	r.proposal = r.proposal.WithStatus(statusResolver.Value())
 	return r, nil
 }
 
@@ -163,16 +151,17 @@ func (r ProposalResolver) cancel(
 	canceledAt, canceledHeight int64,
 	canceledBy address,
 ) (ProposalResolver, error) {
-	if r.statusResolver.IsCanceled(canceledAt) {
+	statusResolver := MakeProposalStatusResolver(r.proposal.Status())
+	if statusResolver.IsCanceled(canceledAt) {
 		return r, errors.New(errAlreadyCanceledProposal)
 	}
-	if !r.statusResolver.IsUpcoming(canceledAt) {
+	if !statusResolver.IsUpcoming(canceledAt) {
 		return r, errors.New(errUnableToCancelVotingProposal)
 	}
-	statusResolver, err := r.statusResolver.cancel(canceledAt, canceledHeight, canceledBy)
+	statusResolver, err := statusResolver.cancel(canceledAt, canceledHeight, canceledBy)
 	if err != nil {
 		return r, err
 	}
-	r.statusResolver = statusResolver
+	r.proposal = r.proposal.WithStatus(statusResolver.Value())
 	return r, nil
 }

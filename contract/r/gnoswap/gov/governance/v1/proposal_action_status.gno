@@ -63,10 +63,10 @@ func (p ProposalActionStatusResolver) cancel(
 		return p, errors.New(errAlreadyCanceledProposal)
 	}
 
-	p.status = p.status.SetCanceled(true)
-	p.status = p.status.SetCanceledAt(canceledAt)
-	p.status = p.status.SetCanceledHeight(canceledHeight)
-	p.status = p.status.SetCanceledBy(canceledBy)
+	p.status = p.status.WithCanceled(true)
+	p.status = p.status.WithCanceledAt(canceledAt)
+	p.status = p.status.WithCanceledHeight(canceledHeight)
+	p.status = p.status.WithCanceledBy(canceledBy)
 	return p, nil
 }
 
@@ -82,9 +82,9 @@ func (p ProposalActionStatusResolver) Execute(
 		return p, errors.New(errAlreadyCanceledProposal)
 	}
 
-	p.status = p.status.SetExecuted(true)
-	p.status = p.status.SetExecutedAt(executedAt)
-	p.status = p.status.SetExecutedHeight(executedHeight)
-	p.status = p.status.SetExecutedBy(executedBy)
+	p.status = p.status.WithExecuted(true)
+	p.status = p.status.WithExecutedAt(executedAt)
+	p.status = p.status.WithExecutedHeight(executedHeight)
+	p.status = p.status.WithExecutedBy(executedBy)
 	return p, nil
 }

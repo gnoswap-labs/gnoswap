@@ -191,11 +191,11 @@ func TestProposalScheduleStatus_Setters(cur realm, t *testing.T) {
 			)
 
 			// when
-			status = status.SetCreateTime(tt.newCreate)
-			status = status.SetActiveTime(tt.newActive)
-			status = status.SetVotingEndTime(tt.newVotingEnd)
-			status = status.SetExecutableTime(tt.newExecutable)
-			status = status.SetExpiredTime(tt.newExpired)
+			status = status.WithCreateTime(tt.newCreate)
+			status = status.WithActiveTime(tt.newActive)
+			status = status.WithVotingEndTime(tt.newVotingEnd)
+			status = status.WithExecutableTime(tt.newExecutable)
+			status = status.WithExpiredTime(tt.newExpired)
 
 			// then
 			uassert.Equal(t, status.CreateTime(), tt.newCreate)
