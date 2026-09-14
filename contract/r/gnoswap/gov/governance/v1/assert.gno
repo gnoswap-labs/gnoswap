@@ -2,6 +2,7 @@ package governance
 
 import (
 	"errors"
+
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/common"
 )

@@ -27,6 +27,7 @@ import (
 	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -187,6 +188,7 @@ func firstUnstake(cur realm) {
 
 	// First unstake - should succeed
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 
 	ufmt.Printf("[EXPECTED] first unstake succeeded\n")
 	testing.SkipHeights(1)

@@ -267,6 +267,18 @@ func (s *stakerV1) getDeposit(lpTokenId uint64) (*sr.Deposit, error) {
 	return deposits.get(lpTokenId), nil
 }
 
+// assertIsCollectablePosition ensures the position is staked or holds an exit checkpoint.
+func (s *stakerV1) assertIsCollectablePosition(positionId uint64) error {
+	if s.getDeposits().Has(positionId) || s.getUnstakedPositions().Has(positionId) {
+		return nil
+	}
+
+	return makeErrorWithDetails(
+		errDataNotFound,
+		ufmt.Sprintf("lpTokenId(%d) deposit does not exist", positionId),
+	)
+}
+
 // GetDeposit returns the deposit for the given LP token ID.
 func (s *stakerV1) GetDeposit(lpTokenId uint64) (*sr.Deposit, error) {
 	return s.getDeposit(lpTokenId)
@@ -277,7 +289,7 @@ func (s *stakerV1) GetDeposit(lpTokenId uint64) (*sr.Deposit, error) {
 func (s *stakerV1) CollectableEmissionReward(positionId uint64) (int64, error) {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	if _, err := s.getDeposit(positionId); err != nil {
+	if err := s.assertIsCollectablePosition(positionId); err != nil {
 		return 0, err
 	}
 	reward, err := s.calculateCollectablePositionReward(currentHeight, currentTime, positionId)
@@ -292,7 +304,7 @@ func (s *stakerV1) CollectableEmissionReward(positionId uint64) (int64, error) {
 func (s *stakerV1) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) (int64, error) {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
-	if _, err := s.getDeposit(positionId); err != nil {
+	if err := s.assertIsCollectablePosition(positionId); err != nil {
 		return 0, err
 	}
 	reward, err := s.calculateCollectablePositionReward(currentHeight, currentTime, positionId)
@@ -517,6 +529,11 @@ func (s *stakerV1) GetTotalEmissionSent() int64 {
 // GetAllowedTokens returns the allowed external incentive token list.
 func (s *stakerV1) GetAllowedTokens() []string {
 	return s.store.GetAllowedTokens()
+}
+
+// GetDeniedRewardTokens returns the denied external incentive reward token list.
+func (s *stakerV1) GetDeniedRewardTokens() []string {
+	return s.store.GetDeniedRewardTokens()
 }
 
 // GetWarmupTemplate returns the current warmup template.

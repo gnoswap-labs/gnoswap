@@ -98,6 +98,10 @@ type ILaunchpadStore interface {
 	GetProjects() *bptree.BPTree
 	SetProjects(_ int, rlm realm, projects *bptree.BPTree) error
 
+	HasProjectRecipientsKey() bool
+	GetProjectRecipients() *bptree.BPTree
+	SetProjectRecipients(_ int, rlm realm, recipients *bptree.BPTree) error
+
 	HasProjectTierRewardManagersKey() bool
 	GetProjectTierRewardManagers() *bptree.BPTree
 	SetProjectTierRewardManagers(_ int, rlm realm, managers *bptree.BPTree) error

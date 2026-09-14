@@ -8,11 +8,12 @@ import (
 	"chain"
 	"chain/banker"
 	"fmt"
-	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/gnoswap/scenarioutils"
 
@@ -30,6 +31,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
@@ -413,6 +415,7 @@ func unstakeToken(cur realm, tokenId uint64) {
 
 	println("[INFO] unstake token (no unwrap)")
 	sr.UnStakeToken(cross(cur), tokenId)
+	sr.CollectReward(cross(cur), tokenId)
 	testing.SkipHeights(1)
 
 	owner := mustOwnerOf(positionIdFrom(cur, tokenId))

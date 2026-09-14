@@ -13,6 +13,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -32,10 +33,10 @@ var (
 
 	govStakerAddr = access.MustGetAddress(prbac.ROLE_GOV_STAKER.String())
 
-	dummyAddr       = testutils.TestAddress("dummy")
-	reDelegateAddr  = testutils.TestAddress("reDelegate")
-	thirdDelegatee  = testutils.TestAddress("thirdDelegatee")
-	minAmount       = int64(1_000_000)
+	dummyAddr      = testutils.TestAddress("dummy")
+	reDelegateAddr = testutils.TestAddress("reDelegate")
+	thirdDelegatee = testutils.TestAddress("thirdDelegatee")
+	minAmount      = int64(1_000_000)
 )
 
 func main(cur realm) {
