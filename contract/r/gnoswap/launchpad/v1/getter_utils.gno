@@ -8,9 +8,8 @@ import (
 // rotree.Wrap. They run on every read through a read-only view, so each one
 // returns a value the caller may hold without reaching realm-owned state.
 
-// cloneProjectEntry is the transformation for the project tree. Project is
-// mutable and its setters are declared in /r/gnoswap/launchpad, so an external
-// holder of a cloned value cannot write realm state through it.
+// cloneProjectEntry is the transformation for the project tree. It returns a
+// value copy whose map containers are independent of realm state.
 func cloneProjectEntry(value any) any {
 	project, ok := value.(launchpad.Project)
 	if !ok {

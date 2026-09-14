@@ -6,8 +6,8 @@ import (
 )
 
 // GetProjects returns a read-only view of every project, keyed by project ID.
-// Callers paginate it themselves through IterateByOffset. Reading an entry
-// yields a clone, so the view cannot mutate realm state.
+// Callers paginate it themselves through IterateByOffset. Each entry is a
+// value copy, so the view cannot mutate realm state.
 func GetProjects() *rotree.ReadOnlyTree {
 	return getImplementation().GetProjects()
 }

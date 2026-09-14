@@ -203,30 +203,29 @@ func NewProject(
 	}
 }
 
-// Clone copies a project's own fields and leaves its maps nil: conditions,
-// tiers, and tiersRatios are not copied.
+// Clone returns a value copy with independently owned map containers.
 //
-// The copy is shallow because the read-only project view clones every entry a
-// caller reads, so copying the maps would deep-copy every condition and tier
-// for each entry on a page. Read them through their own lookups instead:
-// GetProjectCondition, GetProjectTier, and GetProjectTiersRatios.
-func (p Project) Clone() *Project {
-	conditions := make(map[string]*ProjectCondition)
+// Conditions and tiers stay as references because their accessors clone entries
+// before exposing them. Copying only the containers prevents setters on this
+// value from mutating the stored project's maps without cloning every tier and
+// condition during root-project pagination.
+func (p Project) Clone() Project {
+	conditions := make(map[string]*ProjectCondition, len(p.conditions))
 	for k, v := range p.conditions {
-		conditions[k] = v.Clone()
+		conditions[k] = v
 	}
 
-	tiers := make(map[int64]*ProjectTier)
+	tiers := make(map[int64]*ProjectTier, len(p.tiers))
 	for k, v := range p.tiers {
-		tiers[k] = v.Clone()
+		tiers[k] = v
 	}
 
-	tiersRatios := make(map[int64]int64)
+	tiersRatios := make(map[int64]int64, len(p.tiersRatios))
 	for k, v := range p.tiersRatios {
 		tiersRatios[k] = v
 	}
 
-	return &Project{
+	return Project{
 		id:            p.id,
 		name:          p.name,
 		tokenPath:     p.tokenPath,

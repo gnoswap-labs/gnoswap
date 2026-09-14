@@ -15,7 +15,7 @@ func TestCloneProjectEntry(cur realm, t *testing.T) {
 		uassert.Equal(t, nil, cloneProjectEntry(nil))
 	})
 
-	t.Run("returns a copy the caller cannot write back through", func(cur realm, t *testing.T) {
+	t.Run("returns a value copy the caller cannot write back through", func(cur realm, t *testing.T) {
 		stored := launchpad.NewProject(
 			"Test Project",
 			"gno.land/r/onbloc/obl",
@@ -24,17 +24,21 @@ func TestCloneProjectEntry(cur realm, t *testing.T) {
 			100,
 			100,
 		)
+		stored.SetTier(30, launchpad.NewProjectTier("project", 30, 1, 100, 200))
 
-		cloned, ok := cloneProjectEntry(*stored).(*launchpad.Project)
+		cloned, ok := cloneProjectEntry(*stored).(launchpad.Project)
 		uassert.True(t, ok)
-		uassert.False(t, cloned == stored)
 		uassert.Equal(t, stored.Name(), cloned.Name())
 
 		cloned.SetName("Mutated")
 		uassert.Equal(t, "Test Project", stored.Name())
+		cloned.SetTier(30, launchpad.NewProjectTier("project", 30, 2, 100, 200))
+		storedTier, err := stored.GetTier(30)
+		uassert.NoError(t, err)
+		uassert.Equal(t, int64(1), storedTier.TotalDistributeAmount())
 	})
 
-	t.Run("returns a distinct copy per read", func(cur realm, t *testing.T) {
+	t.Run("returns an independent value per read", func(cur realm, t *testing.T) {
 		stored := launchpad.NewProject(
 			"Test Project",
 			"gno.land/r/onbloc/obl",
@@ -44,11 +48,13 @@ func TestCloneProjectEntry(cur realm, t *testing.T) {
 			100,
 		)
 
-		first, ok := cloneProjectEntry(*stored).(*launchpad.Project)
+		first, ok := cloneProjectEntry(*stored).(launchpad.Project)
 		uassert.True(t, ok)
-		second, ok := cloneProjectEntry(*stored).(*launchpad.Project)
+		second, ok := cloneProjectEntry(*stored).(launchpad.Project)
 		uassert.True(t, ok)
-		uassert.False(t, first == second)
+
+		first.SetName("Mutated")
+		uassert.Equal(t, "Test Project", second.Name())
 	})
 }
 

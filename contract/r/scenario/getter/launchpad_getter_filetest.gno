@@ -164,7 +164,7 @@ func testProjectGetters(cur realm, projectId string) {
 	})
 
 	// GetProject
-	project, ok := launchpad.GetProjects().Get(projectId).(*launchpad.Project)
+	project, ok := launchpad.GetProjects().Get(projectId).(launchpad.Project)
 	if !ok {
 		panic("project not found")
 	}

@@ -157,16 +157,14 @@ func TestGetProjectsGet(cur realm, t *testing.T) {
 			}
 
 			// Execute
-			project, ok := lp.GetProjects().Get(projectID).(*launchpad.Project)
+			project, ok := lp.GetProjects().Get(projectID).(launchpad.Project)
 
 			// Verify
 			if tt.expectedHasError {
 				uassert.False(t, ok)
-				uassert.True(t, project == nil)
 			} else {
 				if tt.expectedNotNil {
 					uassert.True(t, ok)
-					uassert.NotNil(t, project)
 					uassert.Equal(t, "Test Project", project.Name())
 				}
 			}

@@ -105,7 +105,7 @@ func createContractRecipientProject(cur realm) string {
 	testing.SkipHeights(secondsOf7Days / 5)
 
 	testing.SetRealm(launchpadRealm)
-	project, _ := launchpad.GetProjects().Get(projectId).(*launchpad.Project)
+	project, _ := launchpad.GetProjects().Get(projectId).(launchpad.Project)
 	if project.Recipient() != contractProjectAddr {
 		panic("project recipient is not contract")
 	}

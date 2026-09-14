@@ -298,7 +298,7 @@ func transferLeftV2Valid(cur realm, projectId string) {
 }
 
 func printState(cur realm, projectId, depositId string) {
-	project, _ := launchpad.GetProjects().Get(projectId).(*launchpad.Project)
+	project, _ := launchpad.GetProjects().Get(projectId).(launchpad.Project)
 	tierTotalDeposit, _ := launchpad.GetProjectTierTotalDepositAmount(projectId, 30)
 	tierDepositCount := launchpad.GetProjectTierRewards(projectId, 30).Size()
 	depositAmount, _ := launchpad.GetDepositAmount(depositId)
@@ -310,7 +310,7 @@ func printState(cur realm, projectId, depositId string) {
 }
 
 func printProjectSummary(cur realm, projectId string) {
-	project, _ := launchpad.GetProjects().Get(projectId).(*launchpad.Project)
+	project, _ := launchpad.GetProjects().Get(projectId).(launchpad.Project)
 	tier30Total, _ := launchpad.GetProjectTierTotalDistributeAmount(projectId, 30)
 	tier90Total, _ := launchpad.GetProjectTierTotalDistributeAmount(projectId, 90)
 	tier180Total, _ := launchpad.GetProjectTierTotalDistributeAmount(projectId, 180)
