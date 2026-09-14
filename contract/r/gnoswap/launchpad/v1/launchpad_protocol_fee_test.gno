@@ -120,6 +120,11 @@ func TestLaunchpadProtocolFee_CollectProtocolFee_ContractRecipient(cur realm, t 
 	launchpadAddr, adminRealm := setupTestEnvironment(cur, t, testEnvConfig{})
 	contractAddr := chain.PackageAddress(contractPackagePath)
 
+	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
+	uassert.AbortsContains(t, cur, "GNOSWAP-LAUNCHPAD-014", func() {
+		launchpad.CollectEmissionReward(cross(cur))
+	})
+
 	testing.SetRealm(adminRealm)
 	obl.Approve(cross(cur), launchpadAddr, 1000000)
 	launchpad.CreateProject(
@@ -141,4 +146,10 @@ func TestLaunchpadProtocolFee_CollectProtocolFee_ContractRecipient(cur realm, t 
 
 	testing.SetRealm(testing.NewCodeRealm(contractPackagePath))
 	launchpad.CollectProtocolFee(cross(cur))
+	launchpad.CollectEmissionReward(cross(cur))
+
+	testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("non_recipient")))
+	uassert.AbortsContains(t, cur, "GNOSWAP-LAUNCHPAD-014", func() {
+		launchpad.CollectEmissionReward(cross(cur))
+	})
 }

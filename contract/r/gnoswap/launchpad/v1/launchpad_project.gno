@@ -237,6 +237,11 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 	if err := lp.store.SetProjectTierRewardManagers(0, rlm, projectTierRewardManagers); err != nil {
 		return nil, err
 	}
+	recipients := lp.store.GetProjectRecipients()
+	recipients.Set(project.Recipient().String(), true)
+	if err := lp.store.SetProjectRecipients(0, rlm, recipients); err != nil {
+		return nil, err
+	}
 
 	return project, nil
 }

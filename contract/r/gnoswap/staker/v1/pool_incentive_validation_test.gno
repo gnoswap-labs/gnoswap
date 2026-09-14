@@ -487,3 +487,40 @@ func TestIsExternallyIncentivizedPool_InactiveIncentivePrecedesActive(cur realm,
 		})
 	}
 }
+
+func TestIsExternallyIncentivizedPool_StartWindowBoundary(cur realm, t *testing.T) {
+	tests := []struct {
+		name        string
+		startOffset int64
+		want        bool
+	}{
+		{"maximum duration ended", -TIMESTAMP_365DAYS - 1, false},
+		{"maximum duration at end", -TIMESTAMP_365DAYS, true},
+		{"future start", 7 * 24 * 60 * 60, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			initStakerTest(cur, t)
+			currentTime := time.Now().Unix()
+			poolPath := "eligibility-window"
+			pool := sr.NewPool(poolPath, currentTime)
+			resolver := NewPoolResolver(pool)
+			startTime := currentTime + tt.startOffset
+			incentive := sr.NewExternalIncentive(
+				"window-incentive", poolPath, GNS_TOKEN_KEY, 1000,
+				startTime, startTime+TIMESTAMP_365DAYS,
+				testutils.TestAddress("creator"), 0, 0, currentTime,
+			)
+			resolver.IncentivesResolver().create(incentive)
+
+			uassert.Equal(t, tt.want, resolver.IsExternallyIncentivizedPool())
+
+			// Eligibility must not remove records needed for past reward claims.
+			retained, ok := resolver.IncentivesResolver().Get(incentive.IncentiveId())
+			uassert.True(t, ok)
+			uassert.Equal(t, int64(1000), retained.RewardAmount())
+			uassert.False(t, retained.Refunded())
+		})
+	}
+}
