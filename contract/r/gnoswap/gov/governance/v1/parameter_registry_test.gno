@@ -548,6 +548,12 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 			expectedError: false,
 		},
 		{
+			name:          "Success - staker SetDeniedRewardToken",
+			numToExecute:  1,
+			executions:    "gno.land/r/gnoswap/staker*EXE*SetDeniedRewardToken*EXE*gno.land/r/onbloc/foo.FOO,true",
+			expectedError: false,
+		},
+		{
 			name:          "Success - staker SetWarmUp",
 			numToExecute:  1,
 			executions:    "gno.land/r/gnoswap/staker*EXE*SetWarmUp*EXE*100,1000",
