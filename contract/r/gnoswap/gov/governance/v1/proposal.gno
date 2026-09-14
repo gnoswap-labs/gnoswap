@@ -16,7 +16,7 @@ type ProposalResolver struct {
 func NewProposalResolver(proposal *governance.Proposal) *ProposalResolver {
 	statusResolver := NewProposalStatusResolver(proposal.Status())
 	dataResolver := NewProposalDataResolver(proposal.Data())
-	metadata, _ := proposal.Metadata()
+	metadata := proposal.Metadata()
 	metadataResolver := NewProposalMetadataResolver(&metadata)
 	return &ProposalResolver{
 		Proposal:         proposal,

@@ -5,15 +5,14 @@ import bptree "gno.land/p/nt/bptree/v0"
 // Proposal represents a governance proposal with all its associated data and state.
 // This is the core structure that tracks proposal lifecycle from creation to execution.
 type Proposal struct {
-	id              int64
-	proposer        address
-	configVersion   int64
-	status          ProposalStatus
-	metadata        ProposalMetadata
-	metadataPresent bool
-	data            ProposalData
-	snapshotTime    int64
-	createdHeight   int64
+	id            int64
+	proposer      address
+	configVersion int64
+	status        ProposalStatus
+	metadata      ProposalMetadata
+	data          ProposalData
+	snapshotTime  int64
+	createdHeight int64
 }
 
 // ID returns the unique identifier of the proposal.
@@ -28,17 +27,11 @@ func (p *Proposal) Type() ProposalType {
 
 // Title returns the proposal title.
 func (p *Proposal) Title() string {
-	if !p.metadataPresent {
-		return ""
-	}
 	return p.metadata.Title()
 }
 
 // Description returns the proposal description.
 func (p *Proposal) Description() string {
-	if !p.metadataPresent {
-		return ""
-	}
 	return p.metadata.Description()
 }
 
@@ -97,10 +90,9 @@ func (p *Proposal) Status() *ProposalStatus {
 	return &p.status
 }
 
-// Metadata returns the inline proposal metadata and whether it was provided.
-// The value return cannot expose realm-owned state.
-func (p *Proposal) Metadata() (ProposalMetadata, bool) {
-	return p.metadata, p.metadataPresent
+// Metadata returns the inline proposal metadata value.
+func (p *Proposal) Metadata() ProposalMetadata {
+	return p.metadata
 }
 
 // IsTextType checks if this is a text proposal.
@@ -148,11 +140,10 @@ func NewProposal(
 	if status != nil {
 		statusValue = *status
 	}
-	metadataValue := ProposalMetadata{}
-	metadataPresent := metadata != nil
-	if metadataPresent {
-		metadataValue = *metadata
+	if metadata == nil {
+		panic("proposal metadata is required")
 	}
+	metadataValue := *metadata
 	dataValue := ProposalData{}
 	if data != nil {
 		dataValue = *data
@@ -162,15 +153,14 @@ func NewProposal(
 	}
 
 	return &Proposal{
-		id:              proposalID,
-		proposer:        proposerAddress,
-		status:          statusValue,
-		metadata:        metadataValue,
-		metadataPresent: metadataPresent,
-		data:            dataValue,
-		configVersion:   configVersion,
-		snapshotTime:    snapshotTime,
-		createdHeight:   createdHeight,
+		id:            proposalID,
+		proposer:      proposerAddress,
+		status:        statusValue,
+		metadata:      metadataValue,
+		data:          dataValue,
+		configVersion: configVersion,
+		snapshotTime:  snapshotTime,
+		createdHeight: createdHeight,
 	}
 }
 
