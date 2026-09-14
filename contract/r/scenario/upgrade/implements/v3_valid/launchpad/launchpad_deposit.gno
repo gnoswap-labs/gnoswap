@@ -96,7 +96,7 @@ func (lp *launchpadV1) depositGns(
 ) (launchpad.Deposit, *launchpad.RewardState, bool, string, error) {
 	project, err := lp.getProject(projectID)
 	if err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	balanceOfFn := func(tokenPath string, caller address) int64 {
@@ -109,19 +109,19 @@ func (lp *launchpadV1) depositGns(
 
 	err = checkProjectConditions(project, callerAddress, balanceOfFn)
 	if err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	projectTier, err := getProjectTier(project, tierDuration)
 	if err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 
 	if !projectTier.IsActivated(currentTime) {
-		return launchpad.NewDefaultDeposit(), nil, false, "", makeErrorWithDetails(errInactiveProject, projectID)
+		return launchpad.DefaultDeposit(), nil, false, "", makeErrorWithDetails(errInactiveProject, projectID)
 	}
 
 	depositID := lp.nextDepositID()
@@ -144,7 +144,7 @@ func (lp *launchpadV1) depositGns(
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	isFirstDeposit := !isRewardManagerInitialized(rewardManager)
@@ -153,12 +153,12 @@ func (lp *launchpadV1) depositGns(
 
 	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
 	if err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	// Save the modified state back
 	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	return deposit,

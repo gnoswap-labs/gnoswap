@@ -154,8 +154,8 @@ func MakeDeposit(
 	}
 }
 
-// NewDefaultDeposit returns the zero Deposit value.
-func NewDefaultDeposit() Deposit {
+// DefaultDeposit returns the zero Deposit value.
+func DefaultDeposit() Deposit {
 	return Deposit{}
 }
 

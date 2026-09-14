@@ -30,8 +30,8 @@ func TestMakeDepositReturnsValue(cur realm, t *testing.T) {
 	uassert.Equal(t, int64(0), deposit.WithdrawnHeight())
 }
 
-func TestNewDefaultDepositReturnsZeroValue(cur realm, t *testing.T) {
-	deposit := NewDefaultDeposit()
+func TestDefaultDepositReturnsZeroValue(cur realm, t *testing.T) {
+	deposit := DefaultDeposit()
 
 	uassert.Equal(t, "", deposit.ID())
 	uassert.Equal(t, "", deposit.ProjectID())

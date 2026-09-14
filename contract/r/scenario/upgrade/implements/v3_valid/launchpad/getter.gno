@@ -257,12 +257,12 @@ func (lp *launchpadV1) GetDeposit(depositId string) (launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
 	value := deposits.Get(depositId)
 	if value == nil {
-		return launchpad.NewDefaultDeposit(), errors.New("deposit not found")
+		return launchpad.DefaultDeposit(), errors.New("deposit not found")
 	}
 
 	deposit, ok := value.(launchpad.Deposit)
 	if !ok {
-		return launchpad.NewDefaultDeposit(), errors.New("invalid deposit type")
+		return launchpad.DefaultDeposit(), errors.New("invalid deposit type")
 	}
 	return deposit, nil
 }

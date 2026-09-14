@@ -126,19 +126,19 @@ func (lp *launchpadV1) depositGns(
 
 	err := checkProjectConditions(project, callerAddress, balanceOfFn)
 	if err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	projectTier, err := getProjectTier(project, tierDuration)
 	if err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 
 	if !projectTier.IsActivated(currentTime) {
-		return launchpad.NewDefaultDeposit(), nil, false, "", makeErrorWithDetails(errInactiveProject, project.ID())
+		return launchpad.DefaultDeposit(), nil, false, "", makeErrorWithDetails(errInactiveProject, project.ID())
 	}
 
 	depositID := lp.nextDepositID()
@@ -160,7 +160,7 @@ func (lp *launchpadV1) depositGns(
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	isFirstDeposit := !isRewardManagerInitialized(rewardManager)
@@ -168,7 +168,7 @@ func (lp *launchpadV1) depositGns(
 	// update rewards before adding deposit to reward manager
 	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
 	if err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	// add reward state to reward manager
@@ -180,7 +180,7 @@ func (lp *launchpadV1) depositGns(
 
 	// Save the modified state back
 	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {
-		return launchpad.NewDefaultDeposit(), nil, false, "", err
+		return launchpad.DefaultDeposit(), nil, false, "", err
 	}
 
 	emitUpdateLaunchpadRewardAccumulation(projectTier.ID(), rewardManager, getTierCurrentDepositAmount(projectTier))
