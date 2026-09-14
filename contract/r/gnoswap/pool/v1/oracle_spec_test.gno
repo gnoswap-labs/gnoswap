@@ -390,7 +390,7 @@ func testObserveInterpolatesMaxLiquidity(t *testing.T) {
 	slot0 := testObservationSlot0(0, 1, 1)
 	// Manually set first observation with MaxUint128 liquidity
 	firstObs := mustObservation(os, 0)
-	os.Set(0, pl.NewObservation(
+	os.Set(0, pl.MakeObservation(
 		currentTime,
 		firstObs.TickCumulative(),
 		"0", // secondsPerLiquidityCumulativeX128
