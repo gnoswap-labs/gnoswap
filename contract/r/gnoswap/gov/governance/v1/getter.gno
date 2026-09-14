@@ -259,28 +259,30 @@ func (gv *governanceV1) GetUserProposals() *rotree.ReadOnlyTree {
 // If it is inactive, the error identifies the proposal requiring admin cleanup.
 // An error must never be treated as an empty index when deleting delegation history.
 func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
-	snapshotIndex := gv.store.GetActiveProposalsBySnapshot()
-	var oldestSnapshotTime int64
-	var hasActiveProposal bool
-	var err error
+	index := gv.store.GetActiveProposalsBySnapshot()
+	if index.Size() == 0 {
+		return 0, false, nil
+	}
 
-	snapshotIndex.Iterate("", "", func(_ string, value any) bool {
-		proposalID, ok := value.(int64)
-		if !ok {
-			panic(ufmt.Sprintf("failed to cast active proposal ID to int64: %T", value))
-		}
-		proposal, exists := gv.getProposal(proposalID)
-		if !exists {
-			err = makeErrorWithDetails(errProposalNotFound, ufmt.Sprintf("proposalID: %d", proposalID))
-		} else if !NewProposalResolver(proposal).IsActive(time.Now().Unix()) {
-			err = makeErrorWithDetails(errProposalIndexNeedsCleanup, ufmt.Sprintf("proposalID: %d", proposalID))
-		} else {
-			oldestSnapshotTime = proposal.SnapshotTime()
-			hasActiveProposal = true
-		}
-		return true
-	})
-	return oldestSnapshotTime, hasActiveProposal, err
+	_, value := index.GetByIndex(0)
+	proposalID, ok := value.(int64)
+	if !ok {
+		panic(ufmt.Sprintf("failed to cast active proposal ID to int64: %T", value))
+	}
+
+	proposal, exists := gv.getProposal(proposalID)
+	if !exists {
+		return 0, false, makeErrorWithDetails(
+			errProposalNotFound, ufmt.Sprintf("proposalID: %d", proposalID),
+		)
+	}
+	if !NewProposalResolver(proposal).IsActive(time.Now().Unix()) {
+		return 0, false, makeErrorWithDetails(
+			errProposalIndexNeedsCleanup, ufmt.Sprintf("proposalID: %d", proposalID),
+		)
+	}
+
+	return proposal.SnapshotTime(), true, nil
 }
 
 // GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.
