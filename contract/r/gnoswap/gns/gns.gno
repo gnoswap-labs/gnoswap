@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"gno.land/p/demo/tokens/grc20"
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/nt/grc20/v0"
+	"gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/demo/defi/grc20reg"
+	"gno.land/r/nt/grc20reg/v0"
 	"gno.land/r/gnoswap/access"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/p/gnoswap/utils"
 	_ "gno.land/r/gnoswap/rbac"
