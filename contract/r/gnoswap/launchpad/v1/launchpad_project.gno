@@ -181,7 +181,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 		)
 	}
 
-	projectConditions, err := launchpad.NewProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
+	projectConditions, err := launchpad.MakeProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
 	if err != nil {
 		return launchpad.DefaultProject(), err
 	}
@@ -367,7 +367,7 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project launchp
 	}
 
 	if projectRefundableAmount > 0 {
-		updatedTiers := make(map[int64]*launchpad.ProjectTier)
+		updatedTiers := make(map[int64]launchpad.ProjectTier)
 		for duration, tier := range project.Tiers() {
 			tierRefundableAmount := refundableAmountsByTier[duration]
 			if tierRefundableAmount > 0 {
@@ -393,7 +393,7 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project launchp
 // applyTierRewardGrowthWithRewards updates a tier index and returns a
 // conservative aggregate reservation for active claims. Rounding dust remains
 // in the project instead of risking an under-reserved depositor claim.
-func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectTier, currentTime int64) (int64, error) {
+func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier launchpad.ProjectTier, currentTime int64) (int64, error) {
 	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
 	if err != nil {
 		return 0, err

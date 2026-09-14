@@ -6,15 +6,15 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func getTierCurrentDepositCount(t *launchpad.ProjectTier) int64 {
+func getTierCurrentDepositCount(t launchpad.ProjectTier) int64 {
 	return safeSubInt64(t.TotalDepositCount(), t.TotalWithdrawCount())
 }
 
-func getTierCurrentDepositAmount(t *launchpad.ProjectTier) int64 {
+func getTierCurrentDepositAmount(t launchpad.ProjectTier) int64 {
 	return safeSubInt64(t.TotalDepositAmount(), t.TotalWithdrawAmount())
 }
 
-func getCalculatedLeftReward(t *launchpad.ProjectTier) int64 {
+func getCalculatedLeftReward(t launchpad.ProjectTier) int64 {
 	return safeSubInt64(t.TotalDistributeAmount(), t.TotalCollectedAmount())
 }
 
@@ -52,17 +52,17 @@ func updateTierDistributeAmountPerSecond(t *launchpad.ProjectTier) {
 	t.SetDistributeAmountPerSecondX128(distributeAmountPerSecondX128)
 }
 
-// newProjectTier returns a pointer to a new ProjectTier with the given values.
+// newProjectTier returns a new ProjectTier with the given values.
 func newProjectTier(
 	projectID string,
 	tierDuration int64,
 	totalDistributeAmount int64,
 	startTime int64,
 	endTime int64,
-) *launchpad.ProjectTier {
-	tier := launchpad.NewProjectTier(projectID, tierDuration, totalDistributeAmount, startTime, endTime)
+) launchpad.ProjectTier {
+	tier := launchpad.MakeProjectTier(projectID, tierDuration, totalDistributeAmount, startTime, endTime)
 
-	updateTierDistributeAmountPerSecond(tier)
+	updateTierDistributeAmountPerSecond(&tier)
 
 	return tier
 }

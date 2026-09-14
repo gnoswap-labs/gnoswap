@@ -64,17 +64,17 @@ func (lp *launchpadV1) GetProjectRecipient(projectId string) (address, error) {
 }
 
 // GetProjectCondition retrieves a specific condition of a project.
-// Returns nil and error if project or condition not found.
-func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (*launchpad.ProjectCondition, error) {
+// Returns the zero value and error if project or condition not found.
+func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (launchpad.ProjectCondition, error) {
 	project, err := lp.getProject(projectId)
 	if err != nil {
-		return nil, err
+		return launchpad.DefaultProjectCondition(), err
 	}
 
 	conditions := project.Conditions()
 	condition, exists := conditions[tokenPath]
 	if !exists {
-		return nil, makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("condition(%s) not found", tokenPath))
+		return launchpad.DefaultProjectCondition(), makeErrorWithDetails(errDataNotFound, ufmt.Sprintf("condition(%s) not found", tokenPath))
 	}
 
 	return condition, nil
@@ -114,16 +114,16 @@ func (lp *launchpadV1) GetProjectCreatedAt(projectId string) (int64, error) {
 }
 
 // GetProjectTier retrieves a specific tier of a project.
-// Returns nil and error if project or tier not found.
-func (lp *launchpadV1) GetProjectTier(projectId string, tier int64) (*launchpad.ProjectTier, error) {
+// Returns the zero value and error if project or tier not found.
+func (lp *launchpadV1) GetProjectTier(projectId string, tier int64) (launchpad.ProjectTier, error) {
 	project, err := lp.getProject(projectId)
 	if err != nil {
-		return nil, err
+		return launchpad.DefaultProjectTier(), err
 	}
 
 	projectTier, err := getProjectTier(project, tier)
 	if err != nil {
-		return nil, err
+		return launchpad.DefaultProjectTier(), err
 	}
 
 	return projectTier, nil

@@ -208,8 +208,6 @@ func testProjectGetters(cur realm, projectId string) {
 	if err != nil {
 		// Expected error when no condition exists
 		println("[EXPECTED] Project condition error (no condition set):", err.Error())
-	} else if condition == nil {
-		println("[EXPECTED] Project condition for gno.land/r/gnoswap/gns.GNS: nil")
 	} else {
 		println("[EXPECTED] Project condition token path:", condition.TokenPath())
 		println("[EXPECTED] Project condition minimum amount:", condition.MinimumAmount())
@@ -263,12 +261,10 @@ func testProjectTierGetters(cur realm, projectId, projectTier30Id, projectTier90
 		if err != nil {
 			panic(err)
 		}
-		if projectTier != nil {
-			ufmt.Printf("[EXPECTED] Tier %d details:\n", tier)
-			ufmt.Printf("[EXPECTED] - ID: %s\n", projectTier.ID())
-			ufmt.Printf("[EXPECTED] - Start Time: %d\n", projectTier.StartTime())
-			ufmt.Printf("[EXPECTED] - End Time: %d\n", projectTier.EndTime())
-		}
+		ufmt.Printf("[EXPECTED] Tier %d details:\n", tier)
+		ufmt.Printf("[EXPECTED] - ID: %s\n", projectTier.ID())
+		ufmt.Printf("[EXPECTED] - Start Time: %d\n", projectTier.StartTime())
+		ufmt.Printf("[EXPECTED] - End Time: %d\n", projectTier.EndTime())
 
 		// GetProjectTierDistributeAmountPerSecondX128
 		distributeAmountX128, err := launchpad.GetProjectTierDistributeAmountPerSecondX128(projectId, tier)

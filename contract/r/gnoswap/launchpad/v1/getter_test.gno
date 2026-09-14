@@ -166,6 +166,18 @@ func TestGetProjectsGet(cur realm, t *testing.T) {
 				if tt.expectedNotNil {
 					uassert.True(t, ok)
 					uassert.Equal(t, "Test Project", project.Name())
+
+					tiers := project.Tiers()
+					tier, exists := tiers[projectTier30]
+					uassert.True(t, exists)
+					tier.SetTotalDepositAmount(123)
+					project.SetTier(projectTier30, tier)
+
+					refetched, ok := lp.GetProjects().Get(projectID).(launchpad.Project)
+					uassert.True(t, ok)
+					refetchedTier, err := refetched.GetTier(projectTier30)
+					uassert.NoError(t, err)
+					uassert.Equal(t, int64(0), refetchedTier.TotalDepositAmount())
 				}
 			}
 		})
@@ -524,10 +536,9 @@ func TestGetProjectTier(cur realm, t *testing.T) {
 			// Verify
 			if tt.expectedHasError {
 				uassert.Error(t, err)
-				uassert.True(t, tier == nil)
+				uassert.Equal(t, "", tier.ID())
 			} else {
 				uassert.NoError(t, err)
-				uassert.NotNil(t, tier)
 				uassert.True(t, tier.StartTime() > 0)
 			}
 		})

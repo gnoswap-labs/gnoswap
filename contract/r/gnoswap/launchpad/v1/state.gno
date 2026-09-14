@@ -22,15 +22,15 @@ func (lp *launchpadV1) getProject(projectID string) (launchpad.Project, error) {
 	return project, nil
 }
 
-func (lp *launchpadV1) getProjectTier(projectID string, tierDuration int64) (*launchpad.ProjectTier, error) {
+func (lp *launchpadV1) getProjectTier(projectID string, tierDuration int64) (launchpad.ProjectTier, error) {
 	project, err := lp.getProject(projectID)
 	if err != nil {
-		return nil, err
+		return launchpad.DefaultProjectTier(), err
 	}
 
 	tier, err := project.GetTier(tierDuration)
 	if err != nil {
-		return nil, makeErrorWithDetails(errDataNotFound, err.Error())
+		return launchpad.DefaultProjectTier(), makeErrorWithDetails(errDataNotFound, err.Error())
 	}
 
 	return tier, nil

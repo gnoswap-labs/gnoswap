@@ -59,19 +59,19 @@ func (lp *launchpadV1) GetProjectRecipient(projectId string) (address, error) {
 }
 
 // GetProjectCondition retrieves a specific condition of a project.
-func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (*launchpad.ProjectCondition, error) {
+func (lp *launchpadV1) GetProjectCondition(projectId string, tokenPath string) (launchpad.ProjectCondition, error) {
 	project, err := lp.getProject(projectId)
 	if err != nil {
-		return nil, err
+		return launchpad.DefaultProjectCondition(), err
 	}
 
 	conditions := project.Conditions()
 	condition, exists := conditions[tokenPath]
 	if !exists {
-		return nil, errors.New("condition not found")
+		return launchpad.DefaultProjectCondition(), errors.New("condition not found")
 	}
 
-	return condition.Clone(), nil
+	return condition, nil
 }
 
 // GetProjectTiersRatios returns the tiers ratios map of a project by its ID.
@@ -109,16 +109,16 @@ func (lp *launchpadV1) GetProjectCreatedAt(projectId string) (int64, error) {
 
 // GetProjectTier retrieves a specific tier of a project.
 // Returns a cloned tier to prevent external modification.
-// Returns nil and error if project or tier not found.
-func (lp *launchpadV1) GetProjectTier(projectId string, tier int64) (*launchpad.ProjectTier, error) {
+// Returns a zero-value tier and error if project or tier not found.
+func (lp *launchpadV1) GetProjectTier(projectId string, tier int64) (launchpad.ProjectTier, error) {
 	project, err := lp.getProject(projectId)
 	if err != nil {
-		return nil, err
+		return launchpad.DefaultProjectTier(), err
 	}
 
 	projectTier, err := getProjectTier(project, tier)
 	if err != nil {
-		return nil, err
+		return launchpad.DefaultProjectTier(), err
 	}
 
 	return projectTier.Clone(), nil

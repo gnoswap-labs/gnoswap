@@ -449,6 +449,11 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 				// The deposit caller is resolved by rlm.Previous(), which the
 				// test harness reports as the launchpad realm crossing in.
 				uassert.Equal(t, chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1"), deposit.Depositor())
+				project, err := lp.getProject(deposit.ProjectID())
+				uassert.NoError(t, err)
+				tier, err := getProjectTier(project, deposit.Tier())
+				uassert.NoError(t, err)
+				uassert.Equal(t, deposit.DepositAmount(), tier.TotalDepositAmount())
 			},
 		},
 	}
@@ -546,7 +551,7 @@ func TestLaunchpadDeposit_depositGns(cur realm, t *testing.T) {
 				return
 			}
 
-			_, _, _, _, err = lp.depositGns(0, cur, project, tt.tierDuration, tt.depositAmount, tt.callerAddress)
+			deposit, _, _, _, err := lp.depositGns(0, cur, project, tt.tierDuration, tt.depositAmount, tt.callerAddress)
 
 			if tt.expectedHasError {
 				uassert.Equal(t, tt.expectedErrorMessage, err.Error())
@@ -554,6 +559,16 @@ func TestLaunchpadDeposit_depositGns(cur realm, t *testing.T) {
 			}
 
 			uassert.NoError(t, err)
+			storedDeposit, err := lp.getDeposit(deposit.ID())
+			uassert.NoError(t, err)
+			uassert.Equal(t, tt.depositAmount, storedDeposit.DepositAmount())
+
+			storedProject, err := lp.getProject(tt.projectID)
+			uassert.NoError(t, err)
+			storedTier, err := getProjectTier(storedProject, tt.tierDuration)
+			uassert.NoError(t, err)
+			uassert.Equal(t, tt.depositAmount, storedTier.TotalDepositAmount())
+			uassert.Equal(t, int64(1), storedTier.TotalDepositCount())
 		})
 	}
 }

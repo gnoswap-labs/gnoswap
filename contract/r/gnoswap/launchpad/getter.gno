@@ -33,14 +33,10 @@ func GetProjectRecipient(projectId string) (address, error) {
 }
 
 // GetProjectCondition retrieves a specific condition of a project.
-// Returns a cloned condition to prevent external modification.
-func GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition, error) {
+func GetProjectCondition(projectId string, tokenPath string) (ProjectCondition, error) {
 	condition, err := getImplementation().GetProjectCondition(projectId, tokenPath)
 	if err != nil {
-		return nil, err
-	}
-	if condition == nil {
-		return nil, nil
+		return DefaultProjectCondition(), err
 	}
 	return condition.Clone(), nil
 }
@@ -65,14 +61,10 @@ func GetProjectCreatedAt(projectId string) (int64, error) {
 }
 
 // GetProjectTier retrieves a specific tier of a project.
-// Returns a cloned tier to prevent external modification.
-func GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {
+func GetProjectTier(projectId string, tier int64) (ProjectTier, error) {
 	projectTier, err := getImplementation().GetProjectTier(projectId, tier)
 	if err != nil {
-		return nil, err
-	}
-	if projectTier == nil {
-		return nil, nil
+		return DefaultProjectTier(), err
 	}
 	return projectTier.Clone(), nil
 }

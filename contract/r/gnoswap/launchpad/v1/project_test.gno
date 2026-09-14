@@ -56,10 +56,10 @@ func TestProject_IsProjectActive(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			tier := launchpad.NewProjectTier("test_project", 180, 1000000, tt.startTime, tt.endTime)
+			tier := launchpad.MakeProjectTier("test_project", 180, 1000000, tt.startTime, tt.endTime)
 
 			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 1000000, testutils.TestAddress("recipient"), 100, 1000)
-			tiers := map[int64]*launchpad.ProjectTier{
+			tiers := map[int64]launchpad.ProjectTier{
 				projectTier180: tier,
 			}
 			project.SetTiers(tiers)
@@ -107,10 +107,10 @@ func TestProject_IsProjectEnded(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			tier := launchpad.NewProjectTier("test_project", 180, 1000000, tt.startTime, tt.endTime)
+			tier := launchpad.MakeProjectTier("test_project", 180, 1000000, tt.startTime, tt.endTime)
 
 			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 1000000, testutils.TestAddress("recipient"), 100, 1000)
-			tiers := map[int64]*launchpad.ProjectTier{
+			tiers := map[int64]launchpad.ProjectTier{
 				projectTier180: tier,
 			}
 			project.SetTiers(tiers)
@@ -165,24 +165,24 @@ func TestProject_IsRecipient(cur realm, t *testing.T) {
 func TestProject_GetProjectRemainingAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name              string
-		tiers             map[int64]*launchpad.ProjectTier
+		tiers             map[int64]launchpad.ProjectTier
 		expectedRemaining int64
 	}{
 		{
 			name: "calculate remaining amount with multiple tiers",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalCollectedAmount(300)
 					return tier
 				}(),
-				90: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+				90: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 90, 2000, 100, 200)
 					tier.SetTotalCollectedAmount(500)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 3000, 100, 200)
 					tier.SetTotalCollectedAmount(800)
 					return tier
 				}(),
@@ -191,9 +191,9 @@ func TestProject_GetProjectRemainingAmount(cur realm, t *testing.T) {
 		},
 		{
 			name: "calculate remaining amount with single tier",
-			tiers: map[int64]*launchpad.ProjectTier{
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 1500, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 1500, 100, 200)
 					tier.SetTotalCollectedAmount(200)
 					return tier
 				}(),
@@ -202,14 +202,14 @@ func TestProject_GetProjectRemainingAmount(cur realm, t *testing.T) {
 		},
 		{
 			name: "calculate remaining amount with zero collected",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalCollectedAmount(0)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 2000, 100, 200)
 					tier.SetTotalCollectedAmount(0)
 					return tier
 				}(),
@@ -218,14 +218,14 @@ func TestProject_GetProjectRemainingAmount(cur realm, t *testing.T) {
 		},
 		{
 			name: "calculate remaining amount with fully collected",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalCollectedAmount(1000)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 2000, 100, 200)
 					tier.SetTotalCollectedAmount(2000)
 					return tier
 				}(),
@@ -234,7 +234,7 @@ func TestProject_GetProjectRemainingAmount(cur realm, t *testing.T) {
 		},
 		{
 			name:              "calculate remaining amount with no tiers",
-			tiers:             map[int64]*launchpad.ProjectTier{},
+			tiers:             map[int64]launchpad.ProjectTier{},
 			expectedRemaining: 0,
 		},
 	}
@@ -257,26 +257,26 @@ func TestProject_GetProjectRemainingAmount(cur realm, t *testing.T) {
 func TestProject_GetProjectTotalDepositCount(cur realm, t *testing.T) {
 	tests := []struct {
 		name               string
-		tiers              map[int64]*launchpad.ProjectTier
+		tiers              map[int64]launchpad.ProjectTier
 		expectedTotalCount int64
 	}{
 		{
 			name: "calculate deposit counts with multiple tiers",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalDepositCount(10)
 					tier.SetTotalWithdrawCount(2)
 					return tier
 				}(),
-				90: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+				90: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 90, 2000, 100, 200)
 					tier.SetTotalDepositCount(20)
 					tier.SetTotalWithdrawCount(5)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 3000, 100, 200)
 					tier.SetTotalDepositCount(15)
 					tier.SetTotalWithdrawCount(3)
 					return tier
@@ -286,15 +286,15 @@ func TestProject_GetProjectTotalDepositCount(cur realm, t *testing.T) {
 		},
 		{
 			name: "calculate deposit counts with no withdrawals",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalDepositCount(10)
 					tier.SetTotalWithdrawCount(0)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 2000, 100, 200)
 					tier.SetTotalDepositCount(20)
 					tier.SetTotalWithdrawCount(0)
 					return tier
@@ -304,7 +304,7 @@ func TestProject_GetProjectTotalDepositCount(cur realm, t *testing.T) {
 		},
 		{
 			name:               "calculate deposit counts with no tiers",
-			tiers:              map[int64]*launchpad.ProjectTier{},
+			tiers:              map[int64]launchpad.ProjectTier{},
 			expectedTotalCount: 0,
 		},
 	}
@@ -330,26 +330,26 @@ func TestProject_GetProjectTotalDepositCount(cur realm, t *testing.T) {
 func TestProject_GetProjectCurrentDepositCount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                 string
-		tiers                map[int64]*launchpad.ProjectTier
+		tiers                map[int64]launchpad.ProjectTier
 		expectedCurrentCount int64
 	}{
 		{
 			name: "calculate current deposit counts with withdrawals",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalDepositCount(10)
 					tier.SetTotalWithdrawCount(2)
 					return tier
 				}(),
-				90: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+				90: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 90, 2000, 100, 200)
 					tier.SetTotalDepositCount(20)
 					tier.SetTotalWithdrawCount(5)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 3000, 100, 200)
 					tier.SetTotalDepositCount(15)
 					tier.SetTotalWithdrawCount(3)
 					return tier
@@ -359,15 +359,15 @@ func TestProject_GetProjectCurrentDepositCount(cur realm, t *testing.T) {
 		},
 		{
 			name: "calculate current deposit counts with no withdrawals",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalDepositCount(10)
 					tier.SetTotalWithdrawCount(0)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 2000, 100, 200)
 					tier.SetTotalDepositCount(20)
 					tier.SetTotalWithdrawCount(0)
 					return tier
@@ -398,26 +398,26 @@ func TestProject_GetProjectCurrentDepositCount(cur realm, t *testing.T) {
 func TestProject_GetProjectTotalDepositAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                string
-		tiers               map[int64]*launchpad.ProjectTier
+		tiers               map[int64]launchpad.ProjectTier
 		expectedTotalAmount int64
 	}{
 		{
 			name: "calculate deposit amounts with multiple tiers",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalDepositAmount(1000000)
 					tier.SetTotalWithdrawAmount(200000)
 					return tier
 				}(),
-				90: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+				90: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 90, 2000, 100, 200)
 					tier.SetTotalDepositAmount(2000000)
 					tier.SetTotalWithdrawAmount(500000)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 3000, 100, 200)
 					tier.SetTotalDepositAmount(1500000)
 					tier.SetTotalWithdrawAmount(300000)
 					return tier
@@ -427,15 +427,15 @@ func TestProject_GetProjectTotalDepositAmount(cur realm, t *testing.T) {
 		},
 		{
 			name: "calculate deposit amounts with no withdrawals",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalDepositAmount(1000000)
 					tier.SetTotalWithdrawAmount(0)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 2000, 100, 200)
 					tier.SetTotalDepositAmount(2000000)
 					tier.SetTotalWithdrawAmount(0)
 					return tier
@@ -445,7 +445,7 @@ func TestProject_GetProjectTotalDepositAmount(cur realm, t *testing.T) {
 		},
 		{
 			name:                "calculate deposit amounts with no tiers",
-			tiers:               map[int64]*launchpad.ProjectTier{},
+			tiers:               map[int64]launchpad.ProjectTier{},
 			expectedTotalAmount: 0,
 		},
 	}
@@ -471,26 +471,26 @@ func TestProject_GetProjectTotalDepositAmount(cur realm, t *testing.T) {
 func TestProject_GetProjectCurrentDepositAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                  string
-		tiers                 map[int64]*launchpad.ProjectTier
+		tiers                 map[int64]launchpad.ProjectTier
 		expectedCurrentAmount int64
 	}{
 		{
 			name: "calculate current deposit amounts with withdrawals",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalDepositAmount(1000000)
 					tier.SetTotalWithdrawAmount(200000)
 					return tier
 				}(),
-				90: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+				90: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 90, 2000, 100, 200)
 					tier.SetTotalDepositAmount(2000000)
 					tier.SetTotalWithdrawAmount(500000)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 3000, 100, 200)
 					tier.SetTotalDepositAmount(1500000)
 					tier.SetTotalWithdrawAmount(300000)
 					return tier
@@ -500,15 +500,15 @@ func TestProject_GetProjectCurrentDepositAmount(cur realm, t *testing.T) {
 		},
 		{
 			name: "calculate current deposit amounts with no withdrawals",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalDepositAmount(1000000)
 					tier.SetTotalWithdrawAmount(0)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 2000, 100, 200)
 					tier.SetTotalDepositAmount(2000000)
 					tier.SetTotalWithdrawAmount(0)
 					return tier
@@ -539,24 +539,24 @@ func TestProject_GetProjectCurrentDepositAmount(cur realm, t *testing.T) {
 func TestProject_GetProjectTotalCollectedAmount(cur realm, t *testing.T) {
 	tests := []struct {
 		name                    string
-		tiers                   map[int64]*launchpad.ProjectTier
+		tiers                   map[int64]launchpad.ProjectTier
 		expectedCollectedAmount int64
 	}{
 		{
 			name: "calculate total collected amount with multiple tiers",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalCollectedAmount(300000)
 					return tier
 				}(),
-				90: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+				90: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 90, 2000, 100, 200)
 					tier.SetTotalCollectedAmount(500000)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 3000, 100, 200)
 					tier.SetTotalCollectedAmount(800000)
 					return tier
 				}(),
@@ -565,14 +565,14 @@ func TestProject_GetProjectTotalCollectedAmount(cur realm, t *testing.T) {
 		},
 		{
 			name: "calculate total collected amount with zero collected",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetTotalCollectedAmount(0)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 2000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 2000, 100, 200)
 					tier.SetTotalCollectedAmount(0)
 					return tier
 				}(),
@@ -581,7 +581,7 @@ func TestProject_GetProjectTotalCollectedAmount(cur realm, t *testing.T) {
 		},
 		{
 			name:                    "calculate total collected amount with no tiers",
-			tiers:                   map[int64]*launchpad.ProjectTier{},
+			tiers:                   map[int64]launchpad.ProjectTier{},
 			expectedCollectedAmount: 0,
 		},
 	}
@@ -607,21 +607,21 @@ func TestProject_GetProjectTotalCollectedAmount(cur realm, t *testing.T) {
 func TestProject_GetProjectTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
-		tiers            map[int64]*launchpad.ProjectTier
+		tiers            map[int64]launchpad.ProjectTier
 		duration         int64
 		expectedHasError bool
 		expectedError    string
 	}{
 		{
 			name: "get existing tier",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetID("test:30")
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 3000, 100, 200)
 					tier.SetID("test:180")
 					return tier
 				}(),
@@ -631,9 +631,9 @@ func TestProject_GetProjectTier(cur realm, t *testing.T) {
 		},
 		{
 			name: "get non-existing tier",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetID("test:30")
 					return tier
 				}(),
@@ -644,7 +644,7 @@ func TestProject_GetProjectTier(cur realm, t *testing.T) {
 		},
 		{
 			name:             "get tier from empty project",
-			tiers:            map[int64]*launchpad.ProjectTier{},
+			tiers:            map[int64]launchpad.ProjectTier{},
 			duration:         30,
 			expectedHasError: true,
 			expectedError:    "tier(%!d(MISSING)) not found",
@@ -666,7 +666,6 @@ func TestProject_GetProjectTier(cur realm, t *testing.T) {
 				uassert.ErrorContains(t, err, "tier")
 			} else {
 				uassert.NoError(t, err)
-				uassert.NotNil(t, tier)
 				uassert.Equal(t, tt.tiers[tt.duration].ID(), tier.ID())
 			}
 		})
@@ -676,18 +675,18 @@ func TestProject_GetProjectTier(cur realm, t *testing.T) {
 func TestProject_GetStandardTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		tiers         map[int64]*launchpad.ProjectTier
+		tiers         map[int64]launchpad.ProjectTier
 		expectedPanic bool
 	}{
 		{
 			name: "get standard tier with 180 days tier",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					return tier
 				}(),
-				180: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 180, 3000, 100, 200)
+				180: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 180, 3000, 100, 200)
 					tier.SetID("test:180")
 					return tier
 				}(),
@@ -696,13 +695,13 @@ func TestProject_GetStandardTier(cur realm, t *testing.T) {
 		},
 		{
 			name: "get standard tier without 180 days tier",
-			tiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					return tier
 				}(),
-				90: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 90, 2000, 100, 200)
+				90: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 90, 2000, 100, 200)
 					return tier
 				}(),
 			},
@@ -710,7 +709,7 @@ func TestProject_GetStandardTier(cur realm, t *testing.T) {
 		},
 		{
 			name:          "get standard tier from empty project",
-			tiers:         map[int64]*launchpad.ProjectTier{},
+			tiers:         map[int64]launchpad.ProjectTier{},
 			expectedPanic: true,
 		},
 	}
@@ -729,7 +728,6 @@ func TestProject_GetStandardTier(cur realm, t *testing.T) {
 			} else {
 				standardTier := getStandardTier(project)
 
-				uassert.True(t, standardTier != nil, "standard tier should not be nil")
 				uassert.Equal(t, "test:180", standardTier.ID())
 			}
 		})
@@ -781,11 +779,11 @@ func TestProject_ValidateRefundRemainingAmount(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Setup
-			tier := launchpad.NewProjectTier("test", 180, tt.totalDistributeAmount, tt.tierStartTime, tt.tierEndTime)
+			tier := launchpad.MakeProjectTier("test", 180, tt.totalDistributeAmount, tt.tierStartTime, tt.tierEndTime)
 			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
 			project := launchpad.MakeProject("test_project", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
-			tiers := map[int64]*launchpad.ProjectTier{
+			tiers := map[int64]launchpad.ProjectTier{
 				projectTier180: tier,
 			}
 			project.SetTiers(tiers)
@@ -807,23 +805,23 @@ func TestProject_ValidateRefundRemainingAmount(cur realm, t *testing.T) {
 func TestProject_AddProjectTier(cur realm, t *testing.T) {
 	tests := []struct {
 		name          string
-		initialTiers  map[int64]*launchpad.ProjectTier
+		initialTiers  map[int64]launchpad.ProjectTier
 		duration      int64
-		tier          *launchpad.ProjectTier
-		expectedTiers map[int64]*launchpad.ProjectTier
+		tier          launchpad.ProjectTier
+		expectedTiers map[int64]launchpad.ProjectTier
 	}{
 		{
 			name:         "add new tier to empty project",
-			initialTiers: map[int64]*launchpad.ProjectTier{},
+			initialTiers: map[int64]launchpad.ProjectTier{},
 			duration:     30,
-			tier: func() *launchpad.ProjectTier {
-				tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tier: func() launchpad.ProjectTier {
+				tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 				tier.SetID("test:30")
 				return tier
 			}(),
-			expectedTiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			expectedTiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetID("test:30")
 					return tier
 				}(),
@@ -831,27 +829,27 @@ func TestProject_AddProjectTier(cur realm, t *testing.T) {
 		},
 		{
 			name: "add tier to existing tiers",
-			initialTiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			initialTiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetID("test:30")
 					return tier
 				}(),
 			},
 			duration: 90,
-			tier: func() *launchpad.ProjectTier {
-				tier := launchpad.NewProjectTier("test", 90, 1000, 100, 200)
+			tier: func() launchpad.ProjectTier {
+				tier := launchpad.MakeProjectTier("test", 90, 1000, 100, 200)
 				tier.SetID("test:90")
 				return tier
 			}(),
-			expectedTiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			expectedTiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetID("test:30")
 					return tier
 				}(),
-				90: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 90, 1000, 100, 200)
+				90: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 90, 1000, 100, 200)
 					tier.SetID("test:90")
 					return tier
 				}(),
@@ -859,22 +857,22 @@ func TestProject_AddProjectTier(cur realm, t *testing.T) {
 		},
 		{
 			name: "overwrite existing tier",
-			initialTiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			initialTiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetID("test:30_old")
 					return tier
 				}(),
 			},
 			duration: 30,
-			tier: func() *launchpad.ProjectTier {
-				tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			tier: func() launchpad.ProjectTier {
+				tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 				tier.SetID("test:30_new")
 				return tier
 			}(),
-			expectedTiers: map[int64]*launchpad.ProjectTier{
-				30: func() *launchpad.ProjectTier {
-					tier := launchpad.NewProjectTier("test", 30, 1000, 100, 200)
+			expectedTiers: map[int64]launchpad.ProjectTier{
+				30: func() launchpad.ProjectTier {
+					tier := launchpad.MakeProjectTier("test", 30, 1000, 100, 200)
 					tier.SetID("test:30_new")
 					return tier
 				}(),
@@ -907,16 +905,16 @@ func TestProject_AddProjectTier(cur realm, t *testing.T) {
 func TestProject_CheckProjectConditions(cur realm, t *testing.T) {
 	tests := []struct {
 		name             string
-		conditions       map[string]*launchpad.ProjectCondition
+		conditions       map[string]launchpad.ProjectCondition
 		balanceFunc      func(tokenPath string, caller address) int64
 		expectedHasError bool
 		expectedError    string
 	}{
 		{
 			name: "check conditions passes with sufficient balance",
-			conditions: map[string]*launchpad.ProjectCondition{
-				"gno.land/r/demo/gns": func() *launchpad.ProjectCondition {
-					condition := launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000)
+			conditions: map[string]launchpad.ProjectCondition{
+				"gno.land/r/demo/gns": func() launchpad.ProjectCondition {
+					condition := launchpad.MakeProjectCondition("gno.land/r/demo/gns", 1000)
 					return condition
 				}(),
 			},
@@ -927,9 +925,9 @@ func TestProject_CheckProjectConditions(cur realm, t *testing.T) {
 		},
 		{
 			name: "check conditions fails with insufficient balance",
-			conditions: map[string]*launchpad.ProjectCondition{
-				"gno.land/r/demo/gns": func() *launchpad.ProjectCondition {
-					condition := launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000)
+			conditions: map[string]launchpad.ProjectCondition{
+				"gno.land/r/demo/gns": func() launchpad.ProjectCondition {
+					condition := launchpad.MakeProjectCondition("gno.land/r/demo/gns", 1000)
 					return condition
 				}(),
 			},
@@ -941,12 +939,12 @@ func TestProject_CheckProjectConditions(cur realm, t *testing.T) {
 		},
 		{
 			name: "check conditions with multiple tokens",
-			conditions: map[string]*launchpad.ProjectCondition{
-				"gno.land/r/demo/gns": func() *launchpad.ProjectCondition {
-					return launchpad.NewProjectCondition("gno.land/r/demo/gns", 1000)
+			conditions: map[string]launchpad.ProjectCondition{
+				"gno.land/r/demo/gns": func() launchpad.ProjectCondition {
+					return launchpad.MakeProjectCondition("gno.land/r/demo/gns", 1000)
 				}(),
-				"gno.land/r/demo/usdc": func() *launchpad.ProjectCondition {
-					return launchpad.NewProjectCondition("gno.land/r/demo/usdc", 500)
+				"gno.land/r/demo/usdc": func() launchpad.ProjectCondition {
+					return launchpad.MakeProjectCondition("gno.land/r/demo/usdc", 500)
 				}(),
 			},
 			balanceFunc: func(tokenPath string, caller address) int64 {
@@ -959,9 +957,9 @@ func TestProject_CheckProjectConditions(cur realm, t *testing.T) {
 		},
 		{
 			name: "skip zero conditions",
-			conditions: map[string]*launchpad.ProjectCondition{
-				"gno.land/r/demo/xgns": func() *launchpad.ProjectCondition {
-					return launchpad.NewProjectCondition("gno.land/r/demo/xgns", 0)
+			conditions: map[string]launchpad.ProjectCondition{
+				"gno.land/r/demo/xgns": func() launchpad.ProjectCondition {
+					return launchpad.MakeProjectCondition("gno.land/r/demo/xgns", 0)
 				}(),
 			},
 			balanceFunc: func(tokenPath string, caller address) int64 {

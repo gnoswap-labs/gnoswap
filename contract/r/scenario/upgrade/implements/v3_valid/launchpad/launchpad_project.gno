@@ -132,9 +132,9 @@ func (lp *launchpadV1) CreateProject(
 // This function validates the input parameters, creates the project structure,
 // and sets up the project tiers and reward managers.
 // Returns the created project and any error.
-func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectParams) (*launchpad.Project, error) {
+func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectParams) (launchpad.Project, error) {
 	if err := params.validate(); err != nil {
-		return nil, err
+		return launchpad.DefaultProject(), err
 	}
 
 	// create project
@@ -153,19 +153,19 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 
 	// check duplicate project
 	if projects.Has(project.ID()) {
-		return nil, makeErrorWithDetails(
+		return launchpad.DefaultProject(), makeErrorWithDetails(
 			errDuplicateProject,
 			ufmt.Sprintf("project(%s) already exists", project.ID()),
 		)
 	}
 
-	projectConditions, err := launchpad.NewProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
+	projectConditions, err := launchpad.MakeProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
 	if err != nil {
-		return nil, err
+		return launchpad.DefaultProject(), err
 	}
 
 	for _, condition := range projectConditions {
-		addProjectCondition(project, condition.TokenPath(), condition)
+		project = addProjectCondition(project, condition.TokenPath(), condition)
 	}
 
 	projectTierRatios := map[int64]int64{
@@ -195,7 +195,7 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 			params.startTime,
 			params.startTime+tierDurationTime,
 		)
-		addProjectTier(project, duration, projectTier)
+		project = addProjectTier(project, duration, projectTier)
 
 		projectTierRewardManagers.Set(projectTier.ID(), newRewardManager(
 			projectTier.TotalDistributeAmount(),
@@ -205,14 +205,13 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 		))
 	}
 
-	projects.Set(project.ID(), *project)
-
+	projects.Set(project.ID(), project)
 	// Save the modified state back
 	if err := lp.store.SetProjects(0, rlm, projects); err != nil {
-		return nil, err
+		return launchpad.DefaultProject(), err
 	}
 	if err := lp.store.SetProjectTierRewardManagers(0, rlm, projectTierRewardManagers); err != nil {
-		return nil, err
+		return launchpad.DefaultProject(), err
 	}
 
 	return project, nil
@@ -313,7 +312,7 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, projectID strin
 }
 
 // validateTransferLeft validates the transfer of remaining tokens
-func validateRefundProject(project *launchpad.Project, recipient address, currentTime int64) error {
+func validateRefundProject(project launchpad.Project, recipient address, currentTime int64) error {
 	if !recipient.IsValid() {
 		return errors.New(ufmt.Sprintf("invalid recipient address(%s)", recipient.String()))
 	}

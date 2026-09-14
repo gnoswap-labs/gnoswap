@@ -18,11 +18,11 @@ func TestProjectValuePayloadDoesNotMutateStoredMaps(cur realm, t *testing.T) {
 		100,
 		100,
 	)
-	stored.SetTier(30, launchpad.NewProjectTier("project", 30, 1, 100, 200))
+	stored.SetTier(30, launchpad.MakeProjectTier("project", 30, 1, 100, 200))
 
 	value := stored
 	value.SetName("Mutated")
-	value.SetTier(30, launchpad.NewProjectTier("project", 30, 2, 100, 200))
+	value.SetTier(30, launchpad.MakeProjectTier("project", 30, 2, 100, 200))
 
 	uassert.Equal(t, "Test Project", stored.Name())
 	storedTier, err := stored.GetTier(30)

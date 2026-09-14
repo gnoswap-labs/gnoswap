@@ -49,16 +49,16 @@ func checkProjectConditions(p launchpad.Project, caller address, balanceOfFunc f
 	return nil
 }
 
-func getProjectTier(p launchpad.Project, duration int64) (*launchpad.ProjectTier, error) {
+func getProjectTier(p launchpad.Project, duration int64) (launchpad.ProjectTier, error) {
 	tier, err := p.GetTier(duration)
 	if err != nil {
-		return nil, makeErrorWithDetails(errDataNotFound, err.Error())
+		return launchpad.DefaultProjectTier(), makeErrorWithDetails(errDataNotFound, err.Error())
 	}
 
 	return tier, nil
 }
 
-func getStandardTier(p launchpad.Project) *launchpad.ProjectTier {
+func getStandardTier(p launchpad.Project) launchpad.ProjectTier {
 	projectTier, err := p.GetTier(projectTier180)
 	if err != nil {
 		panic(makeErrorWithDetails(errDataNotFound, err.Error()))
@@ -83,12 +83,12 @@ func validateRefundRemainingAmount(p launchpad.Project, currentTime int64) error
 	return nil
 }
 
-func addProjectTier(p launchpad.Project, tierDuration int64, projectTier *launchpad.ProjectTier) launchpad.Project {
+func addProjectTier(p launchpad.Project, tierDuration int64, projectTier launchpad.ProjectTier) launchpad.Project {
 	p.SetTier(tierDuration, projectTier)
 	return p
 }
 
-func addProjectCondition(p launchpad.Project, tokenPath string, condition *launchpad.ProjectCondition) launchpad.Project {
+func addProjectCondition(p launchpad.Project, tokenPath string, condition launchpad.ProjectCondition) launchpad.Project {
 	p.SetCondition(tokenPath, condition)
 	return p
 }

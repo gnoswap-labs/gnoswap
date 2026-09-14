@@ -314,6 +314,14 @@ func TestLaunchpadProject_CreateProjectInternal(cur realm, t *testing.T) {
 			}
 
 			uassert.Equal(t, projectId.ID(), tt.expectedProjectID)
+			storedProject, err := lp.getProject(tt.expectedProjectID)
+			uassert.NoError(t, err)
+			uassert.Equal(t, tt.expectedProjectID, storedProject.ID())
+			uassert.Equal(t, tt.params.tier30Ratio, storedProject.TiersRatios()[projectTier30])
+			uassert.Equal(t, tt.params.tier90Ratio, storedProject.TiersRatios()[projectTier90])
+			uassert.Equal(t, tt.params.tier180Ratio, storedProject.TiersRatios()[projectTier180])
+			uassert.Equal(t, len(projectTierDurations), len(storedProject.Tiers()))
+			uassert.Equal(t, 2, len(storedProject.Conditions()))
 		})
 	}
 }
@@ -395,6 +403,14 @@ func TestLaunchpadProject_CreateProjectPrivateMultiple(cur realm, t *testing.T) 
 			}
 
 			uassert.Equal(t, projectId.ID(), tt.expectedProjectID)
+			storedProject, err := lp.getProject(tt.expectedProjectID)
+			uassert.NoError(t, err)
+			uassert.Equal(t, tt.expectedProjectID, storedProject.ID())
+			uassert.Equal(t, tt.params.tier30Ratio, storedProject.TiersRatios()[projectTier30])
+			uassert.Equal(t, tt.params.tier90Ratio, storedProject.TiersRatios()[projectTier90])
+			uassert.Equal(t, tt.params.tier180Ratio, storedProject.TiersRatios()[projectTier180])
+			uassert.Equal(t, len(projectTierDurations), len(storedProject.Tiers()))
+			uassert.Equal(t, 2, len(storedProject.Conditions()))
 		})
 	}
 }
@@ -864,14 +880,14 @@ func TestLaunchpadProject_validateRefundProject(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// Create a project with tier
-			tier := launchpad.NewProjectTier("test", 180, tt.totalDistributeAmount, tt.tierStartTime, tt.tierEndTime)
+			tier := launchpad.MakeProjectTier("test", 180, tt.totalDistributeAmount, tt.tierStartTime, tt.tierEndTime)
 			tier.SetID("test:180")
 			tier.SetTotalCollectedAmount(tt.totalCollectedAmount)
 
 			project := launchpad.MakeProject("test:100", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 			project.SetID("test:100")
 
-			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers := make(map[int64]launchpad.ProjectTier)
 			tiers[projectTier180] = tier
 			project.SetTiers(tiers)
 
@@ -887,18 +903,18 @@ func TestLaunchpadProject_validateRefundProject(cur realm, t *testing.T) {
 
 	t.Run("panic on addition overflow - multiple tiers with large remaining amounts", func(cur realm, t *testing.T) {
 		// Create multiple tiers with large remaining amounts that will overflow when summed
-		tier30 := launchpad.NewProjectTier("test", 30, MAX_INT64/2+1, 1000, 2000)
+		tier30 := launchpad.MakeProjectTier("test", 30, MAX_INT64/2+1, 1000, 2000)
 		tier30.SetID("test:30")
 		tier30.SetTotalCollectedAmount(0)
 
-		tier90 := launchpad.NewProjectTier("test", 90, MAX_INT64/2+1, 1000, 2000)
+		tier90 := launchpad.MakeProjectTier("test", 90, MAX_INT64/2+1, 1000, 2000)
 		tier90.SetID("test:90")
 		tier90.SetTotalCollectedAmount(0)
 
 		project := launchpad.MakeProject("test:100", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 		project.SetID("test:100")
 
-		tiers := make(map[int64]*launchpad.ProjectTier)
+		tiers := make(map[int64]launchpad.ProjectTier)
 		tiers[projectTier30] = tier30
 		tiers[projectTier90] = tier90
 		project.SetTiers(tiers)
@@ -912,14 +928,14 @@ func TestLaunchpadProject_validateRefundProject(cur realm, t *testing.T) {
 	t.Run("panic on subtraction underflow - extreme values", func(cur realm, t *testing.T) {
 		// Create a tier where subtraction causes underflow
 		// totalDistributeAmount - totalCollectedAmount underflows
-		tier := launchpad.NewProjectTier("test", 180, MIN_INT64/2, 1000, 2000)
+		tier := launchpad.MakeProjectTier("test", 180, MIN_INT64/2, 1000, 2000)
 		tier.SetID("test:180")
 		tier.SetTotalCollectedAmount(MAX_INT64)
 
 		project := launchpad.MakeProject("test:100", "gno.land/r/test/token", 0, testutils.TestAddress("recipient"), 100, 1000)
 		project.SetID("test:100")
 
-		tiers := make(map[int64]*launchpad.ProjectTier)
+		tiers := make(map[int64]launchpad.ProjectTier)
 		tiers[projectTier180] = tier
 		project.SetTiers(tiers)
 
@@ -941,7 +957,7 @@ func TestLaunchpadProject_applyTierRewardGrowthWithRewards(cur realm, t *testing
 		tierID := projectID + ":30"
 
 		// Create tier
-		tier := launchpad.NewProjectTier(projectID, 30, 100_000, 1000, 2000)
+		tier := launchpad.MakeProjectTier(projectID, 30, 100_000, 1000, 2000)
 		tier.SetID(tierID)
 
 		// Setup reward manager with claimable rewards
@@ -1053,7 +1069,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 			tierID := projectID + ":180"
 
 			// Create project with single tier (180 days for simplicity)
-			tier := launchpad.NewProjectTier(projectID, 180, tt.totalDistributeAmount, 1000, 2000)
+			tier := launchpad.MakeProjectTier(projectID, 180, tt.totalDistributeAmount, 1000, 2000)
 			tier.SetID(tierID)
 			tier.SetTotalDepositCount(1)    // One active depositor
 			tier.SetTotalWithdrawCount(0)   // No withdrawals yet
@@ -1062,7 +1078,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 			project := launchpad.MakeProject(projectID, "gno.land/r/onbloc/obl.OBL", 0, recipient, 100, 1000)
 			project.SetID(projectID)
 
-			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers := make(map[int64]launchpad.ProjectTier)
 			tiers[projectTier180] = tier
 			project.SetTiers(tiers)
 
@@ -1175,7 +1191,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 			tierID := projectID + ":180"
 
 			// Create project with tier
-			tier := launchpad.NewProjectTier(projectID, 180, tt.totalDistributeAmount, 1000, 2000)
+			tier := launchpad.MakeProjectTier(projectID, 180, tt.totalDistributeAmount, 1000, 2000)
 			tier.SetID(tierID)
 			tier.SetTotalDepositCount(int64(len(tt.deposits)))
 			tier.SetTotalWithdrawCount(0)
@@ -1184,7 +1200,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 			project := launchpad.MakeProject(projectID, "gno.land/r/onbloc/obl.OBL", 0, recipient, 100, 1000)
 			project.SetID(projectID)
 
-			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers := make(map[int64]launchpad.ProjectTier)
 			tiers[projectTier180] = tier
 			project.SetTiers(tiers)
 
@@ -1267,7 +1283,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(cur realm, t *test
 			tierID := projectID + ":180"
 
 			// Create project with tier - no depositors
-			tier := launchpad.NewProjectTier(projectID, 180, tt.totalDistributeAmount, 1000, 2000)
+			tier := launchpad.MakeProjectTier(projectID, 180, tt.totalDistributeAmount, 1000, 2000)
 			tier.SetID(tierID)
 			tier.SetTotalDepositCount(0)  // No depositors
 			tier.SetTotalWithdrawCount(0) // No withdrawals
@@ -1276,7 +1292,7 @@ func TestLaunchpadProject_TransferLeftFromProjectNoDepositors(cur realm, t *test
 			project := launchpad.MakeProject(projectID, "gno.land/r/onbloc/obl.OBL", 0, recipient, 100, 1000)
 			project.SetID(projectID)
 
-			tiers := make(map[int64]*launchpad.ProjectTier)
+			tiers := make(map[int64]launchpad.ProjectTier)
 			tiers[projectTier180] = tier
 			project.SetTiers(tiers)
 
@@ -1358,7 +1374,7 @@ func TestLaunchpadProject_TransferLeftFromProjectRepeatedRefundDoesNotDrainOther
 }
 
 func newRefundableNoDepositorProject(projectID string, recipient address, rewardAmount int64) launchpad.Project {
-	tier := launchpad.NewProjectTier(projectID, projectTier180, rewardAmount, 1000, 2000)
+	tier := launchpad.MakeProjectTier(projectID, projectTier180, rewardAmount, 1000, 2000)
 	tier.SetID(projectID + ":180")
 	tier.SetTotalDepositCount(0)
 	tier.SetTotalWithdrawCount(0)
@@ -1367,7 +1383,7 @@ func newRefundableNoDepositorProject(projectID string, recipient address, reward
 	project := launchpad.MakeProject(projectID, "gno.land/r/onbloc/obl.OBL", 0, recipient, 100, 1000)
 	project.SetID(projectID)
 
-	tiers := make(map[int64]*launchpad.ProjectTier)
+	tiers := make(map[int64]launchpad.ProjectTier)
 	tiers[projectTier180] = tier
 	project.SetTiers(tiers)
 

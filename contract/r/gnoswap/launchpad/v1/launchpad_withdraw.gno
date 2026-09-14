@@ -140,7 +140,7 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Depo
 	}
 
 	// Process withdrawal from project tier
-	withdrawToTier(projectTier, deposit)
+	withdrawToTier(&projectTier, deposit)
 	project.SetTier(deposit.Tier(), projectTier)
 
 	projects := lp.store.GetProjects()

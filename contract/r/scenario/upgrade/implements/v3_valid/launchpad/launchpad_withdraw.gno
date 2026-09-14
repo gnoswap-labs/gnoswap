@@ -104,11 +104,11 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit *launchpad.Depo
 	}
 
 	// Process withdrawal from project tier
-	withdrawToTier(projectTier, deposit)
+	withdrawToTier(&projectTier, deposit)
 	project.SetTier(deposit.Tier(), projectTier)
 
 	projects := lp.store.GetProjects()
-	projects.Set(project.ID(), *project)
+	projects.Set(project.ID(), project)
 
 	// Update rewards with new deposit amount after withdrawal
 	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)

@@ -15,8 +15,8 @@ import (
 // - tokenPath (string): The path of the token associated with the project.
 // - depositAmount (int64): The total amount of tokens deposited for the project.
 // - recipient (std.Address): The address to receive the project's rewards.
-// - conditions (map[string]*ProjectCondition): A map of token paths to their associated conditions.
-// - tiers (map[int64]*ProjectTier): A map of tier durations to their associated tiers.
+// - conditions (map[string]ProjectCondition): A map of token paths to their associated conditions.
+// - tiers (map[int64]ProjectTier): A map of tier durations to their associated tiers.
 // - tiersRatios (map[int64]int64): A map of tier durations to their associated ratios.
 // - createdBlockTimeInfo (BlockTimeInfo): The block time and height information for the creation of the project.
 type Project struct {
@@ -24,16 +24,16 @@ type Project struct {
 	name          string
 	tokenPath     string
 	depositAmount int64
-	recipient     address                      // string
-	conditions    map[string]*ProjectCondition // tokenPath -> Condition
-	tiers         map[int64]*ProjectTier
+	recipient     address                     // string
+	conditions    map[string]ProjectCondition // tokenPath -> Condition
+	tiers         map[int64]ProjectTier
 	tiersRatios   map[int64]int64
 	createdHeight int64
 	createdAt     int64
 }
 
 // GetID returns the ID of the project.
-func (p *Project) ID() string {
+func (p Project) ID() string {
 	return p.id
 }
 
@@ -43,7 +43,7 @@ func (p *Project) SetID(id string) {
 }
 
 // GetName returns the name of the project.
-func (p *Project) Name() string {
+func (p Project) Name() string {
 	return p.name
 }
 
@@ -53,7 +53,7 @@ func (p *Project) SetName(name string) {
 }
 
 // GetTokenPath returns the token path of the project.
-func (p *Project) TokenPath() string {
+func (p Project) TokenPath() string {
 	return p.tokenPath
 }
 
@@ -63,7 +63,7 @@ func (p *Project) SetTokenPath(tokenPath string) {
 }
 
 // GetDepositAmount returns the deposit amount of the project.
-func (p *Project) DepositAmount() int64 {
+func (p Project) DepositAmount() int64 {
 	return p.depositAmount
 }
 
@@ -73,7 +73,7 @@ func (p *Project) SetDepositAmount(amount int64) {
 }
 
 // GetRecipient returns the recipient address of the project.
-func (p *Project) Recipient() address {
+func (p Project) Recipient() address {
 	return p.recipient
 }
 
@@ -83,61 +83,57 @@ func (p *Project) SetRecipient(recipient address) {
 }
 
 // GetConditions returns the conditions map of the project.
-func (p *Project) Conditions() map[string]*ProjectCondition {
-	conditions := make(map[string]*ProjectCondition)
-
+func (p Project) Conditions() map[string]ProjectCondition {
+	conditions := make(map[string]ProjectCondition, len(p.conditions))
 	for tokenPath, condition := range p.conditions {
 		conditions[tokenPath] = condition.Clone()
 	}
-
 	return conditions
 }
 
 // SetConditions sets the conditions map of the project. The map is rebuilt so
 // it is owned by this realm, allowing later in-domain mutations (e.g.
 // SetCondition) without hitting the readonly taint on a foreign map.
-func (p *Project) SetConditions(conditions map[string]*ProjectCondition) {
-	owned := make(map[string]*ProjectCondition, len(conditions))
+func (p *Project) SetConditions(conditions map[string]ProjectCondition) {
+	owned := make(map[string]ProjectCondition, len(conditions))
 	for tokenPath, condition := range conditions {
-		owned[tokenPath] = condition
+		owned[tokenPath] = condition.Clone()
 	}
 	p.conditions = owned
 }
 
 // SetCondition adds a condition without sharing the caller's map container.
-func (p *Project) SetCondition(tokenPath string, condition *ProjectCondition) {
-	conditions := make(map[string]*ProjectCondition, len(p.conditions)+1)
+func (p *Project) SetCondition(tokenPath string, condition ProjectCondition) {
+	conditions := make(map[string]ProjectCondition, len(p.conditions)+1)
 	for key, value := range p.conditions {
 		conditions[key] = value
 	}
-	conditions[tokenPath] = condition
+	conditions[tokenPath] = condition.Clone()
 	p.conditions = conditions
 }
 
 // GetTiers returns the tiers map of the project.
-func (p *Project) Tiers() map[int64]*ProjectTier {
-	tiers := make(map[int64]*ProjectTier)
-
+func (p Project) Tiers() map[int64]ProjectTier {
+	tiers := make(map[int64]ProjectTier, len(p.tiers))
 	for duration, tier := range p.tiers {
 		tiers[duration] = tier.Clone()
 	}
-
 	return tiers
 }
 
 // SetTiers sets the tiers map of the project. The map is rebuilt so it is owned
 // by this realm, allowing later in-domain mutations (e.g. SetTier) without
 // hitting the readonly taint on a map passed in from another realm.
-func (p *Project) SetTiers(tiers map[int64]*ProjectTier) {
-	owned := make(map[int64]*ProjectTier, len(tiers))
+func (p *Project) SetTiers(tiers map[int64]ProjectTier) {
+	owned := make(map[int64]ProjectTier, len(tiers))
 	for duration, tier := range tiers {
-		owned[duration] = tier
+		owned[duration] = tier.Clone()
 	}
 	p.tiers = owned
 }
 
 // TiersRatios returns an independently owned ratios map.
-func (p *Project) TiersRatios() map[int64]int64 {
+func (p Project) TiersRatios() map[int64]int64 {
 	ratios := make(map[int64]int64, len(p.tiersRatios))
 	for duration, ratio := range p.tiersRatios {
 		ratios[duration] = ratio
@@ -155,7 +151,7 @@ func (p *Project) SetTiersRatios(tiersRatios map[int64]int64) {
 }
 
 // GetCreatedHeight returns the created height of the project.
-func (p *Project) CreatedHeight() int64 {
+func (p Project) CreatedHeight() int64 {
 	return p.createdHeight
 }
 
@@ -165,7 +161,7 @@ func (p *Project) SetCreatedHeight(height int64) {
 }
 
 // GetCreatedAt returns the created time of the project.
-func (p *Project) CreatedAt() int64 {
+func (p Project) CreatedAt() int64 {
 	return p.createdAt
 }
 
@@ -174,34 +170,41 @@ func (p *Project) SetCreatedAt(time int64) {
 	p.createdAt = time
 }
 
-func (p *Project) GetTier(duration int64) (*ProjectTier, error) {
+func (p Project) GetCondition(tokenPath string) (ProjectCondition, error) {
+	condition, exists := p.conditions[tokenPath]
+	if !exists {
+		return DefaultProjectCondition(), ufmt.Errorf("condition(%s) not found", tokenPath)
+	}
+	return condition.Clone(), nil
+}
+
+func (p Project) GetTier(duration int64) (ProjectTier, error) {
 	tier, exists := p.tiers[duration]
 	if !exists {
-		return nil, ufmt.Errorf("tier(%d) not found", duration)
+		return DefaultProjectTier(), ufmt.Errorf("tier(%d) not found", duration)
 	}
-
 	return tier.Clone(), nil
 }
 
-func (p *Project) SetTier(duration int64, tier *ProjectTier) {
-	tiers := make(map[int64]*ProjectTier, len(p.tiers)+1)
+func (p *Project) SetTier(duration int64, tier ProjectTier) {
+	tiers := make(map[int64]ProjectTier, len(p.tiers)+1)
 	for key, value := range p.tiers {
 		tiers[key] = value
 	}
-	tiers[duration] = tier
+	tiers[duration] = tier.Clone()
 	p.tiers = tiers
 }
 
 // IsRecipient returns true if the project recipient is the given address.
-func (p *Project) IsRecipient(recipient address) bool {
+func (p Project) IsRecipient(recipient address) bool {
 	return p.recipient == recipient
 }
 
 // DefaultProject creates an empty independently owned Project value.
 func DefaultProject() Project {
 	return Project{
-		conditions:  make(map[string]*ProjectCondition),
-		tiers:       make(map[int64]*ProjectTier),
+		conditions:  make(map[string]ProjectCondition),
+		tiers:       make(map[int64]ProjectTier),
 		tiersRatios: make(map[int64]int64),
 	}
 }
@@ -221,29 +224,25 @@ func MakeProject(
 		tokenPath:     tokenPath,
 		depositAmount: depositAmount,
 		recipient:     recipient,
-		conditions:    make(map[string]*ProjectCondition),
-		tiers:         make(map[int64]*ProjectTier),
+		conditions:    make(map[string]ProjectCondition),
+		tiers:         make(map[int64]ProjectTier),
 		tiersRatios:   make(map[int64]int64),
 		createdHeight: createdHeight,
 		createdAt:     createdAt,
 	}
 }
 
-// Clone returns a value copy with independently owned map containers.
-//
-// Conditions and tiers stay as references because their accessors clone entries
-// before exposing them. Copying only the containers prevents setters on this
-// value from mutating the stored project's maps without cloning every tier and
-// condition during root-project pagination.
+// Clone returns a value copy with independently owned map containers and
+// independently owned tier payloads.
 func (p Project) Clone() Project {
-	conditions := make(map[string]*ProjectCondition, len(p.conditions))
+	conditions := make(map[string]ProjectCondition, len(p.conditions))
 	for k, v := range p.conditions {
-		conditions[k] = v
+		conditions[k] = v.Clone()
 	}
 
-	tiers := make(map[int64]*ProjectTier, len(p.tiers))
+	tiers := make(map[int64]ProjectTier, len(p.tiers))
 	for k, v := range p.tiers {
-		tiers[k] = v
+		tiers[k] = v.Clone()
 	}
 
 	tiersRatios := make(map[int64]int64, len(p.tiersRatios))

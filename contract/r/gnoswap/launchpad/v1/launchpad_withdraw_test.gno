@@ -319,6 +319,18 @@ func TestLaunchpadWithdraw_WithdrawDeposit(cur realm, t *testing.T) {
 			} else {
 				uassert.NoError(t, err)
 				uassert.Equal(t, tt.expectedAmount, amount)
+
+				storedDeposit, err := getDeposit(deposit.ID())
+				uassert.NoError(t, err)
+				uassert.True(t, storedDeposit.IsWithdrawn())
+				uassert.Equal(t, int64(0), storedDeposit.DepositAmount())
+
+				storedProject, err := lp.getProject(storedDeposit.ProjectID())
+				uassert.NoError(t, err)
+				storedTier, err := getProjectTier(storedProject, storedDeposit.Tier())
+				uassert.NoError(t, err)
+				uassert.Equal(t, tt.expectedAmount, storedTier.TotalWithdrawAmount())
+				uassert.Equal(t, int64(1), storedTier.TotalWithdrawCount())
 			}
 		})
 	}

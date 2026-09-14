@@ -158,26 +158,26 @@ func (m *MockLaunchpad) GetDeposit(depositId string) (*Deposit, error) {
 	return res[0].(*Deposit), res[1].(error)
 }
 
-func (m *MockLaunchpad) GetProjectTier(projectId string, tier int64) (*ProjectTier, error) {
+func (m *MockLaunchpad) GetProjectTier(projectId string, tier int64) (ProjectTier, error) {
 	res, ok := m.Response.Get("GetProjectTier")
-	if !ok {
-		return nil, nil
+	if !ok || len(res) == 0 {
+		return DefaultProjectTier(), nil
 	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(*ProjectTier), nil
+	if len(res) > 1 && res[1] != nil {
+		return DefaultProjectTier(), res[1].(error)
 	}
-	return res[0].(*ProjectTier), res[1].(error)
+	return res[0].(ProjectTier).Clone(), nil
 }
 
-func (m *MockLaunchpad) GetProjectCondition(projectId string, tokenPath string) (*ProjectCondition, error) {
+func (m *MockLaunchpad) GetProjectCondition(projectId string, tokenPath string) (ProjectCondition, error) {
 	res, ok := m.Response.Get("GetProjectCondition")
-	if !ok {
-		return nil, nil
+	if !ok || len(res) == 0 {
+		return DefaultProjectCondition(), nil
 	}
-	if len(res) < 2 || res[1] == nil {
-		return res[0].(*ProjectCondition), nil
+	if len(res) > 1 && res[1] != nil {
+		return DefaultProjectCondition(), res[1].(error)
 	}
-	return res[0].(*ProjectCondition), res[1].(error)
+	return res[0].(ProjectCondition).Clone(), nil
 }
 
 func (m *MockLaunchpad) GetProjectTierRewardManager(projectTierId string) (*RewardManager, error) {

@@ -35,18 +35,23 @@ type ProjectTier struct {
 	endTime                       int64
 }
 
-// DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the project tier.
-func (pt *ProjectTier) DistributeAmountPerSecondX128() *u256.Uint {
-	return pt.distributeAmountPerSecondX128
+// DistributeAmountPerSecondX128 returns a copy of the distribute amount per
+// second (Q128) of the project tier.
+func (pt ProjectTier) DistributeAmountPerSecondX128() *u256.Uint {
+	if pt.distributeAmountPerSecondX128 == nil {
+		return nil
+	}
+	return pt.distributeAmountPerSecondX128.Clone()
 }
 
-// SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the project tier.
+// SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128)
+// of the project tier, taking ownership of a copy of amount.
 func (pt *ProjectTier) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
 	pt.distributeAmountPerSecondX128 = u256.Zero().Set(amount)
 }
 
 // ID returns the ID of the project tier.
-func (pt *ProjectTier) ID() string {
+func (pt ProjectTier) ID() string {
 	return pt.id
 }
 
@@ -56,7 +61,7 @@ func (pt *ProjectTier) SetID(id string) {
 }
 
 // TotalDistributeAmount returns the total distribute amount of the project tier.
-func (pt *ProjectTier) TotalDistributeAmount() int64 {
+func (pt ProjectTier) TotalDistributeAmount() int64 {
 	return pt.totalDistributeAmount
 }
 
@@ -66,7 +71,7 @@ func (pt *ProjectTier) SetTotalDistributeAmount(amount int64) {
 }
 
 // TotalDepositAmount returns the total deposit amount of the project tier.
-func (pt *ProjectTier) TotalDepositAmount() int64 {
+func (pt ProjectTier) TotalDepositAmount() int64 {
 	return pt.totalDepositAmount
 }
 
@@ -76,7 +81,7 @@ func (pt *ProjectTier) SetTotalDepositAmount(amount int64) {
 }
 
 // TotalWithdrawAmount returns the total withdraw amount of the project tier.
-func (pt *ProjectTier) TotalWithdrawAmount() int64 {
+func (pt ProjectTier) TotalWithdrawAmount() int64 {
 	return pt.totalWithdrawAmount
 }
 
@@ -86,7 +91,7 @@ func (pt *ProjectTier) SetTotalWithdrawAmount(amount int64) {
 }
 
 // TotalDepositCount returns the total deposit count of the project tier.
-func (pt *ProjectTier) TotalDepositCount() int64 {
+func (pt ProjectTier) TotalDepositCount() int64 {
 	return pt.totalDepositCount
 }
 
@@ -96,7 +101,7 @@ func (pt *ProjectTier) SetTotalDepositCount(count int64) {
 }
 
 // TotalWithdrawCount returns the total withdraw count of the project tier.
-func (pt *ProjectTier) TotalWithdrawCount() int64 {
+func (pt ProjectTier) TotalWithdrawCount() int64 {
 	return pt.totalWithdrawCount
 }
 
@@ -106,7 +111,7 @@ func (pt *ProjectTier) SetTotalWithdrawCount(count int64) {
 }
 
 // TotalCollectedAmount returns the total collected amount of the project tier.
-func (pt *ProjectTier) TotalCollectedAmount() int64 {
+func (pt ProjectTier) TotalCollectedAmount() int64 {
 	return pt.totalCollectedAmount
 }
 
@@ -116,7 +121,7 @@ func (pt *ProjectTier) SetTotalCollectedAmount(amount int64) {
 }
 
 // StartTime returns the start time of the project tier.
-func (pt *ProjectTier) StartTime() int64 {
+func (pt ProjectTier) StartTime() int64 {
 	return pt.startTime
 }
 
@@ -126,7 +131,7 @@ func (pt *ProjectTier) SetStartTime(time int64) {
 }
 
 // EndTime returns the end time of the project tier.
-func (pt *ProjectTier) EndTime() int64 {
+func (pt ProjectTier) EndTime() int64 {
 	return pt.endTime
 }
 
@@ -135,20 +140,27 @@ func (pt *ProjectTier) SetEndTime(time int64) {
 	pt.endTime = time
 }
 
-func (pt *ProjectTier) IsActivated(currentTime int64) bool {
+func (pt ProjectTier) IsActivated(currentTime int64) bool {
 	return pt.startTime <= currentTime && currentTime < pt.endTime
 }
 
 // IsEnded returns true if the project tier has ended.
-func (pt *ProjectTier) IsEnded(currentTime int64) bool {
+func (pt ProjectTier) IsEnded(currentTime int64) bool {
 	return pt.endTime < currentTime
 }
 
-func (pt ProjectTier) Clone() *ProjectTier {
-	return &ProjectTier{
+func (pt ProjectTier) Clone() ProjectTier {
+	var distributeAmountPerSecondX128 *u256.Uint
+	if pt.distributeAmountPerSecondX128 == nil {
+		distributeAmountPerSecondX128 = u256.Zero()
+	} else {
+		distributeAmountPerSecondX128 = pt.distributeAmountPerSecondX128.Clone()
+	}
+
+	return ProjectTier{
 		id:                            pt.id,
 		totalDistributeAmount:         pt.totalDistributeAmount,
-		distributeAmountPerSecondX128: pt.distributeAmountPerSecondX128.Clone(),
+		distributeAmountPerSecondX128: distributeAmountPerSecondX128,
 		startTime:                     pt.startTime,
 		endTime:                       pt.endTime,
 		totalDepositAmount:            pt.totalDepositAmount,
@@ -159,15 +171,24 @@ func (pt ProjectTier) Clone() *ProjectTier {
 	}
 }
 
-// NewProjectTier returns a pointer to a new ProjectTier with the given values.
-func NewProjectTier(
+// DefaultProjectTier returns an empty tier owned by this package.
+// Callers outside the launchpad realm must use it instead of constructing a
+// foreign ProjectTier literal, which can fail on GnoVM.
+func DefaultProjectTier() ProjectTier {
+	return ProjectTier{
+		distributeAmountPerSecondX128: u256.Zero(),
+	}
+}
+
+// MakeProjectTier returns a value containing the given project tier values.
+func MakeProjectTier(
 	projectID string,
 	tierDuration int64,
 	totalDistributeAmount int64,
 	startTime int64,
 	endTime int64,
-) *ProjectTier {
-	return &ProjectTier{
+) ProjectTier {
+	return ProjectTier{
 		id:                            MakeProjectTierID(projectID, tierDuration),
 		totalDistributeAmount:         totalDistributeAmount,
 		distributeAmountPerSecondX128: u256.Zero(),

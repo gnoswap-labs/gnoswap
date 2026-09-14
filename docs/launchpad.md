@@ -9,6 +9,8 @@ Token distribution and vesting.
 - Access control: only authorized addresses can create or modify campaigns.
 - Any `collect` function must follow CEI pattern (state update before transfer).
 - Project creation records recipient membership in a dedicated B+Tree (`address -> true`). Emission and protocol-fee claims use tree lookup rather than scanning projects; shared recipients reuse one entry. Initialization preserves the existing tree. Projects and recipients are not removed or reassigned by the current lifecycle.
+- Projects, tiers, and conditions are value payloads. Map setters use copy-on-write, and tier numeric getters/setters copy their `uint256` payloads. After changing a local tier, call `Project.SetTier`; after changing a local project, save it back to the projects tree. Mutating a getter result must not update stored state.
+- The value-payload storage layout requires a fresh deployment; it does not migrate existing pointer-backed project state.
 
 ## Pitfalls
 

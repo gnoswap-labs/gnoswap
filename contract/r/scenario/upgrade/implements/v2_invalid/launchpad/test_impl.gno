@@ -134,7 +134,7 @@ func (t *TestLaunchpad) GetProjectRecipient(projectId string) (address, error) {
 	return t.instance.GetProjectRecipient(projectId)
 }
 
-func (t *TestLaunchpad) GetProjectCondition(projectId string, tokenPath string) (*launchpad.ProjectCondition, error) {
+func (t *TestLaunchpad) GetProjectCondition(projectId string, tokenPath string) (launchpad.ProjectCondition, error) {
 	if !t.isActive("GetProjectCondition") {
 		panic("test implementation: GetProjectCondition not supported")
 	}
@@ -162,7 +162,7 @@ func (t *TestLaunchpad) GetProjectCreatedAt(projectId string) (int64, error) {
 	return t.instance.GetProjectCreatedAt(projectId)
 }
 
-func (t *TestLaunchpad) GetProjectTier(projectId string, tier int64) (*launchpad.ProjectTier, error) {
+func (t *TestLaunchpad) GetProjectTier(projectId string, tier int64) (launchpad.ProjectTier, error) {
 	if !t.isActive("GetProjectTier") {
 		panic("test implementation: GetProjectTier not supported")
 	}

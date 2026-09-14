@@ -31,12 +31,12 @@ func newLaunchpadRewardManager() *RewardManager {
 
 func newLaunchpadProject() *Project {
 	project := MakeProject("project-name", "token-path", 1000, adminAddr, 10, 20)
-	project.SetConditions(map[string]*ProjectCondition{
-		"token-path": NewProjectCondition("token-path", 500),
+	project.SetConditions(map[string]ProjectCondition{
+		"token-path": MakeProjectCondition("token-path", 500),
 	})
-	tier := NewProjectTier(project.ID(), 30, 1000, 30, 60)
+	tier := MakeProjectTier(project.ID(), 30, 1000, 30, 60)
 	tier.SetDistributeAmountPerSecondX128(u256.MustFromDecimal("111"))
-	project.SetTiers(map[int64]*ProjectTier{30: tier})
+	project.SetTiers(map[int64]ProjectTier{30: tier})
 	project.SetTiersRatios(map[int64]int64{30: 25, 90: 75})
 	return &project
 }
@@ -68,7 +68,7 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 		{
 			name: "GetProjectCondition",
 			setup: func(m *MockLaunchpad) {
-				m.Response.Set("GetProjectCondition", NewProjectCondition("token-path", 500), nil)
+				m.Response.Set("GetProjectCondition", MakeProjectCondition("token-path", 500), nil)
 			},
 			getter: func(t *testing.T) any {
 				value, err := GetProjectCondition("project-1", "token-path")
@@ -76,12 +76,12 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 				return value
 			},
 			mutate: func(result any) {
-				condition := result.(*ProjectCondition)
+				condition := result.(ProjectCondition)
 				condition.tokenPath = "mutated-token"
 				condition.minimumAmount = 999
 			},
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
-				condition := m.Response.data["GetProjectCondition"][0].(*ProjectCondition)
+				condition := m.Response.data["GetProjectCondition"][0].(ProjectCondition)
 				uassert.Equal(t, "token-path", condition.TokenPath())
 				uassert.Equal(t, int64(500), condition.MinimumAmount())
 			},
@@ -89,7 +89,7 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 		{
 			name: "GetProjectTier",
 			setup: func(m *MockLaunchpad) {
-				tier := NewProjectTier("project-1", 30, 1000, 10, 20)
+				tier := MakeProjectTier("project-1", 30, 1000, 10, 20)
 				tier.SetDistributeAmountPerSecondX128(u256.MustFromDecimal("100"))
 				m.Response.Set("GetProjectTier", tier, nil)
 			},
@@ -99,7 +99,7 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 				return value
 			},
 			mutate: func(result any) {
-				tier := result.(*ProjectTier)
+				tier := result.(ProjectTier)
 				tier.SetDistributeAmountPerSecondX128(u256.MustFromDecimal("200"))
 				tier.SetTotalDepositAmount(300)
 				tier.SetTotalWithdrawAmount(400)
@@ -108,7 +108,7 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 				tier.SetTotalCollectedAmount(700)
 			},
 			assertRaw: func(t *testing.T, m *MockLaunchpad) {
-				tier := m.Response.data["GetProjectTier"][0].(*ProjectTier)
+				tier := m.Response.data["GetProjectTier"][0].(ProjectTier)
 				uassert.Equal(t, "100", tier.DistributeAmountPerSecondX128().ToString())
 				uassert.Equal(t, int64(0), tier.TotalDepositAmount())
 				uassert.Equal(t, int64(0), tier.TotalWithdrawAmount())
@@ -383,4 +383,92 @@ func TestReadOnlyTreeGetters_NoImplementationResponse(cur realm, t *testing.T) {
 
 	uassert.True(t, GetProjects() == nil)
 	uassert.True(t, GetProjectTierRewards("project-1", 30) == nil)
+}
+
+func TestProjectValuePayloadIsolation(t *testing.T) {
+	project := MakeProject("project", "token-path", 1_000, adminAddr, 10, 20)
+
+	inputCondition := MakeProjectCondition("token-path", 500)
+	inputTier := MakeProjectTier(project.ID(), 30, 1_000, 30, 60)
+	inputRate := u256.MustFromDecimal("100")
+	inputTier.SetDistributeAmountPerSecondX128(inputRate)
+
+	conditions := map[string]ProjectCondition{"token-path": inputCondition}
+	tiers := map[int64]ProjectTier{30: inputTier}
+	project.SetConditions(conditions)
+	project.SetTiers(tiers)
+
+	// Mutating the caller's maps and numeric payload after a setter call must
+	// not mutate the project's owned state.
+	conditions["other-token"] = MakeProjectCondition("other-token", 1)
+	tiers[90] = MakeProjectTier(project.ID(), 90, 2_000, 30, 90)
+	inputRate.Set(u256.MustFromDecimal("999"))
+
+	storedCondition, err := project.GetCondition("token-path")
+	uassert.NoError(t, err)
+	uassert.Equal(t, "token-path", storedCondition.TokenPath())
+	uassert.Equal(t, int64(500), storedCondition.MinimumAmount())
+
+	storedTier, err := project.GetTier(30)
+	uassert.NoError(t, err)
+	uassert.Equal(t, "100", storedTier.DistributeAmountPerSecondX128().ToString())
+
+	missingCondition, err := project.GetCondition("other-token")
+	uassert.ErrorContains(t, err, "condition(other-token) not found")
+	uassert.Equal(t, "", missingCondition.TokenPath())
+	missingTier, err := project.GetTier(90)
+	uassert.ErrorContains(t, err, "tier(90) not found")
+	uassert.Equal(t, int64(0), missingTier.TotalDistributeAmount())
+
+	// Returned maps and entries are copies. Mutating either copy must leave the
+	// source project unchanged.
+	returnedConditions := project.Conditions()
+	returnedCondition := returnedConditions["token-path"]
+	returnedCondition.tokenPath = "mutated-token"
+	returnedConditions["token-path"] = returnedCondition
+
+	returnedTiers := project.Tiers()
+	returnedTier := returnedTiers[30]
+	returnedTier.SetTotalDepositAmount(123)
+	returnedRate := returnedTier.DistributeAmountPerSecondX128()
+	returnedRate.Set(u256.MustFromDecimal("888"))
+	returnedTiers[30] = returnedTier
+
+	storedCondition, err = project.GetCondition("token-path")
+	uassert.NoError(t, err)
+	uassert.Equal(t, "token-path", storedCondition.TokenPath())
+	storedTier, err = project.GetTier(30)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), storedTier.TotalDepositAmount())
+	uassert.Equal(t, "100", storedTier.DistributeAmountPerSecondX128().ToString())
+
+	// A direct Project value copy must use COW map updates.
+	copyProject := project
+	copyProject.SetName("mutated-project")
+	copyProject.SetCondition("new-token", MakeProjectCondition("new-token", 2))
+	copyProject.SetTier(30, MakeProjectTier(project.ID(), 30, 2_000, 30, 60))
+
+	uassert.Equal(t, "project", project.Name())
+	_, err = project.GetCondition("new-token")
+	uassert.ErrorContains(t, err, "condition(new-token) not found")
+	storedTier, err = project.GetTier(30)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(1_000), storedTier.TotalDistributeAmount())
+}
+
+func TestProjectTierNumericPayloadIsolation(t *testing.T) {
+	inputRate := u256.MustFromDecimal("100")
+	tier := MakeProjectTier("project", 30, 1_000, 10, 20)
+	tier.SetDistributeAmountPerSecondX128(inputRate)
+
+	// Setter copies its input and getter returns a fresh mutable number.
+	inputRate.Set(u256.MustFromDecimal("200"))
+	returnedRate := tier.DistributeAmountPerSecondX128()
+	returnedRate.Set(u256.MustFromDecimal("300"))
+	uassert.Equal(t, "100", tier.DistributeAmountPerSecondX128().ToString())
+
+	// Clone must also sever the internal numeric pointer.
+	clone := tier.Clone()
+	clone.distributeAmountPerSecondX128.Set(u256.MustFromDecimal("400"))
+	uassert.Equal(t, "100", tier.DistributeAmountPerSecondX128().ToString())
 }

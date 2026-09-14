@@ -35,7 +35,7 @@ func TestProjectCondition_Getters(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			condition := &ProjectCondition{
+			condition := ProjectCondition{
 				tokenPath:     tt.tokenPath,
 				minimumAmount: tt.minimumAmount,
 			}
@@ -95,7 +95,7 @@ func TestProjectCondition_IsAvailable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			condition := &ProjectCondition{
+			condition := ProjectCondition{
 				tokenPath:     tt.tokenPath,
 				minimumAmount: tt.minimumAmount,
 			}
@@ -155,7 +155,7 @@ func TestProjectCondition_CheckCondition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			condition := &ProjectCondition{
+			condition := ProjectCondition{
 				tokenPath:     tt.tokenPath,
 				minimumAmount: tt.minimumAmount,
 			}
@@ -173,7 +173,7 @@ func TestProjectCondition_CheckCondition(t *testing.T) {
 	}
 }
 
-func TestProjectCondition_NewProjectCondition(t *testing.T) {
+func TestProjectCondition_MakeProjectCondition(t *testing.T) {
 	tests := []struct {
 		name              string
 		tokenPath         string
@@ -195,7 +195,7 @@ func TestProjectCondition_NewProjectCondition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Execute
-			condition := NewProjectCondition(tt.tokenPath, tt.minimumAmount)
+			condition := MakeProjectCondition(tt.tokenPath, tt.minimumAmount)
 
 			// Verify
 			uassert.Equal(t, condition.TokenPath(), tt.expectedTokenPath)
@@ -204,7 +204,7 @@ func TestProjectCondition_NewProjectCondition(t *testing.T) {
 	}
 }
 
-func TestProjectCondition_NewProjectConditionsWithError(t *testing.T) {
+func TestProjectCondition_MakeProjectConditionsWithError(t *testing.T) {
 	tests := []struct {
 		name             string
 		conditionTokens  string
@@ -279,7 +279,7 @@ func TestProjectCondition_NewProjectConditionsWithError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Execute
-			conditions, err := NewProjectConditionsWithError(tt.conditionTokens, tt.conditionAmounts)
+			conditions, err := MakeProjectConditionsWithError(tt.conditionTokens, tt.conditionAmounts)
 
 			// Verify
 			if tt.expectedHasError {

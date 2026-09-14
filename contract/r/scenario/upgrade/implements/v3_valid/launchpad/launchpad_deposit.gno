@@ -140,10 +140,10 @@ func (lp *launchpadV1) depositGns(
 	deposits := lp.store.GetDeposits()
 	deposits.Set(depositID, deposit)
 
-	depositToTier(projectTier, deposit)
+	depositToTier(&projectTier, deposit)
 	project.SetTier(tierDuration, projectTier)
 	projects := lp.store.GetProjects()
-	projects.Set(project.ID(), *project)
+	projects.Set(project.ID(), project)
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {

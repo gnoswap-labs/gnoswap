@@ -174,7 +174,7 @@ func (lp *launchpadV1) depositGns(
 	rewardState := addRewardStateByDeposit(rewardManager, deposit)
 
 	// update tier data after adding reward state to reward manager
-	depositToTier(projectTier, deposit)
+	depositToTier(&projectTier, deposit)
 	project.SetTier(tierDuration, projectTier)
 
 	projects := lp.store.GetProjects()
