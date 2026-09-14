@@ -1,0 +1,454 @@
+# Verifies that common can serve two GRC20 registry generations at once.
+#
+# 1. A second generation (p/nt/grc20/v1 + r/nt/grc20reg/v1) is deployed as a
+#    mock next to the real v0 packages.
+# 2. One token is issued on each generation; both mint to the caller realm.
+# 3. With common/v1 active only the v0 key resolves.
+# 4. After upgrading to common/v2 (consults v0 then v1) both keys resolve, and
+#    a Transfer through common moves balances on the matching ledger only.
+
+loadpkg gno.land/p/nt/bptree/v0
+loadpkg gno.land/p/nt/ufmt/v0
+loadpkg gno.land/p/onbloc/json/v0
+loadpkg gno.land/p/nt/ownable/v0
+loadpkg gno.land/p/nt/grc20/v0
+
+loadpkg gno.land/r/sys/users
+loadpkg gno.land/r/nt/grc20reg/v0
+
+loadpkg gno.land/p/gnoswap/uint256
+loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/consts
+loadpkg gno.land/p/gnoswap/gnsmath
+loadpkg gno.land/p/gnoswap/store
+loadpkg gno.land/p/gnoswap/version_manager
+loadpkg gno.land/p/gnoswap/utils
+
+loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/r/gnoswap/rbac
+loadpkg gno.land/r/gnoswap/common
+loadpkg gno.land/r/gnoswap/common/v1
+
+gnoland start
+
+gnokey maketx send -send 15000000000ugnot -to $test1_user_addr -broadcast -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 100000000 test1
+
+## Deploy the second GRC20 generation (mock) and one token per generation
+gnokey maketx addpkg -pkgdir $WORK/grc20_v1 -pkgpath gno.land/p/nt/grc20/v1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir $WORK/grc20reg_v1 -pkgpath gno.land/r/nt/grc20reg/v1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir $WORK/token_v0 -pkgpath gno.land/r/test/token_v0 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir $WORK/token_v1 -pkgpath gno.land/r/test/token_v1 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir $WORK/common_caller -pkgpath gno.land/r/test/common_caller -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+gnokey query vm/qeval --data "gno.land/r/gnoswap/common.GetImplementationPackagePath()"
+# stdout "gno.land/r/gnoswap/common/v1"
+
+## Both ledgers start with the caller realm funded
+gnokey query vm/qeval --data "gno.land/r/test/token_v0.BalanceOf(\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\")"
+# stdout 1000000
+gnokey query vm/qeval --data "gno.land/r/test/token_v1.BalanceOf(\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\")"
+# stdout 1000000
+
+## With common/v1 only the v0 generation is visible
+gnokey query vm/qeval --data "gno.land/r/test/common_caller.IsRegistered(\"gno.land/r/test/token_v0.TKV0\")"
+# stdout true
+gnokey query vm/qeval --data "gno.land/r/test/common_caller.IsRegistered(\"gno.land/r/test/token_v1.TKV1\")"
+# stdout false
+
+gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "gno.land/r/test/token_v0.TKV0" -args $test1_user_addr -args 100 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+# stdout OK!
+gnokey query vm/qeval --data "gno.land/r/test/token_v0.BalanceOf(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
+# stdout 100
+
+! gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "gno.land/r/test/token_v1.TKV1" -args $test1_user_addr -args 100 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stderr 'unknown token\(gno.land/r/test/token_v1.TKV1\)'
+gnokey query vm/qeval --data "gno.land/r/test/token_v1.BalanceOf(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
+# stdout 0
+
+## Upgrade common to the multi-generation implementation
+gnokey maketx addpkg -pkgdir $WORK/common_v2 -pkgpath gno.land/r/gnoswap/common/v2 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/common -func UpgradeImpl -args gno.land/r/gnoswap/common/v2 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+# stdout OK!
+gnokey query vm/qeval --data "gno.land/r/gnoswap/common.GetImplementationPackagePath()"
+# stdout "gno.land/r/gnoswap/common/v2"
+
+gnokey query vm/qeval --data "gno.land/r/test/common_caller.IsRegistered(\"gno.land/r/test/token_v0.TKV0\")"
+# stdout true
+gnokey query vm/qeval --data "gno.land/r/test/common_caller.IsRegistered(\"gno.land/r/test/token_v1.TKV1\")"
+# stdout true
+
+## v1 key routes to the v1 ledger
+gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "gno.land/r/test/token_v1.TKV1" -args $test1_user_addr -args 300 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+# stdout OK!
+gnokey query vm/qeval --data "gno.land/r/test/token_v1.BalanceOf(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
+# stdout 300
+gnokey query vm/qeval --data "gno.land/r/gnoswap/common.BalanceOf(\"gno.land/r/test/token_v1.TKV1\", \"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
+# stdout 300
+gnokey query vm/qeval --data "gno.land/r/test/token_v0.BalanceOf(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
+# stdout 100
+
+## v0 key still routes to the v0 ledger
+gnokey maketx call -pkgpath gno.land/r/test/common_caller -func Transfer -args "gno.land/r/test/token_v0.TKV0" -args $test1_user_addr -args 50 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+# stdout OK!
+gnokey query vm/qeval --data "gno.land/r/test/token_v0.BalanceOf(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
+# stdout 150
+gnokey query vm/qeval --data "gno.land/r/gnoswap/common.BalanceOf(\"gno.land/r/test/token_v0.TKV0\", \"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
+# stdout 150
+gnokey query vm/qeval --data "gno.land/r/test/token_v1.BalanceOf(\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\")"
+# stdout 300
+
+## Caller realm balances reflect both transfers
+gnokey query vm/qeval --data "gno.land/r/test/token_v0.BalanceOf(\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\")"
+# stdout 999850
+gnokey query vm/qeval --data "gno.land/r/test/token_v1.BalanceOf(\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\")"
+# stdout 999700
+
+-- grc20_v1/gnomod.toml --
+module = "gno.land/p/nt/grc20/v1"
+gno = "0.9"
+-- grc20_v1/grc20.gno --
+// Mock of a second GRC20 generation. It keeps the v0 method shapes but owns a
+// completely separate ledger type, so a v1 token can never be handled by v0 code.
+package grc20
+
+import "errors"
+
+var (
+	ErrInsufficientBalance   = errors.New("insufficient balance")
+	ErrInsufficientAllowance = errors.New("insufficient allowance")
+	ErrSpoofedRealm          = errors.New("rlm does not match the current crossing frame")
+)
+
+type Teller interface {
+	GetName() string
+	GetSymbol() string
+	GetDecimals() int
+	TotalSupply() int64
+	BalanceOf(account address) int64
+	Allowance(owner, spender address) int64
+	Transfer(_ int, rlm realm, to address, amount int64) error
+	Approve(_ int, rlm realm, spender address, amount int64) error
+	TransferFrom(_ int, rlm realm, from, to address, amount int64) error
+}
+
+type Token struct {
+	name     string
+	symbol   string
+	decimals int
+	origin   string
+	ledger   *PrivateLedger
+}
+
+type PrivateLedger struct {
+	totalSupply int64
+	balances    map[address]int64
+	allowances  map[string]int64
+}
+
+func NewToken(name, symbol string, decimals int, rlm realm) (*Token, *PrivateLedger) {
+	if !rlm.IsCurrent() {
+		panic(ErrSpoofedRealm)
+	}
+	ledger := &PrivateLedger{
+		balances:   make(map[address]int64),
+		allowances: make(map[string]int64),
+	}
+	return &Token{name: name, symbol: symbol, decimals: decimals, origin: rlm.PkgPath(), ledger: ledger}, ledger
+}
+
+func (t *Token) GetName() string                     { return t.name }
+func (t *Token) GetSymbol() string                   { return t.symbol }
+func (t *Token) GetDecimals() int                    { return t.decimals }
+func (t *Token) Origin() string                      { return t.origin }
+func (t *Token) TotalSupply() int64                  { return t.ledger.totalSupply }
+func (t *Token) BalanceOf(account address) int64     { return t.ledger.balances[account] }
+func (t *Token) Allowance(owner, spender address) int64 {
+	return t.ledger.allowances[allowanceKey(owner, spender)]
+}
+
+func (t *Token) RealmTeller(_ int, rlm realm) Teller {
+	if !rlm.IsCurrent() {
+		panic(ErrSpoofedRealm)
+	}
+	return &realmTeller{Token: t, actor: rlm.Address()}
+}
+
+func (l *PrivateLedger) Mint(to address, amount int64) error {
+	l.balances[to] += amount
+	l.totalSupply += amount
+	return nil
+}
+
+func (l *PrivateLedger) transfer(from, to address, amount int64) error {
+	if l.balances[from] < amount {
+		return ErrInsufficientBalance
+	}
+	l.balances[from] -= amount
+	l.balances[to] += amount
+	return nil
+}
+
+type realmTeller struct {
+	*Token
+	actor address
+}
+
+func (rt *realmTeller) Transfer(_ int, rlm realm, to address, amount int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+	return rt.ledger.transfer(rt.actor, to, amount)
+}
+
+func (rt *realmTeller) Approve(_ int, rlm realm, spender address, amount int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+	rt.ledger.allowances[allowanceKey(rt.actor, spender)] = amount
+	return nil
+}
+
+func (rt *realmTeller) TransferFrom(_ int, rlm realm, from, to address, amount int64) error {
+	if !rlm.IsCurrent() {
+		return ErrSpoofedRealm
+	}
+	key := allowanceKey(from, rt.actor)
+	if rt.ledger.allowances[key] < amount {
+		return ErrInsufficientAllowance
+	}
+	if err := rt.ledger.transfer(from, to, amount); err != nil {
+		return err
+	}
+	rt.ledger.allowances[key] -= amount
+	return nil
+}
+
+func allowanceKey(owner, spender address) string {
+	return string(owner) + ":" + string(spender)
+}
+
+-- grc20reg_v1/gnomod.toml --
+module = "gno.land/r/nt/grc20reg/v1"
+gno = "0.9"
+-- grc20reg_v1/grc20reg.gno --
+// Mock registry for the second GRC20 generation. Keys use the same
+// "<realm path>.<SYMBOL>" shape as grc20reg/v0.
+package grc20reg
+
+import (
+	"gno.land/p/nt/grc20/v1"
+)
+
+var registry = make(map[string]*grc20.Token)
+
+func Register(cur realm, token *grc20.Token) string {
+	if token == nil {
+		panic("grc20reg: nil token")
+	}
+	rlmPath := cur.Previous().PkgPath()
+	if token.Origin() != rlmPath {
+		panic("grc20reg: token must be registered from its own realm")
+	}
+	key := rlmPath + "." + token.GetSymbol()
+	if _, ok := registry[key]; ok {
+		panic("grc20reg: token already registered")
+	}
+	registry[key] = token
+	return key
+}
+
+func Get(key string) *grc20.Token {
+	return registry[key]
+}
+
+-- token_v0/gnomod.toml --
+module = "gno.land/r/test/token_v0"
+gno = "0.9"
+-- token_v0/token.gno --
+package token_v0
+
+import (
+	"chain"
+
+	"gno.land/p/nt/grc20/v0"
+	"gno.land/r/nt/grc20reg/v0"
+)
+
+var (
+	token         *grc20.Token
+	privateLedger *grc20.PrivateLedger
+)
+
+func init(cur realm) {
+	token, privateLedger = grc20.NewToken("TokenV0", "TKV0", 6, 0, cur)
+	privateLedger.Mint(chain.PackageAddress("gno.land/r/test/common_caller"), 1_000_000)
+	grc20reg.Register(cross(cur), token, "")
+}
+
+func BalanceOf(owner address) int64 {
+	return token.BalanceOf(owner)
+}
+
+-- token_v1/gnomod.toml --
+module = "gno.land/r/test/token_v1"
+gno = "0.9"
+-- token_v1/token.gno --
+package token_v1
+
+import (
+	"chain"
+
+	"gno.land/p/nt/grc20/v1"
+	"gno.land/r/nt/grc20reg/v1"
+)
+
+var (
+	token         *grc20.Token
+	privateLedger *grc20.PrivateLedger
+)
+
+func init(cur realm) {
+	token, privateLedger = grc20.NewToken("TokenV1", "TKV1", 6, cur)
+	privateLedger.Mint(chain.PackageAddress("gno.land/r/test/common_caller"), 1_000_000)
+	grc20reg.Register(cross(cur), token)
+}
+
+func BalanceOf(owner address) int64 {
+	return token.BalanceOf(owner)
+}
+
+-- common_caller/gnomod.toml --
+module = "gno.land/r/test/common_caller"
+gno = "0.9"
+-- common_caller/caller.gno --
+// Stand-in for a core realm: every token operation goes through common with
+// this realm as the token actor.
+package common_caller
+
+import (
+	"gno.land/r/gnoswap/common"
+)
+
+func Transfer(cur realm, tokenKey string, to address, amount int64) {
+	common.SafeGRC20Transfer(0, cur, tokenKey, to, amount)
+}
+
+func IsRegistered(tokenKey string) bool {
+	return common.IsRegistered(tokenKey) == nil
+}
+
+-- common_v2/gnomod.toml --
+module = "gno.land/r/gnoswap/common/v2"
+gno = "0.9"
+-- common_v2/init.gno --
+package common
+
+import (
+	"gno.land/r/gnoswap/common"
+)
+
+func init(cur realm) {
+	common.RegisterInitializer(cross(cur), func(_ int, rlm realm) common.ICommon {
+		return NewCommonV2()
+	})
+}
+
+-- common_v2/instance.gno --
+// commonV2 consults every registry generation, v0 first. A key must belong to
+// exactly one generation; anything else is a deployment error.
+package common
+
+import (
+	"gno.land/p/nt/ufmt/v0"
+	"gno.land/r/gnoswap/common"
+
+	grc20v0 "gno.land/p/nt/grc20/v0"
+	grc20v1 "gno.land/p/nt/grc20/v1"
+	grc20regv0 "gno.land/r/nt/grc20reg/v0"
+	grc20regv1 "gno.land/r/nt/grc20reg/v1"
+)
+
+const errNotRegistered = "[GNOSWAP-COMMON-001] token is not registered"
+
+type commonV2 struct{}
+
+func NewCommonV2() common.ICommon {
+	return &commonV2{}
+}
+
+// teller is the method set both generations share.
+type teller interface {
+	TotalSupply() int64
+	BalanceOf(account address) int64
+	Allowance(owner, spender address) int64
+	Transfer(_ int, rlm realm, to address, amount int64) error
+	Approve(_ int, rlm realm, spender address, amount int64) error
+	TransferFrom(_ int, rlm realm, from, to address, amount int64) error
+}
+
+type token interface {
+	TotalSupply() int64
+	BalanceOf(account address) int64
+	Allowance(owner, spender address) int64
+	realmTeller(_ int, rlm realm) teller
+}
+
+type v0Token struct{ *grc20v0.Token }
+
+func (t v0Token) realmTeller(_ int, rlm realm) teller { return t.Token.RealmTeller(0, rlm) }
+
+type v1Token struct{ *grc20v1.Token }
+
+func (t v1Token) realmTeller(_ int, rlm realm) teller { return t.Token.RealmTeller(0, rlm) }
+
+func (c *commonV2) lookup(tokenKey string) (token, bool) {
+	t0 := grc20regv0.Get(tokenKey)
+	t1 := grc20regv1.Get(tokenKey)
+
+	switch {
+	case t0 != nil && t1 != nil:
+		panic(ufmt.Sprintf("common/v2: token key(%s) is registered in more than one generation", tokenKey))
+	case t0 != nil:
+		return v0Token{t0}, true
+	case t1 != nil:
+		return v1Token{t1}, true
+	}
+	return nil, false
+}
+
+func (c *commonV2) mustGetToken(tokenKey string) token {
+	t, ok := c.lookup(tokenKey)
+	if !ok {
+		panic(ufmt.Sprintf("%s || unknown token(%s)", errNotRegistered, tokenKey))
+	}
+	return t
+}
+
+func (c *commonV2) IsRegistered(tokenKey string) bool {
+	_, ok := c.lookup(tokenKey)
+	return ok
+}
+
+func (c *commonV2) TotalSupply(tokenKey string) int64 {
+	return c.mustGetToken(tokenKey).TotalSupply()
+}
+
+func (c *commonV2) BalanceOf(tokenKey string, addr address) int64 {
+	return c.mustGetToken(tokenKey).BalanceOf(addr)
+}
+
+func (c *commonV2) Allowance(tokenKey string, owner, spender address) int64 {
+	return c.mustGetToken(tokenKey).Allowance(owner, spender)
+}
+
+func (c *commonV2) Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) error {
+	return c.mustGetToken(tokenKey).realmTeller(0, rlm).Transfer(0, rlm, to, amount)
+}
+
+func (c *commonV2) TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount int64) error {
+	return c.mustGetToken(tokenKey).realmTeller(0, rlm).TransferFrom(0, rlm, from, to, amount)
+}
+
+func (c *commonV2) Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) error {
+	return c.mustGetToken(tokenKey).realmTeller(0, rlm).Approve(0, rlm, spender, amount)
+}
