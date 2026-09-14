@@ -378,71 +378,76 @@ func (g *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
 	return launchpadProjectDeposits.RemoveDeposit(ownerAddress)
 }
 
-// addStakeProtocolFeeReward adds stake to protocol fee reward tracking for an address.
-// This method distributes protocol fees and updates the protocol fee reward state.
+// addStakeProtocolFeeReward records a stake increase for protocol fee rewards.
+//
+// The change only opens a new accrual epoch and appends one stake event, so its cost
+// does not depend on how many tokens collected fees.
 //
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to add
 //   - currentTimestamp: current timestamp
 func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
-	accruedAmounts := pf.ConsumeAccrualPendingProtocolFees(cross(rlm))
+	epoch := pf.AdvanceAccrualEpoch(cross(rlm))
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
+	if err := resolvedManager.addStake(address, amount, epoch); err != nil {
+		return err
+	}
+	resolvedManager.SetAccumulatedTimestamp(currentTimestamp)
+
+	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
 		return err
 	}
 
-	if err := resolvedManager.addStake(address, amount, currentTimestamp); err != nil {
-		return err
-	}
-
-	err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager)
-	if err != nil {
-		return err
-	}
-
-	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, accruedAmounts)
+	emitUpdateProtocolFeeStakeAccrual(protocolFeeRewardManager)
 
 	return nil
 }
 
-// removeStakeProtocolFeeReward removes stake from protocol fee reward tracking for an address.
-// This method distributes protocol fees and updates the protocol fee reward state.
+// removeStakeProtocolFeeReward records a stake decrease for protocol fee rewards.
+// Like addStakeProtocolFeeReward it never folds fees, so a withdrawal never pays for
+// the reward calculation; that happens on collect, one token at a time if need be.
 //
 // Parameters:
 //   - address: staker's address
 //   - amount: amount of stake to remove
 //   - currentTimestamp: current timestamp
 func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
-	accruedAmounts := pf.ConsumeAccrualPendingProtocolFees(cross(rlm))
+	epoch := pf.AdvanceAccrualEpoch(cross(rlm))
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
+	if err := resolvedManager.removeStake(address, amount, epoch); err != nil {
 		return err
 	}
-
-	if err := resolvedManager.removeStake(address, amount, currentTimestamp); err != nil {
-		return err
-	}
+	resolvedManager.SetAccumulatedTimestamp(currentTimestamp)
 
 	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
 		return err
 	}
 
-	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, accruedAmounts)
+	emitUpdateProtocolFeeStakeAccrual(protocolFeeRewardManager)
 
 	return nil
 }
 
-// claimRewardsProtocolFeeReward claims protocol fee rewards for an address.
-// This method distributes protocol fees and processes reward claiming for all token types.
+// foldProtocolFeeAccrual consumes up to limit pending accrual buckets of tokenPath from
+// the protocol fee realm and folds them into the token's accumulator. A limit of zero
+// or less consumes every pending bucket.
+func (g *govStakerV1) foldProtocolFeeAccrual(_ int, rlm realm, resolvedManager *ProtocolFeeRewardManagerResolver, tokenPath string, limit int, currentTimestamp int64) error {
+	epochs, amounts := pf.ConsumeAccrualBuckets(cross(rlm), tokenPath, limit)
+	exhausted := limit <= 0 || len(epochs) < limit
+
+	return resolvedManager.applyAccrualBuckets(tokenPath, epochs, amounts, exhausted, currentTimestamp)
+}
+
+// claimRewardsProtocolFeeReward claims protocol fee rewards for an address in every token.
+// It folds every pending token first, so its cost grows with the number of tokens
+// that collected a fee. claimRewardProtocolFeeRewardByTokenPath is the bounded path.
 //
 // Parameters:
 //   - address: staker's address claiming rewards
@@ -453,16 +458,33 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address str
 //   - error: nil on success, error if claiming fails
 func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address string, currentTimestamp int64) (map[string]int64, error) {
 	// Claiming pays out of gov/staker's own balance, so the reserved fees are pulled in
-	// from the protocol fee realm first. The stake-change paths need no transfer.
+	// from the protocol fee realm first.
 	pf.DistributeProtocolFee(cross(rlm))
-
-	accruedAmounts := pf.ConsumeAccrualPendingProtocolFees(cross(rlm))
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStake(accruedAmounts, currentTimestamp); err != nil {
-		return nil, err
+	// Every pending token is consumed from the protocol fee realm. A known token with
+	// nothing pending has no bucket in any epoch since its last fold, so an empty
+	// exhaustive fold is enough to mark every closed epoch as settled for it.
+	pendingTokenPaths := pf.GetAccrualPendingTokens()
+	pending := make(map[string]bool, len(pendingTokenPaths))
+	for _, tokenPath := range pendingTokenPaths {
+		pending[tokenPath] = true
+		if err := g.foldProtocolFeeAccrual(0, rlm, resolvedManager, tokenPath, 0, currentTimestamp); err != nil {
+			return nil, err
+		}
+	}
+
+	foldedTokenPaths := pendingTokenPaths
+	for _, tokenPath := range protocolFeeRewardManager.GetTokenPaths() {
+		if pending[tokenPath] {
+			continue
+		}
+		if err := resolvedManager.applyAccrualBuckets(tokenPath, []int64{}, []int64{}, true, currentTimestamp); err != nil {
+			return nil, err
+		}
+		foldedTokenPaths = append(foldedTokenPaths, tokenPath)
 	}
 
 	rewards, err := resolvedManager.claimRewards(address, currentTimestamp)
@@ -474,67 +496,64 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address st
 		return nil, err
 	}
 
-	// Emit the protocol fee reward accumulation
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, accruedAmounts)
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, foldedTokenPaths)
 
 	return rewards, nil
 }
 
-// claimAccruedProtocolFeeRewardByTokenPath processes an observed protocol fee accrual for one token.
-func (g *govStakerV1) claimAccruedProtocolFeeRewardByTokenPath(address string, tokenPath string, accruedAmount int64, currentTimestamp int64) (*staker.ProtocolFeeRewardManager, int64, bool, error) {
-	if accruedAmount == 0 {
-		return nil, 0, false, nil
-	}
+// claimRewardProtocolFeeRewardByTokenPath claims one protocol fee reward token for an address.
+//
+// Both the fold and the settlement are bounded per call (maxAccrualBucketsPerCollect,
+// maxStakeEventsPerCollect); a token with more pending work pays what is settled and
+// keeps the rest for a later collect.
+func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, address string, tokenPath string, currentTimestamp int64) (int64, error) {
+	pf.DistributeProtocolFeeByTokenPath(cross(rlm), tokenPath)
 
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
 
-	if err := resolvedManager.updateAccumulatedProtocolFeeX128PerStakeForToken(tokenPath, accruedAmount, currentTimestamp); err != nil {
-		return nil, 0, false, err
-	}
-
-	reward, err := resolvedManager.claimRewardForToken(address, tokenPath, currentTimestamp)
-	if err != nil {
-		return nil, 0, false, err
-	}
-
-	return protocolFeeRewardManager, reward, true, nil
-}
-
-// claimRewardProtocolFeeRewardByTokenPath claims one protocol fee reward token for an address.
-func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, address string, tokenPath string, currentTimestamp int64) (int64, error) {
-	pf.DistributeProtocolFeeByTokenPath(cross(rlm), tokenPath)
-
-	accruedAmount := pf.ConsumeAccrualPendingProtocolFeeByTokenPath(cross(rlm), tokenPath)
-	protocolFeeRewardManager, reward, processed, err := g.claimAccruedProtocolFeeRewardByTokenPath(address, tokenPath, accruedAmount, currentTimestamp)
-	if err != nil {
+	if err := g.foldProtocolFeeAccrual(0, rlm, resolvedManager, tokenPath, maxAccrualBucketsPerCollect, currentTimestamp); err != nil {
 		return 0, err
 	}
-	if !processed {
-		return 0, nil
+
+	reward, err := resolvedManager.claimTokenReward(address, tokenPath, maxStakeEventsPerCollect)
+	if err != nil {
+		return 0, err
 	}
 
 	if err := g.store.SetProtocolFeeRewardManager(0, rlm, protocolFeeRewardManager); err != nil {
 		return 0, err
 	}
 
-	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, map[string]int64{tokenPath: accruedAmount})
+	emitUpdateProtocolFeeRewardAccumulation(protocolFeeRewardManager, []string{tokenPath})
 
 	return reward, nil
 }
 
-// getAccrualPendingProtocolFees retrieves the protocol fee amounts reserved for
-// gov/staker, limited to the tokens that collected a fee since the last accrual.
-//
-// The reserved amount is recorded when a fee reaches the protocol fee realm, before it
-// is transferred out, so accrual does not depend on a transfer happening. This is the
-// read-only counterpart of pf.ConsumeAccrualPendingProtocolFees: a query never advances
-// accrual state.
-//
-// Returns:
-//   - map[string]int64: accrued amounts by token path
-func (g *govStakerV1) getAccrualPendingProtocolFees() map[string]int64 {
-	return pf.GetAccrualPendingProtocolFees()
+// getClaimableProtocolFeeRewards reports what collecting every token would pay for a
+// reward ID right now, pending accrual buckets included, without changing any state.
+func (g *govStakerV1) getClaimableProtocolFeeRewards(rewardID string) (map[string]int64, error) {
+	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
+	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
+
+	rewards := make(map[string]int64)
+	tokenPaths := protocolFeeRewardManager.GetTokenPaths()
+	for _, tokenPath := range pf.GetAccrualPendingTokens() {
+		if _, ok := protocolFeeRewardManager.GetTokenAccumulator(tokenPath); !ok {
+			tokenPaths = append(tokenPaths, tokenPath)
+		}
+	}
+
+	for _, tokenPath := range tokenPaths {
+		pendingEpochs, pendingAmounts := pf.GetAccrualBuckets(tokenPath, 0)
+		reward, err := resolvedManager.GetClaimableRewardAmount(rewardID, tokenPath, pendingEpochs, pendingAmounts)
+		if err != nil {
+			return nil, err
+		}
+		rewards[tokenPath] = reward
+	}
+
+	return rewards, nil
 }
 
 // getLaunchpadProjectDeposit retrieves the deposit amount for a launchpad project.

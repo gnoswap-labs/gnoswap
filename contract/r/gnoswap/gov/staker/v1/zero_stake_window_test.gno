@@ -156,72 +156,53 @@ func TestEmissionRewardManager_ZeroStakeWindow_EdgeCases(cur realm, t *testing.T
 // TestProtocolFeeRewardManager_ZeroStakeWindow_DiscardsDelta pins the same policy on the
 // protocol fee accumulator, for both the all-token and the single-token update paths.
 func TestProtocolFeeRewardManager_ZeroStakeWindow_DiscardsDelta(cur realm, t *testing.T) {
-	t.Run("all-token update discards and advances", func(cur realm, t *testing.T) {
-		manager := staker.NewProtocolFeeRewardManager()
-		resolver := NewProtocolFeeRewardManagerResolver(manager)
+	t.Run("a bucket with nothing staked is discarded and counted", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardManagerResolver(staker.NewProtocolFeeRewardManager())
 
-		err := resolver.updateAccumulatedProtocolFeeX128PerStake(
-			map[string]int64{zeroStakeTestToken: 5000},
-			10,
-		)
-		uassert.NoError(t, err)
+		foldAll(t, resolver, zeroStakeTestToken, []int64{0}, []int64{5000}, 10)
 
 		uassert.Equal(t, resolver.GetProtocolFeeAmount(zeroStakeTestToken), int64(5000))
 		uassert.Equal(t, resolver.GetAccumulatedProtocolFeeX128PerStake(zeroStakeTestToken).ToString(), "0")
 
 		// The first staker only earns fees collected after it staked.
-		uassert.NoError(t, resolver.addStake("alice", 100, 10))
-		err = resolver.updateAccumulatedProtocolFeeX128PerStake(
-			map[string]int64{zeroStakeTestToken: 6000},
-			20,
-		)
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		foldAll(t, resolver, zeroStakeTestToken, []int64{1}, []int64{1000}, 20)
+
+		claimable, err := resolver.GetClaimableRewardAmount("alice", zeroStakeTestToken, nil, nil)
 		uassert.NoError(t, err)
-
-		claimable, err := resolver.GetClaimableRewardAmounts(map[string]int64{}, "alice", 20)
-		uassert.NoError(t, err)
-		uassert.Equal(t, claimable[zeroStakeTestToken], int64(1000))
-	})
-
-	t.Run("single-token update discards and advances", func(cur realm, t *testing.T) {
-		manager := staker.NewProtocolFeeRewardManager()
-		resolver := NewProtocolFeeRewardManagerResolver(manager)
-
-		err := resolver.updateAccumulatedProtocolFeeX128PerStakeForToken(zeroStakeTestToken, 5000, 10)
-		uassert.NoError(t, err)
-
-		uassert.Equal(t, resolver.GetProtocolFeeAmount(zeroStakeTestToken), int64(5000))
-		uassert.Equal(t, resolver.GetAccumulatedProtocolFeeX128PerStake(zeroStakeTestToken).ToString(), "0")
-
-		uassert.NoError(t, resolver.addStake("alice", 100, 10))
-		uassert.NoError(t, resolver.updateAccumulatedProtocolFeeX128PerStakeForToken(zeroStakeTestToken, 6000, 20))
-
-		claimable, err := resolver.GetClaimableRewardAmounts(map[string]int64{}, "alice", 20)
-		uassert.NoError(t, err)
-		uassert.Equal(t, claimable[zeroStakeTestToken], int64(1000))
+		uassert.Equal(t, claimable, int64(1000))
 	})
 
 	t.Run("only the token that saw fees during the window is discarded", func(cur realm, t *testing.T) {
-		manager := staker.NewProtocolFeeRewardManager()
-		resolver := NewProtocolFeeRewardManagerResolver(manager)
+		resolver := NewProtocolFeeRewardManagerResolver(staker.NewProtocolFeeRewardManager())
 
 		// bar collects while nothing is staked, qux only collects afterwards.
-		err := resolver.updateAccumulatedProtocolFeeX128PerStake(
-			map[string]int64{zeroStakeTestToken: 5000},
-			10,
-		)
-		uassert.NoError(t, err)
+		foldAll(t, resolver, zeroStakeTestToken, []int64{0}, []int64{5000}, 10)
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		foldAll(t, resolver, zeroStakeTestOtherToken, []int64{1}, []int64{2000}, 20)
 
-		uassert.NoError(t, resolver.addStake("alice", 100, 10))
-		err = resolver.updateAccumulatedProtocolFeeX128PerStake(
-			map[string]int64{zeroStakeTestOtherToken: 2000},
-			20,
-		)
+		claimable, err := resolver.GetClaimableRewardAmount("alice", zeroStakeTestToken, nil, nil)
 		uassert.NoError(t, err)
+		uassert.Equal(t, claimable, int64(0))
+		claimable, err = resolver.GetClaimableRewardAmount("alice", zeroStakeTestOtherToken, nil, nil)
+		uassert.NoError(t, err)
+		uassert.Equal(t, claimable, int64(2000))
+	})
 
-		claimable, err := resolver.GetClaimableRewardAmounts(map[string]int64{}, "alice", 20)
+	t.Run("a window that empties out drops the fees that arrive in it", func(cur realm, t *testing.T) {
+		resolver := NewProtocolFeeRewardManagerResolver(staker.NewProtocolFeeRewardManager())
+
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+		uassert.NoError(t, resolver.removeStake("alice", 100, 2))
+		uassert.NoError(t, resolver.addStake("alice", 100, 3))
+
+		// Fees at epoch 2 had nobody to credit; epochs 1 and 3 go to alice.
+		foldAll(t, resolver, zeroStakeTestToken, []int64{1, 2, 3}, []int64{1000, 5000, 1000}, 30)
+
+		claimable, err := resolver.GetClaimableRewardAmount("alice", zeroStakeTestToken, nil, nil)
 		uassert.NoError(t, err)
-		uassert.Equal(t, claimable[zeroStakeTestToken], int64(0))
-		uassert.Equal(t, claimable[zeroStakeTestOtherToken], int64(2000))
+		uassert.Equal(t, claimable, int64(2000))
+		uassert.Equal(t, resolver.GetProtocolFeeAmount(zeroStakeTestToken), int64(7000))
 	})
 }
 
@@ -239,10 +220,7 @@ func TestRewardAccumulators_ZeroStakeWindowPolicyParity(cur realm, t *testing.T)
 
 	// Both see the same window with nothing staked.
 	uassert.NoError(t, emissionResolver.updateAccumulatedRewardX128PerStake(windowAmount, 10))
-	uassert.NoError(t, feeResolver.updateAccumulatedProtocolFeeX128PerStake(
-		map[string]int64{zeroStakeTestToken: windowAmount},
-		10,
-	))
+	foldAll(t, feeResolver, zeroStakeTestToken, []int64{0}, []int64{windowAmount}, 10)
 
 	// Both advanced their cursor past the window without crediting anyone.
 	uassert.Equal(t, emissionResolver.GetDistributedAmount(), windowAmount)
@@ -252,20 +230,17 @@ func TestRewardAccumulators_ZeroStakeWindowPolicyParity(cur realm, t *testing.T)
 
 	// Both then credit the first staker with the post-stake delta only.
 	uassert.NoError(t, emissionResolver.addStake("alice", stakeAmount, 10))
-	uassert.NoError(t, feeResolver.addStake("alice", stakeAmount, 10))
+	uassert.NoError(t, feeResolver.addStake("alice", stakeAmount, 1))
 
 	uassert.NoError(t, emissionResolver.updateAccumulatedRewardX128PerStake(windowAmount+postStakeAmount, 20))
-	uassert.NoError(t, feeResolver.updateAccumulatedProtocolFeeX128PerStake(
-		map[string]int64{zeroStakeTestToken: windowAmount + postStakeAmount},
-		20,
-	))
+	foldAll(t, feeResolver, zeroStakeTestToken, []int64{1}, []int64{postStakeAmount}, 20)
 
 	emissionClaimable, err := emissionResolver.GetClaimableRewardAmount(windowAmount+postStakeAmount, "alice", 20)
 	uassert.NoError(t, err)
-	feeClaimable, err := feeResolver.GetClaimableRewardAmounts(map[string]int64{}, "alice", 20)
+	feeClaimable, err := feeResolver.GetClaimableRewardAmount("alice", zeroStakeTestToken, nil, nil)
 	uassert.NoError(t, err)
 
 	uassert.Equal(t, emissionClaimable, postStakeAmount)
-	uassert.Equal(t, feeClaimable[zeroStakeTestToken], postStakeAmount)
-	uassert.Equal(t, emissionClaimable, feeClaimable[zeroStakeTestToken])
+	uassert.Equal(t, feeClaimable, postStakeAmount)
+	uassert.Equal(t, emissionClaimable, feeClaimable)
 }

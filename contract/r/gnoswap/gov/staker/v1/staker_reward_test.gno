@@ -838,8 +838,12 @@ func setupStakerRewardTestEmissionRewards(cur realm, t *testing.T, gs *govStaker
 func setupStakerRewardTestProtocolFeeRewards(cur realm, t *testing.T, gs *govStakerV1, addr address, amount int64, protocolFeeReward map[string]int64, currentHeight int64) {
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
-	resolvedManager.updateAccumulatedProtocolFeeX128PerStake(protocolFeeReward, currentHeight)
-	resolvedManager.addStake(addr.String(), amount, currentHeight)
+	// Fees collected before the stake fall into the epoch in force and, with nothing
+	// staked yet, are dropped; the stake then opens the next epoch.
+	for tokenPath, amount := range protocolFeeReward {
+		resolvedManager.applyAccrualBuckets(tokenPath, []int64{resolvedManager.GetCurrentEpoch()}, []int64{amount}, true, currentHeight)
+	}
+	resolvedManager.addStake(addr.String(), amount, resolvedManager.GetCurrentEpoch()+1)
 	testing.SetRealm(adminRealm)
 	func(cur realm) {
 		gs.store.SetProtocolFeeRewardManager(0, cur, protocolFeeRewardManager)
@@ -859,7 +863,15 @@ func setupStakerRewardTestAccumulateEmissionRewards(cur realm, t *testing.T, gs 
 func setupStakerRewardTestAccumulateProtocolFeeRewards(cur realm, t *testing.T, gs *govStakerV1, distributedAmounts map[string]int64, currentHeight int64) {
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 	resolvedManager := &ProtocolFeeRewardManagerResolver{protocolFeeRewardManager}
-	resolvedManager.updateAccumulatedProtocolFeeX128PerStake(distributedAmounts, currentHeight)
+	// distributedAmounts are cumulative totals, so only the delta since the last
+	// accumulation is folded, under the epoch in force.
+	for tokenPath, cumulative := range distributedAmounts {
+		delta := cumulative - resolvedManager.GetProtocolFeeAmount(tokenPath)
+		if delta <= 0 {
+			continue
+		}
+		resolvedManager.applyAccrualBuckets(tokenPath, []int64{resolvedManager.GetCurrentEpoch()}, []int64{delta}, true, currentHeight)
+	}
 	testing.SetRealm(adminRealm)
 	func(cur realm) {
 		gs.store.SetProtocolFeeRewardManager(0, cur, protocolFeeRewardManager)

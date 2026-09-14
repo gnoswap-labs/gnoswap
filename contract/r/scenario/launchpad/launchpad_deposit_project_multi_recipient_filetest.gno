@@ -361,7 +361,7 @@ func collectProtocolFeeForOBLProjectRecipient2(cur realm) {
 // [SCENARIO] 9. Collect protocol fee for OBL project recipient 2
 // [INFO] Bar balance in protocol fee: 1000
 // [INFO] Qux balance in protocol fee: 2500
-// [EXPECTED] Gov staker bar balance after collection: 2002
-// [EXPECTED] Gov staker qux balance after collection: 5002
-// [EXPECTED] Project bar balance after collection: 998
-// [EXPECTED] Project qux balance after collection: 2498
+// [EXPECTED] Gov staker bar balance after collection: 2001
+// [EXPECTED] Gov staker qux balance after collection: 5001
+// [EXPECTED] Project bar balance after collection: 999
+// [EXPECTED] Project qux balance after collection: 2499

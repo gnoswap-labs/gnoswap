@@ -12,8 +12,10 @@ type mockProtocolFeeStore struct {
 	accuToDevOps         *bptree.BPTree
 	distributedToGovStakerHistory *bptree.BPTree
 	distributedToDevOpsHistory    *bptree.BPTree
-	reservedTokens       []string
-	accrualPendingTokens []string
+	reservedTokens       *bptree.BPTree
+	accrualEpoch         int64
+	accrualBuckets       map[string]map[int64]int64
+	accrualPendingTokens *bptree.BPTree
 }
 
 // handle devOpsPct store data
@@ -173,38 +175,106 @@ func (s *mockProtocolFeeStore) HasReservedTokensStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeReservedTokens(_ int, rlm realm) error {
-	s.reservedTokens = []string{}
+	s.reservedTokens = protocol_fee.NewBPTreeN(16)
 	return nil
 }
 
 func (s *mockProtocolFeeStore) GetReservedTokens() []string {
-	return s.reservedTokens
+	return mockTreeKeys(s.reservedTokens)
 }
 
-func (s *mockProtocolFeeStore) SetReservedTokens(_ int, rlm realm, reservedTokens []string) error {
-	s.reservedTokens = reservedTokens
-	return nil
+func (s *mockProtocolFeeStore) HasReservedToken(tokenPath string) bool {
+	return s.reservedTokens.Has(tokenPath)
 }
 
 func (s *mockProtocolFeeStore) AddReservedToken(_ int, rlm realm, tokenPath string) error {
-	for _, reservedToken := range s.reservedTokens {
-		if reservedToken == tokenPath {
-			return nil
-		}
-	}
-	s.reservedTokens = append(s.reservedTokens, tokenPath)
+	s.reservedTokens.Set(tokenPath, true)
 	return nil
 }
 
 func (s *mockProtocolFeeStore) RemoveReservedToken(_ int, rlm realm, tokenPath string) error {
-	filteredReservedTokens := make([]string, 0, len(s.reservedTokens))
-	for _, reservedToken := range s.reservedTokens {
-		if reservedToken != tokenPath {
-			filteredReservedTokens = append(filteredReservedTokens, reservedToken)
-		}
+	s.reservedTokens.Remove(tokenPath)
+	return nil
+}
+
+// handle accrualEpoch store data
+func (s *mockProtocolFeeStore) HasAccrualEpochStoreKey() bool {
+	return true
+}
+
+func (s *mockProtocolFeeStore) InitializeAccrualEpoch(_ int, rlm realm) error {
+	s.accrualEpoch = 0
+	return nil
+}
+
+func (s *mockProtocolFeeStore) GetAccrualEpoch() int64 {
+	return s.accrualEpoch
+}
+
+func (s *mockProtocolFeeStore) SetAccrualEpoch(_ int, rlm realm, accrualEpoch int64) error {
+	s.accrualEpoch = accrualEpoch
+	return nil
+}
+
+// handle accrualBuckets store data
+func (s *mockProtocolFeeStore) HasAccrualBucketsStoreKey() bool {
+	return true
+}
+
+func (s *mockProtocolFeeStore) InitializeAccrualBuckets(_ int, rlm realm) error {
+	s.accrualBuckets = map[string]map[int64]int64{}
+	return nil
+}
+
+func (s *mockProtocolFeeStore) GetAccrualBuckets(tokenPath string, limit int) ([]int64, []int64) {
+	epochs := []int64{}
+	amounts := []int64{}
+	tokenBuckets, ok := s.accrualBuckets[tokenPath]
+	if !ok {
+		return epochs, amounts
 	}
 
-	return s.SetReservedTokens(0, rlm, filteredReservedTokens)
+	for epoch := range tokenBuckets {
+		epochs = append(epochs, epoch)
+	}
+	// insertion sort keeps the mock dependency-free
+	for i := 1; i < len(epochs); i++ {
+		for j := i; j > 0 && epochs[j-1] > epochs[j]; j-- {
+			epochs[j-1], epochs[j] = epochs[j], epochs[j-1]
+		}
+	}
+	if limit > 0 && len(epochs) > limit {
+		epochs = epochs[:limit]
+	}
+	for _, epoch := range epochs {
+		amounts = append(amounts, tokenBuckets[epoch])
+	}
+
+	return epochs, amounts
+}
+
+func (s *mockProtocolFeeStore) AddAccrualBucket(_ int, rlm realm, tokenPath string, epoch int64, amount int64) error {
+	tokenBuckets, ok := s.accrualBuckets[tokenPath]
+	if !ok {
+		tokenBuckets = map[int64]int64{}
+		s.accrualBuckets[tokenPath] = tokenBuckets
+	}
+	tokenBuckets[epoch] += amount
+	return nil
+}
+
+func (s *mockProtocolFeeStore) RemoveAccrualBuckets(_ int, rlm realm, tokenPath string, epochs []int64) error {
+	tokenBuckets, ok := s.accrualBuckets[tokenPath]
+	if !ok {
+		return nil
+	}
+	for _, epoch := range epochs {
+		delete(tokenBuckets, epoch)
+	}
+	if len(tokenBuckets) == 0 {
+		delete(s.accrualBuckets, tokenPath)
+	}
+	return nil
 }
 
 // handle accrualPendingTokens store data
@@ -213,50 +283,31 @@ func (s *mockProtocolFeeStore) HasAccrualPendingTokensStoreKey() bool {
 }
 
 func (s *mockProtocolFeeStore) InitializeAccrualPendingTokens(_ int, rlm realm) error {
-	s.accrualPendingTokens = []string{}
+	s.accrualPendingTokens = protocol_fee.NewBPTreeN(16)
 	return nil
 }
 
 func (s *mockProtocolFeeStore) GetAccrualPendingTokens() []string {
-	return s.accrualPendingTokens
-}
-
-func (s *mockProtocolFeeStore) SetAccrualPendingTokens(_ int, rlm realm, accrualPendingTokens []string) error {
-	s.accrualPendingTokens = accrualPendingTokens
-	return nil
+	return mockTreeKeys(s.accrualPendingTokens)
 }
 
 func (s *mockProtocolFeeStore) AddAccrualPendingToken(_ int, rlm realm, tokenPath string) error {
-	for _, accrualPendingToken := range s.accrualPendingTokens {
-		if accrualPendingToken == tokenPath {
-			return nil
-		}
-	}
-	s.accrualPendingTokens = append(s.accrualPendingTokens, tokenPath)
+	s.accrualPendingTokens.Set(tokenPath, true)
 	return nil
 }
 
 func (s *mockProtocolFeeStore) RemoveAccrualPendingToken(_ int, rlm realm, tokenPath string) error {
-	filtered := make([]string, 0, len(s.accrualPendingTokens))
-	listed := false
-	for _, accrualPendingToken := range s.accrualPendingTokens {
-		if accrualPendingToken == tokenPath {
-			listed = true
-			continue
-		}
-
-		filtered = append(filtered, accrualPendingToken)
-	}
-
-	if !listed {
-		return nil
-	}
-
-	return s.SetAccrualPendingTokens(0, rlm, filtered)
+	s.accrualPendingTokens.Remove(tokenPath)
+	return nil
 }
 
-func (s *mockProtocolFeeStore) ClearAccrualPendingTokens(_ int, rlm realm) error {
-	return s.SetAccrualPendingTokens(0, rlm, []string{})
+func mockTreeKeys(tree *bptree.BPTree) []string {
+	keys := []string{}
+	tree.Iterate("", "", func(key string, _ any) bool {
+		keys = append(keys, key)
+		return false
+	})
+	return keys
 }
 
 func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
@@ -266,7 +317,9 @@ func newMockProtocolFeeStore() protocol_fee.IProtocolFeeStore {
 		accuToDevOps:                  protocol_fee.NewBPTreeN(16),
 		distributedToGovStakerHistory: protocol_fee.NewBPTreeN(16),
 		distributedToDevOpsHistory:    protocol_fee.NewBPTreeN(16),
-		reservedTokens:                []string{},
-		accrualPendingTokens:          []string{},
+		reservedTokens:                protocol_fee.NewBPTreeN(16),
+		accrualEpoch:                  0,
+		accrualBuckets:                map[string]map[int64]int64{},
+		accrualPendingTokens:          protocol_fee.NewBPTreeN(16),
 	}
 }

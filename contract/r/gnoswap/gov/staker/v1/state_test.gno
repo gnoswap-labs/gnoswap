@@ -483,7 +483,7 @@ func TestMakeLaunchpadRewardID(cur realm, t *testing.T) {
 	}
 }
 
-func TestClaimAccruedProtocolFeeRewardByTokenPath_NoAccrualDoesNotMaterializeTokenState(cur realm, t *testing.T) {
+func TestClaimTokenReward_NoAccrualDoesNotMaterializeTokenState(cur realm, t *testing.T) {
 	gs := createTestGovStaker()
 	caller := makeFakeAddress("f2-no-distribution")
 	stakerAddress := caller.String()
@@ -491,24 +491,20 @@ func TestClaimAccruedProtocolFeeRewardByTokenPath_NoAccrualDoesNotMaterializeTok
 
 	manager := gs.store.GetProtocolFeeRewardManager()
 	managerResolver := NewProtocolFeeRewardManagerResolver(manager)
-	err := managerResolver.addStake(stakerAddress, 100, 10)
+	err := managerResolver.addStake(stakerAddress, 100, 1)
 	uassert.NoError(t, err)
 
-	processedManager, reward, processed, err := gs.claimAccruedProtocolFeeRewardByTokenPath(stakerAddress, tokenPath, 0, 20)
+	reward, err := managerResolver.claimTokenReward(stakerAddress, tokenPath, 0)
 
 	uassert.NoError(t, err)
-	uassert.False(t, processed)
-	uassert.Equal(t, processedManager, nil)
 	uassert.Equal(t, reward, int64(0))
-	uassert.Equal(t, len(managerResolver.GetAllAccumulatedProtocolFeeX128PerStake()), 0)
-	uassert.Equal(t, len(managerResolver.GetProtocolFeeAmounts()), 0)
+	uassert.Equal(t, len(managerResolver.GetTokenPaths()), 0)
 
 	rewardState, ok, err := managerResolver.GetRewardState(stakerAddress)
 	uassert.NoError(t, err)
 	uassert.True(t, ok)
-	uassert.Equal(t, len(rewardState.GetRewardDebtX128()), 0)
-	uassert.Equal(t, len(rewardState.GetAccumulatedRewards()), 0)
-	uassert.Equal(t, len(rewardState.GetClaimedRewards()), 0)
+	uassert.Equal(t, len(rewardState.GetTokenPaths()), 0)
+	uassert.Equal(t, rewardState.GetStakeEventCount(), int64(1))
 }
 
 // Test launchpad stake operations
