@@ -14,6 +14,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/pool"
 	_ "gno.land/r/gnoswap/pool/collect_balance_revert"
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -31,7 +32,7 @@ const (
 
 	MIN_PRICE string = "4295128740"
 
-	poolV1Path             = "gno.land/r/gnoswap/pool/v1"
+	poolV1Path                = "gno.land/r/gnoswap/pool/v1"
 	poolCollectRevertTestPath = "gno.land/r/gnoswap/pool/collect_balance_revert"
 )
 

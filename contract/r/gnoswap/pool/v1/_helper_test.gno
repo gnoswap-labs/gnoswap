@@ -69,12 +69,6 @@ func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
 }
 
 var (
-	fooToken = common.GetToken(fooPath)
-	barToken = common.GetToken(barPath)
-	bazToken = common.GetToken(bazPath)
-)
-
-var (
 	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
 	devOpsAddr, _ = access.GetAddress(prabc.ROLE_DEVOPS.String())
 

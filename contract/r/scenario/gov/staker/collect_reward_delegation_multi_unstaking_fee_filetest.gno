@@ -19,6 +19,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	_ "gno.land/r/gnoswap/gov/staker/v1"

@@ -9,6 +9,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -21,10 +22,10 @@ import (
 )
 
 const (
-	fee500       uint32 = 500
-	maxApprove   int64  = 9223372036854775806
-	positionLiq         = "1000000000"
-	tinyExactIn         = "1"
+	fee500      uint32 = 500
+	maxApprove  int64  = 9223372036854775806
+	positionLiq        = "1000000000"
+	tinyExactIn        = "1"
 )
 
 var (

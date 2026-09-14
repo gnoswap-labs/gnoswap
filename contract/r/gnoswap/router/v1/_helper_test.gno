@@ -25,6 +25,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 )
 

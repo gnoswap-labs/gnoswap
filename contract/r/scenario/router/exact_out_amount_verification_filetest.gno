@@ -33,6 +33,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -332,4 +333,3 @@ func singleHopLowFeePool(cur realm) {
 // [INFO] amountIn=1002005 amountOut=1000000
 // [EXPECTED] user received: 1000000 (want: 1000000)
 // [EXPECTED] protocol fee (bar): 1502
-

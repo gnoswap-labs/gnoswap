@@ -14,6 +14,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/onbloc/obl"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 	_ "gno.land/r/gnoswap/launchpad/v3_valid"
 )

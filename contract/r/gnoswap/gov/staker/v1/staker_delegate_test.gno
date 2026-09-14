@@ -17,6 +17,7 @@ import (
 
 	_ "gno.land/r/gnoswap/access"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
