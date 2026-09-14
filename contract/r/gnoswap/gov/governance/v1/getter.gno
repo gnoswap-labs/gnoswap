@@ -49,9 +49,10 @@ func (gv *governanceV1) GetConfig(configVersion int64) (governance.Config, error
 }
 
 // GetProposals returns a read-only view of every proposal, keyed by the decimal
-// string form of the proposal ID.
+// string form of the proposal ID. Proposal entries are values, so the view can
+// return each entry directly without a compatibility clone transformer.
 func (gv *governanceV1) GetProposals() *rotree.ReadOnlyTree {
-	return rotree.Wrap(gv.store.GetProposals(), cloneProposalEntry)
+	return rotree.Wrap(gv.store.GetProposals(), nil)
 }
 
 // ExistsProposal checks if a proposal exists.
@@ -97,33 +98,37 @@ func (gv *governanceV1) GetProposalCreatedHeight(proposalId int64) (int64, error
 }
 
 // GetProposalCommunityPoolSpendInfo returns the community pool spend info for a proposal.
-func (gv *governanceV1) GetProposalCommunityPoolSpendInfo(proposalID int64) (*governance.CommunityPoolSpendInfo, error) {
+func (gv *governanceV1) GetProposalCommunityPoolSpendInfo(proposalID int64) (governance.CommunityPoolSpendInfo, error) {
 	proposal, exists := gv.store.GetProposal(proposalID)
 	if !exists {
-		return nil, ufmt.Errorf("proposal %d not found", proposalID)
+		var zero governance.CommunityPoolSpendInfo
+		return zero, ufmt.Errorf("proposal %d not found", proposalID)
 	}
 
 	proposalData := proposal.Data()
 	if proposalData == nil || proposalData.CommunityPoolSpend() == nil {
-		return nil, ufmt.Errorf("proposal is not a community pool spend proposal")
+		var zero governance.CommunityPoolSpendInfo
+		return zero, ufmt.Errorf("proposal is not a community pool spend proposal")
 	}
 
-	return proposalData.CommunityPoolSpend(), nil
+	return *proposalData.CommunityPoolSpend(), nil
 }
 
 // GetProposalExecutionInfo returns the execution info for a proposal.
-func (gv *governanceV1) GetProposalExecutionInfo(proposalID int64) (*governance.ExecutionInfo, error) {
+func (gv *governanceV1) GetProposalExecutionInfo(proposalID int64) (governance.ExecutionInfo, error) {
 	proposal, exists := gv.store.GetProposal(proposalID)
 	if !exists {
-		return nil, ufmt.Errorf("proposal %d not found", proposalID)
+		var zero governance.ExecutionInfo
+		return zero, ufmt.Errorf("proposal %d not found", proposalID)
 	}
 
 	proposalData := proposal.Data()
 	if proposalData == nil || proposalData.Execution() == nil {
-		return nil, ufmt.Errorf("proposal is not a parameter change proposal")
+		var zero governance.ExecutionInfo
+		return zero, ufmt.Errorf("proposal is not a parameter change proposal")
 	}
 
-	return proposalData.Execution(), nil
+	return *proposalData.Execution(), nil
 }
 
 // GetYeaByProposalId returns the yes vote weight of a proposal.
@@ -186,7 +191,7 @@ func (gv *governanceV1) GetProposalStatusByProposalId(proposalId int64) (string,
 	if !exists {
 		return "", ufmt.Errorf("proposal %d not found", proposalId)
 	}
-	proposalResolver := NewProposalResolver(proposal)
+	proposalResolver := NewProposalResolver(&proposal)
 	return proposalResolver.Status(time.Now().Unix()), nil
 }
 
@@ -267,13 +272,13 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool) {
 		hasActiveProposal  bool
 	)
 
-	for id := int64(1); id <= currentProposalID; id++ {
-		proposal, exists := gv.getProposal(id)
+	for proposalID := int64(1); proposalID <= currentProposalID; proposalID++ {
+		proposal, exists := gv.store.GetProposal(proposalID)
 		if !exists {
 			continue
 		}
 
-		proposalResolver := NewProposalResolver(proposal)
+		proposalResolver := NewProposalResolver(&proposal)
 
 		if proposalResolver.IsActive(currentTime) {
 			snapshotTime := proposal.SnapshotTime()

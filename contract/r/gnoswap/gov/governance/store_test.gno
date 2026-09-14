@@ -426,7 +426,7 @@ func TestStoreSetAndGetProposal(cur realm, t *testing.T) {
 				_, exists := gs.GetProposal(1)
 				uassert.False(t, exists, "proposal 1 should not exist")
 
-				proposal := &Proposal{
+				proposal := Proposal{
 					id:       1,
 					proposer: "g1test",
 				}
@@ -436,9 +436,15 @@ func TestStoreSetAndGetProposal(cur realm, t *testing.T) {
 
 				retrieved, exists := gs.GetProposal(1)
 				uassert.True(t, exists, "proposal 1 should exist")
-				uassert.NotEqual(t, nil, retrieved)
 				uassert.Equal(t, int64(1), retrieved.id)
 				uassert.Equal(t, address("g1test"), retrieved.proposer)
+
+				// Proposal reads are value copies; mutating one read cannot
+				// change the value stored in the proposal tree.
+				retrieved.id = 2
+				again, exists := gs.GetProposal(1)
+				uassert.True(t, exists)
+				uassert.Equal(t, int64(1), again.id)
 			},
 		},
 		{
@@ -447,7 +453,7 @@ func TestStoreSetAndGetProposal(cur realm, t *testing.T) {
 				resetTestState(t)
 				gs := NewGovernanceStore(kvStore)
 
-				proposal := &Proposal{
+				proposal := Proposal{
 					id: 1,
 				}
 
@@ -640,7 +646,7 @@ func TestStoreSetAndGetUserProposals(cur realm, t *testing.T) {
 func TestStoreGetUserProposalIDs(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setupFn      func(cur realm, gs IGovernanceStore)
+		setupFn  func(cur realm, gs IGovernanceStore)
 		verifyFn func(cur realm, t *testing.T, gs IGovernanceStore)
 	}{
 		{

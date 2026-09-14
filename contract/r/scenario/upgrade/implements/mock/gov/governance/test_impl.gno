@@ -108,11 +108,11 @@ func (t *TestGovernance) GetProposalCreatedHeight(proposalId int64) (int64, erro
 	return t.instance.GetProposalCreatedHeight(proposalId)
 }
 
-func (t *TestGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (*governance.CommunityPoolSpendInfo, error) {
+func (t *TestGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (governance.CommunityPoolSpendInfo, error) {
 	return t.instance.GetProposalCommunityPoolSpendInfo(proposalID)
 }
 
-func (t *TestGovernance) GetProposalExecutionInfo(proposalID int64) (*governance.ExecutionInfo, error) {
+func (t *TestGovernance) GetProposalExecutionInfo(proposalID int64) (governance.ExecutionInfo, error) {
 	return t.instance.GetProposalExecutionInfo(proposalID)
 }
 

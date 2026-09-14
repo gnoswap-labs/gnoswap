@@ -829,7 +829,7 @@ func TestGovernancePropose_ProposalStateValidation(cur realm, t *testing.T) {
 			}, 5_000_000_000)
 
 			if tt.setupActiveProposal != nil {
-				gov.addProposal(0, cur, tt.setupActiveProposal())
+				gov.addProposal(0, cur, *tt.setupActiveProposal())
 			}
 
 			testing.SetRealm(testing.NewUserRealm(caller))
@@ -1375,5 +1375,5 @@ func setupTestActiveProposal(cur realm, t *testing.T, gov *governanceV1, propose
 		100,
 	)
 
-	gov.addProposal(0, cur, proposal)
+	gov.addProposal(0, cur, *proposal)
 }

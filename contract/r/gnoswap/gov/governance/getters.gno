@@ -43,7 +43,7 @@ func GetConfig(configVersion int64) (Config, error) {
 
 // GetProposals returns a read-only view of every proposal, keyed by the decimal
 // string form of the proposal ID. Callers paginate it themselves through
-// IterateByOffset. Reading an entry yields a clone, so the view cannot mutate
+// IterateByOffset. Reading an entry yields a value copy, so the view cannot mutate
 // realm state.
 func GetProposals() *rotree.ReadOnlyTree {
 	return getImplementation().GetProposals()
@@ -152,23 +152,13 @@ func GetVotedAt(proposalID int64, addr address) (int64, error) {
 }
 
 // GetProposalCommunityPoolSpendInfo returns the community pool spend info for a proposal.
-func GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error) {
-	info, err := getImplementation().GetProposalCommunityPoolSpendInfo(proposalID)
-	if err != nil {
-		return nil, err
-	}
-
-	return info.Clone(), nil
+func GetProposalCommunityPoolSpendInfo(proposalID int64) (CommunityPoolSpendInfo, error) {
+	return getImplementation().GetProposalCommunityPoolSpendInfo(proposalID)
 }
 
 // GetProposalExecutionInfo returns the execution info for a proposal.
-func GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error) {
-	info, err := getImplementation().GetProposalExecutionInfo(proposalID)
-	if err != nil {
-		return nil, err
-	}
-
-	return info.Clone(), nil
+func GetProposalExecutionInfo(proposalID int64) (ExecutionInfo, error) {
+	return getImplementation().GetProposalExecutionInfo(proposalID)
 }
 
 // ==================================

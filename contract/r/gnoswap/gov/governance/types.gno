@@ -1,8 +1,8 @@
 package governance
 
 import (
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type IGovernance interface {
@@ -83,8 +83,8 @@ type IGovernanceGetter interface {
 	GetProposalTypeByProposalId(proposalId int64) (ProposalType, error)
 	GetProposalCreatedAt(proposalId int64) (int64, error)
 	GetProposalCreatedHeight(proposalId int64) (int64, error)
-	GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error)
-	GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error)
+	GetProposalCommunityPoolSpendInfo(proposalID int64) (CommunityPoolSpendInfo, error)
+	GetProposalExecutionInfo(proposalID int64) (ExecutionInfo, error)
 	GetYeaByProposalId(proposalId int64) (int64, error)
 	GetNayByProposalId(proposalId int64) (int64, error)
 	GetConfigVersionByProposalId(proposalId int64) (int64, error)
@@ -129,8 +129,8 @@ type IGovernanceStore interface {
 	// Proposal methods
 	HasProposalsStoreKey() bool
 	GetProposals() *bptree.BPTree
-	GetProposal(proposalID int64) (*Proposal, bool)
-	SetProposal(_ int, rlm realm, proposalID int64, proposal *Proposal) error
+	GetProposal(proposalID int64) (Proposal, bool)
+	SetProposal(_ int, rlm realm, proposalID int64, proposal Proposal) error
 	SetProposals(_ int, rlm realm, proposals *bptree.BPTree) error
 
 	// Proposal voting info methods

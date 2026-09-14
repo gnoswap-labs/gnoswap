@@ -169,25 +169,22 @@ func (s *governanceStore) SetProposals(_ int, rlm realm, proposals *bptree.BPTre
 	return s.kvStore.Set(0, rlm, StoreKeyProposals.String(), proposals)
 }
 
-func (s *governanceStore) GetProposal(proposalID int64) (*Proposal, bool) {
+func (s *governanceStore) GetProposal(proposalID int64) (Proposal, bool) {
 	proposals := s.GetProposals()
 	result := proposals.Get(formatInt64Key(proposalID))
 	if result == nil {
-		return nil, false
+		return Proposal{}, false
 	}
 
-	// Proposal entries are stored as values. Return a detached pointer copy to
-	// preserve the existing pointer-based reader API without exposing the value
-	// held by the storage tree.
 	proposal, ok := result.(Proposal)
 	if !ok {
-		return nil, false
+		return Proposal{}, false
 	}
 
-	return proposal.Clone(), true
+	return proposal, true
 }
 
-func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal *Proposal) error {
+func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal Proposal) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
 	}
@@ -196,14 +193,12 @@ func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, propos
 		return errors.New("proposals store key not found")
 	}
 
-	if proposal == nil || proposal.ID() != proposalID {
+	if proposal.ID() != proposalID {
 		return errors.New("proposal ID does not match the storage key")
 	}
 
-	// Store a detached deep copy as a value. Nested status, metadata, and data
-	// pointers must not remain aliased with the caller's mutable proposal.
 	proposals := s.GetProposals()
-	proposals.Set(formatInt64Key(proposalID), *proposal.Clone())
+	proposals.Set(formatInt64Key(proposalID), proposal)
 
 	return s.kvStore.Set(0, rlm, StoreKeyProposals.String(), proposals)
 }

@@ -83,26 +83,29 @@ func (m *mockGovernanceStore) GetProposals() *bptree.BPTree {
 	return m.proposals
 }
 
-func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposal, bool) {
+func (m *mockGovernanceStore) GetProposal(proposalID int64) (governance.Proposal, bool) {
 	if m.proposals == nil {
-		return nil, false
+		var zero governance.Proposal
+		return zero, false
 	}
 	result := m.proposals.Get(utils.FormatInt(proposalID))
 	if result == nil {
-		return nil, false
+		var zero governance.Proposal
+		return zero, false
 	}
 	proposal, ok := result.(governance.Proposal)
 	if !ok {
-		return nil, false
+		var zero governance.Proposal
+		return zero, false
 	}
-	return proposal.Clone(), true
+	return proposal, true
 }
 
-func (m *mockGovernanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal *governance.Proposal) error {
+func (m *mockGovernanceStore) SetProposal(_ int, rlm realm, proposalID int64, proposal governance.Proposal) error {
 	if m.proposals == nil {
 		m.proposals = governance.NewProposalTree()
 	}
-	m.proposals.Set(utils.FormatInt(proposalID), *proposal.Clone())
+	m.proposals.Set(utils.FormatInt(proposalID), proposal)
 	return nil
 }
 

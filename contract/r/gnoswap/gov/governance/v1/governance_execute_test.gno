@@ -374,7 +374,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 				uassert.ErrorContains(t, err, tt.expectedErrorMessage)
 			} else {
 				uassert.NoError(t, err)
-				uassert.NotEqual(t, nil, proposal)
+				uassert.Equal(t, int64(tt.proposalId), proposal.ID())
 				statusResolver := NewProposalStatusResolver(proposal.Status())
 				uassert.Equal(t, true, statusResolver.IsExecuted(time.Now().Unix()))
 			}
@@ -1318,7 +1318,7 @@ func TestGovernanceExecute_executeCommunityPoolSpend(cur realm, t *testing.T) {
 			testing.SetRealm(govRealm)
 			err = executeCommunityPoolSpend(
 				0, cur,
-				proposal,
+				*proposal,
 				registry,
 				tt.executedAt,
 				tt.executedHeight,
@@ -1467,7 +1467,7 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 			testing.SetRealm(govRealm)
 			err = executeParameterChange(
 				0, cur,
-				proposal,
+				*proposal,
 				registry,
 				tt.executedAt,
 				tt.executedHeight,
@@ -1487,7 +1487,7 @@ func TestGovernanceExecute_executeParameterChange(cur realm, t *testing.T) {
 
 // Helper functions for execute tests
 func setupExecuteTestProposal(cur realm, t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
-	gov.addProposal(0, cur, proposal)
+	gov.addProposal(0, cur, *proposal)
 }
 
 func setupGovernanceExecuteTestCommunityPoolBalance(cur realm, t *testing.T) {

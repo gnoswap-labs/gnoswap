@@ -71,7 +71,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, proposal)
+				gv.addProposal(0, cur, *proposal)
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay - 10,
 			expectedRemainingCount: 1,
@@ -92,7 +92,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, proposal)
+				gv.addProposal(0, cur, *proposal)
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay + 50, // during voting period
 			expectedRemainingCount: 1,
@@ -113,7 +113,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, proposal)
+				gv.addProposal(0, cur, *proposal)
 			},
 			currentTime:            expiredTime + 100, // after expired
 			expectedRemainingCount: 0,
@@ -135,7 +135,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, oldProposal)
+				gv.addProposal(0, cur, *oldProposal)
 
 				// Active proposal (created after first one expired)
 				newCreatedAt := expiredTime + 50
@@ -150,7 +150,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, newCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, newProposal)
+				gv.addProposal(0, cur, *newProposal)
 			},
 			currentTime:            expiredTime + 50 + config.VotingStartDelay + 50, // during new proposal's voting period
 			expectedRemainingCount: 1,
@@ -171,12 +171,12 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 					proposerAddr, 1, baseCreatedAt,
 					100,
 				)
-				gv.addProposal(0, cur, proposal)
+				gv.addProposal(0, cur, *proposal)
 
 				// Cancel the proposal
 				proposalResolver := NewProposalResolver(proposal)
 				_ = proposalResolver.cancel(baseCreatedAt+50, 100, proposerAddr)
-				if err := gv.store.SetProposal(0, cur, proposal.ID(), proposal); err != nil {
+				if err := gv.store.SetProposal(0, cur, proposal.ID(), *proposal); err != nil {
 					panic(err)
 				}
 			},
@@ -208,7 +208,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 				proposalResolver := NewProposalResolver(proposal)
 				_ = proposalResolver.Vote(true, 600)
 
-				gv.addProposal(0, cur, proposal)
+				gv.addProposal(0, cur, *proposal)
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay + config.VotingPeriod + config.ExecutionDelay + 50,
 			expectedRemainingCount: 1,
@@ -230,7 +230,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 						proposerAddr, 1, baseCreatedAt,
 						100,
 					)
-					gv.addProposal(0, cur, proposal)
+					gv.addProposal(0, cur, *proposal)
 				}
 			},
 			currentTime:            expiredTime + 100,
@@ -253,7 +253,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 						proposerAddr, 1, baseCreatedAt,
 						100,
 					)
-					gv.addProposal(0, cur, proposal)
+					gv.addProposal(0, cur, *proposal)
 				}
 			},
 			currentTime:            baseCreatedAt + config.VotingStartDelay + 50, // during voting period

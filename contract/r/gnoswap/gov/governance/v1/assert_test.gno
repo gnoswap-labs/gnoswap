@@ -37,7 +37,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(0, cur, proposal)
+				gv.addProposal(0, cur, *proposal)
 				return 1
 			},
 			caller:        testutils.TestAddress("proposer1"),
@@ -71,7 +71,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(0, cur, proposal)
+				gv.addProposal(0, cur, *proposal)
 				return 2
 			},
 			caller:           testutils.TestAddress("not_proposer"),
@@ -96,7 +96,7 @@ func TestAssert_assertCallerIsProposer(cur realm, t *testing.T) {
 					time.Now().Unix(),
 					100,
 				)
-				gv.addProposal(0, cur, proposal)
+				gv.addProposal(0, cur, *proposal)
 				return 3
 			},
 			caller:        testutils.TestAddress("proposer2"),

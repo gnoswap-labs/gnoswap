@@ -215,26 +215,26 @@ func (m *MockGovernance) GetProposalCreatedHeight(proposalId int64) (int64, erro
 	return res[0].(int64), nil
 }
 
-func (m *MockGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (*CommunityPoolSpendInfo, error) {
+func (m *MockGovernance) GetProposalCommunityPoolSpendInfo(proposalID int64) (CommunityPoolSpendInfo, error) {
 	res, ok := m.Response.Get("GetProposalCommunityPoolSpendInfo")
 	if !ok {
-		return nil, nil
+		return CommunityPoolSpendInfo{}, nil
 	}
 	if res[1] != nil {
-		return nil, res[1].(error)
+		return CommunityPoolSpendInfo{}, res[1].(error)
 	}
-	return res[0].(*CommunityPoolSpendInfo), nil
+	return res[0].(CommunityPoolSpendInfo), nil
 }
 
-func (m *MockGovernance) GetProposalExecutionInfo(proposalID int64) (*ExecutionInfo, error) {
+func (m *MockGovernance) GetProposalExecutionInfo(proposalID int64) (ExecutionInfo, error) {
 	res, ok := m.Response.Get("GetProposalExecutionInfo")
 	if !ok {
-		return nil, nil
+		return ExecutionInfo{}, nil
 	}
 	if res[1] != nil {
-		return nil, res[1].(error)
+		return ExecutionInfo{}, res[1].(error)
 	}
-	return res[0].(*ExecutionInfo), nil
+	return res[0].(ExecutionInfo), nil
 }
 
 func (m *MockGovernance) GetProposalTypeByProposalId(id int64) (ProposalType, error) {

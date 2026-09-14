@@ -832,7 +832,7 @@ func TestGovernanceVote_QuorumCalculation(cur realm, t *testing.T) {
 }
 
 func setupTestProposal(cur realm, t *testing.T, gov *governanceV1, proposal *governance.Proposal) {
-	gov.addProposal(0, cur, proposal)
+	gov.addProposal(0, cur, *proposal)
 
 	// Initialize empty voting info tree for the proposal if not exists
 	if _, exists := gov.getProposalUserVotingInfos(proposal.ID()); !exists {

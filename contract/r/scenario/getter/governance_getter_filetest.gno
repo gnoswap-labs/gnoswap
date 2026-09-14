@@ -182,7 +182,7 @@ func testProposalGetters(cur realm, proposalId int64) {
 	println("[EXPECTED] Proposal 999 exists:", exists999)
 
 	// GetProposals entry
-	proposal, ok := governance.GetProposals().Get(strconv.FormatInt(proposalId, 10)).(*governance.Proposal)
+	proposal, ok := governance.GetProposals().Get(strconv.FormatInt(proposalId, 10)).(governance.Proposal)
 	if !ok {
 		panic("proposal not found")
 	}

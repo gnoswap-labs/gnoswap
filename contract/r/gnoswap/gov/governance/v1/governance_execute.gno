@@ -86,51 +86,56 @@ func (gv *governanceV1) executeProposal(
 	executedAt int64,
 	executedHeight int64,
 	executedBy address,
-) (*governance.Proposal, error) {
-	// Retrieve the proposal from storage
+) (governance.Proposal, error) {
+	// Retrieve the proposal from storage.
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
-		return nil, errors.New(errDataNotFound)
+		var zero governance.Proposal
+		return zero, errors.New(errDataNotFound)
 	}
 
-	// Text proposals cannot be executed (they are informational only)
+	// Text proposals cannot be executed (they are informational only).
 	if proposal.IsTextType() {
-		return nil, errors.New(errTextProposalNotExecutable)
+		var zero governance.Proposal
+		return zero, errors.New(errTextProposalNotExecutable)
 	}
 
-	proposalResolver := NewProposalResolver(proposal)
+	proposalResolver := NewProposalResolver(&proposal)
 
-	// Verify proposal is in executable state (timing and voting requirements met)
+	// Verify proposal is in executable state (timing and voting requirements met).
 	if !proposalResolver.IsExecutable(executedAt) {
-		return nil, errors.New(errProposalNotExecutable)
+		var zero governance.Proposal
+		return zero, errors.New(errProposalNotExecutable)
 	}
 
-	// Mark proposal as executed in its status
+	// Mark proposal as executed in its status.
 	err := proposalResolver.execute(executedAt, executedHeight, executedBy)
 	if err != nil {
-		return nil, err
+		var zero governance.Proposal
+		return zero, err
 	}
 
-	// Persist the status transition before invoking proposal actions. This
-	// preserves the old pointer-backed mutation order while still writing back
-	// the detached value held by value-backed storage.
+	// Persist the status transition before invoking proposal actions.
 	if err := gv.store.SetProposal(0, rlm, proposalID, proposal); err != nil {
-		return nil, err
+		var zero governance.Proposal
+		return zero, err
 	}
 
-	// Execute proposal based on its type
+	// Execute proposal based on its type.
 	switch proposal.Type() {
 	case governance.CommunityPoolSpend:
-		// Execute community pool spending (token transfers)
+		// Execute community pool spending (token transfers).
 		err = executeCommunityPoolSpend(0, rlm, proposal, globalParameterRegistry, executedAt, executedHeight, executedBy)
 		if err != nil {
-			return nil, err
+			var zero governance.Proposal
+			return zero, err
 		}
 	case governance.ParameterChange:
-		// Execute parameter changes (governance configuration updates)
+		// Execute parameter changes (governance configuration updates).
 		err = executeParameterChange(0, rlm, proposal, globalParameterRegistry, executedAt, executedHeight, executedBy)
 		if err != nil {
-			return nil, err
+			var zero governance.Proposal
+			return zero, err
 		}
 	}
 
@@ -199,26 +204,29 @@ func (gv *governanceV1) cancel(
 	_ int, rlm realm,
 	proposalID, canceledAt, canceledHeight int64,
 	canceledBy address,
-) (proposal *governance.Proposal, err error) {
+) (proposal governance.Proposal, err error) {
 	// Retrieve the proposal from storage. Value-backed storage returns a
 	// detached mutable copy that must be written back after cancellation.
 	proposal, ok := gv.getProposal(proposalID)
 	if !ok {
-		return nil, errors.New(errDataNotFound)
+		var zero governance.Proposal
+		return zero, errors.New(errDataNotFound)
 	}
 
-	proposalResolver := NewProposalResolver(proposal)
+	proposalResolver := NewProposalResolver(&proposal)
 
-	// Attempt to cancel the proposal (this validates cancellation conditions)
+	// Attempt to cancel the proposal (this validates cancellation conditions).
 	err = proposalResolver.cancel(canceledAt, canceledHeight, canceledBy)
 	if err != nil {
-		return nil, err
+		var zero governance.Proposal
+		return zero, err
 	}
 
 	// Cancellation mutates a detached value copy, so write the new status back
 	// before returning.
 	if err = gv.store.SetProposal(0, rlm, proposalID, proposal); err != nil {
-		return nil, err
+		var zero governance.Proposal
+		return zero, err
 	}
 
 	return proposal, nil
@@ -228,7 +236,7 @@ func (gv *governanceV1) cancel(
 // Handles token transfers from community pool to specified recipients.
 func executeCommunityPoolSpend(
 	_ int, rlm realm,
-	proposal *governance.Proposal,
+	proposal governance.Proposal,
 	parameterRegistry *ParameterRegistry,
 	executedAt int64,
 	executedHeight int64,
@@ -267,7 +275,7 @@ func executeCommunityPoolSpend(
 // Handles governance configuration updates and system parameter modifications.
 func executeParameterChange(
 	_ int, rlm realm,
-	proposal *governance.Proposal,
+	proposal governance.Proposal,
 	parameterRegistry *ParameterRegistry,
 	executedAt int64,
 	executedHeight int64,

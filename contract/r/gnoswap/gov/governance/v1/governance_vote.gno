@@ -102,7 +102,7 @@ func (gv *governanceV1) vote(
 		return nil, 0, 0, makeErrorWithDetails(errDataNotFound, "not found proposal")
 	}
 
-	proposalResolver := NewProposalResolver(proposal)
+	proposalResolver := NewProposalResolver(&proposal)
 
 	// Check if current time is within voting period
 	if !proposalResolver.IsVotingPeriod(votedAt) {

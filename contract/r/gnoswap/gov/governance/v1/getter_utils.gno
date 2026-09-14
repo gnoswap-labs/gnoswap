@@ -8,18 +8,6 @@ import (
 // rotree.Wrap. They run on every read through a read-only view, so each one
 // returns a value the caller may hold without reaching realm-owned state.
 
-// cloneProposalEntry is the transformation for the proposal tree. Proposal is
-// mutable and its setters are declared in /r/gnoswap/gov/governance, so the
-// caller must receive a pointer clone rather than the stored value itself.
-func cloneProposalEntry(value any) any {
-	proposal, ok := value.(governance.Proposal)
-	if !ok {
-		return nil
-	}
-
-	return proposal.Clone()
-}
-
 // cloneVotingInfoEntry is the transformation for a proposal's voting info
 // tree. VotingInfo is mutable and its setters are declared in
 // /r/gnoswap/gov/governance, so an external holder of the stored pointer could

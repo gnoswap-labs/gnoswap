@@ -48,7 +48,7 @@ func setupGetterTestWithProposal(cur realm, t *testing.T) *governanceV1 {
 		runtime.ChainHeight(),
 	)
 
-	gv.store.SetProposal(0, cur, 1, proposal)
+	gv.store.SetProposal(0, cur, 1, *proposal)
 	gv.store.GetProposalCounter().Next()
 	gv.store.AddUserProposal(0, cur, "g1proposer", 1)
 
@@ -262,7 +262,7 @@ func TestGetProposals(cur realm, t *testing.T) {
 
 			ids := make([]string, 0)
 			gv.GetProposals().IterateByOffset(tc.offset, tc.count, func(key string, value any) bool {
-				_, ok := value.(*governance.Proposal)
+				_, ok := value.(governance.Proposal)
 				uassert.True(t, ok)
 				ids = append(ids, key)
 				return false
@@ -272,18 +272,23 @@ func TestGetProposals(cur realm, t *testing.T) {
 	}
 }
 
-func TestGetProposals_EntriesAreCloned(cur realm, t *testing.T) {
+func TestGetProposals_EntriesAreValues(cur realm, t *testing.T) {
 	gv := setupGetterTestWithProposal(cur, t)
 	proposals := gv.GetProposals()
 
-	first, ok := proposals.Get("1").(*governance.Proposal)
+	first, ok := proposals.Get("1").(governance.Proposal)
 	uassert.True(t, ok)
-	second, ok := proposals.Get("1").(*governance.Proposal)
+	second, ok := proposals.Get("1").(governance.Proposal)
 	uassert.True(t, ok)
 
-	// Each read hands out a distinct clone, so a reader cannot reach the stored
-	// proposal nor any other reader's copy.
-	uassert.False(t, first == second)
+	// Each read returns a value copy. Mutating one local status cannot affect
+	// another read or the proposal held by the storage tree.
+	first.Status().ActionStatus().SetCanceled(true)
+	uassert.False(t, second.Status().ActionStatus().Canceled())
+
+	stored, ok := gv.store.GetProposal(1)
+	uassert.True(t, ok)
+	uassert.False(t, stored.Status().ActionStatus().Canceled())
 }
 
 func TestExistsProposal(cur realm, t *testing.T) {
@@ -348,12 +353,12 @@ func TestGetProposal(cur realm, t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			gv := tc.setup(cur, t)
-			proposal, ok := gv.GetProposals().Get(formatProposalKey(tc.proposalID)).(*governance.Proposal)
+			proposal, ok := gv.GetProposals().Get(formatProposalKey(tc.proposalID)).(governance.Proposal)
 			if tc.expectError {
 				uassert.False(t, ok)
 			} else {
 				uassert.True(t, ok)
-				uassert.True(t, proposal != nil)
+				uassert.Equal(t, tc.proposalID, proposal.ID())
 			}
 		})
 	}

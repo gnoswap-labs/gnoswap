@@ -147,9 +147,6 @@ func NewProposal(
 	dataValue := ProposalData{}
 	if data != nil {
 		dataValue = *data
-		if data.executionPresent {
-			dataValue.execution.msgs = append([]string(nil), data.execution.msgs...)
-		}
 	}
 
 	return &Proposal{
@@ -162,20 +159,6 @@ func NewProposal(
 		snapshotTime:  snapshotTime,
 		createdHeight: createdHeight,
 	}
-}
-
-// Clone returns a detached proposal copy. Only execution messages require
-// copying because all remaining proposal state is stored by value.
-func (p *Proposal) Clone() *Proposal {
-	if p == nil {
-		return nil
-	}
-
-	cloned := *p
-	if p.data.executionPresent {
-		cloned.data.execution.msgs = append([]string(nil), p.data.execution.msgs...)
-	}
-	return &cloned
 }
 
 func NewProposalTree() *bptree.BPTree {

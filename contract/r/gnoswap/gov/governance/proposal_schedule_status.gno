@@ -54,18 +54,3 @@ func (p *ProposalScheduleStatus) SetExecutableTime(executableTime int64) {
 func (p *ProposalScheduleStatus) SetExpiredTime(expiredTime int64) {
 	p.expiredTime = expiredTime
 }
-
-// Clone creates a deep copy of the ProposalScheduleStatus.
-func (p *ProposalScheduleStatus) Clone() *ProposalScheduleStatus {
-	if p == nil {
-		return nil
-	}
-
-	return &ProposalScheduleStatus{
-		createTime:     p.createTime,
-		activeTime:     p.activeTime,
-		votingEndTime:  p.votingEndTime,
-		executableTime: p.executableTime,
-		expiredTime:    p.expiredTime,
-	}
-}

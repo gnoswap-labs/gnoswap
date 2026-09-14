@@ -206,7 +206,7 @@ func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 
 			// Create proposal
 			proposal := createTestProposal(tt.proposalID)
-			store.SetProposal(0, cur, tt.proposalID, proposal)
+			store.SetProposal(0, cur, tt.proposalID, *proposal)
 
 			// Create voting infos
 			votingInfos := governance.NewProposalUserVotingInfoTree()
@@ -217,7 +217,7 @@ func TestUpdateProposalUserVotes(cur realm, t *testing.T) {
 			}
 
 			// Update votes
-			err := gv.updateProposalUserVotes(0, cur, proposal, votingInfos)
+			err := gv.updateProposalUserVotes(0, cur, *proposal, votingInfos)
 
 			uassert.NoError(t, err)
 

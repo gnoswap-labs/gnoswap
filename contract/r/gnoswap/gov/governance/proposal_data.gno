@@ -97,7 +97,7 @@ func NewProposalData(proposalType ProposalType, communityPoolSpend *CommunityPoo
 		data.communityPoolSpend = *communityPoolSpend
 	}
 	if execution != nil {
-		data.execution = ExecutionInfo{num: execution.num, msgs: append([]string(nil), execution.msgs...)}
+		data.execution = *execution
 	}
 	return data
 }
@@ -132,7 +132,7 @@ type ExecutionInfo struct {
 func NewExecutionInfo(num int64, msgs []string) *ExecutionInfo {
 	return &ExecutionInfo{
 		num:  num,
-		msgs: msgs,
+		msgs: append([]string(nil), msgs...),
 	}
 }
 
@@ -162,17 +162,3 @@ func NewParameterChangeInfo(pkgPath string, function string, params []string) Pa
 func (i *ParameterChangeInfo) PkgPath() string  { return i.pkgPath }
 func (i *ParameterChangeInfo) Function() string { return i.function }
 func (i *ParameterChangeInfo) Params() []string { return i.params }
-
-func (i *CommunityPoolSpendInfo) Clone() *CommunityPoolSpendInfo {
-	if i == nil {
-		return nil
-	}
-	return &CommunityPoolSpendInfo{to: i.to, tokenPath: i.tokenPath, amount: i.amount}
-}
-
-func (i *ExecutionInfo) Clone() *ExecutionInfo {
-	if i == nil {
-		return nil
-	}
-	return &ExecutionInfo{num: i.num, msgs: append([]string(nil), i.msgs...)}
-}

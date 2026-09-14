@@ -1,55 +1,12 @@
 package governance
 
 import (
-	"chain/runtime"
 	"testing"
-	"time"
 
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
-
-func newCloneTestProposal(cur realm, t *testing.T) *governance.Proposal {
-	t.Helper()
-
-	gv := setupGetterTest(cur, t)
-	config, _ := gv.store.GetConfig(1)
-	baseTime := time.Now().Unix()
-
-	return governance.NewProposal(
-		1,
-		NewProposalStatus(config, 1000, governance.Text.IsExecutable(), baseTime, 1000),
-		governance.NewProposalMetadata("Test Proposal", "Test Description"),
-		governance.NewProposalData(governance.Text, nil, nil),
-		address("g1proposer"),
-		1,
-		baseTime,
-		runtime.ChainHeight(),
-	)
-}
-
-func TestCloneProposalEntry(cur realm, t *testing.T) {
-	t.Run("returns nil for a value that is not a proposal", func(cur realm, t *testing.T) {
-		uassert.Equal(t, nil, cloneProposalEntry("not a proposal"))
-		uassert.Equal(t, nil, cloneProposalEntry(nil))
-	})
-
-	t.Run("returns a distinct copy per read", func(cur realm, t *testing.T) {
-		stored := newCloneTestProposal(cur, t)
-		storedValue := *stored.Clone()
-
-		first, ok := cloneProposalEntry(storedValue).(*governance.Proposal)
-		uassert.True(t, ok)
-		second, ok := cloneProposalEntry(storedValue).(*governance.Proposal)
-		uassert.True(t, ok)
-
-		uassert.False(t, first == stored)
-		uassert.False(t, first == second)
-		uassert.Equal(t, stored.ID(), first.ID())
-		uassert.Equal(t, stored.Title(), first.Title())
-	})
-}
 
 func TestCloneVotingInfoEntry(cur realm, t *testing.T) {
 	t.Run("returns nil for a value that is not a voting info", func(cur realm, t *testing.T) {

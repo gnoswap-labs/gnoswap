@@ -364,30 +364,33 @@ func (gv *governanceV1) createProposal(
 	proposerXGnsBalance int64,
 	createdAt int64,
 	createdHeight int64,
-) (*governance.Proposal, error) {
-	// Validate proposal metadata (title and description)
+) (governance.Proposal, error) {
+	// Validate proposal metadata (title and description).
 	metadataResolver := NewProposalMetadataResolver(proposalMetadata)
 	err := metadataResolver.Validate()
 	if err != nil {
-		return nil, err
+		var zero governance.Proposal
+		return zero, err
 	}
 
-	// Validate proposal data (type-specific validation)
+	// Validate proposal data (type-specific validation).
 	dataResolver := NewProposalDataResolver(proposalData)
 	err = dataResolver.Validate()
 	if err != nil {
-		return nil, err
+		var zero governance.Proposal
+		return zero, err
 	}
 
-	// Check if proposer has enough xGNS balance to create proposal
+	// Check if proposer has enough xGNS balance to create proposal.
 	if proposerXGnsBalance < config.ProposalCreationThreshold {
-		return nil, errors.New(errNotEnoughBalance)
+		var zero governance.Proposal
+		return zero, errors.New(errNotEnoughBalance)
 	}
 
-	// Generate unique proposal ID
+	// Generate unique proposal ID.
 	proposalID := gv.nextProposalID(0, rlm)
 
-	// Create proposal status with voting schedule and requirements
+	// Create proposal status with voting schedule and requirements.
 	proposalStatus := NewProposalStatus(
 		config,
 		maxVotingWeight,
@@ -396,11 +399,11 @@ func (gv *governanceV1) createProposal(
 		quorumWeight,
 	)
 
-	// Get current configuration version for tracking
+	// Get current configuration version for tracking.
 	configVersion := gv.getCurrentConfigVersion()
 
-	// Create the proposal object with snapshotTime for lazy voting weight lookup
-	proposal := governance.NewProposal(
+	// Create the proposal object with snapshotTime for lazy voting weight lookup.
+	proposal := *governance.NewProposal(
 		proposalID,
 		proposalStatus,
 		proposalMetadata,
@@ -411,10 +414,11 @@ func (gv *governanceV1) createProposal(
 		createdHeight,
 	)
 
-	// Store the proposal in state
+	// Store the proposal in state.
 	success := gv.addProposal(0, rlm, proposal)
 	if !success {
-		return nil, errors.New(errDataNotFound)
+		var zero governance.Proposal
+		return zero, errors.New(errDataNotFound)
 	}
 
 	return proposal, nil

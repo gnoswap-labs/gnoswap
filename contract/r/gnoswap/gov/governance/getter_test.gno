@@ -28,6 +28,17 @@ func newVotingInfoFixture() *VotingInfo {
 	return votingInfo
 }
 
+func TestExecutionMessagesOwnInputAndOutput(t *testing.T) {
+	input := []string{"original"}
+	info := NewExecutionInfo(1, input)
+	input[0] = "changed input"
+	uassert.Equal(t, "original", info.Msgs()[0])
+
+	output := info.Msgs()
+	output[0] = "changed output"
+	uassert.Equal(t, "original", info.Msgs()[0])
+}
+
 func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 	tests := []struct {
 		name      string
@@ -40,7 +51,7 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 			name: "GetProposalCommunityPoolSpendInfo",
 			setup: func(m *MockGovernance) {
 				stored := newProposalFixture()
-				m.Response.Set("GetProposalCommunityPoolSpendInfo", &stored.data.communityPoolSpend, nil)
+				m.Response.Set("GetProposalCommunityPoolSpendInfo", stored.data.communityPoolSpend, nil)
 				m.Response.Set("storedProposal", stored)
 			},
 			getter: func(t *testing.T) any {
@@ -49,7 +60,7 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 				return info
 			},
 			mutate: func(result any) {
-				info := result.(*CommunityPoolSpendInfo)
+				info := result.(CommunityPoolSpendInfo)
 				info.tokenPath = "mutated"
 				info.amount = 999
 			},
@@ -63,7 +74,7 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 			name: "GetProposalExecutionInfo",
 			setup: func(m *MockGovernance) {
 				stored := newProposalFixture()
-				m.Response.Set("GetProposalExecutionInfo", &stored.data.execution, nil)
+				m.Response.Set("GetProposalExecutionInfo", stored.data.execution, nil)
 				m.Response.Set("storedProposal", stored)
 			},
 			getter: func(t *testing.T) any {
@@ -72,10 +83,11 @@ func TestMutableGovernanceGetterIsolation(cur realm, t *testing.T) {
 				return info
 			},
 			mutate: func(result any) {
-				info := result.(*ExecutionInfo)
+				info := result.(ExecutionInfo)
 				info.num = 999
-				info.msgs[0] = "mutated"
-				info.msgs = append(info.msgs, "extra")
+				msgs := info.Msgs()
+				msgs[0] = "mutated"
+				msgs = append(msgs, "extra")
 			},
 			assertRaw: func(t *testing.T, m *MockGovernance) {
 				info := storedTestProposal(m).data.execution
