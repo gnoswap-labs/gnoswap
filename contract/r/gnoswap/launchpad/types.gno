@@ -2,8 +2,8 @@ package launchpad
 
 import (
 	"gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type ILaunchpad interface {
@@ -97,6 +97,10 @@ type ILaunchpadStore interface {
 	HasProjectsKey() bool
 	GetProjects() *bptree.BPTree
 	SetProjects(_ int, rlm realm, projects *bptree.BPTree) error
+
+	HasProjectRecipientsKey() bool
+	GetProjectRecipients() *bptree.BPTree
+	SetProjectRecipients(_ int, rlm realm, recipients *bptree.BPTree) error
 
 	HasProjectTierRewardManagersKey() bool
 	GetProjectTierRewardManagers() *bptree.BPTree

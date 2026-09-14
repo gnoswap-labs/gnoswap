@@ -5,18 +5,19 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
 )
 
-// AddToken adds a new token path to the list of allowed tokens
-// Only the admin can add a new token.
+// AddToken adds a registered token key to the list of allowed tokens.
+// Only admin or governance can add a token.
 //
 // Parameters:
-//   - tokenPath (string): The path of the token to add
+//   - tokenPath (string): The registered token key to add
 //
 // Panics:
-//   - If the caller is not the admin
+//   - If the caller is not admin or governance, or the token key is not registered
 func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -29,6 +30,8 @@ func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 	if err := checkCannotAddDefaultToken(tokenPath); err != nil {
 		panic(err.Error())
 	}
+
+	common.MustRegistered(tokenPath)
 
 	if err := s.store.AddAllowedToken(0, rlm, tokenPath); err != nil {
 		panic(err.Error())
