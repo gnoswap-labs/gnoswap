@@ -11,11 +11,10 @@ package main
 
 import (
 	"chain/runtime"
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
 	"time"
-
-	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/gnoswap/scenarioutils"
 

@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/nt/grc721/v0"
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/nt/grc721/v0"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -31,10 +31,10 @@ import (
 )
 
 const (
-	targetPoolPath          = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000"
-	unrelatedPoolPath       = "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:3000"
-	maxTimeout        int64 = 9999999999
-	maxInt64          int64 = 9223372036854775807
+	targetPoolPath    = "gno.land/r/onbloc/bar.BAR:gno.land/r/onbloc/baz.BAZ:3000"
+	unrelatedPoolPath = "gno.land/r/onbloc/foo.FOO:gno.land/r/onbloc/qux.QUX:3000"
+	maxTimeout  int64 = 9999999999
+	maxInt64    int64 = 9223372036854775807
 )
 
 var (

@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/nt/grc721/v0"
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"

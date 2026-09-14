@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/grc721/v0"
+	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
+	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"

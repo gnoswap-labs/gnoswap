@@ -840,8 +840,8 @@ func TestSwapMath_handleExactIn(t *testing.T) {
 			currentX96:           encodePriceSqrtTest(t, "1", "1"),
 			targetX96:            encodePriceSqrtTest(t, "121", "100"),
 			liquidity:            u256.MustFromDecimal("2000000000000000000"),
-			amountRemainingAbs:   u256.One(),                   // 1 unit
-			withoutFeeRateInPips: u256.NewUint(1000000 - 3000), // 99.7%: 1 * 997000 / 1000000 = 0
+			amountRemainingAbs:   u256.One(),                       // 1 unit
+			withoutFeeRateInPips: u256.NewUint(1000000 - 3000),     // 99.7%: 1 * 997000 / 1000000 = 0
 			expectedSqrtNext:     encodePriceSqrtTest(t, "1", "1"),
 			expectedAmountIn:     u256.MustFromDecimal("200000000000000000"),
 		},

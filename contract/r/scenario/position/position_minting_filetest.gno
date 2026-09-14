@@ -5,10 +5,9 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"strconv"
 	"testing"
-
-	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"

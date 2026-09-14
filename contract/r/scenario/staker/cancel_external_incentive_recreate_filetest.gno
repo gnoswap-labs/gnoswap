@@ -22,8 +22,8 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/nt/grc721/v0"
+	"gno.land/p/gnoswap/gnsmath"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 

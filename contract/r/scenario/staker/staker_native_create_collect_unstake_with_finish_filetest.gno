@@ -8,12 +8,11 @@ import (
 	"chain"
 	"chain/banker"
 	"fmt"
+	"gno.land/p/gnoswap/gnsmath"
 	"math"
 	"strconv"
 	"testing"
 	"time"
-
-	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/gnoswap/scenarioutils"
 

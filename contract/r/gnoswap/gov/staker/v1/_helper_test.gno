@@ -92,3 +92,4 @@ func callStakerCollectUndelegatedGns(cur realm) int64 {
 func callStakerCollectReward(cur realm) {
 	staker.CollectReward(cross(cur))
 }
+

@@ -6,11 +6,10 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
 	"strconv"
 	"testing"
-
-	"gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"

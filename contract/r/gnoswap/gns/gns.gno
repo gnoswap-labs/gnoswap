@@ -8,8 +8,8 @@ import (
 	"gno.land/p/nt/grc20/v0"
 	"gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
 	"gno.land/r/nt/grc20reg/v0"
+	"gno.land/r/gnoswap/access"
 
 	"gno.land/p/gnoswap/gnsmath"
 	prabc "gno.land/p/gnoswap/rbac"

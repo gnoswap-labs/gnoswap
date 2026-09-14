@@ -1,8 +1,8 @@
 package governance
 
 import (
-	rotree "gno.land/p/nt/bptree/rotree/v0"
 	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 )
 
 type IGovernance interface {

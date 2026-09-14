@@ -93,7 +93,6 @@ func newTestProposal(
 		100, // createdHeight
 	)
 }
-
 // Crossing test wrappers.
 //
 // The governance impl methods read their caller via rlm.Previous(). To

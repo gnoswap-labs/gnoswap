@@ -4,11 +4,11 @@ import (
 	"strconv"
 	"strings"
 
+	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
-	rotree "gno.land/p/nt/bptree/rotree/v0"
-	bptree "gno.land/p/nt/bptree/v0"
-	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
 // UintTree is a wrapper around a B+ tree for storing block timestamps as strings.

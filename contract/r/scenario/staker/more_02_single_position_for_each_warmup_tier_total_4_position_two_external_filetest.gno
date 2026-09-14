@@ -5,14 +5,14 @@
 package main
 
 import (
+	"gno.land/p/gnoswap/gnsmath"
 	"chain/runtime"
 	"strconv"
 	"testing"
 
-	"gno.land/p/gnoswap/gnsmath"
-
 	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
+
 
 	"gno.land/r/gnoswap/access"
 
@@ -105,8 +105,8 @@ func initAndSetup(cur realm) {
 		cross(cur),
 		7500, // liquidityStakerPct
 		2500, // devOpsPct
-		0,    // communityPoolPct
-		0,    // govStakerPct
+		0, // communityPoolPct
+		0, // govStakerPct
 	)
 
 	println("[INFO] register gns change callback")
