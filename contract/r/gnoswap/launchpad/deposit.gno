@@ -158,27 +158,3 @@ func MakeDeposit(
 func DefaultDeposit() Deposit {
 	return Deposit{}
 }
-
-// NewDeposit returns a pointer to a new Deposit with the given values.
-func NewDeposit(
-	depositID string,
-	projectID string,
-	tier int64,
-	depositor address,
-	depositAmount int64,
-	createdHeight int64,
-	createdTime int64,
-	endTime int64,
-) *Deposit {
-	deposit := MakeDeposit(
-		depositID,
-		projectID,
-		tier,
-		depositor,
-		depositAmount,
-		createdHeight,
-		createdTime,
-		endTime,
-	)
-	return &deposit
-}

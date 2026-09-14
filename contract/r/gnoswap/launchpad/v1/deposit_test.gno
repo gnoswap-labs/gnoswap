@@ -401,7 +401,7 @@ func TestDeposit_Withdraw(cur realm, t *testing.T) {
 	}
 }
 
-func TestDeposit_NewDeposit(cur realm, t *testing.T) {
+func TestDeposit_MakeDeposit(cur realm, t *testing.T) {
 	testAddr := testutils.TestAddress("test")
 	projectID := "gno.land/r/onbloc/obl.OBL:123"
 

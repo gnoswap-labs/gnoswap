@@ -102,7 +102,7 @@ func TestLaunchpadReward_CollectDepositReward(cur realm, t *testing.T) {
 			}
 
 			// Create deposit
-			deposit := launchpad.NewDeposit("deposit_1", tt.projectID, tt.tier, testutils.TestAddress("depositor"), tt.depositAmount, 100, 100, 200)
+			deposit := newDeposit("deposit_1", tt.projectID, tt.tier, testutils.TestAddress("depositor"), tt.depositAmount, 100, 100, 200)
 
 			// Execute
 			_, _, err := lp.collectDepositReward(0, cur, deposit, runtime.ChainHeight(), tt.currentTime)

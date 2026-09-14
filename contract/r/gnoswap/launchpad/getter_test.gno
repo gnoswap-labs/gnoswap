@@ -10,7 +10,8 @@ import (
 )
 
 func newLaunchpadDeposit() *Deposit {
-	deposit := NewDeposit("deposit-1", "project-1", 30, adminAddr, 1000, 10, 20, 30)
+	depositValue := MakeDeposit("deposit-1", "project-1", 30, adminAddr, 1000, 10, 20, 30)
+	deposit := &depositValue
 	deposit.SetWithdrawnHeight(40)
 	deposit.SetWithdrawnTime(50)
 	return deposit

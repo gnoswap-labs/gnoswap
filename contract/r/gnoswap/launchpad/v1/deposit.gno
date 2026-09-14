@@ -21,7 +21,7 @@ func newDeposit(
 	createdTime int64,
 	endTime int64,
 ) *launchpad.Deposit {
-	return launchpad.NewDeposit(
+	deposit := launchpad.MakeDeposit(
 		depositID,
 		projectID,
 		tier,
@@ -31,4 +31,5 @@ func newDeposit(
 		createdTime,
 		endTime,
 	)
+	return &deposit
 }
