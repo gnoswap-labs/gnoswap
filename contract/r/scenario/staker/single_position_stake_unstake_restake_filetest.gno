@@ -202,6 +202,7 @@ func unstakeOperation(cur realm) {
 
 	println("[INFO] unstake position 01")
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 
 	ownerAfterUnstake := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after unstake: %s\n", ownerAfterUnstake)
@@ -259,6 +260,7 @@ func finalUnstakeOperation(cur realm) {
 
 	println("[INFO] final unstake operation")
 	sr.UnStakeToken(cross(cur), 1)
+	sr.CollectReward(cross(cur), 1)
 
 	ownerAfterFinalUnstake := mustOwnerOf(positionIdFrom(cur, 1))
 	ufmt.Printf("[EXPECTED] position owner after final unstake: %s\n", ownerAfterFinalUnstake)

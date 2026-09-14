@@ -733,6 +733,20 @@ func CreateParameterHandlers() *ParameterRegistry {
 				return nil
 			},
 		},
+		{
+			pkgPath:    STAKER_PATH,
+			function:   "SetDeniedRewardToken",
+			paramCount: 2,
+			paramValidators: []paramValidator{
+				stringValidator, // tokenPath
+				boolValidator,   // denied
+			},
+			handlerFunc: func(_ int, rlm realm, params []string) error {
+				// Deny or re-allow a token as an external incentive reward token
+				sr.SetDeniedRewardToken(cross(rlm), params[0], parseBool(params[1]))
+				return nil
+			},
+		},
 
 		// Staker - External incentive recovery
 		{

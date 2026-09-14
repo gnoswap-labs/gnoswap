@@ -48,11 +48,14 @@ Stakes LP position NFT to earn rewards.
 
 ### `UnStakeToken`
 
-Unstakes position and collects all rewards.
+Unstakes a position and records an exit checkpoint for its rewards. It neither calculates nor
+pays them: withdrawing must never depend on the reward side.
 
 ### `CollectReward`
 
-Collects accumulated rewards without unstaking.
+Collects accumulated rewards. Takes a position that was unstaked without collecting as well as a
+staked one, so withdrawing is `UnStakeToken` plus one collect. A collect on an unstaked position
+is permissionless, since it can only ever pay that position's owner.
 
 ### `CreateExternalIncentive`
 
@@ -185,8 +188,12 @@ CreateExternalIncentive(
 // Collect rewards without unstaking
 CollectReward(123)
 
-// Unstake and collect all rewards
+// Unstake; rewards are checkpointed, not calculated or paid
 UnStakeToken(123)
+
+// Collect works on the checkpoint too, per source or all at once
+CollectEmissionReward(123)
+CollectExternalIncentiveReward(123, incentiveId)
 ```
 
 ## Security
