@@ -2,8 +2,8 @@ package staker
 
 import (
 	u256 "gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 type IStaker interface {
@@ -168,6 +168,9 @@ type IStakerStore interface {
 	HasPendingProtocolFeesStoreKey() bool
 	GetPendingProtocolFees() map[string]int64
 	SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error
+	GetPendingProtocolFee(tokenPath string) int64
+	SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error
+	RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error
 
 	// UnstakedPositions
 	HasUnstakedPositionsStoreKey() bool

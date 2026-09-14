@@ -65,7 +65,7 @@ type ILaunchpadGetter interface {
 	GetCurrentDepositId() int64
 	GetProjectTierRewards(projectId string, tier int64) *rotree.ReadOnlyTree
 
-	GetDeposit(depositId string) (*Deposit, error)
+	GetDeposit(depositId string) (Deposit, error)
 	GetDepositProjectID(depositId string) (string, error)
 	GetDepositTier(depositId string) (int64, error)
 	GetDepositProjectTierID(depositId string) (string, error)

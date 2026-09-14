@@ -48,9 +48,8 @@ func setupGetterTestWithProposal(cur realm, t *testing.T) *governanceV1 {
 		runtime.ChainHeight(),
 	)
 
-	gv.store.SetProposal(0, cur, 1, proposal)
+	uassert.True(t, gv.addProposal(0, cur, proposal))
 	gv.store.GetProposalCounter().Next()
-	gv.store.AddUserProposal(0, cur, "g1proposer", 1)
 
 	return gv
 }
@@ -896,34 +895,55 @@ func TestGetUserProposals_EntriesAreCopied(cur realm, t *testing.T) {
 // ==================================
 
 func TestGetOldestActiveProposalSnapshotTime(cur realm, t *testing.T) {
-	testCases := []struct {
-		name            string
-		setup           func(cur realm, t *testing.T) *governanceV1
-		expectHasActive bool
-	}{
-		{
-			name: "returns false when no proposals",
-			setup: func(cur realm, t *testing.T) *governanceV1 {
-				return setupGetterTest(cur, t)
-			},
-			expectHasActive: false,
-		},
-		{
-			name: "returns true when active proposal exists",
-			setup: func(cur realm, t *testing.T) *governanceV1 {
-				return setupGetterTestWithProposal(cur, t)
-			},
-			expectHasActive: true,
-		},
-	}
+	gv := setupGetterTest(cur, t)
+	snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), snapshotTime)
+	uassert.False(t, hasActive)
 
-	for _, tc := range testCases {
+	for _, tc := range []struct {
+		name           string
+		snapshotOffset int64
+		missing        bool
+		expectedError  string
+	}{
+		{"stale first entry", -1, false, errProposalIndexNeedsCleanup},
+		{"equal snapshots retain both proposals", 0, false, ""},
+		{"later stale entry does not block", 1, false, ""},
+		{"missing first proposal", -1, true, errProposalNotFound},
+	} {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
-			gv := tc.setup(cur, t)
-			snapshotTime, hasActive := gv.GetOldestActiveProposalSnapshotTime()
-			uassert.Equal(t, tc.expectHasActive, hasActive)
-			if hasActive {
-				uassert.True(t, snapshotTime > 0)
+			gv := setupGetterTest(cur, t)
+			config, _ := gv.getCurrentConfig()
+			now := time.Now().Unix()
+			active := governance.NewProposal(
+				1, NewProposalStatus(config, 1000, false, now, 1000),
+				governance.NewProposalMetadata("active", "active"),
+				governance.NewProposalData(governance.Text, nil, nil),
+				address("g1proposer"), 1, 1000, 100,
+			)
+			stale := governance.NewProposal(
+				2, NewProposalStatus(config, 1000, false, now-config.VotingStartDelay-config.VotingPeriod-1, 1000),
+				active.Metadata(), active.Data(), active.Proposer(),
+				1, active.SnapshotTime()+tc.snapshotOffset, 100,
+			)
+			uassert.True(t, gv.addProposal(0, cur, active))
+			if tc.missing {
+				gv.store.GetActiveProposalsBySnapshot().Set(activeProposalSnapshotKey(stale), stale.ID())
+			} else {
+				uassert.True(t, gv.addProposal(0, cur, stale))
+			}
+
+			snapshotTime, hasActive, err := gv.GetOldestActiveProposalSnapshotTime()
+			if tc.expectedError != "" {
+				uassert.ErrorContains(t, err, tc.expectedError)
+				uassert.ErrorContains(t, err, "proposalID: 2")
+				uassert.Equal(t, int64(0), snapshotTime)
+				uassert.False(t, hasActive)
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(1000), snapshotTime)
+				uassert.True(t, hasActive)
 			}
 		})
 	}

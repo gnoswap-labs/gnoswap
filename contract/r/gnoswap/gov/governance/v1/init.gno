@@ -66,6 +66,12 @@ func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore
 		}
 	}
 
+	if !governanceStore.HasActiveProposalsBySnapshotStoreKey() {
+		if err := governanceStore.SetActiveProposalsBySnapshot(0, rlm, governance.NewProposalTree()); err != nil {
+			return err
+		}
+	}
+
 	if !governanceStore.HasProposalUserVotingInfosStoreKey() {
 		err := governanceStore.SetProposalUserVotingInfos(0, rlm, governance.NewProposalUserVotingInfoTree())
 		if err != nil {

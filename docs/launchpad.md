@@ -11,6 +11,7 @@ Token distribution and vesting.
 - Project creation records recipient membership in a dedicated B+Tree (`address -> true`). Emission and protocol-fee claims use tree lookup rather than scanning projects; shared recipients reuse one entry. Initialization preserves the existing tree. Projects and recipients are not removed or reassigned by the current lifecycle.
 - Projects, tiers, and conditions are value payloads. Map setters use copy-on-write, and tier numeric getters/setters copy their `uint256` payloads. After changing a local tier, call `Project.SetTier`; after changing a local project, save it back to the projects tree. Mutating a getter result must not update stored state.
 - The value-payload storage layout requires a fresh deployment; it does not migrate existing pointer-backed project state.
+- Deposit records are stored and passed as values. Withdrawal helpers return the updated value; persist it explicitly in the deposits tree. Mutating a local copy does not update storage or the caller's copy.
 
 ## Pitfalls
 

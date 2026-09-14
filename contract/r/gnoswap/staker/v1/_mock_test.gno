@@ -5,8 +5,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/p/nt/grc721/v0"
 	bptree "gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"
@@ -270,6 +270,20 @@ func (s *MockStakerStore) GetUncollectedIncentiveCounts() *bptree.BPTree {
 
 func (s *MockStakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error {
 	s.uncollectedIncentiveCounts = counts
+	return nil
+}
+
+func (s *MockStakerStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.pendingProtocolFees[tokenPath]
+}
+
+func (s *MockStakerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	s.pendingProtocolFees[tokenPath] = amount
+	return nil
+}
+
+func (s *MockStakerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(s.pendingProtocolFees, tokenPath)
 	return nil
 }
 

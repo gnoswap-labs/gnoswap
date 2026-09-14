@@ -253,174 +253,89 @@ func (lp *launchpadV1) GetProjectTierRewards(projectId string, tier int64) *rotr
 	return rotree.Wrap(rewardManager.Rewards(), cloneRewardStateEntry)
 }
 
-// GetDeposit retrieves a deposit by its ID.
-// Returns a cloned deposit to prevent external modification.
-// Returns nil and error if deposit not found.
-func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return nil, makeErrorWithDetails(errDataNotFound, "deposit not found")
-	}
-
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
-		return nil, errors.New("invalid deposit type")
-	}
-
-	return deposit, nil
+// GetDeposit retrieves the value payload of a deposit by its ID.
+func (lp *launchpadV1) GetDeposit(depositId string) (launchpad.Deposit, error) {
+	return lp.getDepositValue(depositId)
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.
-// Returns empty string and error if deposit not found.
 func (lp *launchpadV1) GetDepositProjectID(depositId string) (string, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return "", makeErrorWithDetails(errDataNotFound, "deposit not found")
+	deposit, err := lp.getDepositValue(depositId)
+	if err != nil {
+		return "", err
 	}
-
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
-		return "", errors.New("invalid deposit type")
-	}
-
 	return deposit.ProjectID(), nil
 }
 
 // GetDepositTier returns the tier of a deposit by its ID.
-// Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositTier(depositId string) (int64, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
+	deposit, err := lp.getDepositValue(depositId)
+	if err != nil {
+		return 0, err
 	}
-
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
-		return 0, errors.New("invalid deposit type")
-	}
-
 	return deposit.Tier(), nil
 }
 
 // GetDepositProjectTierID returns the project tier ID of a deposit by its ID.
-// Returns empty string and error if deposit not found.
 func (lp *launchpadV1) GetDepositProjectTierID(depositId string) (string, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return "", makeErrorWithDetails(errDataNotFound, "deposit not found")
+	deposit, err := lp.getDepositValue(depositId)
+	if err != nil {
+		return "", err
 	}
-
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
-		return "", errors.New("invalid deposit type")
-	}
-
 	return deposit.ProjectTierID(), nil
 }
 
 // GetDepositAmount returns the deposit amount of a deposit by its ID.
-// Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositAmount(depositId string) (int64, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
+	deposit, err := lp.getDepositValue(depositId)
+	if err != nil {
+		return 0, err
 	}
-
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
-		return 0, errors.New("invalid deposit type")
-	}
-
 	return deposit.DepositAmount(), nil
 }
 
 // GetDepositWithdrawnHeight returns the withdrawn height of a deposit by its ID.
-// Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositWithdrawnHeight(depositId string) (int64, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
+	deposit, err := lp.getDepositValue(depositId)
+	if err != nil {
+		return 0, err
 	}
-
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
-		return 0, errors.New("invalid deposit type")
-	}
-
 	return deposit.WithdrawnHeight(), nil
 }
 
 // GetDepositWithdrawnTime returns the withdrawn time of a deposit by its ID.
-// Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositWithdrawnTime(depositId string) (int64, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
+	deposit, err := lp.getDepositValue(depositId)
+	if err != nil {
+		return 0, err
 	}
-
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
-		return 0, errors.New("invalid deposit type")
-	}
-
 	return deposit.WithdrawnTime(), nil
 }
 
 // GetDepositCreatedHeight returns the created height of a deposit by its ID.
-// Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositCreatedHeight(depositId string) (int64, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
+	deposit, err := lp.getDepositValue(depositId)
+	if err != nil {
+		return 0, err
 	}
-
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
-		return 0, errors.New("invalid deposit type")
-	}
-
 	return deposit.CreatedHeight(), nil
 }
 
 // GetDepositCreatedAt returns the created time of a deposit by its ID.
-// Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositCreatedAt(depositId string) (int64, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
+	deposit, err := lp.getDepositValue(depositId)
+	if err != nil {
+		return 0, err
 	}
-
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
-		return 0, errors.New("invalid deposit type")
-	}
-
 	return deposit.CreatedAt(), nil
 }
 
 // GetDepositEndTime returns the end time of a deposit by its ID.
-// Returns 0 and error if deposit not found.
 func (lp *launchpadV1) GetDepositEndTime(depositId string) (int64, error) {
-	deposits := lp.store.GetDeposits()
-	value := deposits.Get(depositId)
-	if value == nil {
-		return 0, makeErrorWithDetails(errDataNotFound, "deposit not found")
+	deposit, err := lp.getDepositValue(depositId)
+	if err != nil {
+		return 0, err
 	}
-
-	deposit, ok := value.(*launchpad.Deposit)
-	if !ok {
-		return 0, errors.New("invalid deposit type")
-	}
-
 	return deposit.EndTime(), nil
 }
 

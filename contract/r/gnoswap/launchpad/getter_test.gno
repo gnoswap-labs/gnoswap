@@ -10,10 +10,34 @@ import (
 )
 
 func newLaunchpadDeposit() *Deposit {
-	deposit := NewDeposit("deposit-1", "project-1", 30, adminAddr, 1000, 10, 20, 30)
+	depositValue := MakeDeposit("deposit-1", "project-1", 30, adminAddr, 1000, 10, 20, 30)
+	deposit := &depositValue
 	deposit.SetWithdrawnHeight(40)
 	deposit.SetWithdrawnTime(50)
 	return deposit
+}
+
+func TestMakeDepositReturnsValue(cur realm, t *testing.T) {
+	deposit := MakeDeposit("deposit-1", "project-1", 30, adminAddr, 1000, 10, 20, 30)
+
+	uassert.Equal(t, "deposit-1", deposit.ID())
+	uassert.Equal(t, "project-1", deposit.ProjectID())
+	uassert.Equal(t, int64(30), deposit.Tier())
+	uassert.Equal(t, adminAddr, deposit.Depositor())
+	uassert.Equal(t, int64(1000), deposit.DepositAmount())
+	uassert.Equal(t, int64(10), deposit.CreatedHeight())
+	uassert.Equal(t, int64(20), deposit.CreatedAt())
+	uassert.Equal(t, int64(30), deposit.EndTime())
+	uassert.Equal(t, int64(0), deposit.WithdrawnHeight())
+}
+
+func TestDefaultDepositReturnsZeroValue(cur realm, t *testing.T) {
+	deposit := DefaultDeposit()
+
+	uassert.Equal(t, "", deposit.ID())
+	uassert.Equal(t, "", deposit.ProjectID())
+	uassert.Equal(t, int64(0), deposit.DepositAmount())
+	uassert.Equal(t, int64(0), deposit.WithdrawnHeight())
 }
 
 func newLaunchpadRewardManager() *RewardManager {
@@ -154,39 +178,6 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 			},
 		},
 		{
-			name:  "GetDeposit",
-			setup: func(m *MockLaunchpad) { m.Response.Set("GetDeposit", newLaunchpadDeposit(), nil) },
-			getter: func(t *testing.T) any {
-				value, err := GetDeposit("deposit-1")
-				uassert.NoError(t, err)
-				return value
-			},
-			mutate: func(result any) {
-				deposit := result.(*Deposit)
-				deposit.SetID("mutated-deposit")
-				deposit.SetProjectID("mutated-project")
-				deposit.SetTier(90)
-				deposit.SetDepositAmount(2000)
-				deposit.SetCreatedHeight(99)
-				deposit.SetCreatedAt(88)
-				deposit.SetWithdrawnHeight(77)
-				deposit.SetWithdrawnTime(66)
-				deposit.SetEndTime(55)
-			},
-			assertRaw: func(t *testing.T, m *MockLaunchpad) {
-				deposit := m.Response.data["GetDeposit"][0].(*Deposit)
-				uassert.Equal(t, "deposit-1", deposit.ID())
-				uassert.Equal(t, "project-1", deposit.ProjectID())
-				uassert.Equal(t, int64(30), deposit.Tier())
-				uassert.Equal(t, int64(1000), deposit.DepositAmount())
-				uassert.Equal(t, int64(10), deposit.CreatedHeight())
-				uassert.Equal(t, int64(20), deposit.CreatedAt())
-				uassert.Equal(t, int64(40), deposit.WithdrawnHeight())
-				uassert.Equal(t, int64(50), deposit.WithdrawnTime())
-				uassert.Equal(t, int64(30), deposit.EndTime())
-			},
-		},
-		{
 			name: "GetRewardState",
 			setup: func(m *MockLaunchpad) {
 				m.Response.Set("GetRewardState", NewRewardState(u256.MustFromDecimal("700"), 800, 900, 1000, 1100), nil)
@@ -317,6 +308,28 @@ func TestMutableLaunchpadGetterIsolation(cur realm, t *testing.T) {
 			tt.assertRaw(t, mockLaunchpad)
 		})
 	}
+}
+
+func TestGetDepositReturnsValue(cur realm, t *testing.T) {
+	resetTestState(cur, t)
+	mockLaunchpad := newMockLaunchpad("v1")
+	implementation = mockLaunchpad
+
+	expected := newLaunchpadDeposit()
+	mockLaunchpad.Response.Set("GetDeposit", *expected, nil)
+
+	deposit, err := GetDeposit("deposit-1")
+
+	uassert.NoError(t, err)
+	uassert.Equal(t, expected.ID(), deposit.ID())
+	uassert.Equal(t, expected.ProjectID(), deposit.ProjectID())
+	uassert.Equal(t, expected.Tier(), deposit.Tier())
+	uassert.Equal(t, expected.DepositAmount(), deposit.DepositAmount())
+	uassert.Equal(t, expected.CreatedHeight(), deposit.CreatedHeight())
+	uassert.Equal(t, expected.CreatedAt(), deposit.CreatedAt())
+	uassert.Equal(t, expected.WithdrawnHeight(), deposit.WithdrawnHeight())
+	uassert.Equal(t, expected.WithdrawnTime(), deposit.WithdrawnTime())
+	uassert.Equal(t, expected.EndTime(), deposit.EndTime())
 }
 
 func TestReadOnlyTreeGetters(cur realm, t *testing.T) {

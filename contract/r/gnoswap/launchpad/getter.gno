@@ -140,16 +140,8 @@ func GetProjectTierRewards(projectId string, tier int64) *rotree.ReadOnlyTree {
 }
 
 // GetDeposit retrieves a deposit by its ID.
-// Returns a cloned deposit to prevent external modification.
-func GetDeposit(depositId string) (*Deposit, error) {
-	deposit, err := getImplementation().GetDeposit(depositId)
-	if err != nil {
-		return nil, err
-	}
-	if deposit == nil {
-		return nil, nil
-	}
-	return deposit.Clone(), nil
+func GetDeposit(depositId string) (Deposit, error) {
+	return getImplementation().GetDeposit(depositId)
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.

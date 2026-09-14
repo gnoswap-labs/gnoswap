@@ -252,22 +252,19 @@ func (lp *launchpadV1) GetProjectTierRewards(projectId string, tier int64) *rotr
 	return rotree.Wrap(rewardManager.Rewards(), cloneRewardStateEntry)
 }
 
-// GetDeposit retrieves a deposit by its ID.
-// Returns a cloned deposit to prevent external modification.
-// Returns nil and error if deposit not found.
-func (lp *launchpadV1) GetDeposit(depositId string) (*launchpad.Deposit, error) {
+// GetDeposit retrieves the value payload of a deposit by its ID.
+func (lp *launchpadV1) GetDeposit(depositId string) (launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
 	value := deposits.Get(depositId)
 	if value == nil {
-		return nil, errors.New("deposit not found")
+		return launchpad.DefaultDeposit(), errors.New("deposit not found")
 	}
 
-	deposit, ok := value.(*launchpad.Deposit)
+	deposit, ok := value.(launchpad.Deposit)
 	if !ok {
-		return nil, errors.New("invalid deposit type")
+		return launchpad.DefaultDeposit(), errors.New("invalid deposit type")
 	}
-
-	return deposit.Clone(), nil
+	return deposit, nil
 }
 
 // GetDepositProjectID returns the project ID of a deposit by its ID.

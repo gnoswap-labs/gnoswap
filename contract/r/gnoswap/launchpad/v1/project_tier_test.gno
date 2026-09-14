@@ -278,13 +278,13 @@ func TestProjectTier_DepositAndWithdraw(cur realm, t *testing.T) {
 			tier.SetTotalDepositCount(tt.initialDepositCount)
 			tier.SetTotalWithdrawCount(tt.initialWithdrawCount)
 
-			deposit := launchpad.NewDeposit("test_deposit", "test_project", 180, testutils.TestAddress("depositor"), tt.depositAmount, 100, 100, 200)
+			deposit := newDeposit("test_deposit", "test_project", 180, testutils.TestAddress("depositor"), tt.depositAmount, 100, 100, 200)
 
 			// Execute
 			if tt.operation == "deposit" {
-				depositToTier(&tier, deposit)
+				depositToTier(&tier, *deposit)
 			} else {
-				withdrawToTier(&tier, deposit)
+				withdrawToTier(&tier, *deposit)
 			}
 
 			// Verify

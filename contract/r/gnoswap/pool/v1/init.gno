@@ -80,11 +80,12 @@ func initStoreData(_ int, rlm realm, poolStore pool.IPoolStore) error {
 		}
 	}
 
-	if !poolStore.HasPendingProtocolFees() {
-		err := poolStore.SetPendingProtocolFees(0, rlm, make(map[string]int64))
-		if err != nil {
-			return err
-		}
+	pendingProtocolFees := make(map[string]int64)
+	if poolStore.HasPendingProtocolFees() {
+		pendingProtocolFees = poolStore.GetPendingProtocolFees()
+	}
+	if err := poolStore.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
+		return err
 	}
 
 	if !poolStore.HasSlot0FeeProtocol() {

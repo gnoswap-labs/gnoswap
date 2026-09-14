@@ -33,6 +33,20 @@ func (s *MockRouterStore) SetPendingProtocolFees(_ int, rlm realm, fees map[stri
 	return nil
 }
 
+func (s *MockRouterStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.pendingProtocolFees[tokenPath]
+}
+
+func (s *MockRouterStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	s.pendingProtocolFees[tokenPath] = amount
+	return nil
+}
+
+func (s *MockRouterStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(s.pendingProtocolFees, tokenPath)
+	return nil
+}
+
 func (s *MockRouterStore) Clear() {
 	s.swapFee = 0
 	s.pendingProtocolFees = make(map[string]int64)

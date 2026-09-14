@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 
 ### Changed
-- Return launchpad projects, tiers, and conditions as isolated values and require explicit saves for updates. This storage-layout change supports fresh deployments only.
+-
 
 ### Deprecated
 -

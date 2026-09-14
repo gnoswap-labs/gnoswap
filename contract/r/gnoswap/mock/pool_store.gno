@@ -108,6 +108,20 @@ func (s *MockPoolStore) SetPendingProtocolFees(_ int, rlm realm, pendingProtocol
 	return nil
 }
 
+func (s *MockPoolStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.pendingProtocolFees[tokenPath]
+}
+
+func (s *MockPoolStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	s.pendingProtocolFees[tokenPath] = amount
+	return nil
+}
+
+func (s *MockPoolStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(s.pendingProtocolFees, tokenPath)
+	return nil
+}
+
 func (s *MockPoolStore) HasWithdrawalFeeBPS() bool {
 	return true
 }

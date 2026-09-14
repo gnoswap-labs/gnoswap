@@ -6,8 +6,8 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/p/nt/grc721/v0"
 	bptree "gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"
@@ -115,6 +115,20 @@ func (s *mockPoolStore) GetPendingProtocolFees() map[string]int64 {
 
 func (s *mockPoolStore) SetPendingProtocolFees(_ int, rlm realm, pendingProtocolFees map[string]int64) error {
 	s.pendingProtocolFees = pendingProtocolFees
+	return nil
+}
+
+func (s *mockPoolStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.pendingProtocolFees[tokenPath]
+}
+
+func (s *mockPoolStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	s.pendingProtocolFees[tokenPath] = amount
+	return nil
+}
+
+func (s *mockPoolStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(s.pendingProtocolFees, tokenPath)
 	return nil
 }
 
@@ -303,6 +317,20 @@ func (r *mockRouterStore) GetPendingProtocolFees() map[string]int64 {
 
 func (r *mockRouterStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
 	r.data[router.StoreKeyPendingProtocolFees.String()] = fees
+	return nil
+}
+
+func (r *mockRouterStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return r.GetPendingProtocolFees()[tokenPath]
+}
+
+func (r *mockRouterStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	r.GetPendingProtocolFees()[tokenPath] = amount
+	return nil
+}
+
+func (r *mockRouterStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(r.GetPendingProtocolFees(), tokenPath)
 	return nil
 }
 
@@ -639,6 +667,20 @@ func (s *MockStakerStore) GetUncollectedIncentiveCounts() *bptree.BPTree {
 
 func (s *MockStakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error {
 	s.uncollectedIncentiveCounts = counts
+	return nil
+}
+
+func (s *MockStakerStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.pendingProtocolFees[tokenPath]
+}
+
+func (s *MockStakerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	s.pendingProtocolFees[tokenPath] = amount
+	return nil
+}
+
+func (s *MockStakerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(s.pendingProtocolFees, tokenPath)
 	return nil
 }
 
