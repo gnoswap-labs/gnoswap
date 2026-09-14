@@ -126,6 +126,11 @@ func (u *UnstakedPosition) PendingIncentiveIdList() []string {
 	return incentiveIds
 }
 
+// PendingIncentiveCount returns how many incentives are still to be collected.
+func (u *UnstakedPosition) PendingIncentiveCount() int {
+	return len(u.pendingIncentiveIds)
+}
+
 // HasPendingIncentives reports whether any incentive is still to be collected.
 func (u *UnstakedPosition) HasPendingIncentives() bool {
 	return len(u.pendingIncentiveIds) > 0
