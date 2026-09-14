@@ -206,14 +206,14 @@ func (gv *governanceV1) GetVoteStatus(proposalId int64) (quorum, maxVotingWeight
 	return voting.QuorumAmount(), voting.MaxVotingWeight(), voting.YesWeight(), voting.NoWeight(), nil
 }
 
-// GetVotingInfos returns a read-only view of a proposal's voting infos, keyed by
-// voter address. nil is returned when the proposal has no votes.
+// GetVotingInfos returns a read-only view of a proposal's value-backed voting
+// infos, keyed by voter address. nil is returned when the proposal has no votes.
 func (gv *governanceV1) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 	votingInfos, exists := gv.getProposalUserVotingInfos(proposalID)
 	if !exists {
 		return nil
 	}
-	return rotree.Wrap(votingInfos, cloneVotingInfoEntry)
+	return rotree.Wrap(votingInfos, nil)
 }
 
 // ExistsVotingInfo checks if a voting info exists for a user on a proposal.
