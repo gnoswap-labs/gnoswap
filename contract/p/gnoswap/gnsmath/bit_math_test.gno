@@ -719,3 +719,16 @@ func TestBitMath_ExhaustiveSmallRange(t *testing.T) {
 		}
 	}
 }
+
+// Dense bit runs exercise limb selection with competing nonzero limbs.
+func TestBitMath_DenseBitBoundaries(t *testing.T) {
+	max := &u256.Uint{18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615}
+	for bit := uint(0); bit < 256; bit++ {
+		low := new(u256.Uint).Rsh(max, 255-bit)
+		high := new(u256.Uint).Lsh(max, bit)
+		uassert.Equal(t, BitMathMostSignificantBit(low), uint8(bit))
+		uassert.Equal(t, BitMathLeastSignificantBit(low), uint8(0))
+		uassert.Equal(t, BitMathMostSignificantBit(high), uint8(255))
+		uassert.Equal(t, BitMathLeastSignificantBit(high), uint8(bit))
+	}
+}
