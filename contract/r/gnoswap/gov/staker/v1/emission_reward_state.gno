@@ -3,7 +3,7 @@ package staker
 import (
 	"errors"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/p/gnoswap/consts/v1"
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/r/gnoswap/gov/staker"

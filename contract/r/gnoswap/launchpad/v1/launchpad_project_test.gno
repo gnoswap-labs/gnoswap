@@ -9,7 +9,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/p/gnoswap/consts/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/p/gnoswap/utils"
 

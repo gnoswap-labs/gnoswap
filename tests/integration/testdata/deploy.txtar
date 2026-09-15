@@ -77,7 +77,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/int256/v1 -pkg
 # stdout 'STORAGE FEE:    (5|6)[0-9]{6}ugnot'
 
 ## deploy consts
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/consts -pkgpath gno.land/p/gnoswap/consts -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/consts/v1 -pkgpath gno.land/p/gnoswap/consts/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   [0-9]+'
 # stdout 'STORAGE DELTA:  [0-9]+ bytes'
 # stdout 'STORAGE FEE:    [0-9]+ugnot'

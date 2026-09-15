@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"gno.land/p/gnoswap/consts"
+	"gno.land/p/gnoswap/consts/v1"
 	"gno.land/p/gnoswap/gnsmath"
 	ufmt "gno.land/p/nt/ufmt/v0"
 

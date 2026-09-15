@@ -3,7 +3,7 @@ package staker
 import (
 	"testing"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/p/gnoswap/consts/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"

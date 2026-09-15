@@ -3,7 +3,7 @@ package gnsmath
 import (
 	"math"
 
-	"gno.land/p/gnoswap/consts"
+	"gno.land/p/gnoswap/consts/v1"
 	"gno.land/p/gnoswap/fuzz"
 	i256 "gno.land/p/gnoswap/int256/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
