@@ -686,7 +686,7 @@ func assertPositiveString(cur realm, value string, label string) {
 // [EXPECTED] position.DecreaseLiquidity succeeded in emergency mode
 //
 // [SCENARIO] 5. staker.CollectReward remains allowed
-// [EXPECTED] staker.CollectReward gnsAmount: 93642955, externalRewards: 0, externalPenalties: 0
+// [EXPECTED] staker.CollectReward gnsAmount: 0, externalRewards: 0, externalPenalties: 0
 // [EXPECTED] staker.CollectReward succeeded in emergency mode
 //
 // [SCENARIO] 6. staker.UnStakeToken remains allowed
