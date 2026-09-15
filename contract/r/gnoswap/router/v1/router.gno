@@ -194,8 +194,9 @@ func (r *routerV1) finalizeSwap(
 	// Handle swap fee
 	resultAmountOutWithoutFee := r.handleSwapFee(0, rlm, outputToken, resultAmountOut)
 
-	// Validate exact out amount if applicable
-	// If sqrtPriceLimitX96 is set, slippage check is not needed
+	// Validate the exact-out target when no caller price limit is set. A
+	// nonzero single-hop limit permits partial output, so only the max-input
+	// slippage check below remains applicable.
 	if swapType == ExactOut && !isSetSqrtPriceLimitX96 {
 		if err := validator.exactOutAmount(resultAmountOutWithoutFee, amountSpecified, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))

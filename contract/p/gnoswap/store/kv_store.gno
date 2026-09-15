@@ -14,8 +14,8 @@ type kvStore struct {
 	domainAddress     address
 }
 
-// NewKVStore creates a new kvStore instance for a specific domain
-// domain: the name of the domain using this store (e.g., "pool", "position")
+// NewKVStore creates a new kvStore instance for a specific domain.
+// domainAddress is the address of the domain realm that owns this store.
 func NewKVStore(domainAddress address) KVStore {
 	return &kvStore{
 		data: make(map[string]any),

@@ -190,7 +190,7 @@ func (s *stakerV1) GetIncentiveRefunded(poolPath string, incentiveId string) (bo
 	return incentive.Refunded(), nil
 }
 
-// IsIncentiveActive returns whether an incentive is currently active.
+// IsIncentiveActive reports whether an unrefunded incentive is active, including both start and end timestamps.
 func (s *stakerV1) IsIncentiveActive(poolPath string, incentiveId string) (bool, error) {
 	incentive, err := s.getIncentive(poolPath, incentiveId)
 	if err != nil {
@@ -212,7 +212,7 @@ func (s *stakerV1) GetIncentiveRewardToken(poolPath string, incentiveId string) 
 	return incentive.RewardToken(), nil
 }
 
-// GetIncentiveRewardAmount returns the reward amount of an incentive.
+// GetIncentiveRewardAmount returns the remaining reward amount of an incentive.
 func (s *stakerV1) GetIncentiveRewardAmount(poolPath string, incentiveId string) (*u256.Uint, error) {
 	incentive, err := s.getIncentive(poolPath, incentiveId)
 	if err != nil {
@@ -222,7 +222,7 @@ func (s *stakerV1) GetIncentiveRewardAmount(poolPath string, incentiveId string)
 	return u256.NewUintFromInt64(incentive.RewardAmount()), nil
 }
 
-// GetIncentiveRewardAmountAsString returns the reward amount of an incentive as string.
+// GetIncentiveRewardAmountAsString returns the remaining reward amount of an incentive as string.
 func (s *stakerV1) GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) (string, error) {
 	rewardAmount, err := s.GetIncentiveRewardAmount(poolPath, incentiveId)
 	if err != nil {
@@ -328,7 +328,7 @@ func (s *stakerV1) GetDepositOwner(lpTokenId uint64) (address, error) {
 	return deposit.Owner(), nil
 }
 
-// GetDepositStakeTime returns the stake time of a deposit.
+// GetDepositStakeTime returns the Unix timestamp at which a position was staked.
 func (s *stakerV1) GetDepositStakeTime(lpTokenId uint64) (int64, error) {
 	deposit, err := s.getDeposit(lpTokenId)
 	if err != nil {

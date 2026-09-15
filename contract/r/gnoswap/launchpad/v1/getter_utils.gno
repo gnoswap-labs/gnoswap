@@ -12,8 +12,8 @@ import (
 // mutable and its setters are declared in /r/gnoswap/launchpad, so an external
 // holder of the stored pointer could write realm state through it.
 //
-// Project.Clone leaves the project's maps nil; see it for which lookups read
-// them instead.
+// Project.Clone deep-copies the conditions, tiers, and tier-ratio maps and their
+// entries, so the read-only view does not expose realm-owned state.
 func cloneProjectEntry(value any) any {
 	project, ok := value.(*launchpad.Project)
 	if !ok {

@@ -1,273 +1,228 @@
-# Gnoswap Deployment and Testing Scripts
+# Deployment and smoke-test Makefile
 
-This directory contains scripts for deploying and testing Gnoswap contracts.
-
-## Directory Structure
-
-```
-tests/
-├── scripts/
-│   ├── config/          # Environment-specific configuration files
-│   │   ├── local.mk     # Local environment configuration
-│   │   ├── dev.mk       # Development environment configuration
-│   │   ├── staging.mk   # Staging environment configuration
-│   │   └── production.mk # Production environment configuration
-│   ├── deploy.mk        # Deployment scripts
-│   └── test.mk          # Test scripts
-├── Makefile             # Main entry point
-└── README.md            # This file
-```
-
-## Usage
-
-### Basic Commands
-
-Execute commands with environment specification:
+This directory contains the Makefile and helper scripts for deploying GnoSwap
+packages and exercising an already-deployed instance. The commands in this
+README use the repository root as the current directory:
 
 ```bash
-# Show help
-make help
-
-# Check environment information
-make info ENV=dev
-
-# List available environments
-make envs
+make -C tests <target>
 ```
 
-### Pre-Deployment Commands
+Alternatively, change into `tests/` first and run `make <target>`. The Makefile
+includes `scripts/config/$(ENV).mk`, so invoking it from the repository root
+with `make -f tests/Makefile` does not resolve the relative include and script
+paths correctly.
 
-**⚠️ IMPORTANT: These commands must be executed before deployment!**
+## Configuration
 
-```bash
-# Step 1: Remove all test files (REQUIRED before deployment)
-make remove-test
+`ENV` defaults to `default`. The only environment configuration checked into
+this repository is:
 
-# Step 2: Faucet admin account (for local/test environments)
-make faucet-admin ENV=local
+```text
+tests/scripts/config/default.mk
 ```
 
-**What these commands do:**
+That profile is for a local node and defaults to:
 
-1. **`make remove-test`**: Removes all `*_test.gno` and `testutils.gno` files
-   - Prevents test files from being deployed to the blockchain
-   - Reduces deployment costs and contract size
-   - Protects internal testing logic from exposure
+- `GNOLAND_RPC_URL=localhost:26657`
+- `CHAINID=dev`
 
-2. **`make faucet-admin`**: Sends ugnot to necessary admin accounts
-   - Required for local/test environments
-   - Funds accounts needed for contract deployment
-   - Sends 10,000,000,000 ugnot to: ADDR_GNOSWAP, ADDR_ADMIN, ADDR_TEST
+It also contains the default contract and account addresses used by the
+recipes, transaction settings (`MAX_APPROVE` and `TX_EXPIRE`), and the
+incentive time values used by the staking recipes. The incentive values are
+computed with `gdate` (GNU `date`) and `expr`; both commands must be available
+when Make reads the configuration.
 
-### Deployment Commands
+Check which configuration files are actually present instead of assuming that
+an environment name exists:
 
 ```bash
-# Full deployment (local environment)
-make deploy ENV=local
-
-# Full deployment to development environment
-make deploy ENV=dev
-
-# Deploy specific components only
-make deploy-tokens ENV=dev      # Test tokens only
-make deploy-libs ENV=dev         # Libraries only
-make deploy-base ENV=dev         # Base contracts only
-make deploy-realms ENV=dev       # Gnoswap realms only
-make deploy-v1 ENV=dev           # v1 implementations only
+make -C tests envs
+make -C tests info ENV=default
 ```
 
-### Testing Commands
+Passing another environment name requires a corresponding file; Make fails
+while reading the include if `tests/scripts/config/<name>.mk` does not exist.
+To create a user-owned profile, copy the checked-in profile, edit its RPC,
+chain, address, and transaction values, and then use its filename as `ENV`:
 
 ```bash
-# Pool tests
-make test-pool ENV=dev
-
-# Swap tests
-make test-swap ENV=dev
-
-# Staking tests
-make test-stake ENV=dev
-
-# Governance tests
-make test-gov ENV=dev
-
-# Run all tests
-make test-all ENV=dev
-
-# Transfer tokens (for testing)
-make transfer-tokens ENV=dev
+cp tests/scripts/config/default.mk tests/scripts/config/custom.mk
+# Edit tests/scripts/config/custom.mk for the target node.
+make -C tests info ENV=custom
 ```
 
-## Environment Configuration
+Do not use the checked-in `default` addresses against a different network
+without reviewing them first. `info` prints the selected RPC URL, chain ID,
+and the pool, position, router, and staker addresses before any write target
+is run.
 
-### Adding a New Environment
+## Accounts and source preparation
 
-1. Create a new environment configuration file in `scripts/config/` directory:
-
-```bash
-cp scripts/config/local.mk scripts/config/production.mk
-```
-
-2. Edit the new file to configure environment-specific settings:
-   - `GNOLAND_RPC_URL`: RPC endpoint
-   - `CHAINID`: Chain ID
-   - `ADDR_*`: Contract and user addresses
-
-3. Execute commands with the new environment:
+The deployment and contract-call recipes sign as `gnoswap_admin`; the
+`faucet-admin` and native-token transfer recipes send from the `test1` key.
+Make sure the key names used by the commands are available in the `gnokey`
+configuration. The checked-in profile documents the usual local setup for the
+admin key:
 
 ```bash
-make deploy ENV=production
-```
-
-### Key Configuration Settings
-
-Each environment configuration file (`scripts/config/*.mk`) should configure:
-
-- **RPC and Chain Settings**
-  - `GNOLAND_RPC_URL`: Gnoland RPC URL
-  - `CHAINID`: Chain ID
-
-- **Contract Addresses** (update after deployment)
-  - `ADDR_POOL`, `ADDR_POSITION`, `ADDR_ROUTER`, etc.
-
-- **User Addresses**
-  - `ADDR_GNOSWAP`: Gnoswap administrator address
-  - `ADDR_ADMIN`: Admin address
-  - `ADDR_TEST`: Test account address
-  - `ADDR_USER_1` ~ `ADDR_USER_4`: Test user addresses
-
-- **Transaction Settings**
-  - `MAX_APPROVE`: Maximum approval amount
-  - `TX_EXPIRE`: Transaction expiration time
-
-## Environment Examples
-
-### Local Development
-
-** Prerequisites:**
-
-Before starting, ensure `gnoswap_admin` account is registered in gnokey:
-
-```bash
-# Check if account exists
 gnokey list
-
-# If not registered, add it
-gnokey add gnoswap_admin
-
-# Verify the account
-gnokey list | grep gnoswap_admin
+gnokey add gnoswap_admin   # only if it is not already registered
+gnokey list
 ```
 
-**Complete workflow for local testing:**
+### Optional source edits
+
+`patch-admin-address` is a local source rewrite, not a blockchain operation.
+It passes `ADDR_ADMIN` from the selected profile to
+`scripts/patch-admin-address.sh`, which replaces the old admin address in its
+fixed list of contract and test-token files. Use it only when intentionally
+moving the admin address, and review the resulting source diff:
 
 ```bash
-# Step 0: Start local gnoland (in another terminal)
-gnoland start
-
-# Step 1: Remove test files before deployment
-make remove-test
-# This removes all *_test.gno and testutils.gno files from the project
-# Ensures test files are not deployed to the blockchain
-
-# Step 2: Faucet admin accounts
-make faucet-admin ENV=local
-# Sends 10,000,000,000 ugnot to necessary admin accounts:
-# - ADDR_GNOSWAP: Main gnoswap admin account
-# - ADDR_ADMIN: Admin account for contract management
-# - ADDR_TEST: Test account for initial operations
-
-# Step 3: Deploy contracts
-make deploy ENV=local
-# Deploys all contracts in the following order:
-# 1. Test tokens (atom, atone, btc, dai, eth, photon, sol, trx, usdc, usdt)
-# 2. Libraries (uint256, int256, rbac, gnsmath, store, version_manager)
-# 3. Base contracts (access, rbac-realm, halt, referral, gns, emission, etc.)
-# 4. Gnoswap realms (protocol_fee, pool, position, router, staker, governance, launchpad)
-# 5. v1 implementations
-
-# Step 4: Run test scripts
-make test-pool ENV=local
-make test-swap ENV=local
-make test-all ENV=local
+make -C tests patch-admin-address ENV=default
 ```
 
-**Quick start (all-in-one):**
+`remove-test` is also optional. Deployment targets do **not** depend on it or
+invoke it automatically. If a deployment tree must have Gno test files removed,
+the script searches the repository tree for `*_test.gno` and `testutils.gno`,
+prints the matches, and asks for an explicit `y` confirmation before deleting
+them:
 
 ```bash
-# Execute all steps sequentially
-make remove-test && \
-make faucet-admin ENV=local && \
-make deploy ENV=local && \
-make test-pool ENV=local
+make -C tests remove-test
 ```
 
-### Development Server
+This deletion is destructive to the working tree; preserve or commit any
+work first. Skip this target when you still need the test files. The normal
+integration setup has its own `setup.py --exclude-tests` option and does not
+make `remove-test` a prerequisite for running integration tests.
+
+`faucet-admin` is not a faucet-service call. It broadcasts three native-coin
+transfers of `10,000,000,000ugnot` each, from `test1` to `ADDR_GNOSWAP`,
+`ADDR_ADMIN`, and `ADDR_TEST` in the selected profile. Run it only after
+checking the RPC, chain ID, recipient addresses, and sender account:
 
 ```bash
-# Step 1: Remove test files before deployment
-make remove-test
-
-# Step 2: Faucet admin accounts (if needed)
-make faucet-admin ENV=local
-
-# Step 3: Deploy to development server
-make deploy ENV=local
-
-# Step 4: Run tests
-make test-pool ENV=local
+make -C tests faucet-admin ENV=default
 ```
 
-### Staging Environment
+## Inspecting targets
+
+These targets do not submit deployment or contract-call transactions:
 
 ```bash
-# Step 1: Remove test files before deployment
-make remove-test
-
-# Step 2: Deploy to staging environment
-make deploy ENV=staging
-
-# Step 3: Run comprehensive tests
-make test-pool ENV=staging
+make -C tests help
+make -C tests envs
+make -C tests info ENV=default
 ```
 
-### Production Environment
+`help` prints the target groups, `envs` lists the `*.mk` files in
+`scripts/config/`, and `info` prints the selected configuration and several
+addresses. The `help` output is generated by the Makefile; use `envs` as the
+source of truth for available profiles.
 
-**⚠️ CRITICAL: Extra caution required for production deployment!**
+## Deployment targets
+
+All deployment commands below invoke `gnokey maketx addpkg` with
+`-broadcast=true`. They submit transactions to the selected RPC endpoint and
+require the configured `gnoswap_admin` key to be funded. Verify the
+configuration with `info` first and run these against the intended node.
 
 ```bash
-# Step 1: Remove test files (MANDATORY)
-make remove-test
+# Complete deployment.
+make -C tests deploy ENV=default
 
-# Step 2: Verify environment configuration
-make info ENV=production.local
-
-# Step 3: Deploy to production (after thorough review)
-make deploy ENV=production.local
-
-# Note: Faucet is NOT needed for production as accounts should already be funded
+# Individual deployment groups.
+make -C tests deploy-tokens ENV=default
+make -C tests deploy-libs ENV=default
+make -C tests deploy-base ENV=default
+make -C tests deploy-realms ENV=default
+make -C tests deploy-v1 ENV=default
 ```
 
-## Important Notes
+`deploy` runs the groups in the following dependency order:
 
-1. **Gnokey Account Setup (REQUIRED)**:
-   - **MUST** have `gnoswap_admin` account registered in gnokey before deployment
-   - Check: `gnokey list`
-   - Add if missing: `gnokey add gnoswap_admin`
-   - This account is used for all contract deployments
+1. Test tokens: `atom`, `atone`, `btc`, `dai`, `eth`, `photon`, `sol`, `trx`,
+   `usdc`, and `usdt`.
+2. Libraries: `uint256`, `int256`, `consts`, `rbac`, `gnsmath`, `store`,
+   `version_manager`, and `utils`.
+3. Base realms: `access`, `rbac`, `halt`, `referral`, `gns`, `emission`,
+   `common`, `community_pool`, `gnft`, and `gov/xgns`.
+4. GnoSwap realms: `protocol_fee`, `pool`, `position`, `router`, `staker`,
+   `gov/staker`, `gov/governance`, and `launchpad`.
+5. Versioned implementations: `common/v1`, `protocol_fee/v1`, `pool/v1`,
+   `position/v1`, `router/v1`, `staker/v1`, `gov/staker/v1`,
+   `gov/governance/v1`, and `launchpad/v1`.
 
-2. **Pre-Deployment Steps (MANDATORY)**:
-   - **Step 1**: Run `make remove-test` to remove all test files
-   - **Step 2**: Run `make faucet-admin` for local/test environments
-   - **Step 3**: Verify with `make info ENV=<env>` before deployment
+For an upgrade implementation, the versioned deployment target first creates a
+new version directory by copying the contract's `v1` source (excluding
+`*test.gno` files) and updating its module and package declarations. The
+version must have the form `v<number>`, and the destination directory must not
+already exist:
 
-3. **Test Files**: Test files (`*_test.gno`, `testutils.gno`) should NEVER be deployed to the blockchain. They increase costs and may expose internal logic.
+```bash
+make -C tests deploy-version ENV=default CONTRACT=pool VERSION=v2
+```
 
-4. **Account Requirements**:
-   - Local/Dev: Use `make faucet-admin` to fund admin accounts
-   - Staging/Production: Ensure accounts are pre-funded with sufficient GNOT
+That target then broadcasts the `addpkg` transaction. The upgrade target does
+not create or modify local source; it only broadcasts `UpgradeImpl` for the
+selected proxy and implementation path:
 
-5. **Deployment Order**: Contracts must be deployed in this specific order:
-   - Test tokens → Libraries → Base contracts → Gnoswap realms → v1 implementations
+```bash
+make -C tests upgrade-version ENV=default CONTRACT=pool VERSION=v2
+```
 
-6. **Contract Addresses**: Update environment config files with deployed contract addresses after successful deployment.
+## Contract-call smoke tests
+
+The test targets are state-changing `gnokey maketx call` sequences, not
+read-only assertions. Run them after the required contracts are deployed and
+after any prerequisites for the selected group are present on the target
+network:
+
+```bash
+make -C tests test-pool ENV=default
+make -C tests test-swap ENV=default
+make -C tests test-stake ENV=default
+make -C tests test-gov ENV=default
+
+# Runs test-pool, test-swap, test-stake, and test-gov in that order.
+make -C tests test-all ENV=default
+```
+
+The groups perform the following operations:
+
+- `test-pool`: create the default GNS/WUGNOT pool and mint a position.
+- `test-swap`: execute the exact-in and exact-out GNS/WUGNOT swap recipes.
+- `test-stake`: create an external incentive, stake token 1, collect its
+  reward, and unstake it.
+- `test-gov`: delegate GNS and submit text and community-pool proposals.
+
+`transfer-tokens` is another state-changing target. It sends native coins and
+1,000,000,000 units of GNS, USDC, ATONE, ATOM, BTC, DAI, ETH, PHOTON, SOL,
+TRX, and USDT to `ADDR_TEST_ADMIN` and any non-empty `ADDR_USER_1` through
+`ADDR_USER_4`; unset user addresses are skipped:
+
+```bash
+make -C tests transfer-tokens ENV=default
+```
+
+## Docker integration runner
+
+The repository-root Makefile provides a separate Docker-backed runner for the
+`.txtar` integration tests. It prepares the Gno checkout inside the container
+before running the selected test:
+
+```bash
+# From the repository root.
+make integration-test-build
+make integration-test-list
+make integration-test-run TEST=pool_create_pool_and_mint
+make integration-test
+```
+
+`integration-test-run` accepts a converted test name without `.txtar` and runs
+one test. `integration-test` runs all discovered integration tests; the Make
+target does not pass the optional skip flag. The runner uses the integration
+sources under `tests/integration/testdata/`; see
+[`bless/README.md`](integration/bless/README.md) for refreshing expectations.

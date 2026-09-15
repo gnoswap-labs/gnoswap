@@ -10,11 +10,11 @@ import (
 // ProtocolFeeRewardManager distributes protocol fees to stakers.
 //
 // Protocol fees arrive in many tokens, so the manager keeps one accumulator per token
-// instead of a single one. A stake change never touches those accumulators: it only
-// advances the accrual epoch, records the total stake in force from that epoch and
-// appends one event to the staker's own history. The per-token work happens when a
-// token is collected, so the cost of Delegate, Undelegate and Redelegate does not
-// depend on how many tokens ever collected a fee.
+// instead of a single one. A stake change never touches those accumulators: it advances
+// the accrual epoch, records the total stake in force from that epoch, and appends one
+// event for an ordinary add/remove. Redelegate performs a remove plus an add and
+// therefore appends two events. The per-token work happens when a token is collected,
+// so stake-change cost does not depend on how many tokens ever collected a fee.
 type ProtocolFeeRewardManager struct {
 	// rewardStates maps a reward ID to the ProtocolFeeRewardState tracking that staker
 	rewardStates *bptree.BPTree // rewardID -> *ProtocolFeeRewardState

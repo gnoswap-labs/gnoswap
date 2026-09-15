@@ -38,8 +38,10 @@ func assertf(ok bool, format string, args ...any) {
 	}
 }
 
-type invalidData string
-type stopTest string
+type (
+	invalidData string
+	stopTest    string
+)
 
 // T is similar to testing.T, but with extra bookkeeping for property-based tests.
 type T struct {
@@ -153,11 +155,12 @@ func (t *T) failOnError() {
 	}
 }
 
-// Check runs property-based tests by generating random test cases.
-// It fails the test if it finds a test case that falsifies the property.
+// Check runs one property-based test case by default. It fails the test if it
+// finds a test case that falsifies the property; use CheckN to request more
+// valid cases.
 //
-// The property function receives a *T which provides generator methods
-// via Draw() and can be used to mark the test as failed.
+// The property function receives a *T which provides generator methods via
+// Draw() and can be used to mark the test as failed.
 //
 // Example:
 //

@@ -6,17 +6,18 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 )
 
-// Config represents the configuration of the governor contract
-// All parameters in this struct can be modified through governance.
+// Config represents the configuration of the governor contract.
+// All parameters can be modified through Reconfigure by admin or governance.
 type Config struct {
 	// VotingStartDelay is the delay before voting starts after proposal creation (in seconds)
 	VotingStartDelay int64
 	// VotingPeriod is the duration during which votes are collected (in seconds)
 	VotingPeriod int64
 	// VotingWeightSmoothingDuration is the period over which voting weight is averaged
-	// for proposal creation and cancellation threshold calculations (in seconds)
+	// for proposal creation and cancellation threshold calculations (in seconds).
 	VotingWeightSmoothingDuration int64
-	// Quorum is the percentage of active xGNS supply required for proposal approval
+	// Quorum is the percentage of total xGNS supply required for proposal approval.
+	// Total supply includes xGNS held by the launchpad.
 	Quorum int64
 	// ProposalCreationThreshold is the minimum xGNS amount required to create a proposal
 	ProposalCreationThreshold int64

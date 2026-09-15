@@ -37,8 +37,8 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, stakerSto
 }
 
 // UpgradeImpl switches the active staker implementation to a different version.
-// This function allows seamless upgrades from one version to another without
-// data migration or downtime.
+// It changes the implementation pointer without transforming persisted state; the
+// selected implementation must understand the existing storage schema.
 //
 // Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.

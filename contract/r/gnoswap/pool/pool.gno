@@ -7,8 +7,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// type Pool describes a single Pool's state
-// A pool is identificed with a unique key (token0, token1, fee), where token0 < token1
+// Pool describes a single pool's state.
+// A pool is identified with a unique key (token0, token1, fee), where token0 < token1.
 type Pool struct {
 	// token0/token1 path of the pool
 	token0Path           string
@@ -23,7 +23,7 @@ type Pool struct {
 	liquidity            *u256.Uint       // total amount of active liquidity in the pool (within current tick range)
 	ticks                *bptree.BPTree   // tick(int32) -> TickInfo
 	tickBitmaps          map[int16]string // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(string)
-	positions            *bptree.BPTree   // maps the key (caller, lower tick, upper tick) to a unique position
+	positions            *bptree.BPTree   // maps encoded lower/upper tick pairs to aggregate pool accounting
 }
 
 // Pool Getters methods
@@ -292,7 +292,7 @@ func (p *TokenPair) SetToken1(token1 int64) { p.token1 = token1 }
 type Slot0 struct {
 	sqrtPriceX96               *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
 	tick                       int32      // current tick of the pool, i.e according to the last tick transition that was run
-	feeProtocol                uint8      // protocol fee for both tokens of the pool
+	feeProtocol                uint8      // packed protocol-fee denominators: token0 low nibble, token1 high nibble
 	unlocked                   bool       // whether the pool is currently locked to reentrancy
 	observationIndex           uint16     // the index of the most-recently written observation
 	observationCardinality     uint16     // the current maximum number of observations stored
@@ -450,18 +450,17 @@ func NewTickInfo() TickInfo {
 	}
 }
 
-// PositionInfo stores liquidity and fee state for a position.
-// Liquidity and fee-growth fields are stored as decimal strings to reduce storage cost,
-// while transferable owed amounts stay as int64 for token transfer boundaries.
+// PositionInfo stores aggregate liquidity, fee-growth checkpoints, and tokens
+// owed for one pool-scoped lower/upper tick key.
 type PositionInfo struct {
-	liquidity                string // amount of liquidity owned by this position
+	liquidity                string // aggregate liquidity for this tick-range key
 	feeGrowthInside0LastX128 string // fee growth per unit of liquidity for token0 as of last update
 	feeGrowthInside1LastX128 string // fee growth per unit of liquidity for token1 as of last update
 
-	// accumulated fees in token0 waiting to be collected
+	// accumulated token0 amount waiting to be collected (principal or swap fee)
 	tokensOwed0 int64
 
-	// accumulated fees in token1 waiting to be collected
+	// accumulated token1 amount waiting to be collected (principal or swap fee)
 	tokensOwed1 int64
 }
 

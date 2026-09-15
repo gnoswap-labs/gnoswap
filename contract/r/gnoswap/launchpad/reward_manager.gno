@@ -15,11 +15,11 @@ import (
 // - rewards (bptree.BPTree): A map of deposit IDs to their associated reward states.
 // - distributeAmountPerSecondX128 (u256.Uint): The amount of tokens to be distributed per second, represented as a Q128 fixed-point number.
 // - accumulatedRewardPerDepositX128 (u256.Uint): The accumulated reward per GNS stake, represented as a Q128 fixed-point number.
-// - totalDistributeAmount (int64): The total amount of tokens to be distributed.
+// - totalDistributeAmount (int64): The total token allocation for this tier.
 // - totalClaimedAmount (int64): The total amount of tokens claimed.
 // - distributeStartTime (int64): The start time of the reward calculation.
 // - distributeEndTime (int64): The end time of the reward calculation.
-// - accumulatedDistributeAmount (int64): The accumulated amount of tokens distributed.
+// - accumulatedDistributeAmount (int64): A legacy field not maintained by v1 reward accounting; normally zero unless explicitly set.
 // - rewardClaimableDuration (int64): The duration of reward claimable.
 type RewardManager struct {
 	rewards *bptree.BPTree // depositId -> RewardState
@@ -27,13 +27,13 @@ type RewardManager struct {
 	distributeAmountPerSecondX128   *u256.Uint // distribute amount per second, Q128
 	accumulatedRewardPerDepositX128 *u256.Uint // accumulated reward per GNS stake, Q128
 
-	totalDistributeAmount       int64 // total distributed amount
+	totalDistributeAmount       int64 // total token allocation for this tier
 	totalClaimedAmount          int64 // total claimed amount
 	activeDepositAmount         int64 // principal represented by active reward states
 	activeClaimedAmount         int64 // claims paid to active reward states
 	distributeStartTime         int64 // start time of reward calculation
 	distributeEndTime           int64 // end time of reward calculation
-	accumulatedDistributeAmount int64 // accumulated distribute amount
+	accumulatedDistributeAmount int64 // legacy field; v1 reward paths do not update it
 	accumulatedTime             int64 // last time when reward was calculated
 	rewardClaimableDuration     int64 // duration of reward claimable
 
@@ -142,12 +142,15 @@ func (rm *RewardManager) SetDistributeEndTime(time int64) {
 	rm.distributeEndTime = time
 }
 
-// AccumulatedDistributeAmount returns the accumulated distribute amount of the reward manager.
+// AccumulatedDistributeAmount returns the legacy reward-manager field.
+// v1 reward paths do not maintain it, so normal reads return zero unless it was
+// explicitly set.
 func (rm *RewardManager) AccumulatedDistributeAmount() int64 {
 	return rm.accumulatedDistributeAmount
 }
 
-// SetAccumulatedDistributeAmount sets the accumulated distribute amount of the reward manager.
+// SetAccumulatedDistributeAmount sets the legacy reward-manager field. It is not
+// used by v1 reward accounting.
 func (rm *RewardManager) SetAccumulatedDistributeAmount(amount int64) {
 	rm.accumulatedDistributeAmount = amount
 }

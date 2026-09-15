@@ -3,7 +3,8 @@ package position
 import bptree "gno.land/p/nt/bptree/v0"
 
 // Position represents a liquidity position in a pool.
-// Each position tracks the amount of liquidity, fee growth, and tokens owed to the position owner.
+// Each position tracks liquidity, fee-growth checkpoints, tokens owed, and a
+// burned marker for the position NFT.
 // All uint256 fields are stored as decimal strings to reduce realm object overhead.
 type Position struct {
 	operator  address // address that is approved for spending this token
@@ -20,7 +21,7 @@ type Position struct {
 	tokensOwed0 int64
 	tokensOwed1 int64
 
-	burned bool // whether the position has been burned (we don't burn the NFT, just mark as burned)
+	burned bool // empty-position marker; the NFT itself is not burned
 }
 
 func (p *Position) PoolKey() string {
@@ -103,7 +104,8 @@ func (p *Position) SetOperator(operator address) {
 	p.operator = operator
 }
 
-// isClear reports whether the position is empty
+// IsClear reports whether liquidity and tokens owed are all zero; it does not
+// describe the burned marker.
 func (p *Position) IsClear() bool {
 	return isZeroStr(p.liquidity) && p.tokensOwed0 == 0 && p.tokensOwed1 == 0
 }

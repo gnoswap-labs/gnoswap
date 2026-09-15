@@ -3,7 +3,7 @@ package governance
 // ProposeText creates a new text proposal with the provided data.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - title: The title of the proposal.
 //   - description: The description of the proposal.
 //
@@ -22,15 +22,18 @@ func ProposeText(
 }
 
 // ProposeCommunityPoolSpend creates a CommunityPoolSpend proposal with the provided data.
+// The transfer is attempted when an approved proposal executes.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - title: The title of the proposal.
 //   - description: The description of the proposal.
-//   - to: The address to receive the spent token.
-//   - tokenPath: The path of the token to be sent.
-//   - amount: The amount of the token to be sent.
+//   - to: A valid address to receive the spent token.
+//   - tokenPath: A registered token path.
+//   - amount: A strictly positive amount in the token's smallest unit.
 //
+// The community-pool balance is checked at execution, not proposal creation.
+
 // Returns:
 //   - proposalId: The ID of the proposal.
 func ProposeCommunityPoolSpend(
@@ -54,7 +57,7 @@ func ProposeCommunityPoolSpend(
 // ProposeParameterChange creates a ParameterChange proposal with the provided data.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - title: The title of the proposal.
 //   - description: The description of the proposal.
 //   - numToExecute: The number of changes to execute.
@@ -80,13 +83,16 @@ func ProposeParameterChange(
 
 // Vote allows a user to vote on a given proposal.
 //
+// The proposal's timestamp-based smoothing calculation determines the applied
+// weight. A vote cannot be changed after it is recorded.
+//
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - proposalId: The ID of the proposal to vote.
 //   - yes: The flag to vote as yes or not.
 //
 // Returns:
-//   - voteKey: The key of the vote.
+//   - voteWeight: The caller's calculated vote weight, formatted as a decimal string.
 func Vote(
 	cur realm,
 	proposalId int64,
@@ -102,7 +108,7 @@ func Vote(
 // Execute executes the given proposal.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - proposalId: The ID of the proposal to execute.
 //
 // Returns:
@@ -117,7 +123,7 @@ func Execute(
 // Cancel cancels the proposal with the given ID.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - proposalId: The ID of the proposal to cancel.
 //
 // Returns:
@@ -130,7 +136,7 @@ func Cancel(
 }
 
 // RemoveInactiveProposalFromIndex removes an inactive proposal from the
-// snapshot index without deleting its proposal or voting history.
+// timestamp-ordered index without deleting its proposal or voting history.
 func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
 	getImplementation().RemoveInactiveProposalFromIndex(0, cur, proposalID)
 }
@@ -139,7 +145,7 @@ func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
 // Only callable by admin or governance.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - votingStartDelay: delay before voting starts (seconds)
 //   - votingPeriod: voting duration (seconds)
 //   - votingWeightSmoothingDuration: weight smoothing duration (seconds)

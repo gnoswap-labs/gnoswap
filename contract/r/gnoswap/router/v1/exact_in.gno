@@ -39,7 +39,7 @@ import (
 //
 // Returns:
 //   - amountIn: Actual input consumed
-//   - amountOut: Actual output received
+//   - amountOut: Actual output received after the router fee
 //
 // Reverts if output < amountOutMin or deadline passed.
 func (r *routerV1) ExactInSwapRoute(
@@ -104,10 +104,10 @@ func (r *routerV1) ExactInSwapRoute(
 //
 // Returns:
 //   - amountIn: Actual input consumed
-//   - amountOut: Actual output received
+//   - amountOut: Actual output received after the router fee
 //
-// Reverts the transaction if the output amount is less than amountOutMin,
-// the deadline has passed, or the price limit is exceeded.
+// With a nonzero price limit, the swap may stop at the limit after consuming
+// less than amountIn; amountOutMin and the deadline are still enforced.
 func (r *routerV1) ExactInSingleSwapRoute(
 	_ int,
 	rlm realm,

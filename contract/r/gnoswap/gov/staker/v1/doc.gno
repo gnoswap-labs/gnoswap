@@ -1,4 +1,5 @@
-// package v1 manages GNS token staking and delegation functionality.
-// It handles delegation of voting power, distribution of protocol rewards,
-// and implements a lockup period (default: 7-days) for unstaking operations (xGNS burned on collect).
+// Package v1 manages GNS delegation and xGNS accounting.
+// It maintains timestamped delegation history, distributes GNS emission and
+// protocol-fee rewards, and enforces a configurable undelegation lockup
+// (7 days by default; xGNS is burned when undelegated GNS is collected).
 package staker

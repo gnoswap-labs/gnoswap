@@ -2,7 +2,7 @@
 
 ## Overview
 
-GnoSwap is built on a **proxy pattern architecture** that enables **seamless upgrades**, **independent contract version management**, and **centralized data management without data migration**.
+GnoSwap uses permanent proxy realms, registered implementation versions, and proxy-owned storage. An implementation switch reuses that storage; it does not automatically migrate its schema or establish behavioral compatibility.
 
 ## Architecture Pattern
 
@@ -52,10 +52,10 @@ Provides a stable public interface that routes calls to the current implementati
 
 ### Key Features
 
-- **Stable Interface** - Public API never changes
+- **Stable Entry Points** - Implementation switches retain the proxy's public API
 - **Dynamic Routing** - Calls routed to current implementation
-- **Upgrade Management** - Seamless implementation switching
-- **Interface Contract** - Enforces implementation compatibility
+- **Upgrade Management** - Switches to a previously registered implementation
+- **Interface Contract** - Checks the implementation's method interface; storage and behavior require separate compatibility review
 
 ### Directory Structure
 
@@ -83,13 +83,13 @@ pool/
 ├── v1/                          # Pool implementation v1
 │   ├── init.gno                # Registers v1 implementation
 │   ├── manager.gno             # Pool management functions
-│   ├── position.gno            # Position management (stub)
-│   ├── swap.gno                # Swap functions (stub)
-│   ├── getter.gno              # Getter functions (stub)
+│   ├── position.gno            # Position accounting
+│   ├── swap.gno                # Swap execution
+│   ├── getter.gno              # Read-only pool queries
 │   ├── errors.gno              # Error definitions
 │   ├── assert.gno              # Assertion functions
 │   ├── factory_param.gno       # Factory parameters
-│   ├── pool_type.gno           # Pool type definitions
+│   ├── type.gno                # Swap state and cache types
 │   ├── utils.gno               # Utility functions
 │   └── gnomod.toml             # Module configuration
 │
@@ -106,6 +106,7 @@ type IPool interface {
     IPoolManager    // Pool creation and management
     IPoolPosition   // Position operations (Mint, Burn, Collect)
     IPoolSwap       // Swap operations and protocol fees
+    IPoolOracle     // Observation and cumulative-price queries
     IPoolGetter     // Data retrieval functions
 }
 ```
@@ -114,7 +115,7 @@ type IPool interface {
 
 - **Interface Compliance** - All versions implement IPool interface
 - **Independent Development** - Each version developed separately
-- **Backward Compatibility** - Interface ensures compatibility
+- **Interface Compatibility** - Versions must satisfy the same method interface; this does not prove storage or behavioral compatibility
 - **Registration System** - Implementations register via initializers
 
 ---
@@ -140,7 +141,7 @@ Provides centralized data storage with domain-specific access patterns.
 - **Centralized Storage** - Single storage system for all versions
 - **Namespace Isolation** - Domain-specific storage namespaces
 - **Access Control** - Role-based storage permissions
-- **No Data Migration** - All versions share same data
+- **Shared Storage** - Compatible versions reuse domain data; schema changes need explicit handling
 
 ### Directory Structure
 
@@ -151,14 +152,14 @@ p/gnoswap/store/                 # Core Storage Infrastructure
 └── types.gno                    # Storage types
 
 r/gnoswap/access/                # Access Control System
-├── access.gno                   # Access assertions
+├── access.gno                   # Role registry mirror
 ├── assert.gno                   # Access validation
-└── swap_whitelist.gno           # Swap whitelist management
+└── errors.gno                   # Access errors
 
 r/gnoswap/rbac/                  # Role-Based Access Control
 ├── rbac.gno                     # Role management
 ├── role.gno                     # Role definitions
-└── types.gno                    # RBAC types
+└── consts.gno                   # Initial role addresses
 
 r/gnoswap/halt/                  # Emergency Halt System
 ├── halt.gno                     # Halt management
@@ -223,7 +224,7 @@ These contracts form the core infrastructure and are never upgraded after deploy
 
 **Characteristics:**
 
-- Deployed once and never modified
+- No version-manager implementation switch; realm state can still change through its APIs
 - Provide foundational services for all other contracts
 - Critical for system security and stability
 
@@ -234,7 +235,6 @@ These contracts manage the upgrade process and coordinate between versions:
 - **`r/gnoswap/pool`**: Pool domain management with proxy pattern
 - **`r/gnoswap/position`**: Position domain management with proxy pattern
 - **`r/gnoswap/router`**: Router domain management with proxy pattern
--
 - **`r/gnoswap/staker`**: Staker domain management with proxy pattern
 - Other domain contracts...
 
@@ -274,7 +274,7 @@ User Request
 ┌─────────────────────────────────────────┐
 │ PROXY LAYER: pool/proxy.gno              │
 │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
-│ 1. getImpl() → Returns current impl      │
+│ 1. getImplementation()                 │
 │ 2. Delegate to implementation           │
 └─────────────────────────────────────────┘
                  │
@@ -282,8 +282,8 @@ User Request
 ┌─────────────────────────────────────────┐
 │ IMPLEMENTATION: pool/v1/swap.gno         │
 │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
-│ 1. halt.AssertIsNotHaltedPool()         │
-│ 2. access.AssertIsAuthorized()          │
+│ 1. Validate realm, lock, and halt state │
+│ 2. Reject user call; validate swap      │
 │ 3. Execute business logic               │
 │ 4. store.Get/Set operations             │
 └─────────────────────────────────────────┘
@@ -323,14 +323,14 @@ STORAGE LAYER: "Where to store and how to access data?"
 ```
 All implementations must implement IPool interface
 Proxy routes calls to current implementation
-Interface ensures backward compatibility
+Interface checks method compatibility, not storage schema or business semantics
 ```
 
 ### 3. Version Independence
 
 ```
 pool/v1, pool/v2 → Use same pool/store
-Deploying pool/v2 doesn't affect pool/v1
+Registering a later version does not activate it while a current version exists
 Data shared via centralized storage
 ```
 
@@ -339,7 +339,7 @@ Data shared via centralized storage
 ```
 Single storage system for all versions
 Namespace-based isolation
-No data migration required
+Schema compatibility must be checked before switching versions
 ```
 
 ---
@@ -359,7 +359,7 @@ No data migration required
                  ▼
 ┌─────────────────────────────────────────┐
 │ Step 2: Call pool/upgrade.gno           │
-│ - UpgradeImpl("pool/v2")                │
+│ - UpgradeImpl(cur, fullPackagePath)     │
 │ - Switches implementation pointer       │
 │ - Reuses proxy-owned storage access     │
 └─────────────────────────────────────────┘
@@ -369,9 +369,9 @@ No data migration required
 │ Result:                                 │
 │ - pool/v1 still registered              │
 │ - pool/v2 now active                    │
-│ - No data migration needed              │
-│ - Zero downtime                         │
-│ - v1 remains for rollback capability    │
+│ - Shared data retained                  │
+│ - Target initializer has run            │
+│ - Prior version remains registered      │
 └─────────────────────────────────────────┘
 ```
 
@@ -379,23 +379,23 @@ No data migration required
 
 ## Benefits
 
-### 1. Zero-Downtime Upgrades
+### 1. Registered Implementation Switching
 
-- Old and new versions coexist
-- Instant implementation switching
-- Instant rollback capability
-- Previous versions remain registered for emergency rollback
+- Old and new versions remain registered
+- Switching executes the target initializer and updates the active instance
+- A switch back also re-runs that version's initializer; it does not restore an earlier storage snapshot
+- Rollback is safe only when the old code and initializer accept the current stored state
 
-### 2. No Data Migration
+### 2. Shared Domain Storage
 
-- Single centralized storage
-- All versions share same data
-- Interface ensures compatibility
+- Each domain owns its KV store
+- Versions of that domain reuse its data
+- The version manager supplies no automatic schema migration
 
 ### 3. Independent Contract Upgrades
 
-- Upgrade pool without affecting other domains
-- Interface validation ensures compatibility
+- Each domain selects its own active implementation
+- Cross-domain interfaces, hooks, and stored data still require compatibility review
 - Version management via initializers
 
 ### 4. Strong Access Control
@@ -417,27 +417,27 @@ No data migration required
 ### 1. Interface Compliance
 
 - All implementations must implement IPool interface
-- Interface prevents breaking changes
-- Compile-time compatibility checking
+- Proxy registration accepts the domain's typed initializer
+- Updating the active instance type-asserts the result to the domain interface
 
 ### 2. Access Control
 
 - Role-based storage permissions
 - Namespace isolation
-- Admin-only upgrade functions
+- Pool upgrades require admin or governance authorization and an unlocked pool
 - Realm tokens are threaded explicitly into the version manager and validated via `rlm.IsCurrent()`, rejecting spoofed or stale crossing-frame tokens
 
 ### 3. Emergency Halt
 
 - Per-domain halt capability
 - Independent halt states
-- Can halt specific implementations
+- Halt checks apply by operation/domain, not by registered implementation version
 
 ### 4. Immutable Infrastructure
 
 - Core storage cannot be upgraded
 - Interface contracts are stable
-- Predictable system behavior
+- State remains mutable through the infrastructure's authorized APIs
 
 ---
 
@@ -445,10 +445,21 @@ No data migration required
 
 ### Registration Process
 
+The pool's initializer registers a realm-aware callback. The callback validates
+the live token, initializes or validates existing store data, installs the
+emission pool checker, and constructs the implementation:
+
 ```go
 // In pool/v1/init.gno
-func init() {
-    pool.RegisterInitializer(cross, func(poolStore pool.IPoolStore) pool.IPool {
+func init(cur realm) {
+    pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, poolStore pool.IPoolStore) pool.IPool {
+        access.AssertIsRlmCurrent(0, rlm)
+        if err := initStoreData(0, rlm, poolStore); err != nil {
+            panic(err)
+        }
+        emission.SetDefaultInitialPoolChecker(cross(rlm), func(poolPath string) bool {
+            return pool.ExistsPoolPath(poolPath)
+        })
         return NewPoolV1(poolStore)
     })
 }
@@ -459,8 +470,9 @@ func init() {
 ```go
 // In pool/upgrade.gno
 func UpgradeImpl(cur realm, packagePath string) {
-    caller := runtime.PreviousRealm().Address()
+    caller := cur.Previous().Address()
     access.AssertIsAdminOrGovernance(caller)
+    assertPoolUnlocked()
 
     // Thread the live crossing-frame token into the version manager. The
     // leading 0 is the v2 interrealm sentinel; the manager validates
@@ -481,15 +493,15 @@ func UpgradeImpl(cur realm, packagePath string) {
 ```go
 // In pool/proxy.gno
 func CreatePool(cur realm, token0Path, token1Path string, fee uint32, sqrtPriceX96 string) {
-    getImpl().CreatePool(token0Path, token1Path, fee, sqrtPriceX96)
+    getImplementation().CreatePool(0, cur, token0Path, token1Path, fee, sqrtPriceX96)
 }
 
-func getImpl() IPool {
-    if poolImpl == nil {
-        panic("pool implementation is not set")
+func getImplementation() IPool {
+    if implementation == nil {
+        panic("implementation is not initialized")
     }
-    return poolImpl
+    return implementation
 }
 ```
 
-This proxy pattern architecture provides a robust, upgradeable foundation for GnoSwap while maintaining data consistency and enabling seamless feature evolution.
+See each domain's `upgrade.gno` and initializer for its authorization, validation, and initialization requirements before planning an implementation switch.

@@ -12,13 +12,13 @@ func GetPositions() *rotree.ReadOnlyTree {
 	return getImplementation().GetPositions()
 }
 
-// IsBurned reports whether a position NFT has been burned.
+// IsBurned reports whether the position's empty-position marker is set.
 //
 // Parameters:
 //   - positionId: position NFT token ID
 //
 // Returns:
-//   - burned: whether the position has been burned
+//   - burned: whether the position's empty-position marker is set
 //   - err: non-nil when positionId cannot be resolved
 func IsBurned(positionId uint64) (bool, error) {
 	return getImplementation().IsBurned(positionId)
@@ -36,14 +36,17 @@ func IsInRange(positionId uint64) (bool, error) {
 	return getImplementation().IsInRange(positionId)
 }
 
-// GetPositionTokenBalances returns both token balances associated with a position.
+// GetPositionTokenBalances calculates the current token0/token1 balances for
+// a position from its liquidity, tick range, and pool price.
+//
+// These are derived balances, not permanently stored token amounts.
 //
 // Parameters:
 //   - positionId: position NFT token ID
 //
 // Returns:
-//   - balance0: token0 balance
-//   - balance1: token1 balance
+//   - balance0: current token0 balance
+//   - balance1: current token1 balance
 //   - err: non-nil when positionId cannot be resolved
 func GetPositionTokenBalances(positionId uint64) (int64, int64, error) {
 	return getImplementation().GetPositionTokenBalances(positionId)

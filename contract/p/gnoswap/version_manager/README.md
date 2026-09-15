@@ -216,48 +216,54 @@ The package returns errors for:
 - Unauthorized caller attempting to register (not in domain path)
 - Duplicate registration of the same package path
 - Attempting to switch to an unregistered version
-- Invalid initializer function type
+- A nil initializer in the registered map (`ChangeImplementation`'s internal
+  invalid-state check). The initializer function signature is checked at
+  compile time by the typed API.
 
 ## Use Cases
 
 ### Protocol Upgrades
 
-Upgrade DeFi protocol logic without disrupting active users:
+Upgrade DeFi protocol logic without disrupting active users. The target version
+must already be deployed/loaded and must have registered its initializer during
+package initialization; `UpgradeImpl` only activates registered paths:
 
 ```go
-// Upgrade fee calculation algorithm
+// The protocol_fee/v2 package has already registered this path during init.
 protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/v2")
 ```
 
 ### A/B Testing
 
-Test new implementations before full rollout:
+Test a new implementation before full rollout. Deploy/load the package and let
+its `init` call `RegisterInitializer` before switching:
 
 ```go
-// Switch to experimental version
-protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/experimental")
+// v2 was deployed and registered before this call.
+protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/v2")
 
-// Rollback if issues detected
+// Roll back to another path that was also registered during initialization.
 protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/v1")
 ```
 
 ### Emergency Response
 
-Quickly switch to a patched version during security incidents:
+Quickly switch to a patched version during security incidents. The hotfix
+package must be deployed/loaded and registered before activation:
 
 ```go
-// Deploy fixed version and immediately activate
+// v1_hotfix was deployed and registered during its package init.
 protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/v1_hotfix")
 ```
 
 ## Implementation Notes
 
 - Built on Strategy Pattern for runtime algorithm swapping
-- Uses Plugin Architecture for dynamic version loading
+- Uses Plugin Architecture for explicit version registration
 - Storage access is driven by the proxy realm; the live realm token is threaded explicitly (the v2 `_ int, rlm realm` marker) and validated via `rlm.IsCurrent()`
 - No data migration required - all versions share the same storage
 - Type assertions required when retrieving current implementation
-- Map used for efficient initializer storage and lookup
+- Initializers are registered by version packages; the manager does not load or deploy packages itself
 
 ## Limitations
 

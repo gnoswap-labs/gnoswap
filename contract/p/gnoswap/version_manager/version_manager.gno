@@ -68,7 +68,8 @@ type versionManager struct {
 //   - rlm: the live realm token threaded in by the caller; rlm.Previous() identifies the
 //     version package that is registering. The leading `_ int` is a v2 sentinel that surfaces
 //     as a `0` at every call site so the realm-threading is visible to the reader.
-//   - initializer: A function that receives a storage interface and returns an implementation instance
+//   - initializer: A function receiving the sentinel, live realm token, and storage
+//     interface, and returning an implementation instance.
 //
 // Returns:
 //   - error: If realm token is spoofed, caller is unauthorized, already registered, or initializer is nil
@@ -143,7 +144,8 @@ func (vm *versionManager) RegisterInitializer(_ int, rlm realm, initializer func
 //   - packagePath: The full package path of the target version (e.g., "gno.land/r/gnoswap/protocol_fee/v2")
 //
 // Returns:
-//   - error: If realm token is spoofed, target version is not registered, or initializer is invalid
+//   - error: If realm token is spoofed, target version is not registered, or the
+//     registered initializer is nil (an internal invalid state)
 func (vm *versionManager) ChangeImplementation(_ int, rlm realm, packagePath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)

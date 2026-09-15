@@ -186,7 +186,7 @@ func stakeScanLowerBound(currentTime int64) int64 {
 //
 // Transfers position NFT to staker and begins reward accumulation.
 // Eligible for internal incentives (GNS emission) and external rewards.
-// Position must have liquidity and be in eligible pool tier.
+// A pool is stakeable when it has an internal tier or an active/future external incentive.
 //
 // Parameters:
 //   - positionId: LP position NFT token ID to stake
@@ -197,8 +197,8 @@ func stakeScanLowerBound(currentTime int64) int64 {
 //
 // Requirements:
 //   - Caller must own the position NFT
-//   - Position must have active liquidity
-//   - Pool must be in tier 1, 2, or 3
+//   - Position must have non-zero liquidity
+//   - Pool must have an internal tier or an active/future external incentive
 //   - Position not already staked
 //
 // Note: Out-of-range positions earn no rewards but can be staked.
@@ -647,7 +647,8 @@ func (s *stakerV1) newRewardCollectParam(target *collectTarget, currentTime, blo
 	}
 }
 
-// CollectEmissionReward harvests only the GNS emission (internal) reward of a staked position.
+// CollectEmissionReward harvests only the GNS emission (internal) reward for a live staked deposit
+// or an exit checkpoint left by UnStakeToken.
 //
 // The emission and the external incentive rewards track their collection cursors independently
 // (a single lastCollectTime on the deposit for emission, one per incentive id for external), so
@@ -661,11 +662,11 @@ func (s *stakerV1) newRewardCollectParam(target *collectTarget, currentTime, blo
 //
 // Requirements:
 //   - Contract must not be halted
-//   - Caller must be the position owner
-//   - Position must be staked (have a deposit record)
+//   - Caller must be the position owner for a live deposit; checkpoint collection is permissionless
+//   - Position must be staked or have an exit checkpoint
 //
 // Parameters:
-//   - positionId: LP position NFT token ID
+//   - positionId: LP position NFT token ID or position with an exit checkpoint
 //
 // Returns the GNS amount sent to the user and the penalty amount sent to the community pool.
 func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (int64, int64) {
@@ -700,11 +701,14 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 	return rewardToUser, rewardPenalty
 }
 
-// CollectExternalIncentiveReward harvests one external incentive reward of a staked position.
+// CollectExternalIncentiveReward harvests one external incentive reward for a live staked deposit
+// or an exit checkpoint left by UnStakeToken.
 //
 // Each incentive keeps its own lastCollectTime, so the emission reward and every incentive other than
-// the requested one stay collectible afterwards. The requested incentive is itself left collectible when
-// it cannot be delivered (not started, zero reward, or underfunded).
+// the requested one stay collectible afterwards. For a live deposit, a not-started, zero-reward, or
+// reward-token-balance-short incentive remains collectible because its cursor is not advanced. For
+// an exit checkpoint, an incentive-balance shortfall is forfeited to release the checkpoint rather
+// than left as an unpayable claim.
 //
 // State Transition:
 //  1. Incentives created since the deposit's last update are added to its incentive index
@@ -714,15 +718,15 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 //
 // Requirements:
 //   - Contract must not be halted
-//   - Caller must be the position owner
-//   - Position must be staked (have a deposit record)
+//   - Caller must be the position owner for a live deposit; checkpoint collection is permissionless
+//   - Position must be staked or have an exit checkpoint
 //   - Incentive must exist and target the pool the position is staked in
 //
 // Parameters:
-//   - positionId: LP position NFT token ID
+//   - positionId: LP position NFT token ID or position with an exit checkpoint
 //   - incentiveId: external incentive to collect
 //
-// Returns the collected reward amount, before the staking reward fee is taken, and the penalty amount
+// Returns the collected reward amount before the staking reward fee, and the penalty amount
 // kept by the incentive.
 func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId uint64, incentiveId string) (int64, int64) {
 	access.AssertIsRlmCurrent(0, rlm)
@@ -757,8 +761,8 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 	return rewardAmount, rewardPenalty
 }
 
-// CollectReward harvests accumulated rewards for a staked position. This includes both
-// internal GNS emission and external incentive rewards.
+// CollectReward harvests accumulated rewards for a live staked deposit or an exit checkpoint left
+// by UnStakeToken. This includes both internal GNS emission and external incentive rewards.
 //
 // It is the "collect everything" entry point kept for callers that do not want to choose a side. It
 // calculates both sides in one pass and delivers each incentive, then the emission reward, through the
@@ -766,14 +770,14 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 //
 // Requirements:
 //   - Contract must not be halted
-//   - Caller must be the position owner
-//   - Position must be staked (have a deposit record)
+//   - Caller must be the position owner for a live deposit; checkpoint collection is permissionless
+//   - Position must be staked or have an exit checkpoint
 //
 // Parameters:
-//   - positionId: LP position NFT token ID
+//   - positionId: LP position NFT token ID or position with an exit checkpoint
 //
 // Returns the GNS amount sent to the user, the GNS penalty amount, and the per-token external
-// reward and penalty amounts.
+// reward and penalty amounts. External reward amounts are gross before the staking-reward fee.
 func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -824,20 +828,20 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	return utils.FormatInt(internalRewardToUser), utils.FormatInt(internalRewardPenalty), toUserExternalReward, toUserExternalPenalty
 }
 
-// deliverExternalIncentiveReward pays out one incentive's already-calculated reward: it debits the
-// incentive, advances its lastCollectTime, takes the staking reward fee and transfers the rest.
+// For a live deposit, the incentive is skipped WITHOUT advancing its lastCollectTime when it yields
+// no user reward or does not hold enough reward token, so the amount stays collectible later. For an
+// exit checkpoint, a penalty-only source is settled and its cursor advances; an incentive-balance
+// shortfall is reported as unpayable so checkpoint bookkeeping can forfeit the source. A shortfall in
+// the staker's token ledger instead aborts checkpoint collection and leaves that source owed.
+// A skipped live incentive is reported by an empty reward token, and the outcome tells checkpoint
+// bookkeeping whether the source was deferred or can never be paid.
 //
-// The incentive is skipped WITHOUT advancing its lastCollectTime when it yields no user reward or does
-// not hold enough reward token, so the amount stays collectible later. A skipped incentive is reported
-// by an empty reward token, and the outcome says why, so a checkpoint can tell a deferral from a debt
-// it will never be able to pay.
-//
-// A warmup ratio below 100% floors the user reward, so a small accrual can yield rewardAmount == 0 while
-// externalPenalty > 0. Such a call is skipped as a whole: the penalty is NOT booked and the cursor is NOT
-// advanced, which leaves the untouched accrual to be recalculated over the wider window of the next
-// collect. Nothing is lost either way, because an unbooked penalty stays in the incentive's reward
-// amount, and endExternalIncentive refunds the reward amount and the accumulated penalty to the same
-// address.
+// A warmup ratio below 100% can floor the user reward to zero while externalPenalty > 0. For a live
+// deposit, that call is skipped as a whole: the penalty is NOT booked and the cursor is NOT advanced,
+// leaving the untouched accrual to be recalculated over the wider window of the next collect. For an
+// exit checkpoint there is no next collection, so the penalty is booked and the cursor advances even
+// when rewardAmount == 0. After EndExternalIncentive, accumulated penalties are collected separately
+// with CollectExternalIncentivePenalty to its explicit refund address.
 //
 // Returns the reward token, the collected reward amount before the staking reward fee, the penalty,
 // and the delivery outcome.
@@ -1032,10 +1036,9 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 // fee, settles the pool's unclaimable accumulation to the community pool, advances totalEmissionSent and
 // the deposit's internal lastCollectTime, and transfers the GNS.
 //
-// When the position has no emission reward to deliver, the internal lastCollectTime is left untouched so
-// the amount keeps accruing; the pool's unclaimable accumulation is still settled.
-//
-// Returns the GNS amount sent to the user and the penalty amount sent to the community pool.
+// For a live position with no user reward, the internal lastCollectTime is left untouched so the amount
+// keeps accruing. A checkpoint has no next collection: when it has only a penalty, the penalty is settled
+// and the internal cursor advances even though the user reward is zero.
 func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, reward Reward) (int64, int64) {
 	// Same reentrancy backstop as deliverExternalIncentiveReward: a checkpoint whose internal
 	// cursor already reached its window's close has had this delivery, and reward was computed
@@ -1166,7 +1169,6 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 //
 // Parameters:
 //   - positionId: LP position NFT token ID to unstake
-//   - unwrapResult: Convert WUGNOT to GNOT if true
 //
 // Process:
 //  1. Records an exit checkpoint owing every reward source (GNS + external)

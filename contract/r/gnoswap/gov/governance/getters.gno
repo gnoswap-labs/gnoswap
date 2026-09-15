@@ -125,7 +125,8 @@ func GetVoteStatus(proposalId int64) (quorum, maxVotingWeight, yesWeight, noWeig
 }
 
 // GetVotingInfos returns a read-only view of a proposal's value-backed voting
-// infos, keyed by voter address. nil is returned when the proposal has no votes.
+// infos, keyed by voter address. Existing proposals have an empty view before
+// the first vote; nil is returned only when the stored voting-info tree is absent.
 func GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 	return getImplementation().GetVotingInfos(proposalID)
 }
@@ -186,8 +187,8 @@ func GetUserProposals() *rotree.ReadOnlyTree {
 // Active Proposal Query
 // ==================================
 
-// GetOldestActiveProposalSnapshotTime returns the oldest active proposal snapshot
-// time; stale or missing first entries return an error.
+// GetOldestActiveProposalSnapshotTime returns the oldest active proposal's
+// timestamp anchor; stale or missing first entries return an error.
 func GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
 	return getImplementation().GetOldestActiveProposalSnapshotTime()
 }
@@ -196,7 +197,8 @@ func GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
 // Voting weight snapshot getters
 // ==================================
 
-// GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.
+// GetCurrentVotingWeightSnapshot returns current total voting weight and its
+// timestamp anchor computed with the configured smoothing duration.
 func GetCurrentVotingWeightSnapshot() (int64, int64, error) {
 	return getImplementation().GetCurrentVotingWeightSnapshot()
 }

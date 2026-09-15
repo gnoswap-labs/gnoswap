@@ -15,7 +15,9 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-// CollectRewardByDepositId collects reward from a specific deposit.
+// CollectRewardByDepositId collects the claimable project-token reward from a
+// specific deposit. The reward becomes claimable one day after deposit creation,
+// capped at the selected tier's end time.
 //
 // Parameters:
 //   - depositID: ID of the deposit to collect from
@@ -23,7 +25,7 @@ import (
 // Returns:
 //   - amount: reward token amount collected for the deposit
 //
-// Only callable by deposit owner.
+// Only callable by deposit owner after the claimable time.
 func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
 	access.AssertIsRlmCurrent(0, rlm)
 

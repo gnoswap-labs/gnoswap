@@ -156,8 +156,6 @@ func (self *PoolResolver) GetOrNewTick(tickId int32) *sr.Tick {
 	return tick
 }
 
-// initializeNewTickOutsideAccumulation seeds a just-created boundary tick so
-// that below(tick) == globalAccumulation holds, keeping the three branches of
 // outsideAccumulationAt returns a boundary tick's outside accumulation at currentTime.
 //
 // An exit checkpoint answers for its own exit timestamp from the value pinned when it was
@@ -176,7 +174,9 @@ func (self *PoolResolver) outsideAccumulationAt(tickId int32, currentTime int64)
 	return NewTickResolver(self.GetOrNewTick(tickId)).CurrentOutsideAccumulation(currentTime)
 }
 
-// CalculateRawRewardForPosition consistent.
+// initializeNewTickOutsideAccumulation seeds a just-created boundary tick so
+// that below(tick) == globalAccumulation holds across the three branches of
+// outsideAccumulationAt.
 func (self *PoolResolver) initializeNewTickOutsideAccumulation(currentTime int64, currentTick, tickId int32, tick *sr.Tick) {
 	if tickId > currentTick {
 		return

@@ -17,7 +17,7 @@ func (lp *launchpadV1) assertIsDepositOwner(depositID string, caller address) {
 	}
 }
 
-// assertIsValidAmount panics if the amount is zero.
+// assertIsValidAmount panics if the amount is below the minimum deposit or is not a multiple of it.
 func assertIsValidAmount(amount int64) {
 	if amount < minimumDepositAmount {
 		panic(makeErrorWithDetails(

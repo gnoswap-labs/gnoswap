@@ -53,7 +53,7 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 //   - *u256.Uint: The calculated liquidity based on the provided amount of token1 and price range.
 //
 // Notes:
-//   - The result is not directly limited to uint128, as liquidity values can exceed uint128 bounds.
+//   - The result is converted to uint128, so values above `MaxUint128` panic.
 //   - If `sqrtRatioAX96 == sqrtRatioBX96`, the function will panic due to division by zero.
 //   - Q96 is a constant representing `2^96`, ensuring that precision is maintained during division.
 //
@@ -88,7 +88,8 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 // - amount1: The amount of token1 available to provide liquidity (*u256.Uint).
 //
 // Returns:
-// - *u256.Uint: The maximum possible liquidity that can be minted.
+//   - *u256.Uint: The maximum possible liquidity that can be minted. The result
+//     is bounded by uint128; a value above `MaxUint128` panics.
 //
 // Notes:
 //   - The `Clone` method is used to prevent modification of the original values during computation.
@@ -179,33 +180,28 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 	return res
 }
 
-// GetAmountsForLiquidity calculates the amounts of token0 and token1 required
-// to provide a specified liquidity within a price range.
+// GetAmountsForLiquidity calculates the amounts of token0 and token1 represented
+// by a specified liquidity within a price range.
 //
-// This function determines the quantities of token0 and token1 necessary to achieve
-// a given liquidity level, depending on the current price (sqrtRatioX96) and the
-// bounds of the price range (sqrtRatioAX96 and sqrtRatioBX96). The function returns
-// the calculated amounts of token0 and token1 as strings.
-//
-// If the current price is below the lower bound of the price range, only token0 is required.
-// If the current price is above the upper bound, only token1 is required. When the
+// If the current price is below the lower bound, only token0 is required. If the
+// current price is above the upper bound, only token1 is required. When the
 // price is within the range, both token0 and token1 are calculated.
 //
 // Parameters:
 // - sqrtRatioX96: The current price represented as a square root ratio in Q64.96 format (*u256.Uint).
 // - sqrtRatioAX96: The lower bound of the price range as a square root ratio in Q64.96 format (*u256.Uint).
 // - sqrtRatioBX96: The upper bound of the price range as a square root ratio in Q64.96 format (*u256.Uint).
-// - liquidity: The amount of liquidity to be provided (*u256.Uint).
+// - liquidity: The amount of liquidity to value (*u256.Uint).
 //
 // Returns:
-// - string: The calculated amount of token0 required to achieve the specified liquidity.
-// - string: The calculated amount of token1 required to achieve the specified liquidity.
+//   - *u256.Uint: The calculated amount of token0.
+//   - *u256.Uint: The calculated amount of token1.
+//     Call `ToString()` on either value for decimal display.
 //
 // Notes:
-//   - If liquidity is zero, the function returns "0" for both token0 and token1.
-//   - The function guarantees that sqrtRatioAX96 is always the lower bound and
-//     sqrtRatioBX96 is the upper bound by calling toAscendingOrder().
-//   - Edge cases where the current price is exactly on the bounds are handled without division by zero.
+//   - If liquidity is zero, the function returns zero values for both tokens.
+//   - The function orders the range bounds with `toAscendingOrder()`.
+//   - At a boundary, the corresponding out-of-range token amount is zero.
 //
 // Example:
 // ```
@@ -218,10 +214,10 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 //
 // )
 //
-// println("Token0:", amount0, "Token1:", amount1)
+// println("Token0:", amount0.ToString(), "Token1:", amount1.ToString())
 //
 // // Output:
-// Token0: 500000, Token1: 250000
+// Token0: 500000, Token1: 500000
 // ```
 func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) (*u256.Uint, *u256.Uint) {
 	if liquidity.IsZero() {
@@ -253,9 +249,10 @@ func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidit
 //   - x: current liquidity as unsigned 256-bit integer
 //   - y: delta liquidity as signed 256-bit integer (positive to add, negative to subtract)
 //
-// Returns the new liquidity as a uint256 value.
+// Returns the new liquidity as a uint256 value constrained to the uint128 range.
 //
-// Panics if x or y is nil, or if the operation would result in underflow or overflow.
+// Panics if x or y is nil, if subtraction underflows, if addition overflows uint256,
+// or if the resulting liquidity exceeds `MaxUint128`.
 func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	if x == nil || y == nil {
 		panic("liquidity_math: x or y is nil")

@@ -187,11 +187,11 @@ func (gs *govStakerV1) Undelegate(
 	return unDelegationAmount
 }
 
-// Redelegate redelegates xGNS from existing delegate to another.
+// Redelegate redelegates xGNS from an existing delegate to another.
 //
 // Atomic operation to change delegation target.
 // Maintains voting power continuity without unstaking.
-// Useful for vote delegation services and dao coordination.
+// Useful for vote delegation services and DAO coordination.
 //
 // Parameters:
 //   - delegatee: Current address delegated to
@@ -200,9 +200,9 @@ func (gs *govStakerV1) Undelegate(
 //
 // Process:
 //  1. Validates current delegation exists
-//  2. Removes voting power from old delegatee
-//  3. Assigns voting power to new delegatee
-//  4. Updates delegation snapshots
+//  2. Removes voting power from the old delegatee without a lockup
+//  3. Assigns the same amount to the new delegatee
+//  4. Updates delegation history and reward stake events
 //
 // Requirements:
 //   - Must have active delegation to current delegatee
@@ -210,7 +210,8 @@ func (gs *govStakerV1) Undelegate(
 //   - Amount must not exceed current delegation
 //   - Cannot redelegate to same address
 //
-// No lockup period - instant redelegation.
+// No user-facing lockup period; reward accounting records one removal and one
+// addition across the corresponding accrual epochs.
 //
 // Returns:
 //   - redelegatedAmount: amount moved from the current delegatee to the new delegatee

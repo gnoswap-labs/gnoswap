@@ -5,7 +5,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// unStakeTokenParams is the parameters for the ExactOutSwapRoute fuzz test.
+// unStakeTokenParams contains parameters for the UnStakeToken fuzz test.
 type unStakeTokenParams struct {
 	positionID   uint64
 	unwrapResult bool

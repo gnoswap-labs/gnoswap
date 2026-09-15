@@ -24,7 +24,7 @@ import (
 // - totalCollectedAmount (int64): The total amount of tokens collected as rewards for the tier.
 type ProjectTier struct {
 	distributeAmountPerSecondX128 *u256.Uint // distribute amount per second, Q128
-	id                            string     // '{projectId}:duration' // duartion == 30, 90, 180
+	id                            string     // '{projectId}:duration' // duration == 30, 90, 180
 	totalDistributeAmount         int64
 	totalDepositAmount            int64 // accumulated deposit amount
 	totalWithdrawAmount           int64 // accumulated withdraw amount

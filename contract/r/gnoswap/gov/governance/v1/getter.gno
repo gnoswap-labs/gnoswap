@@ -207,7 +207,8 @@ func (gv *governanceV1) GetVoteStatus(proposalId int64) (quorum, maxVotingWeight
 }
 
 // GetVotingInfos returns a read-only view of a proposal's value-backed voting
-// infos, keyed by voter address. nil is returned when the proposal has no votes.
+// infos, keyed by voter address. Existing proposals have an empty view before
+// the first vote; nil is returned only when the stored voting-info tree is absent.
 func (gv *governanceV1) GetVotingInfos(proposalID int64) *rotree.ReadOnlyTree {
 	votingInfos, exists := gv.getProposalUserVotingInfos(proposalID)
 	if !exists {
@@ -255,9 +256,10 @@ func (gv *governanceV1) GetUserProposals() *rotree.ReadOnlyTree {
 	return rotree.Wrap(gv.store.GetUserProposals(), cloneProposalIDsEntry)
 }
 
-// GetOldestActiveProposalSnapshotTime examines only the first snapshot index entry.
-// If it is inactive, the error identifies the proposal requiring admin cleanup.
-// An error must never be treated as an empty index when deleting delegation history.
+// GetOldestActiveProposalSnapshotTime examines only the first timestamp-ordered index entry.
+// If it is inactive, the error identifies the proposal requiring maintenance
+// cleanup. An error must never be treated as an empty index when deleting
+// delegation history.
 func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool, error) {
 	index := gv.store.GetActiveProposalsBySnapshot()
 	if index.Size() == 0 {
@@ -285,7 +287,8 @@ func (gv *governanceV1) GetOldestActiveProposalSnapshotTime() (int64, bool, erro
 	return proposal.SnapshotTime(), true, nil
 }
 
-// GetCurrentVotingWeightSnapshot returns the current voting weight snapshot.
+// GetCurrentVotingWeightSnapshot returns the current total voting weight and
+// timestamp anchor computed with the configured smoothing duration.
 func (gv *governanceV1) GetCurrentVotingWeightSnapshot() (int64, int64, error) {
 	current := time.Now().Unix()
 	config, ok := gv.getCurrentConfig()

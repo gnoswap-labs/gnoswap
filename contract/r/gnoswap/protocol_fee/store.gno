@@ -22,11 +22,14 @@ const (
 	// This percentage can be modified through governance.
 	StoreKeyDevOpsPct StoreKey = "devOpsPct"
 
-	// accumulated amount distributed to gov/staker by token path
+	// accuToGovStaker tracks the cumulative amount allocated to GovStaker,
+	// including allocations that are still pending distribution.
 	StoreKeyAccuToGovStaker StoreKey = "accuToGovStaker" // tokenPath -> amount
-	StoreKeyAccuToDevOps    StoreKey = "accuToDevOps"    // tokenPath -> amount
+	// accuToDevOps tracks the cumulative amount allocated to DevOps,
+	// including allocations that are still pending distribution.
+	StoreKeyAccuToDevOps StoreKey = "accuToDevOps" // tokenPath -> amount
 
-	// distributedToDevOpsHistory and distributedToGovStakerHistory are used to keep track of the distribution history
+	// Distribution-history trees track cumulative amounts actually transferred.
 	StoreKeyDistributedToGovStakerHistory StoreKey = "distributedToGovStakerHistory" // tokenPath -> amount
 	StoreKeyDistributedToDevOpsHistory    StoreKey = "distributedToDevOpsHistory"    // tokenPath -> amount
 

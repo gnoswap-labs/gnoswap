@@ -26,12 +26,16 @@ func (pfs *protocolFeeState) GovStakerPct() int64 {
 	return 10000 - pfs.store.GetDevOpsPct()
 }
 
-// AccuToGovStaker returns the accumulated amounts distributed to Gov/Staker.
+// AccuToGovStaker returns the cumulative amount allocated to GovStaker.
+// It includes allocations that may still be pending distribution; completed
+// transfers are tracked separately in the distribution history.
 func (pfs *protocolFeeState) AccuToGovStaker() *bptree.BPTree {
 	return pfs.store.GetAccuToGovStaker()
 }
 
-// AccuToDevOps returns the accumulated amounts distributed to DevOps.
+// AccuToDevOps returns the cumulative amount allocated to DevOps.
+// It includes allocations that may still be pending distribution; completed
+// transfers are tracked separately in the distribution history.
 func (pfs *protocolFeeState) AccuToDevOps() *bptree.BPTree {
 	return pfs.store.GetAccuToDevOps()
 }

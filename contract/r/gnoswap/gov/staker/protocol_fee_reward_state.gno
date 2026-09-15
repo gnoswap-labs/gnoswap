@@ -9,9 +9,10 @@ import (
 
 // ProtocolFeeRewardState tracks the protocol fee rewards of one staker.
 //
-// A stake change appends one ProtocolFeeStakeEvent and nothing else. Each token is
-// settled on its own from those events, so the state keeps a per-token cursor into
-// the event history rather than a reward debt for every token at once.
+// Ordinary stake changes append one ProtocolFeeStakeEvent; Redelegate performs
+// a remove plus an add and appends two events. Each token is settled on its own
+// from those events, so the state keeps a per-token cursor into the event
+// history rather than a reward debt for every token at once.
 type ProtocolFeeRewardState struct {
 	// stakedAmount is the current amount staked
 	stakedAmount int64

@@ -125,7 +125,8 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 //
 // Converts a square root price ratio in Q64.96 format back to its tick index,
 // returning the greatest tick where TickMathGetSqrtRatioAtTick(tick) <= sqrtPriceX96.
-// This matches Uniswap V3's behavior exactly.
+// For this inverse API, sqrtPriceX96 must be in `[MinSqrtRatio, MaxSqrtRatio)`;
+// the upper bound equals the max-tick output but is itself excluded.
 //
 // Parameters:
 //   - sqrtPriceX96: Square root price ratio in Q64.96 format

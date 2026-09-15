@@ -27,7 +27,8 @@ import (
 //   - payer: Address that will pay for the swap
 //
 // Access:
-//   - Only callable by Router v1 address (self-callback from pool)
+//   - swap_inner's closure first verifies the pool caller; this implementation
+//     then accepts only a call from the Router v1 address.
 //
 // Returns:
 //   - error: nil on success, error if transfer fails

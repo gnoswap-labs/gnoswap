@@ -16,16 +16,16 @@ import (
 	"gno.land/r/gnoswap/referral"
 )
 
-// ExactOutSwapRoute swaps tokens for an exact output amount.
+// ExactOutSwapRoute swaps tokens for a requested post-router-fee output target.
 //
-// Executes swap to receive exact output tokens.
-// Calculates required input working backwards through route.
-// Useful for buying specific amounts regardless of price.
+// Executes a swap to receive the requested net output tokens.
+// Calculates the required gross pool output and input working backwards
+// through the route.
 //
 // Parameters:
 //   - inputToken: Input token contract path
 //   - outputToken: Output token contract path
-//   - amountOut: Exact output amount desired
+//   - amountOut: Requested net output target
 //   - routeArr: Swap routes separated by comma; each route may contain up to 3 hops joined by *POOL*
 //   - quoteArr: Split percentages "70,30" (must sum to 100)
 //   - amountInMax: Maximum input to spend (slippage protection)
@@ -39,7 +39,7 @@ import (
 //
 // Returns:
 //   - amountIn: Actual input consumed
-//   - amountOut: Exact output received
+//   - amountOut: Net output delivered after the router fee
 //
 // Reverts if input > amountInMax or deadline passed.
 func (r *routerV1) ExactOutSwapRoute(
@@ -83,16 +83,17 @@ func (r *routerV1) ExactOutSwapRoute(
 	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount)
 }
 
-// ExactOutSingleSwapRoute swaps tokens for an exact output amount through a single route.
+// ExactOutSingleSwapRoute swaps tokens for a requested post-router-fee output
+// target through a single route.
 //
 // Executes a single-hop swap through a single specified route.
-// Allows price limit control via sqrtPriceLimitX96 parameter.
+// Allows price limit control via sqrtPriceLimitX96.
 // Applies slippage protection via maximum input amount.
 //
 // Parameters:
 //   - inputToken: Input token contract path
 //   - outputToken: Output token contract path
-//   - amountOut: Exact output amount desired
+//   - amountOut: Requested net output target
 //   - routeArr: Single-hop route path
 //   - amountInMax: Maximum input to spend (slippage protection)
 //   - sqrtPriceLimitX96: Price limit for swap execution (0 for no limit)
@@ -104,10 +105,10 @@ func (r *routerV1) ExactOutSwapRoute(
 //
 // Returns:
 //   - amountIn: Actual input consumed
-//   - amountOut: Exact output received
+//   - amountOut: Net output delivered after the router fee
 //
-// Reverts the transaction if the input amount is greater than `amountInMax`,
-// the deadline has passed, or the price limit is exceeded.
+// With a nonzero price limit, the swap may stop at the limit and deliver less
+// than amountOut; amountInMax and the deadline are still enforced.
 func (r *routerV1) ExactOutSingleSwapRoute(
 	_ int,
 	rlm realm,

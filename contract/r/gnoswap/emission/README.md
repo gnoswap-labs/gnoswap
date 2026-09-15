@@ -17,12 +17,12 @@ The emission system controls creation and distribution of new GNS tokens with a 
 
 ## Configuration
 
-- **Distribution Ratios** (modifiable by governance):
+- **Distribution Ratios** (modifiable by admin or governance):
   - Liquidity Staker: 75% (default)
   - DevOps: 20% (default)
   - Community Pool: 5% (default)
   - Governance Staker: 0% (default)
-- **Start Time**: Unix timestamp (immutable once set)
+- **Start Time**: Unix timestamp. It may be changed while the configured timestamp is still in the future; once active, it cannot be changed.
 
 ## Core Features
 
@@ -41,9 +41,12 @@ Implements Bitcoin-style halving model:
 When triggered by protocol activity:
 
 1. Calculates elapsed time since last distribution
-2. Mints GNS based on current emission rate
+2. Mints GNS based on the current timestamp range and halving-year rates
 3. Distributes to targets per configured ratios
 4. Carries forward any undistributed amounts
+
+If emission is halted, `MintAndDistributeGns` returns `(0, false)` without
+panicking. A caller that requires emission must explicitly handle that result.
 
 ## Key Functions
 
@@ -53,7 +56,9 @@ Mints and distributes GNS tokens automatically.
 
 ### `SetDistributionStartTime`
 
-One-time setup of emission start timestamp.
+Sets or reschedules the emission start timestamp before distribution is active.
+The timestamp must be positive and in the future; after the configured start
+time has been reached, the timestamp is immutable.
 
 ### `ChangeDistributionPct`
 
@@ -67,12 +72,25 @@ Returns current distribution percentage in basis points for a target, or an erro
 
 ### Timestamp-Based Emission
 
+The following is a conceptual view of the schedule:
+
 ```
 emissionPerSecond = baseEmission / (2^halvingCount)
-amountToMint = emissionPerSecond * timeSinceLastMint
+amountToMint = emissionPerSecond * elapsedSeconds
 ```
 
+The implementation uses integer, piecewise rates. For each halving year
+intersecting the inclusive mint range `[fromTimestamp, toTimestamp]`, it
+initializes `yearAmountPerSecond` as
+`floor(yearDistributionAmount / SECONDS_IN_YEAR)` and multiplies that rate by
+the inclusive number of seconds. The mint range is clamped to the 12-year
+schedule end. When a range reaches a year end, the remaining integer amount
+(including division dust) is added so that the year's allocation is exhausted.
+
 ### Halving Calculation
+
+Halving years are determined by the schedule's year boundaries; the conceptual
+form is:
 
 ```
 halvingCount = floor(timeSinceStart / halvingPeriod)
@@ -88,8 +106,8 @@ halvingCount = floor(timeSinceStart / halvingPeriod)
 ## Usage
 
 ```go
-// Set emission start (one-time by admin/governance)
-SetDistributionStartTime(cross(cur), 1704067200) // Jan 1, 2024
+// Set emission start (admin/governance; timestamp must be in the future)
+SetDistributionStartTime(cross(cur), futureStartTimestamp)
 
 // Trigger emission (called automatically by protocol flows)
 amount, ok := MintAndDistributeGns(cross(cur))
@@ -117,8 +135,9 @@ if err != nil {
 
 ## Security
 
-- Start time immutable once set and passed
+- Start time may be rescheduled while still in the future and is immutable once active
 - Distribution percentages must sum to 10000 (100%)
-- Automatic triggers prevent manipulation
-- Leftover tracking ensures no token loss
-- Halving enforced at protocol level
+- A halted `MintAndDistributeGns` call returns `false`; no automatic cross-module cascade occurs
+- If staker cache invalidation is required, keep the optional distribution-change callback registered
+- Leftover tracking carries undistributed amounts forward
+- Halving is enforced at protocol level

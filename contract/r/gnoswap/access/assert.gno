@@ -107,8 +107,8 @@ func AssertIsAuthorized(roleName string, caller address) {
 	}
 }
 
-// AssertHasAnyRole panics if the caller does not have any of the specified roles.
-// Also panics if any of the roles do not exist.
+// AssertHasAnyRole checks the roles in order and panics if the caller matches none.
+// It also panics if a checked role is missing before an authorized match is found.
 func AssertHasAnyRole(caller address, roleNames ...string) {
 	for _, roleName := range roleNames {
 		addr, ok := GetAddress(roleName)

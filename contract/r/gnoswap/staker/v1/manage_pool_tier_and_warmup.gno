@@ -137,7 +137,8 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 	)
 }
 
-// SetWarmUp configures the warm-up percentage and duration for rewards.
+// SetWarmUp configures the duration for the warm-up tier selected by its fixed ratio.
+// Finite tiers are capped at 365 days; the final 100% tier must remain math.MaxInt64.
 // Only admin or governance can call this function.
 func (s *stakerV1) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	access.AssertIsRlmCurrent(0, rlm)

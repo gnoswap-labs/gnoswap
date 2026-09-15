@@ -55,7 +55,8 @@ type IPoolPosition interface {
 		positionCaller address,
 	) (string, string)
 
-	// Burn removes liquidity from a position.
+	// Burn removes liquidity and credits principal to the pool position entry;
+	// Collect later transfers that principal without a withdrawal fee.
 	Burn(
 		_ int,
 		rlm realm,
@@ -68,7 +69,8 @@ type IPoolPosition interface {
 		positionCaller address,
 	) (string, string)
 
-	// CollectSwapFee and Collect pay owed tokens out to recipient.
+	// CollectSwapFee pays accrued swap fees and applies the withdrawal fee;
+	// Collect pays principal owed by Burn without that fee.
 	CollectSwapFee(
 		_ int,
 		rlm realm,

@@ -430,8 +430,9 @@ func (lp *launchpadV1) GetProjectTierRewardDistributeEndTime(projectTierId strin
 	return manager.DistributeEndTime(), nil
 }
 
-// GetProjectTierRewardAccumulatedDistributeAmount returns the accumulated distribute amount of a reward manager.
-// Returns 0 and error if reward manager not found.
+// GetProjectTierRewardAccumulatedDistributeAmount returns a legacy reward-manager field.
+// The v1 reward paths do not maintain it, so normal reads return zero unless it
+// was explicitly set.
 func (lp *launchpadV1) GetProjectTierRewardAccumulatedDistributeAmount(projectTierId string) (int64, error) {
 	manager, err := lp.GetProjectTierRewardManager(projectTierId)
 	if err != nil {

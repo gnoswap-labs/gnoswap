@@ -251,27 +251,27 @@ func (p *positionV1) IncreaseLiquidity(
 
 // DecreaseLiquidity decreases liquidity of an existing position.
 //
-// Removes liquidity but keeps NFT ownership.
-// Calculates tokens owed based on current price.
-// Two-step: decrease then collect tokens.
+// Removes liquidity but keeps NFT ownership. This is one atomic public
+// operation: accrued swap fees are collected first, then liquidity is burned,
+// and principal is collected through the pool's fee-free `Collect` path.
 //
 // Parameters:
 //   - positionId: NFT token ID
 //   - liquidityStr: Amount of liquidity to remove
-//   - amount0MinStr: Min token0 to receive (slippage)
-//   - amount1MinStr: Min token1 to receive (slippage)
+//   - amount0MinStr: Min token0 principal to receive (slippage)
+//   - amount1MinStr: Min token1 principal to receive (slippage)
 //   - deadline: Transaction expiration
 //
 // Returns:
 //   - positionId: Same NFT ID
 //   - liquidity: Amount of liquidity removed (the delta)
-//   - fee0: Token0 fee amount collected during the decrease
-//   - fee1: Token1 fee amount collected during the decrease
-//   - amount0: Token0 principal collected
-//   - amount1: Token1 principal collected
+//   - fee0: Token0 fee amount returned net of the withdrawal fee
+//   - fee1: Token1 fee amount returned net of the withdrawal fee
+//   - amount0: Token0 principal collected without a withdrawal fee
+//   - amount1: Token1 principal collected without a withdrawal fee
 //   - poolPath: Pool identifier
 //
-// Note: Applies withdrawal fee on collected amounts.
+// Amount-minimum checks apply to the principal actually collected.
 func (p *positionV1) DecreaseLiquidity(
 	_ int,
 	rlm realm,
@@ -352,7 +352,7 @@ func (p *positionV1) DecreaseLiquidity(
 //
 // Claims accumulated fees without removing liquidity.
 // Useful for active positions earning ongoing fees.
-// Applies protocol withdrawal fee.
+// Applies the configured withdrawal fee to the collected swap fees.
 //
 // Parameters:
 //   - positionId: NFT token ID
@@ -366,8 +366,8 @@ func (p *positionV1) DecreaseLiquidity(
 //   - totalAmount1: Raw token1 collected (before withdrawal fee)
 //
 // Requirements:
-//   - Caller must be owner or approved operator
-//   - Position must have accumulated fees
+//   - Caller must own an unstaked NFT; a staked position uses its configured operator
+//   - If no fees are owed, the fee amounts returned are zero
 func (p *positionV1) CollectFee(_ int, rlm realm, positionId uint64) (uint64, string, string, string, string, string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -513,13 +513,15 @@ func (p *positionV1) getCurrentFeeGrowth(position *pos.Position, owner address) 
 	return feeGrowthInside, nil
 }
 
-// computePositionKey generates a compact deterministic key for a liquidity position.
+// computePositionKey generates a compact deterministic key for a pool's
+// aggregate liquidity accounting entry. It encodes only the lower/upper ticks;
+// the pool path supplies the scope.
 func computePositionKey(tickLower, tickUpper int32) string {
 	return pl.EncodePositionKey(tickLower, tickUpper)
 }
 
-// calculatePositionBalances computes token balances for a position at current price.
-// Returns calculated token0 and token1 balances based on position liquidity and price range.
+// calculatePositionBalances derives current token balances from the position's
+// liquidity and range together with the current pool price.
 func calculatePositionBalances(position *pos.Position) (int64, int64) {
 	liquidity := u256.MustFromDecimal(position.Liquidity())
 	if liquidity.IsZero() {

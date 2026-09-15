@@ -162,16 +162,18 @@ func (i *poolV1) safeTransferFrom(
 //   - zeroForOne: Swap direction (true = token0 to token1)
 //   - swapCallback: Callback function that must transfer input tokens to pool
 //
-// The callback needed:
-//  1. Verify the caller is the legitimate pool contract address to prevent unauthorized invocations
-//  2. Transfer at least `amountIn` of input tokens to the pool
-//  3. Return nil on success, or an error to revert the swap
+// Callback obligations:
+//  1. A callback supplied by a custom caller should verify that its caller is
+//     the legitimate pool. In the router flow, swap_inner's closure performs
+//     that pool-origin check before delegating to router.SwapCallback.
+//  2. Transfer at least `amountIn` of input tokens to the pool.
+//  3. Return nil on success, or an error to revert the swap.
 //
 // Example callback implementation:
 //
 //	func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
 //	    // Security check: ensure this callback is invoked by the legitimate pool
-//	    caller := runtime.PreviousRealm().Address()
+//	    caller := cur.Previous().Address()
 //	    poolAddr := chain.PackageAddress("gno.land/r/gnoswap/pool")
 //
 //	    if caller != poolAddr {

@@ -13,8 +13,8 @@ import (
 	"gno.land/r/gnoswap/position"
 )
 
-// decreaseLiquidity reduces position liquidity and collects fees.
-// Returns positionId, liquidity, fee0, fee1, amount0, amount1, poolPath.
+// decreaseLiquidity performs the internal atomic flow: it collects swap fees,
+// reduces position liquidity, and returns fee-free principal amounts.
 func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidityParams) (uint64, string, string, string, string, string, string, error) {
 	caller := params.caller
 

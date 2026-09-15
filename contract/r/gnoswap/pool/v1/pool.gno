@@ -104,22 +104,23 @@ func (i *poolV1) Mint(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Burn removes liquidity from a position.
+// Burn removes liquidity from a pool position and credits principal as tokens
+// owed to that pool-level position entry.
 //
-// Decreases liquidity and calculates tokens owed to position owner.
-// Updates tick state but doesn't transfer tokens (use Collect).
-// Two-step process prevents reentrancy attacks.
+// The pool operation itself does not transfer tokens; a subsequent Collect call
+// pays the credited principal. Position.DecreaseLiquidity wraps Burn and the
+// fee-free Collect call within one atomic public operation.
 //
 // Parameters:
 //   - token0Path, token1Path: Token contract paths
 //   - fee: Fee tier matching the pool
 //   - tickLower, tickUpper: Position's price range
-//   - liquidityAmount: Liquidity to remove (uint128)
-//   - positionCaller: Position owner for validation
+//   - liquidityAmount: Non-negative decimal liquidity amount, at most 2^127-1
+//   - positionCaller: Address supplied by the position contract; validated as a nonzero address
 //
 // Returns:
-//   - amount0: Token0 owed to position (decimal string)
-//   - amount1: Token1 owed to position (decimal string)
+//   - amount0: Token0 principal credited to the pool position (decimal string)
+//   - amount1: Token1 principal credited to the pool position (decimal string)
 //
 // Note: Tokens remain in pool until Collect is called.
 // Only callable by position contract.
@@ -131,7 +132,7 @@ func (i *poolV1) Burn(
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	liquidityAmount string, // uint128
+	liquidityAmount string, // parsed as uint256, then checked against int128
 	positionCaller address,
 ) (string, string) {
 	access.AssertIsRlmCurrent(0, rlm)
@@ -191,7 +192,7 @@ func (i *poolV1) Burn(
 //   - fee: Fee tier of the pool
 //   - recipient: Address to receive tokens
 //   - tickLower, tickUpper: Position's price range
-//   - amount0Requested, amount1Requested: Max amounts to collect (use MAX_UINT128 for all)
+//   - amount0Requested, amount1Requested: Non-negative int64 decimal amounts; use "9223372036854775807" to request all owed tokens
 //
 // Returns:
 //   - amount0, amount1: Collected amounts, before the withdrawal fee
@@ -234,7 +235,7 @@ func (i *poolV1) CollectSwapFee(
 //   - fee: Fee tier of the pool
 //   - recipient: Address to receive tokens
 //   - tickLower, tickUpper: Position's price range
-//   - amount0Requested, amount1Requested: Max amounts to collect (use MAX_UINT128 for all)
+//   - amount0Requested, amount1Requested: Non-negative int64 decimal amounts; use "9223372036854775807" to request all owed tokens
 //
 // Returns:
 //   - amount0, amount1: Amounts transferred to recipient
@@ -266,10 +267,8 @@ func (i *poolV1) Collect(
 
 // collect settles the pool ledger for a position and pays the recipient.
 //
-// The payout is capped by the position's tokensOwed, never by a caller
-// supplied number, and the ledger is written before any token leaves the
-// realm. Both happen under a single pool lock, so the pool's accounting and
-// its token balance are never observably out of step.
+// The payout is capped by both the requested amount and the position's
+// tokensOwed. The ledger is written before token transfers, under the pool lock.
 //
 // The collected amount is NOT capped by the pool's internal balance: a balance
 // short of the owed amount means the internal ledger has drifted, so the call
@@ -312,9 +311,8 @@ func (i *poolV1) collect(
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
-	// Generate position key by combining position contract path with tick range
-	// The key is composed of the position contract's address and the tick boundaries,
-	// allowing the pool to uniquely identify and access position data.
+	// The pool position key encodes only the lower and upper ticks. It is scoped
+	// to this pool, so NFTs sharing a range use the same aggregate pool entry.
 	positionKey := getPositionKey(tickLower, tickUpper)
 	position, err := pool.GetPosition(positionKey)
 	if err != nil {

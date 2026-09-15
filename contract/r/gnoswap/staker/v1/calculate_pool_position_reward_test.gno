@@ -563,7 +563,7 @@ func TestCalculateCollectablePositionReward(cur realm, t *testing.T) {
 				pool := sr.NewPool(poolPath, baseTime-86400*31) // Started 31 days ago
 				s.getPools().set(poolPath, pool)
 
-				// Create deposit that started 31 days ago (past all warmup periods)
+				// Create deposit that started 31 days ago (past the first three warmup thresholds)
 				stakeTime := baseTime - 86400*31
 				warmups := instantiateWarmup(sr.DefaultWarmupTemplate(), stakeTime)
 				deposit := sr.NewDeposit(
@@ -599,9 +599,9 @@ func TestCalculateCollectablePositionReward(cur realm, t *testing.T) {
 			minInternalReward:     1,
 			maxInternalReward:     math.MaxInt64,
 			validateFunc: func(t *testing.T, reward Reward) {
-				// With 31 days of staking, the position has gone through all warmup periods
+				// With 31 days of staking, the position has gone through the first three warmup periods
 				// Rewards from earlier periods (30%, 50%, 70%) still have their respective penalties
-				// Only rewards earned after 30 days have 100% ratio (no penalty)
+				// Only rewards earned after 45 days have 100% ratio (no penalty)
 				totalReward := reward.Internal + reward.InternalPenalty
 				uassert.True(t, totalReward > 0, "should have total reward")
 				uassert.True(t, reward.Internal > 0, "should have internal reward")

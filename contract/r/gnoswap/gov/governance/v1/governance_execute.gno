@@ -21,29 +21,29 @@ import (
 // Execute executes an approved proposal.
 //
 // Processes and implements governance decisions after successful voting.
-// Enforces timelock delays and execution windows for security.
+// Enforces the configured execution delay and execution window.
 // Anyone can trigger execution to ensure decentralization.
 //
 // Parameters:
 //   - proposalID: ID of the proposal to execute
 //
 // Requirements:
-//   - Proposal must have passed (majority yes votes)
-//   - Quorum must be reached (50% of xGNS supply)
-//   - Timelock period must have elapsed (1 day default)
-//   - Must be within execution window (30 days default)
+//   - Proposal must have passed (quorum and strict yes-over-no majority)
+//   - Quorum must be reached using the proposal's stored amount, derived from
+//     the total xGNS supply and configured quorum percentage at creation
+//   - Execution delay must have elapsed (1 day by default)
+//   - Must be within the execution window (30 days by default)
 //   - Proposal not already executed or cancelled
 //
 // Effects:
 //   - Executes proposal actions (parameter changes, treasury transfers)
 //   - Marks proposal as executed
 //   - Emits execution event
-//   - Refunds gas costs from treasury
 //
 // Returns:
 //   - proposalID: ID of the executed proposal
 //
-// Callable by anyone once proposal is executable.
+// Callable by anyone once the proposal is executable.
 func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 	access.AssertIsRlmCurrent(0, rlm)
 

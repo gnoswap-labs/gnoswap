@@ -2,7 +2,7 @@
 
 ## KV Store
 
-Permission model: unregistered callers have no write access; registered callers can only be granted `Write`.
+Permission model: unregistered **code** callers have no write access; registered code callers can only be granted `Write`. A current user/EOA realm passes the live-frame check and bypasses the ACL for both `Set` and `Delete`.
 
 ### Rules
 

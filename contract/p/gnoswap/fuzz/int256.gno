@@ -141,21 +141,20 @@ func (g *int256Gen) value(t *T) any {
 	return result
 }
 
-// Int256 generates random int256 values across the full int256 range [-2^255, 2^255-1]
-//
-// Example:
-//
-//	Int256() generates values from min int256 to max int256
+// Int256 generates values using the configured full signed-int256 bounds.
+// For a span wider than the signed-positive range, the current implementation
+// caps the span at MaxInt256; because offsets are non-negative, Int256() then
+// samples MinInt256 through -1 rather than the complete signed range.
 func Int256() *Generator {
 	return Int256RangeFrom(minInt256Value, maxInt256Value)
 }
 
-// Int256Max generates int256 values from min int256 to the specified max
+// Int256Max generates values from min int256 to the specified max.
 // max: maximum value as decimal string
 //
-// Example:
-//
-//	Int256Max("1000000") generates values from min int256 to 1000000
+// If max - MinInt256 exceeds MaxInt256, the current capped-span
+// implementation samples the negative half (MinInt256 through -1) instead of
+// reaching the supplied positive max.
 func Int256Max(max string) *Generator {
 	maxVal, err := int256.FromDecimal(max)
 	if err != nil {
@@ -164,12 +163,12 @@ func Int256Max(max string) *Generator {
 	return Int256RangeFrom(minInt256Value, maxVal)
 }
 
-// Int256Range generates int256 values within a specified range [min, max]
-// min and max are decimal strings
+// Int256Range generates int256 values within a specified range [min, max].
+// min and max are decimal strings.
 //
-// Example:
-//
-//	Int256Range("-1000", "999999") generates values between -1000 and 999999
+// If max-min exceeds MaxInt256, the implementation caps the span at
+// MaxInt256; generated offsets remain non-negative and may not reach max.
+// Int256RangeFrom also panics when the bounds are nil or min > max.
 func Int256Range(minStr, maxStr string) *Generator {
 	min, err := int256.FromDecimal(minStr)
 	if err != nil {
@@ -184,12 +183,12 @@ func Int256Range(minStr, maxStr string) *Generator {
 	return Int256RangeFrom(min, max)
 }
 
-// Int256Min generates int256 values from the specified min to max int256
+// Int256Min generates int256 values from the specified min to max int256.
 // min: minimum value as decimal string
 //
-// Example:
-//
-//	Int256Min("-1000") generates values from -1000 to max int256
+// When maxInt256-min exceeds MaxInt256, the capped-span implementation may
+// not reach maxInt256; it samples min plus a non-negative offset up to
+// MaxInt256.
 func Int256Min(min string) *Generator {
 	minVal, err := int256.FromDecimal(min)
 	if err != nil {

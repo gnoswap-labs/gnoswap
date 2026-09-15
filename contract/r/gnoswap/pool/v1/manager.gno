@@ -22,12 +22,13 @@ const GNS_TOKEN_KEY string = "gno.land/r/gnoswap/gns.GNS"
 
 // CreatePool creates a new concentrated liquidity pool.
 //
-// Deploys new AMM pool for token pair with specified fee tier.
-// Charges 100 GNS creation fee to prevent spam.
-// Sets initial price and tick spacing based on fee tier.
+// Deploys a new AMM pool for a token pair with the specified fee tier.
+// Charges the configured pool-creation fee (100 GNS by default).
+// Accepts either token path order, canonicalizes token0/token1, and sets the
+// initial price and tick spacing for that canonical order.
 //
 // Parameters:
-//   - token0Path, token1Path: Token contract paths (ordered by address)
+//   - token0Path, token1Path: Token contract paths (either order accepted)
 //   - fee: Fee tier (100=0.01%, 500=0.05%, 3000=0.3%, 10000=1%)
 //   - sqrtPriceX96: Initial sqrt price in Q64.96 format
 //
@@ -38,23 +39,23 @@ const GNS_TOKEN_KEY string = "gno.land/r/gnoswap/gns.GNS"
 //   - 1.00%: 200 ticks
 //
 // Requirements:
-//   - Tokens must be different
+//   - Tokens must be different after canonicalization/wrapping
 //   - Fee tier must be supported
 //   - Pool must not already exist
-//   - Caller must have 100 GNS for creation fee
+//   - Caller must have the configured creation fee
 //
-// IMPORTANT - Price Initialization Security:
+// Price initialization:
+//   - The initial sqrt price must be in [MIN_SQRT_RATIO, MAX_SQRT_RATIO).
+//   - No oracle or external market-price sanity check is performed.
+//   - If paths are supplied in reverse order, the stored sqrt price is
+//     inverted to match the canonical token0/token1 order.
 //
-//	The sqrtPriceX96 parameter allows arbitrary initial price setting without validation.
-//	Extreme prices can make pools temporarily unusable (griefing attack).
+// Recovery from an economically inappropriate price:
+//  1. Add wide-range liquidity at the current price.
+//  2. Execute a swap to move the price toward the desired market rate.
+//  3. Remove the liquidity.
 //
-// Recovery from Price Griefing:
-//
-//	If a pool is created with an incorrect price, it can be restored via atomic transaction:
-//	1. Add wide-range liquidity at the distorted price
-//	2. Execute swap to move price toward market rate
-//	3. Remove the liquidity
-//	The executor's LP losses offset arbitrage gains (minus fees).
+// The executor's LP losses offset arbitrage gains, minus fees and slippage.
 func (i *poolV1) CreatePool(
 	_ int,
 	rlm realm,
@@ -155,10 +156,12 @@ func (i *poolV1) CreatePool(
 	)
 }
 
-// SetFeeProtocol sets the protocol fee percentage for all pools.
+// SetFeeProtocol sets the protocol fee denominators for all managed pools.
 //
 // Parameters:
-//   - feeProtocol0, feeProtocol1: fee percentages (0-10)
+//   - feeProtocol0, feeProtocol1: denominators; each must be 0 or 4-10.
+//     Zero disables protocol fees for that token; 4 routes 1/4 (25%) of swap
+//     fees and 10 routes 1/10 (10%) to the protocol.
 //
 // Only callable by admin or governance.
 func (i *poolV1) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {
@@ -340,19 +343,16 @@ func (i *poolV1) setFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uin
 	return newFee, nil
 }
 
-// validateFeeProtocol validates the fee protocol values for token0 and token1.
-//
-// This function checks whether the provided fee protocol values (`feeProtocol0` and `feeProtocol1`)
-// are valid using the `isValidFeeProtocolValue` function. If either value is invalid, it returns
-// an error indicating that the protocol fee percentage is invalid.
+// validateFeeProtocol validates the protocol fee denominators for token0 and
+// token1. Each value must be 0 (disabled) or between 4 and 10 inclusive.
 //
 // Parameters:
-//   - feeProtocol0: uint8, the fee protocol value for token0.
-//   - feeProtocol1: uint8, the fee protocol value for token1.
+//   - feeProtocol0: denominator for token0
+//   - feeProtocol1: denominator for token1
 //
 // Returns:
-//   - error: Returns `errInvalidProtocolFeePct` if either `feeProtocol0` or `feeProtocol1` is invalid.
-//     Returns `nil` if both values are valid.
+//   - error: the existing errInvalidProtocolFeePct error when either
+//     denominator is invalid; nil when both values are valid.
 func validateFeeProtocol(feeProtocol0, feeProtocol1 uint8) error {
 	if !isValidFeeProtocolValue(feeProtocol0) || !isValidFeeProtocolValue(feeProtocol1) {
 		return errors.New(errInvalidProtocolFeePct)

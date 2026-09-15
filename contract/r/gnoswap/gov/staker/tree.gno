@@ -7,18 +7,21 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// UintTree is a wrapper around a BPTree for storing block timestamps as strings.
-// Since block timestamps are defined as int64, we take int64 and convert it to uint64 for the tree.
+// UintTree is a wrapper around a BPTree for storing non-negative int64 keys as
+// ordered strings. Depending on the caller, keys represent Unix timestamps,
+// accrual epochs, or stake-event indexes.
+//
+// Since keys are int64 values, they are converted to uint64-compatible strings.
 //
 // Methods:
-// - Get: Retrieves a value associated with a uint64 key.
-// - set: Stores a value with a uint64 key.
-// - Has: Checks if a uint64 key exists in the tree.
-// - remove: Removes a uint64 key and its associated value.
+// - Get: Retrieves a value associated with a non-negative int64 key.
+// - set: Stores a value with a non-negative int64 key.
+// - Has: Checks if a non-negative int64 key exists in the tree.
+// - remove: Removes a non-negative int64 key and its associated value.
 // - Iterate: Iterates over keys and values in a range.
 // - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
-	tree *bptree.BPTree // blockTimestamp -> any
+	tree *bptree.BPTree // non-negative int64 key -> any
 }
 
 // NewUintTree creates a new UintTree instance.

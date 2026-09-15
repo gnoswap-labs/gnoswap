@@ -1,8 +1,8 @@
 package router
 
 import (
-	"errors"
 	"bytes"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -118,7 +118,10 @@ func i256MinMax(x, y *i256.Int) (min, max *u256.Uint) {
 // Validates:
 // - Each route path starts with the specified inputToken
 // - Each route path ends with the specified outputToken
-// - Route path format consistency (prevents swap-direction vs alphabetical pool ordering confusion)
+// - Multi-hop paths have continuous adjacent hops
+//
+// It does not reject repeated intermediate tokens or otherwise enforce an
+// acyclic route.
 //
 // Parameters:
 // - routePathArrString: comma-separated route paths (e.g., "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000*POOL*gno.land/r/demo/gns:gno.land/r/demo/usdc:500")
@@ -148,7 +151,7 @@ func validateRoutePaths(routePathArrString, inputToken, outputToken string) erro
 // Validates:
 // - Route path starts with the specified inputToken
 // - Route path ends with the specified outputToken
-// - Proper token ordering in swap direction (not alphabetical pool ordering)
+// - Multi-hop paths have continuous adjacent hops
 //
 // Route Path Formats:
 // - single-hop: "tokenA:tokenB:fee" (direct swap between two tokens)

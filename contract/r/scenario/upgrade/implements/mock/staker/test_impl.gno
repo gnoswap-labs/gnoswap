@@ -17,7 +17,7 @@ func NewMockStaker(store staker.IStakerStore, poolAccessor staker.PoolAccessor, 
 	}
 }
 
-// TestStaker is a minimal test implementation that panics on all methods
+// TestStaker wraps v1 and lets tests override individual methods with mock functions.
 type TestStaker struct {
 	instance staker.IStaker
 	mockFns  map[string]func(args ...any) any

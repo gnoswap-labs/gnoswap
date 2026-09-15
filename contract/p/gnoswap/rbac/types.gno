@@ -1,6 +1,6 @@
 package rbac
 
-// SystemRole represents a predefined system role that cannot be removed.
+// SystemRole represents a reserved system-role name that cannot be removed once registered.
 type SystemRole string
 
 const (

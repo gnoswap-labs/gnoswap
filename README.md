@@ -4,8 +4,9 @@ Smart contracts for GnoSwap AMM DEX on Gno.land.
 
 ## Prerequisites
 
-- GNU Make 3.81 or higher
-- Latest version of [gno.land](https://github.com/gnolang/gno)
+- GNU Make and Python 3.11+ for the package-test wrapper
+- The [GnoSwap Gno fork](https://github.com/gnoswap-labs/gno), with its matching `gno` executable on `PATH`
+- Docker and the `docker-compose` command for integration tests
 
 ## Directory Structure
 
@@ -21,27 +22,26 @@ gnoswap/
 │   │       └── consts/             # Protocol constants
 │   │
 │   └── r/                          # Realms (contracts)
-│       └── gnoswap/
-│           ├── v1/                 # Protocol v1 contracts
-│           │   ├── pool/           # Concentrated liquidity pools
-│           │   ├── position/       # LP position NFTs
-│           │   ├── router/         # Swap routing
-│           │   ├── staker/         # Liquidity mining
-│           │   ├── gov/            # Governance
-│           │   ├── launchpad/      # Token distribution
-│           │   ├── protocol_fee/   # Fee management
-│           │   └── community_pool/ # Treasury
-│           │
-│           ├── access/             # Access control
-│           ├── emission/           # GNS emission
-│           ├── gns/                # GNS token
-│           ├── halt/               # Emergency pause
-│           ├── rbac/               # RBAC realm
-│           ├── referral/           # Referral system
-│           └── test_token/         # Test tokens
+│       ├── gnoswap/
+│       │   ├── pool/               # Pool proxy, storage, and v1/
+│       │   ├── position/           # LP position proxy, storage, and v1/
+│       │   ├── router/             # Swap proxy, storage, and v1/
+│       │   ├── staker/             # Liquidity mining proxy, storage, and v1/
+│       │   ├── gov/                # Governance/staker proxies and v1/; xGNS
+│       │   ├── launchpad/          # Launchpad proxy, storage, and v1/
+│       │   ├── protocol_fee/       # Fee proxy, storage, and v1/
+│       │   ├── community_pool/     # Treasury transfers
+│       │   ├── access/             # Access control
+│       │   ├── emission/           # GNS emission distribution
+│       │   ├── gns/                # GNS token
+│       │   ├── gnft/               # Position NFT and metadata
+│       │   ├── halt/               # Emergency pause
+│       │   ├── rbac/               # RBAC realm
+│       │   ├── referral/           # Referral system
+│       │   └── test_token/         # Test tokens
+│       └── scenario/              # Scenario/filetest packages
 │
 ├── tests/                          # Test suites
-│   ├── scenario/                   # Scenario-based tests
 │   ├── integration/                # Integration tests
 │   └── deploy/                     # Deployment scripts
 │
@@ -50,24 +50,38 @@ gnoswap/
 
 ## Testing
 
-### Run All Tests
+### Run Package Tests
+
+Run these commands from the repository root:
 
 ```bash
-make test
+make test PKG=gno.land/r/gnoswap/pool/v1
+make test PKG=gno.land/r/gnoswap/pool/v1 RUN=TestCreatePool
 ```
 
-### Run Specific Scenario Tests
+`PKG` is required. The wrapper runs `setup.py` to link this checkout into
+`WORKDIR/gno/examples`, then invokes the `gno` executable on `PATH`. `WORKDIR`
+defaults to `tmp`; if its `gno` directory is absent, the wrapper clones the
+GnoSwap Gno fork there. To use an existing toolchain checkout:
 
 ```bash
-make test-folder FOLDER=tests/scenario/pool
-make test-folder FOLDER=tests/scenario/router
+make test WORKDIR=/path/to/toolchain-parent PKG=gno.land/p/gnoswap/gnsmath
+```
+
+### Run Scenario Tests
+
+```bash
+make test PKG=gno.land/r/gnoswap/scenario/pool
+make test PKG=gno.land/r/gnoswap/scenario/router
 ```
 
 ### Run Integration Tests
 
 ```bash
-cd $WORKDIR/gno/examples
-gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/pool
+make integration-test-build
+make integration-test-list
+make integration-test-run TEST=pool_create_pool_and_mint
+make integration-test
 ```
 
 ## Security

@@ -11,7 +11,6 @@ Stakes LP NFTs, distributes GNS emissions and external incentives.
 | `reward_calculation*.gno` | Reward computation |
 | `calculate_pool_position_reward.gno` | Per-position reward calculation |
 | `type.gno` | Type definitions |
-| `wrap_unwrap.gno` | Token wrapping utilities |
 
 ## Checkpoint Storage Schema
 
@@ -20,10 +19,11 @@ binary bytes in big-endian uint256 order (most-significant limb first). Readers
 require both the string type and the exact 32-byte length; decimal strings and
 legacy `*uint256.Uint` values are not compatible.
 
-This changes the persisted tick history schema within the staker realm. A
-fresh deployment is required; it is not a v1-only implementation upgrade and
-cannot be applied in place to existing deployments. No migration API is
-provided.
+This is a persisted tick-history schema change, not an in-place implementation-only upgrade.
+The staker proxy exposes `UpgradeImpl` to switch among previously registered implementations,
+but that operation does not migrate incompatible stored values. No migration API is provided;
+a deployment containing the legacy representation must use a fresh deployment (or an explicitly
+supported external migration) before adopting this schema.
 
 ## Rules
 
@@ -48,17 +48,30 @@ provided.
 - **Invariant the deferred collect depends on**: every path that changes the tier layout must materialize the reward cache of all tiered pools first, at the current time (`changeTier` does this via `cacheReward`). A tier change that skips it would let `resolveInternalRewardSegments` re-rate a checkpoint's closed window with the new layout.
 
 ### External Incentives
-- Active window: `startTimestamp <= now < endTimestamp`. Both bounds required.
-- Stake eligibility short-circuits on a valid internal tier. Otherwise, query the existing start-time index from `max(0, now - 365 days)` through future starts, rather than scanning lifetime incentive records. This relies on the enforced 365-day maximum duration and preserves the existing `now <= endTimestamp` eligibility boundary.
+- Public `IsIncentiveActive` includes the end timestamp for an unrefunded incentive: `startTimestamp <= now <= endTimestamp`. Stake eligibility uses the same inclusive end boundary; reward accounting uses the `endTimestamp - startTimestamp` duration (the elapsed interval `[startTimestamp, endTimestamp)`).
+- Stake eligibility short-circuits on a valid internal tier. Otherwise, query the existing start-time index from `max(0, now - 365 days)` through future starts, rather than scanning lifetime incentive records. This relies on the enforced 365-day maximum duration.
 - Keep ended incentive records and their start-time entries for past reward accounting; eligibility lookup does not prune them or require a new index migration.
 - `refunded` flag prevents double-claim on `EndExternalIncentive`. Set atomically.
-- `EndExternalIncentive` needs `now >= endTimestamp` and keeps the record; `CancelExternalIncentive` needs `now < startTimestamp`, removes it from the incentive tree, the per-pool start-time index and the global tree, and refunds the reward tokens plus the GNS deposit to the **creator** (never a caller-supplied address). Callable by admin, governance, or the creator. Removal is only safe before the start: discovery is bounded by the current time, so no deposit can reference a pending incentive.
+- `EndExternalIncentive` needs `now >= endTimestamp` and keeps the record. It sends only the unclaimable/remainder reward portion and the GNS deposit to its explicit `refundAddress`; rewards still owed by live positions remain claimable. `CancelExternalIncentive` needs `now < startTimestamp`, removes the incentive from the incentive tree, the per-pool start-time index and the global tree, and refunds the available reward-token balance (capped by the staker balance) plus the GNS deposit to the **creator** (never a caller-supplied address). Callable by admin, governance, or the creator. Removal is only safe before the start: discovery is bounded by the current time, so no deposit can reference a pending incentive.
 - `lastCollectTime` tracked **per incentive** (not shared). Updated only after successful transfer.
-- `rewardPerSecond = totalReward / duration` — integer truncation leaves dust. Verify dust does not accumulate into locked balance.
+- `rewardPerSecondX128 = floor((totalReward << 128) / duration)`. Reward calculation consumes this Q128 fixed-point rate and shifts back to token units; End computes the distributable amount with the same Q128 rate, so the refundable remainder is only the fixed-point rounding residue (at most one token unit).
 
 ### Warmup
-- Final warmup tier must be `math.MaxInt64`. Finite value → panic when block time passes it.
-- Warmup percentages must sum to ≤ 100 at any point.
+- The final warmup tier must be `math.MaxInt64`; `SetWarmUp` rejects a finite final duration immediately.
+- Warmup ratios are fixed per tier at 30%, 50%, 70%, and 100%; they are stage rates, not cumulative percentages, so they do not have to sum to 100%. Governance may change only the finite tier durations (each at most 365 days).
+
+### Public API semantics
+
+- `Collect*` and `Collectable*` accept either a live staked deposit or an exit checkpoint. Live
+  collection requires the depositor/owner; checkpoint collection is permissionless and pays the
+  owner pinned in the checkpoint. The checkpoint is removed after its emission and every pending
+  incentive source is settled (or an unpayable source is explicitly forfeited).
+- `CollectExternalIncentiveReward` returns the gross calculated reward before the staking-reward
+  fee; the user transfer is the net amount. `GetIncentiveRewardAmount` returns the mutable
+  remaining amount, while `GetIncentiveTotalRewardAmount` returns the original total.
+- `GetDepositStakeTime` returns the Unix timestamp at which staking began, not an elapsed duration.
+  `GetDepositGnsAmount` is the GNS deposit required for each external incentive, not for each LP
+  stake. `GetUnstakingFee` is expressed in basis points from 0 through 1,000 (`100` = 1%).
 
 ### External Reward Delivery Guard (audit finding #4)
 
@@ -119,12 +132,12 @@ retry with a larger `-max-deposit`.
 
 ## Pitfalls
 
-- Finite final warmup tier → panic at runtime.
+- Finite final warmup tier → panic at configuration time (`SetWarmUp`), not when block time passes it.
 - Pool tier removal blocks unstake → NFTs permanently locked.
 - Reward calculation reintroduced into the unstake path → a long unclaimed window locks NFTs.
 - Refunding an incentive while positions are uncollected → their reward is paid to the creator instead.
 - `lastCollectTime` shared across incentives → wrong reward amounts.
 - `referrer` not forwarded → lost referral attribution.
-- `rewardPerSecond` dust not handled → small balance permanently locked.
+- Ignoring the Q128 fixed-point remainder in incentive ending → misreported refundable balance.
 - Reward delivery without the balance guard → a third-party token failure aborts every collect of an exit checkpoint, locking re-staking and the incentive refund (audit finding #4).
 - Checkpoint bookkeeping that re-derives the delivery decision from incentive state → a permissionless re-entering collect sees state the outer call already changed; key it off the delivery's reported outcome instead, and keep the marks idempotent.

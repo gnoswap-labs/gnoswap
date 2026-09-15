@@ -4,7 +4,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-// RegisterInitializer registers a new pool implementation version.
+// RegisterInitializer registers a new protocol fee implementation version.
 // This function is called by each version (v1, v2, etc.) during initialization
 // to register their implementation with the proxy system.
 //

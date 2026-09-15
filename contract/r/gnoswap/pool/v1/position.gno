@@ -12,12 +12,14 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-// getPositionKey generates a compact deterministic key for a liquidity position.
+// getPositionKey generates a compact deterministic key for a pool liquidity
+// accounting entry.
 //
-// Creates deterministic identifier for position tracking.
-// Ensures unique positions per price range while preserving lexical ordering.
+// The key encodes only the lower and upper ticks. It is scoped by the pool,
+// so positions with the same range share the pool's aggregate liquidity and
+// fee-growth accounting.
 //
-// Used internally for position state management.
+// Used internally for pool position state management.
 //
 // Parameters:
 //   - tickLower: Lower boundary tick of position range
@@ -242,15 +244,14 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 // It also manages the fee growth, tick state flipping, and cleanup of unused tick data.
 //
 // Parameters:
-//   - positionParams: ModifyPositionParams, the parameters for the position modification, which include:
-//   - owner: The address of the position owner.
-//   - tickLower: The lower tick boundary of the position.
-//   - tickUpper: The upper tick boundary of the position.
-//   - liquidityDelta: The change in liquidity (positive or negative).
-//   - tick: int32, the current tick position.
+//   - p: Pool whose aggregate position entry is updated.
+//   - observations: Pool observation history used when liquidity changes.
+//   - positionParams: Tick bounds and signed liquidity delta for the update.
+//   - tick: Current pool tick.
 //
 // Returns:
 //   - PositionInfo: The updated position information.
+//   - error: Observation or position update failure.
 //
 // Workflow:
 //  1. Clone the global fee growth values (token 0 and token 1).
@@ -258,7 +259,8 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 //     - Update the lower and upper ticks using `tickUpdate`, flipping their states if necessary.
 //     - If a tick's state was flipped, update the tick bitmap to reflect the new state.
 //  3. Calculate the fee growth inside the tick range using `getFeeGrowthInside`.
-//  4. Generate a unique position key and update the position data using `positionUpdateWithKey`.
+//  4. Encode the lower/upper tick pair and update the aggregate pool accounting
+//     entry using `positionUpdateWithKey`.
 //  5. If liquidity is being removed (negative delta), clean up unused tick data by deleting the tick entries.
 //  6. Return the updated position.
 //
@@ -270,8 +272,8 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 //
 // ```gno
 //
-//	updatedPosition := pool.updatePosition(positionParams, currentTick)
-//	println("Updated Position Info:", updatedPosition)
+//	updatedPosition, err := updatePosition(pool, observations, positionParams, currentTick)
+//	println("Updated Position Info:", updatedPosition, err)
 //
 // ```
 func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {

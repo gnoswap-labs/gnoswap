@@ -45,7 +45,7 @@ func (p *positionV1) exists(positionId uint64) bool {
 
 // isOwner checks whether the caller is the owner of the positionId
 // If the caller is the owner of the positionId, return true, otherwise return false
-// input: positionId uint64, addr std.Address
+// input: positionId uint64, addr address
 // output: bool
 func (p *positionV1) isOwner(positionId uint64, addr address) bool {
 	owner, err := p.nftAccessor.OwnerOf(positionIdFrom(positionId))
@@ -57,8 +57,7 @@ func (p *positionV1) isOwner(positionId uint64, addr address) bool {
 
 // isOperator checks whether the caller is the approved operator of the positionId
 // If the caller is the approved operator of the positionId, return true, otherwise return false
-// input: positionId uint64, addr std.Address
-// output: bool
+// input: positionId uint64, addr address
 func (p *positionV1) isOperator(positionId uint64, addr address) bool {
 	operator, err := p.GetPositionOperator(positionId)
 	return err == nil && operator == addr
@@ -83,7 +82,7 @@ func (p *positionV1) isStaked(positionId grc721.TokenID) bool {
 
 // isOwnerOrOperator checks whether the caller is the owner or approved operator of the positionId
 // If the caller is the owner or approved operator of the positionId, return true, otherwise return false
-// input: addr std.Address, positionId uint64
+// input: addr address, positionId uint64
 // output: bool
 func (p *positionV1) isOwnerOrOperator(positionId uint64, addr address) bool {
 	if !addr.IsValid() || !p.exists(positionId) {

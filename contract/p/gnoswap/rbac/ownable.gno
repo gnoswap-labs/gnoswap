@@ -116,12 +116,12 @@ func (o *Ownable2Step) PendingOwner() address {
 	return o.pendingOwner
 }
 
-// IsOwner returns true if the origin caller is the current owner.
+// IsOwner returns true if the provided caller address is the current owner.
 func (o *Ownable2Step) IsOwner(caller address) bool {
 	return o.owner == caller
 }
 
-// IsPendingOwner returns true if the origin caller is the pending owner.
+// IsPendingOwner returns true if the provided caller address is the pending owner.
 func (o *Ownable2Step) IsPendingOwner(caller address) bool {
 	return o.pendingOwner == caller
 }

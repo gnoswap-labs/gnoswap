@@ -4,13 +4,20 @@ NFT-based liquidity position management for concentrated liquidity.
 
 ## Overview
 
-Each liquidity position is a unique GRC721 NFT containing pool identifier, price range, liquidity amount, accumulated fees, and token balances.
+Each liquidity position is a unique GRC721 NFT. Stored state includes the pool
+key, price range, liquidity, fee-growth checkpoints, tokens owed, burned marker,
+and operator. Current token balances are derived from the current pool price,
+range, and liquidity; they are not permanently stored balances.
+
+The pool accounting key encodes only the lower/upper tick pair and is scoped by
+pool. NFTs with the same range in one pool share the pool-level accounting entry.
 
 ## Configuration
 
-- **Withdrawal Fee**: 1% on collected fees
-- **Max Position Size**: No limit
-- **Transfer Restrictions**: User transfers are disabled; only staker-mediated transfers are allowed
+- **Withdrawal Fee**: 1% by default on fee-bearing swap-fee collection
+- **Max Position Size**: No separate position-level cap; pool tick limits apply
+- **Transfers**: Unstaked NFTs follow GRC721 owner/approval/operator rules;
+  staked NFTs are locked to staker-mediated transfers
 
 ## Core Functions
 
@@ -24,33 +31,36 @@ Creates new position NFT with initial liquidity.
 
 ### `IncreaseLiquidity`
 
-Adds liquidity to existing position.
+Adds liquidity to an existing position.
 
-- Maintains same price range
-- Pro-rata token amounts
+- Maintains the existing price range
+- Uses the current-price token ratio
+- Can clear a burned marker when the position is used again
 
 ### `DecreaseLiquidity`
 
-Removes liquidity while keeping NFT.
+Removes liquidity while keeping the NFT.
 
-- Two-step: decrease then collect
-- Calculates owed tokens
+- One atomic public operation: internally collects swap fees, burns liquidity,
+  then collects principal through the pool's fee-free `Collect` path
+- Returns fee amounts net of the withdrawal fee and collected principal
+- Amount-minimum checks apply to the principal actually collected
 
 ### `CollectFee`
 
-Claims accumulated swap fees.
+Claims accumulated swap fees without removing liquidity.
 
 - No liquidity removal required
 - Returns net collected amounts plus the raw pre-withdrawal-fee amounts
-- 1% withdrawal fee applied to collected fees
+- The configured withdrawal fee applies only to this fee-bearing path
 
 ### `Reposition`
 
 Updates an existing position's price range.
 
-- Requires position to be cleared first (zero liquidity/tokens owed)
+- Requires the position to be clear first (zero liquidity and tokens owed)
 - Reuses the same position ID and NFT
-- Adds new liquidity to the updated range
+- Adds new liquidity to the updated range and clears the burned marker
 
 ## Technical Details
 
@@ -98,25 +108,28 @@ Range ±50%   → 4x efficient
 
 ### Token Calculations
 
-**Below range (token1 only)**:
+For liquidity `L` and square-root prices `sqrtLower`, `sqrtCurrent`, and
+`sqrtUpper`:
 
-```
-amount1 = L * (sqrtUpper - sqrtLower)
-amount0 = 0
-```
-
-**Above range (token0 only)**:
+**Below range (`current < lower`, token0 only)**:
 
 ```
 amount0 = L * (sqrtUpper - sqrtLower) / (sqrtUpper * sqrtLower)
 amount1 = 0
 ```
 
-**In range (both tokens)**:
+**In range (`lower <= current < upper`, both tokens)**:
 
 ```
 amount0 = L * (sqrtUpper - sqrtCurrent) / (sqrtUpper * sqrtCurrent)
 amount1 = L * (sqrtCurrent - sqrtLower)
+```
+
+**Above range (`current >= upper`, token1 only)**:
+
+```
+amount0 = 0
+amount1 = L * (sqrtUpper - sqrtLower)
 ```
 
 ## Usage
@@ -170,10 +183,20 @@ positionId, liquidity, tickLower, tickUpper, amount0, amount1 := Reposition(
 )
 ```
 
+## Lifecycle
+
+A full decrease that leaves zero liquidity and zero tokens owed sets the
+`burned` marker but does not destroy the NFT. `IncreaseLiquidity` and
+`Reposition` clear the marker when the position is used again; the marker does
+not by itself block an increase.
+
 ## Security
 
 - Tick range validation prevents invalid positions
-- Slippage protection on all operations
-- Deadline prevents stale transactions
-- Position NFTs can only move through staker-mediated transfer flows
-- Liquidity changes and repositioning require the owner; fee collection also allows an approved operator
+- Slippage protection applies to liquidity-changing operations; fee collection
+  has no amount-minimum parameter
+- Deadlines prevent stale liquidity-changing transactions
+- Unstaked NFTs follow standard GRC721 transfer authorization; staked NFTs
+  can move only through staker-mediated flows
+- Liquidity changes and repositioning require the owner; fee collection also
+  permits the position's approved operator where applicable

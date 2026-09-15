@@ -3,7 +3,7 @@ package protocol_fee
 // DistributeProtocolFee distributes accumulated protocol fees to DevOps and GovStaker.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 func DistributeProtocolFee(cur realm) {
 	getImplementation().DistributeProtocolFee(0, cur)
 }
@@ -16,7 +16,7 @@ func DistributeProtocolFeeByTokenPath(cur realm, tokenPath string) {
 // SetDevOpsPct sets the percentage of protocol fees allocated to DevOps.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - pct: percentage in basis points (0-10000)
 func SetDevOpsPct(cur realm, pct int64) {
 	getImplementation().SetDevOpsPct(0, cur, pct)
@@ -25,18 +25,20 @@ func SetDevOpsPct(cur realm, pct int64) {
 // SetGovStakerPct sets the percentage of protocol fees allocated to GovStaker.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - pct: percentage in basis points (0-10000)
 func SetGovStakerPct(cur realm, pct int64) {
 	getImplementation().SetGovStakerPct(0, cur, pct)
 }
 
-// AddToProtocolFee adds tokens to the protocol fee pool.
+// AddToProtocolFee pulls an approved fee amount from an authorized protocol caller
+// into protocol-fee accounting. Authorized callers are pool, position, router,
+// and staker realms; direct transfers to this address do not register a fee.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
-//   - tokenPath: path of the token
-//   - amount: amount to add
+//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - tokenPath: token path of the fee
+//   - amount: fee amount to pull from the caller
 //
 // Returns:
 //   - err: nil on success; errSpoofedRealm for a spoofed-realm call; errProtocolFeeHalted when protocol-fee collection is halted

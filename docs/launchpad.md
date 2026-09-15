@@ -1,19 +1,22 @@
-# Launchpad Module (`v1/launchpad/`)
+# Launchpad Module (`r/gnoswap/launchpad/v1/`)
 
-Token distribution and vesting.
+Token distribution and time-locked GNS deposits with project-token rewards.
 
 ## Rules
 
-- Vesting schedule arithmetic: overflow on `totalAmount * vestingRate / denominator` for large supplies. Add explicit range checks.
-- Claimable amount calculations must match actual contract balance — accounting drift leads to irreversible fund lock.
-- Access control: only authorized addresses can create or modify campaigns.
-- Any `collect` function must follow CEI pattern (state update before transfer).
-- Project creation records recipient membership in a dedicated B+Tree (`address -> true`). Emission and protocol-fee claims use tree lookup rather than scanning projects; shared recipients reuse one entry. Initialization preserves the existing tree. Projects and recipients are not removed or reassigned by the current lifecycle.
-- Deposit records are stored and passed as values. Withdrawal helpers return the updated value; persist it explicitly in the deposits tree. Mutating a local copy does not update storage or the caller's copy.
+- Tier allocation is integer arithmetic: for the 30-day and 90-day tiers, `tierAmount = SafeMulDivInt64(depositAmount, tierRatio, 100)`; the 180-day tier receives the remaining amount so the tier allocations total the deposit.
+- Reward accounting uses Q128 fixed-point indices. The per-second rate is `(totalDistributeAmount << 128) / (endTime - startTime)`, and each update adds `elapsedSeconds * rate / totalStaked` to the cumulative index. A claim calculates `((accumulatedIndex - priceDebt) * depositAmount) >> 128`, then subtracts what that deposit already claimed.
+- Integer division and Q128 truncation are part of the on-chain result; a range that reaches a tier end is capped by that end.
+- A project reward becomes claimable at `createdAt + 1 day`, capped at the tier end. `CollectDepositGns` settles any claimable project reward before returning the original GNS principal and is available only strictly after the tier end.
+- `CreateProject` is admin-or-governance authorized. Deposits, reward claims, and principal withdrawals are restricted to the deposit owner. The administrative refund is admin-only, requires an ended project, and transfers only the remaining balance to its supplied recipient after reserving active depositor claims.
+- Condition expressions are split by `*PAD*`; an off-chain caller must use that delimiter rather than commas.
+- Checks-effects-interactions ordering must be preserved around token transfers and reward-state updates.
+- Project and deposit values must remain consistent with the stored state; do not infer deposit amounts from a current token balance.
 
 ## Pitfalls
 
-- `totalAmount * vestingRate / denominator` overflow for large token supplies → silent corruption.
-- Claimable amount diverges from actual balance → funds permanently locked.
-- Unauthorized campaign creation/modification → token theft.
-- `collect` without CEI → reentrancy risk.
+- Using a single vesting-rate formula for all tiers misstates the 180-day allocation and ignores integer rounding.
+- Off-chain calculators that use exclusive seconds, omit Q128 shifts, or fail to cap at the tier end can disagree with claims.
+- Treating `CollectDepositGns` as principal-only misses its reward-settlement side effect.
+- A halted emission call returns a soft `(0, false)` result; callers must decide whether their operation requires minted emission.
+- Bypassing owner/admin checks, condition validation, or CEI can expose deposits or project-token balances.

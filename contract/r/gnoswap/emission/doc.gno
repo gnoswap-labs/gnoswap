@@ -7,18 +7,20 @@
 //   - Year 1-2:  100% emission rate (225,000,000 GNS/year)
 //   - Year 3-4:   50% emission rate (112,500,000 GNS/year)
 //   - Year 5-6:   25% emission rate  (56,250,000 GNS/year)
-//   - Year 7-8: 12.5% emission rate  (28,125,000 GNS/year)
-//   - Year 9-12: 6.25% emission rate (14,062,500 GNS/year)
+//   - Year 7-8:  12.5% emission rate (28,125,000 GNS/year)
+//   - Year 9-12:  6.25% emission rate (14,062,500 GNS/year)
 //
-// Distribution Targets (configurable via governance):
+// Distribution Targets (configurable via admin or governance):
 //   - LIQUIDITY_STAKER: Rewards for LP providers (default 75%)
 //   - DEVOPS: Development and operations fund (default 20%)
-//   - COMMUNITY_POOL: Community-governed treasury (default 5%)
+//   - COMMUNITY_POOL: Community treasury (default 5%)
 //   - GOV_STAKER: GNS staking rewards (default 0%)
 //
 // Key Functions:
-//   - MintAndDistributeGns: Mints and distributes GNS per emission schedule
-//   - SetDistributionStartTime: One-time setup of emission start timestamp
+//   - MintAndDistributeGns: Mints and distributes GNS per emission schedule;
+//     returns false only when emission is halted.
+//   - SetDistributionStartTime: Sets or reschedules the start timestamp while
+//     it is still in the future; the timestamp is immutable once active.
 //   - ChangeDistributionPct: Updates distribution percentages
 //   - ClearDistributedToStaker/GovStaker: Resets pending distribution amounts
 package emission

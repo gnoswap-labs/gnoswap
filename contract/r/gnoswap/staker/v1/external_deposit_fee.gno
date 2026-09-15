@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-// GetDepositGnsAmount returns the current deposit amount in GNS.
+// GetDepositGnsAmount returns the current GNS deposit amount required for each external incentive.
 func (s *stakerV1) GetDepositGnsAmount() int64 {
 	return s.store.GetDepositGnsAmount()
 }

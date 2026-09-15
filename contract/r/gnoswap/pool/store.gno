@@ -21,7 +21,7 @@ const (
 	StoreKeyPools                StoreKey = "pools"                // Map containing all pools
 	StoreKeyObservations         StoreKey = "observations"         // poolPath -> observation B+tree
 	StoreKeyFeeAmountTickSpacing StoreKey = "feeAmountTickSpacing" // Fee tier to tick spacing mapping
-	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee percentage
+	StoreKeySlot0FeeProtocol     StoreKey = "slot0FeeProtocol"     // Protocol fee denominator(s)
 
 	// Protocol fee storage keys
 	StoreKeyPoolCreationFee     StoreKey = "poolCreationFee"     // Pool creation fee amount
@@ -139,7 +139,7 @@ func (s *poolStore) HasSlot0FeeProtocol() bool {
 	return s.kvStore.Has(StoreKeySlot0FeeProtocol.String())
 }
 
-// GetSlot0FeeProtocol retrieves the protocol fee percentage for slot0.
+// GetSlot0FeeProtocol retrieves the protocol fee denominator(s) for slot0.
 func (s *poolStore) GetSlot0FeeProtocol() uint8 {
 	result, err := s.kvStore.Get(StoreKeySlot0FeeProtocol.String())
 	if err != nil {
@@ -154,7 +154,7 @@ func (s *poolStore) GetSlot0FeeProtocol() uint8 {
 	return slot0FeeProtocol
 }
 
-// SetSlot0FeeProtocol stores the protocol fee percentage for slot0.
+// SetSlot0FeeProtocol stores the protocol fee denominator(s) for slot0.
 func (s *poolStore) SetSlot0FeeProtocol(_ int, rlm realm, slot0FeeProtocol uint8) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)

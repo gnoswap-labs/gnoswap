@@ -13,7 +13,8 @@ const (
 )
 
 // keeper implements ReferralKeeper using BPTree storage.
-// It includes rate limiting to prevent abuse.
+// Non-removal registrations and updates use a 24-hour cooldown; removal via
+// the contract-address sentinel bypasses that check and preserves the timestamp.
 type keeper struct {
 	store   *bptree.BPTree // address(string) -> referral address(string)
 	lastOps *bptree.BPTree // address(string) -> last operation timestamp(int64)
@@ -29,8 +30,9 @@ func NewKeeper() ReferralKeeper {
 	}
 }
 
-// register creates or updates a referral relationship between addresses.
-// Setting refAddr to the contract's own address removes the referral.
+// register creates, updates, or removes a referral relationship between addresses.
+// Setting refAddr to the contract's own address removes the referral without
+// changing the last non-removal operation timestamp.
 func (k *keeper) register(addr, refAddr address) (address, error) {
 	if err := k.validateAddresses(addr, refAddr); err != nil {
 		return zeroAddress, err
@@ -102,8 +104,8 @@ func (k *keeper) isEmpty() bool {
 	return k.store.Size() == 0
 }
 
-// getLastOpTimestamp retrieves the last operation timestamp for a given address.
-// Returns ErrNotFound if no operation exists.
+// getLastOpTimestamp retrieves the last non-removal registration or update
+// timestamp for a given address. Returns ErrNotFound if no such operation exists.
 func (k *keeper) getLastOpTimestamp(addr address) (int64, error) {
 	if !addr.IsValid() {
 		return 0, errors.New(ErrInvalidAddress)
@@ -122,8 +124,8 @@ func (k *keeper) getLastOpTimestamp(addr address) (int64, error) {
 	return ts, nil
 }
 
-// checkRateLimit verifies if enough time has passed since the last operation.
-// Returns ErrTooManyRequests if rate limit is exceeded.
+// checkRateLimit verifies whether enough time has passed since the last
+// non-removal operation. Returns ErrTooManyRequests if the cooldown is exceeded.
 func (k *keeper) checkRateLimit(addr string) error {
 	now := time.Now().Unix()
 

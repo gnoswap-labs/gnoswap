@@ -36,9 +36,12 @@ func (rb *RBAC) IsAuthorized(roleName string, addr address) bool {
 // Errors:
 // `RegisterRole` returns an error in the following situations:
 //   - `ErrInvalidRoleName`: role name is an empty string or contains only whitespace
-//   - `ErrRoleAlreadyExists`: the role to be registered already exists in rbac.
-//     Since system roles are registered through `initRbac`, attempting to register
-//     a new role with a system role name will return an `ErrRoleAlreadyExists` error.
+//   - `ErrRoleAlreadyExists`: the role to be registered already exists in RBAC.
+//   - A system-role name may be registered when absent, but remains protected
+//     from removal; this package does not pre-register system roles.
+//
+// The supplied address is stored without validation; UpdateRoleAddress validates
+// non-zero, syntactically valid addresses.
 func (rb *RBAC) RegisterRole(roleName string, addr address) error {
 	roleName = strings.TrimSpace(roleName)
 	if roleName == "" {

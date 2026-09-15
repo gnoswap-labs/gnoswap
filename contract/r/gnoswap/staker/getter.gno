@@ -13,8 +13,8 @@ import (
 //   - poolPath: pool realm path
 //
 // Returns:
-//   - pool: independent pool copy, or nil when no pool is configured
-//   - err: non-nil when the implementation cannot resolve poolPath
+//   - pool: independent pool copy, or nil when an implementation has no pool value
+//   - err: implementation resolution error; the current v1 implementation returns not-found for a missing pool
 func GetPool(poolPath string) (*Pool, error) {
 	pool, err := getImplementation().GetPool(poolPath)
 	if err != nil {
@@ -32,8 +32,8 @@ func GetPool(poolPath string) (*Pool, error) {
 //   - lpTokenId: staked position NFT token ID
 //
 // Returns:
-//   - deposit: independent deposit copy, or nil when no deposit exists
-//   - err: non-nil when the implementation cannot resolve lpTokenId
+//   - deposit: independent deposit copy, or nil when an implementation has no deposit value
+//   - err: implementation resolution error; the current v1 implementation returns not-found for a missing deposit
 func GetDeposit(lpTokenId uint64) (*Deposit, error) {
 	deposit, err := getImplementation().GetDeposit(lpTokenId)
 	if err != nil {
@@ -45,10 +45,11 @@ func GetDeposit(lpTokenId uint64) (*Deposit, error) {
 	return deposit.Clone(), nil
 }
 
-// CollectableEmissionReward returns the claimable internal GNS reward.
+// CollectableEmissionReward returns the claimable internal GNS reward for a live staked deposit or
+// an exit checkpoint left by UnStakeToken.
 //
 // Parameters:
-//   - positionId: staked position NFT token ID
+//   - positionId: staked position NFT token ID or position with an exit checkpoint
 //
 // Returns:
 //   - amount: claimable internal reward amount
@@ -57,10 +58,11 @@ func CollectableEmissionReward(positionId uint64) (int64, error) {
 	return getImplementation().CollectableEmissionReward(positionId)
 }
 
-// CollectableExternalIncentiveReward returns a position's claimable external reward.
+// CollectableExternalIncentiveReward returns a position's claimable external reward for a live
+// staked deposit or an exit checkpoint left by UnStakeToken.
 //
 // Parameters:
-//   - positionId: staked position NFT token ID
+//   - positionId: staked position NFT token ID or position with an exit checkpoint
 //   - incentiveId: external incentive identifier
 //
 // Returns:
@@ -126,17 +128,18 @@ func GetIncentiveRefunded(poolPath string, incentiveId string) (bool, error) {
 	return getImplementation().GetIncentiveRefunded(poolPath, incentiveId)
 }
 
-// IsIncentiveActive returns whether an incentive is active.
+// IsIncentiveActive reports whether an unrefunded incentive is active, including both start and end timestamps.
 func IsIncentiveActive(poolPath string, incentiveId string) (bool, error) {
 	return getImplementation().IsIncentiveActive(poolPath, incentiveId)
 }
 
-// GetDepositExternalRewardLastCollectTimestamp returns the last external reward collection time for a position.
+// GetDepositExternalRewardLastCollectTimestamp returns the last external reward collection time for
+// a position and incentive. For a newly tracked incentive, the value is based on the stake timestamp.
 func GetDepositExternalRewardLastCollectTimestamp(lpTokenId uint64, incentiveId string) (int64, error) {
 	return getImplementation().GetDepositExternalRewardLastCollectTimestamp(lpTokenId, incentiveId)
 }
 
-// GetDepositGnsAmount returns the required GNS deposit amount for staking.
+// GetDepositGnsAmount returns the GNS deposit required for each external incentive.
 func GetDepositGnsAmount() int64 {
 	return getImplementation().GetDepositGnsAmount()
 }
@@ -175,7 +178,7 @@ func GetDepositOwner(lpTokenId uint64) (address, error) {
 	return getImplementation().GetDepositOwner(lpTokenId)
 }
 
-// GetDepositStakeTime returns the staking duration of a position.
+// GetDepositStakeTime returns the Unix timestamp at which a position was staked.
 func GetDepositStakeTime(lpTokenId uint64) (int64, error) {
 	return getImplementation().GetDepositStakeTime(lpTokenId)
 }
@@ -232,7 +235,8 @@ func GetIncentiveCreator(poolPath string, incentiveId string) (address, error) {
 	return getImplementation().GetIncentiveCreator(poolPath, incentiveId)
 }
 
-// GetIncentiveRewardAmount returns the total reward amount of an incentive.
+// GetIncentiveRewardAmount returns the remaining reward amount of an incentive, after deliveries
+// and refunds represented by the current incentive state.
 func GetIncentiveRewardAmount(poolPath string, incentiveId string) (*u256.Uint, error) {
 	amount, err := getImplementation().GetIncentiveRewardAmount(poolPath, incentiveId)
 	if err != nil {
@@ -241,7 +245,7 @@ func GetIncentiveRewardAmount(poolPath string, incentiveId string) (*u256.Uint, 
 	return amount.Clone(), nil
 }
 
-// GetIncentiveRewardAmountAsString returns the total reward amount of an incentive as string.
+// GetIncentiveRewardAmountAsString returns the remaining reward amount of an incentive as string.
 func GetIncentiveRewardAmountAsString(poolPath string, incentiveId string) (string, error) {
 	return getImplementation().GetIncentiveRewardAmountAsString(poolPath, incentiveId)
 }
@@ -268,7 +272,8 @@ func GetIncentiveStartTimestamp(poolPath string, incentiveId string) (int64, err
 	return getImplementation().GetIncentiveStartTimestamp(poolPath, incentiveId)
 }
 
-// GetMinimumRewardAmount returns the minimum reward amount to distribute.
+// GetMinimumRewardAmount returns the default minimum reward amount required to create an external
+// incentive. A token-specific override may apply.
 func GetMinimumRewardAmount() int64 {
 	return getImplementation().GetMinimumRewardAmount()
 }
@@ -322,7 +327,7 @@ func GetTargetPoolPathByIncentiveId(poolPath string, incentiveId string) (string
 	return getImplementation().GetTargetPoolPathByIncentiveId(poolPath, incentiveId)
 }
 
-// GetUnstakingFee returns the unstaking fee percentage.
+// GetUnstakingFee returns the current unstaking fee rate in basis points (0-1,000; 100 = 1%).
 func GetUnstakingFee() uint64 {
 	return getImplementation().GetUnstakingFee()
 }

@@ -9,7 +9,8 @@ import (
 	"gno.land/p/nt/ufmt/v0"
 )
 
-// generateRandInstance generates a new random instance.
+// generateRandInstance creates time-seeded pseudo-random artwork parameters.
+// It is not a source of secure or cryptographic randomness.
 func generateRandInstance() *rand.Rand {
 	now := time.Now()
 	seed1 := now.Unix() + TotalSupply()

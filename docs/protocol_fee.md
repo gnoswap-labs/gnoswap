@@ -1,22 +1,20 @@
-# Protocol Fee Module (`v1/protocol_fee/`)
+# Protocol Fee Module (`r/gnoswap/protocol_fee/v1/`)
 
-Collects and distributes protocol fees from swaps, staking rewards, and withdrawals.
+Collects authorized protocol fees and accounts for their distribution to the
+configured DevOps and GovStaker destinations.
 
 ## Rules
 
-- **Every fee transfer must call `AddToProtocolFee`** to register the amount. Transfers that bypass this leave funds permanently locked (no record → no distribution path).
-- `DistributeProtocolFee` only distributes what is registered in `tokenListWithAmount`. Direct transfers to the protocol fee address without registration are unrecoverable.
-- Fee collection addresses must be validated — sending to `""` or an invalid address loses funds.
-- All distribution functions must handle token transfer failures without corrupting the registered balance.
-- The gov/staker share of every fee is bucketed under the accrual epoch in force (`accrualBuckets[tokenPath][epoch]`). Only gov/staker may call `AdvanceAccrualEpoch` (on every stake change) and `ConsumeAccrualBuckets` (on collect, oldest epoch first). Clearing a bucket anywhere else strands that share.
-- `reservedTokens` and `accrualPendingTokens` are tree-backed sets: settle one token without rewriting the whole set.
-
-## Audit Finding (M-06)
-
-`CollectFee` withdrawal fees were not tracked (resolved). Any future code path that transfers tokens to the protocol_fee realm without calling `AddToProtocolFee` creates a permanent balance discrepancy. Grep for every `SafeGRC20Transfer` targeting the protocol_fee realm address and verify `AddToProtocolFee` is called atomically.
+- Every fee collection must call `AddToProtocolFee`, which pulls an approved amount from an authorized pool, position, router, or staker caller and records it in the protocol-fee accounting.
+- `DistributeProtocolFee` processes only token paths in `reservedTokens`. Per-token cumulative allocation accumulators (`accuToGovStaker` and `accuToDevOps`) track amounts assigned to each destination, while distribution-history trees track actual transfers.
+- GovStaker accrual is additionally bucketed as `accrualBuckets[tokenPath][epoch]`; each epoch bucket is consumed against the stake state for that epoch.
+- Addresses and token paths are validated before transfers, and transfer failures must abort without leaving a partially applied accounting update.
+- The default split is 100% to GovStaker and 0% to DevOps; authorized admin or governance configuration can change the percentages.
+- A direct token transfer to the protocol-fee address without `AddToProtocolFee` is not added to `reservedTokens` or accrual buckets and is not included by `Distribute`; these APIs provide no public recovery path for such an unregistered balance.
 
 ## Pitfalls
 
-- Fee transfer without `AddToProtocolFee` → fees permanently locked.
-- Direct transfer to protocol_fee realm without registration → excess is unrecoverable.
-- Advancing the accrual epoch without a matching gov/staker stake record → buckets attributed to a stake distribution that was never recorded.
+- Calling `DistributeProtocolFee` without first registering a fee through `AddToProtocolFee` leaves that amount outside the distribution queue.
+- Treating an accumulator as an actual transfer total ignores pending allocations; consult the distribution-history getters for completed transfers.
+- Treating protocol-fee rewards as one current-balance share ignores epoch buckets, total stake in force, and Q128 settlement.
+- Bypassing access control, token validation, or failed-transfer handling can corrupt accounting or strand funds.

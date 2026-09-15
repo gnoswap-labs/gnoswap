@@ -40,7 +40,9 @@ func (g *customGen) maybeValue(t *T) (any, bool) {
 	return g.fn(t.s), true
 }
 
-// Custom creates a generator which produces results of calling fn.
+// Custom creates a generator which produces results of calling fn. Its callback
+// takes the package-private bitStream type, so external callers should prefer
+// Map, OneOf, or another public combinator.
 func Custom(fn func(bitStream) any) *Generator {
 	return newGenerator(&customGen{
 		fn: fn,

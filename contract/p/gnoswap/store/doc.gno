@@ -41,10 +41,11 @@
 //   - **Write (1)**: Allowed to call `Set` and `Delete`.
 //
 // The zero value of `Permission` is reserved and rejected by registration APIs.
-// Callers not in the authorized-caller table have no write access. Read
-// methods do not enforce caller permissions; realm-level APIs must gate
-// sensitive reads themselves. The domain address (owner) is always treated
-// as authorized and cannot be removed.
+// Code callers not in the authorized-caller table have no write access. Current
+// user/EOA realms bypass the ACL for Set and Delete after the live-frame check.
+// Read methods do not enforce caller permissions; realm-level APIs must gate
+// sensitive reads themselves. The domain address (owner) is always treated as
+// authorized and cannot be removed.
 //
 // ## Realm Threading
 //
@@ -66,10 +67,9 @@
 // framework rule. The store currently checks:
 //
 //   - `Set` / `Delete`: `rlm.Address()` (the realm performing the write, i.e.
-//     the domain realm calling into the store) against the write ACL. Set
-//     additionally bypasses the ACL when `rlm.IsCode()` is false so EOA /
-//     user-realm callers (deploy, tests) can populate state without prior
-//     registration; Delete has no such bypass.
+//     the domain realm calling into the store) against the write ACL for code
+//     callers. Current user/EOA realms (`!rlm.IsCode()`) bypass the ACL after
+//     `rlm.IsCurrent()` validation, so they can populate or delete state.
 //   - `AddAuthorizedCaller`, `UpdateAuthorizedCaller`,
 //     `RemoveAuthorizedCaller`: `rlm.Address()` (the current realm) against
 //     the domain address.
@@ -130,9 +130,9 @@
 //   - **Read Operations** (`Get`, `GetInt64`, `GetString`, ...): no permission
 //     check; reads are public within the package.
 //   - **Write Operations** (`Set`, `Delete`): require the calling realm --
-//     `rlm.Address()` -- to be in the write ACL. Set additionally
-//     bypasses the ACL when the immediate caller is an EOA / user realm
-//     (`!rlm.IsCode()`); Delete has no such bypass.
+//     `rlm.Address()` -- to be in the write ACL when the caller is code.
+//     Current user/EOA realms (`!rlm.IsCode()`) bypass the ACL after the live
+//     frame check.
 //   - **Management Operations** (`AddAuthorizedCaller`,
 //     `UpdateAuthorizedCaller`, `RemoveAuthorizedCaller`): require the
 //     current realm -- `rlm.Address()` -- to equal the domain address.
@@ -150,10 +150,9 @@
 //
 // The package defines several error types:
 //
-//   - `ErrKeyNotFound` - Requested key does not exist.
-//   - `ErrWritePermissionDenied` - the calling realm (`rlm.Address()`) is
-//     not in the write ACL. For Set, this only fires when `rlm.IsCode()` is
-//     true; the EOA / user-realm path bypasses the ACL.
+//   - `ErrWritePermissionDenied` - the calling code realm (`rlm.Address()`) is
+//     not in the write ACL. Current user/EOA realms bypass the ACL for Set and
+//     Delete after `rlm.IsCurrent()` validation.
 //   - `ErrUpdatePermissionDenied` - ACL change attempted from a current realm
 //     (`rlm.Address()`) other than the domain address.
 //   - `ErrAuthorizedCallerAlreadyRegistered` - Adding a caller that already

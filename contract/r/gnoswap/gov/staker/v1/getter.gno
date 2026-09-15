@@ -13,7 +13,8 @@ import (
 	"gno.land/r/gnoswap/gov/xgns"
 )
 
-// GetTotalxGnsSupply returns the total amount of xGNS supply.
+// GetTotalxGnsSupply returns the total amount of xGNS supply, including
+// xGNS held by the launchpad.
 func (gs *govStakerV1) GetTotalxGnsSupply() int64 {
 	return xgns.TotalSupply()
 }
@@ -73,15 +74,16 @@ func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
 	return gs.store.HasTotalDelegationHistoryStoreKey()
 }
 
-// GetTotalDelegationAmountAtSnapshot returns the total delegation amount at a specific snapshot time.
-// Uses ReverseIterate to find the most recent entry at or before the snapshot time.
+// GetTotalDelegationAmountAtSnapshot returns the total delegation amount at a
+// Unix timestamp. It uses ReverseIterate to find the most recent history entry
+// at or before that timestamp; this is a timestamp lookup, not a block snapshot.
 //
 // Parameters:
-//   - snapshotTime: timestamp to retrieve the snapshot for
+//   - snapshotTime: Unix timestamp to retrieve the history value for
 //
 // Returns:
 //   - int64: total delegation amount at the specified time
-//   - bool: true if snapshot was exists, false otherwise
+//   - bool: true when a history entry exists at or before the timestamp
 func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
 	history := gs.store.GetTotalDelegationHistory()
 	if history.Size() == 0 {
@@ -109,17 +111,17 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 	return totalAmount, exists
 }
 
-// GetUserDelegationAmountAtSnapshot returns the delegation amount for a specific user at a specific snapshot time.
-// Structure: single BPTree keyed by composite key "addrStr|paddedTimestamp" -> int64
-// Uses ReverseIterate over the user's prefix range to find the most recent entry at or before the snapshot time.
+// GetUserDelegationAmountAtSnapshot returns one user's delegation amount at a
+// Unix timestamp. The history is keyed by address and timestamp, and the
+// lookup returns the most recent entry at or before the requested time.
 //
 // Parameters:
-//   - userAddr: address of the user to get delegation amount for
-//   - snapshotTime: timestamp to retrieve the snapshot for
+//   - userAddr: address of the user
+//   - snapshotTime: Unix timestamp to retrieve
 //
 // Returns:
 //   - int64: user delegation amount at the specified time
-//   - bool: true if snapshot was exists, false otherwise
+//   - bool: true when a history entry exists at or before the timestamp
 func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
 	history := gs.store.GetUserDelegationHistory()
 

@@ -1,44 +1,43 @@
 # GNFT
 
-GRC721-compliant NFT contract for GnoSwap LP positions.
+GRC721-compatible NFT contract for GnoSwap LP positions.
 
 ## Overview
 
-GNFT represents each liquidity position as a unique NFT with dynamically generated SVG artwork. Each NFT features a gradient background with parameters stored efficiently to minimize gas costs.
+GNFT represents each liquidity position as a unique NFT. It exposes ownership,
+transfer, approval, and metadata operations while generating compact SVG artwork
+for tokens whose URI is stored in GNFT's parameter format.
+
+GNFT implements the position-NFT surface used by GnoSwap; it does not expose
+every optional GRC721 extension. In particular, this package has no token
+enumeration API and does not expose `safeTransferFrom`.
 
 ## Core Features
 
-### GRC721 Standard Compliance
+### Ownership and approvals
 
-- Full implementation of GRC721 interface
-- Transfer, approval, and operator management
-- Token enumeration and metadata
+- Transfer, single-token approval, and operator approval
+- Owner, balance, existence, and approval queries
+- Staked tokens are locked to the staker contract
+- Other transfers use the GRC721 owner and approval checks
 
-### Dynamic SVG Generation
+### Dynamic SVG generation
 
-- Unique gradient backgrounds for each NFT
-- Parameters: x1, y1, x2, y2, color1, color2
-- On-demand SVG rendering from stored parameters
-- Base64-encoded data URI for direct browser display
+- Generated tokens store compact gradient parameters
+- Parameters are rendered to SVG and returned as a base64-encoded data URI
+- Rendering occurs on `TokenURI` reads rather than storing the full SVG
+- A custom non-empty URI set with `SetTokenURI` is returned unchanged when it is not in GNFT parameter format
 
-### Gas Optimization
+### Storage
 
-- Compact parameter storage (CSV string format)
-- Template-based SVG generation
-- Lazy rendering (generate on read, not on mint)
-- Minimal storage footprint per token
-
-### Integration
-
-- Position contract mints NFTs for new positions
-- Staker contract locks NFTs during staking
-- GRC721 owner/approval checks for transfers and operator management
+- Compact parameter storage reduces per-token metadata size
+- Template-based SVG generation avoids storing repeated markup
 
 ## Key Functions
 
 ### `Mint`
 
-Mints new NFT for LP position.
+Mints a new NFT for an LP position. Only the position role may call it.
 
 **Parameters:**
 - `cur realm`: Current realm context
@@ -49,7 +48,7 @@ Mints new NFT for LP position.
 
 ### `Burn`
 
-Burns NFT when position is closed.
+Burns an NFT when its position is closed. Only the position role may call it.
 
 **Parameters:**
 - `cur realm`: Current realm context
@@ -65,38 +64,67 @@ Transfers NFT ownership.
 - `to address`: New owner
 - `tid grc721.TokenID`: Token ID to transfer
 
+For a token held by the staker contract, only the staker can move it. For other
+tokens, the owner, token approval, or operator approval must authorize the
+transfer.
+
 ### `TokenURI`
 
-Returns the token URI, rendering stored SVG parameters as a base64 image data URI.
+Returns metadata for a token. When the stored URI parses as GNFT image
+parameters (`x1,y1,x2,y2,color1,color2`), GNFT renders those parameters as an
+SVG and returns a base64-encoded data URI. A custom non-empty URI that is not in
+that parameter format is returned unchanged.
 
 **Parameters:**
 - `tid grc721.TokenID`: Token ID
 
-**Returns:** Token URI string, using a base64-encoded SVG data URI for generated GNFT images
+**Returns:** Token URI string and an error when the token or metadata is missing
 
-### `Approve`
+### `SetTokenURI`
 
-Approves address to manage specific token.
+Sets a non-empty token URI. Only the position role may call it.
 
 **Parameters:**
 - `cur realm`: Current realm context
-- `to address`: Address to approve
+- `tid grc721.TokenID`: Token ID
+- `tURI string`: Non-empty metadata URI
+
+### `Approve`
+
+Approves an address to manage a specific token.
+
+**Parameters:**
+- `cur realm`: Current realm context
+- `approved address`: Address to approve
 - `tid grc721.TokenID`: Token ID
 
 ### `SetApprovalForAll`
 
-Approves operator to manage all tokens.
+Approves or revokes an operator for all tokens owned by the caller.
 
 **Parameters:**
 - `cur realm`: Current realm context
 - `operator address`: Operator address
 - `approved bool`: Approval status
 
+### Queries
+
+- `Name() string`: Collection name
+- `Symbol() string`: Collection symbol
+- `TotalSupply() int64`: Number of minted NFTs
+- `BalanceOf(owner address) (int64, error)`: Number of NFTs owned
+- `OwnerOf(tid grc721.TokenID) (address, error)`: Current owner
+- `MustOwnerOf(tid grc721.TokenID) address`: Owner or panic on error
+- `Exists(tid grc721.TokenID) bool`: Whether a token exists
+- `GetApproved(tid grc721.TokenID) (address, error)`: Token approval
+- `IsApprovedForAll(owner, operator address) bool`: Operator approval
+
 ## SVG Generation
 
 ### Parameter Format
 
-Token URI stores compact parameters:
+Generated token URIs store compact parameters:
+
 ```
 "x1,y1,x2,y2,#COLOR1,#COLOR2"
 Example: "10,12,125,123,#FF5733,#33B5FF"
@@ -104,73 +132,73 @@ Example: "10,12,125,123,#FF5733,#33B5FF"
 
 ### Parameter Ranges
 
-- x1: 7-13
-- y1: 7-13
-- x2: 121-126
-- y2: 121-126
-- colors: 6-digit hex (#RRGGBB)
-
-### SVG Structure
-
-```svg
-<svg width="135" height="135">
-  <circle cx="67.5" cy="67.5" r="67.5" fill="url(#gradient)"/>
-  <!-- GnoSwap logo paths -->
-  <linearGradient id="gradient" x1="X1" y1="Y1" x2="X2" y2="Y2">
-    <stop stop-color="#COLOR1"/>
-    <stop offset="1" stop-color="#COLOR2"/>
-  </linearGradient>
-</svg>
-```
+- `x1`: 7-13
+- `y1`: 7-13
+- `x2`: 121-126
+- `y2`: 121-126
+- colors: 6-digit hex (`#RRGGBB`)
 
 ### Rendering Process
 
-1. **Mint**: Generate random parameters → Store as CSV string
-2. **TokenURI**: Parse CSV → Generate SVG → Encode base64 → Return data URI
-3. **Display**: Browser decodes data URI → Renders SVG
+1. **Mint**: Generate pseudo-random parameters and store them as a CSV string
+2. **TokenURI**: Parse the CSV, generate SVG, encode it as base64, and return a data URI
+3. **Display**: The browser decodes the data URI and renders the SVG
+
+The parameters use time-seeded `math/rand`; this is pseudo-random artwork
+generation, not a security or cryptographic randomness source.
 
 ## Usage
 
+These helpers illustrate calls from an integrating realm. `mintExample` and
+`burnExample` require that realm to hold the position role; `transferExample`
+requires the caller to satisfy the ownership/approval rules described above.
+
 ```go
-// Position contract mints NFT when creating position
-import "gno.land/r/gnoswap/gnft"
+import (
+    grc721 "gno.land/p/nt/grc721/v0"
+    "gno.land/r/gnoswap/gnft"
+)
 
-// Mint NFT for new position
-tokenId := gnft.Mint(cross(cur), ownerAddress, positionId)
+func mintExample(cur realm, owner address, tokenID grc721.TokenID) grc721.TokenID {
+    return gnft.Mint(cross(cur), owner, tokenID)
+}
 
-// Get token URI with SVG
-imageURI, err := gnft.TokenURI(tokenId)
-// Returns: "data:image/svg+xml;base64,..." for generated GNFT images
+func metadataExample(tokenID grc721.TokenID) (string, error) {
+    return gnft.TokenURI(tokenID)
+}
 
-// Transfer NFT
-gnft.TransferFrom(cross(cur), fromAddress, toAddress, tokenId)
+func transferExample(cur realm, from, to address, tokenID grc721.TokenID) error {
+    return gnft.TransferFrom(cross(cur), from, to, tokenID)
+}
 
-// Burn NFT when closing position
-gnft.Burn(cross(cur), tokenId)
+func burnExample(cur realm, tokenID grc721.TokenID) {
+    gnft.Burn(cross(cur), tokenID)
+}
 ```
 
-## Security
+## Security and Access Control
 
-- Position contract mints NFTs for new positions
-- Transfers and approvals require the caller to be the owner or approved for the token
-- Tokens held by the staker contract can only be moved by the staker
-- Validated parameter ranges
-- Secure random generation
+- `Mint`, `SetTokenURI`, and `Burn` require the position role
+- Staker-held tokens can only be moved by the staker contract
+- Other transfers are checked by the owner/approval rules in the GRC721 ledger
+- Token URI parameters are validated before generated artwork is rendered
+- Generated artwork uses pseudo-random, time-seeded parameters and must not be
+  treated as a source of secure randomness
 
 ## Architecture
 
 ### Dependencies
 
-- `gno.land/p/nt/grc721/v0`: GRC721 implementation
-- `gno.land/r/gnoswap/rbac`: Access control
-- `gno.land/r/gnoswap/access`: Position role mirror
+- `gno.land/p/nt/grc721/v0`: GRC721 token and ledger implementation
+- `gno.land/p/nt/grc721/metadata/v0`: Metadata storage
+- `gno.land/r/gnoswap/access`: Position-role authorization
 
 ### State Variables
 
-- `nft`: GRC721 token instance
-- Token URIs are stored by the GRC721 token as compact SVG parameter strings
+- `token`: GRC721 token metadata and supply state
+- `ledger`: Ownership, transfer, and approval ledger
+- `meta`: Token URI metadata
+- `metaLedger`: Metadata update ledger
 
-### Access Control
-
-- `owner.AssertOwnedByPrevious()`: Checks that the caller owns the GNFT before owner-only operations
-- `checkErr()`: Panic on errors
+Generated image tokens store compact parameters in metadata; the full SVG data
+URI is generated when `TokenURI` is called.

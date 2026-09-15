@@ -10,7 +10,7 @@ The common package contains shared GRC20 token operations and native coin valida
 
 1. **GRC20 Registry Helpers**: Convenient wrappers for GRC20 token operations
 2. **Coin Utilities**: Native coin (GNOT) handling and validation
-3. **Assertion Utilities**: Input validation and authorization checks
+3. **Assertion Utilities**: Input validation for supported operations (not authorization checks)
 
 ## API Reference
 
@@ -38,5 +38,4 @@ which is swapped with `UpgradeImpl` like the other proxy realms.
 ### Coin Utilities
 
 **Coin Validation:**
-- **ExistsUserSendCoins**: Checks if user sent any coins
-- **AssertIsNotHandleNativeCoin**: Ensures no native coins in transaction
+- **AssertIsNotHandleNativeCoin**: Rejects native coins for GRC20-only functions and panics with `[GNOSWAP-COMMON-002] handle native coin is not allowed` when `unsafe.OriginSend()` is non-empty

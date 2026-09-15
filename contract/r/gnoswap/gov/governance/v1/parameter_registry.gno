@@ -135,7 +135,7 @@ func (h *ParameterHandlerOptions) HandlerKey() string {
 // This method ensures the correct number of parameters are provided before execution.
 //
 // Parameters:
-//   - cur: governance proxy realm threaded in by the caller; forwarded to the
+//   - rlm: governance proxy realm threaded in by the caller; forwarded to the
 //     wrapped closure so its cross-realm calls run under the proxy.
 //   - params: slice of string parameters to pass to the handler
 //
@@ -192,7 +192,7 @@ type ParameterRegistry struct {
 	handlers map[string]ParameterHandlerOptions // Map storing handler configurations keyed by package:function
 }
 
-// register adds a new parameter handler to the registry.
+// Register adds a new parameter handler to the registry.
 // Each handler is identified by a unique combination of package path and function name.
 //
 // Parameters:
@@ -201,16 +201,15 @@ func (r *ParameterRegistry) Register(handler ParameterHandlerOptions) {
 	r.handlers[handler.HandlerKey()] = handler
 }
 
-// handler retrieves a parameter handler by package path and function name.
+// Handler retrieves a parameter handler by its package:function key.
 // This method is used during proposal execution to find the appropriate handler.
 //
 // Parameters:
-//   - pkgPath: package path of the target contract
-//   - function: function name to be called
+//   - key: handler key returned by HandlerKey, in "pkgPath:function" format
 //
 // Returns:
 //   - ParameterHandler: the matching parameter handler
-//   - error: error if handler not found or casting fails
+//   - error: error if the key has no registered handler
 func (r *ParameterRegistry) Handler(key string) (ParameterHandler, error) {
 	// Retrieve handler from registry
 	handler, exists := r.handlers[key]

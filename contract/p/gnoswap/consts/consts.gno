@@ -49,9 +49,10 @@ func MinSqrtRatio() *u256.Uint {
 	return &u256.Uint{4295128739, 0, 0, 0}
 }
 
-// MaxSqrtRatio returns the maximum valid sqrt price ratio
-// (1461446703485210103287273052203988822378723970342),
-// equal to TickMathGetSqrtRatioAtTick(maxTick).
+// MaxSqrtRatio returns the upper bound of the valid sqrt price range
+// (1461446703485210103287273052203988822378723970342), equal to
+// TickMathGetSqrtRatioAtTick(maxTick). TickMathGetTickAtSqrtRatio treats this
+// boundary as exclusive and accepts values in [MinSqrtRatio, MaxSqrtRatio).
 func MaxSqrtRatio() *u256.Uint {
 	return &u256.Uint{6743328256752651558, 17280870778742802505, 4294805859, 0}
 }

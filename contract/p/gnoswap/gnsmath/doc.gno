@@ -42,7 +42,8 @@
 // ### Tick Math
 //
 //   - TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint
-//   - TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32
+//   - TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32; accepts
+//     `[MinSqrtRatio, MaxSqrtRatio)` (the upper bound is exclusive)
 //
 // ### Liquidity Math
 //

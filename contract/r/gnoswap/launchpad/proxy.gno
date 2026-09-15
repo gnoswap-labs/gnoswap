@@ -1,9 +1,9 @@
 package launchpad
 
-// CreateProject creates a new launchpad project (only callable by the admin).
+// CreateProject creates a new launchpad project (callable by admin or governance).
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - name: The name of a project.
 //   - tokenPath: The token path to distribute as reward.
 //   - recipient: The address of the project's to receive reward.
@@ -46,10 +46,10 @@ func CreateProject(
 	)
 }
 
-// CollectProtocolFee collects the protocol fees from the governance contract. The reward is for projects, not for users, and it occurs based on the xGNS holdings that users deposited via launchpad to receive the project tokens.
-//
+// CollectProtocolFee collects protocol-fee rewards from gov/staker for project
+// recipient wallets. Only project recipients can call this function.
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 func CollectProtocolFee(cur realm) {
 	getImplementation().CollectProtocolFee(0, cur)
 }
@@ -64,10 +64,12 @@ func CollectProtocolFeeReward(cur realm, tokenPath string) {
 	getImplementation().CollectProtocolFeeReward(0, cur, tokenPath)
 }
 
-// TransferLeftFromProjectByAdmin transfers the remaining amount from the ended project to the recipient.
+// TransferLeftFromProjectByAdmin transfers the remaining refundable project-token
+// balance from an ended project to the supplied recipient. Active depositor
+// claims are reserved and excluded from the transfer. Only admin may call it.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - projectID: The ID of the ended project.
 //   - recipient: The recipient address to receive the remaining tokens.
 //
@@ -80,7 +82,7 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient addre
 // DepositGns deposits GNS to a launchpad project pool.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - targetProjectTierID: The pool tier ID to deposit.
 //   - depositAmount: The amount of GNS token to deposit.
 //   - referrer: The referrer address for reward tracking.
@@ -94,7 +96,7 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 // CollectDepositGns collects the deposited GNS using a depositID.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - depositID: The ID of a deposit to collect GNS.
 //
 // Returns:
@@ -107,7 +109,7 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 // CollectRewardByDepositId collects the project token reward for users using a depositId.
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //   - depositID: The ID of a deposit to collect reward token.
 //
 // Returns:

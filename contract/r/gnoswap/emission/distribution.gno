@@ -26,7 +26,7 @@ const (
 var (
 	// Stores the percentage (in basis points) for each distribution target
 	// 1 basis point = 0.01%
-	// These percentages can be modified through governance.
+	// These percentages can be modified by admin or governance.
 	distributionBpsPct map[int]int64
 
 	distributedToStaker        int64 // can be cleared by staker contract

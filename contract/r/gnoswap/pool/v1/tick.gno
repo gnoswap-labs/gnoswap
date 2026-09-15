@@ -10,6 +10,9 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
+// MAX_LIQUIDITY_PER_TICK_* values are spacing-specific limits returned by
+// calculateMaxLiquidityPerTick; they are not a universal uint128 maximum.
+
 const (
 	MAX_LIQUIDITY_PER_TICK_SPACING_1         = "191757530477355301479181766273477"
 	MAX_LIQUIDITY_PER_TICK_SPACING_10        = "1917569901783203986719870431555990"
@@ -76,8 +79,8 @@ func maxLiquidityPerTickSpacing200FromDec() *u256.Uint {
 //
 // ```gno
 //
-//	feeGrowth0, feeGrowth1 := pool.getFeeGrowthInside(
-//	    100, 200, 150, globalFeeGrowth0, globalFeeGrowth1,
+//	feeGrowth0, feeGrowth1 := getFeeGrowthInside(
+//	    pool, 100, 200, 150, globalFeeGrowth0, globalFeeGrowth1,
 //	)
 //	println("Fee Growth Inside (Token 0):", feeGrowth0)
 //	println("Fee Growth Inside (Token 1):", feeGrowth1)
@@ -150,7 +153,11 @@ func getFeeGrowthInside(
 //
 // ```gno
 //
-//	flipped := pool.tickUpdate(10, 5, liquidityDelta, feeGrowth0, feeGrowth1, secondsPerLiquidityCumulativeX128, tickCumulative, blockTimestamp, true, maxLiquidity)
+//	flipped := tickUpdate(
+//	    pool, 10, 5, liquidityDelta, feeGrowth0, feeGrowth1,
+//	    secondsPerLiquidityCumulativeX128, tickCumulative, blockTimestamp,
+//	    true, maxLiquidity,
+//	)
 //	println("Tick flipped:", flipped)
 //
 // ```
@@ -297,7 +304,7 @@ func getTick(p *pl.Pool, tick int32) pl.TickInfo {
 //
 // ```gno
 //
-//	tickInfo := pool.mustGetTick(10)
+//	tickInfo := mustGetTick(pool, 10)
 //	ufmt.Println("Tick Info:", tickInfo)
 //
 // ```
@@ -418,6 +425,8 @@ func getFeeGrowthBelowX128(
 //     feeGrowthAbove = feeGrowthGlobal - feeGrowthOutside
 //
 // Example:
+//
+// ```gno
 //
 //	feeGrowth0, feeGrowth1 := getFeeGrowthAboveX128(
 //	    200, 150, globalFeeGrowth0, globalFeeGrowth1, upperTickInfo,

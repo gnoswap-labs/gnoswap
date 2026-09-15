@@ -9,18 +9,19 @@ package launchpad
 // - depositor (std.Address): The address of the depositor.
 // - id (string): The unique identifier for the deposit.
 // - projectID (string): The ID of the project associated with the deposit.
-// - tier (int64): The tier of the deposit.
+// - tier (int64): The tier duration of the deposit (30, 90, or 180 days).
 // - depositAmount (int64): The amount of the deposit.
 // - withdrawnHeight (int64): The height at which the deposit was withdrawn.
-// - withdrawnTime (int64): The time when the deposit was withdrawn.
-// - createdTime (int64): The time when the deposit was created.
-// - endTime (int64): The time when the deposit ends.
+// - withdrawnTime (int64): The Unix timestamp when the deposit was withdrawn.
+// - createdHeight (int64): The block height at which the deposit was created.
+// - createdAt (int64): The Unix timestamp when the deposit was created.
+// - endTime (int64): The Unix timestamp when the deposit ends.
 type Deposit struct {
 	depositor address
 
 	id              string
 	projectID       string
-	tier            int64 // 30, 60, 180 // instead of tierId
+	tier            int64 // 30, 90, 180 // instead of tierId
 	depositAmount   int64
 	withdrawnHeight int64
 	withdrawnTime   int64

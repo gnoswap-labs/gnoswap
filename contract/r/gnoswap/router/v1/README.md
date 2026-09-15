@@ -8,37 +8,42 @@ Router handles swap execution across multiple pools, finding optimal paths and m
 
 ## Configuration
 
-- **Router Fee**: 0.15% on all swaps
+- **Router Fee**: 15 bps (0.15%) by default on output tokens; configurable by
+  admin/governance from 0 through 1000 bps (0–10%)
 - **Max Hops**: 3 pools per route
-- **Deadline Buffer**: 5-30 minutes recommended
+- **Deadline Buffer**: 5-30 minutes recommended for live swaps
 
 ## Core Functions
 
 ### `ExactInSwapRoute`
 
-Swaps exact input amount for minimum output.
+Swaps an exact input amount for output, subject to a minimum net output.
 
 - Fixed input, variable output
+- The returned output is after the router fee
 - Reverts if output < amountOutMin
 - Supports multi-hop routing
 
 ### `ExactOutSwapRoute`
 
-Swaps for a requested final user output amount with maximum input. The router requests
-extra pool output to cover the router fee, deducts the fee, then validates and transfers
-the post-fee output amount.
+Swaps for a requested final user output amount with maximum input. The
+`amountOut` target is post-router-fee: the router requests the corresponding
+gross pool output, deducts the fee, then validates and transfers the net output.
 
-- Fixed post-fee user output, variable input
+- With no single-hop price limit, targets the requested post-fee output within
+  the implementation's small per-hop rounding tolerance
+- A nonzero single-hop price limit may stop early and return a partial output
 - Reverts if input > amountInMax
 - Calculates path backwards
 
 ### `DrySwapRoute`
 
-Simulates swap without execution.
+Simulates a swap without execution.
 
 - Frontend price quotes
 - Slippage calculation
 - Path validation
+- No deadline check or token transfer
 
 ## Technical Details
 
@@ -123,7 +128,8 @@ gno.land/r/demo/bar:gno.land/r/demo/baz:3000*POOL*gno.land/r/demo/baz:gno.land/r
 
 Split large trades across routes to minimize impact:
 
-- `quoteArr`: Percentage per route (must sum to 100)
+- `quoteArr`: positive percentage per route, with one quote for each route
+- Quotes must sum to 100; at most 7 routes are accepted
 - Example: "30,70" = 30% route1, 70% route2
 
 ### Native Token Handling
@@ -141,12 +147,12 @@ The current router implementation does **not** handle native `ugnot` directly. I
 - If you want wrapped GNOT exposure, use the `wugnot` token contract path directly.
 - Native-token refund and unwrap flows are not part of the current router implementation.
 
-### Slippage Protection
+For live liquidity-changing swaps:
 
 - Set `amountOutMin = expected * (1 - slippage%)`
 - 0.5-1% for stable pairs
 - 1-3% for volatile pairs
-- Reverts if exceeded
+- Reverts if the net output is below the minimum
 
 ## Usage
 
@@ -193,9 +199,8 @@ ExactInSwapRoute(
 )
 ```
 
-### Single Swap with Partial Execution
-
-Single swap functions support partial execution through price limits:
+Single-hop functions support partial execution through a nonzero
+`sqrtPriceLimitX96`:
 
 ```go
 // Partial swap with price limit - may not consume full input amount
@@ -210,8 +215,9 @@ amountIn, amountOut := ExactInSingleSwapRoute(
     deadline,
     "",
 )
-// If price limit is reached, only partial amount is swapped
-// Remaining input tokens stay with user (no refund needed for GRC20 tokens)
+// If the price limit is reached, only a partial amount is swapped. For exact-in
+// this can consume less input; exact-out can deliver less than its target.
+// amountOutMin or amountInMax remains enforced, respectively.
 ```
 
 ## Important Developer Notes
@@ -235,19 +241,23 @@ amountIn, amountOut := ExactInSingleSwapRoute(
 - [ ] Test both partial and full swap scenarios
 - [ ] Implement proper error handling for failed approvals
 
-### Single Swap Partial Execution
+Both single-hop functions support partial execution when
+`sqrtPriceLimitX96` is nonzero:
 
-The `ExactInSingleSwapRoute` and `ExactOutSingleSwapRoute` functions support partial execution when `sqrtPriceLimitX96` is set. This means:
-
-- Swap may consume less than the specified input amount
-- Price impact is limited by the price limit parameter
-- Remaining tokens stay with the user because the router works with token contract transfers
-- This is useful for large trades to prevent excessive slippage
+- Exact-in may consume less than the specified input amount
+- Exact-out may deliver less than the requested post-fee output
+- The relevant amount limit (`amountOutMin` or `amountInMax`) still applies
+- Remaining input tokens stay with the user because the router uses token
+  contract transfers
+- A zero limit uses the global tick-math boundary and preserves full exact
+  semantics
 
 ## Security
 
-- Path validation prevents circular routes
-- Deadline prevents stale transactions
-- Slippage limits protect against MEV
-- Router fees immutable per swap
+- Path validation checks syntax, endpoints, hop continuity, and pool existence;
+  it does not reject circular routes
+- Deadline prevents stale live transactions
+- Slippage limits protect against unfavorable execution
+- The router fee rate is configurable; the current rate is fixed during one
+  execution
 - WUGNOT approval requirement prevents unauthorized token transfers

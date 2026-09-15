@@ -14,11 +14,12 @@ import (
 // - name (string): The name of the project.
 // - tokenPath (string): The path of the token associated with the project.
 // - depositAmount (int64): The total amount of tokens deposited for the project.
-// - recipient (std.Address): The address to receive the project's rewards.
+// - recipient (address): The address to receive the project's rewards.
 // - conditions (map[string]*ProjectCondition): A map of token paths to their associated conditions.
 // - tiers (map[int64]*ProjectTier): A map of tier durations to their associated tiers.
 // - tiersRatios (map[int64]int64): A map of tier durations to their associated ratios.
-// - createdBlockTimeInfo (BlockTimeInfo): The block time and height information for the creation of the project.
+// - createdHeight (int64): The block height at which the project was created.
+// - createdAt (int64): The Unix timestamp at which the project was created.
 type Project struct {
 	id            string // 'tokenPath:createdHeight'
 	name          string
@@ -203,13 +204,9 @@ func NewProject(
 	}
 }
 
-// Clone copies a project's own fields and leaves its maps nil: conditions,
-// tiers, and tiersRatios are not copied.
-//
-// The copy is shallow because the read-only project view clones every entry a
-// caller reads, so copying the maps would deep-copy every condition and tier
-// for each entry on a page. Read them through their own lookups instead:
-// GetProjectCondition, GetProjectTier, and GetProjectTiersRatios.
+// Clone returns a copy of the project with independent condition, tier, and
+// tier-ratio maps. Condition and tier entries are cloned as well; scalar fields
+// are copied directly.
 func (p Project) Clone() *Project {
 	conditions := make(map[string]*ProjectCondition)
 	for k, v := range p.conditions {

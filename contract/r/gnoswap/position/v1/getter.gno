@@ -119,6 +119,8 @@ func (p *positionV1) GetPositionLiquidity(positionId uint64) (string, error) {
 	return position.Liquidity(), nil
 }
 
+// GetPositionTokenBalances returns balances derived from current pool price,
+// position range, and liquidity; token balances are not stored snapshots.
 func (p *positionV1) GetPositionTokenBalances(positionId uint64) (int64, int64, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {

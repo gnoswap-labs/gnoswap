@@ -23,7 +23,7 @@ func isRemovalRequest(refAddr address) bool {
 
 // ReferralKeeper defines the interface for managing referral relationships.
 type ReferralKeeper interface {
-	// register creates or updates a referral relationship between addresses.
+	// register creates, updates, or removes a referral relationship between addresses.
 	// Setting refAddr to the contract's own address removes the referral.
 	register(addr, refAddr address) (address, error)
 
@@ -36,6 +36,6 @@ type ReferralKeeper interface {
 	// isEmpty returns true if no referrals exist in the system.
 	isEmpty() bool
 
-	// getLastOpTimestamp returns the last operation timestamp for an address.
+	// getLastOpTimestamp returns the last non-removal registration or update timestamp.
 	getLastOpTimestamp(addr address) (int64, error)
 }

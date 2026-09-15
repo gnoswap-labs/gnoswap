@@ -9,11 +9,13 @@ Pool contracts implement Uniswap V3-style concentrated liquidity, allowing LPs t
 ## Configuration
 
 - **Pool Creation Fee**: 100 GNS (default)
-- **Protocol Fee**: Disabled (0) or 1/4 to 1/10 of swap fees (denominator: 4-10)
-- **Withdrawal Fee**: 1% on collected fees
+- **Protocol Fee**: Disabled (0) or a denominator of 4-10, routing 1/4 to
+  1/10 of swap fees to the protocol
+- **Withdrawal Fee**: 1% on fee-bearing collection (configurable)
 - **Fee Tiers**: 0.01%, 0.05%, 0.3%, 1%
 - **Tick Spacing**: Auto-set by fee tier
-- **Max Liquidity Per Tick**: 2^128 - 1
+- **Max Liquidity Per Tick**: Depends on tick spacing; use
+  `GetMaxLiquidityPerTick` rather than `2^128 - 1`
 
 ## Core Concepts
 
@@ -32,13 +34,14 @@ Liquidity providers concentrate capital within custom price ranges instead of 0-
 
 ### `CreatePool`
 
-Deploys new trading pair.
+Deploys a new trading pair.
 
-- Requires 100 GNS creation fee
+- Requires 100 GNS creation fee by default
 - Valid fee tier required
-- Initial price via sqrtPriceX96
-- Unique token pair per fee tier
-- **Note**: No price validation performed (see Security Considerations)
+- Accepts either token path order and canonicalizes token0/token1
+- If paths are reversed, the initial square-root price is inverted
+- Initial `sqrtPriceX96` must be in `[MIN_SQRT_RATIO, MAX_SQRT_RATIO)`
+- Does not compare the initial price with an oracle or external market price
 
 ### `Mint`
 
@@ -53,17 +56,26 @@ Adds liquidity to position (called by Position contract).
 
 Removes liquidity without collecting tokens.
 
-- Two-step: burn then collect
-- Calculates owed amounts
+- Pool-level operation: burn first, then collect owed tokens
+- Calculates owed principal
 - Updates position state
 
 ### `Collect`
 
-Claims tokens from burned position + fees.
+Pays tokens owed by a pool position without a withdrawal fee. This fee-free
+path is normally used for principal after `Burn`.
 
-- Transfers principal and fees
-- Updates tokensOwed
-- Applies withdrawal fee
+- Transfers the requested portion of `tokensOwed`
+- Updates `tokensOwed`
+
+### `CollectSwapFee`
+
+Pays accrued swap fees through the fee-bearing collection path.
+
+- Applies the configured withdrawal fee
+- Returns gross collected amounts and the fee withheld
+- `Position.DecreaseLiquidity` and `Position.CollectFee` invoke the appropriate
+  pool paths internally
 
 ### `Swap`
 
@@ -81,7 +93,7 @@ The `Swap` function uses a callback pattern for token transfers, following the U
 **Callback Signature**:
 
 ```go
-func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error
+func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error
 ```
 
 **Delta Convention**:
@@ -105,8 +117,8 @@ For `zeroForOne = false` (token1 → token0):
 **Callback Implementation Example**:
 
 ```go
-func swapCallback(cur realm, amount0Delta, amount1Delta int64) error {
-    caller := runtime.PreviousRealm().Address()
+func swapCallback(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
+    caller := cur.Previous().Address()
     poolAddr := chain.PackageAddress("gno.land/r/gnoswap/pool")
 
     // Security check: ensure this callback is invoked by the legitimate pool
@@ -128,10 +140,13 @@ func swapCallback(cur realm, amount0Delta, amount1Delta int64) error {
 
 **Important Notes**:
 
-- It is recommended that the callback verify the caller is the legitimate pool to prevent unauthorized invocations
-- The callback MUST transfer at least the positive delta amount to the pool
-- Return `nil` on success, or an error to revert the swap
-- Pool validates balance increase after callback execution
+- A custom callback should verify that the caller is the legitimate pool.
+- In the router flow, the supplied closure performs that pool-origin check
+  before calling `router.SwapCallback`; the Router implementation then checks
+  that its caller is Router v1.
+- The callback MUST transfer at least the positive delta amount to the pool.
+- Return `nil` on success, or an error to revert the swap.
+- Pool validates the balance increase after callback execution.
 
 ## Technical Details
 
@@ -153,15 +168,17 @@ tick 6932  = price ~2
 tick -6932 = price ~0.5
 ```
 
-### Liquidity Math
+**Range Liquidity**:
 
-**Range Liquidity Formula**:
+Liquidity is calculated from the token required by the current price:
 
-```
-L = amount / (sqrt(upper) - sqrt(lower))        // current < lower
-L = amount * sqrt(current) / (upper - current)  // lower < current < upper
-L = amount / (sqrt(current) - sqrt(lower))      // current > upper
-```
+- Below the range (`current < lower`): token0 only
+- In the range (`lower <= current < upper`): both token0 and token1
+- Above the range (`current >= upper`): token1 only
+
+The integer formulas use the square-root prices and round in the direction
+required by the mint or burn operation; there is no single `amount` formula
+that applies to all three cases.
 
 **Impermanent Loss**:
 
@@ -187,9 +204,11 @@ feeGrowthInside = feeGrowthGlobal - feeGrowthOutside
 
 **Protocol fees**:
 
-- Optional 0% or 4-10% of swap fees
-- Configurable per pool
-- Sent to protocol fee contract
+- `0` disables protocol fee collection
+- `4` through `10` are denominators: `4` routes 25% and `10` routes 10% of
+  swap fees to the protocol
+- Governance-managed configuration applies to the pool set, not an independent
+  percentage selected on each pool
 
 ## Security
 
@@ -201,33 +220,34 @@ feeGrowthInside = feeGrowthGlobal - feeGrowthOutside
 
 ### Price Manipulation
 
-- TWAP oracle resists manipulation
+- TWAP oracle provides time-weighted observations for monitoring; it is not an
+  automatic initial-price guard
 - Large swaps limited by liquidity
 - Slippage protection required
 
 ### Pool Creation Griefing
 
-**Issue**: CreatePool allows arbitrary initial prices without validation, enabling griefing attacks where pools are created at extreme prices (e.g., 1 GNO = 0.000001 USDC).
+**Issue**: `CreatePool` validates the fee tier, token canonicalization, and
+square-root price bounds, but does not compare the initial price with an
+oracle or external market price. A pool can therefore be created at an
+economically inappropriate extreme price.
 
 **Impact**:
 
-- Pool becomes temporarily unusable
-- No rational LP will provide liquidity at distorted prices
+- Pool may be temporarily unusable
+- No rational LP may provide liquidity at a distorted price
 - Price cannot self-correct without liquidity
 
 **Recovery Mechanism**:
-Griefed pools can be restored through an atomic transaction:
+Recovery requires coordinated liquidity provision and swaps to move the price
+toward a desired market rate, followed by liquidity removal. The protocol does
+not perform this correction automatically, and profitability depends on market
+conditions, fees, and slippage.
 
-1. **Add Liquidity**: Provide wide-range liquidity at the distorted price
-2. **Execute Swap**: Trade to move price toward market rate
-3. **Remove Liquidity**: Withdraw the provided liquidity
-
-The executor acts as both LP (losing value to slippage) and arbitrageur (gaining from price correction). These effects largely cancel out, with only gas and protocol fees as net cost.
-
-**Example Recovery Transaction**:
+**Example Recovery Sequence**:
 
 ```
-// Atomic recovery for griefed pool
+// Illustrative sequence; the caller must compose and execute these operations
 1. position.Mint(cross, ..., fullRange, largeAmount, ...)  // Add liquidity
 2. router.ExactInSwapRoute(cross, ..., targetRoute, ...)    // Fix price via arbitrage
 3. position.DecreaseLiquidity(cross, positionId, ...)       // Remove liquidity and collect principal
@@ -242,6 +262,7 @@ The executor acts as both LP (losing value to slippage) and arbitrageur (gaining
 
 ### Rounding
 
-- Division rounds down (favors protocol)
+- Integer math rounds directionally for the input/output invariant; not every
+  division rounds down
 - Minimum liquidity enforced
 - Full precision for amounts

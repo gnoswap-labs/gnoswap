@@ -416,9 +416,10 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 	return mu
 }
 
-// reduce4 computes the least non-negative residue of x modulo m
+// reduce4 computes the least non-negative residue of x modulo m.
 //
-// requires a four-word modulus (m[3] > 1) and its inverse (mu)
+// It requires a four-word modulus with a nonzero most-significant word
+// (`m[3] != 0`) and its inverse (`mu`).
 func reduce4(x [8]uint64, m *Uint, mu [5]uint64) (z Uint) {
 	// NB: Most variable names in the comments match the pseudocode for
 	// 	Barrett reduction in the Handbook of Applied Cryptography.

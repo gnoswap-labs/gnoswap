@@ -3,10 +3,11 @@ package pool
 // CreatePool creates a new liquidity pool for a token pair.
 //
 // Parameters:
-//   - token0Path: path of the first token
-//   - token1Path: path of the second token
+//   - token0Path, token1Path: token contract paths in either order; the pool
+//     canonicalizes them lexicographically
 //   - fee: pool fee tier
-//   - sqrtPriceX96: initial sqrt price (Q64.96 format)
+//   - sqrtPriceX96: initial sqrt price (Q64.96 format), inverted when the
+//     supplied token order is reversed and validated against sqrt bounds
 func CreatePool(
 	cur realm,
 	token0Path string,

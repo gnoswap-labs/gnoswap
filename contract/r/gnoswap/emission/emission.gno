@@ -76,7 +76,7 @@ func setLastExecutedTimestamp(timestamp int64) {
 // last distribution and distributes them to predefined targets (staker, devops, etc.).
 //
 // Parameters:
-//   - cur: Pass `cross` as argument.
+//   - cur: Live realm token; external realm callers pass cross(cur).
 //
 // Returns:
 //   - distributedAmount: total amount of GNS distributed in this call
@@ -182,15 +182,15 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 
 // SetDistributionStartTime sets the timestamp when emission distribution starts.
 //
-// This function controls when GNS emission begins. Once set and reached, the protocol
-// starts minting GNS tokens according to the emission schedule. The timestamp can only
-// be set before distribution starts - it becomes immutable once active.
+// This function controls when GNS emission begins. Before the configured
+// timestamp is reached, an admin or governance caller may reschedule it. Once
+// the timestamp is reached, the start time is immutable.
 //
 // Parameters:
 //   - startTimestamp: Unix timestamp when emission should begin
 //
 // Requirements:
-//   - Must be called before distribution starts (one-time setup)
+//   - Must be called before distribution starts
 //   - Timestamp must be in the future
 //   - Cannot be negative
 //
@@ -246,13 +246,13 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 	)
 }
 
-// SetOnDistributionPctChangeCallback sets a callback function to be called when distribution percentages change.
-// This allows external contracts (like staker) to update their internal caches when governance changes emission rates.
+// SetOnDistributionPctChangeCallback registers the optional callback invoked when
+// distribution percentages change. A nil callback clears the registration.
+// This allows external contracts (like staker) to update their internal caches
+// when governance or admin changes emission rates.
 //
 // Parameters:
-//   - callback: function to call with emission amount per second when percentages change
-//
-// Only callable by the staker contract.
+//   - callback: function to call with emission amount per second, or nil to clear
 func SetOnDistributionPctChangeCallback(cur realm, callback func(cur realm, emissionAmountPerSecond int64)) {
 	caller := cur.Previous().Address()
 	access.AssertIsStaker(caller)

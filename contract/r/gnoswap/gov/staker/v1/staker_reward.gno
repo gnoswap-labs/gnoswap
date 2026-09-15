@@ -15,31 +15,22 @@ import (
 	"gno.land/r/gnoswap/halt"
 )
 
-// CollectReward collects accumulated rewards based on xGNS holdings.
+// CollectReward claims all rewards for the caller.
 //
-// Claims all pending rewards from governance staking.
-// Distributes protocol fees and emission rewards proportionally.
-// Multi-token rewards system based on xGNS share.
+// It settles both reward streams:
+//  1. GNS emission rewards from the emission accumulator.
+//  2. Protocol-fee rewards for every known token path.
 //
-// Reward Types:
-//  1. Emission rewards: GNS from protocol emission
-//  2. Protocol fees: Various tokens from swap/pool fees
-//  3. Withdrawal fees: 1% of liquidity provider rewards
-//  4. Pool creation fees: 100 GNS per pool
+// Protocol-fee rewards are divided by the total stake in force for each
+// accrual epoch and settled across the caller's stake-event segments. They
+// are not calculated from one current xGNS/total-xGNS ratio. Q128 fractional
+// remainders remain in state for later collection.
 //
-// Distribution Formula:
+// The all-token path intentionally grows with the number of known fee tokens.
+// Use the token-specific entry point when bounded work is required.
 //
-//	userReward = (userXGNS / totalXGNS) * accumulatedRewards
-//
-// Process:
-//  1. Calculates share based on xGNS balance
-//  2. Claims GNS emission rewards
-//  3. Claims protocol fee rewards (all tokens)
-//  4. Transfers all rewards to caller
-//  5. Resets user's reward tracking
-//
-// No parameters required - automatically determines caller's rewards.
-// Transfers rewards directly to caller.
+// No parameters are required; the caller's reward ID is used. Rewards are
+// transferred directly to the caller.
 func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 	access.AssertIsRlmCurrent(0, rlm)
 

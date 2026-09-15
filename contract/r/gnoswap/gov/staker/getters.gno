@@ -5,7 +5,7 @@ import (
 	rotree "gno.land/p/nt/bptree/rotree/v0"
 )
 
-// GetTotalxGnsSupply returns the total supply of xGNS tokens.
+// GetTotalxGnsSupply returns total xGNS supply, including launchpad-held xGNS.
 func GetTotalxGnsSupply() int64 {
 	return getImplementation().GetTotalxGnsSupply()
 }
@@ -56,12 +56,16 @@ func HasDelegationSnapshotsKey() bool {
 	return getImplementation().HasDelegationSnapshotsKey()
 }
 
-// GetTotalDelegationAmountAtSnapshot returns the total delegation amount at a specific snapshot time.
+// GetTotalDelegationAmountAtSnapshot returns total delegation at a Unix
+// timestamp, using the latest history entry at or before that timestamp.
+// The lookup is timestamp-based rather than a block-height snapshot.
 func GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
 	return getImplementation().GetTotalDelegationAmountAtSnapshot(snapshotTime)
 }
 
-// GetUserDelegationAmountAtSnapshot returns the user delegation amount at a specific snapshot time.
+// GetUserDelegationAmountAtSnapshot returns one user's delegation at a Unix
+// timestamp, using that user's latest history entry at or before the timestamp.
+// The bool is false when no qualifying history entry exists.
 func GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
 	return getImplementation().GetUserDelegationAmountAtSnapshot(userAddr, snapshotTime)
 }

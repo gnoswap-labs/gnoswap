@@ -185,7 +185,7 @@ func GetSlot0Tick(poolPath string) (int32, error) {
 	return getImplementation().GetSlot0Tick(poolPath)
 }
 
-// GetSlot0Unlocked returns the locked status from slot0.
+// GetSlot0Unlocked reports whether the pool is currently unlocked.
 func GetSlot0Unlocked(poolPath string) (bool, error) {
 	return getImplementation().GetSlot0Unlocked(poolPath)
 }

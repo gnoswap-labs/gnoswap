@@ -18,25 +18,25 @@ import (
 
 // Vote casts a vote on a proposal.
 //
-// Records on-chain vote with weight based on delegated xGNS.
-// Uses 24-hour average voting power to prevent manipulation.
-// Votes are final and cannot be changed.
+// Records an on-chain vote with weight based on delegated xGNS.
+// Uses the proposal's timestamp anchors and configured smoothing duration to
+// prevent manipulation. Votes are final and cannot be changed.
 //
 // Parameters:
 //   - proposalID: ID of the proposal to vote on
 //   - yes: true for yes vote, false for no vote
 //
 // Vote Weight Calculation:
-//   - Based on delegated xGNS amount
-//   - 24-hour average before proposal creation
-//   - Prevents flash loan attacks
-//   - Includes both self-stake and delegations received
+//   - Based on the voter's delegated xGNS amount
+//   - Averages delegation at the stored smoothing timestamp and proposal creation time
+//   - Uses Unix timestamp history, not a block-height snapshot
+//   - Includes self-delegation and delegations received by the voter
 //
 // Requirements:
 //   - Proposal must be in voting period
-//   - Voter must have xGNS delegated
+//   - Voter must have xGNS delegated at one of the lookup timestamps
 //   - Cannot vote twice on same proposal
-//   - Voting period typically 7 days
+//   - Voting period is 7 days by default and is configurable
 //
 // Returns:
 //   - voteWeight: voting weight applied to the caller's vote, formatted as a string
@@ -110,7 +110,8 @@ func (gv *governanceV1) vote(
 		return governance.DefaultVotingInfo(), 0, 0, makeErrorWithDetails(errUnableToVoteOutOfPeriod, "cannot vote out of voting period")
 	}
 
-	// Get user's voting weight using average between proposal time and snapshot time.
+	// Get user's voting weight by averaging timestamp-history values at the
+	// proposal's stored smoothing anchor and creation time.
 	snapshotTime := proposal.SnapshotTime()
 	createdAt := proposal.CreatedAt()
 

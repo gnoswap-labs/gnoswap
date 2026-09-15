@@ -12,10 +12,11 @@ func GetLeftGNSAmount() int64 {
 	return leftGNSAmount
 }
 
-// GetDistributionStartTimestamp returns the timestamp when emission distribution started.
+// GetDistributionStartTimestamp returns the configured emission start timestamp.
+// The value may be in the future; it is 0 when no start timestamp is configured.
 //
 // Returns:
-//   - timestamp: distribution start timestamp, or 0 if not started
+//   - timestamp: configured distribution start timestamp, or 0 if unconfigured
 func GetDistributionStartTimestamp() int64 {
 	return distributionStartTimestamp
 }

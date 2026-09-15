@@ -18,7 +18,9 @@ import (
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
 
-// CollectDepositGns withdraws the original GNS deposit after the lock period ends.
+// CollectDepositGns withdraws the original GNS deposit after the lock period
+// ends. Before returning the principal, it settles any claimable project-token
+// reward for the deposit.
 //
 // Parameters:
 //   - depositID: ID of the deposit to withdraw
@@ -27,7 +29,8 @@ import (
 //   - amount: original GNS deposit amount returned to the depositor
 //   - err: non-nil for a spoofed-realm call; other withdrawal failures panic before returning
 //
-// Only callable by deposit owner after tier lock period ends.
+// Only callable by deposit owner when the current time is strictly after the
+// selected tier's end time.
 func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (int64, error) {
 	if !rlm.IsCurrent() {
 		return 0, errors.New(errSpoofedRealm)

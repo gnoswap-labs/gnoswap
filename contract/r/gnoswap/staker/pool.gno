@@ -21,7 +21,7 @@ const AllTierCount = 4 // 0, 1, 2, 3
 // Fields:
 // - poolPath: The path of the pool.
 //
-//   - currentStakedLiquidity:
+//   - stakedLiquidity:
 //     The current total staked liquidity of the in-range positions for the pool.
 //     Updated when tick cross happens or stake/unstake happens.
 //     Used to calculate the global reward ratio accumulation or
@@ -32,7 +32,7 @@ const AllTierCount = 4 // 0, 1, 2, 3
 //     Set to 0 when the pool is not in an unclaimable period.
 //
 //   - unclaimableAcc:
-//     The accumulated undisributed unclaimable reward.
+//     The accumulated undistributed unclaimable reward.
 //     Reset to 0 when processUnclaimableReward is called and sent to community pool.
 //
 //   - rewardCache:
@@ -201,7 +201,7 @@ func (p *Pool) Clone() *Pool {
 	}
 }
 
-// NewPool creates a new pool with the given poolPath and currentHeight.
+// NewPool creates pool reward state initialized at currentTime (Unix seconds).
 func NewPool(poolPath string, currentTime int64) *Pool {
 	pool := &Pool{
 		poolPath:        poolPath,
@@ -421,13 +421,13 @@ type ExternalIncentive struct {
 	targetPoolPath           string     // external reward target pool path
 	rewardToken              string     // external reward token path
 	totalRewardAmount        int64      // total reward amount
-	rewardAmount             int64      // to be distributed reward amount
+	rewardAmount             int64      // mutable remaining reward amount
 	rewardPerSecondX128      *u256.Uint // reward per second, scaled by 2^128 to preserve sub-second precision
-	distributedRewardAmount  int64      // distributed reward amount, when un-staked and refunded
+	distributedRewardAmount  int64      // reward amount delivered to positions or refunded at incentive end
 	accumulatedPenaltyAmount int64      // accumulated warmup penalty from CollectReward
 	creator                  address    // creator address
 
-	refunded bool // whether incentive has been refunded (includes GNS deposit and unclaimed rewards)
+	refunded bool // whether EndExternalIncentive finalized the incentive and returned its refundable portion and GNS deposit
 
 	unclaimableSeconds int64 // accumulated seconds of unclaimable periods overlapping the incentive window
 }

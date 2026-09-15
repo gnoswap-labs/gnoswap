@@ -98,8 +98,8 @@ const (
 	y2Range = y2Max - y2Min + 1
 )
 
-// genImageParamsString generates random gradient parameters and returns them as a compact string.
-// Format: "x1,y1,x2,y2,color1,color2" (e.g., "10,12,125,123,#AABBCC,#DDEEFF")
+// genImageParamsString generates pseudo-random gradient parameters from the
+// supplied source and returns them as a compact string.
 func genImageParamsString(r *rand.Rand) string {
 	x1 := x1Min + r.Uint64N(x1Range)
 	y1 := y1Min + r.Uint64N(y1Range)

@@ -264,7 +264,9 @@ func GetProjectTierRewardDistributeEndTime(projectTierId string) (int64, error) 
 	return getImplementation().GetProjectTierRewardDistributeEndTime(projectTierId)
 }
 
-// GetProjectTierRewardAccumulatedDistributeAmount returns the accumulated distribute amount of a reward manager.
+// GetProjectTierRewardAccumulatedDistributeAmount returns a legacy reward-manager field.
+// The v1 reward paths do not maintain it, so normal reads return zero unless it
+// was explicitly set.
 func GetProjectTierRewardAccumulatedDistributeAmount(projectTierId string) (int64, error) {
 	return getImplementation().GetProjectTierRewardAccumulatedDistributeAmount(projectTierId)
 }

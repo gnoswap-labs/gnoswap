@@ -15,7 +15,7 @@ package router
 //
 // Returns:
 //   - amountIn: input amount consumed
-//   - amountOut: output amount delivered
+//   - amountOut: net output amount delivered after the router fee
 func ExactInSwapRoute(cur realm, inputToken string, outputToken string, amountIn string, routeArr string, quoteArr string, amountOutMin string, deadline int64, referrer string) (string, string) {
 	return getImplementation().ExactInSwapRoute(0, cur, inputToken, outputToken, amountIn, routeArr, quoteArr, amountOutMin, deadline, referrer)
 }
@@ -34,19 +34,20 @@ func ExactInSwapRoute(cur realm, inputToken string, outputToken string, amountIn
 //   - referrer: referral address
 //
 // Returns:
-//   - amountIn: input amount consumed
-//   - amountOut: output amount delivered
+//   - amountIn: input amount consumed (a nonzero price limit may stop early)
+//   - amountOut: net output amount delivered after the router fee
 func ExactInSingleSwapRoute(cur realm, inputToken string, outputToken string, amountIn string, routeArr string, amountOutMin string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string) {
 	return getImplementation().ExactInSingleSwapRoute(0, cur, inputToken, outputToken, amountIn, routeArr, amountOutMin, sqrtPriceLimitX96, deadline, referrer)
 }
 
-// ExactOutSwapRoute executes a multi-hop swap for an exact output amount.
+// ExactOutSwapRoute executes a multi-hop swap for a requested post-fee output
+// target.
 //
 // Parameters:
 //   - cur: pass `cross` as argument
 //   - inputToken: input token path
 //   - outputToken: output token path
-//   - amountOut: exact output amount
+//   - amountOut: requested net output target
 //   - routeArr: encoded route
 //   - quoteArr: encoded quotes
 //   - amountInMax: maximum input amount
@@ -55,18 +56,19 @@ func ExactInSingleSwapRoute(cur realm, inputToken string, outputToken string, am
 //
 // Returns:
 //   - amountIn: input amount consumed
-//   - amountOut: output amount delivered
+//   - amountOut: net output delivered after the router fee
 func ExactOutSwapRoute(cur realm, inputToken string, outputToken string, amountOut string, routeArr string, quoteArr string, amountInMax string, deadline int64, referrer string) (string, string) {
 	return getImplementation().ExactOutSwapRoute(0, cur, inputToken, outputToken, amountOut, routeArr, quoteArr, amountInMax, deadline, referrer)
 }
 
-// ExactOutSingleSwapRoute executes a single-hop swap for an exact output amount.
+// ExactOutSingleSwapRoute executes a single-hop swap for a requested post-fee
+// output target.
 //
 // Parameters:
 //   - cur: pass `cross` as argument
 //   - inputToken: input token path
 //   - outputToken: output token path
-//   - amountOut: exact output amount
+//   - amountOut: requested net output target
 //   - routeArr: encoded route
 //   - amountInMax: maximum input amount
 //   - sqrtPriceLimitX96: Q64.96 price limit
@@ -74,8 +76,9 @@ func ExactOutSwapRoute(cur realm, inputToken string, outputToken string, amountO
 //   - referrer: referral address
 //
 // Returns:
-//   - amountIn: input amount consumed
-//   - amountOut: output amount delivered
+//   - amountIn: input amount consumed (a nonzero price limit may stop early)
+//   - amountOut: net output delivered after the router fee; it may be below
+//     the requested target when the limit is reached
 func ExactOutSingleSwapRoute(cur realm, inputToken string, outputToken string, amountOut string, routeArr string, amountInMax string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string) {
 	return getImplementation().ExactOutSingleSwapRoute(0, cur, inputToken, outputToken, amountOut, routeArr, amountInMax, sqrtPriceLimitX96, deadline, referrer)
 }
@@ -86,7 +89,7 @@ func ExactOutSingleSwapRoute(cur realm, inputToken string, outputToken string, a
 //   - inputToken: input token path
 //   - outputToken: output token path
 //   - specifiedAmount: exact input or output amount
-//   - swapTypeStr: `ExactIn` or `ExactOut`
+//   - swapTypeStr: `EXACT_IN` or `EXACT_OUT`
 //   - strRouteArr: encoded route
 //   - quoteArr: encoded quotes
 //   - tokenAmountLimit: minimum output or maximum input amount

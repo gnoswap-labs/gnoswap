@@ -13,7 +13,7 @@ type RewardState struct {
 	depositAmount           int64 // amount of GNS staked
 	distributeStartTime     int64 // time when launchpad started staking
 	distributeEndTime       int64 // end time of reward calculation
-	accumulatedRewardAmount int64 // calculated, not collected
+	accumulatedRewardAmount int64 // legacy field; v1 reward accounting does not populate it
 	accumulatedTime         int64 // last time when reward was calculated
 	claimedAmount           int64 // amount of reward claimed so far
 }
@@ -87,12 +87,15 @@ func (rs *RewardState) SetDistributeEndTime(time int64) {
 	rs.distributeEndTime = time
 }
 
-// AccumulatedRewardAmount returns the accumulated reward amount of the reward state.
+// AccumulatedRewardAmount returns the legacy reward-state field.
+// v1 reward accounting does not populate it, so normal reads return zero unless
+// it was explicitly set.
 func (rs *RewardState) AccumulatedRewardAmount() int64 {
 	return rs.accumulatedRewardAmount
 }
 
-// SetAccumulatedRewardAmount sets the accumulated reward amount of the reward state.
+// SetAccumulatedRewardAmount sets the legacy reward-state field. It is not used
+// by v1 reward accounting.
 func (rs *RewardState) SetAccumulatedRewardAmount(amount int64) {
 	rs.accumulatedRewardAmount = amount
 }

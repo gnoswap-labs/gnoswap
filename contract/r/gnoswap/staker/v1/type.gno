@@ -23,7 +23,7 @@ func (self *ExternalIncentiveResolver) IsStarted(currentTimestamp int64) bool {
 }
 
 // addDistributedRewardAmount adds the given amount to the distributed reward amount.
-// This function is used to add the distributed reward amount when the incentive is un-staked and refunded.
+// It records reward delivered to positions and reward refunded when an incentive ends.
 func (self *ExternalIncentiveResolver) addDistributedRewardAmount(amount int64) {
 	distributedRewardAmount := gnsmath.SafeAddInt64(self.DistributedRewardAmount(), amount)
 	self.SetDistributedRewardAmount(distributedRewardAmount)

@@ -80,69 +80,60 @@ AcceptOwnership(cross(cur))             // Step 2: Accept (by newAdmin)
 
 ## Contract Upgrade
 
-RBAC enables seamless contract upgrades through role address updates. Versioned contracts (with paths like `v1`) can be upgraded by deploying new versions and updating role addresses.
+RBAC supports contract upgrades by changing role addresses. Versioned implementations live under component-specific realm paths (for example, `gno.land/r/gnoswap/pool/v1`), while the stable realm resolves calls through the current role address.
 
 ### Upgrade Process
 
-1. **Deploy new contract version** (e.g., `v2` contracts)
-2. **Update role addresses** to point to new contracts
-3. **Verify distribution** flows to new contract addresses
+1. **Deploy a new component version** under its versioned realm path.
+2. **Update the relevant role address** to point to the new implementation.
+3. **Verify distribution and call flows** use the new role address.
 
-### Upgradeable Components
+### Versioned Components
 
-All versioned contracts under `gno.land/r/gnoswap/{version}/` are upgradeable:
+This checkout contains versioned implementations for:
 
-- `pool` - Liquidity pool management
-- `position` - Position management
-- `router` - Swap routing engine
-- `staker` - Staking and rewards
-- `governance` - Governance system (governance, staker, xgns)
-- `launchpad` - Token launch platform
-- `protocol_fee` - Fee collection
-- `community_pool` - Community treasury
+- `pool`
+- `position`
+- `router`
+- `staker`
+- `gov/governance`
+- `gov/staker`
+- `launchpad`
+- `protocol_fee`
+
+The `community_pool` role is a distribution and treasury destination, not a versioned component. Updating that role redirects distributions to the selected address.
 
 ### Example: GNS Distribution Upgrade
 
 ```go
-// Before upgrade - GNS distributed to v1 contracts
-mintAndDistribute() // → v1 staker, devops, community_pool
-
-// Upgrade process - update role addresses
-rbac.UpdateRoleAddress("staker", newV2StakerAddr)
-rbac.UpdateRoleAddress("devops", newV2DevOpsAddr)
-rbac.UpdateRoleAddress("community_pool", newV2CommunityPoolAddr)
-
-// After upgrade - GNS distributed to v2 contracts
-mintAndDistribute() // → v2 staker, devops, community_pool
-```
-
-This approach ensures zero-downtime upgrades with atomic role address switches, maintaining protocol continuity while enabling feature updates and bug fixes.
-
-### Test Example
-
-The upgrade mechanism is demonstrated in the test file:
-[upgrade scenario test](./../../../../tests/scenario/upgrade/change_gns_distribution_target_filetest.gno)
-
-```go
-// Test scenario steps:
-// 1. Initialize emission and mint GNS to v1 contracts
-// 2. Update role addresses to point to v2 contracts
-// 3. Verify GNS now flows to v2 contracts
-
-func changeDistributionTarget() {
-    // Update all role addresses atomically
-    rbac.UpdateRoleAddress("staker", newStakerAddr)
-    rbac.UpdateRoleAddress("gov_staker", newGovStakerAddr)
-    rbac.UpdateRoleAddress("devops", newDevOpsAddr)
-    rbac.UpdateRoleAddress("community_pool", newCommunityPoolAddr)
+func changeDistributionTarget(cur realm) {
+    // Update role addresses through the RBAC realm.
+    rbac.UpdateRoleAddress(cross(cur), "staker", newStakerAddr)
+    rbac.UpdateRoleAddress(cross(cur), "gov_staker", newGovStakerAddr)
+    rbac.UpdateRoleAddress(cross(cur), "devops", newDevOpsAddr)
+    // community_pool is a distribution target, not a versioned implementation.
+    rbac.UpdateRoleAddress(cross(cur), "community_pool", newCommunityPoolAddr)
 }
 ```
 
-The test validates that after role updates, GNS distribution switches from v1 to v2 contracts without any protocol downtime or loss of funds.
+### Test Example
+
+The upgrade mechanism is demonstrated in the [upgrade scenario test](../../scenario/upgrade/change_gns_distribution_target_filetest.gno).
+
+```go
+// The scenario initializes distribution targets, updates role addresses,
+// and verifies that subsequent GNS distributions use the new addresses.
+func changeDistributionTarget(cur realm) {
+    rbac.UpdateRoleAddress(cross(cur), "staker", newStakerAddr)
+    rbac.UpdateRoleAddress(cross(cur), "gov_staker", newGovStakerAddr)
+    rbac.UpdateRoleAddress(cross(cur), "devops", newDevOpsAddr)
+    rbac.UpdateRoleAddress(cross(cur), "community_pool", newCommunityPoolAddr)
+}
+```
 
 ## Security
 
-- Admin-only role management
-- Synchronized with access package
-- Ownership transfer capability
-- Role validation before updates
+- Admin or governance authorization is required for role management
+- Ownership transfer is restricted to the current owner and pending owner
+- Role updates are synchronized with the access package
+- Role validation is performed before updates

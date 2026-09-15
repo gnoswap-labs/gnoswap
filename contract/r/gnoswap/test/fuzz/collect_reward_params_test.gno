@@ -8,7 +8,7 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-// collectRewardParams is the parameters for the ExactOutSwapRoute fuzz test.
+// collectRewardParams contains parameters for the CollectReward fuzz test.
 type collectRewardParams struct {
 	positionID   uint64
 	unwrapResult bool

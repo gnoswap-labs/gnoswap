@@ -47,7 +47,8 @@ func (p *positionV1) Reposition(
 
 	emission.MintAndDistributeGns(cross(rlm))
 
-	// position should be burned to reposition
+	// The position must be clear (zero liquidity and zero tokens owed) before
+	// it can be repositioned.
 	position := p.mustGetPosition(positionId)
 
 	token0, token1, _ := splitOf(position.PoolKey())
@@ -104,9 +105,8 @@ func (p *positionV1) Reposition(
 
 	position.SetLiquidity(liquidity.ToString())
 
-	// OBS: do not reset feeGrowthInside1LastX128 and feeGrowthInside1LastX128 to zero
-	// if so, ( decrease 100% -> reposition )
-	// > at this point, that position will have unclaimedFee which isn't intended
+	// Do not reset the fee-growth checkpoints: a full decrease followed by
+	// repositioning must not create an unintended unclaimed-fee balance.
 	position.SetTokensOwed0(0)
 	position.SetTokensOwed1(0)
 	position.SetBurned(false)

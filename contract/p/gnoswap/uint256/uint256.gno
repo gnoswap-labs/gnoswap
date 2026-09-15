@@ -187,7 +187,7 @@ func (z *Uint) fromDecimal(bs string) error {
 }
 
 // Byte returns the value of the byte at position n as a Uint.
-// Position n is counted from the right (0 = least significant byte).
+// Position n is counted from the left (0 = most significant byte).
 // Returns 0 if n >= 32.
 func (z *Uint) Byte(n *Uint) *Uint {
 	// in z, z[0] is the least significant

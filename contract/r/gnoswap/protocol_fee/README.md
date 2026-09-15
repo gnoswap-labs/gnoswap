@@ -4,22 +4,26 @@ Fee collection and distribution for protocol operations.
 
 ## Overview
 
-Protocol Fee contract collects fees from various protocol operations and distributes them to xGNS holders and DevOps.
+The protocol-fee contract collects authorized fees from protocol operations and
+distributes them to GovStaker and DevOps according to configured percentages.
 
 ## Configuration
 
-- **Router Fee**: 0.15% of swap amount
-- **Pool Creation Fee**: 100 GNS
-- **Withdrawal Fee**: 1% of LP fees claimed
-- **Unstaking Fee**: 1% of staking rewards
-- **Distribution**: 100% to xGNS holders (default)
+- **Router Fee (initial/default)**: 0.15% of the swap amount; configured by the router, with an admin-or-governance range of 0–10%
+- **Pool Creation Fee (initial/default)**: 100 GNS; configured by the pool and modifiable through governance
+- **Withdrawal Fee (initial/default)**: 1% of LP fees claimed; configured by the pool and modifiable through governance
+- **Unstaking Fee (initial/default)**: 1% of staking rewards; configured by the staker and modifiable by admin or governance
+- **Distribution (default)**: 100% to GovStaker and 0% to DevOps
+
+The operation-specific fees above are configured in their owning modules; they
+are not protocol-fee distribution percentages.
 
 ## Fee Sources
 
-1. **Swaps**: 0.15% fee on all trades
-2. **Pool Creation**: 100 GNS per new pool
-3. **LP Withdrawals**: 1% of collected fees
-4. **Staking Claims**: 1% of rewards
+1. **Swaps**: The router applies its configured swap fee (0.15% initially).
+2. **Pool Creation**: The pool charges its configured creation fee (100 GNS initially).
+3. **LP Withdrawals**: The pool charges its configured withdrawal fee (1% initially).
+4. **Staking Claims**: The staker charges its configured unstaking fee (1% initially).
 
 ## Key Functions
 
@@ -27,13 +31,13 @@ Protocol Fee contract collects fees from various protocol operations and distrib
 Distributes accumulated fees to recipients.
 
 ### `SetDevOpsPct`
-Sets DevOps funding percentage.
+Sets the DevOps funding percentage.
 
 ### `SetGovStakerPct`
-Sets xGNS holder percentage.
+Sets the GovStaker funding percentage.
 
 ### `AddToProtocolFee`
-Adds fees to distribution queue.
+Adds an approved fee amount to the distribution queue.
 
 ### `AdvanceAccrualEpoch`
 Closes the accrual epoch in force and returns the new one. Called by gov/staker on every stake change, so fees are attributed to the stake distribution live when they arrived.
@@ -45,11 +49,11 @@ Returns and clears up to `limit` of the oldest pending buckets of one token, as 
 
 ```go
 // Distribute accumulated fees
-DistributeProtocolFee(cross)
+DistributeProtocolFee(cross(cur))
 
 // Configure distribution
-SetDevOpsPct(cross, 2000)     // 20% to DevOps
-SetGovStakerPct(cross, 8000)  // 80% to xGNS holders
+SetDevOpsPct(cross(cur), 2000)     // 20% to DevOps
+SetGovStakerPct(cross(cur), 8000)  // 80% to GovStaker
 
 // View tokens reserved for the next distribution
 GetReservedTokens()

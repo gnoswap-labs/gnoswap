@@ -26,8 +26,8 @@ import (
 //   - tokenPath: reward token contract path
 //   - recipient: project recipient address
 //   - depositAmount: amount of tokens to deposit
-//   - conditionTokens: comma-separated token paths for conditions
-//   - conditionAmounts: comma-separated minimum amounts for conditions
+//   - conditionTokens: `*PAD*`-separated token paths for conditions
+//   - conditionAmounts: `*PAD*`-separated minimum amounts for conditions
 //   - tier30Ratio: allocation ratio for 30-day tier
 //   - tier90Ratio: allocation ratio for 90-day tier
 //   - tier180Ratio: allocation ratio for 180-day tier
@@ -248,15 +248,17 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 	return project, nil
 }
 
-// TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
-// Only admin can call this function.
+// TransferLeftFromProjectByAdmin transfers the remaining refundable project-token
+// balance of an ended project to a specified recipient.
+// Only admin can call this function. Amounts reserved for active depositor
+// claims are excluded from the transfer.
 //
 // Parameters:
-//   - projectID: ID of the project whose remaining reward tokens should be transferred
-//   - recipient: address that receives the remaining project reward tokens
+//   - projectID: ID of the ended project
+//   - recipient: address that receives the remaining project-token balance
 //
 // Returns:
-//   - amount: amount of reward tokens transferred to the recipient
+//   - amount: amount of project-token balance transferred to the recipient
 func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64 {
 	access.AssertIsRlmCurrent(0, rlm)
 

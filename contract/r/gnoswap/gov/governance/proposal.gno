@@ -75,7 +75,7 @@ func (p *Proposal) ConfigVersion() int64 {
 	return p.configVersion
 }
 
-// SnapshotTime returns the snapshot time for voting weight lookup.
+// SnapshotTime returns the timestamp anchor for historical voting-weight lookup.
 func (p *Proposal) SnapshotTime() int64 {
 	return p.snapshotTime
 }
@@ -121,7 +121,7 @@ func (p *Proposal) IsProposer(addr address) bool {
 //   - data: type-specific proposal data
 //   - proposerAddress: address of the proposal creator
 //   - configVersion: governance configuration version
-//   - snapshotTime: timestamp for voting weight snapshot lookup
+//   - snapshotTime: timestamp anchor for historical voting-weight lookup
 //   - createdHeight: creation block height
 //
 // Returns:
@@ -148,13 +148,11 @@ func NewProposal(
 	}
 }
 
-// Clone copies a proposal's own fields and leaves its type-specific data nil.
+// Clone returns a deep copy of the proposal, including its type-specific data
+// and nested execution messages.
 //
-// The copy is shallow because the read-only proposal view clones every entry a
-// caller reads, and ProposalData carries the execution message slice, so
-// copying it would copy every message for each entry on a page. Read the data
-// through its own lookups instead: GetProposalTypeByProposalId,
-// GetProposalCommunityPoolSpendInfo, and GetProposalExecutionInfo.
+// The returned proposal and all nested status, metadata, data, and message
+// values are independent copies; mutating the clone does not mutate realm state.
 func (p *Proposal) Clone() *Proposal {
 	if p == nil {
 		return nil

@@ -6,6 +6,8 @@ import (
 
 var gReferralKeeper ReferralKeeper
 
+// EventRegisterFailed is emitted when an authorized non-empty write fails.
+// Successful non-empty writes emit the RegisterReferral event.
 const EventRegisterFailed = "ReferralRegistrationFailed"
 
 func init() {
@@ -34,8 +36,8 @@ func IsEmpty() bool {
 	return gReferralKeeper.isEmpty()
 }
 
-// GetLastOpTimestamp returns the last operation timestamp for the given address.
-// Returns ErrNotFound if no operation exists.
+// GetLastOpTimestamp returns the last non-removal registration or update timestamp for the given address.
+// Returns ErrNotFound if no such operation exists.
 func GetLastOpTimestamp(addr string) (int64, error) {
 	return gReferralKeeper.getLastOpTimestamp(address(addr))
 }
@@ -46,16 +48,16 @@ func ContractAddress() string {
 	return selfAddress.String()
 }
 
-// TryRegister attempts to register a new referral.
+// TryRegister attempts to register, update, or remove a referral.
 //
 // Parameters:
 //   - addr: address to register
-//   - referral: referral address string
+//   - referral: referral address string, or ContractAddress() to remove
 //
 // Returns the effective referrer after applying registration or fallback.
-// Empty input is treated as "no new referrer provided" and returns the stored
-// referrer without attempting registration.
-// Panics if the caller is not authorized for non-empty registration attempts.
+// Empty input is treated as a read and returns the stored referrer without
+// authorization, rate-limit checks, or event emission.
+// Non-empty input requires an authorized caller.
 func TryRegister(cur realm, addr address, referral string) string {
 	if referral == "" {
 		return GetReferral(addr.String())

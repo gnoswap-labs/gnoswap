@@ -42,8 +42,8 @@ func TotalSupply() int64 {
 }
 
 // TokenURI returns the metadata URI for the specified token ID.
-// If stored value is in parameter format (x1,y1,x2,y2,color1,color2),
-// it converts to full base64-encoded SVG image URI on read.
+// Parameter-format values (x1,y1,x2,y2,color1,color2) are rendered as a
+// base64-encoded SVG data URI; other non-empty stored URIs are returned unchanged.
 func TokenURI(tid grc721.TokenID) (string, error) {
 	stored, err := meta.TokenURI(tid)
 	if err != nil {

@@ -11,8 +11,9 @@ import (
 // instance rather than sharing a mutable singleton.
 func MIN_SQRT_RATIO() *u256.Uint { return consts.MinSqrtRatio() }
 
-// MAX_SQRT_RATIO returns the maximum valid sqrt price ratio
-// (1461446703485210103287273052203988822378723970342). See MIN_SQRT_RATIO.
+// MAX_SQRT_RATIO returns the upper bound used by Q64.96 sqrt-price math
+// (1461446703485210103287273052203988822378723970342). See MIN_SQRT_RATIO;
+// the inverse tick conversion treats this boundary as exclusive.
 func MAX_SQRT_RATIO() *u256.Uint { return consts.MaxSqrtRatio() }
 
 // getNextPriceAmount0Add calculates the next sqrt price when adding token0 liquidity,

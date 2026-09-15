@@ -4,16 +4,16 @@ Liquidity mining and reward distribution for LP positions.
 
 ## Overview
 
-Staker manages distribution of internal (GNS emission) and external (admin-funded) rewards to staked LP positions, with time-weighted rewards and warmup periods.
+Staker manages distribution of internal (GNS emission) and external (caller-funded) rewards to staked LP positions, with time-weighted rewards and warmup periods.
 
 ## Configuration
 
-- **Deposit GNS Amount**: 100,000 GNS for external incentives (default)
-- **Minimum Reward Amount**: 1,000 tokens (default)
-- **Unstaking Fee**: 1% (default)
-- **Pool Tiers**: 1, 2, or 3 (assigned per pool)
-- **Warmup Schedule**: 30/50/70/100% over 30/60/90 days
-- **External Token Whitelist**: Approved reward tokens
+- **Deposit GNS Amount**: 100,000 GNS per external incentive (default; governance-adjustable)
+- **Minimum Reward Amount**: 1,000 token units (default for external incentive creation)
+- **Unstaking Fee**: 1% default (100 basis points; configurable from 0 to 10%)
+- **Internal Pool Tiers**: 1, 2, or 3 (assigned per pool); external-only pools can also be stakeable
+- **Warmup Schedule**: 30/50/70/100% over default cumulative windows of 0-5, 5-15, 15-45, and 45+ days
+- **External Token Policy**: Approved reward tokens; pool-pair tokens are also accepted for their own pool unless explicitly denied
 - **External Incentive Start**: UTC midnight, from the first eligible start (at least 24 hours after creation) through 7 days later
 
 ## Core Features
@@ -24,19 +24,24 @@ Staker manages distribution of internal (GNS emission) and external (admin-funde
 - Distributed proportionally to in-range liquidity
 - Unclaimed rewards go to community pool
 
-### External Rewards (Admin-Funded Incentives)
-- Created for specific pools
-- Constant reward per second over the configured incentive window
+### External Rewards (Caller-Funded Incentives)
+- Created for specific pools by any caller that satisfies the token, duration, start-time, reward-minimum, and GNS-deposit checks
+- Constant reward per second over the configured incentive window; the stored rate is Q128-scaled as `(rewardAmount << 128) / duration`
 - Proportional to staked liquidity
-- `EndExternalIncentive` refunds the remaining reward balance and the GNS deposit to the explicit refund address
-- Accumulated warmup penalties are collected separately through `CollectExternalIncentivePenalty`
+- `EndExternalIncentive` is creator/admin-only and sends only the unclaimable/remainder portion plus the GNS deposit to its explicit `refundAddress`; rewards still owed by live positions remain claimable
+- Accumulated warmup penalties are collected separately through `CollectExternalIncentivePenalty` after `EndExternalIncentive`
 
 ### Warmup Periods
-Every staked position progresses through warmup periods:
-- 0-30 days: 30% rewards (70% to community/creator)
-- 30-60 days: 50% rewards (50% to community/creator)
-- 60-90 days: 70% rewards (30% to community/creator)
-- 90+ days: 100% rewards
+Every staked position progresses through warmup periods. The default finite durations are 5, 10,
+and 30 days, followed by a final `math.MaxInt64` tier:
+- 0-5 days: 30% of the calculated reward
+- 5-15 days: 50% of the calculated reward
+- 15-45 days: 70% of the calculated reward
+- 45+ days: 100% of the calculated reward
+
+Governance may change the finite durations. Warmup ratios are applied before the staking-reward fee:
+internal GNS penalties go to the community pool, while external penalties accumulate on the
+incentive and are collected separately to an explicit address after `EndExternalIncentive`.
 
 ## Key Functions
 
@@ -44,22 +49,30 @@ Every staked position progresses through warmup periods:
 Stakes LP position NFT to earn rewards.
 
 ### `UnStakeToken`
-Unstakes position and collects all rewards.
+
+Unstakes the position and creates an exit checkpoint. It returns the NFT and the staked pool path
+without collecting rewards; use a `Collect*` entry point afterward.
 
 ### `CollectReward`
-Collects accumulated rewards without unstaking.
+Collects accumulated rewards for a live staked position or an exit checkpoint. Live collection
+requires the depositor/owner; checkpoint collection is permissionless and pays its pinned owner.
 
 ### `CreateExternalIncentive`
-Creates external reward program for specific pool. Admin only.
+Creates an external reward program for a specific pool. Creation is permissionless after all
+reward-token allowlist/denial, duration, start-time, reward-minimum, and GNS-deposit checks pass.
 
 ### `EndExternalIncentive`
-Ends incentive program and refunds remaining rewards to the provided refund address.
+Ends an incentive after its end timestamp and finalizes its refundable unclaimable/remainder
+amount. The reward tokens and GNS deposit are sent to the caller-supplied `refundAddress`; only
+the creator or admin may call it, and an outstanding exit checkpoint for that incentive blocks ending.
 
 ### `CollectExternalIncentivePenalty`
-Collects accumulated warmup penalties for an ended incentive to the provided refund address.
+Collects accumulated warmup penalties for an incentive after `EndExternalIncentive` has finalized
+it, sending the penalty to the caller-supplied `refundAddress`. Only the creator or admin may call.
 
 ### `CancelExternalIncentive`
-Removes a not-yet-started incentive and refunds the rewards and GNS deposit to the creator. Callable by admin, governance, or the creator.
+Removes a not-yet-started incentive and refunds its reward tokens and GNS deposit to the creator.
+Callable by admin, governance, or the creator; the reward-token refund is capped by the staker balance.
 
 ## Reward Calculation Logic
 
@@ -76,33 +89,36 @@ If all tiers have pools:     [50%, 30%, 20%]
 
 Mathematical representation:
 ```math
-TierRatio(t) = 
-  [1, 0, 0]        if Count(2) = 0 ∧ Count(3) = 0
-  [0.8, 0, 0.2]    if Count(2) = 0
-  [0.7, 0.3, 0]    if Count(3) = 0
-  [0.5, 0.3, 0.2]  otherwise
+TierRatio(t) =
+  [100, 0, 0]  if Count(2) = 0 ∧ Count(3) = 0
+  [80, 0, 20]  if Count(2) = 0
+  [70, 30, 0]  if Count(3) = 0
+  [50, 30, 20] otherwise
 ```
 
 ### Pool Reward Formula
 
 ```math
-poolReward(pool) = (emission × TierRatio[tier(pool)]) / Count(tier(pool))
+poolReward(pool) = (emission × TierRatio[tier(pool)] / 100) / Count(tier(pool))
 ```
 
 Where emission is calculated as:
 ```math
-emission = GNSEmissionPerSecond × (avgMsPerBlock/1000) × StakerEmissionRatio
+emission = GetStakerEmissionAmountPerSecond()
 ```
 
 ### Position Reward Calculation
 
 The reward for each position is calculated through:
 
-1. **Cache pool rewards** up to current block
-2. **Retrieve position state** from deposit records
-3. **Calculate internal rewards** if pool is tiered
-4. **Calculate external rewards** for active incentives
-5. **Apply warmup penalties** based on stake duration
+1. **Resolve the persisted/halving per-second reward schedule** (read-only)
+2. **Retrieve position state** from deposit records or an exit checkpoint
+3. **Calculate internal rewards** if the pool has an internal tier
+4. **Calculate external rewards** for the incentive IDs
+5. **Apply warmup ratios and penalties** based on stake duration
+
+Collection may separately advance reward caches and persist newly discovered incentive IDs; the
+read-only calculation itself does not write those caches.
 
 Mathematical formula for total reward ratio:
 ```math
@@ -158,35 +174,42 @@ The system maintains:
 
 ## Usage
 
-```go
-// Stake existing position
-StakeToken(cross, 123, "g1referrer...")
+The proxy functions receive a realm argument. From a caller realm with `cur realm`, pass
+`cross(cur)` as that first argument:
 
-// Create external incentive
+```go
+// Stake an existing position
+StakeToken(cross(cur), 123, "g1referrer...")
+
+// Create an external incentive (rewardAmount is an int64 token-unit amount)
 CreateExternalIncentive(
-    cross,
+    cross(cur),
     "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",
     "gno.land/r/demo/reward",
-    1000000000,
+    1_000_000_000,
     startTime,
     endTime,
 )
 
-// Collect rewards without unstaking
-CollectReward(cross, 123)
+// Collect while the position is staked
+CollectReward(cross(cur), 123)
 
-// End an incentive and collect remaining penalties
-EndExternalIncentive(cross, poolPath, incentiveId, refundAddress)
-CollectExternalIncentivePenalty(cross, poolPath, incentiveId, refundAddress)
+// Unstake: this returns the NFT and creates an exit checkpoint; it does not collect
+UnStakeToken(cross(cur), 123)
 
-// Unstake and collect all rewards
-UnStakeToken(cross, 123)
+// Collect the checkpoint, either per source or all at once
+CollectEmissionReward(cross(cur), 123)
+CollectExternalIncentiveReward(cross(cur), 123, incentiveId)
+
+// End an incentive after its end timestamp, then collect accumulated penalties
+EndExternalIncentive(cross(cur), poolPath, incentiveId, refundAddress)
+CollectExternalIncentivePenalty(cross(cur), poolPath, incentiveId, refundAddress)
 ```
 
 ## Security
 
 - Positions locked during staking
-- External incentive creation restricted to admin
+- External incentive creation is permissionless after validation
 - External incentives require GNS deposit
 - Warmup periods prevent gaming
 - Unclaimed rewards properly redirected
