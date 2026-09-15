@@ -9,6 +9,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/governance"
+	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/onbloc/bar"
 )
 
@@ -1498,4 +1499,72 @@ func setupGovernanceExecuteTestCommunityPoolBalance(cur realm, t *testing.T) {
 
 	// Transfer GRC20 token(bar) directly to communityPool instead of wugnot deposit
 	bar.Transfer(cross(cur), communityPoolAddr, amount*10)
+}
+
+func TestGovernanceExecute_HaltRecoveryWhileGovernanceHalted(cur realm, t *testing.T) {
+	tests := []struct {
+		name             string
+		executions       string
+		expectedHasAbort bool
+		expectedAbortMsg string
+	}{
+		{
+			name:             "success - halt recovery proposal executes and unhalts governance",
+			executions:       "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
+			expectedHasAbort: false,
+		},
+		{
+			name:             "fail - non-halt proposal is blocked while governance is halted",
+			executions:       "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
+			expectedHasAbort: true,
+			expectedAbortMsg: "halted: governance",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// given
+			gov := newMockGovernance()
+
+			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
+			proposal := governance.NewProposal(
+				1,
+				NewProposalStatus(
+					testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
+					10_000_000_000,
+				),
+				governance.NewProposalMetadata("Halt Recovery", "Description"),
+				NewProposalExecutionData(1, tt.executions),
+				testutils.TestAddress("proposer"),
+				1,
+				time.Now().Add(-time.Hour*24*15).Unix(),
+				100,
+			)
+			statusResolver := NewProposalStatusResolver(proposal.Status())
+			statusResolver.vote(true, 6_000_000_000)
+			setupExecuteTestProposal(cur, t, gov, proposal)
+
+			testing.SetRealm(govRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+			// when & then
+			if tt.expectedHasAbort {
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func(cur realm) {
+					testing.SetRealm(govRealm)
+					gov.Execute(0, cur, 1)
+				})
+				uassert.Equal(t, true, halt.IsHaltedGovernance())
+			} else {
+				testing.SetRealm(govRealm)
+				resultId := gov.Execute(0, cur, 1)
+				uassert.Equal(t, int64(1), resultId)
+				uassert.Equal(t, false, halt.IsHaltedGovernance())
+				uassert.Equal(t, false, halt.IsHaltedWithdraw())
+			}
+
+			// restore halt state so other tests are not affected
+			testing.SetRealm(govRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+		})
+	}
 }

@@ -165,7 +165,7 @@ func mintPosition(cur realm) {
 }
 
 func setSafeMode(cur realm) {
-	testing.SetRealm(adminRealm)
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelSafeMode)
 

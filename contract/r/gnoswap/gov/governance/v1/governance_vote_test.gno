@@ -569,7 +569,7 @@ func TestGovernanceVote_VoteValidation(cur realm, t *testing.T) {
 			// given
 			gov := newMockGovernance()
 
-			testing.SetRealm(adminRealm)
+			testing.SetRealm(govRealm)
 			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 			if tt.setupHalt {
 				halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)

@@ -19,9 +19,11 @@ func init() {
 //   - level: halt level to apply (None, SafeMode, Emergency, Complete)
 //
 // Only callable by admin or governance.
+// Levels that halt withdrawals (SafeMode, Complete) are only callable by governance,
+// so a single admin key cannot freeze user funds.
 func SetHaltLevel(cur realm, level HaltLevel) {
 	caller := cur.Previous().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	assertCanSetWithdrawHalted(caller, levelHaltsWithdraw(level))
 
 	err := setHaltLevel(level)
 	if err != nil {
@@ -43,9 +45,10 @@ func SetHaltLevel(cur realm, level HaltLevel) {
 //   - halted: true to halt, false to resume
 //
 // Only callable by admin or governance.
+// Halting withdrawals is only callable by governance.
 func SetOperationStatus(cur realm, op OpType, halted bool) {
 	caller := cur.Previous().Address()
-	access.AssertIsAdminOrGovernance(caller)
+	assertCanSetWithdrawHalted(caller, op == OpTypeWithdraw && halted)
 
 	if !op.IsValid() {
 		panic(makeErrorWithDetails(errInvalidOpType, op.String()))
@@ -82,4 +85,25 @@ func setHaltLevel(level HaltLevel) error {
 	}
 
 	return haltStates.updateOperationHaltsByConfig(config)
+}
+
+// assertCanSetWithdrawHalted enforces that only governance can halt withdrawals,
+// while admin or governance can perform any other halt change.
+func assertCanSetWithdrawHalted(caller address, haltsWithdraw bool) {
+	if haltsWithdraw {
+		access.AssertIsGovernance(caller)
+		return
+	}
+
+	access.AssertIsAdminOrGovernance(caller)
+}
+
+// levelHaltsWithdraw returns true if the halt level halts withdraw operations.
+func levelHaltsWithdraw(level HaltLevel) bool {
+	switch level {
+	case HaltLevelSafeMode, HaltLevelComplete:
+		return true
+	default:
+		return false
+	}
 }

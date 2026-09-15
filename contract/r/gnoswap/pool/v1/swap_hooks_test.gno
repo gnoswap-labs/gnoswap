@@ -35,7 +35,7 @@ func TestHookSetters_BypassHaltAndRequireStaker(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			testing.SetRealm(adminRealm)
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 			halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
 
 			testing.SetRealm(stakerRealm)

@@ -10,7 +10,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
-	_ "gno.land/r/gnoswap/halt/v1"
+	"gno.land/r/gnoswap/halt/v1"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -1376,4 +1376,69 @@ func setupTestActiveProposal(cur realm, t *testing.T, gov *governanceV1, propose
 	)
 
 	gov.addProposal(0, cur, proposal)
+}
+
+func TestGovernancePropose_ProposeParameterChange_WhileGovernanceHalted(cur realm, t *testing.T) {
+	tests := []struct {
+		name             string
+		executions       string
+		expectedHasAbort bool
+		expectedAbortMsg string
+	}{
+		{
+			name:             "success - halt recovery proposal is allowed while governance is halted",
+			executions:       "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/halt/v1*EXE*SetOperationStatus*EXE*governance,false",
+			expectedHasAbort: false,
+		},
+		{
+			name:             "fail - mixed targets are blocked while governance is halted",
+			executions:       "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0",
+			expectedHasAbort: true,
+			expectedAbortMsg: "halted: governance",
+		},
+		{
+			name:             "fail - non-halt proposal is blocked while governance is halted",
+			executions:       "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0",
+			expectedHasAbort: true,
+			expectedAbortMsg: "halted: governance",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// given
+			gov := newMockGovernance()
+			proposer := testutils.TestAddress("proposer")
+
+			setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
+			setupTestXGnsBalance(cross(cur), t, proposer, 10_000_000_000)
+			setupTestUserVotesWithDelegation(t, gov, map[string]governance.VotingInfo{
+				proposer.String(): governance.NewVotingInfo(5_000_000_000),
+			}, 5_000_000_000)
+
+			testing.SetRealm(govRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+			testing.SetRealm(testing.NewUserRealm(proposer))
+
+			// when
+			numToExecute := int64(len(strings.Split(tt.executions, "*GOV*")))
+			if tt.expectedHasAbort {
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func(cur realm) {
+					mockProposeParameterChange(cross(cur), gov, "Halt Recovery", "Recover from halt", numToExecute, tt.executions)
+				})
+			} else {
+				proposalId := mockProposeParameterChange(cross(cur), gov, "Halt Recovery", "Recover from halt", numToExecute, tt.executions)
+
+				// then
+				proposal, ok := gov.getProposal(proposalId)
+				uassert.Equal(t, true, ok)
+				uassert.Equal(t, true, isHaltRecoveryProposalData(proposal.Data()))
+			}
+
+			// restore halt state so other tests are not affected
+			testing.SetRealm(govRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+		})
+	}
 }

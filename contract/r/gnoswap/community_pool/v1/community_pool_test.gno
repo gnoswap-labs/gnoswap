@@ -51,7 +51,7 @@ func TestCommunityPool_TransferToken(cur realm, t *testing.T) {
 		{
 			name: "panic if halted with complete level",
 			setup: func(cur realm) {
-				testing.SetRealm(adminRealm)
+				testing.SetRealm(govRealm)
 				halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
 			},
 			tokenPath:   gnsPath,
@@ -63,7 +63,7 @@ func TestCommunityPool_TransferToken(cur realm, t *testing.T) {
 		{
 			name: "panic if halted with safe mode (withdraw blocked only)",
 			setup: func(cur realm) {
-				testing.SetRealm(adminRealm)
+				testing.SetRealm(govRealm)
 				halt.SetHaltLevel(cross(cur), halt.HaltLevelSafeMode)
 			},
 			tokenPath:   gnsPath,

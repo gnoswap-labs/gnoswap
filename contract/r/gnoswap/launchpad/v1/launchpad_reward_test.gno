@@ -590,7 +590,7 @@ func TestLaunchpadReward_CollectRewardByDepositId_Failure(cur realm, t *testing.
 
 			// Set halt level if specified
 			if tt.haltLevel != "" {
-				testing.SetRealm(adminRealm)
+				testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
 				halt.SetHaltLevel(cross(cur), tt.haltLevel)
 			}
 
