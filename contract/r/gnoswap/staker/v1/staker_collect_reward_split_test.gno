@@ -19,6 +19,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/halt"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -193,6 +194,72 @@ func TestCollectExternalIncentiveReward_LeavesEmissionRewardCollectable(cur real
 	collectableBar, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
 	uassert.NoError(t, err)
 	uassert.Equal(t, int64(0), collectableBar)
+}
+
+// An emission halt defers only the internal side of a combined collect. External incentives keep
+// settling, while the GNS balance and internal accounting remain untouched until emission resumes.
+func TestCollectReward_EmissionHaltDefersInternalReward(cur realm, t *testing.T) {
+	positionId, barIncentiveId, _ := setupSplitCollectDeposit(cur, t)
+	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
+	pool := getMockInstance().getPools().GetPoolOrNil(poolPath)
+	uassert.NotNil(t, pool)
+	NewPoolResolver(pool).cacheReward(time.Now().Unix(), 1_000_000)
+	testing.SkipHeights(100)
+
+	collectableInternal, err := sr.CollectableEmissionReward(positionId)
+	uassert.NoError(t, err)
+	uassert.True(t, collectableInternal > 0)
+	collectableExternal, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
+	uassert.NoError(t, err)
+	uassert.True(t, collectableExternal > 0)
+
+	resolver, err := getMockInstance().getDepositResolver(positionId)
+	uassert.NoError(t, err)
+	internalLastCollectBefore := resolver.InternalRewardLastCollectTime()
+	collectedInternalBefore := resolver.CollectedInternalReward()
+
+	userGnsBefore := gns.BalanceOf(addr01)
+	stakerGnsBefore := gns.BalanceOf(stakerV1Addr)
+	userBarBefore := TokenBalance(t, barPath, addr01)
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
+	testing.SkipHeights(100)
+	collectableDuringHalt, err := sr.CollectableEmissionReward(positionId)
+	uassert.NoError(t, err)
+	uassert.True(t, collectableDuringHalt > collectableInternal)
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	internalToUser, internalPenalty, externalToUser, _ := sr.CollectReward(cross(cur), positionId)
+
+	uassert.Equal(t, "0", internalToUser)
+	uassert.Equal(t, "0", internalPenalty)
+	uassert.True(t, externalToUser[barPath] > 0)
+	uassert.Equal(t, userBarBefore+externalToUser[barPath], TokenBalance(t, barPath, addr01))
+	uassert.Equal(t, userGnsBefore, gns.BalanceOf(addr01))
+	uassert.Equal(t, stakerGnsBefore, gns.BalanceOf(stakerV1Addr))
+	uassert.Equal(t, internalLastCollectBefore, resolver.InternalRewardLastCollectTime())
+	uassert.Equal(t, collectedInternalBefore, resolver.CollectedInternalReward())
+
+	// The emission-only entry point is also a no-op while halted.
+	emissionToUser, emissionPenalty := sr.CollectEmissionReward(cross(cur), positionId)
+	uassert.Equal(t, int64(0), emissionToUser)
+	uassert.Equal(t, int64(0), emissionPenalty)
+	uassert.Equal(t, userGnsBefore, gns.BalanceOf(addr01))
+	uassert.Equal(t, stakerGnsBefore, gns.BalanceOf(stakerV1Addr))
+	uassert.Equal(t, internalLastCollectBefore, resolver.InternalRewardLastCollectTime())
+	uassert.Equal(t, collectedInternalBefore, resolver.CollectedInternalReward())
+
+	testing.SetRealm(adminRealm)
+	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	emissionToUser, _ = sr.CollectEmissionReward(cross(cur), positionId)
+
+	uassert.True(t, emissionToUser > 0)
+	uassert.Equal(t, userGnsBefore+emissionToUser, gns.BalanceOf(addr01))
+	uassert.True(t, resolver.InternalRewardLastCollectTime() > internalLastCollectBefore)
+	uassert.True(t, resolver.CollectedInternalReward() > collectedInternalBefore)
 }
 
 // Collecting one external incentive must leave every other incentive of the same deposit untouched.

@@ -790,66 +790,6 @@ func TestUnStakeToken_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
 }
 
-func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(cur realm, t *testing.T) {
-	initStakerTest(cur, t)
-
-	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
-	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross(cur), 0)
-	createDefaultInitialPoolForStakerTest(cur, t)
-	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
-	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(cross(cur), poolPath, 1)
-	mockInstanceAddToken(cross(cur), barPath)
-
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	TokenFaucet(cur, t, barPath, addr01)
-	TokenFaucet(cur, t, bazPath, addr01)
-	TokenFaucet(cur, t, gnsPath, addr01)
-	TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
-	TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
-
-	positionId, _, _, _ := MintPosition(
-		cur,
-		t,
-		barPath,
-		bazPath,
-		fee3000,
-		-18000,
-		18000,
-		"10000000",
-		"10000000",
-		"0",
-		"0",
-		max_timeout,
-		addr01,
-		addr01,
-	)
-
-	mockNFTMint(cur, addr01, positionId)
-	mockNFTApprove(cur, stakerAddr, positionId)
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	sr.StakeToken(cross(cur), positionId, "")
-
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
-	gnsApprove(cur, t, addr01, stakerAddr, 1000000000)
-	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
-	CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
-	testing.SkipHeights(100)
-
-	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
-
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	uassert.NotPanics(t, cur, func() {
-		sr.CollectReward(cross(cur), positionId)
-	})
-
-	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
-}
-
 // TestStakeToken_EmptyIncentiveList tests that after staking,
 // the deposit's external incentive list is empty (lazy sync optimization).
 func TestStakeToken_EmptyIncentiveList(cur realm, t *testing.T) {
