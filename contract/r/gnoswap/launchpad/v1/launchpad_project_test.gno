@@ -20,7 +20,7 @@ import (
 	_ "gno.land/r/onbloc/bar"
 	_ "gno.land/r/onbloc/foo"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 )
 
 func TestLaunchpadProject_CreateProjectShouldFail(cur realm, t *testing.T) {

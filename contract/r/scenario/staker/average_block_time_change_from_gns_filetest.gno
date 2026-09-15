@@ -25,7 +25,7 @@ import (
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"

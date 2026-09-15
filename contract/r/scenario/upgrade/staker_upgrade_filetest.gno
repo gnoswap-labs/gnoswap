@@ -6,7 +6,7 @@ package main
 import (
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 

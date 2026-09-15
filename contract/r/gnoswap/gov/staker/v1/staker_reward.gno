@@ -4,7 +4,7 @@ import (
 	"chain"
 	"time"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/p/gnoswap/utils/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 

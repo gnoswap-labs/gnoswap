@@ -48,7 +48,7 @@
 // package main
 //
 // import (
-//	"gno.land/p/gnoswap/rbac"
+//	"gno.land/p/gnoswap/rbac/v1"
 //
 // )
 //

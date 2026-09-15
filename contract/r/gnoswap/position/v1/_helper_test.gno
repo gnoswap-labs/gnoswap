@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"gno.land/p/gnoswap/gnsmath/v1"
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"

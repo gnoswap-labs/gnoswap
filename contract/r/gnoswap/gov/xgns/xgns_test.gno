@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/halt"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	_ "gno.land/r/gnoswap/rbac"
 )
 

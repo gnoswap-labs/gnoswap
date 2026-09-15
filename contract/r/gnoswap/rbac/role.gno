@@ -1,6 +1,6 @@
 package rbac
 
-import prbac "gno.land/p/gnoswap/rbac"
+import prbac "gno.land/p/gnoswap/rbac/v1"
 
 // MUST BE IMMUTABLE, DO NOT MODIFY.
 // _defaultRoleAddresses maps system roles to their default addresses.

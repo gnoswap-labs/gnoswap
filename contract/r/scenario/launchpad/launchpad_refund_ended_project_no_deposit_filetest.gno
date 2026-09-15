@@ -10,7 +10,7 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/gnoswap/access"

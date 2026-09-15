@@ -35,7 +35,7 @@ import (
 	pn "gno.land/r/gnoswap/position"
 	sr "gno.land/r/gnoswap/staker"
 
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	_ "gno.land/r/gnoswap/rbac"
 
 	"gno.land/r/onbloc/bar"

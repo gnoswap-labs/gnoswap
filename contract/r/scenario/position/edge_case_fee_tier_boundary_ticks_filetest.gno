@@ -9,7 +9,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath/v1"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 

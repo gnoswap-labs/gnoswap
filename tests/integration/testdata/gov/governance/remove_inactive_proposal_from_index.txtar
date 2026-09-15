@@ -52,7 +52,7 @@ import (
     "gno.land/r/gnoswap/gov/governance"
     gs "gno.land/r/gnoswap/gov/staker"
     "gno.land/r/gnoswap/access"
-    prbac "gno.land/p/gnoswap/rbac"
+    prbac "gno.land/p/gnoswap/rbac/v1"
 )
 func main(cur realm) {
     admin := access.MustGetAddress(prbac.ROLE_ADMIN.String())

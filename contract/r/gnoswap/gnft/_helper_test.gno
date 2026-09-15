@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"gno.land/p/nt/grc721/v0"
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/r/gnoswap/access"
 )
 

@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/nt/grc20/v0"
 
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 
 	"gno.land/r/gnoswap/access"
 

@@ -40,7 +40,7 @@ import (
 	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/gnoswap/gnsmath/v1"
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"

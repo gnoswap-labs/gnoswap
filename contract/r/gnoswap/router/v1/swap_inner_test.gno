@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	uassert "gno.land/p/nt/uassert/v0"
 

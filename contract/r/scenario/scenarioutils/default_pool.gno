@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/gnoswap/gnsmath/v1"
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	_ "gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"
 	_ "gno.land/r/gnoswap/common/v1"

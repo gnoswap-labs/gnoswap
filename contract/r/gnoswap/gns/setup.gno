@@ -1,7 +1,7 @@
 package gns
 
 import (
-	"gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/rbac/v1"
 	"gno.land/r/gnoswap/access"
 )
 

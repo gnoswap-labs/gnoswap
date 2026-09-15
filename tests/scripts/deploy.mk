@@ -51,7 +51,7 @@ deploy-consts:
 
 deploy-rbac:
 	$(info ************ deploy rbac ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/rbac -pkgpath gno.land/p/gnoswap/rbac -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 13280ugnot -gas-wanted 13280000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/rbac/v1 -pkgpath gno.land/p/gnoswap/rbac/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 13280ugnot -gas-wanted 13280000 -memo "" gnoswap_admin
 	@echo
 
 deploy-uint256:

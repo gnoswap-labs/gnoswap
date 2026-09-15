@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath/v1"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	_ "gno.land/r/gnoswap/rbac"
 

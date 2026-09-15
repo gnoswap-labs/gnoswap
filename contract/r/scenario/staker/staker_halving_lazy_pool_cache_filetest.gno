@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/p/nt/grc721/v0"
 
 	"gno.land/r/gnoswap/access"

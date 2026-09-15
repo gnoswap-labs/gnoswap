@@ -24,7 +24,7 @@ import (
 	"gno.land/r/gnoswap/router"
 	usdc "gno.land/r/gnoswap/test_token/test_usdc"
 
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/common/v1"

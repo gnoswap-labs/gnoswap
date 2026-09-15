@@ -14,7 +14,7 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/r/gnoswap/access"
 	_ "gno.land/r/gnoswap/staker"
 )

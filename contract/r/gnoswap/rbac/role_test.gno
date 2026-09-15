@@ -3,7 +3,7 @@ package rbac
 import (
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 )
 
 func Test_defaultRoleAddresses(cur realm, t *testing.T) {

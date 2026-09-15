@@ -9,7 +9,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 )
 
 func TestIsOwner(cur realm, t *testing.T) {

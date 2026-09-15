@@ -3,7 +3,7 @@ package access
 import (
 	"chain"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 

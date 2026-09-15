@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"gno.land/p/nt/grc721/v0"
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"

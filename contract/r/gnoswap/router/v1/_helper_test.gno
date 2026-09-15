@@ -21,7 +21,7 @@ import (
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
 
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 
 	"gno.land/r/gnoswap/access"
 

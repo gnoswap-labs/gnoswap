@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/fuzz"
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/pool"

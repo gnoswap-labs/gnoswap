@@ -8,7 +8,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"

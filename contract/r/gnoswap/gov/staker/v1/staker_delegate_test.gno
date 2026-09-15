@@ -12,7 +12,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
-	_ "gno.land/p/gnoswap/rbac"
+	_ "gno.land/p/gnoswap/rbac/v1"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/access"

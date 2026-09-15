@@ -4,7 +4,7 @@ import (
 	"chain/runtime/unsafe"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/p/gnoswap/store/v1"
 	"gno.land/p/gnoswap/version_manager"
 	"gno.land/r/gnoswap/access"

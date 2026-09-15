@@ -5,7 +5,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 )
 
 // assertIsOwner panics if address is not the current owner.

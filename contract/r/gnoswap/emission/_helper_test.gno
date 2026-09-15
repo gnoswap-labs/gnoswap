@@ -3,7 +3,7 @@ package emission
 import (
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/r/gnoswap/access"
 	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
 )

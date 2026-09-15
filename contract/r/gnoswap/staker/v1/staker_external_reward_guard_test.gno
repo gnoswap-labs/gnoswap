@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access"

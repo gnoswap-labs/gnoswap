@@ -11,7 +11,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath/v1"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/access"

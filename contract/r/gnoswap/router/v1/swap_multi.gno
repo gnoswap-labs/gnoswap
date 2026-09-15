@@ -1,7 +1,7 @@
 package router
 
 import (
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 
 	"gno.land/r/gnoswap/access"
