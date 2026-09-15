@@ -4,7 +4,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/router"
 
-	i256 "gno.land/p/gnoswap/int256"
+	i256 "gno.land/p/gnoswap/int256/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/p/gnoswap/utils"
 

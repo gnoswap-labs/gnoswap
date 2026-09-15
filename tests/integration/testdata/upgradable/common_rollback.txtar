@@ -13,7 +13,7 @@ loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/nt/grc20reg/v0
 
 loadpkg gno.land/p/gnoswap/uint256/v1
-loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/int256/v1
 loadpkg gno.land/p/gnoswap/consts
 loadpkg gno.land/p/gnoswap/gnsmath
 loadpkg gno.land/p/gnoswap/store

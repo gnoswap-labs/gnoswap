@@ -41,7 +41,7 @@ deploy-gnsmath:
 
 deploy-int256:
 	$(info ************ deploy int256 ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/int256 -pkgpath gno.land/p/gnoswap/int256 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 17924ugnot -gas-wanted 17924000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/int256/v1 -pkgpath gno.land/p/gnoswap/int256/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 17924ugnot -gas-wanted 17924000 -memo "" gnoswap_admin
 	@echo
 
 deploy-consts:

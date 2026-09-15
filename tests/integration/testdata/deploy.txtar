@@ -71,7 +71,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/uint256/v1 -pk
 # stdout 'STORAGE FEE:    (1|2)[0-9]{7}ugnot'
 
 ## deploy int256 (expected gas fee: 16866ugnot, gas wanted: 16866000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/int256 -pkgpath gno.land/p/gnoswap/int256 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/int256/v1 -pkgpath gno.land/p/gnoswap/int256/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   16[0-9]{6}'
 # stdout 'STORAGE DELTA:  (5|6)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (5|6)[0-9]{6}ugnot'

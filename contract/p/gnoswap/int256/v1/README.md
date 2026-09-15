@@ -17,7 +17,7 @@ Fixed-size 256-bit signed integer library optimized for AMM calculations with ov
 ## Usage
 
 ```go
-import i256 "gno.land/p/gnoswap/int256"
+import i256 "gno.land/p/gnoswap/int256/v1"
 
 // Create values
 a := i256.NewInt(100)

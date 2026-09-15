@@ -7,7 +7,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/p/gnoswap/consts"
-	i256 "gno.land/p/gnoswap/int256"
+	i256 "gno.land/p/gnoswap/int256/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 

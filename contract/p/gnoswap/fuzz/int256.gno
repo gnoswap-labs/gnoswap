@@ -3,7 +3,7 @@ package fuzz
 import (
 	"strings"
 
-	"gno.land/p/gnoswap/int256"
+	"gno.land/p/gnoswap/int256/v1"
 	"gno.land/p/gnoswap/uint256/v1"
 )
 

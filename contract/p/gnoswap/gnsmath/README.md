@@ -36,7 +36,7 @@ Square root prices use Q64.96 representation:
 ```go
 import (
     "gno.land/p/gnoswap/gnsmath"
-    i256 "gno.land/p/gnoswap/int256"
+    i256 "gno.land/p/gnoswap/int256/v1"
     u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
