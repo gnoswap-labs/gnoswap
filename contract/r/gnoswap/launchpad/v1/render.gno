@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	prbac "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/p/moul/md/v0"
+	"gno.land/p/moul/mdtable/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access/v1"
@@ -19,55 +21,45 @@ func (l *launchpadV1) Render(path string) string {
 
 	implementation := launchpadRoot.GetImplementationPackagePath()
 
-	return ufmt.Sprintf(
-		`# Gnoswap Launchpad
-
-All GNS amounts use the token's six-decimal base units. Project reward amounts
-use the project token's own base units.
-
-## Implementation and access
-
-| Field | Value |
-| --- | --- |
-| Realm address | `+"`%s`"+` |
-| Active implementation | [%s](%s) |
-| Launchpad operations halted | %t |
-| Withdrawal operations halted | %t |
-| Project creation role (admin) | %s |
-| Project creation role (governance) | %s |
-
-## Deposit accounting and configuration
-
-| Field | Value |
-| --- | --- |
-| Stored project records | %d |
-| Stored unique project-recipient records | %d |
-| Stored project-tier reward-manager records | %d |
-| Stored deposit records (including withdrawn) | %d |
-| Deposit ID counter (allocated IDs) | %d |
-| Current GNS staked amount (base units; 6 decimals) | %d |
-| Minimum GNS deposit (base units; 6 decimals) | %d |
-| Minimum project start delay (seconds) | %d |
-| Project tiers (days) | 30 / 90 / 180 |
-| Reward claimable duration (seconds) | %d |
-`,
-		chain.PackageAddress("gno.land/r/gnoswap/launchpad"),
-		implementation,
-		strings.TrimPrefix(implementation, "gno.land"),
-		halt.IsHaltedLaunchpad(),
-		halt.IsHaltedWithdraw(),
-		renderLaunchpadRole(prbac.ROLE_ADMIN),
-		renderLaunchpadRole(prbac.ROLE_GOVERNANCE),
-		l.store.GetProjects().Size(),
-		l.store.GetProjectRecipients().Size(),
-		l.store.GetProjectTierRewardManagers().Size(),
-		l.store.GetDeposits().Size(),
-		l.store.GetDepositCounter().Get(),
-		l.store.GetTotalGNSStakedAmount(),
-		minimumDepositAmount,
-		projectMinimumStartDelayTime,
-		projectTierRewardCollectableDuration[projectTier30],
+	out := md.H1("Gnoswap Launchpad")
+	out += md.Paragraph(
+		"All GNS amounts use the token's six-decimal base units. Project reward amounts\n" +
+			"use the project token's own base units.",
 	)
+
+	out += md.H2("Implementation and access")
+	implementationTable := mdtable.Table{
+		Headers: []string{"Field", "Value"},
+		Rows: [][]string{
+			{"Realm address", md.InlineCode(chain.PackageAddress("gno.land/r/gnoswap/launchpad").String())},
+			{"Active implementation", md.Link(implementation, strings.TrimPrefix(implementation, "gno.land"))},
+			{"Launchpad operations halted", ufmt.Sprintf("%t", halt.IsHaltedLaunchpad())},
+			{"Withdrawal operations halted", ufmt.Sprintf("%t", halt.IsHaltedWithdraw())},
+			{"Project creation role (admin)", renderLaunchpadRole(prbac.ROLE_ADMIN)},
+			{"Project creation role (governance)", renderLaunchpadRole(prbac.ROLE_GOVERNANCE)},
+		},
+	}
+	out += implementationTable.String()
+
+	out += md.H2("Deposit accounting and configuration")
+	accountingTable := mdtable.Table{
+		Headers: []string{"Field", "Value"},
+		Rows: [][]string{
+			{"Stored project records", ufmt.Sprintf("%d", l.store.GetProjects().Size())},
+			{"Stored unique project-recipient records", ufmt.Sprintf("%d", l.store.GetProjectRecipients().Size())},
+			{"Stored project-tier reward-manager records", ufmt.Sprintf("%d", l.store.GetProjectTierRewardManagers().Size())},
+			{"Stored deposit records (including withdrawn)", ufmt.Sprintf("%d", l.store.GetDeposits().Size())},
+			{"Deposit ID counter (allocated IDs)", ufmt.Sprintf("%d", l.store.GetDepositCounter().Get())},
+			{"Current GNS staked amount (base units; 6 decimals)", ufmt.Sprintf("%d", l.store.GetTotalGNSStakedAmount())},
+			{"Minimum GNS deposit (base units; 6 decimals)", ufmt.Sprintf("%d", minimumDepositAmount)},
+			{"Minimum project start delay (seconds)", ufmt.Sprintf("%d", projectMinimumStartDelayTime)},
+			{"Project tiers (days)", "30 / 90 / 180"},
+			{"Reward claimable duration (seconds)", ufmt.Sprintf("%d", projectTierRewardCollectableDuration[projectTier30])},
+		},
+	}
+	out += accountingTable.String()
+
+	return out
 }
 
 func renderLaunchpadRole(role prbac.SystemRole) string {
@@ -75,5 +67,5 @@ func renderLaunchpadRole(role prbac.SystemRole) string {
 	if !ok || addr == address("") {
 		return "Unassigned"
 	}
-	return "`" + addr.String() + "`"
+	return md.InlineCode(addr.String())
 }

@@ -3,6 +3,8 @@ package governance
 import (
 	"strings"
 
+	"gno.land/p/moul/md/v0"
+	"gno.land/p/moul/mdtable/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -14,19 +16,18 @@ func (g *governanceV1) Render(path string) string {
 
 	implementation := governance.GetImplementationPackagePath()
 
-	return ufmt.Sprintf(
-		"# Gnoswap Governance\n\n"+
-			"## Governance configuration\n\n"+
-			"| Field | Value |\n"+
-			"| --- | ---: |\n"+
-			"| Active implementation | [%s](%s) |\n"+
-			"| Latest configuration version | %d |\n"+
-			"| Current proposal ID | %d |\n"+
-			"| Maximum smoothing period | %d |\n",
-		implementation,
-		strings.TrimPrefix(implementation, "gno.land"),
-		governance.GetLatestConfigVersion(),
-		governance.GetCurrentProposalID(),
-		governance.GetMaxSmoothingPeriod(),
-	)
+	out := md.H1("Gnoswap Governance")
+	out += md.H2("Governance configuration")
+	configurationTable := mdtable.Table{
+		Headers: []string{"Field", "Value"},
+		Rows: [][]string{
+			{"Active implementation", md.Link(implementation, strings.TrimPrefix(implementation, "gno.land"))},
+			{"Latest configuration version", ufmt.Sprintf("%d", governance.GetLatestConfigVersion())},
+			{"Current proposal ID", ufmt.Sprintf("%d", governance.GetCurrentProposalID())},
+			{"Maximum smoothing period", ufmt.Sprintf("%d", governance.GetMaxSmoothingPeriod())},
+		},
+	}
+	out += configurationTable.String()
+
+	return out
 }

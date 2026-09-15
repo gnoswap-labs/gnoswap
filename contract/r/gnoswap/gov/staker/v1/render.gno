@@ -3,6 +3,8 @@ package staker
 import (
 	"strings"
 
+	"gno.land/p/moul/md/v0"
+	"gno.land/p/moul/mdtable/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -14,23 +16,20 @@ func (g *govStakerV1) Render(path string) string {
 
 	implementation := staker.GetImplementationPackagePath()
 
-	return ufmt.Sprintf(
-		"# Gnoswap Governance Staker\n\n"+
-			"## Staking overview\n\n"+
-			"| Field | Value |\n"+
-			"| --- | ---: |\n"+
-			"| Active implementation | [%s](%s) |\n"+
-			"| Total xGNS supply | %d |\n"+
-			"| Total delegated GNS | %d |\n"+
-			"| Total locked GNS | %d |\n"+
-			"| Undelegation lockup period | %d |\n"+
-			"| Protocol-fee accumulation timestamp | %d |\n",
-		implementation,
-		strings.TrimPrefix(implementation, "gno.land"),
-		staker.GetTotalxGnsSupply(),
-		staker.GetTotalDelegated(),
-		staker.GetTotalLockedAmount(),
-		staker.GetUnDelegationLockupPeriod(),
-		staker.GetProtocolFeeAccumulatedTimestamp(),
-	)
+	out := md.H1("Gnoswap Governance Staker")
+	out += md.H2("Staking overview")
+	overviewTable := mdtable.Table{
+		Headers: []string{"Field", "Value"},
+		Rows: [][]string{
+			{"Active implementation", md.Link(implementation, strings.TrimPrefix(implementation, "gno.land"))},
+			{"Total xGNS supply", ufmt.Sprintf("%d", staker.GetTotalxGnsSupply())},
+			{"Total delegated GNS", ufmt.Sprintf("%d", staker.GetTotalDelegated())},
+			{"Total locked GNS", ufmt.Sprintf("%d", staker.GetTotalLockedAmount())},
+			{"Undelegation lockup period", ufmt.Sprintf("%d", staker.GetUnDelegationLockupPeriod())},
+			{"Protocol-fee accumulation timestamp", ufmt.Sprintf("%d", staker.GetProtocolFeeAccumulatedTimestamp())},
+		},
+	}
+	out += overviewTable.String()
+
+	return out
 }

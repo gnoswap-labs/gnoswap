@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/utils/v1"
+	"gno.land/p/moul/md/v0"
+	"gno.land/p/moul/mdtable/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -16,64 +18,70 @@ func Render(path string) string {
 		return "404\n"
 	}
 
-	return ufmt.Sprintf(`# GNS Emission
+	out := md.H1("GNS Emission") +
+		"\n" +
+		md.Paragraph("All GNS amounts use exactly six decimal places. Schedule timestamps are UTC.")
 
-All GNS amounts use exactly six decimal places. Schedule timestamps are UTC.
+	scheduleTable := mdtable.Table{
+		Headers: []string{"Field", "Value"},
+		Rows: [][]string{
+			{"Distribution start", formatEmissionTimestamp(GetDistributionStartTimestamp(), "Not started")},
+			{"Distribution end", formatEmissionTimestamp(GetDistributionEndTimestamp(), "Not scheduled")},
+			{"Last execution", formatEmissionTimestamp(GetLastExecutedTimestamp(), "Not yet executed")},
+		},
+	}
+	out += md.H2("Distribution schedule") +
+		"\n" +
+		scheduleTable.String() +
+		"\n"
 
-## Distribution schedule
+	accountingTable := mdtable.Table{
+		Headers: []string{"Metric", "Amount"},
+		Rows: [][]string{
+			{"Undistributed GNS", formatGnsAmount(GetLeftGNSAmount())},
+			{"Total cumulative distributed", formatGnsAmount(GetTotalAccuDistributed())},
+		},
+	}
+	out += md.H2("Distribution accounting") +
+		"\n" +
+		accountingTable.String() +
+		"\n" +
+		md.Paragraph(
+			"The cumulative total includes allocations sent to all four recipients;\n"+
+				"DevOps and community-pool rows represent completed direct-transfer accounting.",
+		)
 
-| Field | Value |
-| --- | --- |
-| Distribution start | %s |
-| Distribution end | %s |
-| Last execution | %s |
+	recipientsTable := mdtable.Table{
+		Headers: []string{"Recipient", "Allocation", "Cumulative distributed"},
+		Rows: [][]string{
+			{"Liquidity stakers", formatDistributionPercent(distributionBpsPct[LIQUIDITY_STAKER]), formatGnsAmount(GetAccuDistributedToStaker())},
+			{"DevOps", formatDistributionPercent(distributionBpsPct[DEVOPS]), formatGnsAmount(GetAccuDistributedToDevOps())},
+			{"Community pool", formatDistributionPercent(distributionBpsPct[COMMUNITY_POOL]), formatGnsAmount(GetAccuDistributedToCommunityPool())},
+			{"Governance stakers", formatDistributionPercent(distributionBpsPct[GOV_STAKER]), formatGnsAmount(GetAccuDistributedToGovStaker())},
+		},
+	}
+	out += md.H2("Recipients") +
+		"\n" +
+		recipientsTable.String() +
+		"\n"
 
-## Distribution accounting
+	stakingTable := mdtable.Table{
+		Headers: []string{"Recipient", "Since last accounting clear"},
+		Rows: [][]string{
+			{"Liquidity stakers", formatGnsAmount(GetDistributedToStaker())},
+			{"Governance stakers", formatGnsAmount(GetDistributedToGovStaker())},
+		},
+	}
+	out += md.H2("Staking accounting") +
+		"\n" +
+		md.Paragraph(
+			"These allocations have already been transferred to the recipients.\n"+
+				"The counters below show amounts since each accounting contract's last clear; they\n"+
+				"are not wallet balances or claimable amounts.",
+		) +
+		stakingTable.String()
 
-| Metric | Amount |
-| --- | ---: |
-| Undistributed GNS | %s |
-| Total cumulative distributed | %s |
-
-The cumulative total includes allocations sent to all four recipients;
-DevOps and community-pool rows represent completed direct-transfer accounting.
-
-## Recipients
-
-| Recipient | Allocation | Cumulative distributed |
-| --- | ---: | ---: |
-| Liquidity stakers | %s | %s |
-| DevOps | %s | %s |
-| Community pool | %s | %s |
-| Governance stakers | %s | %s |
-
-## Staking accounting
-
-These allocations have already been transferred to the recipients.
-The counters below show amounts since each accounting contract's last clear; they
-are not wallet balances or claimable amounts.
-
-| Recipient | Since last accounting clear |
-| --- | ---: |
-| Liquidity stakers | %s |
-| Governance stakers | %s |
-`,
-		formatEmissionTimestamp(GetDistributionStartTimestamp(), "Not started"),
-		formatEmissionTimestamp(GetDistributionEndTimestamp(), "Not scheduled"),
-		formatEmissionTimestamp(GetLastExecutedTimestamp(), "Not yet executed"),
-		formatGnsAmount(GetLeftGNSAmount()),
-		formatGnsAmount(GetTotalAccuDistributed()),
-		formatDistributionPercent(distributionBpsPct[LIQUIDITY_STAKER]),
-		formatGnsAmount(GetAccuDistributedToStaker()),
-		formatDistributionPercent(distributionBpsPct[DEVOPS]),
-		formatGnsAmount(GetAccuDistributedToDevOps()),
-		formatDistributionPercent(distributionBpsPct[COMMUNITY_POOL]),
-		formatGnsAmount(GetAccuDistributedToCommunityPool()),
-		formatDistributionPercent(distributionBpsPct[GOV_STAKER]),
-		formatGnsAmount(GetAccuDistributedToGovStaker()),
-		formatGnsAmount(GetDistributedToStaker()),
-		formatGnsAmount(GetDistributedToGovStaker()),
-	)
+	return out
 }
 
 func formatEmissionTimestamp(timestamp int64, zeroLabel string) string {

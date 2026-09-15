@@ -4,6 +4,8 @@ import (
 	"chain"
 	"strings"
 
+	"gno.land/p/moul/md/v0"
+	"gno.land/p/moul/mdtable/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/halt/v1"
@@ -18,50 +20,41 @@ func (p *poolV1) Render(path string) string {
 	feeAmountTickSpacing := p.store.GetFeeAmountTickSpacing()
 	protocolFee := p.store.GetSlot0FeeProtocol()
 	implementation := poolRoot.GetImplementationPackagePath()
+	implementationTable := mdtable.Table{
+		Headers: []string{"Field", "Value"},
+		Rows: [][]string{
+			{"Realm address", md.InlineCode(chain.PackageAddress("gno.land/r/gnoswap/pool").String())},
+			{"Active implementation", md.Link(implementation, strings.TrimPrefix(implementation, "gno.land"))},
+			{"Pool operations halted", ufmt.Sprintf("%t", halt.IsHaltedPool())},
+			{"Protocol-fee operations halted", ufmt.Sprintf("%t", halt.IsHaltedProtocolFee())},
+			{"Withdrawals halted", ufmt.Sprintf("%t", halt.IsHaltedWithdraw())},
+		},
+	}
+	feeTable := mdtable.Table{
+		Headers: []string{"Field", "Value"},
+		Rows: [][]string{
+			{"Stored pool records", ufmt.Sprintf("%d", p.store.GetPools().Size())},
+			{"Pool creation fee (GNS base units; 6 decimals)", ufmt.Sprintf("%d", p.store.GetPoolCreationFee())},
+			{"Withdrawal fee", ufmt.Sprintf("%d bps", p.store.GetWithdrawalFeeBPS())},
+			{"Fee tiers (pips)", "100 (0.01%) / 500 (0.05%) / 3000 (0.30%) / 10000 (1.00%)"},
+			{"Tick spacing (ticks; same tier order)", ufmt.Sprintf("%d / %d / %d / %d",
+				feeAmountTickSpacing[100],
+				feeAmountTickSpacing[500],
+				feeAmountTickSpacing[3000],
+				feeAmountTickSpacing[10000],
+			)},
+			{"Protocol fee denominators (token0 / token1)", ufmt.Sprintf("%d / %d", protocolFee&15, protocolFee>>4)},
+		},
+	}
 
-	return ufmt.Sprintf(
-		`# Gnoswap Pool
-
-Pool creation fees are charged in GNS. GNS amounts use the token's six-decimal
+	out := md.H1("Gnoswap Pool") + "\n"
+	out += md.Paragraph(`Pool creation fees are charged in GNS. GNS amounts use the token's six-decimal
 base units; pool token amounts use each token's own base units. Withdrawal fees
 apply to collected swap fees and are expressed in basis points. Protocol fee
-denominators apply to swap fees; zero disables the corresponding token's fee.
-
-## Implementation and operation status
-
-| Field | Value |
-| --- | --- |
-| Realm address | `+"`%s`"+` |
-| Active implementation | [%s](%s) |
-| Pool operations halted | %t |
-| Protocol-fee operations halted | %t |
-| Withdrawals halted | %t |
-
-## Pools and fee configuration
-
-| Field | Value |
-| --- | --- |
-| Stored pool records | %d |
-| Pool creation fee (GNS base units; 6 decimals) | %d |
-| Withdrawal fee | %d bps |
-| Fee tiers (pips) | 100 (0.01%%) / 500 (0.05%%) / 3000 (0.30%%) / 10000 (1.00%%) |
-| Tick spacing (ticks; same tier order) | %d / %d / %d / %d |
-| Protocol fee denominators (token0 / token1) | %d / %d |
-`,
-		chain.PackageAddress("gno.land/r/gnoswap/pool"),
-		implementation,
-		strings.TrimPrefix(implementation, "gno.land"),
-		halt.IsHaltedPool(),
-		halt.IsHaltedProtocolFee(),
-		halt.IsHaltedWithdraw(),
-		p.store.GetPools().Size(),
-		p.store.GetPoolCreationFee(),
-		p.store.GetWithdrawalFeeBPS(),
-		feeAmountTickSpacing[100],
-		feeAmountTickSpacing[500],
-		feeAmountTickSpacing[3000],
-		feeAmountTickSpacing[10000],
-		protocolFee&15,
-		protocolFee>>4,
-	)
+denominators apply to swap fees; zero disables the corresponding token's fee.`)
+	out += md.H2("Implementation and operation status") + "\n"
+	out += implementationTable.String() + "\n"
+	out += md.H2("Pools and fee configuration") + "\n"
+	out += feeTable.String()
+	return out
 }

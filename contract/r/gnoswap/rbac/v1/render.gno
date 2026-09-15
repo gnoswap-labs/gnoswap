@@ -2,7 +2,8 @@ package rbac
 
 import (
 	prbac "gno.land/p/gnoswap/rbac/v1"
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/moul/md/v0"
+	"gno.land/p/moul/mdtable/v0"
 )
 
 // Render returns ownership and assignments for the protocol's fixed system roles.
@@ -19,24 +20,28 @@ func Render(path string) string {
 		prbac.ROLE_PROTOCOL_FEE,
 	}
 
-	result := ufmt.Sprintf(`# Gnoswap RBAC
-
-## Ownership
-
-| Field | Address |
-| --- | --- |
-| Owner | %s |
-| Pending owner | %s |
-
-## System roles
-
-| Role | Address |
-| --- | --- |
-`, renderOwnershipAddress(GetOwner()), renderOwnershipAddress(GetPendingOwner()))
-	for _, role := range roles {
-		result += ufmt.Sprintf("| %s | %s |\n", role.String(), renderRoleAddress(role))
+	ownershipTable := mdtable.Table{
+		Headers: []string{"Field", "Address"},
+		Rows: [][]string{
+			{"Owner", renderOwnershipAddress(GetOwner())},
+			{"Pending owner", renderOwnershipAddress(GetPendingOwner())},
+		},
 	}
-	return result
+	out := md.H1("Gnoswap RBAC") +
+		"\n" +
+		md.H2("Ownership") +
+		"\n" +
+		ownershipTable.String() +
+		"\n" +
+		md.H2("System roles")
+
+	roleTable := mdtable.Table{
+		Headers: []string{"Role", "Address"},
+	}
+	for _, role := range roles {
+		roleTable.Append([]string{role.String(), renderRoleAddress(role)})
+	}
+	return out + "\n" + roleTable.String()
 }
 
 func renderOwnershipAddress(addr address) string {
@@ -51,5 +56,5 @@ func renderRoleAddress(role prbac.SystemRole) string {
 	if err != nil || addr == address("") {
 		return "Unassigned"
 	}
-	return "`" + addr.String() + "`"
+	return md.InlineCode(addr.String())
 }
