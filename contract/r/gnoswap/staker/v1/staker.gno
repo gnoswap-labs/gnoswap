@@ -26,7 +26,7 @@ import (
 	pn "gno.land/r/gnoswap/position"
 
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 
 	"gno.land/r/gnoswap/referral"
 )

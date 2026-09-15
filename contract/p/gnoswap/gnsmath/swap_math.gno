@@ -2,7 +2,7 @@ package gnsmath
 
 import (
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // denominator represents 100% in the fee calculation basis (1,000,000 = 100%).

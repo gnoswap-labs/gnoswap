@@ -28,7 +28,7 @@ import (
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 var t *testing.T

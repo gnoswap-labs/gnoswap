@@ -65,7 +65,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/obl -pkgpath gn
 ## deploy packages
 
 ### deploy uint256 (expected gas fee: 18106ugnot, gas wanted: 18106000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/uint256 -pkgpath gno.land/p/gnoswap/uint256 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/uint256/v1 -pkgpath gno.land/p/gnoswap/uint256/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   (1|2)[0-9]{7}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{5} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{7}ugnot'

@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"

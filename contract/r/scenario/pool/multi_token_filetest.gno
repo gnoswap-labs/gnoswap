@@ -10,7 +10,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"

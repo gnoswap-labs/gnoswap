@@ -17,7 +17,7 @@ TEST_KEYS:=p/uint256 \
 	r/gov/governance \
 	r/launchpad
 
-TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256 \
+TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256/v1 \
 	   gno/examples/gno.land/p/gnoswap/int256 \
 	   gno/examples/gno.land/p/gnoswap/gnsmath \
 	   gno/examples/gno.land/r/gnoswap/common \

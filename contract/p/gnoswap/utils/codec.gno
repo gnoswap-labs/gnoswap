@@ -1,7 +1,7 @@
 package utils
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/p/nt/ufmt/v0"
 )
 

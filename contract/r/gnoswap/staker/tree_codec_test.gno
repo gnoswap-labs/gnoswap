@@ -3,7 +3,7 @@ package staker
 import (
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 func TestUintTreeInt64Codec(t *testing.T) {

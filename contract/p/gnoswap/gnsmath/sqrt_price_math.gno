@@ -3,7 +3,7 @@ package gnsmath
 import (
 	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // MIN_SQRT_RATIO returns the minimum valid sqrt price ratio (4295128739).

@@ -414,7 +414,7 @@ func safeSubInt64(cur realm, a, b int64) int64 {
 // [EXPECTED] DrySwap prediction matches actual Swap
 //
 // [SCENARIO] 5. Verify Extreme Swap with Price Limit
-// [INFO] Current price: &(array[(17654669951358689512 uint64),(4280847330 uint64),(0 uint64),(0 uint64)] gno.land/p/gnoswap/uint256.Uint)
+// [INFO] Current price: &(array[(17654669951358689512 uint64),(4280847330 uint64),(0 uint64),(0 uint64)] gno.land/p/gnoswap/uint256/v1.Uint)
 // [INFO] Target price limit (tick -5000): 61703726247759831737814779831
 // [INFO] DrySwap prediction:
 // [INFO] - poolIn: 500000000
@@ -422,7 +422,7 @@ func safeSubInt64(cur realm, a, b int64) int64 {
 // [INFO] Actual Swap result:
 // [INFO] - amount0: 500000000
 // [INFO] - amount1: -480513023
-// [INFO] End price: &(array[(17755719775704812608 uint64),(4143261482 uint64),(0 uint64),(0 uint64)] gno.land/p/gnoswap/uint256.Uint)
+// [INFO] End price: &(array[(17755719775704812608 uint64),(4143261482 uint64),(0 uint64),(0 uint64)] gno.land/p/gnoswap/uint256/v1.Uint)
 // [EXPECTED] Balance changes: bar= -500000000 foo= 480513023
 // [EXPECTED] Price stopped at limit, DrySwap prediction matches
 //

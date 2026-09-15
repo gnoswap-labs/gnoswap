@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/gnsmath"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/pool"
 )

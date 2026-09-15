@@ -17,7 +17,7 @@ Fixed-size 256-bit unsigned integer library optimized for AMM calculations with 
 ## Usage
 
 ```go
-import u256 "gno.land/p/gnoswap/uint256"
+import u256 "gno.land/p/gnoswap/uint256/v1"
 
 // Create values
 a := u256.NewUint(1000)

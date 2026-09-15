@@ -6,7 +6,7 @@ import (
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 const FUZZ_ITERATIONS = 10

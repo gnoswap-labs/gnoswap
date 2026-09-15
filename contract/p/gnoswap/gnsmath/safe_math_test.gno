@@ -6,7 +6,7 @@ import (
 
 	uassert "gno.land/p/nt/uassert/v0"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 func TestSafeAddInt64(t *testing.T) {

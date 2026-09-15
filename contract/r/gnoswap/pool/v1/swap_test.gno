@@ -10,7 +10,7 @@ import (
 	"gno.land/p/gnoswap/consts"
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 	"gno.land/r/onbloc/bar"

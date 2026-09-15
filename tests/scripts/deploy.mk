@@ -56,7 +56,7 @@ deploy-rbac:
 
 deploy-uint256:
 	$(info ************ deploy uint256 ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/uint256 -pkgpath gno.land/p/gnoswap/uint256 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 26332ugnot -gas-wanted 26332000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/uint256/v1 -pkgpath gno.land/p/gnoswap/uint256/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 26332ugnot -gas-wanted 26332000 -memo "" gnoswap_admin
 	@echo
 
 deploy-store:

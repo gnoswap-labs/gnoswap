@@ -5,7 +5,7 @@ import (
 	"math"
 	"math/bits"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 type Int [4]uint64

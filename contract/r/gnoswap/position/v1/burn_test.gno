@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/consts"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/position"

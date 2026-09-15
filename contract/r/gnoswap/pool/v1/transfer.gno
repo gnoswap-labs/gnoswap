@@ -11,7 +11,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // safeTransfer performs a token transfer out of the pool while ensuring

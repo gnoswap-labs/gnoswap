@@ -7,7 +7,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // Helper functions for RewardManager

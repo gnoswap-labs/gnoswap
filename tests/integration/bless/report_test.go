@@ -72,7 +72,7 @@ func TestParseTxtar(t *testing.T) {
 	}
 
 	// Create a temporary txtar content
-	content := `loadpkg gno.land/p/gnoswap/uint256
+	content := `loadpkg gno.land/p/gnoswap/uint256/v1
 
 gnoland start
 

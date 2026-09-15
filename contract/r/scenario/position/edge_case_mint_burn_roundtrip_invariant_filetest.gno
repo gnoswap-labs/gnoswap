@@ -9,7 +9,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 

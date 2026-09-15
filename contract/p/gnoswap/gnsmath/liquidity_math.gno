@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // computeLiquidityForAmount0 calculates the liquidity for a given amount of token0.

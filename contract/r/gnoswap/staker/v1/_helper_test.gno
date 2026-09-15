@@ -9,7 +9,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/mock"
 	pl "gno.land/r/gnoswap/pool"

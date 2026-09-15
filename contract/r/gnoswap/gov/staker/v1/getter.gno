@@ -4,7 +4,7 @@ import (
 	"time"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/uint256/v1"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 

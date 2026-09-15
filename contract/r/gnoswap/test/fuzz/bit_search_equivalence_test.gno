@@ -7,7 +7,7 @@ import (
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // Test-only reference for the pre-#1441 shift searches. Keep independent of

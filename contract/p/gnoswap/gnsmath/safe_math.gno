@@ -6,7 +6,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // Range bounds used by the safe conversion helpers.

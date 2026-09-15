@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/nt/grc721/v0"
