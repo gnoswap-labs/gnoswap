@@ -28,12 +28,12 @@ func Render(path string) string {
 			"\n" +
 			md.Paragraph(
 				"Removing a referral bypasses the interval but does not reset the last registration time.\n"+
-					"Address-specific records are available at "+md.InlineCode("referral/<address>")+".",
+					"Address-specific records are available at "+md.InlineCode("address/<address>")+".",
 			)
 	}
 
 	parts := strings.Split(path, "/")
-	if len(parts) != 2 || parts[0] != "referral" || parts[1] == "" {
+	if len(parts) != 2 || parts[0] != "address" || parts[1] == "" {
 		return "404\n"
 	}
 

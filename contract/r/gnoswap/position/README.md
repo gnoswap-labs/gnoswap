@@ -19,9 +19,9 @@ The root `Render("")` delegates to the active implementation and shows realm ide
 Supported routes:
 
 - `""`: the root summary. It reads only aggregate position-store metadata.
-- `position/<id>`: one position record, selected by a single keyed lookup. The `<id>` must be an unsigned decimal `uint64`; malformed, overflowing, missing, and extra-segment paths return `404`.
+- `id/<id>`: one position record, selected by a single keyed lookup. The `<id>` must be an unsigned decimal `uint64`; malformed, overflowing, missing, and extra-segment paths return `404`.
 
-For example, `/r/gnoswap/position:position/1` shows position 1. Detail pages show
+For example, `/r/gnoswap/position:id/1` shows position 1. Detail pages show
 the ID, burn status, NFT owner when available, token realm links, fee tier, tick
 range, liquidity, and stored fee accounting.
 

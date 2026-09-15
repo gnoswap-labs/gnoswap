@@ -36,8 +36,8 @@ func (p *positionV1) renderSummary() string {
 	out += md.Paragraph(
 		"Position records remain stored after burning. The record count includes burned " +
 			"positions and is not a count of active liquidity positions. Use " +
-			md.InlineCode("position/<id>") + " for one stored record, for example " +
-			md.Link("position/1", "/r/gnoswap/position:position/1") +
+			md.InlineCode("id/<id>") + " for one stored record, for example " +
+			md.Link("id/1", "/r/gnoswap/position:id/1") +
 			". The detail route performs one keyed lookup and does not enumerate positions or recompute claimable values.",
 	)
 	runtimeTable := mdtable.Table{
@@ -125,7 +125,7 @@ func (p *positionV1) renderPositionDetail(positionID uint64, stored positionRoot
 }
 
 func parsePositionRenderPath(path string) (uint64, bool) {
-	const prefix = "position/"
+	const prefix = "id/"
 	if len(path) <= len(prefix) || path[:len(prefix)] != prefix {
 		return 0, false
 	}
