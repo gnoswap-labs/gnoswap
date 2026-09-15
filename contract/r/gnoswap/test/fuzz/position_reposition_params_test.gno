@@ -4,9 +4,9 @@ import (
 	"math"
 
 	"gno.land/p/gnoswap/fuzz"
+	"gno.land/p/gnoswap/utils"
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/gnoswap/utils"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"

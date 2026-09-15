@@ -38,10 +38,8 @@ func assertf(ok bool, format string, args ...any) {
 	}
 }
 
-type (
-	invalidData string
-	stopTest    string
-)
+type invalidData string
+type stopTest string
 
 // T is similar to testing.T, but with extra bookkeeping for property-based tests.
 type T struct {

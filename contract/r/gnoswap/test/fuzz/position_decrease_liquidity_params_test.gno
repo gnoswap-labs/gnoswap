@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/fuzz"
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/p/gnoswap/utils"
+	u256 "gno.land/p/gnoswap/uint256"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/pool"

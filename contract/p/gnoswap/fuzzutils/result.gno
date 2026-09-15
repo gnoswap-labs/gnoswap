@@ -61,7 +61,7 @@ func (r *Result) PrintLog(t fuzz.TestingT) {
 	t.Logf("\n=== Error Messages ===")
 
 	if r.ErrorMessagesCount() > 0 {
-		for i := range r.errorMessages {
+		for i, _ := range r.errorMessages {
 			paramStr := "failed load"
 
 			if r.params[i] != nil {
@@ -77,7 +77,8 @@ func (r *Result) PrintLog(t fuzz.TestingT) {
 	t.Logf("\n=== Unexpected Result Logs ===")
 
 	if r.UnexpectedResultsCount() > 0 {
-		for i := range r.unexpectedResults {
+
+		for i, _ := range r.unexpectedResults {
 			paramStr := "failed load"
 
 			if r.params[i] != nil {

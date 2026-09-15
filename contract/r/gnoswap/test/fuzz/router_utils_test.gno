@@ -100,7 +100,7 @@ func generatePoolIdentifier(f *fuzz.T, token0Path, token1Path string) string {
 func generateIntermediateToken(f *fuzz.T, currentToken, targetToken string) string {
 	availableTokens := make(map[string]bool)
 
-	for token := range defaultTokenPaths {
+	for token, _ := range defaultTokenPaths {
 		if token != currentToken && token != targetToken {
 			availableTokens[token] = true
 		}
@@ -117,7 +117,7 @@ func generateIntermediateToken(f *fuzz.T, currentToken, targetToken string) stri
 func generateIntermediateTokenWithPairs(f *fuzz.T, currentToken, targetToken string, usedPairs map[string]bool) string {
 	availableTokens := make(map[string]bool)
 
-	for token := range defaultTokenPaths {
+	for token, _ := range defaultTokenPaths {
 		if token == currentToken || token == targetToken {
 			continue
 		}
