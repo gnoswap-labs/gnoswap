@@ -545,8 +545,7 @@ func (s *stakerV1) settleHaltedEmission(_ int, rlm realm, target *collectTarget,
 		return
 	}
 
-	// Mark the emission collect as collected.
-	// This is a no-op for checkpoint targets.
+	// Mark the checkpoint's emission source as collected.
 	s.markEmissionCollected(0, rlm, target)
 }
 
