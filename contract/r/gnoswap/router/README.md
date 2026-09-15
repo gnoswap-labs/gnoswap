@@ -9,7 +9,7 @@ Router handles swap execution across multiple pools, finding optimal paths and m
 ## Gnoweb
 
 The root `Render("")` delegates to the active implementation. It exposes separate
-status and read-only swap-fee sections. Native Gnoweb command-preview forms show
+status and read-only swap-fee sections. Native Gnoweb execution forms show
 one user-facing swap action per page:
 
 - `""`: `ExactInSingleSwapRoute`
@@ -17,12 +17,13 @@ one user-facing swap action per page:
 - `"swap/exact-out-single"`: `ExactOutSingleSwapRoute`
 - `"swap/exact-out"`: `ExactOutSwapRoute`
 
-Forms only prepare commands; they do not sign or broadcast transactions. Token
-amounts are integer base units. Set `amountOutMin` or `amountInMax` for slippage
+Input placeholders show token-key, route, and percentage examples without
+separate explanatory paragraphs. Token amounts are integer base units.
+Set `amountOutMin` or `amountInMax` for slippage
 protection, use a future Unix `deadline`, and set multi-route `quoteArr`
 percentages to sum to 100. Approve each input GRC20 token for the router realm
-before swapping. The single-route price limit accepts decimal `sqrtPriceLimitX96`;
-`0` disables it.
+before swapping. The single-route price limit accepts `sqrtPriceLimitX96` as a
+base-10 Q64.96 square-root price; `0` disables it.
 
 No privileged fee-setting form, guidance route, or navigation link is exposed.
 `SetSwapFee` itself is unchanged. No internal callback form is exposed.
