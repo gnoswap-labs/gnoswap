@@ -305,6 +305,17 @@ func (s *stakerV1) calculatePositionReward(param *calculatePositionRewardParam) 
 	return rewards, ctx.update, nil
 }
 
+// calculateExternalPositionRewards computes all of a position's external incentive rewards WITHOUT
+// mutating persisted state. Used by the combined collect path while GNS emission is halted.
+func (s *stakerV1) calculateExternalPositionRewards(param *calculatePositionRewardParam) ([]Reward, positionRewardUpdate) {
+	ctx := s.newPositionRewardContext(param)
+	rewards := ctx.newRewards()
+
+	ctx.computeExternalRewards(param, rewards)
+
+	return rewards, ctx.update
+}
+
 // calculateInternalPositionReward computes only a position's per-warmup GNS emission rewards, WITHOUT
 // mutating persisted state. Used by the emission collect path.
 func (s *stakerV1) calculateInternalPositionReward(param *calculatePositionRewardParam) ([]Reward, positionRewardUpdate, error) {

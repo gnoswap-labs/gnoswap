@@ -654,13 +654,15 @@ func (s *stakerV1) newRewardCollectParam(target *collectTarget, currentTime, blo
 // collecting one side leaves the other side fully accruable.
 //
 // State Transition:
-//  1. Emission is minted and distributed so the staker holds the GNS to pay out
+//  1. Emission is minted and distributed so the staker holds the GNS to pay out; when emission is
+//     halted, collection returns without consuming the accrued reward
 //  2. Warm-up ratios are applied and the emission reward is split into user / penalty amounts
 //  3. GNS is transferred to the owner, penalties and unclaimable amounts to the community pool
 //  4. The deposit's internal lastCollectTime is advanced
 //
 // Requirements:
-//   - Contract must not be halted
+//   - Withdrawals must not be halted
+//   - An emission halt returns zero without advancing internal reward state
 //   - Caller must be the position owner
 //   - Position must be staked (have a deposit record)
 //
@@ -675,7 +677,10 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 
 	target := s.resolveCollectTarget(positionId, rlm.Previous().Address())
 
-	en.MintAndDistributeGns(cross(rlm))
+	_, emissionActive := en.MintAndDistributeGns(cross(rlm))
+	if !emissionActive {
+		return 0, 0
+	}
 
 	currentTime := target.currentTime
 	blockHeight := runtime.ChainHeight()
@@ -761,11 +766,12 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 // internal GNS emission and external incentive rewards.
 //
 // It is the "collect everything" entry point kept for callers that do not want to choose a side. It
-// calculates both sides in one pass and delivers each incentive, then the emission reward, through the
-// same delivery functions the single-source entry points use.
+// delivers each incentive, then the emission reward, through the same delivery functions the
+// single-source entry points use. During an emission halt, it skips internal calculation, state updates,
+// and delivery while continuing to settle external incentives.
 //
 // Requirements:
-//   - Contract must not be halted
+//   - Withdrawals must not be halted
 //   - Caller must be the position owner
 //   - Position must be staked (have a deposit record)
 //
@@ -781,19 +787,28 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 	target := s.resolveCollectTarget(positionId, rlm.Previous().Address())
 
-	en.MintAndDistributeGns(cross(rlm))
+	_, emissionActive := en.MintAndDistributeGns(cross(rlm))
 
 	currentTime := target.currentTime
 	blockHeight := runtime.ChainHeight()
-
-	// One calculation and one state update cover both reward sources.
 	rewardParam := s.newRewardCollectParam(target, currentTime, blockHeight)
-	rewards, rewardUpdate, err := s.calculatePositionReward(rewardParam)
-	if err != nil {
-		panic(err)
+
+	var (
+		rewards      []Reward
+		rewardUpdate positionRewardUpdate
+	)
+	if emissionActive {
+		var err error
+		rewards, rewardUpdate, err = s.calculatePositionReward(rewardParam)
+		if err != nil {
+			panic(err)
+		}
+		s.updatePositionReward(rewardParam, rewardUpdate)
+	} else {
+		rewards, rewardUpdate = s.calculateExternalPositionRewards(rewardParam)
+		s.updateExternalPositionReward(rewardParam, rewardUpdate)
 	}
 	reward := aggregateRewards(rewards)
-	s.updatePositionReward(rewardParam, rewardUpdate)
 
 	ctx := s.newCollectContext(0, rlm, target, currentTime, blockHeight)
 
@@ -817,9 +832,12 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		toUserExternalPenalty[rewardToken] = gnsmath.SafeAddInt64(toUserExternalPenalty[rewardToken], rewardPenalty)
 	}
 
-	internalRewardToUser, internalRewardPenalty := s.deliverEmissionReward(0, rlm, ctx, reward)
-
-	s.markEmissionCollected(0, rlm, target)
+	internalRewardToUser := int64(0)
+	internalRewardPenalty := int64(0)
+	if emissionActive {
+		internalRewardToUser, internalRewardPenalty = s.deliverEmissionReward(0, rlm, ctx, reward)
+		s.markEmissionCollected(0, rlm, target)
+	}
 
 	return utils.FormatInt(internalRewardToUser), utils.FormatInt(internalRewardPenalty), toUserExternalReward, toUserExternalPenalty
 }
