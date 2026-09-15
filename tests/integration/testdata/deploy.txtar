@@ -220,7 +220,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/launchpad -pkg
 # stdout 'STORAGE FEE:    (1|2)[0-9]{7}ugnot'
 
 ### deploy referral (expected gas fee: 17046ugnot, gas wanted: 17046000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/referral -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/referral/v1 -pkgpath gno.land/r/gnoswap/referral/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   17[0-9]{6}'
 # stdout 'STORAGE DELTA:  (3|4)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (3|4)[0-9]{6}ugnot'

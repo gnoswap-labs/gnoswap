@@ -31,7 +31,7 @@ loadpkg gno.land/r/gnoswap/common/v1
 loadpkg gno.land/p/nt/grc721/v0
 loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/gnoswap/halt/v1
-loadpkg gno.land/r/gnoswap/referral
+loadpkg gno.land/r/gnoswap/referral/v1
 loadpkg gno.land/r/gnoswap/gns
 loadpkg gno.land/r/gnoswap/gnft
 loadpkg gno.land/r/gnoswap/gov/xgns

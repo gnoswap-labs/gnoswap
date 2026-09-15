@@ -146,7 +146,7 @@ deploy-protocol_fee:
 
 deploy-referral:
 	$(info ************ deploy referral ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/referral -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20465ugnot -gas-wanted 20465000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/referral/v1 -pkgpath gno.land/r/gnoswap/referral/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20465ugnot -gas-wanted 20465000 -memo "" gnoswap_admin
 	@echo
 
 deploy-halt-realm:

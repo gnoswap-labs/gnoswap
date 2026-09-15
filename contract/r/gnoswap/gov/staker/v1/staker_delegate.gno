@@ -15,7 +15,7 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt/v1"
-	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/referral/v1"
 )
 
 // Spoofed-realm guards on entry points reject any caller that fabricates a

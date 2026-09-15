@@ -92,7 +92,7 @@
 // ```go
 //
 //	import (
-//	    "gno.land/r/gnoswap/referral"
+//	    "gno.land/r/gnoswap/referral/v1"
 //	)
 //
 //	func SwapWithReferral(cur realm, referralCode string, ...) {
@@ -113,7 +113,7 @@
 // ```go
 //
 //	import (
-//	    "gno.land/r/gnoswap/referral"
+//	    "gno.land/r/gnoswap/referral/v1"
 //	)
 //
 //	func DistributeRewards(user address, amount uint64) {

@@ -14,7 +14,7 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/gnoswap/position"
-	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/referral/v1"
 
 	_ "gno.land/r/gnoswap/rbac/v1"
 

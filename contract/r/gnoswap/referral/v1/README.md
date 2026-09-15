@@ -32,7 +32,7 @@ Returns the address of the referral contract. Use this address as the referral p
 package example
 
 import (
-    "gno.land/r/gnoswap/referral"
+    "gno.land/r/gnoswap/referral/v1"
 )
 
 // RegisterUserReferral registers a referral relationship for a user.
@@ -48,7 +48,7 @@ func RegisterUserReferral(cur realm, userAddr, referrerAddr address) bool {
 package example
 
 import (
-    "gno.land/r/gnoswap/referral"
+    "gno.land/r/gnoswap/referral/v1"
 )
 
 // RemoveUserReferral removes the referral relationship for a user.
@@ -64,7 +64,7 @@ func RemoveUserReferral(cur realm, userAddr address) bool {
 package example
 
 import (
-    "gno.land/r/gnoswap/referral"
+    "gno.land/r/gnoswap/referral/v1"
 )
 
 // GetUserReferrer returns the referrer address for a user.

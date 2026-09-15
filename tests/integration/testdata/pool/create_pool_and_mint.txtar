@@ -23,7 +23,7 @@ loadpkg gno.land/r/gnoswap/rbac/v1
 loadpkg gno.land/r/gnoswap/halt/v1
 loadpkg gno.land/r/gnoswap/common
 loadpkg gno.land/r/gnoswap/common/v1
-loadpkg gno.land/r/gnoswap/referral
+loadpkg gno.land/r/gnoswap/referral/v1
 
 loadpkg gno.land/r/gnoswap/gns
 loadpkg gno.land/r/gnoswap/gnft
