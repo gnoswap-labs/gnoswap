@@ -78,7 +78,7 @@
 //
 // import (
 //
-//	"gno.land/p/gnoswap/version_manager"
+//	"gno.land/p/gnoswap/version_manager/v1"
 //	"gno.land/p/gnoswap/store/v1"
 //
 // )

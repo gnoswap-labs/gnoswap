@@ -16,7 +16,7 @@ loadpkg gno.land/p/gnoswap/int256/v1
 loadpkg gno.land/p/gnoswap/consts/v1
 loadpkg gno.land/p/gnoswap/gnsmath/v1
 loadpkg gno.land/p/gnoswap/store/v1
-loadpkg gno.land/p/gnoswap/version_manager
+loadpkg gno.land/p/gnoswap/version_manager/v1
 loadpkg gno.land/p/gnoswap/utils/v1
 
 loadpkg gno.land/r/gnoswap/access
@@ -36,7 +36,7 @@ gnokey maketx addpkg -pkgdir $WORK/grc20reg_v1 -pkgpath gno.land/r/nt/grc20reg/v
 gnokey maketx addpkg -pkgdir $WORK/common_caller -pkgpath gno.land/r/test/common_caller -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 
 gnokey maketx addpkg -pkgdir $WORK/common_v2 -pkgpath gno.land/r/gnoswap/common/v2 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stdout 'EVENTS:     \[\{\"type\":\"RegisterInitializer\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"registeredPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager\"\}'
+stdout 'EVENTS:     \[\{\"type\":\"RegisterInitializer\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"registeredPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager/v1\"\}'
 ## Non-admin cannot activate an implementation
 ! gnokey maketx call -pkgpath gno.land/r/gnoswap/common -func UpgradeImpl -args "gno.land/r/gnoswap/common/v2" -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test alice
 stderr 'unauthorized: caller .* is not admin or governance'
@@ -52,7 +52,7 @@ stdout '\(\"gno.land/r/gnoswap/common/v1\" string\)'
 ## Admin can
 gnokey maketx call -pkgpath gno.land/r/gnoswap/common -func UpgradeImpl -args "gno.land/r/gnoswap/common/v2" -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stdout 'OK!'
-stdout 'EVENTS:     \[\{\"type\":\"ChangeImplementation\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"previousPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v1\"\},\{\"key\":\"newPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager\"\}'
+stdout 'EVENTS:     \[\{\"type\":\"ChangeImplementation\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"previousPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v1\"\},\{\"key\":\"newPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager/v1\"\}'
 gnokey query vm/qeval --data "gno.land/r/gnoswap/common.GetImplementationPackagePath()"
 stdout '\(\"gno.land/r/gnoswap/common/v2\" string\)'
 

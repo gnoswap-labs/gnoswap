@@ -1,5 +1,5 @@
 loadpkg gno.land/p/gnoswap/store/v1
-loadpkg gno.land/p/gnoswap/version_manager
+loadpkg gno.land/p/gnoswap/version_manager/v1
 loadpkg gno.land/p/gnoswap/utils/v1
 
 gnoland start
@@ -20,7 +20,7 @@ package parent
 
 import (
 	"gno.land/p/gnoswap/store/v1"
-	"gno.land/p/gnoswap/version_manager"
+	"gno.land/p/gnoswap/version_manager/v1"
 )
 
 var vm version_manager.VersionManager

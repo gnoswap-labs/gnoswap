@@ -36,7 +36,7 @@ type ProtocolFee interface {
 // protocol_fee/protocol_fee.gno
 package protocol_fee
 
-import "gno.land/p/gnoswap/version_manager"
+import "gno.land/p/gnoswap/version_manager/v1"
 import "gno.land/p/gnoswap/store/v1"
 
 var manager version_manager.VersionManager

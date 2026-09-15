@@ -16,7 +16,7 @@ loadpkg gno.land/p/gnoswap/int256/v1
 loadpkg gno.land/p/gnoswap/consts/v1
 loadpkg gno.land/p/gnoswap/gnsmath/v1
 loadpkg gno.land/p/gnoswap/store/v1
-loadpkg gno.land/p/gnoswap/version_manager
+loadpkg gno.land/p/gnoswap/version_manager/v1
 loadpkg gno.land/p/gnoswap/utils/v1
 
 loadpkg gno.land/r/gnoswap/access
@@ -104,7 +104,7 @@ gnokey query vm/qeval --data "gno.land/r/gnoswap/position.GetPositionTokensOwed1
 ## Upgrade to v3 implementation
 gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func UpgradeImpl -args gno.land/r/gnoswap/pool/v3_valid -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 # stdout OK!
-# stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v3_valid\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
+# stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/pool/v3_valid\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager/v1\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/pool\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/pool.GetImplementationPackagePath()"
 # stdout "gno.land/r/gnoswap/pool/v3_valid"

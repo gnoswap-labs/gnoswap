@@ -20,7 +20,7 @@ loadpkg gno.land/p/gnoswap/int256/v1
 loadpkg gno.land/p/gnoswap/consts/v1
 loadpkg gno.land/p/gnoswap/gnsmath/v1
 loadpkg gno.land/p/gnoswap/store/v1
-loadpkg gno.land/p/gnoswap/version_manager
+loadpkg gno.land/p/gnoswap/version_manager/v1
 loadpkg gno.land/p/gnoswap/utils/v1
 
 loadpkg gno.land/r/gnoswap/access
@@ -63,10 +63,10 @@ gnokey maketx addpkg -pkgdir $WORK/token_v1 -pkgpath gno.land/r/test/token_v1 -g
 stdout 'EVENTS:     \[\{\"type\":\"NewToken\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_v1\.TKV1\.v1\"\},\{\"key\":\"name\",\"value\":\"TokenV1\"\},\{\"key\":\"symbol\",\"value\":\"TKV1\"\},\{\"key\":\"decimals\",\"value\":\"6\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v1\"\},\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_v1\.TKV1\.v1\"\},\{\"key\":\"from\",\"value\":\"\"\},\{\"key\":\"to\",\"value\":\"g1u97mvf4yjxf5anvum8pfzp9w3aa3c7upyfta2r\"\},\{\"key\":\"value\",\"value\":\"1000000\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v1\"\},\{\"type\":\"Transfer\",\"attrs\":\[\{\"key\":\"token\",\"value\":\"gno\.land/r/test/token_v1\.TKV1\.v1\"\},\{\"key\":\"from\",\"value\":\"\"\},\{\"key\":\"to\",\"value\":\"g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5\"\},\{\"key\":\"value\",\"value\":\"1000000000\"\}\],\"pkg_path\":\"gno\.land/p/nt/grc20/v1\"\},\{\"type\":\"register\",\"attrs\":\[\{\"key\":\"token_path\",\"value\":\"gno\.land/r/test/token_v1\.TKV1\"\},\{\"key\":\"pkgpath\",\"value\":\"gno\.land/r/test/token_v1\"\},\{\"key\":\"symbol\",\"value\":\"TKV1\"\}\],\"pkg_path\":\"gno\.land/r/nt/grc20reg/v1\"\}'
 ## Register and activate common/v2 (v0 has priority over v1)
 gnokey maketx addpkg -pkgdir $WORK/common_v2 -pkgpath gno.land/r/gnoswap/common/v2 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stdout 'EVENTS:     \[\{\"type\":\"RegisterInitializer\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"registeredPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager\"\}'
+stdout 'EVENTS:     \[\{\"type\":\"RegisterInitializer\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"registeredPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager/v1\"\}'
 gnokey maketx call -pkgpath gno.land/r/gnoswap/common -func UpgradeImpl -args "gno.land/r/gnoswap/common/v2" -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
 stdout 'OK!'
-stdout 'EVENTS:     \[\{\"type\":\"ChangeImplementation\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"previousPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v1\"\},\{\"key\":\"newPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager\"\}'
+stdout 'EVENTS:     \[\{\"type\":\"ChangeImplementation\",\"attrs\":\[\{\"key\":\"domainPath\",\"value\":\"gno\.land/r/gnoswap/common\"\},\{\"key\":\"previousPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v1\"\},\{\"key\":\"newPackagePath\",\"value\":\"gno\.land/r/gnoswap/common/v2\"\}\],\"pkg_path\":\"gno\.land/p/gnoswap/version_manager/v1\"\}'
 gnokey query vm/qeval --data "gno.land/r/gnoswap/common.GetImplementationPackagePath()"
 stdout '\(\"gno.land/r/gnoswap/common/v2\" string\)'
 

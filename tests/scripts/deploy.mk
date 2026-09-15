@@ -66,7 +66,7 @@ deploy-store:
 
 deploy-version_manager:
 	$(info ************ deploy version_manager ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/version_manager -pkgpath gno.land/p/gnoswap/version_manager -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 16766ugnot -gas-wanted 16766000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/version_manager/v1 -pkgpath gno.land/p/gnoswap/version_manager/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 16766ugnot -gas-wanted 16766000 -memo "" gnoswap_admin
 	@echo
 
 deploy-utils:

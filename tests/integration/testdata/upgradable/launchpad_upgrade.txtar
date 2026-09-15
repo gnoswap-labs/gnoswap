@@ -23,7 +23,7 @@ loadpkg gno.land/p/gnoswap/int256/v1
 loadpkg gno.land/p/gnoswap/consts/v1
 loadpkg gno.land/p/gnoswap/gnsmath/v1
 loadpkg gno.land/p/gnoswap/store/v1
-loadpkg gno.land/p/gnoswap/version_manager
+loadpkg gno.land/p/gnoswap/version_manager/v1
 loadpkg gno.land/p/gnoswap/utils/v1
 
 loadpkg gno.land/r/gnoswap/access
@@ -70,7 +70,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func UpgradeImpl -args
 # stdout 'GAS USED:   1[0-9]{7}'
 # stdout 'STORAGE DELTA:  [0-9]+ bytes'
 # stdout 'TOTAL TX COST:  1[0-9]{8}ugnot'
-# stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v3_valid\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/launchpad\"}\]'
+# stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v1\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v3_valid\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager/v1\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/launchpad\"}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/launchpad.GetImplementationPackagePath()"
 # stdout "gno.land/r/gnoswap/launchpad/v3_valid"
@@ -84,7 +84,7 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func UpgradeImpl -args
 # stdout 'GAS USED:   1[0-9]{7}'
 # stdout 'STORAGE DELTA:  -[0-9]+ bytes'
 # stdout 'TOTAL TX COST:  9[0-9]{7}ugnot'
-# stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v3_valid\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v1\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/launchpad\",\"refund_withheld\":false}\]'
+# stdout 'EVENTS:     \[{\"type\":\"ChangeImplementation\",\"attrs\":\[{\"key\":\"previousPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v3_valid\"},{\"key\":\"newPackagePath\",\"value\":\"gno.land/r/gnoswap/launchpad/v1\"}\],\"pkg_path\":\"gno.land/p/gnoswap/version_manager/v1\"},.*,\"pkg_path\":\"gno.land/r/gnoswap/launchpad\",\"refund_withheld\":false}\]'
 
 gnokey query vm/qeval --data "gno.land/r/gnoswap/launchpad.GetImplementationPackagePath()"
 # stdout "gno.land/r/gnoswap/launchpad/v1"
