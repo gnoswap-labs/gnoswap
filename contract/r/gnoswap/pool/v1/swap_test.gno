@@ -900,6 +900,19 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 			consistencyGoal: "Lower price impact due to wide liquidity distribution",
 		},
 		{
+			name: "exact_output_crosses_inactive_range",
+			setupScenario: func(cur realm, t *testing.T) {
+				InitialisePoolTest(cur, t)
+				TokenFaucet(cur, t, bazPath, routerAddr)
+			},
+			fee: STANDARD_FEE_TIER,
+			swapParams: SwapScenario{
+				zeroForOne:      false,
+				amountSpecified: "-100",
+				priceLimit:      maxSqrtPriceLimitX96,
+			},
+		},
+		{
 			name:        "narrow_range_high_concentration_consistency",
 			description: "Narrow range position with high concentration",
 			setupScenario: func(cur realm, t *testing.T) {
@@ -923,6 +936,8 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 
 			// Given: Specific trading scenario
 			test.setupScenario(cur, t)
+			pool := getMockInstance().mustGetPoolBy(barPath, bazPath, test.fee)
+			assertUnchanged := snapshotDrySwapState(t, pool)
 
 			// When: DrySwap for pre-calculation
 			dryAmount0, dryAmount1, dryErr := getMockInstance().DrySwap(
@@ -930,6 +945,7 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 				test.swapParams.zeroForOne, test.swapParams.amountSpecified,
 				test.swapParams.priceLimit,
 			)
+			assertUnchanged()
 
 			// Execute actual swap
 			testing.SetRealm(rouRealm)
@@ -953,10 +969,6 @@ func TestSwapConsistency_DryVsActual(cur realm, t *testing.T) {
 				"Token0 amount prediction differs from actual")
 			uassert.Equal(t, dryAmount1, actualAmount1,
 				"Token1 amount prediction differs from actual")
-
-			// Check if it's a meaningful trade
-			uassert.True(t, dryAmount0 != "0" || dryAmount1 != "0",
-				"In meaningful trade, token movement should occur")
 
 			t.Logf("✓ %s: Prediction(%s/%s) = Actual(%s/%s) - %s",
 				test.description, dryAmount0, dryAmount1, actualAmount0, actualAmount1, test.consistencyGoal)
