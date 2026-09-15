@@ -563,6 +563,10 @@ const (
 
 type commonV2 struct{}
 
+func (c *commonV2) Render(path string) string {
+	return ""
+}
+
 func NewCommonV2() common.ICommon {
 	return &commonV2{}
 }
