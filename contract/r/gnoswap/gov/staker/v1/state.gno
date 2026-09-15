@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 

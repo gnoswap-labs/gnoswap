@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"

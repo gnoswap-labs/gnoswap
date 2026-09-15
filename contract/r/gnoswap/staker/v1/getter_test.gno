@@ -7,8 +7,8 @@ import (
 	rotree "gno.land/p/nt/bptree/rotree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/gnoswap/utils"
+	u256 "gno.land/p/gnoswap/uint256/v1"
+	"gno.land/p/gnoswap/utils/v1"
 
 	sr "gno.land/r/gnoswap/staker"
 )

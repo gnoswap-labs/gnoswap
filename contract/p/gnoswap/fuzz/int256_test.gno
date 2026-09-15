@@ -3,8 +3,8 @@ package fuzz
 import (
 	"testing"
 
-	"gno.land/p/gnoswap/int256"
-	"gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/int256/v1"
+	"gno.land/p/gnoswap/uint256/v1"
 )
 
 func TestInt256_Uint256(t *testing.T) {

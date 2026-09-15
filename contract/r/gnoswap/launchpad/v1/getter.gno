@@ -7,7 +7,7 @@ import (
 	rotree "gno.land/p/nt/bptree/rotree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/uint256/v1"
 	"gno.land/r/gnoswap/launchpad"
 )
 

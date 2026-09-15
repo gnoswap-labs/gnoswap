@@ -3,7 +3,7 @@ package governance
 import (
 	"strings"
 
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/gov/governance"

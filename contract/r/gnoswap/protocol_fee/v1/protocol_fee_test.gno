@@ -9,13 +9,13 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
-	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
+	_ "gno.land/r/gnoswap/rbac/v1" // Initialize contract roles
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/obl"

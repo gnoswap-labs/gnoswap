@@ -3,7 +3,7 @@ package staker
 import (
 	"strconv"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/p/onbloc/json/v0"

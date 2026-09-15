@@ -8,12 +8,12 @@ import (
 	"gno.land/p/nt/grc20/v0"
 	"gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/nt/grc20reg/v0"
 
-	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
-	_ "gno.land/r/gnoswap/rbac"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 )
 
 const (

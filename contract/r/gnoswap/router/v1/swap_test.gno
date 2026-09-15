@@ -5,7 +5,7 @@ import (
 
 	uassert "gno.land/p/nt/uassert/v0"
 
-	i256 "gno.land/p/gnoswap/int256"
+	i256 "gno.land/p/gnoswap/int256/v1"
 )
 
 // Test swap_callback.gno functions

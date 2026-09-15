@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/gnoswap/launchpad"
 )
 

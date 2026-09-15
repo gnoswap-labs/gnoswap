@@ -8,15 +8,15 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/onbloc/obl"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/gnoswap/utils"
-	_ "gno.land/r/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/p/gnoswap/utils/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 )
 
 func TestLaunchpadWithdraw_CollectDepositGns(cur realm, t *testing.T) {

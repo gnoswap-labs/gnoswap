@@ -5,21 +5,21 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/p/nt/testutils/v0"
 	"gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	pl "gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
 	sr "gno.land/r/gnoswap/staker"
 	"gno.land/r/onbloc/bar"
 
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/position/v1"

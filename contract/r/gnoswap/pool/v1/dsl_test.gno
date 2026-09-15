@@ -5,13 +5,13 @@ import (
 	"math"
 	"testing"
 
-	i256 "gno.land/p/gnoswap/int256"
-	prabc "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256/v1"
+	prabc "gno.land/p/gnoswap/rbac/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 )

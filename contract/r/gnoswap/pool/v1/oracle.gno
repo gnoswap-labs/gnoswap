@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"gno.land/p/gnoswap/consts"
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/consts/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	pl "gno.land/r/gnoswap/pool"
 )
 

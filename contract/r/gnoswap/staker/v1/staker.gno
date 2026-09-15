@@ -9,15 +9,15 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/p/gnoswap/gnsmath"
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/p/gnoswap/utils/v1"
 
-	"gno.land/r/gnoswap/access"
-	_ "gno.land/r/gnoswap/rbac"
+	"gno.land/r/gnoswap/access/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	sr "gno.land/r/gnoswap/staker"
 
 	"gno.land/r/gnoswap/gns"
@@ -25,10 +25,10 @@ import (
 	en "gno.land/r/gnoswap/emission"
 	pn "gno.land/r/gnoswap/position"
 
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 
-	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/referral/v1"
 )
 
 const ZERO_ADDRESS = address("")

@@ -7,7 +7,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // formatInt returns the string representation of the int64 value.

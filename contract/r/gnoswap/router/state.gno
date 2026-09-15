@@ -4,8 +4,8 @@ import (
 	"chain"
 	"errors"
 
-	"gno.land/p/gnoswap/store"
-	"gno.land/p/gnoswap/version_manager"
+	"gno.land/p/gnoswap/store/v1"
+	"gno.land/p/gnoswap/version_manager/v1"
 )
 
 const domainPath = "gno.land/r/gnoswap/router"

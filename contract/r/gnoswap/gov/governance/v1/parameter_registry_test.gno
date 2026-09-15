@@ -151,8 +151,8 @@ func TestCreateParameterHandlers(cur realm, t *testing.T) {
 		pkgPath  string
 		function string
 	}{
-		{"gno.land/r/gnoswap/halt", "SetHaltLevel"},
-		{"gno.land/r/gnoswap/community_pool", "TransferToken"},
+		{"gno.land/r/gnoswap/halt/v1", "SetHaltLevel"},
+		{"gno.land/r/gnoswap/community_pool/v1", "TransferToken"},
 		{"gno.land/r/gnoswap/emission", "ChangeDistributionPct"},
 		{"gno.land/r/gnoswap/protocol_fee", "UpgradeImpl"},
 		{"gno.land/r/gnoswap/common", "UpgradeImpl"},
@@ -406,7 +406,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - community_pool TransferToken",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("valid").String() + ",1000000",
+			executions:    "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("valid").String() + ",1000000",
 			expectedError: false,
 		},
 		// emission
@@ -433,13 +433,13 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - halt SetHaltLevel",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			executions:    "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
 			expectedError: false,
 		},
 		{
 			name:          "Success - halt SetOperationStatus",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*pool,true",
+			executions:    "gno.land/r/gnoswap/halt/v1*EXE*SetOperationStatus*EXE*pool,true",
 			expectedError: false,
 		},
 		// pool
@@ -484,19 +484,19 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - rbac RegisterRole",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*newRole," + testutils.TestAddress("roleAddr").String(),
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*RegisterRole*EXE*newRole," + testutils.TestAddress("roleAddr").String(),
 			expectedError: false,
 		},
 		{
 			name:          "Success - rbac UpdateRoleAddress",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*existingRole," + testutils.TestAddress("newRoleAddr").String(),
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*UpdateRoleAddress*EXE*existingRole," + testutils.TestAddress("newRoleAddr").String(),
 			expectedError: false,
 		},
 		{
 			name:          "Success - rbac RemoveRole",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*RemoveRole*EXE*roleToRemove",
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*RemoveRole*EXE*roleToRemove",
 			expectedError: false,
 		},
 		// router
@@ -565,7 +565,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - multiple valid executions",
 			numToExecute:  2,
-			executions:    "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000",
+			executions:    "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000",
 			expectedError: false,
 		},
 
@@ -580,21 +580,21 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - invalid execution count (zero)",
 			numToExecute:          0,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
 			expectedError:         true,
 			expectedErrorContains: "numToExecute is less than or equal to 0",
 		},
 		{
 			name:                  "Failure - execution count mismatch",
 			numToExecute:          2,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
 			expectedError:         true,
 			expectedErrorContains: "executions count (1) does not match numToExecute (2)",
 		},
 		{
 			name:                  "Failure - malformed execution format",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*SetHaltLevel",
+			executions:            "gno.land/r/gnoswap/halt/v1*SetHaltLevel",
 			expectedError:         true,
 			expectedErrorContains: "expected 3 parts (pkgPath, function, params)",
 		},
@@ -608,31 +608,31 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - empty function name",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE**EXE*NONE",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE**EXE*NONE",
 			expectedError:         true,
 			expectedErrorContains: "function name is empty",
 		},
 		{
 			name:         "Failure - exceeds max executions",
 			numToExecute: 11,
-			executions: "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			executions: "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
 			expectedError:         true,
 			expectedErrorContains: "numToExecute is greater than 10",
 		},
 		{
 			name:                  "Failure - exceeds max executions takes precedence over count mismatch",
 			numToExecute:          11,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
 			expectedError:         true,
 			expectedErrorContains: "numToExecute is greater than 10",
 		},
@@ -648,14 +648,14 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - non-existent function in valid package",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE*NonExistentFunction*EXE*param1",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*NonExistentFunction*EXE*param1",
 			expectedError:         true,
-			expectedErrorContains: "handler not found for gno.land/r/gnoswap/halt:NonExistentFunction",
+			expectedErrorContains: "handler not found for gno.land/r/gnoswap/halt/v1:NonExistentFunction",
 		},
 		{
 			name:                  "Failure - mixed valid and invalid executions",
 			numToExecute:          2,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/fake*EXE*FakeFunction*EXE*param1",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/fake*EXE*FakeFunction*EXE*param1",
 			expectedError:         true,
 			expectedErrorContains: "handler not found for gno.land/r/gnoswap/fake:FakeFunction",
 		},
@@ -664,16 +664,16 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - halt SetHaltLevel wrong param count",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*param1,param2",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*param1,param2",
 			expectedError:         true,
-			expectedErrorContains: "expected 1 parameters for gno.land/r/gnoswap/halt:SetHaltLevel",
+			expectedErrorContains: "expected 1 parameters for gno.land/r/gnoswap/halt/v1:SetHaltLevel",
 		},
 		{
 			name:                  "Failure - community_pool TransferToken wrong param count",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,g1address",
+			executions:            "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,g1address",
 			expectedError:         true,
-			expectedErrorContains: "expected 3 parameters for gno.land/r/gnoswap/community_pool:TransferToken",
+			expectedErrorContains: "expected 3 parameters for gno.land/r/gnoswap/community_pool/v1:TransferToken",
 		},
 
 		/* Failure cases - Parameter type validation */
@@ -701,21 +701,21 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - halt SetOperationStatus invalid bool type",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*pool,not_bool",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetOperationStatus*EXE*pool,not_bool",
 			expectedError:         true,
 			expectedErrorContains: "invalid bool value: not_bool",
 		},
 		{
 			name:                  "Failure - community_pool TransferToken empty address",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
+			executions:            "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 		{
 			name:                  "Failure - community_pool TransferToken invalid address",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,invalidAddress,1000000",
+			executions:            "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,invalidAddress,1000000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
@@ -743,35 +743,35 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - rbac RegisterRole empty role address",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*new_role,",
+			executions:            "gno.land/r/gnoswap/rbac/v1*EXE*RegisterRole*EXE*new_role,",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 		{
 			name:                  "Failure - rbac RegisterRole empty role name",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*   ," + testutils.TestAddress("role").String(),
+			executions:            "gno.land/r/gnoswap/rbac/v1*EXE*RegisterRole*EXE*   ," + testutils.TestAddress("role").String(),
 			expectedError:         true,
 			expectedErrorContains: "role name is empty",
 		},
 		{
 			name:                  "Failure - rbac UpdateRoleAddress empty role address",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*router,",
+			executions:            "gno.land/r/gnoswap/rbac/v1*EXE*UpdateRoleAddress*EXE*router,",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 		{
 			name:                  "Failure - rbac UpdateRoleAddress admin role",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String(),
+			executions:            "gno.land/r/gnoswap/rbac/v1*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String(),
 			expectedError:         true,
 			expectedErrorContains: "admin role cannot be updated",
 		},
 		{
 			name:                  "Failure - rbac RemoveRole system role",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/rbac*EXE*RemoveRole*EXE*admin",
+			executions:            "gno.land/r/gnoswap/rbac/v1*EXE*RemoveRole*EXE*admin",
 			expectedError:         true,
 			expectedErrorContains: "system role cannot be removed",
 		},
@@ -785,7 +785,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - community_pool TransferToken non-positive amount",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("recipient").String() + ",-1",
+			executions:            "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("recipient").String() + ",-1",
 			expectedError:         true,
 			expectedErrorContains: "amount must be positive",
 		},
@@ -820,7 +820,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - halt SetHaltLevel invalid level",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*INVALID",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*INVALID",
 			expectedError:         true,
 			expectedErrorContains: "invalid halt level",
 		},

@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
-	i256 "gno.land/p/gnoswap/int256"
+	i256 "gno.land/p/gnoswap/int256/v1"
 )
 
 // Arithmetic Identity Laws Tests

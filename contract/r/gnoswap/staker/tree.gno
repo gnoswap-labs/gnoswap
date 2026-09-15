@@ -1,8 +1,8 @@
 package staker
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"

@@ -4,9 +4,9 @@ import (
 	"chain/runtime"
 	"testing"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 

@@ -140,7 +140,7 @@ func TestProposalData_Validation(cur realm, t *testing.T) {
 		{
 			name:                 "Failure - ParameterChange invalid RBAC admin update",
 			proposalType:         governance.ParameterChange,
-			execution:            governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String()}),
+			execution:            governance.NewExecutionInfo(1, []string{"gno.land/r/gnoswap/rbac/v1*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String()}),
 			expectedError:        true,
 			expectedErrorMessage: "[GNOSWAP-GOVERNANCE-001] invalid input || execution[0]: param[0]: admin role cannot be updated: admin",
 		},

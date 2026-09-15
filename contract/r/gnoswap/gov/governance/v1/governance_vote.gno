@@ -5,13 +5,12 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
 
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/halt"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -42,7 +41,7 @@ import (
 func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) string {
 	access.AssertIsRlmCurrent(0, rlm)
 
-	halt.AssertIsNotHaltedGovernance()
+	assertIsNotHaltedGovernanceForProposal(gv, proposalID)
 
 	// Get current blockchain state and caller information
 	currentHeight := runtime.ChainHeight()

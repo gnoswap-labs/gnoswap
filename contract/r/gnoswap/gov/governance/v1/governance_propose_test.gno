@@ -10,7 +10,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
-	_ "gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -973,8 +973,8 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 				"gno.land/r/gnoswap/staker*EXE*SetMinimumRewardAmount*EXE*600*GOV*" +
 				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*700*GOV*" +
 				"gno.land/r/gnoswap/emission*EXE*SetDistributionStartTime*EXE*800*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*new_role," + testutils.TestAddress("role").String(),
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/rbac/v1*EXE*RegisterRole*EXE*new_role," + testutils.TestAddress("role").String(),
 			shouldFail: false,
 		},
 		{
@@ -1050,7 +1050,7 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 		{
 			name:          "fail - community_pool TransferToken empty recipient",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
+			executions:    "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
 			expectedError: "invalid address",
 			shouldFail:    true,
 		},
@@ -1078,35 +1078,35 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 		{
 			name:          "fail - rbac RegisterRole empty role address",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*new_role,",
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*RegisterRole*EXE*new_role,",
 			expectedError: "invalid address",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - rbac RegisterRole empty role name",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*   ," + testutils.TestAddress("role").String(),
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*RegisterRole*EXE*   ," + testutils.TestAddress("role").String(),
 			expectedError: "role name is empty",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - rbac UpdateRoleAddress empty role address",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*router,",
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*UpdateRoleAddress*EXE*router,",
 			expectedError: "invalid address",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - rbac UpdateRoleAddress admin role",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String(),
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String(),
 			expectedError: "admin role cannot be updated",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - rbac RemoveRole system role",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*RemoveRole*EXE*admin",
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*RemoveRole*EXE*admin",
 			expectedError: "system role cannot be removed",
 			shouldFail:    true,
 		},
@@ -1376,4 +1376,69 @@ func setupTestActiveProposal(cur realm, t *testing.T, gov *governanceV1, propose
 	)
 
 	gov.addProposal(0, cur, proposal)
+}
+
+func TestGovernancePropose_ProposeParameterChange_WhileGovernanceHalted(cur realm, t *testing.T) {
+	tests := []struct {
+		name             string
+		executions       string
+		expectedHasAbort bool
+		expectedAbortMsg string
+	}{
+		{
+			name:             "success - halt recovery proposal is allowed while governance is halted",
+			executions:       "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/halt/v1*EXE*SetOperationStatus*EXE*governance,false",
+			expectedHasAbort: false,
+		},
+		{
+			name:             "fail - mixed targets are blocked while governance is halted",
+			executions:       "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0",
+			expectedHasAbort: true,
+			expectedAbortMsg: "halted: governance",
+		},
+		{
+			name:             "fail - non-halt proposal is blocked while governance is halted",
+			executions:       "gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*0",
+			expectedHasAbort: true,
+			expectedAbortMsg: "halted: governance",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// given
+			gov := newMockGovernance()
+			proposer := testutils.TestAddress("proposer")
+
+			setupTestConfig(0, cur, t, gov, governance.NewConfigPtr(86400, 604800, 86400, 50, 1_000_000_000, 86400, 2592000))
+			setupTestXGnsBalance(cross(cur), t, proposer, 10_000_000_000)
+			setupTestUserVotesWithDelegation(t, gov, map[string]governance.VotingInfo{
+				proposer.String(): governance.NewVotingInfo(5_000_000_000),
+			}, 5_000_000_000)
+
+			testing.SetRealm(govRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+			testing.SetRealm(testing.NewUserRealm(proposer))
+
+			// when
+			numToExecute := int64(len(strings.Split(tt.executions, "*GOV*")))
+			if tt.expectedHasAbort {
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func(cur realm) {
+					mockProposeParameterChange(cross(cur), gov, "Halt Recovery", "Recover from halt", numToExecute, tt.executions)
+				})
+			} else {
+				proposalId := mockProposeParameterChange(cross(cur), gov, "Halt Recovery", "Recover from halt", numToExecute, tt.executions)
+
+				// then
+				proposal, ok := gov.getProposal(proposalId)
+				uassert.Equal(t, true, ok)
+				uassert.Equal(t, true, isHaltRecoveryProposalData(proposal.Data()))
+			}
+
+			// restore halt state so other tests are not affected
+			testing.SetRealm(govRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+		})
+	}
 }

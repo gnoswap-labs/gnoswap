@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 
 	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -22,7 +22,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"

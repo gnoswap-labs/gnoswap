@@ -6,13 +6,13 @@ import (
 	"errors"
 	"time"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
 
 	"gno.land/r/gnoswap/gov/xgns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -272,7 +272,8 @@ func (gv *governanceV1) ProposeParameterChange(
 ) (newProposalId int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
-	halt.AssertIsNotHaltedGovernance()
+	proposalData := NewProposalExecutionData(numToExecute, executions)
+	assertIsNotHaltedGovernanceForProposalData(proposalData)
 
 	prev := rlm.Previous()
 	callerAddress := prev.Address()
@@ -316,7 +317,7 @@ func (gv *governanceV1) ProposeParameterChange(
 		quorumWeight,
 		snapshotTime,
 		governance.NewProposalMetadata(title, description),
-		NewProposalExecutionData(numToExecute, executions),
+		proposalData,
 		callerAddress,
 		xgnsBalance,
 		createdAt,

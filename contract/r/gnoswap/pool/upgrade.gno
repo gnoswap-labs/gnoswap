@@ -3,7 +3,7 @@ package pool
 import (
 	"errors"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 // RegisterInitializer registers a new pool implementation version.

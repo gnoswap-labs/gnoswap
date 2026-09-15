@@ -2,6 +2,7 @@ package governance
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/governance"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 )
 
 func TestGovernanceVote_Vote(cur realm, t *testing.T) {
@@ -885,4 +886,102 @@ func setupTestVotingInfo(cur realm, t *testing.T, gov *governanceV1, proposalID 
 		gov.stakerAccessor = mockAccessor
 	}
 	mockAccessor.userDelegations[voter] = votingInfo.AvailableVoteWeight()
+}
+
+func TestGovernanceVote_HaltRecoveryWhileGovernanceHalted(cur realm, t *testing.T) {
+	newVotableProposal := func(executions string) *governance.Proposal {
+		return governance.NewProposal(
+			1,
+			NewProposalStatus(
+				testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*36).Unix(),
+				10_000_000_000,
+			),
+			governance.NewProposalMetadata("Halt Recovery", "Description"),
+			NewProposalExecutionData(int64(len(strings.Split(executions, "*GOV*"))), executions),
+			testutils.TestAddress("proposer"),
+			1,
+			time.Now().Add(-time.Hour*36).Unix()-testConfig.VotingWeightSmoothingDuration,
+			100,
+		)
+	}
+
+	tests := []struct {
+		name          string
+		proposalID    int64
+		setupProposal func() *governance.Proposal
+		expectedError string
+	}{
+		{
+			name:       "success - vote on halt recovery proposal while governance is halted",
+			proposalID: 1,
+			setupProposal: func() *governance.Proposal {
+				return newVotableProposal("gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE")
+			},
+		},
+		{
+			name:       "success - vote on multi-message halt-only proposal while governance is halted",
+			proposalID: 1,
+			setupProposal: func() *governance.Proposal {
+				return newVotableProposal("gno.land/r/gnoswap/halt/v1*EXE*SetOperationStatus*EXE*governance,false*GOV*" +
+					"gno.land/r/gnoswap/halt/v1*EXE*SetOperationStatus*EXE*withdraw,false")
+			},
+		},
+		{
+			name:       "fail - vote on non-halt proposal while governance is halted",
+			proposalID: 1,
+			setupProposal: func() *governance.Proposal {
+				return newVotableProposal("gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0")
+			},
+			expectedError: "halted: governance",
+		},
+		{
+			name:       "fail - vote on mixed-target proposal while governance is halted",
+			proposalID: 1,
+			setupProposal: func() *governance.Proposal {
+				return newVotableProposal("gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+					"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0")
+			},
+			expectedError: "halted: governance",
+		},
+		{
+			name:          "fail - vote on nonexistent proposal while governance is halted",
+			proposalID:    999,
+			expectedError: "halted: governance",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// given
+			gov := newMockGovernance()
+			voter := testutils.TestAddress("voter")
+
+			if tt.setupProposal != nil {
+				setupTestProposal(cur, t, gov, tt.setupProposal())
+				setupTestVotingInfo(cur, t, gov, tt.proposalID, voter.String(), governance.NewVotingInfo(5_000_000_000))
+			}
+
+			testing.SetRealm(govRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+			testing.SetRealm(testing.NewUserRealm(voter))
+
+			// when & then
+			if tt.expectedError != "" {
+				uassert.AbortsContains(t, cur, tt.expectedError, func(cur realm) {
+					mockVote(cross(cur), gov, tt.proposalID, true)
+				})
+			} else {
+				weight := mockVote(cross(cur), gov, tt.proposalID, true)
+				uassert.Equal(t, "5000000000", weight)
+
+				proposal, _ := gov.getProposal(tt.proposalID)
+				uassert.Equal(t, int64(5_000_000_000), proposal.Status().VoteStatus().YesWeight())
+			}
+
+			// restore halt state so other tests are not affected
+			testing.SetRealm(govRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+		})
+	}
 }

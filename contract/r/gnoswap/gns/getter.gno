@@ -3,7 +3,7 @@ package gns
 import (
 	"time"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 )
 
 // GetMaxEmissionAmount returns the maximum amount of emission allowed.

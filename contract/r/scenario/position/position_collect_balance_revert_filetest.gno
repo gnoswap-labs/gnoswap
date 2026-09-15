@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
-	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/pool"
@@ -21,7 +21,7 @@ import (
 	"gno.land/r/gnoswap/position"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"

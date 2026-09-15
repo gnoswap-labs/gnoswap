@@ -8,20 +8,20 @@ import (
 	"chain"
 	"testing"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
-	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/referral/v1"
 	"gno.land/r/gnoswap/router"
 
-	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -282,7 +282,7 @@ func swapWithReferrer(cur realm, userAddr address, referrer string) {
 // [EXPECTED] User1 referral after first swap: 'g1wfjkvetjwfjhyv2lta047h6lta047h6lf0xcls'
 //
 // [SCENARIO] 4. Same User Swap with referral contract address (should delete existing referrer)
-// [INFO] Swapping with referrer: 'g1u0p5ld4aq6sk5l26ys27wk8nftj080l3era4wn'
+// [INFO] Swapping with referrer: 'g1egfvxjnj6haqk6tdjrm4jq50jm0whzsl0m54at'
 // [EXPECTED] inputAmount: 1000000
 // [EXPECTED] outputAmount: 989266
 // [EXPECTED] WUGNOT balance changed: -1000000

@@ -1,6 +1,7 @@
 package governance
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/governance"
+	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/onbloc/bar"
 )
 
@@ -74,7 +76,7 @@ func TestGovernanceExecute_Execute(cur realm, t *testing.T) {
 						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						1_000_000_000,
-						"gno.land/r/gnoswap/community_pool",
+						"gno.land/r/gnoswap/community_pool/v1",
 					),
 					testutils.TestAddress("proposer"),
 					1,
@@ -269,7 +271,7 @@ func TestGovernanceExecute_ExecuteProposalPrivate(cur realm, t *testing.T) {
 						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						1_000_000_000,
-						"gno.land/r/gnoswap/community_pool",
+						"gno.land/r/gnoswap/community_pool/v1",
 					),
 					testutils.TestAddress("proposer"),
 					1,
@@ -416,7 +418,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 					"gno.land/r/gnoswap/gns.GNS",
 					testutils.TestAddress("recipient"),
 					1_000_000_000,
-					"gno.land/r/gnoswap/community_pool",
+					"gno.land/r/gnoswap/community_pool/v1",
 				),
 				testutils.TestAddress("proposer"),
 				1,
@@ -443,7 +445,7 @@ func TestGovernanceExecute_Cancel(cur realm, t *testing.T) {
 					"gno.land/r/gnoswap/gns.GNS",
 					testutils.TestAddress("recipient"),
 					1_000_000_000,
-					"gno.land/r/gnoswap/community_pool",
+					"gno.land/r/gnoswap/community_pool/v1",
 				),
 				testutils.TestAddress("proposer"),
 				1,
@@ -855,7 +857,7 @@ func TestGovernanceExecute_ExecutionTiming(cur realm, t *testing.T) {
 					10_000_000_000,
 				),
 				governance.NewProposalMetadata("Parameter Change", "Description"),
-				NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", testutils.TestAddress("recipient"), 100, "gno.land/r/gnoswap/community_pool"),
+				NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", testutils.TestAddress("recipient"), 100, "gno.land/r/gnoswap/community_pool/v1"),
 				testutils.TestAddress("proposer"),
 				1,
 				tt.proposalTime.Unix(),
@@ -959,7 +961,7 @@ func TestGovernanceExecute_CommunityPoolSpendExecution(cur realm, t *testing.T) 
 					tt.tokenPath,
 					tt.recipientAddress,
 					tt.amount,
-					"gno.land/r/gnoswap/community_pool",
+					"gno.land/r/gnoswap/community_pool/v1",
 				),
 				testutils.TestAddress("proposer"),
 				1,
@@ -1187,7 +1189,7 @@ func TestGovernanceExecute_CancellationScenarios(cur realm, t *testing.T) {
 						10_000_000_000,
 					),
 					governance.NewProposalMetadata("Test Proposal", "Description"),
-					NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", tt.proposer, 100, "gno.land/r/gnoswap/community_pool"),
+					NewProposalCommunityPoolSpendData("gno.land/r/gnoswap/gns.GNS", tt.proposer, 100, "gno.land/r/gnoswap/community_pool/v1"),
 					tt.proposer,
 					1,
 					tt.cancellationTime.Unix(),
@@ -1288,7 +1290,7 @@ func TestGovernanceExecute_executeCommunityPoolSpend(cur realm, t *testing.T) {
 						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						1_000_000,
-						"gno.land/r/gnoswap/community_pool",
+						"gno.land/r/gnoswap/community_pool/v1",
 					),
 					testutils.TestAddress("proposer"),
 					1,
@@ -1498,4 +1500,263 @@ func setupGovernanceExecuteTestCommunityPoolBalance(cur realm, t *testing.T) {
 
 	// Transfer GRC20 token(bar) directly to communityPool instead of wugnot deposit
 	bar.Transfer(cross(cur), communityPoolAddr, amount*10)
+}
+
+func TestGovernanceExecute_HaltRecoveryWhileGovernanceHalted(cur realm, t *testing.T) {
+	tests := []struct {
+		name             string
+		executions       string
+		expectedHasAbort bool
+		expectedAbortMsg string
+	}{
+		{
+			name:             "success - halt recovery proposal executes and unhalts governance",
+			executions:       "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
+			expectedHasAbort: false,
+		},
+		{
+			name:             "fail - non-halt proposal is blocked while governance is halted",
+			executions:       "gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
+			expectedHasAbort: true,
+			expectedAbortMsg: "halted: governance",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// given
+			gov := newMockGovernance()
+
+			setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
+			proposal := governance.NewProposal(
+				1,
+				NewProposalStatus(
+					testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
+					10_000_000_000,
+				),
+				governance.NewProposalMetadata("Halt Recovery", "Description"),
+				NewProposalExecutionData(1, tt.executions),
+				testutils.TestAddress("proposer"),
+				1,
+				time.Now().Add(-time.Hour*24*15).Unix(),
+				100,
+			)
+			statusResolver := NewProposalStatusResolver(proposal.Status())
+			statusResolver.vote(true, 6_000_000_000)
+			setupExecuteTestProposal(cur, t, gov, proposal)
+
+			testing.SetRealm(govRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+			// when & then
+			if tt.expectedHasAbort {
+				uassert.AbortsContains(t, cur, tt.expectedAbortMsg, func(cur realm) {
+					testing.SetRealm(govRealm)
+					gov.Execute(0, cur, 1)
+				})
+				uassert.Equal(t, true, halt.IsHaltedGovernance())
+			} else {
+				testing.SetRealm(govRealm)
+				resultId := gov.Execute(0, cur, 1)
+				uassert.Equal(t, int64(1), resultId)
+				uassert.Equal(t, false, halt.IsHaltedGovernance())
+				uassert.Equal(t, false, halt.IsHaltedWithdraw())
+			}
+
+			// restore halt state so other tests are not affected
+			testing.SetRealm(govRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+		})
+	}
+}
+
+func TestGovernanceExecute_HaltRecoveryEdgeCases(cur realm, t *testing.T) {
+	newExecutableProposal := func(executions string) *governance.Proposal {
+		proposal := governance.NewProposal(
+			1,
+			NewProposalStatus(
+				testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
+				10_000_000_000,
+			),
+			governance.NewProposalMetadata("Halt Recovery", "Description"),
+			NewProposalExecutionData(int64(len(strings.Split(executions, "*GOV*"))), executions),
+			testutils.TestAddress("proposer"),
+			1,
+			time.Now().Add(-time.Hour*24*15).Unix(),
+			100,
+		)
+		NewProposalStatusResolver(proposal.Status()).vote(true, 6_000_000_000)
+		return proposal
+	}
+
+	t.Run("success - multi-message halt-only proposal restores withdraw and governance", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
+		setupExecuteTestProposal(cur, t, gov, newExecutableProposal(
+			"gno.land/r/gnoswap/halt/v1*EXE*SetOperationStatus*EXE*governance,false*GOV*"+
+				"gno.land/r/gnoswap/halt/v1*EXE*SetOperationStatus*EXE*withdraw,false",
+		))
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+		testing.SetRealm(govRealm)
+		gov.Execute(0, cur, 1)
+
+		uassert.Equal(t, false, halt.IsHaltedGovernance())
+		uassert.Equal(t, false, halt.IsHaltedWithdraw())
+		// other operations stay halted since only two ops were targeted
+		uassert.Equal(t, true, halt.IsHaltedPool())
+		uassert.Equal(t, true, halt.IsHaltedRouter())
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	})
+
+	t.Run("success - recovery proposal can move COMPLETE to EMERGENCY", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
+		setupExecuteTestProposal(cur, t, gov, newExecutableProposal(
+			"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*EMERGENCY",
+		))
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+		testing.SetRealm(govRealm)
+		gov.Execute(0, cur, 1)
+
+		uassert.Equal(t, false, halt.IsHaltedGovernance())
+		uassert.Equal(t, false, halt.IsHaltedWithdraw())
+		uassert.Equal(t, true, halt.IsHaltedPool())
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	})
+
+	t.Run("fail - mixed-target proposal is blocked while governance is halted", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		setupGovernanceExecuteTestCommunityPoolBalance(cur, t)
+		setupExecuteTestProposal(cur, t, gov, newExecutableProposal(
+			"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*"+
+				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*0",
+		))
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+		uassert.AbortsContains(t, cur, "halted: governance", func(cur realm) {
+			testing.SetRealm(govRealm)
+			gov.Execute(0, cur, 1)
+		})
+		uassert.Equal(t, true, halt.IsHaltedGovernance())
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	})
+
+	t.Run("fail - nonexistent proposal is blocked while governance is halted", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+		uassert.AbortsContains(t, cur, "halted: governance", func(cur realm) {
+			testing.SetRealm(govRealm)
+			gov.Execute(0, cur, 999)
+		})
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	})
+
+	t.Run("fail - text proposal is blocked while governance is halted", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		proposal := governance.NewProposal(
+			1,
+			NewProposalStatus(
+				testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*24*15).Unix(),
+				10_000_000_000,
+			),
+			governance.NewProposalMetadata("Text", "Description"),
+			NewProposalTextData(),
+			testutils.TestAddress("proposer"),
+			1,
+			time.Now().Add(-time.Hour*24*15).Unix(),
+			100,
+		)
+		NewProposalStatusResolver(proposal.Status()).vote(true, 6_000_000_000)
+		setupExecuteTestProposal(cur, t, gov, proposal)
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+		uassert.AbortsContains(t, cur, "halted: governance", func(cur realm) {
+			testing.SetRealm(govRealm)
+			gov.Execute(0, cur, 1)
+		})
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	})
+
+	t.Run("fail - recovery proposal still cannot be executed before timelock", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		proposal := governance.NewProposal(
+			1,
+			NewProposalStatus(
+				testConfig, 10_000_000_000, true, time.Now().Add(-time.Hour*36).Unix(),
+				10_000_000_000,
+			),
+			governance.NewProposalMetadata("Halt Recovery", "Description"),
+			NewProposalExecutionData(1, "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE"),
+			testutils.TestAddress("proposer"),
+			1,
+			time.Now().Add(-time.Hour*36).Unix(),
+			100,
+		)
+		NewProposalStatusResolver(proposal.Status()).vote(true, 6_000_000_000)
+		setupExecuteTestProposal(cur, t, gov, proposal)
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+		uassert.AbortsContains(t, cur, errProposalNotExecutable, func(cur realm) {
+			testing.SetRealm(govRealm)
+			gov.Execute(0, cur, 1)
+		})
+		uassert.Equal(t, true, halt.IsHaltedGovernance())
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	})
+
+	t.Run("fail - cancel of recovery proposal stays blocked while governance is halted", func(cur realm, t *testing.T) {
+		gov := newMockGovernance()
+		proposal := governance.NewProposal(
+			1,
+			NewProposalStatus(
+				testConfig, 10_000_000_000, true, time.Now().Unix(),
+				10_000_000_000,
+			),
+			governance.NewProposalMetadata("Halt Recovery", "Description"),
+			NewProposalExecutionData(1, "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE"),
+			testutils.TestAddress("proposer"),
+			1,
+			time.Now().Unix(),
+			100,
+		)
+		setupExecuteTestProposal(cur, t, gov, proposal)
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
+
+		uassert.AbortsContains(t, cur, "halted: governance", func(cur realm) {
+			testing.SetRealm(testing.NewUserRealm(testutils.TestAddress("proposer")))
+			gov.Cancel(0, cur, 1)
+		})
+
+		testing.SetRealm(govRealm)
+		halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	})
 }

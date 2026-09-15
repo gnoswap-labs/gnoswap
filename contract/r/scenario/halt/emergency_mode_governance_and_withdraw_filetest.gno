@@ -35,15 +35,15 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	"gno.land/r/gnoswap/scenarioutils"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -53,10 +53,10 @@ import (
 	_ "gno.land/r/gnoswap/router/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"

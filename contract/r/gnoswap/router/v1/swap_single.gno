@@ -1,10 +1,10 @@
 package router
 
 import (
-	prbac "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 // singleSwap executes a swap within a single pool using the provided parameters.

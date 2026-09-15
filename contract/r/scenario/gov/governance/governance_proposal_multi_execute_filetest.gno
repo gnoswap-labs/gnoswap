@@ -13,8 +13,8 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -22,7 +22,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/emission"
 
 	gs "gno.land/r/gnoswap/gov/staker"
@@ -101,7 +101,7 @@ func proposeMultiExecute(cur realm) int64 {
 		"test_title",
 		"test_description",
 		int64(2),
-		"gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000*GOV*gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5,905",
+		"gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000*GOV*gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5,905",
 	)
 	ufmt.Printf("[INFO] Multi Execute Proposal ID: %d\n", proposalID)
 	return proposalID
@@ -124,7 +124,7 @@ func voteProposal(cur realm, proposalID int64) {
 
 // [SCENARIO] 4. Execute Multi Proposal
 func executeMultiProposal(cur realm, proposalID int64) {
-	communityPoolAddr := address("g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7")
+	communityPoolAddr := address("g1uv80ae4csts8k6w78prvy8kp7aqe3rtl66k2dq")
 
 	prevBlockTime := currentBlockTime
 	prevCommunityPool := gns.BalanceOf(communityPoolAddr)

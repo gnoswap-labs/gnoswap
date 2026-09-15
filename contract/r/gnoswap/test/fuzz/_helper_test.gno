@@ -9,11 +9,11 @@ import (
 
 	_ "gno.land/r/gnoswap/common/v1"
 
-	prabc "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
+	prabc "gno.land/p/gnoswap/rbac/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 
 	"gno.land/p/gnoswap/fuzz"
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"

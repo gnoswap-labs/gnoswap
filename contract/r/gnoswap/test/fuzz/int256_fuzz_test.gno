@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
-	i256 "gno.land/p/gnoswap/int256"
+	i256 "gno.land/p/gnoswap/int256/v1"
 )
 
 // TestFuzzInt256Add_ValidParams_Stateless tests Add with valid parameters

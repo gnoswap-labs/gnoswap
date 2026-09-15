@@ -5,15 +5,15 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gns"
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/gnoswap/launchpad"
-	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/referral/v1"
 )
 
 // DepositGns deposits GNS tokens to a launchpad project tier.
