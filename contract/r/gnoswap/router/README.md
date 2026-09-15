@@ -6,6 +6,12 @@ Swap routing engine for optimal trade execution across pools.
 
 Router handles swap execution across multiple pools, finding optimal paths and managing slippage protection for traders.
 
+## Gnoweb
+
+The root `Render("")` delegates to the active implementation and shows realm identity, the current swap fee, its maximum, and the router halt flag. Fees use basis points of the output-token amount.
+
+Rendering reads fixed configuration without evaluating swap routes. Unsupported paths return `404`.
+
 ## Configuration
 
 - **Router Fee**: 0.15% on all swaps
