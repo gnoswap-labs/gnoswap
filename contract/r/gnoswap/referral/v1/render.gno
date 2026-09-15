@@ -42,6 +42,8 @@ Address-specific records are available at `+"`referral/<address>`"+`.
 
 	return ufmt.Sprintf(`# Gnoswap Referral
 
+## Referral record
+
 | Field | Value |
 | --- | --- |
 | Address | %s |

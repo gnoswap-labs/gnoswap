@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"chain"
+	"strings"
 
 	prbac "gno.land/p/gnoswap/rbac/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -16,20 +17,26 @@ func (l *launchpadV1) Render(path string) string {
 		return "404\n"
 	}
 
+	implementation := launchpadRoot.GetImplementationPackagePath()
+
 	return ufmt.Sprintf(
 		`# Gnoswap Launchpad
 
 All GNS amounts use the token's six-decimal base units. Project reward amounts
 use the project token's own base units.
 
+## Implementation and access
+
 | Field | Value |
 | --- | --- |
-| Realm address | %s |
-| Active implementation | %s |
+| Realm address | `+"`%s`"+` |
+| Active implementation | [%s](%s) |
 | Launchpad operations halted | %t |
 | Withdrawal operations halted | %t |
 | Project creation role (admin) | %s |
 | Project creation role (governance) | %s |
+
+## Deposit accounting and configuration
 
 | Field | Value |
 | --- | --- |
@@ -45,7 +52,8 @@ use the project token's own base units.
 | Reward claimable duration (seconds) | %d |
 `,
 		chain.PackageAddress("gno.land/r/gnoswap/launchpad"),
-		launchpadRoot.GetImplementationPackagePath(),
+		implementation,
+		strings.TrimPrefix(implementation, "gno.land"),
 		halt.IsHaltedLaunchpad(),
 		halt.IsHaltedWithdraw(),
 		renderLaunchpadRole(prbac.ROLE_ADMIN),
@@ -67,5 +75,5 @@ func renderLaunchpadRole(role prbac.SystemRole) string {
 	if !ok || addr == address("") {
 		return "Unassigned"
 	}
-	return addr.String()
+	return "`" + addr.String() + "`"
 }

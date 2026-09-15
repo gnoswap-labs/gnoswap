@@ -35,7 +35,7 @@ Transfers require the admin or governance role and are blocked when withdrawals 
 	for _, role := range []prbac.SystemRole{prbac.ROLE_ADMIN, prbac.ROLE_GOVERNANCE} {
 		value := "Unassigned"
 		if addr, ok := access.GetAddress(role.String()); ok {
-			value = addr.String()
+			value = "`" + addr.String() + "`"
 		}
 		result += ufmt.Sprintf("| %s | %s |\n", role.String(), value)
 	}

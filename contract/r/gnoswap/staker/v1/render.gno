@@ -3,6 +3,7 @@ package staker
 import (
 	"chain"
 	"math"
+	"strings"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -17,6 +18,7 @@ func (s *stakerV1) Render(path string) string {
 
 	tierCounts := s.store.GetPoolTierCounts()
 	tierRatio := s.store.GetPoolTierRatio()
+	implementation := stakerRoot.GetImplementationPackagePath()
 
 	return ufmt.Sprintf(
 		`# Gnoswap Staker
@@ -28,8 +30,8 @@ the reward token's own base units.
 
 | Field | Value |
 | --- | --- |
-| Realm address | %s |
-| Active implementation | %s |
+| Realm address | `+"`%s`"+` |
+| Active implementation | [%s](%s) |
 | Staker operations halted | %t |
 
 ## Accounting and configuration
@@ -56,7 +58,8 @@ the reward token's own base units.
 %s
 `,
 		chain.PackageAddress("gno.land/r/gnoswap/staker"),
-		stakerRoot.GetImplementationPackagePath(),
+		implementation,
+		strings.TrimPrefix(implementation, "gno.land"),
 		halt.IsHaltedStaker(),
 		s.store.GetPools().Size(),
 		s.store.GetDeposits().Size(),

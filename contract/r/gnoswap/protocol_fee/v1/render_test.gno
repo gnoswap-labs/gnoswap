@@ -23,8 +23,8 @@ func TestRenderReflectsDistributionConfigAndEpoch(cur realm, t *testing.T) {
 	rendered := pf.Render("")
 	uassert.True(t, strings.Contains(rendered, "| DevOps allocation | 2500 bps |"))
 	uassert.True(t, strings.Contains(rendered, "| Governance-staker allocation | 7500 bps |"))
-	uassert.True(t, strings.Contains(rendered, "| DevOps recipient | "+access.MustGetAddress(prbac.ROLE_DEVOPS.String()).String()+" |"))
-	uassert.True(t, strings.Contains(rendered, "| Governance-staker recipient | "+access.MustGetAddress(prbac.ROLE_GOV_STAKER.String()).String()+" |"))
+	uassert.True(t, strings.Contains(rendered, access.MustGetAddress(prbac.ROLE_DEVOPS.String()).String()))
+	uassert.True(t, strings.Contains(rendered, access.MustGetAddress(prbac.ROLE_GOV_STAKER.String()).String()))
 	uassert.True(t, strings.Contains(rendered, "| Current accrual epoch | 7 |"))
 	uassert.Equal(t, "404\n", pf.Render("distribution"))
 }

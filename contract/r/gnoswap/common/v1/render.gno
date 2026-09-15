@@ -2,6 +2,7 @@ package common
 
 import (
 	"chain"
+	"strings"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/common"
@@ -13,20 +14,24 @@ func (c *commonV1) Render(path string) string {
 		return "404\n"
 	}
 
+	implementation := common.GetImplementationPackagePath()
+
 	return ufmt.Sprintf(
 		"# Gnoswap Common\n\n"+
+			"## Registry configuration\n\n"+
 			"| Field | Value |\n"+
 			"| --- | --- |\n"+
-			"| Realm address | %s |\n"+
-			"| Active implementation | %s |\n"+
-			"| Token registry | gno.land/r/nt/grc20reg/v0 |\n"+
+			"| Realm address | `%s` |\n"+
+			"| Active implementation | [%s](%s) |\n"+
+			"| Token registry | [gno.land/r/nt/grc20reg/v0](/r/nt/grc20reg/v0) |\n"+
 			"| Registry entries (network-wide) | %d |\n\n"+
 			"Token operations resolve a registered `realm-path.SYMBOL` key. "+
 			"The registry count includes tokens outside Gnoswap; it is not a trading whitelist.\n\n"+
 			"Native coins are not accepted by token operations. "+
 			"Query balances and allowances per token; amounts use that token's base units.\n",
 		chain.PackageAddress("gno.land/r/gnoswap/common"),
-		common.GetImplementationPackagePath(),
+		implementation,
+		strings.TrimPrefix(implementation, "gno.land"),
 		grc20reg.GetRegistry().Size(),
 	)
 }

@@ -51,5 +51,5 @@ func renderRoleAddress(role prbac.SystemRole) string {
 	if err != nil || addr == address("") {
 		return "Unassigned"
 	}
-	return addr.String()
+	return "`" + addr.String() + "`"
 }

@@ -12,6 +12,8 @@ func Render(path string) string {
 
 	return ufmt.Sprintf(`# Gnoswap Halt Status
 
+## Operation status
+
 | Operation | Halted |
 | --- | --- |
 | Pool | %t |

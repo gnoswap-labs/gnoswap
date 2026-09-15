@@ -66,3 +66,29 @@ func TestRenderUnknownPathReturns404BeforeStateAccess(cur realm, t *testing.T) {
 
 	uassert.Equal(t, "404\n", instance.Render("unsupported"))
 }
+
+func TestRenderPositionDetailReturns404ForMissingID(cur realm, t *testing.T) {
+	initPositionTest(cur, t)
+
+	uassert.Equal(t, "404\n", mockInstance.Render("position/404"))
+}
+
+func TestRenderPositionDetailRejectsMalformedAndOverflowIDs(cur realm, t *testing.T) {
+	initPositionTest(cur, t)
+	instance := mockInstance
+	store := instance.store
+	instance.store = nil
+	defer func() { instance.store = store }()
+
+	for _, path := range []string{
+		"position",
+		"position/",
+		"position/-1",
+		"position/+1",
+		"position/not-a-number",
+		"position/18446744073709551616",
+		"position/1/extra",
+	} {
+		uassert.Equal(t, "404\n", instance.Render(path))
+	}
+}

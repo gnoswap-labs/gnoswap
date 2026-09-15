@@ -2,6 +2,7 @@ package pool
 
 import (
 	"chain"
+	"strings"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -16,6 +17,7 @@ func (p *poolV1) Render(path string) string {
 
 	feeAmountTickSpacing := p.store.GetFeeAmountTickSpacing()
 	protocolFee := p.store.GetSlot0FeeProtocol()
+	implementation := poolRoot.GetImplementationPackagePath()
 
 	return ufmt.Sprintf(
 		`# Gnoswap Pool
@@ -25,13 +27,17 @@ base units; pool token amounts use each token's own base units. Withdrawal fees
 apply to collected swap fees and are expressed in basis points. Protocol fee
 denominators apply to swap fees; zero disables the corresponding token's fee.
 
+## Implementation and operation status
+
 | Field | Value |
 | --- | --- |
-| Realm address | %s |
-| Active implementation | %s |
+| Realm address | `+"`%s`"+` |
+| Active implementation | [%s](%s) |
 | Pool operations halted | %t |
 | Protocol-fee operations halted | %t |
 | Withdrawals halted | %t |
+
+## Pools and fee configuration
 
 | Field | Value |
 | --- | --- |
@@ -43,7 +49,8 @@ denominators apply to swap fees; zero disables the corresponding token's fee.
 | Protocol fee denominators (token0 / token1) | %d / %d |
 `,
 		chain.PackageAddress("gno.land/r/gnoswap/pool"),
-		poolRoot.GetImplementationPackagePath(),
+		implementation,
+		strings.TrimPrefix(implementation, "gno.land"),
 		halt.IsHaltedPool(),
 		halt.IsHaltedProtocolFee(),
 		halt.IsHaltedWithdraw(),

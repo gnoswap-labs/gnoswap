@@ -10,7 +10,19 @@ Each liquidity position is a unique GRC721 NFT containing pool identifier, price
 
 The root `Render("")` delegates to the active implementation and shows realm identity, halt flags, stored position count, and the next position ID. Stored records include burned positions, so the count does not represent active liquidity positions.
 
-Rendering is read-only and does not traverse positions. Unsupported paths return `404`.
+Supported routes:
+
+- `""`: the root summary. It reads only aggregate position-store metadata.
+- `position/<id>`: one position record, selected by a single keyed lookup. The `<id>` must be an unsigned decimal `uint64`; malformed, overflowing, missing, and extra-segment paths return `404`.
+
+For example, `/r/gnoswap/position:position/1` shows position 1. Detail pages show
+the ID, burn status, NFT owner when available, token realm links, fee tier, tick
+range, liquidity, and stored fee accounting.
+
+The composite pool key is inline code; each token reference links to its defining
+realm rather than a `.SYMBOL` URL. Rendering does not enumerate positions or
+recompute claimable fees and current token balances. Burned records remain
+addressable even when their NFT owner is unavailable.
 
 ## Configuration
 
