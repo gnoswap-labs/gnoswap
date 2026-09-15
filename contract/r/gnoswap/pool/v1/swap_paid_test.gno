@@ -4,7 +4,7 @@ import (
 	"chain"
 	"testing"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	"gno.land/p/gnoswap/uint256/v1"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/common"

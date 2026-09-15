@@ -7,7 +7,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 	"gno.land/p/gnoswap/utils/v1"
 
 	"gno.land/r/gnoswap/common"

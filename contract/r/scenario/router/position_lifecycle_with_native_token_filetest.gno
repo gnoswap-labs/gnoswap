@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gns"

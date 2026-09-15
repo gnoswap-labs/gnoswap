@@ -6,7 +6,7 @@ import (
 	"chain"
 	"testing"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 
 	"gno.land/r/gnoswap/access"
 	pl "gno.land/r/gnoswap/pool"

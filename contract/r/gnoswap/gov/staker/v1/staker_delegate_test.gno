@@ -11,7 +11,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 	_ "gno.land/p/gnoswap/rbac"
 	_ "gno.land/r/gnoswap/rbac"
 

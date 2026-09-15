@@ -11,7 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/nt/grc20reg/v0"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	"gno.land/p/gnoswap/utils/v1"
 	_ "gno.land/r/gnoswap/rbac"
 )

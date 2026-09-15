@@ -9,7 +9,7 @@ import (
 	"gno.land/r/gnoswap/common"
 	pl "gno.land/r/gnoswap/pool"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	i256 "gno.land/p/gnoswap/int256/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 )

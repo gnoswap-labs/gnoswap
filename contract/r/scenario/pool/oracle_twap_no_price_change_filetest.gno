@@ -5,7 +5,7 @@ package main
 import (
 	"testing"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 

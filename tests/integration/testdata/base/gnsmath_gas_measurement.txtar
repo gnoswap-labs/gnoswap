@@ -1,9 +1,9 @@
-# Gas measurement test for p/gnoswap/gnsmath package
+# Gas measurement test for p/gnoswap/gnsmath/v1 package
 # Tests gnsmath tick, liquidity, sqrt price, and swap math functions
 
 loadpkg gno.land/p/gnoswap/uint256/v1
 loadpkg gno.land/p/gnoswap/int256/v1
-loadpkg gno.land/p/gnoswap/gnsmath
+loadpkg gno.land/p/gnoswap/gnsmath/v1
 
 ## start a new node
 gnoland start
@@ -74,7 +74,7 @@ gno = "0.9"
 package gnsmathgas
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	"gno.land/p/gnoswap/int256/v1"
 	"gno.land/p/gnoswap/uint256/v1"
 )

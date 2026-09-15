@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/p/nt/testutils/v0"
 	"gno.land/p/nt/uassert/v0"

@@ -19,7 +19,7 @@ TEST_KEYS:=p/uint256 \
 
 TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256/v1 \
 	   gno/examples/gno.land/p/gnoswap/int256/v1 \
-	   gno/examples/gno.land/p/gnoswap/gnsmath \
+	   gno/examples/gno.land/p/gnoswap/gnsmath/v1 \
 	   gno/examples/gno.land/r/gnoswap/common \
 	   gno/examples/gno.land/r/gnoswap/gns \
 	   gno/examples/gno.land/r/gnoswap/gnft \

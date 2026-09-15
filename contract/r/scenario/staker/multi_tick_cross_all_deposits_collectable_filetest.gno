@@ -33,7 +33,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/nt/grc721/v0"

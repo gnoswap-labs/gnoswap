@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	uassert "gno.land/p/nt/uassert/v0"

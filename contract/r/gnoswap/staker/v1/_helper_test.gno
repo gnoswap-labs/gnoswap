@@ -7,7 +7,7 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	prbac "gno.land/p/gnoswap/rbac"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	"gno.land/r/gnoswap/access"

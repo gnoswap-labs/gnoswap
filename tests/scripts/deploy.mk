@@ -36,7 +36,7 @@ deploy-gnoswap-impl-v1: deploy-common-v1 deploy-protocol_fee-v1 deploy-pool-v1 d
 
 deploy-gnsmath:
 	$(info ************ deploy gnsmath ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/gnsmath -pkgpath gno.land/p/gnoswap/gnsmath -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 22457ugnot -gas-wanted 22457000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/gnsmath/v1 -pkgpath gno.land/p/gnoswap/gnsmath/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 22457ugnot -gas-wanted 22457000 -memo "" gnoswap_admin
 	@echo
 
 deploy-int256:

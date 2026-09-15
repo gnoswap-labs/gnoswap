@@ -5,7 +5,7 @@ package main
 import (
 	"testing"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"

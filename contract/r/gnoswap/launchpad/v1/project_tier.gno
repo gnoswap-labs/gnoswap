@@ -6,7 +6,7 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 
 	"gno.land/p/gnoswap/consts/v1"
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 

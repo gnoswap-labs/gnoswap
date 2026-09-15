@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 
 	testutils "gno.land/p/nt/testutils/v0"
 

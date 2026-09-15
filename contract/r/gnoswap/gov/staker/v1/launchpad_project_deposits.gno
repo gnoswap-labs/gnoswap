@@ -1,7 +1,7 @@
 package staker
 
 import (
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 
 	"gno.land/r/gnoswap/gov/staker"
 )

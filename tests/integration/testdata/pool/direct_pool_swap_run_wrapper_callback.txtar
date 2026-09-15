@@ -12,7 +12,7 @@ loadpkg gno.land/r/nt/grc20reg/v0
 
 loadpkg gno.land/r/gnoswap/access
 loadpkg gno.land/p/gnoswap/uint256/v1
-loadpkg gno.land/p/gnoswap/gnsmath
+loadpkg gno.land/p/gnoswap/gnsmath/v1
 loadpkg gno.land/p/gnoswap/store
 loadpkg gno.land/p/gnoswap/version_manager
 

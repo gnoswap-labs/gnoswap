@@ -6,7 +6,7 @@ TEST_KEYS=("p/uint256" "p/int256" "p/gnsmath" "r/common" "r/gns" "r/gnft" "r/gov
 TEST_VALUES=(
     "gno/examples/gno.land/p/gnoswap/uint256/v1"
     "gno/examples/gno.land/p/gnoswap/int256/v1"
-    "gno/examples/gno.land/p/gnoswap/gnsmath"
+    "gno/examples/gno.land/p/gnoswap/gnsmath/v1"
     "gno/examples/gno.land/r/gnoswap/common"
     "gno/examples/gno.land/r/gnoswap/gns"
     "gno/examples/gno.land/r/gnoswap/gnft"
