@@ -33,7 +33,7 @@ Returns the address of the referral contract. Pass this value as `referral` to r
 ## Gnoweb
 
 `Render("")` explains the registration interval and removal behavior.
-`Render("referral/<address>")` shows the current referrer and last registration or
+`Render("address/<address>")` shows the current referrer and last registration or
 update time in UTC. Missing records and unsupported paths return `404`.
 
 ## Usage

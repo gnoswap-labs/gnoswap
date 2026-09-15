@@ -10,8 +10,8 @@ import (
 )
 
 func TestRenderUnknownPath(cur realm, t *testing.T) {
-	uassert.Equal(t, "404\n", Render("referral"))
-	uassert.Equal(t, "404\n", Render("referral/not-an-address"))
+	uassert.Equal(t, "404\n", Render("address"))
+	uassert.Equal(t, "404\n", Render("address/not-an-address"))
 }
 
 func TestRenderReferralTracksRegistrationAndRemoval(cur realm, t *testing.T) {
@@ -22,10 +22,11 @@ func TestRenderReferralTracksRegistrationAndRemoval(cur realm, t *testing.T) {
 
 	user := testutils.TestAddress("render-user")
 	referrer := testutils.TestAddress("render-referrer")
-	path := "referral/" + user.String()
+	path := "address/" + user.String()
 	uassert.Equal(t, "404\n", Render(path))
 
 	TryRegister(cross(cur), user, referrer.String())
+	uassert.Equal(t, "404\n", Render("referral/"+user.String()))
 	page := Render(path)
 	uassert.True(t, strings.Contains(page, user.String()))
 	uassert.True(t, strings.Contains(page, referrer.String()))

@@ -55,6 +55,11 @@ func TestRenderShowsStoredStateAndRetainedBurnedRecord(cur realm, t *testing.T) 
 	} {
 		uassert.True(t, strings.Contains(rendered, want), want)
 	}
+
+	detail := instance.Render("id/1")
+	uassert.True(t, strings.Contains(detail, "| Position ID | 1 |"))
+	uassert.True(t, strings.Contains(detail, "| Status | Burned (record retained) |"))
+	uassert.Equal(t, "404\n", instance.Render("position/1"))
 }
 
 func TestRenderUnknownPathReturns404BeforeStateAccess(cur realm, t *testing.T) {
@@ -70,7 +75,7 @@ func TestRenderUnknownPathReturns404BeforeStateAccess(cur realm, t *testing.T) {
 func TestRenderPositionDetailReturns404ForMissingID(cur realm, t *testing.T) {
 	initPositionTest(cur, t)
 
-	uassert.Equal(t, "404\n", mockInstance.Render("position/404"))
+	uassert.Equal(t, "404\n", mockInstance.Render("id/404"))
 }
 
 func TestRenderPositionDetailRejectsMalformedAndOverflowIDs(cur realm, t *testing.T) {
@@ -81,13 +86,13 @@ func TestRenderPositionDetailRejectsMalformedAndOverflowIDs(cur realm, t *testin
 	defer func() { instance.store = store }()
 
 	for _, path := range []string{
-		"position",
-		"position/",
-		"position/-1",
-		"position/+1",
-		"position/not-a-number",
-		"position/18446744073709551616",
-		"position/1/extra",
+		"id",
+		"id/",
+		"id/-1",
+		"id/+1",
+		"id/not-a-number",
+		"id/18446744073709551616",
+		"id/1/extra",
 	} {
 		uassert.Equal(t, "404\n", instance.Render(path))
 	}
