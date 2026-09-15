@@ -272,7 +272,8 @@ func (gv *governanceV1) ProposeParameterChange(
 ) (newProposalId int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
-	halt.AssertIsNotHaltedGovernance()
+	proposalData := NewProposalExecutionData(numToExecute, executions)
+	assertIsNotHaltedGovernanceForProposalData(proposalData)
 
 	prev := rlm.Previous()
 	callerAddress := prev.Address()
@@ -316,7 +317,7 @@ func (gv *governanceV1) ProposeParameterChange(
 		quorumWeight,
 		snapshotTime,
 		governance.NewProposalMetadata(title, description),
-		NewProposalExecutionData(numToExecute, executions),
+		proposalData,
 		callerAddress,
 		xgnsBalance,
 		createdAt,

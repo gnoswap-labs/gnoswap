@@ -45,8 +45,9 @@ import (
 func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 	access.AssertIsRlmCurrent(0, rlm)
 
-	// Check if execution is allowed (system not halted for execution)
-	halt.AssertIsNotHaltedGovernance()
+	// Check if execution is allowed (system not halted for execution).
+	// Halt recovery proposals remain executable while governance is halted.
+	assertIsNotHaltedGovernanceForProposal(gv, proposalID)
 
 	// Get caller information and current blockchain state
 	prev := rlm.Previous()
