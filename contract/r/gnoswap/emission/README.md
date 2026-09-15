@@ -69,6 +69,14 @@ Updates distribution percentages (admin or governance only).
 
 Returns current distribution percentage in basis points for a target, or an error if the target is invalid.
 
+## Gnoweb
+
+`Render("")` shows distribution dates in UTC, GNS amounts with six decimal places,
+allocation percentages, and cumulative distributions for the four recipients.
+Staker and governance-staker counters since their last accounting clear are shown
+separately: these allocations have already been transferred and are not wallet
+balances or user-claimable rewards. Unsupported paths return `404`.
+
 ## Technical Details
 
 ### Timestamp-Based Emission

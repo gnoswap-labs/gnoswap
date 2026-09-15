@@ -10,6 +10,7 @@ type ILaunchpad interface {
 	ILaunchpadProject
 	ILaunchpadDeposit
 	ILaunchpadGetter
+	Render(path string) string
 }
 
 type ILaunchpadProject interface {

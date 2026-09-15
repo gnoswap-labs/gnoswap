@@ -45,7 +45,7 @@ func TestOr(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res := new(Uint).Or(&tc.x, &tc.y)
 			if *res != tc.want {
-				t.Errorf("Or(%s, %s) = %s, want %s", tc.x.ToString(), tc.y.ToString(), res.ToString(), (tc.want).ToString())
+				t.Errorf("Or(%s, %s) = %s, want %s", tc.x.ToString(), tc.y.ToString(), res.ToString(), tc.want.ToString())
 			}
 		})
 	}
@@ -101,7 +101,7 @@ func TestAnd(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res := new(Uint).And(&tc.x, &tc.y)
 			if *res != tc.want {
-				t.Errorf("And(%s, %s) = %s, want %s", tc.x.ToString(), tc.y.ToString(), res.ToString(), (tc.want).ToString())
+				t.Errorf("And(%s, %s) = %s, want %s", tc.x.ToString(), tc.y.ToString(), res.ToString(), tc.want.ToString())
 			}
 		})
 	}
@@ -134,7 +134,7 @@ func TestNot(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res := new(Uint).Not(&tc.x)
 			if *res != tc.want {
-				t.Errorf("Not(%s) = %s, want %s", tc.x.ToString(), res.ToString(), (tc.want).ToString())
+				t.Errorf("Not(%s) = %s, want %s", tc.x.ToString(), res.ToString(), tc.want.ToString())
 			}
 		})
 	}
@@ -190,7 +190,7 @@ func TestAndNot(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res := new(Uint).AndNot(&tc.x, &tc.y)
 			if *res != tc.want {
-				t.Errorf("AndNot(%s, %s) = %s, want %s", tc.x.ToString(), tc.y.ToString(), res.ToString(), (tc.want).ToString())
+				t.Errorf("AndNot(%s, %s) = %s, want %s", tc.x.ToString(), tc.y.ToString(), res.ToString(), tc.want.ToString())
 			}
 		})
 	}
@@ -273,7 +273,7 @@ func TestXor(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res := new(Uint).Xor(&tc.x, &tc.y)
 			if *res != tc.want {
-				t.Errorf("Xor(%s, %s) = %s, want %s", tc.x.ToString(), tc.y.ToString(), res.ToString(), (tc.want).ToString())
+				t.Errorf("Xor(%s, %s) = %s, want %s", tc.x.ToString(), tc.y.ToString(), res.ToString(), tc.want.ToString())
 			}
 		})
 	}

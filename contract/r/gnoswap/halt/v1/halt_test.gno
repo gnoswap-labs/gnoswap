@@ -319,11 +319,11 @@ func TestHalt_IndividualOperationStatus(cur realm, t *testing.T) {
 
 func TestHalt_GetHaltConfigJson(cur realm, t *testing.T) {
 	tests := []struct {
-		name                 string
-		initialLevel         HaltLevel
-		expectedContains     []string
-		expectedNotContains  []string
-		verifyOperations     map[OpType]bool
+		name                string
+		initialLevel        HaltLevel
+		expectedContains    []string
+		expectedNotContains []string
+		verifyOperations    map[OpType]bool
 	}{
 		{
 			name:         "None level JSON",

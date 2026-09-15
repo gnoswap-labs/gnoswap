@@ -3,8 +3,8 @@ package staker
 import (
 	"testing"
 
-	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/p/gnoswap/store/v1"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestState_initializeDomainStore tests the private initializeDomainStore function

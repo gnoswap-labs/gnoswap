@@ -6,6 +6,12 @@ Package common provides shared realm utilities for GnoSwap protocol contracts.
 
 The common package contains shared GRC20 token operations and native coin validation.
 
+## Gnoweb
+
+The root `Render("")` delegates to the active implementation and shows the realm address, implementation path, and network-wide token registry count. The count is not a Gnoswap whitelist. Token keys use `realm-path.SYMBOL`, and token amounts use each token's base units.
+
+Rendering is read-only and does not enumerate registry entries. Unsupported paths return `404`.
+
 ## Key Components
 
 1. **GRC20 Registry Helpers**: Convenient wrappers for GRC20 token operations

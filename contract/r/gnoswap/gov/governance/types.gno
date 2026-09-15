@@ -8,6 +8,7 @@ import (
 type IGovernance interface {
 	IGovernanceManager
 	IGovernanceGetter
+	Render(path string) string
 }
 
 type IGovernanceManager interface {

@@ -122,6 +122,7 @@ type IRouter interface {
 	// Returns:
 	//   - fees: token-path to pending-fee amount map
 	GetPendingProtocolFees() map[string]int64
+	Render(path string) string
 }
 
 type IRouterStore interface {

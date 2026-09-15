@@ -3,8 +3,8 @@ package gnft
 import (
 	"strconv"
 
-	"gno.land/p/nt/grc721/v0"
 	prbac "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/p/nt/grc721/v0"
 	"gno.land/r/gnoswap/access/v1"
 )
 

@@ -57,6 +57,12 @@ Initiates two-step ownership transfer. Only callable by current owner.
 Accepts pending ownership transfer. Only callable by pending owner.
 Also updates the `admin` role address and syncs it to the access package.
 
+## Gnoweb
+
+`Render("")` shows the owner, pending owner (`None` when absent), and the fixed
+system-role assignments. Unassigned roles are explicit; custom roles are not
+enumerated. Unsupported paths return `404`.
+
 ## Usage
 
 ```go

@@ -3,8 +3,8 @@ package staker
 import (
 	"testing"
 
-	uassert "gno.land/p/nt/uassert/v0"
 	u256 "gno.land/p/gnoswap/uint256/v1"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 // TestNewEmissionRewardState tests creating a new emission reward state
@@ -50,13 +50,13 @@ func TestNewEmissionRewardState(cur realm, t *testing.T) {
 // TestEmissionRewardState_Setters tests all setter methods
 func TestEmissionRewardState_Setters(cur realm, t *testing.T) {
 	tests := []struct {
-		name                     string
-		newRewardDebtX128        *u256.Uint
-		newAccumulatedAmount     int64
-		newAccumulatedTimestamp  int64
-		newClaimedAmount         int64
-		newClaimedTimestamp      int64
-		newStakedAmount          int64
+		name                    string
+		newRewardDebtX128       *u256.Uint
+		newAccumulatedAmount    int64
+		newAccumulatedTimestamp int64
+		newClaimedAmount        int64
+		newClaimedTimestamp     int64
+		newStakedAmount         int64
 	}{
 		{
 			name:                    "Set all values to non-zero",

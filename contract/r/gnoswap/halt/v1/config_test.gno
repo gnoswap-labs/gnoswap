@@ -343,11 +343,11 @@ func TestConfig_AllConfigLevelsIntegration(cur realm, t *testing.T) {
 			name:       "Emergency halts most except governance and withdraw",
 			configFunc: newEmergencyConfig,
 			expectedState: map[OpType]bool{
-				OpTypePool:       true,
-				OpTypeGovernance: false,
-				OpTypeProtocolFee:true,
-				OpTypeRouter:     true,
-				OpTypeWithdraw:   false,
+				OpTypePool:        true,
+				OpTypeGovernance:  false,
+				OpTypeProtocolFee: true,
+				OpTypeRouter:      true,
+				OpTypeWithdraw:    false,
 			},
 		},
 		{

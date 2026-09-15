@@ -6,6 +6,12 @@ Concentrated liquidity AMM pools with tick-based pricing.
 
 Pool contracts implement Uniswap V3-style concentrated liquidity, allowing LPs to provide liquidity within custom price ranges for maximum capital efficiency.
 
+## Gnoweb
+
+The root `Render("")` delegates to the active implementation and shows realm identity, halt flags, stored pool count, creation and withdrawal fees, the four fee tiers and tick spacings, and separate token0/token1 protocol-fee denominators.
+
+GNS creation fees use six-decimal base units; withdrawal fees use basis points and swap fee tiers use pips. Rendering reads stored counts and fixed configuration without traversing pools. Unsupported paths return `404`.
+
 ## Configuration
 
 - **Pool Creation Fee**: 100 GNS (default)

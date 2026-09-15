@@ -30,6 +30,12 @@ Returns the last non-removal registration or update timestamp for the address. R
 ### `ContractAddress() string`
 Returns the address of the referral contract. Pass this value as `referral` to remove an existing relationship.
 
+## Gnoweb
+
+`Render("")` explains the registration interval and removal behavior.
+`Render("referral/<address>")` shows the current referrer and last registration or
+update time in UTC. Missing records and unsupported paths return `404`.
+
 ## Usage
 
 ### Registering or Updating a Referral

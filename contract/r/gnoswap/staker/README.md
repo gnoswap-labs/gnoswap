@@ -6,6 +6,12 @@ Liquidity mining and reward distribution for LP positions.
 
 Staker manages distribution of internal (GNS emission) and external (user-provided) rewards to staked LP positions, with time-weighted rewards and warmup periods.
 
+## Gnoweb
+
+The root `Render("")` delegates to the active implementation and shows realm identity, the halt flag, stored record counts, cumulative GNS emissions, the cached emission rate, incentive requirements, tier allocations, unstaking fees, and warmup stages.
+
+GNS amounts use six-decimal base units; external rewards use their token's base units. Warmup durations are per-stage seconds, with the final stage shown as unbounded. Rendering reads stored counts and fixed configuration without traversing positions or incentives. Unsupported paths return `404`.
+
 ## Configuration
 
 - **Deposit GNS Amount**: 100,000 GNS per external incentive (default; governance-adjustable)

@@ -20,6 +20,7 @@ type IPool interface {
 	IPoolSwap
 	IPoolOracle
 	IPoolGetter
+	Render(path string) string
 }
 
 // IPoolManager interface defines pool management operations.

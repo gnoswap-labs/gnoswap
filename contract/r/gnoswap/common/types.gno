@@ -94,4 +94,5 @@ type ICommon interface {
 	// Returns:
 	//   - error: nil when the teller records the allowance; non-nil when token validation or approval rules reject it
 	Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) error
+	Render(path string) string
 }

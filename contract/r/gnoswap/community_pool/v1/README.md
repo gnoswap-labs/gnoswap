@@ -42,6 +42,13 @@ Directly transfers a registered token to a specified address. The caller must
 be admin or governance, withdrawals must not be halted, and the normal token
 transfer validation applies.
 
+## Gnoweb
+
+`Render("")` shows the admin and governance role addresses and the withdrawal halt
+checked by `TransferToken`. It does not enumerate token balances or claim a total
+treasury value. Query a specific registered token with `GetBalanceOf(tokenPath)`.
+Unsupported paths return `404`.
+
 ## Usage
 
 ```go

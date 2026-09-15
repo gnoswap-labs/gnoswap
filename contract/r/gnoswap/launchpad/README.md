@@ -9,11 +9,17 @@ The launchpad supports projects with three lock tiers: 30, 90, and 180 days.
 Project creators configure the project-token reward allocation for each tier,
 and depositors receive rewards according to the selected tier.
 
+## Gnoweb
+
+The root `Render("")` delegates to the active implementation and shows realm identity, halt flags, project-creation roles, stored record counts, the deposit ID counter, total staked GNS, and timing and deposit requirements. Deposit records include withdrawn deposits.
+
+GNS amounts use six-decimal base units; project rewards use their token's base units. Rendering reads stored counts and fixed configuration without traversing projects or deposits. Unsupported paths return `404`.
+
 ## Configuration
 
 - **Pool Tiers**: 30 days, 90 days, and 180 days
 - **Minimum Start Delay**: 3 days from project creation
-- **Minimum Deposit**: 1,000,000 GNS and integer multiples of that amount
+- **Minimum Deposit**: 1 GNS (1,000,000 base units) and integer multiples of that amount
 - **Reward Claim Delay**: 1 day after each deposit, capped at the selected tier's end time
 - **Condition Delimiter**: Use `*PAD*` between condition expressions
 - **Auto-Delegation**: Project deposits can be reflected in governance-staker accounting

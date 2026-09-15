@@ -5,6 +5,7 @@ import bptree "gno.land/p/nt/bptree/v0"
 type IProtocolFee interface {
 	IProtocolFeeManager
 	IProtocolFeeGetter
+	Render(path string) string
 }
 
 type IProtocolFeeManager interface {

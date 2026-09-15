@@ -7,6 +7,12 @@ Fee collection and distribution for protocol operations.
 The protocol-fee contract collects authorized fees from protocol operations and
 distributes them to GovStaker and DevOps according to configured percentages.
 
+## Gnoweb
+
+The root `Render("")` delegates to the active implementation and shows realm identity, distribution allocations in basis points, recipient addresses, the accrual epoch, and halt flags.
+
+Rendering reads fixed configuration without aggregating balances across tokens. Unsupported paths return `404`.
+
 ## Configuration
 
 - **Router Fee (initial/default)**: 0.15% of the swap amount; configured by the router, with an admin-or-governance range of 0–10%
