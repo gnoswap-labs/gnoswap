@@ -157,11 +157,14 @@ func (i *poolV1) GetSlot0FeeProtocol(poolPath string) (uint8, error) {
 	return pool.Slot0FeeProtocol(), nil
 }
 
+// GetSlot0Unlocked returns the stored `Slot0.unlocked` metadata field.
+// It is separate from the pool-wide `Unlocked` KV-store guard and is not the
+// live reentrancy lock.
 // Parameters:
 //   - poolPath: canonical pool identifier to look up.
 //
 // Returns:
-//   - unlocked: true when the pool's slot0 reentrancy lock is open.
+//   - unlocked: Stored `Slot0.unlocked` metadata value.
 //   - err: nil when the pool exists; the pool lookup error otherwise.
 func (i *poolV1) GetSlot0Unlocked(poolPath string) (bool, error) {
 	pool, err := i.getPool(poolPath)
@@ -171,12 +174,15 @@ func (i *poolV1) GetSlot0Unlocked(poolPath string) (bool, error) {
 	return pool.Slot0Unlocked(), nil
 }
 
+// GetSlot0 returns the pool's current price, tick, protocol fee, slot0 lock
+// metadata, and oracle cursor/capacity state.
 // Parameters:
 //   - poolPath: canonical pool identifier to look up.
 //
 // Returns:
-//   - slot0: current pool price, tick, observation, and lock metadata; panics
-//     when poolPath does not identify an existing pool.
+//   - slot0: current pool price, tick, observation, and slot0 lock metadata;
+//     its lock flag is separate from the pool-wide `Unlocked` KV-store guard.
+//     Panics when poolPath does not identify an existing pool.
 func (i *poolV1) GetSlot0(poolPath string) pl.Slot0 {
 	return i.mustGetPool(poolPath).Slot0()
 }
@@ -750,8 +756,8 @@ func (i *poolV1) ExistsPoolPath(poolPath string) bool {
 }
 
 // Returns:
-//   - poolCreationFee: configured pool-creation charge in the chain's smallest
-//     currency unit.
+//   - poolCreationFee: configured pool-creation charge in GNS token base units
+//     (six decimals).
 func (i *poolV1) GetPoolCreationFee() int64 {
 	return i.store.GetPoolCreationFee()
 }

@@ -84,15 +84,29 @@ TransferOwnership(cross(cur), newAdmin) // Step 1: Initiate
 AcceptOwnership(cross(cur))             // Step 2: Accept (by newAdmin)
 ```
 
-## Contract Upgrade
+## Component Upgrades
 
-RBAC supports contract upgrades by changing role addresses. Versioned implementations live under component-specific realm paths (for example, `gno.land/r/gnoswap/pool/v1`), while the stable realm resolves calls through the current role address.
+Versioned component implementations are selected by the version manager behind
+each stable component proxy. RBAC role addresses identify authorization and
+distribution targets (including stable proxies); changing a role with
+`UpdateRoleAddress` only changes the role mapping and does not select
+implementation code.
 
 ### Upgrade Process
 
-1. **Deploy a new component version** under its versioned realm path.
-2. **Update the relevant role address** to point to the new implementation.
-3. **Verify distribution and call flows** use the new role address.
+1. **Register the implementation**: Each version package calls the component
+   proxy's `RegisterInitializer` during package initialization.
+2. **Initial activation**: When no implementation is active, the first
+   registered initializer is activated. Later registrations are retained but
+   remain inactive.
+3. **Activate a registered version**: An authorized admin or governance caller
+   invokes the component's `UpgradeImpl` with the fully qualified package path
+   of a previously registered version, for example
+   `pool.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/pool/v2")`.
+4. **Preserve proxy state and identities**: Calls continue through the stable
+   proxy and shared domain storage; RBAC role identities are unchanged. The
+   selected implementation's initializer is responsible for compatible state
+   setup.
 
 ### Versioned Components
 
@@ -107,13 +121,18 @@ This checkout contains versioned implementations for:
 - `launchpad`
 - `protocol_fee`
 
-The `community_pool` role is a distribution and treasury destination, not a versioned component. Updating that role redirects distributions to the selected address.
+## Distribution Target Changes
 
-### Example: GNS Distribution Upgrade
+The `community_pool` role is a distribution and treasury destination, not a
+versioned component. Updating that role redirects distributions to the selected
+address.
+
+### Example: GNS Distribution Target Change
 
 ```go
 func changeDistributionTarget(cur realm) {
-    // Update role addresses through the RBAC realm.
+    // Update distribution and authorization targets through RBAC.
+    // This does not select an implementation version.
     rbac.UpdateRoleAddress(cross(cur), "staker", newStakerAddr)
     rbac.UpdateRoleAddress(cross(cur), "gov_staker", newGovStakerAddr)
     rbac.UpdateRoleAddress(cross(cur), "devops", newDevOpsAddr)
@@ -124,11 +143,13 @@ func changeDistributionTarget(cur realm) {
 
 ### Test Example
 
-The upgrade mechanism is demonstrated in the [upgrade scenario test](../../../scenario/upgrade/change_gns_distribution_target_filetest.gno).
+The distribution-target scenario is demonstrated in the
+[role-address update scenario test](../../../scenario/upgrade/change_gns_distribution_target_filetest.gno).
+It initializes distribution targets, updates role addresses, and verifies that
+subsequent GNS distributions use the new addresses.
 
 ```go
-// The scenario initializes distribution targets, updates role addresses,
-// and verifies that subsequent GNS distributions use the new addresses.
+// The scenario changes distribution targets, not implementation versions.
 func changeDistributionTarget(cur realm) {
     rbac.UpdateRoleAddress(cross(cur), "staker", newStakerAddr)
     rbac.UpdateRoleAddress(cross(cur), "gov_staker", newGovStakerAddr)

@@ -317,28 +317,34 @@ type IStakerGetter interface {
 	//
 	GetDeposit(lpTokenId uint64) (*Deposit, error)
 
-	// CollectableEmissionReward calculates the currently claimable internal GNS
-	// emission without mutating the position.
+	// CollectableEmissionReward calculates the current gross estimated internal GNS
+	// emission without mutating the position. The returned amount is before
+	// staking/protocol fee deduction during collection.
 	//
 	// Parameters:
 	//   - positionId: LP position identifier for a live deposit or exit checkpoint.
 	//
 	// Returns:
-	//   - reward: Claimable internal GNS amount at the current chain time and height.
-	//   - err: Nil on success, or an error when the position is neither staked nor checkpointed or calculation fails.
+	//   - reward: Gross estimated internal GNS amount at the current chain time and height, before
+	//     staking/protocol fee deduction.
+	//   - err: Nil on success, or an error when the position is neither staked nor checkpointed or
+	//     calculation fails.
 	//
 	CollectableEmissionReward(positionId uint64) (int64, error)
 
-	// CollectableExternalIncentiveReward calculates the currently claimable amount
-	// for one external incentive without mutating the position.
+	// CollectableExternalIncentiveReward calculates the current gross estimated amount
+	// for one external incentive without mutating the position. The returned amount is before
+	// staking/protocol fee deduction during collection.
 	//
 	// Parameters:
 	//   - positionId: LP position identifier for a live deposit or exit checkpoint.
 	//   - incentiveId: External incentive identifier whose reward is queried.
 	//
 	// Returns:
-	//   - reward: Claimable gross reward-token amount, or zero when that incentive contributes no reward.
-	//   - err: Nil on success, or an error when the position or reward calculation is invalid.
+	//   - reward: Gross estimated reward-token amount before staking/protocol fee deduction; zero
+	//     when that incentive is absent from the calculated reward map.
+	//   - err: Nil on success, including an absent incentive entry; an error when the position is
+	//     neither staked nor checkpointed or reward calculation fails.
 	//
 	CollectableExternalIncentiveReward(positionId uint64, incentiveId string) (int64, error)
 
@@ -707,7 +713,7 @@ type IStakerGetter interface {
 	// GetMinimumRewardAmount returns the default minimum reward amount for external incentives.
 	//
 	// Returns:
-	//   - amount: Default minimum reward-token amount used when no token-specific override exists.
+	//   - amount: Default minimum reward-token amount in token smallest units when no token-specific override exists.
 	//
 	GetMinimumRewardAmount() int64
 
@@ -718,7 +724,7 @@ type IStakerGetter interface {
 	//   - tokenPath: Reward-token contract path whose minimum is requested.
 	//
 	// Returns:
-	//   - amount: Token-specific minimum when configured, otherwise the default minimum.
+	//   - amount: Token-specific minimum in token smallest units when configured, otherwise the default minimum.
 	//
 	GetMinimumRewardAmountForToken(tokenPath string) int64
 
@@ -954,7 +960,7 @@ type IStakerStore interface {
 	// Parameters:
 	//   - _: Leading integer discriminator for internal store forwarding; callers pass 0.
 	//   - rlm: Propagated current realm context; a non-current realm is rejected before writing.
-	//   - amount: Default minimum reward-token amount in token units.
+	//   - amount: Default minimum reward-token amount in token smallest units.
 	//
 	// Returns:
 	//   - err: Nil when stored, ErrSpoofedRealm for a non-current realm, or the underlying KV-store write error.
@@ -1196,7 +1202,7 @@ type IStakerStore interface {
 	//   - _: Leading integer discriminator for internal store forwarding; callers pass 0.
 	//   - rlm: Propagated current realm context; a non-current realm is rejected before writing.
 	//   - tokenPath: Token contract path whose override is being set.
-	//   - amount: Token-specific minimum reward amount in token units.
+	//   - amount: Token-specific minimum reward amount in token smallest units.
 	//
 	// Returns:
 	//   - err: Nil when the item is stored, ErrSpoofedRealm for a non-current realm, or the KV-store write error.

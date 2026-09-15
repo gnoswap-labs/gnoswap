@@ -48,7 +48,7 @@ func makeConfig(
 //   - votingPeriod: duration in seconds for which voting remains open
 //   - votingWeightSmoothingDuration: duration in seconds used to smooth voting weight snapshots
 //   - quorum: quorum percentage applied to the proposal's quorum-weight base
-//   - proposalCreationThreshold: minimum voting weight required to create a proposal
+//   - proposalCreationThreshold: minimum voting weight, in xGNS base units, required to create a proposal
 //   - executionDelay: delay in seconds from voting end until execution becomes available
 //   - executionWindow: duration in seconds during which an executable proposal may run
 //

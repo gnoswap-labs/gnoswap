@@ -19,7 +19,7 @@ type Config struct {
 	// Quorum is the percentage of total xGNS supply required for proposal approval.
 	// Total supply includes xGNS held by the launchpad.
 	Quorum int64
-	// ProposalCreationThreshold is the minimum xGNS amount required to create a proposal
+	// ProposalCreationThreshold is the minimum xGNS amount, in six-decimal base units, required to create a proposal
 	ProposalCreationThreshold int64
 	// ExecutionDelay is the waiting period after voting ends before a proposal can be executed (in seconds)
 	ExecutionDelay int64
@@ -102,7 +102,7 @@ func (c Config) IsValid(currentTime int64) error {
 //   - votingPeriod: duration for which voting remains open, in seconds
 //   - votingWeightSmoothingDuration: interval used to smooth delegation weight, in seconds
 //   - quorum: required approval percentage of total xGNS supply, from 0 through 100
-//   - proposalCreationThreshold: minimum xGNS amount required to create a proposal
+//   - proposalCreationThreshold: minimum xGNS amount, in six-decimal base units, required to create a proposal
 //   - executionDelay: delay after voting ends before execution, in seconds
 //   - executionWindow: duration after the execution delay during which execution is allowed, in seconds
 //
@@ -137,7 +137,7 @@ func NewConfig(
 //   - votingPeriod: duration for which voting remains open, in seconds
 //   - votingWeightSmoothingDuration: interval used to smooth delegation weight, in seconds
 //   - quorum: required approval percentage of total xGNS supply, from 0 through 100
-//   - proposalCreationThreshold: minimum xGNS amount required to create a proposal
+//   - proposalCreationThreshold: minimum xGNS amount, in six-decimal base units, required to create a proposal
 //   - executionDelay: delay after voting ends before execution, in seconds
 //   - executionWindow: duration after the execution delay during which execution is allowed, in seconds
 //
@@ -166,8 +166,8 @@ func NewConfigPtr(
 
 // NewDefaultConfig returns the governance configuration's built-in defaults:
 // one day before voting, seven days of voting, one day of weight smoothing,
-// 50% quorum, a 1-billion-xGNS creation threshold, one day execution delay,
-// and a 30-day execution window.
+// 50% quorum, a 1,000-xGNS creation threshold (1,000,000,000 base units),
+// one day execution delay, and a 30-day execution window.
 //
 // Returns:
 //   - Config: default governance configuration value
@@ -177,7 +177,7 @@ func NewDefaultConfig() Config {
 		VotingPeriod:                  604800,        // 7 days - duration for collecting votes
 		VotingWeightSmoothingDuration: 86400,         // 1 day - period for averaging voting weight
 		Quorum:                        50,            // 50% of total xGNS supply required
-		ProposalCreationThreshold:     1_000_000_000, // 1 billion xGNS - minimum amount to create proposals
+		ProposalCreationThreshold:     1_000_000_000, // 1,000 xGNS (1,000,000,000 base units) - minimum amount to create proposals
 		ExecutionDelay:                86400,         // 1 day - waiting period before execution
 		ExecutionWindow:               2592000,       // 30 days - window for executing proposals
 	}

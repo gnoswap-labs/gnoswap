@@ -1,25 +1,27 @@
 # xGNS
 
-Non-transferable receipt token for GNS staked through `gov/staker`.
+Non-transferable receipt token for GNS held by governance staking and launchpad deposits.
 
 ## Overview
 
-xGNS is a GRC20 token that mirrors GNS locked in `gov/staker`. It exists so that
-governance and the launchpad can read one staked-GNS balance, and it is minted
-and burned only by `gov/staker` as delegations and launchpad project deposits
-change.
+xGNS is a GRC20 token representing GNS held in either `gov/staker` for ordinary
+delegations or the `launchpad` realm for project deposits. It lets governance
+and the launchpad read one staked-GNS balance, and it is minted and burned only
+by `gov/staker` as delegations and launchpad project deposits change.
 
-xGNS does not maintain a voting-power ledger. A holder's balance is the
-staked-GNS receipt of the **delegator**; the delegatee attribution and the
-timestamped history that governance reads for vote weight live in `gov/staker`.
-See [gov/staker](../staker) and [governance](../governance).
+xGNS does not maintain a voting-power ledger. For ordinary delegation, a holder's
+balance is the staked-GNS receipt of the **delegator**; launchpad deposits instead
+mint xGNS to the launchpad role address while the corresponding GNS is held by
+the launchpad. The delegatee attribution and the timestamped history that
+governance reads for vote weight live in `gov/staker`. See [gov/staker](../staker)
+and [governance](../governance).
 
 ## Configuration
 
 - **Name**: XGNS
 - **Symbol**: xGNS
 - **Decimals**: 6, matching GNS
-- **Backing**: 1:1 with the GNS locked in `gov/staker`
+- **Backing**: 1:1 with GNS held by `gov/staker` for ordinary delegations or by the `launchpad` realm for launchpad deposits
 - **Transfers**: none. The realm exposes no `Transfer`, `TransferFrom`,
   `Approve`, or `Allowance` entry point, so a balance can change only through
   `Mint` and `Burn`.
@@ -83,6 +85,10 @@ the delegation calls:
 | `SetAmountByProjectWallet` with `add = true` | mints to the launchpad role address |
 | `SetAmountByProjectWallet` with `add = false` | burns from the launchpad role address |
 
+For a launchpad deposit, `DepositGns` transfers the caller's GNS into the
+launchpad realm and the corresponding xGNS is held at the launchpad role
+address. Collecting the deposit returns the GNS and burns the corresponding
+xGNS.
 Because `Undelegate` does not burn, a holder keeps the xGNS balance for the
 duration of the undelegation lockup even though the delegated voting power is
 already gone.

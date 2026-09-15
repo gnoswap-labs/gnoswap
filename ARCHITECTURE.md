@@ -108,6 +108,7 @@ type IPool interface {
     IPoolSwap       // Swap operations and protocol fees
     IPoolOracle     // Observation and cumulative-price queries
     IPoolGetter     // Data retrieval functions
+    Render(path string) string // Render component pages
 }
 ```
 

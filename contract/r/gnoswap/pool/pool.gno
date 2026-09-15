@@ -75,10 +75,10 @@ func (p *Pool) BalanceToken1() int64 { return p.balances.token1 }
 //   - int32: tick spacing configured for the pool.
 func (p *Pool) TickSpacing() int32 { return p.tickSpacing }
 
-// Slot0 returns the pool's current price, tick, lock, and oracle cursor state.
+// Slot0 returns the pool's current price, tick, slot0 lock metadata, and oracle cursor state.
 //
 // Returns:
-//   - Slot0: current slot0 state, including the price and observation metadata.
+//   - Slot0: current slot0 state, including the price, slot0 lock metadata, and observation metadata.
 func (p *Pool) Slot0() Slot0 { return p.slot0 }
 
 // Slot0SqrtPriceX96 returns the current square-root price in Q96 fixed-point form.
@@ -99,10 +99,12 @@ func (p *Pool) Slot0Tick() int32 { return p.slot0.tick }
 //   - uint8: packed token0/token1 protocol-fee denominator configuration.
 func (p *Pool) Slot0FeeProtocol() uint8 { return p.slot0.feeProtocol }
 
-// Slot0Unlocked reports whether the pool is currently available for reentrant operations.
+// Slot0Unlocked reports the stored `Slot0.unlocked` metadata flag.
+// It is separate from the pool-wide `Unlocked` KV-store guard used for live
+// reentrancy protection and is not the live lock state.
 //
 // Returns:
-//   - bool: true when the pool is unlocked; false while its swap lock is held.
+//   - bool: stored `Slot0.unlocked` metadata value.
 func (p *Pool) Slot0Unlocked() bool { return p.slot0.unlocked }
 
 // FeeGrowthGlobal0X128 returns cumulative token0 fee growth per unit of liquidity.
@@ -238,7 +240,7 @@ func (p *Pool) SetTickSpacing(tickSpacing int32) {
 	p.tickSpacing = tickSpacing
 }
 
-// SetSlot0 replaces the pool's current price, tick, lock, and oracle cursor state.
+// SetSlot0 replaces the pool's current price, tick, slot0 lock metadata, and oracle cursor state.
 //
 // Parameters:
 //   - slot0: slot0 state to store.
@@ -564,13 +566,14 @@ func (p *TokenPair) SetToken0(token0 int64) { p.token0 = token0 }
 //   - token1: token1 amount to store.
 func (p *TokenPair) SetToken1(token1 int64) { p.token1 = token1 }
 
-// Slot0 mirrors Uniswap V3's slot0(): current price/tick/protocol-fee/lock
-// state and the oracle cursor/capacity metadata.
+// Slot0 mirrors Uniswap V3's slot0(): current price/tick/protocol-fee/slot0
+// lock metadata and the oracle cursor/capacity metadata. Its lock flag is
+// separate from the pool-wide `Unlocked` KV-store guard.
 type Slot0 struct {
 	sqrtPriceX96               *u256.Uint // current price of the pool as a sqrt(token1/token0) Q96 value
 	tick                       int32      // current tick of the pool, i.e according to the last tick transition that was run
 	feeProtocol                uint8      // packed protocol-fee denominators: token0 low nibble, token1 high nibble
-	unlocked                   bool       // whether the pool is currently locked to reentrancy
+	unlocked                   bool       // slot0 lock metadata, not the pool-wide reentrancy guard
 	observationIndex           uint16     // the index of the most-recently written observation
 	observationCardinality     uint16     // the current maximum number of observations stored
 	observationCardinalityNext uint16     // the next maximum number of observations to store
@@ -594,10 +597,12 @@ func (s *Slot0) Tick() int32 { return s.tick }
 //   - uint8: packed token0/token1 protocol-fee denominator configuration.
 func (s *Slot0) FeeProtocol() uint8 { return s.feeProtocol }
 
-// Unlocked reports whether the pool's reentrancy lock is open.
+// Unlocked reports the stored `Slot0.unlocked` metadata flag.
+// It is separate from the pool-wide `Unlocked` KV-store guard used for live
+// reentrancy protection.
 //
 // Returns:
-//   - bool: true when unlocked and false while the pool is locked.
+//   - bool: stored `Slot0.unlocked` metadata value.
 func (s *Slot0) Unlocked() bool { return s.unlocked }
 
 // ObservationIndex returns the index of the most recently written observation.
@@ -654,10 +659,11 @@ func (s *Slot0) SetTick(tick int32) { s.tick = tick }
 //   - feeProtocol: packed token0/token1 protocol-fee denominator configuration.
 func (s *Slot0) SetFeeProtocol(feeProtocol uint8) { s.feeProtocol = feeProtocol }
 
-// SetUnlocked updates the slot0 reentrancy-lock state.
+// SetUnlocked updates the stored `Slot0.unlocked` metadata flag.
+// It does not update the pool-wide `Unlocked` KV-store guard.
 //
 // Parameters:
-//   - unlocked: true to mark the pool unlocked, false to mark it locked.
+//   - unlocked: Slot0 metadata value to store.
 func (s *Slot0) SetUnlocked(unlocked bool) { s.unlocked = unlocked }
 
 // SetObservationIndex updates the index of the most recently written observation.
@@ -684,14 +690,16 @@ func (s *Slot0) SetObservationCardinalityNext(observationCardinalityNext uint16)
 	s.observationCardinalityNext = observationCardinalityNext
 }
 
-// NewSlot0 constructs slot0 with the supplied price, tick, protocol fee, and lock state.
-// Observation metadata starts with index zero and cardinality one.
+// NewSlot0 constructs slot0 with the supplied price, tick, protocol fee, and
+// slot0 lock metadata. Observation metadata starts with index zero and
+// cardinality one.
 //
 // Parameters:
 //   - sqrtPriceX96: initial sqrt(token1/token0) price scaled by 2^96.
 //   - tick: initial current pool tick.
 //   - feeProtocol: packed token0/token1 protocol-fee denominator configuration.
-//   - unlocked: initial reentrancy-lock state.
+//   - unlocked: initial Slot0 metadata value; it does not set the pool-wide
+//     `Unlocked` KV-store guard.
 //
 // Returns:
 //   - Slot0: initialized slot0 value with one observation slot.

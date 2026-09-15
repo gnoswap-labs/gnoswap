@@ -568,13 +568,14 @@ func GetProjectTierRewardAccumulatedTime(projectTierId string) (int64, error) {
 	return getImplementation().GetProjectTierRewardAccumulatedTime(projectTierId)
 }
 
-// GetProjectTierRewardClaimableDuration returns the reward claimable duration of a reward manager.
+// GetProjectTierRewardClaimableDuration returns the configured initial delay
+// before a deposit's reward becomes claimable.
 //
 // Parameters:
 //   - projectTierId: composite project-tier identifier whose manager is requested.
 //
 // Returns:
-//   - duration: reward claimable window in seconds.
+//   - duration: delay in seconds from a deposit's CreatedAt until its reward becomes claimable; each deposit's claimable time is capped at the manager's distribution end time. This value does not define post-claim expiry.
 //   - err: non-nil when projectTierId does not identify a stored reward manager.
 func GetProjectTierRewardClaimableDuration(projectTierId string) (int64, error) {
 	return getImplementation().GetProjectTierRewardClaimableDuration(projectTierId)

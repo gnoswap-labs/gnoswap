@@ -68,7 +68,9 @@
 //   - Removal via the contract-address sentinel bypasses the rate-limit check.
 //   - Removal does not overwrite the previous timestamp, so immediate
 //     re-registration can still be rejected during the prior cooldown.
-//   - Attempts that exceed the cooldown return ErrTooManyRequests.
+//   - A non-removal attempt that exceeds the cooldown fails with the keeper's
+//     `ErrTooManyRequests`; `TryRegister` emits `ReferralRegistrationFailed` and
+//     returns the currently stored effective referrer instead of an error.
 //
 // ## Events
 //
@@ -82,13 +84,21 @@
 //
 // ## Error Handling
 //
-// The package defines several error types:
-//   - `ErrInvalidAddress`: Returned when an address format is invalid
-//   - `ErrSelfReferral`: Returned when attempting to set self as referrer
-//   - `ErrUnauthorized`: Returned when the caller lacks permission
-//   - `ErrTooManyRequests`: Returned when rate limit is exceeded (24-hour cooldown)
-//   - `ErrNotFound`: Returned when attempting to get a non-existent referral
-//   - `ErrInvalidTime`: Returned when the stored timestamp format is invalid
+// The package defines several error values. `TryRegister` returns only a string; it
+// does not return a keeper error. For an authorized non-empty write that the
+// keeper rejects, including a rate-limit, validation, or self-referral failure,
+// `TryRegister` emits `ReferralRegistrationFailed` and returns the currently
+// stored effective referrer. An unauthorized caller is rejected before keeper
+// handling and causes a panic.
+//
+//   - `ErrInvalidAddress`: Used when an address format is invalid
+//   - `ErrSelfReferral`: Used when attempting to set self as referrer
+//   - `ErrUnauthorized`: Used when the caller lacks permission; `TryRegister`
+//     panics for this case
+//   - `ErrTooManyRequests`: Used by the keeper when the 24-hour rate limit is
+//     exceeded; `TryRegister` handles it as described above
+//   - `ErrNotFound`: Used when attempting to get a non-existent referral
+//   - `ErrInvalidTime`: Used when the stored timestamp format is invalid
 //
 // ## Example: Integration with Router Contract
 //

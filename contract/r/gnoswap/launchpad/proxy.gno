@@ -1,13 +1,15 @@
 package launchpad
 
-// CreateProject creates a new launchpad project callable by the administrator or governance.
+// CreateProject creates a new launchpad project callable by the administrator
+// or governance. It transfers the configured reward-token allocation from the
+// creator into the launchpad realm.
 //
 // Parameters:
 //   - cur: current realm context; callers use cross(cur) when crossing into this realm.
 //   - name: human-readable project name.
 //   - tokenPath: token path whose tokens are distributed as project rewards.
 //   - recipient: address authorized to receive project rewards and project proceeds.
-//   - depositAmount: total reward-token amount allocated to the project.
+//   - depositAmount: total reward-token amount allocated to the project, in tokenPath's base units.
 //   - conditionTokens: optional `*PAD*`-separated token paths required for deposits.
 //   - conditionAmounts: optional `*PAD*`-separated required amounts matching conditionTokens.
 //   - tier30Ratio: reward allocation ratio for the 30-day tier.
@@ -17,6 +19,10 @@ package launchpad
 //
 // Returns:
 //   - projectId: identifier assigned to the newly created project.
+//
+// The creator must approve the launchpad realm (`ROLE_LAUNCHPAD`) to spend at
+// least depositAmount of tokenPath before calling. This reward-token approval
+// is separate from the GNS approval required by DepositGns.
 //
 // Halt check: reverts while the Launchpad halt scope is active.
 func CreateProject(

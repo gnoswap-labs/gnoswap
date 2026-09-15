@@ -16,7 +16,7 @@ The `governance.Config` type defines the governance parameters. The values used 
 | `VotingPeriod` | Duration for collecting votes | 7 days |
 | `VotingWeightSmoothingDuration` | Duration used for timestamp-based voting-weight averaging | 1 day |
 | `Quorum` | Percentage of total xGNS supply required for proposal passage; total supply includes launchpad-held issuance | 50% |
-| `ProposalCreationThreshold` | Minimum xGNS balance required to create a proposal | 1,000,000,000 xGNS |
+| `ProposalCreationThreshold` | Minimum xGNS balance required to create a proposal | 1,000 xGNS (1,000,000,000 base units) |
 | `ExecutionDelay` | Waiting period after voting ends before execution | 1 day |
 | `ExecutionWindow` | Time window during which an approved proposal can be executed | 30 days |
 
@@ -47,7 +47,7 @@ Launchpad-backed xGNS is included in total xGNS supply for quorum, but is not an
 
 ### Creation
 
-- Requires the configured `ProposalCreationThreshold` xGNS balance (1,000,000,000 xGNS by default).
+- Requires the configured `ProposalCreationThreshold` xGNS balance (1,000 xGNS / 1,000,000,000 base units by default).
 - One active proposal per address.
 - Valid type and parameters are required. Community-pool spend amounts must be strictly positive, recipients must be valid, and token paths must be registered.
 - A proposal stores its configuration version, creation timestamp, creation block height, quorum amount, and timestamp used for historical delegation lookup. The block height is metadata; voting-weight lookup is timestamp-based.
@@ -55,7 +55,7 @@ Launchpad-backed xGNS is included in total xGNS supply for quorum, but is not an
 ### Voting
 
 - Voting starts after the configured start delay (1 day by default) and runs for the configured voting period (7 days by default).
-- Weight is the average of the caller's delegation at the proposal's stored snapshot timestamp and at proposal creation time. The snapshot timestamp is `createdAt - VotingWeightSmoothingDuration` (clamped at zero), and the smoothing duration defaults to 24 hours.
+- Weight is the average of the caller's delegated amount as a delegatee/voting-power holder at the proposal's stored snapshot timestamp and at proposal creation time. The snapshot timestamp is `createdAt - VotingWeightSmoothingDuration` (clamped at zero), and the smoothing duration defaults to 24 hours.
 - Each address can vote only once on a proposal. `Vote` returns the applied vote weight as a decimal string.
 
 ### Execution
@@ -110,6 +110,7 @@ Import the corresponding proxy packages and qualify their function names in inte
 
 ```go
 // Through gov/staker: delegate GNS for xGNS voting power.
+// This example uses 1,000 xGNS (1,000,000,000 six-decimal base units).
 Delegate(cross(cur), delegatee, 1_000_000_000, "g1referrer...")
 
 // Create a text or community-pool proposal.
@@ -117,7 +118,9 @@ ProposeText(cross(cur), "Title", "Description")
 ProposeCommunityPoolSpend(cross(cur), "Title", "Description", recipient, tokenPath, amount)
 
 // A parameter-change execution uses a registered handler. This is one valid
-// Reconfigure message (all seven parameters are required).
+// Reconfigure message (all seven parameters are required). The fifth
+// Reconfigure argument is proposalCreationThreshold:
+// 1,000,000,000 xGNS base units (1,000 xGNS).
 execution := "gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*86400,604800,86400,50,1000000000,86400,2592000"
 ProposeParameterChange(cross(cur), "Update config", "Rationale", 1, execution)
 

@@ -19,9 +19,10 @@ func GetTotalDelegated() int64 {
 	return getImplementation().GetTotalDelegated()
 }
 
-// GetTotalLockedAmount returns the total amount of GNS locked in undelegation.
+// GetTotalLockedAmount returns the total GNS held by the staker for active
+// delegations and undelegations that have not yet been collected.
 // Returns:
-//   - int64: total GNS amount currently locked in undelegation withdrawals.
+//   - int64: total GNS principal held for active delegations plus uncollected undelegations, in base units.
 func GetTotalLockedAmount() int64 {
 	return getImplementation().GetTotalLockedAmount()
 }
@@ -97,16 +98,18 @@ func GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
 	return getImplementation().GetTotalDelegationAmountAtSnapshot(snapshotTime)
 }
 
-// GetUserDelegationAmountAtSnapshot returns one user's delegation at a Unix
-// timestamp, using that user's latest history entry at or before the timestamp.
+// GetUserDelegationAmountAtSnapshot returns a delegatee's accumulated delegated
+// amount at a Unix timestamp, using that delegatee's latest history entry at or
+// before the timestamp. The address is the voting-power holder, not the
+// delegator who supplied the GNS.
 // The bool is false when no qualifying history entry exists.
 // Parameters:
-//   - userAddr: Delegator address whose historical delegation is queried.
-//   - snapshotTime: Unix timestamp at or before which to select the user's latest history entry.
+//   - userAddr: Delegatee/voting-power holder address whose historical delegated amount is queried.
+//   - snapshotTime: Unix timestamp at or before which to select the delegatee's latest history entry.
 //
 // Returns:
-//   - int64: user's delegated amount recorded at or before snapshotTime.
-//   - bool: true when a qualifying user-history entry exists; false otherwise.
+//   - int64: delegatee's delegated amount recorded at or before snapshotTime.
+//   - bool: true when a qualifying delegatee-history entry exists; false otherwise.
 func GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
 	return getImplementation().GetUserDelegationAmountAtSnapshot(userAddr, snapshotTime)
 }

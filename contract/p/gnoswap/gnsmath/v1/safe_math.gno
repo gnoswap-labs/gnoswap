@@ -102,19 +102,21 @@ func SafeMulInt64(a, b int64) int64 {
 
 // SafeMulDivInt64 returns the truncated quotient (a * b) / c.
 //
-// The product is formed in signed 256-bit arithmetic before division, so an
-// intermediate product may exceed int64 while the final quotient must still fit.
+// A zero-factor fast path returns 0 before multiplying or dividing, so c may
+// also be zero on that path. For a nonzero product, the product is formed in
+// signed 256-bit arithmetic before division, so an intermediate product may
+// exceed int64 while the final quotient must still fit.
 //
 // Parameters:
 //   - a: First signed int64 factor.
 //   - b: Second signed int64 factor.
-//   - c: Non-zero signed int64 divisor.
+//   - c: Signed int64 divisor; must be non-zero when a * b is nonzero.
 //
 // Returns:
 //   - quotient: The signed integer quotient after dividing a * b by c.
 //
-// Panics if the 256-bit product overflows, c is zero, or the quotient is outside
-// the representable int64 range.
+// Panics if a * b is nonzero and the 256-bit product overflows, c is zero, or
+// the quotient is outside the representable int64 range.
 func SafeMulDivInt64(a, b, c int64) int64 {
 	if a == 0 || b == 0 {
 		return 0

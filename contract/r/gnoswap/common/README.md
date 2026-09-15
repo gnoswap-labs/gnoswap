@@ -28,6 +28,13 @@ The token actor is bound to that current realm via `RealmTeller` before the oper
 Token lookup goes through the registered implementation (`common/v1` resolves `gno.land/r/nt/grc20reg/v0`),
 which is swapped with `UpgradeImpl` like the other proxy realms.
 
+Each version package registers an initializer with the proxy during package
+initialization. When no implementation is active, the first registration becomes
+active; later registrations remain inactive until an authorized admin or
+governance caller invokes `UpgradeImpl` with a previously registered package path.
+The initializer receives the forwarded current common proxy realm token, not the
+version package's identity.
+
 **Token Operations:**
 - **IsRegistered**: Checks token registration status
 - **MustRegistered**: Validates multiple tokens are registered
@@ -38,8 +45,12 @@ which is swapped with `UpgradeImpl` like the other proxy realms.
 - **Allowance**: Returns allowance from owner to spender
 
 **Token Transfers:**
-- **Transfer/TransferFrom/Approve**: Returns error on failure
-- **SafeGRC20Transfer/SafeGRC20TransferFrom/SafeGRC20Approve**: Panics on failure
+- **Transfer/TransferFrom/Approve**: Panics when the token key is invalid or
+  unregistered before the teller is invoked; for a registered token, returns
+  errors from the teller when transfer, allowance, balance, or approval rules
+  reject the operation
+- **SafeGRC20Transfer/SafeGRC20TransferFrom/SafeGRC20Approve**: Panics when the
+  token key is invalid or unregistered or when the teller returns an error
 
 ### Coin Utilities
 

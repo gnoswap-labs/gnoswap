@@ -155,11 +155,11 @@ type IGovStakerGetter interface {
 	// Returns:
 	//   - int64: total active delegated xGNS amount
 	GetTotalDelegated() int64
-	// GetTotalLockedAmount returns GNS held by the staker contract for active
-	// delegations and not-yet-collected undelegations.
+	// GetTotalLockedAmount returns GNS held by the staker for active delegations
+	// and not-yet-collected undelegations.
 	//
 	// Returns:
-	//   - int64: total locked GNS amount
+	//   - int64: total GNS principal held for active delegations plus uncollected undelegations, in base units
 	GetTotalLockedAmount() int64
 	// GetDelegations returns a read-only tree of all delegations keyed by their
 	// decimal-string IDs.
@@ -210,16 +210,17 @@ type IGovStakerGetter interface {
 	//   - int64: total delegated amount from the latest qualifying history entry
 	//   - bool: true when a qualifying history entry exists; false when history has no such entry
 	GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool)
-	// GetUserDelegationAmountAtSnapshot finds one user's latest delegation
-	// history value at or before a Unix timestamp.
+	// GetUserDelegationAmountAtSnapshot finds a delegatee's latest delegated
+	// amount at or before a Unix timestamp. The address is the delegatee and
+	// voting-power holder, not the delegator who supplied the GNS.
 	//
 	// Parameters:
-	//   - userAddr: user's address whose delegation history is searched
-	//   - snapshotTime: Unix timestamp at which to resolve the user's historical delegation
+	//   - userAddr: delegatee/voting-power holder whose delegation history is searched
+	//   - snapshotTime: Unix timestamp at which to resolve the delegatee's historical delegation
 	//
 	// Returns:
-	//   - int64: user's delegated amount from the latest qualifying history entry
-	//   - bool: true when a qualifying history entry exists; false otherwise
+	//   - int64: delegatee's delegated amount from the latest qualifying history entry
+	//   - bool: true when a qualifying delegatee-history entry exists; false otherwise
 	GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool)
 
 	// Reward getters

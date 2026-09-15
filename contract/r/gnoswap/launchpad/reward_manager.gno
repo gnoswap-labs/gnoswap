@@ -20,7 +20,7 @@ import (
 // - distributeStartTime (int64): The start time of the reward calculation.
 // - distributeEndTime (int64): The end time of the reward calculation.
 // - accumulatedDistributeAmount (int64): A legacy field not maintained by v1 reward accounting; normally zero unless explicitly set.
-// - rewardClaimableDuration (int64): The duration of reward claimable.
+// - rewardClaimableDuration (int64): delay from each deposit's CreatedAt until its reward becomes claimable, capped at the distribution end time.
 type RewardManager struct {
 	rewards *bptree.BPTree // depositId -> RewardState
 
@@ -35,7 +35,7 @@ type RewardManager struct {
 	distributeEndTime           int64 // end time of reward calculation
 	accumulatedDistributeAmount int64 // legacy field; v1 reward paths do not update it
 	accumulatedTime             int64 // last time when reward was calculated
-	rewardClaimableDuration     int64 // duration of reward claimable
+	rewardClaimableDuration     int64 // delay from each deposit's CreatedAt until its reward becomes claimable, capped at the distribution end time
 
 	activePriceDebtX128 *u256.Uint // sum of active deposit amount × initial reward index
 }
@@ -252,18 +252,20 @@ func (rm *RewardManager) SetAccumulatedTime(time int64) {
 	rm.accumulatedTime = time
 }
 
-// RewardClaimableDuration returns the reward claimable duration of the reward manager.
+// RewardClaimableDuration returns the initial reward claim delay configured for
+// the reward manager.
 //
 // Returns:
-//   - duration: time after a reward becomes claimable during which it remains collectible, in seconds.
+//   - duration: delay in seconds from a deposit's CreatedAt until its reward becomes claimable; each deposit's claimable time is capped at the distribution end time. This is not a post-claim expiry period.
 func (rm *RewardManager) RewardClaimableDuration() int64 {
 	return rm.rewardClaimableDuration
 }
 
-// SetRewardClaimableDuration sets the reward claimable duration of the reward manager.
+// SetRewardClaimableDuration sets the initial reward claim delay configured for
+// the reward manager.
 //
 // Parameters:
-//   - duration: claimable reward window in seconds.
+//   - duration: delay in seconds from each deposit's CreatedAt until its reward becomes claimable; the resulting claimable time is capped at the distribution end time and does not expire because of this setting.
 func (rm *RewardManager) SetRewardClaimableDuration(duration int64) {
 	rm.rewardClaimableDuration = duration
 }
@@ -306,7 +308,7 @@ func (rm RewardManager) Clone() *RewardManager {
 //   - totalDistributeAmount: total reward allocation for the tier in token base units.
 //   - distributeStartTime: reward distribution start timestamp in Unix seconds.
 //   - distributeEndTime: reward distribution end timestamp in Unix seconds.
-//   - rewardCollectableDuration: duration in seconds for which each accrued reward remains claimable.
+//   - rewardCollectableDuration: initial reward claim delay in seconds from each deposit's CreatedAt; each claimable time is capped at the distribution end time, with no post-claim expiry from this setting.
 //
 // Returns:
 //   - rewardManager: initialized manager with zeroed accounting counters and an empty reward tree.

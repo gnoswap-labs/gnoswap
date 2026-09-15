@@ -15,7 +15,9 @@ GNS amounts use six-decimal base units; external rewards use their token's base 
 ## Configuration
 
 - **Deposit GNS Amount**: 100,000 GNS per external incentive (default; governance-adjustable)
-- **Minimum Reward Amount**: 1,000 token units (default for external incentive creation)
+- **Minimum Reward Amount**: 1,000,000,000 raw reward-token units by default
+  for external incentive creation; token-specific overrides may replace it
+  (1,000 tokens for a 6-decimal token).
 - **Unstaking Fee**: 1% default (100 basis points; configurable from 0 to 10%)
 - **Internal Pool Tiers**: 1, 2, or 3 (assigned per pool); external-only pools can also be stakeable
 - **Warmup Schedule**: 30/50/70/100% over default cumulative windows of 0-5, 5-15, 15-45, and 45+ days
@@ -224,7 +226,7 @@ The proxy functions receive a realm argument. From a caller realm with `cur real
 // Stake an existing position
 StakeToken(cross(cur), 123, "g1referrer...")
 
-// Create an external incentive (rewardAmount is an int64 token-unit amount)
+// Create an external incentive (rewardAmount is an int64 amount in the reward token's smallest units)
 CreateExternalIncentive(
     cross(cur),
     "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",

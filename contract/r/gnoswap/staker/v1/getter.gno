@@ -434,14 +434,16 @@ func (s *stakerV1) GetDeposit(lpTokenId uint64) (*sr.Deposit, error) {
 	return s.getDeposit(lpTokenId)
 }
 
-// CollectableEmissionReward returns the claimable internal reward amount for a position.
-// calculateCollectablePositionReward is read-only, so querying a collectable amount never mutates state.
+// CollectableEmissionReward returns the gross estimated internal GNS reward for a live staked
+// deposit or an exit checkpoint left by UnStakeToken, before staking/protocol fee deduction during
+// collection. The calculation is read-only, so querying an estimate never mutates state.
 //
 // Parameters:
 //   - positionId: LP position NFT token ID or exit-checkpoint ID whose accrued GNS reward is estimated.
 //
 // Returns:
-//   - int64: Currently collectable GNS emission amount in GNS units; zero may be a valid accrued amount.
+//   - int64: Gross estimated GNS emission amount in GNS base units (six decimals) before
+//     staking/protocol fee deduction; zero may be a valid accrued amount.
 //   - error: Non-nil when positionId is not staked/checked out or reward calculation fails; nil on success.
 func (s *stakerV1) CollectableEmissionReward(positionId uint64) (int64, error) {
 	currentTime := time.Now().Unix()
@@ -456,16 +458,20 @@ func (s *stakerV1) CollectableEmissionReward(positionId uint64) (int64, error) {
 	return reward.Internal, nil
 }
 
-// CollectableExternalIncentiveReward returns the claimable external reward amount for an incentive.
-// calculateCollectablePositionReward is read-only, so querying a collectable amount never mutates state.
+// CollectableExternalIncentiveReward returns the gross estimated external reward for an incentive
+// before staking/protocol fee deduction during collection. The calculation is read-only, so
+// querying an estimate never mutates state.
 //
 // Parameters:
 //   - positionId: LP position NFT token ID or exit-checkpoint ID whose external reward is estimated.
-//   - incentiveId: External incentive identifier to inspect; an absent reward entry yields zero without error.
+//   - incentiveId: External incentive identifier to inspect; an absent reward entry yields zero
+//     without error.
 //
 // Returns:
-//   - int64: Currently collectable reward amount for incentiveId, in that incentive's token units.
-//   - error: Non-nil when positionId is not staked/checked out or reward calculation fails; nil on success.
+//   - int64: Gross estimated reward amount for incentiveId in that incentive's token's smallest
+//     units, before staking/protocol fee deduction.
+//   - error: Non-nil when positionId is not staked/checked out or reward calculation fails; nil on
+//     success. An absent reward entry is not an error.
 func (s *stakerV1) CollectableExternalIncentiveReward(positionId uint64, incentiveId string) (int64, error) {
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()

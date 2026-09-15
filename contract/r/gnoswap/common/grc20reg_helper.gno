@@ -81,9 +81,12 @@ func Allowance(tokenKey string, owner, spender address) int64 {
 //   - to: recipient address.
 //   - amount: number of token base units to transfer.
 //
+// Panics if tokenKey is invalid or unregistered; the lookup occurs before the
+// token teller is invoked.
+//
 // Returns:
-//   - error: nil when the implementation completes the transfer; otherwise a token
-//     validation or transfer-rule error.
+//   - error: nil when the token teller completes the transfer; otherwise an error
+//     returned by the teller for transfer-rule validation or execution failure.
 func Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) error {
 	return getImplementation().Transfer(0, rlm, tokenKey, to, amount)
 }
@@ -98,9 +101,12 @@ func Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) error
 //   - to: recipient address.
 //   - amount: number of token base units to transfer.
 //
+// Panics if tokenKey is invalid or unregistered; the lookup occurs before the
+// token teller is invoked.
+//
 // Returns:
-//   - error: nil when the implementation completes the transfer; otherwise a token
-//     validation, allowance, or balance-rule error.
+//   - error: nil when the token teller completes the transfer; otherwise an error
+//     returned by the teller for transfer, allowance, or balance-rule failure.
 func TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount int64) error {
 	return getImplementation().TransferFrom(0, rlm, tokenKey, from, to, amount)
 }
@@ -114,9 +120,12 @@ func TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount in
 //   - spender: address authorized to spend the caller's tokens.
 //   - amount: number of token base units to authorize.
 //
+// Panics if tokenKey is invalid or unregistered; the lookup occurs before the
+// token teller is invoked.
+//
 // Returns:
-//   - error: nil when the implementation records the allowance; otherwise a token
-//     validation or approval-rule error.
+//   - error: nil when the token teller records the allowance; otherwise an error
+//     returned by the teller for approval-rule validation or execution failure.
 func Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) error {
 	return getImplementation().Approve(0, rlm, tokenKey, spender, amount)
 }
@@ -130,7 +139,8 @@ func Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) e
 //   - to: recipient address.
 //   - amount: number of token base units to transfer.
 //
-// Panics if the underlying transfer returns an error.
+// Panics if tokenKey is invalid or unregistered, or if the underlying token
+// teller returns an error.
 func SafeGRC20Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) {
 	if err := Transfer(0, rlm, tokenKey, to, amount); err != nil {
 		panic(err)
@@ -147,7 +157,8 @@ func SafeGRC20Transfer(_ int, rlm realm, tokenKey string, to address, amount int
 //   - to: recipient address.
 //   - amount: number of token base units to transfer.
 //
-// Panics if the underlying transfer returns an error.
+// Panics if tokenKey is invalid or unregistered, or if the underlying token
+// teller returns an error.
 func SafeGRC20TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount int64) {
 	if err := TransferFrom(0, rlm, tokenKey, from, to, amount); err != nil {
 		panic(err)
@@ -163,7 +174,8 @@ func SafeGRC20TransferFrom(_ int, rlm realm, tokenKey string, from, to address, 
 //   - spender: address authorized to spend the caller's tokens.
 //   - amount: number of token base units to authorize.
 //
-// Panics if the underlying approval returns an error.
+// Panics if tokenKey is invalid or unregistered, or if the underlying token
+// teller returns an error.
 func SafeGRC20Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) {
 	if err := Approve(0, rlm, tokenKey, spender, amount); err != nil {
 		panic(err)

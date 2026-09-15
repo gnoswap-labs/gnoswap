@@ -45,29 +45,35 @@ func GetDeposit(lpTokenId uint64) (*Deposit, error) {
 	return deposit.Clone(), nil
 }
 
-// CollectableEmissionReward returns the claimable internal GNS reward for a live staked deposit or
-// an exit checkpoint left by UnStakeToken.
+// CollectableEmissionReward returns the gross estimated internal GNS reward for a live staked
+// deposit or an exit checkpoint left by UnStakeToken, before staking/protocol fee deduction during
+// collection.
 //
 // Parameters:
 //   - positionId: staked position NFT token ID or position with an exit checkpoint
 //
 // Returns:
-//   - amount: claimable internal reward amount
-//   - err: non-nil when positionId cannot be resolved
+//   - amount: Gross estimated internal GNS reward before staking/protocol fee deduction; this
+//     read-only value is not the net amount transferred to the owner.
+//   - err: Non-nil when positionId is not staked/checked out or reward calculation fails; nil on success.
 func CollectableEmissionReward(positionId uint64) (int64, error) {
 	return getImplementation().CollectableEmissionReward(positionId)
 }
 
-// CollectableExternalIncentiveReward returns a position's claimable external reward for a live
-// staked deposit or an exit checkpoint left by UnStakeToken.
+// CollectableExternalIncentiveReward returns the gross estimated external reward for a live staked
+// deposit or an exit checkpoint left by UnStakeToken, before staking/protocol fee deduction during
+// collection.
 //
 // Parameters:
 //   - positionId: staked position NFT token ID or position with an exit checkpoint
-//   - incentiveId: external incentive identifier
+//   - incentiveId: external incentive identifier; an absent entry in the calculated reward map
+//     returns zero without error
 //
 // Returns:
-//   - amount: claimable external reward amount
-//   - err: non-nil when the position or incentive cannot be resolved
+//   - amount: Gross estimated reward in the incentive token's smallest units before
+//     staking/protocol fee deduction; zero when incentiveId is absent from the calculated reward map.
+//   - err: Non-nil when positionId is not staked/checked out or reward calculation fails; an absent
+//     incentiveId is not an error.
 func CollectableExternalIncentiveReward(positionId uint64, incentiveId string) (int64, error) {
 	return getImplementation().CollectableExternalIncentiveReward(positionId, incentiveId)
 }
@@ -491,7 +497,7 @@ func GetIncentiveStartTimestamp(poolPath string, incentiveId string) (int64, err
 // incentive. A token-specific override may apply.
 //
 // Returns:
-//   - amount: Default minimum external-incentive reward amount in token units.
+//   - amount: Default minimum external-incentive reward amount in token smallest units.
 func GetMinimumRewardAmount() int64 {
 	return getImplementation().GetMinimumRewardAmount()
 }
@@ -502,7 +508,7 @@ func GetMinimumRewardAmount() int64 {
 //   - tokenPath: Token path whose configured minimum-reward override should be read.
 //
 // Returns:
-//   - amount: Token-specific minimum reward amount when configured, otherwise the default minimum, in token units.
+//   - amount: Token-specific minimum reward amount when configured, otherwise the default minimum, in token smallest units.
 func GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	return getImplementation().GetMinimumRewardAmountForToken(tokenPath)
 }
@@ -587,7 +593,7 @@ func GetPoolTierRatio(poolPath string) (uint64, error) {
 //   - tokenPath: Token path whose explicit minimum-reward override should be read.
 //
 // Returns:
-//   - amount: Explicit minimum reward amount in token units, or 0 when no override is configured.
+//   - amount: Explicit minimum reward amount in token smallest units, or 0 when no override is configured.
 //   - found: True when tokenPath has an explicit override; false when the default would be used.
 func GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	return getImplementation().GetSpecificTokenMinimumRewardAmount(tokenPath)

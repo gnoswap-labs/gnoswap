@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 
 ### Changed
--
+- Correct public API documentation for upgrades, token units, funding approvals, lock metadata, and getter and error semantics.
 
 ### Deprecated
 -
@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 ### Fixed
--
+- Include the versioned RBAC configuration when patching the admin address for deployment.
 
 ### Security
 -

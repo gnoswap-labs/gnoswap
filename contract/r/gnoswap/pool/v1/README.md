@@ -14,8 +14,10 @@ Pool contracts implement Uniswap V3-style concentrated liquidity, allowing LPs t
 - **Withdrawal Fee**: 1% on fee-bearing collection (configurable)
 - **Fee Tiers**: 0.01%, 0.05%, 0.3%, 1%
 - **Tick Spacing**: Auto-set by fee tier
-- **Max Liquidity Per Tick**: Depends on tick spacing; use
-  `GetMaxLiquidityPerTick` rather than `2^128 - 1`
+- **Max Liquidity Per Tick**: Depends on tick spacing. Query
+  `GetTickSpacing(poolPath)` through the public pool proxy; the proxy does not
+  expose a max-liquidity getter, and the pool enforces the active implementation's
+  spacing-specific limit during liquidity changes.
 
 ## Core Concepts
 

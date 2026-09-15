@@ -157,8 +157,8 @@ func GetLiquidity(poolPath string) (string, error) {
 
 // GetPoolCreationFee returns the current pool creation fee.
 // Returns:
-//   - int64: Pool creation fee charged when a new pool is created, in configured
-//     native-token base units.
+//   - int64: Pool creation fee charged in GNS token base units (six decimal
+//     places; 1 GNS = 1,000,000 base units).
 func GetPoolCreationFee() int64 {
 	return getImplementation().GetPoolCreationFee()
 }
@@ -354,20 +354,22 @@ func GetSlot0Tick(poolPath string) (int32, error) {
 	return getImplementation().GetSlot0Tick(poolPath)
 }
 
-// GetSlot0Unlocked reports whether the pool is currently unlocked.
+// GetSlot0Unlocked returns the stored `Slot0.unlocked` metadata field.
+// It is separate from the pool-wide `Unlocked` KV-store guard used by live
+// reentrancy protection and must not be interpreted as the current lock state.
 // Parameters:
 //   - poolPath: Canonical pool path identifying the pool to query.
 //
 // Returns:
-//   - bool: True when the pool is not holding its reentrancy lock; false when
-//     the pool is currently locked.
+//   - bool: Stored `Slot0.unlocked` metadata value; not the live pool-wide lock
+//     state.
 //   - error: Non-nil when poolPath does not identify an existing pool.
 func GetSlot0Unlocked(poolPath string) (bool, error) {
 	return getImplementation().GetSlot0Unlocked(poolPath)
 }
 
-// GetSlot0 returns a safe copy of the pool's slot0 (sqrt price, tick,
-// protocol fee, lock state, and oracle cursor/capacity metadata).
+// GetSlot0 returns a safe copy of the pool's slot0 (sqrt price, tick, protocol
+// fee, slot0 lock metadata, and oracle cursor/capacity metadata).
 // The clone happens here, at the proxy boundary, so every implementation
 // version can return its internal Slot0 by value without each one having to
 // remember to defend against callers mutating the shared sqrtPriceX96.
@@ -376,7 +378,9 @@ func GetSlot0Unlocked(poolPath string) (bool, error) {
 //
 // Returns:
 //   - Slot0: Copy of the pool's slot0 state, including price, tick, protocol
-//     fee, lock, and observation metadata; panics if the pool is missing.
+//     fee, slot0 lock metadata, and observation metadata. The lock flag is
+//     separate from the pool-wide `Unlocked` KV-store guard; panics if the pool
+//     is missing.
 func GetSlot0(poolPath string) Slot0 {
 	slot0 := getImplementation().GetSlot0(poolPath)
 	return slot0.Clone()

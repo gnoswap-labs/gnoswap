@@ -167,7 +167,7 @@ func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
 //   - votingPeriod: voting duration (seconds)
 //   - votingWeightSmoothingDuration: weight smoothing duration (seconds)
 //   - quorum: minimum voting weight required (percentage)
-//   - proposalCreationThreshold: minimum weight to create proposal
+//   - proposalCreationThreshold: minimum xGNS amount, in six-decimal base units, to create a proposal
 //   - executionDelay: delay before execution (seconds)
 //   - executionWindow: execution time window (seconds)
 //

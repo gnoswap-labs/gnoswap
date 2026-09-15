@@ -47,7 +47,7 @@ type IPoolManager interface {
 	// Parameters:
 	//   - _: Noncrossing implementation-call discriminator; pass 0.
 	//   - rlm: Current realm context forwarded unchanged by the pool proxy.
-	//   - fee: Pool-creation fee amount to store for future pool creation operations.
+	//   - fee: Pool-creation fee amount in GNS token base units (six decimals) to store for future pool creation operations.
 	SetPoolCreationFee(_ int, rlm realm, fee int64)
 }
 
@@ -288,15 +288,19 @@ type IPoolSwap interface {
 // ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L21-L32
 // ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol#L18-L39
 type IPoolOracle interface {
-	// GetSlot0 returns a safe copy of a pool's price, tick, protocol-fee, lock,
-	// and oracle cursor/capacity state, corresponding to Uniswap V3 slot0().
+	// GetSlot0 returns a safe copy of a pool's price, tick, protocol-fee, slot0
+	// lock metadata, and oracle cursor/capacity state, corresponding to Uniswap
+	// V3 slot0(). The slot0 lock flag is separate from the pool-wide `Unlocked`
+	// KV-store guard used for live reentrancy protection.
 	//
 	// ref: https://github.com/Uniswap/v3-core/blob/e3589b192d0be27e100cd0daaf6c97204fdb1899/contracts/interfaces/pool/IUniswapV3PoolState.sol#L21-L32
 	// Parameters:
 	//   - poolPath: Canonical path identifying the pool whose slot0 state is read.
 	//
 	// Returns:
-	//   - slot0: Safe copy of the pool's price, tick, protocol-fee, lock, and oracle cursor/capacity state.
+	//   - slot0: Safe copy of the pool's price, tick, protocol-fee, slot0 lock
+	//     metadata, and oracle cursor/capacity state; its lock flag is separate
+	//     from the pool-wide `Unlocked` KV-store guard.
 	GetSlot0(poolPath string) Slot0
 
 	// GetObservationAt returns the observation stored at index, corresponding to
@@ -464,7 +468,7 @@ type IPoolGetter interface {
 	GetPendingProtocolFees() map[string]int64
 
 	// Returns:
-	//   - poolCreationFee: Configured fee amount charged when creating a pool.
+	//   - poolCreationFee: Configured pool-creation charge in GNS token base units (six decimals).
 	GetPoolCreationFee() int64
 
 	// Parameters:
@@ -563,10 +567,12 @@ type IPoolGetter interface {
 	GetSlot0Tick(poolPath string) (int32, error)
 
 	// Parameters:
-	//   - poolPath: Canonical path identifying the pool whose lock state is read.
+	//   - poolPath: Canonical path identifying the pool whose slot0 metadata flag
+	//     is read.
 	//
 	// Returns:
-	//   - unlocked: True when the pool is available for another state-changing operation.
+	//   - unlocked: Stored `Slot0.unlocked` metadata value, separate from the
+	//     pool-wide `Unlocked` KV-store guard used for live reentrancy protection.
 	//   - err: Non-nil when poolPath does not identify a registered pool.
 	GetSlot0Unlocked(poolPath string) (bool, error)
 
@@ -793,12 +799,12 @@ type IPoolStore interface {
 	//   - exists: True when a pool-creation fee has been initialized.
 	HasPoolCreationFee() bool
 	// Returns:
-	//   - poolCreationFee: Stored pool-creation charge in the chain's smallest currency unit; the implementation panics if the KV value is unreadable or wrongly typed.
+	//   - poolCreationFee: Stored pool-creation charge in GNS token base units (six decimals); the implementation panics if the KV value is unreadable or wrongly typed.
 	GetPoolCreationFee() int64
 	// Parameters:
 	//   - _: Leading integer discriminator forwarded to the storage setter; pass 0.
 	//   - rlm: Propagated realm context; the setter rejects a context that is not current.
-	//   - poolCreationFee: Pool-creation fee amount to store.
+	//   - poolCreationFee: Pool-creation fee amount in GNS token base units (six decimals) to store.
 	//
 	// Returns:
 	//   - err: Nil after storing the fee; non-nil for a non-current rlm or an underlying KV-store write failure.

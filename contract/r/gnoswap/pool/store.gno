@@ -233,8 +233,8 @@ func (s *poolStore) HasPoolCreationFee() bool {
 
 // GetPoolCreationFee retrieves the pool creation fee amount.
 // Returns:
-//   - poolCreationFee: configured pool-creation charge in the chain's smallest
-//     currency unit; panics if the KV value cannot be read or has the wrong type.
+//   - poolCreationFee: configured pool-creation charge in GNS token base units
+//     (six decimals); panics if the KV value cannot be read or has the wrong type.
 func (s *poolStore) GetPoolCreationFee() int64 {
 	result, err := s.kvStore.Get(StoreKeyPoolCreationFee.String())
 	if err != nil {
@@ -254,8 +254,8 @@ func (s *poolStore) GetPoolCreationFee() int64 {
 //   - _: leading realm-call discriminator; callers pass 0.
 //   - rlm: propagated realm context; it must be the current realm or the method
 //     returns ErrSpoofedRealm before writing.
-//   - poolCreationFee: pool-creation charge in the chain's smallest currency
-//     unit.
+//   - poolCreationFee: pool-creation charge in GNS token base units (six
+//     decimals).
 //
 // Returns:
 //   - err: nil when the fee is stored; ErrSpoofedRealm for a non-current realm,

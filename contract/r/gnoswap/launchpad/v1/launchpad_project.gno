@@ -19,7 +19,9 @@ import (
 	"gno.land/r/gnoswap/launchpad"
 )
 
-// CreateProject creates a new launchpad project with tiered allocations.
+// CreateProject creates a new launchpad project with tiered allocations and
+// transfers the configured reward-token allocation from the creator into the
+// launchpad realm.
 //
 // Parameters:
 //   - _: Noncrossing implementation-call discriminator; pass 0.
@@ -27,7 +29,7 @@ import (
 //   - name: project name, limited by the project validation rules.
 //   - tokenPath: reward token contract path whose balance is deposited into the project.
 //   - recipient: project recipient address recorded for authorization and later collection.
-//   - depositAmount: amount of reward tokens to deposit into the project.
+//   - depositAmount: amount of reward tokens to deposit into the project, in tokenPath's base units.
 //   - conditionTokens: `*PAD*`-separated token paths for eligibility conditions.
 //   - conditionAmounts: `*PAD*`-separated minimum balances aligned with conditionTokens.
 //   - tier30Ratio: percentage of the allocation assigned to the 30-day tier.
@@ -37,6 +39,10 @@ import (
 //
 // Returns:
 //   - projectID: newly created launchpad project identifier.
+//
+// The creator must approve tokenPath for the launchpad realm (`ROLE_LAUNCHPAD`)
+// to spend at least depositAmount before calling. This reward-token approval
+// is separate from the GNS approval required by DepositGns.
 //
 // Only callable by admin or governance.
 func (lp *launchpadV1) CreateProject(

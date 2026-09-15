@@ -20,7 +20,7 @@ GNS amounts use six-decimal base units; project rewards use their token's base u
 - **Pool Tiers**: 30 days, 90 days, and 180 days
 - **Minimum Start Delay**: 3 days from project creation
 - **Minimum Deposit**: 1 GNS (1,000,000 base units) and integer multiples of that amount
-- **Reward Claim Delay**: 1 day after each deposit, capped at the selected tier's end time
+- **Reward Claim Delay**: 1 day from each deposit's creation before its reward can be claimed, capped at the selected tier's end time; once claimable, it does not expire because of this setting
 - **Condition Delimiter**: Use `*PAD*` between condition expressions
 - **Auto-Delegation**: Project deposits can be reflected in governance-staker accounting
 
@@ -64,14 +64,17 @@ depositor claims are not transferred.
 
 ## Approval Requirements
 
-- `DepositGns` pulls GNS from the caller into the launchpad realm, so approve
-  the launchpad realm for at least the deposit amount before calling.
-- `CollectRewardByDepositId` and `CollectDepositGns` pay out to the caller and
-  require no approval.
+- `CreateProject` pulls the configured reward token from the creator into the stable launchpad realm (`ROLE_LAUNCHPAD`), so the creator must approve the launchpad realm to spend at least `depositAmount` of that token before calling. This reward-token approval is separate from the GNS approval required by `DepositGns`.
+- `DepositGns` pulls GNS from the caller into the launchpad realm, so approve the launchpad realm for at least the deposit amount before calling.
+- `CollectRewardByDepositId` and `CollectDepositGns` pay out to the caller and require no approval.
 
 ```go
-// Approve the launchpad realm before depositing
-launchpadAddress := access.MustGetAddress(prabc.ROLE_LAUNCHPAD.String())
+launchpadAddress := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+
+// Approve the configured project reward token for CreateProject.
+projectToken.Approve(cross(cur), launchpadAddress, 1_000_000_000)
+
+// Approve GNS separately for DepositGns.
 gns.Approve(cross(cur), launchpadAddress, 10_000_000)
 ```
 

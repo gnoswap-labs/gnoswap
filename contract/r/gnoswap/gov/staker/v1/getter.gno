@@ -30,10 +30,11 @@ func (gs *govStakerV1) GetTotalDelegated() int64 {
 	return gs.store.GetTotalDelegatedAmount()
 }
 
-// GetTotalLockedAmount returns the total amount of locked GNS.
+// GetTotalLockedAmount returns the total GNS held by the staker for active
+// delegations and undelegations that have not yet been collected.
 //
 // Returns:
-//   - int64: total GNS amount currently locked.
+//   - int64: total GNS principal held for active delegations plus uncollected undelegations, in base units.
 func (gs *govStakerV1) GetTotalLockedAmount() int64 {
 	return gs.store.GetTotalLockedAmount()
 }
@@ -151,17 +152,18 @@ func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (i
 	return totalAmount, exists
 }
 
-// GetUserDelegationAmountAtSnapshot returns one user's delegation amount at a
-// Unix timestamp. The history is keyed by address and timestamp, and the
-// lookup returns the most recent entry at or before the requested time.
+// GetUserDelegationAmountAtSnapshot returns a delegatee's accumulated delegated
+// amount at a Unix timestamp. The history is keyed by delegatee address and
+// timestamp, and the lookup returns the most recent entry at or before the
+// requested time. The address is the voting-power holder, not the delegator.
 //
 // Parameters:
-//   - userAddr: address of the user
-//   - snapshotTime: Unix timestamp to retrieve
+//   - userAddr: delegatee/voting-power holder address whose history is queried.
+//   - snapshotTime: Unix timestamp to retrieve.
 //
 // Returns:
-//   - int64: user delegation amount at the specified time
-//   - bool: true when a history entry exists at or before the timestamp
+//   - int64: delegatee's delegated amount at or before the timestamp.
+//   - bool: true when a qualifying delegatee-history entry exists; false otherwise.
 func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
 	history := gs.store.GetUserDelegationHistory()
 

@@ -84,7 +84,10 @@ func ContractAddress() string {
 //
 // Empty input is treated as a read and returns the stored referrer without
 // authorization, rate-limit checks, or event emission.
-// Non-empty input requires an authorized caller.
+// Non-empty input requires an authorized caller. If the keeper rejects an
+// authorized non-empty write, this function emits EventRegisterFailed and
+// returns the stored effective referrer as a fallback; it does not return an
+// error.
 func TryRegister(cur realm, addr address, referral string) string {
 	if referral == "" {
 		return GetReferral(addr.String())

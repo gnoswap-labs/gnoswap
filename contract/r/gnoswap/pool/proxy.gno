@@ -36,7 +36,7 @@ func CreatePool(
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this
 //     realm.
-//   - fee: New pool creation fee, in the configured native-token base units.
+//   - fee: New pool creation fee, in GNS token base units (six decimals).
 //
 // Halt check: reverts while the Pool halt scope is active.
 func SetPoolCreationFee(cur realm, fee int64) {

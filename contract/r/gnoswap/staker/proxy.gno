@@ -282,7 +282,7 @@ func SetDepositGnsAmount(cur realm, amount int64) {
 //
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
-//   - amount: Default minimum reward amount, measured in the reward token's units.
+//   - amount: Default minimum reward amount, measured in the reward token's smallest units.
 //
 // Halt check: reverts while the Staker halt scope is active.
 func SetMinimumRewardAmount(cur realm, amount int64) {

@@ -76,8 +76,9 @@ gnokey list
 `patch-admin-address` is a local source rewrite, not a blockchain operation.
 It passes `ADDR_ADMIN` from the selected profile to
 `scripts/patch-admin-address.sh`, which replaces the old admin address in its
-fixed list of contract and test-token files. Use it only when intentionally
-moving the admin address, and review the resulting source diff:
+fixed list of files, including `contract/r/gnoswap/rbac/v1/consts.gno` and the
+test-token contracts. Use it only when intentionally moving the admin address,
+and review the resulting source diff:
 
 ```bash
 make -C tests patch-admin-address ENV=default

@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# Script to replace admin address in specific files from commit 90bfb4852a2fc9b8de45918050ff2d826ddb5ec2
+# Script to replace the configured RBAC and test-token admin address.
 # Usage: ./patch-admin-address.sh <new_address>
 
 set -e
 
 OLD_ADDRESS="g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"
 
-# Static list of files to process (from commit 90bfb4852a2fc9b8de45918050ff2d826ddb5ec2)
+# RBAC configuration and test-token files sharing the configured admin address.
 TARGET_FILES=(
-    "contract/r/gnoswap/rbac/consts.gno"
+    "contract/r/gnoswap/rbac/v1/consts.gno"
     "contract/r/gnoswap/test_token/test_atom/atom.gno"
     "contract/r/gnoswap/test_token/test_atone/atone.gno"
     "contract/r/gnoswap/test_token/test_btc/btc.gno"

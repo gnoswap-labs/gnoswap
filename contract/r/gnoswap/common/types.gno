@@ -64,8 +64,11 @@ type ICommon interface {
 	//   - to: recipient account address
 	//   - amount: number of token units to transfer
 	//
+	// Panics if tokenKey is invalid or unregistered before the teller is invoked.
+	//
 	// Returns:
-	//   - error: nil when the teller completes the transfer; non-nil when token validation or transfer rules reject it
+	//   - error: nil when the teller completes the transfer; otherwise an error
+	//     returned by the teller for transfer-rule validation or execution failure
 	Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) error
 
 	// TransferFrom asks the token teller bound to rlm to transfer tokens from one account to another.
@@ -78,8 +81,11 @@ type ICommon interface {
 	//   - to: recipient account address
 	//   - amount: number of token units to transfer
 	//
+	// Panics if tokenKey is invalid or unregistered before the teller is invoked.
+	//
 	// Returns:
-	//   - error: nil when the teller completes the transfer; non-nil when token validation, allowance, or balance rules reject it
+	//   - error: nil when the teller completes the transfer; otherwise an error
+	//     returned by the teller for transfer, allowance, or balance-rule failure
 	TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount int64) error
 
 	// Approve asks the token teller bound to rlm to set spender's allowance.
@@ -91,8 +97,11 @@ type ICommon interface {
 	//   - spender: account receiving permission to spend the caller's tokens
 	//   - amount: number of token units to authorize
 	//
+	// Panics if tokenKey is invalid or unregistered before the teller is invoked.
+	//
 	// Returns:
-	//   - error: nil when the teller records the allowance; non-nil when token validation or approval rules reject it
+	//   - error: nil when the teller records the allowance; otherwise an error
+	//     returned by the teller for approval-rule validation or execution failure
 	Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) error
 	Render(path string) string
 }

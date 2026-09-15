@@ -14,7 +14,9 @@ type ILaunchpad interface {
 }
 
 type ILaunchpadProject interface {
-	// CreateProject creates a project and its reward tiers in the current launchpad realm.
+	// CreateProject creates a project and its reward tiers in the current
+	// launchpad realm. It transfers the configured reward-token allocation from
+	// the creator into the launchpad realm.
 	//
 	// Parameters:
 	//   - _: Noncrossing implementation-call discriminator; pass 0.
@@ -22,7 +24,7 @@ type ILaunchpadProject interface {
 	//   - name: human-readable project name.
 	//   - tokenPath: token path whose tokens are distributed as project rewards.
 	//   - recipient: address authorized to receive project rewards and project proceeds.
-	//   - depositAmount: total reward-token amount allocated to the project.
+	//   - depositAmount: total reward-token amount allocated to the project, in tokenPath's base units.
 	//   - conditionTokens: optional `*PAD*`-separated token paths required for deposits.
 	//   - conditionAmounts: optional `*PAD*`-separated required amounts matching conditionTokens.
 	//   - tier30Ratio: reward allocation ratio for the 30-day tier.
@@ -32,6 +34,9 @@ type ILaunchpadProject interface {
 	//
 	// Returns:
 	//   - projectID: identifier assigned to the newly created project.
+	// The creator must approve the launchpad realm (`ROLE_LAUNCHPAD`) to spend at
+	// least depositAmount of tokenPath before calling. This reward-token approval
+	// is separate from the GNS approval required by DepositGns.
 	CreateProject(
 		_ int,
 		rlm realm,
@@ -497,13 +502,13 @@ type ILaunchpadGetter interface {
 	//   - time: accumulated Unix timestamp.
 	//   - err: non-nil when projectTierId does not identify a stored manager.
 	GetProjectTierRewardAccumulatedTime(projectTierId string) (int64, error)
-	// GetProjectTierRewardClaimableDuration returns the delay before rewards become claimable.
+	// GetProjectTierRewardClaimableDuration returns the configured initial delay before each deposit reward becomes claimable.
 	//
 	// Parameters:
 	//   - projectTierId: identifier of the project tier.
 	//
 	// Returns:
-	//   - duration: claimable delay in seconds.
+	//   - duration: delay in seconds from a deposit's CreatedAt; each deposit's claimable time is capped at the reward manager's distribution end time, and this value does not define post-claim expiry.
 	//   - err: non-nil when projectTierId does not identify a stored manager.
 	GetProjectTierRewardClaimableDuration(projectTierId string) (int64, error)
 

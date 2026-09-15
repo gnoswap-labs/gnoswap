@@ -104,8 +104,8 @@ func (i *poolV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount in
 //     pass 0.
 //   - rlm: Propagated realm context validated as current before the fee is
 //     written.
-//   - fee: New non-negative pool creation fee in configured native-token base
-//     units.
+//   - fee: New non-negative pool creation fee in GNS token base units (six
+//     decimals).
 func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 

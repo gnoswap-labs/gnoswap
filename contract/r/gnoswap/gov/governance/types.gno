@@ -135,7 +135,7 @@ type IGovernanceManager interface {
 	//   - votingPeriod: seconds for which voting remains open.
 	//   - votingWeightSmoothingDuration: seconds used to smooth delegation history for voting weight.
 	//   - quorum: required approval percentage of total xGNS supply, from 0 through 100.
-	//   - proposalCreationThreshold: minimum xGNS amount required to create a proposal.
+	//   - proposalCreationThreshold: minimum xGNS amount, in six-decimal base units, required to create a proposal
 	//   - executionDelay: seconds required between approval and execution.
 	//   - executionWindow: seconds after the delay during which execution is allowed.
 	//
@@ -660,15 +660,15 @@ type GovStakerAccessor interface {
 	//   - bool: true when a snapshot value exists at that timestamp.
 	GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool)
 
-	// GetUserDelegationAmountAtSnapshot returns the user delegation amount at a specific snapshot time.
+	// GetUserDelegationAmountAtSnapshot returns a delegatee's delegated amount at a specific snapshot time.
 	//
 	// Parameters:
-	//   - userAddr: user address whose delegated amount is sampled.
-	//   - snapshotTime: Unix timestamp at which the user's history is sampled.
+	//   - userAddr: delegatee/voting-power holder address whose delegated amount is sampled.
+	//   - snapshotTime: Unix timestamp at or before which the delegatee's history is sampled.
 	//
 	// Returns:
-	//   - int64: user's delegated amount at snapshotTime.
-	//   - bool: true when a snapshot value exists for the user and timestamp.
+	//   - int64: delegatee's delegated amount at the requested snapshot time.
+	//   - bool: true when a qualifying delegatee-history value exists at or before the timestamp.
 	GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool)
 
 	// GetTotalxGnsSupply returns the total xGNS supply used as the quorum base.

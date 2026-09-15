@@ -112,9 +112,12 @@ func (c *commonV1) Allowance(tokenKey string, owner, spender address) int64 {
 //   - to: recipient address
 //   - amount: number of token units to transfer
 //
+// Panics if tokenKey is invalid or unregistered; mustGetToken performs this
+// lookup before RealmTeller is invoked.
+//
 // Returns:
-//   - error: nil after a successful transfer; the token teller's validation or
-//     transfer error otherwise
+//   - error: nil after a successful transfer; otherwise the error returned by
+//     the token teller for transfer-rule validation or execution failure
 func (c *commonV1) Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) error {
 	return c.getTokenTeller(0, rlm, tokenKey).Transfer(0, rlm, to, amount)
 }
@@ -131,9 +134,12 @@ func (c *commonV1) Transfer(_ int, rlm realm, tokenKey string, to address, amoun
 //   - to: recipient address
 //   - amount: number of token units to transfer
 //
+// Panics if tokenKey is invalid or unregistered; mustGetToken performs this
+// lookup before RealmTeller is invoked.
+//
 // Returns:
-//   - error: nil after a successful transfer; the token teller's validation,
-//     allowance, or balance error otherwise
+//   - error: nil after a successful transfer; otherwise the error returned by
+//     the token teller for transfer, allowance, or balance-rule failure
 func (c *commonV1) TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount int64) error {
 	return c.getTokenTeller(0, rlm, tokenKey).TransferFrom(0, rlm, from, to, amount)
 }
@@ -148,9 +154,12 @@ func (c *commonV1) TransferFrom(_ int, rlm realm, tokenKey string, from, to addr
 //   - spender: address authorized to spend
 //   - amount: maximum number of token units spender may transfer
 //
+// Panics if tokenKey is invalid or unregistered; mustGetToken performs this
+// lookup before RealmTeller is invoked.
+//
 // Returns:
-//   - error: nil after the allowance is stored; the token teller's validation
-//     error otherwise
+//   - error: nil after the allowance is stored; otherwise the error returned by
+//     the token teller for approval-rule validation or execution failure
 func (c *commonV1) Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) error {
 	return c.getTokenTeller(0, rlm, tokenKey).Approve(0, rlm, spender, amount)
 }

@@ -9,7 +9,7 @@ Manages referral relationships between users. Non-removal writes have a 24-hour 
 ## Global Functions
 
 ### `TryRegister(cur realm, addr address, referral string) string`
-Attempts to register, update, or remove a referral relationship and returns the effective referrer string.
+Attempts to register, update, or remove a referral relationship and returns the effective referrer string, not an error.
 
 - An empty `referral` only reads and returns the user's current referrer. It does not require authorization or emit an event.
 - An authorized non-empty write that fails emits `ReferralRegistrationFailed` and returns the currently stored referrer.
@@ -95,6 +95,7 @@ func CheckUserHasReferral(userAddr string) bool {
 - Non-removal registrations and updates are limited to one operation per 24 hours per address.
 - Passing the referral contract's own address removes a relationship and bypasses the rate-limit check.
 - Removal does not overwrite the previous non-removal timestamp, so immediate re-registration can still be rejected while that timestamp is within the cooldown.
+- A cooldown failure emits `ReferralRegistrationFailed`; `TryRegister` returns the currently stored effective referrer instead of an error.
 
 ## Events
 

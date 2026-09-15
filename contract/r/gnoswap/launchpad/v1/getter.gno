@@ -745,14 +745,15 @@ func (lp *launchpadV1) GetProjectTierRewardAccumulatedTime(projectTierId string)
 	return manager.AccumulatedTime(), nil
 }
 
-// GetProjectTierRewardClaimableDuration returns the reward claimable duration of a reward manager.
+// GetProjectTierRewardClaimableDuration returns the configured initial delay
+// before a deposit's reward becomes claimable.
 // Returns 0 and error if reward manager not found.
 //
 // Parameters:
 //   - projectTierId: composite project-tier identifier whose reward manager is requested.
 //
 // Returns:
-//   - duration: configured period during which rewards remain claimable, in the manager's timestamp units; zero when lookup fails.
+//   - duration: delay in seconds from a deposit's CreatedAt until its reward becomes claimable; each deposit's claimable time is capped at the manager's distribution end time. This value does not define post-claim expiry.
 //   - err: nil when found; non-nil when the reward manager is absent or has an invalid type.
 func (lp *launchpadV1) GetProjectTierRewardClaimableDuration(projectTierId string) (int64, error) {
 	manager, err := lp.GetProjectTierRewardManager(projectTierId)
