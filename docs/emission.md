@@ -4,7 +4,7 @@ GNS minting and distribution schedule.
 
 ## Rules
 
-- `MintAndDistributeGns` returns `(int64, bool)`. The `bool` indicates whether emission is active (not halted). **Every caller must check this bool** — ignoring it causes the calling module to halt when emission is paused.
+- `MintAndDistributeGns` returns `(int64, bool)`. The `bool` indicates whether emission is active (not halted). Callers that calculate or transfer internal GNS rewards must check it so halted emission cannot consume existing module reserves.
 - Minting authority: only `emission` calls `gns.Mint`. Any other realm gaining mint access is a critical vulnerability.
 - Emission rate changes must trigger a cache-invalidation callback in staker. Missing this causes stale reward calculations until the next user interaction.
 - Allocation percentages (stakers / devops / community pool / governance stakers) must sum to 100% after any change.
