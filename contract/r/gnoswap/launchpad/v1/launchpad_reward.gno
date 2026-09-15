@@ -53,6 +53,7 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 		"prevRealm", previousRealm.PkgPath(),
 		"depositId", depositID,
 		"targetProjectTierId", targetProjectTierID,
+		"rewardTokenPath", rewardTokenPath,
 		"amount", utils.FormatInt(rewardAmount),
 	)
 
