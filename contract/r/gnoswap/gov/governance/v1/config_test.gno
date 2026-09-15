@@ -210,7 +210,7 @@ func zzSkip2_TestConfig_Reconfigure(cur realm, t *testing.T) {
 			// given: set realm and halt state
 			gs := newMockGovernance()
 
-			testing.SetRealm(govRealm)
+			testing.SetRealm(adminRealm)
 			if tc.halted {
 				halt.SetHaltLevel(cross(cur), halt.HaltLevelComplete)
 			} else {

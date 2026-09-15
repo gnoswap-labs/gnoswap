@@ -435,41 +435,9 @@ func TestHalt_SetHaltLevel_WithAuthorization(cur realm, t *testing.T) {
 			expectedAbortMessage: "",
 		},
 		{
-			name:                 "Success with governance realm - safe mode",
-			callerAddress:        govAddr,
-			inputLevel:           HaltLevelSafeMode,
-			expectedLevel:        HaltLevelSafeMode,
-			expectedHasAbort:     false,
-			expectedAbortMessage: "",
-		},
-		{
-			name:                 "Success with governance realm - complete",
-			callerAddress:        govAddr,
-			inputLevel:           HaltLevelComplete,
-			expectedLevel:        HaltLevelComplete,
-			expectedHasAbort:     false,
-			expectedAbortMessage: "",
-		},
-		{
-			name:                 "Fail with admin realm - safe mode halts withdraw",
-			callerAddress:        adminAddr,
-			inputLevel:           HaltLevelSafeMode,
-			expectedLevel:        HaltLevelNone,
-			expectedHasAbort:     true,
-			expectedAbortMessage: "is not governance",
-		},
-		{
-			name:                 "Fail with admin realm - complete halts withdraw",
-			callerAddress:        adminAddr,
-			inputLevel:           HaltLevelComplete,
-			expectedLevel:        HaltLevelNone,
-			expectedHasAbort:     true,
-			expectedAbortMessage: "is not governance",
-		},
-		{
 			name:                 "Fail with unauthorized realm",
 			callerAddress:        address("g1unauthorized"),
-			inputLevel:           HaltLevelEmergency,
+			inputLevel:           HaltLevelComplete,
 			expectedLevel:        HaltLevelNone, // Should remain unchanged
 			expectedHasAbort:     true,
 			expectedAbortMessage: "unauthorized: caller g1unauthorized is not admin or governance",
@@ -549,30 +517,6 @@ func TestHalt_SetOperationStatus_WithAuthorization(cur realm, t *testing.T) {
 			halted:               false,
 			expectedHasAbort:     false,
 			expectedAbortMessage: "",
-		},
-		{
-			name:                 "Success with governance realm - halt withdraw",
-			callerAddress:        govAddr,
-			operationType:        OpTypeWithdraw,
-			halted:               true,
-			expectedHasAbort:     false,
-			expectedAbortMessage: "",
-		},
-		{
-			name:                 "Success with admin realm - unhalt withdraw",
-			callerAddress:        adminAddr,
-			operationType:        OpTypeWithdraw,
-			halted:               false,
-			expectedHasAbort:     false,
-			expectedAbortMessage: "",
-		},
-		{
-			name:                 "Fail with admin realm - halt withdraw",
-			callerAddress:        adminAddr,
-			operationType:        OpTypeWithdraw,
-			halted:               true,
-			expectedHasAbort:     true,
-			expectedAbortMessage: "is not governance",
 		},
 		{
 			name:                 "Fail with unauthorized realm",
@@ -1067,139 +1011,4 @@ func TestHaltStateManager_SetOperationHalted_InvalidOpType(cur realm, t *testing
 func cleanup(t *testing.T) {
 	t.Helper()
 	haltStates = newHaltStateManagerByConfig(newNoneConfig())
-}
-
-func TestHalt_WithdrawHaltAuthorization_EdgeCases(cur realm, t *testing.T) {
-	adminAddr := access.MustGetAddress(prbac.ROLE_ADMIN.String())
-	govAddr := access.MustGetAddress(prbac.ROLE_GOVERNANCE.String())
-
-	setLevel := func(cur realm, caller address, level HaltLevel) {
-		testing.SetRealm(testing.NewUserRealm(caller))
-		SetHaltLevel(cross(cur), level)
-	}
-
-	t.Run("admin can unhalt withdraw after governance halted it", func(cur realm, t *testing.T) {
-		cleanup(t)
-		setLevel(cur, govAddr, HaltLevelSafeMode)
-		uassert.Equal(t, true, IsHaltedWithdraw())
-
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		SetOperationStatus(cross(cur), OpTypeWithdraw, false)
-		uassert.Equal(t, false, IsHaltedWithdraw())
-	})
-
-	t.Run("admin can recover from governance-set COMPLETE via NONE", func(cur realm, t *testing.T) {
-		cleanup(t)
-		setLevel(cur, govAddr, HaltLevelComplete)
-		uassert.Equal(t, true, IsHaltedGovernance())
-
-		setLevel(cur, adminAddr, HaltLevelNone)
-		for _, op := range OpTypes() {
-			uassert.Equal(t, false, GetHaltConfig().IsHalted(op))
-		}
-	})
-
-	t.Run("admin can move governance-set COMPLETE to EMERGENCY", func(cur realm, t *testing.T) {
-		cleanup(t)
-		setLevel(cur, govAddr, HaltLevelComplete)
-
-		setLevel(cur, adminAddr, HaltLevelEmergency)
-		uassert.Equal(t, false, IsHaltedWithdraw())
-		uassert.Equal(t, false, IsHaltedGovernance())
-		uassert.Equal(t, true, IsHaltedPool())
-	})
-
-	t.Run("admin cannot escalate EMERGENCY to COMPLETE", func(cur realm, t *testing.T) {
-		cleanup(t)
-		setLevel(cur, adminAddr, HaltLevelEmergency)
-
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		uassert.AbortsContains(t, cur, "is not governance", func() {
-			SetHaltLevel(cross(cur), HaltLevelComplete)
-		})
-		// state must be unchanged
-		uassert.Equal(t, false, IsHaltedWithdraw())
-		uassert.Equal(t, true, IsHaltedPool())
-	})
-
-	t.Run("admin cannot halt withdraw even when already halted", func(cur realm, t *testing.T) {
-		cleanup(t)
-		setLevel(cur, govAddr, HaltLevelSafeMode)
-
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		uassert.AbortsContains(t, cur, "is not governance", func() {
-			SetOperationStatus(cross(cur), OpTypeWithdraw, true)
-		})
-		uassert.Equal(t, true, IsHaltedWithdraw())
-	})
-
-	t.Run("admin can set withdraw to false when already false", func(cur realm, t *testing.T) {
-		cleanup(t)
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		SetOperationStatus(cross(cur), OpTypeWithdraw, false)
-		uassert.Equal(t, false, IsHaltedWithdraw())
-	})
-
-	t.Run("admin can still halt every non-withdraw operation individually", func(cur realm, t *testing.T) {
-		cleanup(t)
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		for _, op := range OpTypes() {
-			if op == OpTypeWithdraw {
-				continue
-			}
-			SetOperationStatus(cross(cur), op, true)
-			uassert.Equal(t, true, GetHaltConfig().IsHalted(op))
-		}
-		uassert.Equal(t, false, IsHaltedWithdraw())
-	})
-
-	t.Run("unauthorized caller halting withdraw gets governance error", func(cur realm, t *testing.T) {
-		cleanup(t)
-		testing.SetRealm(testing.NewUserRealm(address("g1unauthorized")))
-		uassert.AbortsContains(t, cur, "is not governance", func() {
-			SetOperationStatus(cross(cur), OpTypeWithdraw, true)
-		})
-		uassert.AbortsContains(t, cur, "is not governance", func() {
-			SetHaltLevel(cross(cur), HaltLevelSafeMode)
-		})
-	})
-
-	t.Run("unauthorized caller unhalting withdraw gets admin-or-governance error", func(cur realm, t *testing.T) {
-		cleanup(t)
-		testing.SetRealm(testing.NewUserRealm(address("g1unauthorized")))
-		uassert.AbortsContains(t, cur, "is not admin or governance", func() {
-			SetOperationStatus(cross(cur), OpTypeWithdraw, false)
-		})
-	})
-
-	t.Run("invalid level from admin is rejected before authorization", func(cur realm, t *testing.T) {
-		cleanup(t)
-		testing.SetRealm(testing.NewUserRealm(adminAddr))
-		uassert.AbortsContains(t, cur, "invalid halt level", func() {
-			SetHaltLevel(cross(cur), HaltLevel("BOGUS"))
-		})
-	})
-
-	t.Run("governance can toggle withdraw both ways", func(cur realm, t *testing.T) {
-		cleanup(t)
-		testing.SetRealm(testing.NewUserRealm(govAddr))
-		SetOperationStatus(cross(cur), OpTypeWithdraw, true)
-		uassert.Equal(t, true, IsHaltedWithdraw())
-		SetOperationStatus(cross(cur), OpTypeWithdraw, false)
-		uassert.Equal(t, false, IsHaltedWithdraw())
-	})
-}
-
-func TestHalt_LevelHaltsWithdraw(cur realm, t *testing.T) {
-	uassert.Equal(t, false, levelHaltsWithdraw(HaltLevelNone))
-	uassert.Equal(t, true, levelHaltsWithdraw(HaltLevelSafeMode))
-	uassert.Equal(t, false, levelHaltsWithdraw(HaltLevelEmergency))
-	uassert.Equal(t, true, levelHaltsWithdraw(HaltLevelComplete))
-	uassert.Equal(t, false, levelHaltsWithdraw(HaltLevel("INVALID")))
-
-	// levelHaltsWithdraw must agree with the level configs
-	uassert.Equal(t, levelHaltsWithdraw(HaltLevelNone), newNoneConfig().IsHalted(OpTypeWithdraw))
-	uassert.Equal(t, levelHaltsWithdraw(HaltLevelSafeMode), newSafeModeConfig().IsHalted(OpTypeWithdraw))
-	uassert.Equal(t, levelHaltsWithdraw(HaltLevelEmergency), newEmergencyConfig().IsHalted(OpTypeWithdraw))
-	uassert.Equal(t, levelHaltsWithdraw(HaltLevelComplete), newCompleteConfig().IsHalted(OpTypeWithdraw))
 }

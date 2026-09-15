@@ -175,7 +175,7 @@ func setupSafeScenario(cur realm) {
 }
 
 func setSafeModeForCollect(cur realm) {
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+	testing.SetRealm(adminRealm3)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelSafeMode)
 	ufmt.Printf("[INFO] Position halted: %t\n", halt.IsHaltedPosition())
 	ufmt.Printf("[INFO] Staker halted: %t\n", halt.IsHaltedStaker())

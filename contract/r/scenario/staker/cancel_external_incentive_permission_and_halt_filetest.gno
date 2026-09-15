@@ -140,7 +140,7 @@ func checkStrangerBlocked(cur realm) {
 }
 
 func checkSafeModeBlocked(cur realm) {
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelSafeMode)
 	ufmt.Printf("[INFO] withdraw halted: %t\n", halt.IsHaltedWithdraw())
 

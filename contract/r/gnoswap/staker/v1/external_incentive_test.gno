@@ -2151,7 +2151,7 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(cur realm, t *testing.T) 
 	t.Run("safe mode blocks penalty collection", func(cur realm, t *testing.T) {
 		setupPenaltyFixture(cross(cur), t)
 
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+		testing.SetRealm(adminRealm)
 		halt.SetHaltLevel(cross(cur), halt.HaltLevelSafeMode)
 
 		// The caller realm is set inside the abort closure (via cross) so the

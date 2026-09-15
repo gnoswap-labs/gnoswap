@@ -279,7 +279,7 @@ func TestDistributeProtocolFeeByTokenPath_HaltScenario(cur realm, t *testing.T) 
 			pf := createTestProtocolFee(t)
 
 			testing.SetOriginCaller(adminAddr)
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+			testing.SetRealm(adminRealm)
 			halt.SetHaltLevel(cross(cur), tt.haltLevel)
 			defer func() {
 				func(cur realm) {
@@ -1284,7 +1284,7 @@ func TestDistributeProtocolFee_HaltScenario_SafeMode(cur realm, t *testing.T) {
 	}
 
 	testing.SetOriginCaller(adminAddr)
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/governance"))
+	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelSafeMode)
 	defer func() {
 		func(cur realm) {

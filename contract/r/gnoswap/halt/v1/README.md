@@ -85,13 +85,12 @@ if halted {
 ### COMPLETE (Full Halt)
 - All operations disabled
 - Complete system freeze
-- Only governance can enter this level (it halts withdrawals)
+- Recovery requires admin/governance action
 - Governance can still propose, vote on, and execute proposals that only target the halt realm, so it can recover on its own
 
 ## Security
 
 - Admin/governance control only
-- Halting withdrawals (SAFE_MODE, COMPLETE, or `withdraw` op) requires governance
 - Beta mainnet starts in SAFE_MODE
 - Granular operation control
 - Event emission for transparency
