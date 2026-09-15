@@ -1,9 +1,6 @@
 package staker
 
 import (
-	"strconv"
-	"strings"
-
 	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/utils"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
@@ -11,14 +8,14 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// UintTree is a wrapper around a B+ tree for storing block timestamps as strings.
-// Since block timestamps are defined as int64, we take int64 and convert it to uint64 for the tree.
+// UintTree wraps a B+ tree with nonnegative int64 timestamp keys, encoded as
+// fixed-width 8-byte big-endian strings to preserve numeric ordering.
 //
 // Methods:
-// - Get: Retrieves a value associated with a uint64 key.
-// - Set: Stores a value with a uint64 key.
-// - Has: Checks if a uint64 key exists in the tree.
-// - Remove: Removes a uint64 key and its associated value.
+// - Get: Retrieves a value associated with an int64 key.
+// - Set: Stores a value with an int64 key.
+// - Has: Checks if an int64 key exists in the tree.
+// - Remove: Removes an int64 key and its associated value.
 // - Iterate: Iterates over keys and values in a range.
 // - ReverseIterate: Iterates in reverse order over keys and values in a range.
 type UintTree struct {
@@ -96,8 +93,8 @@ func (self *UintTree) IterateByOffset(offset, count int, fn func(key int64, valu
 // ReadOnly returns a read-only view of the underlying tree, so callers can
 // paginate it without gaining a handle on the mutable tree.
 //
-// Keys are the fixed-width binary encoding produced by EncodeInt64, not the
-// int64 keys this type takes; use DecodeInt64 to recover them.
+// Keys use utils.EncodeUint64's fixed-width binary encoding, not the int64
+// keys this type takes; utils.DecodeUint64 recovers the nonnegative value.
 func (self *UintTree) ReadOnly(makeEntrySafeFn func(any) any) *rotree.ReadOnlyTree {
 	return rotree.Wrap(self.tree, makeEntrySafeFn)
 }
@@ -125,34 +122,4 @@ func encodeInt64(num int64) string {
 
 func decodeInt64(s string) int64 {
 	return gnsmath.SafeUint64ToInt64(utils.DecodeUint64(s))
-}
-
-// EncodeInt takes an int32 and returns a zero-padded decimal string
-// with up to 10 digits for the absolute value.
-// If the number is negative, the '-' sign comes first, followed by zeros, then digits.
-func EncodeInt(num int32) string {
-	// Convert the absolute value to a decimal string.
-	absValue := int64(num)
-	isNegative := false
-	if num < 0 {
-		isNegative = true
-		absValue = -absValue // Safely negate into int64 to avoid overflow.
-	}
-
-	s := strconv.FormatInt(absValue, 10)
-
-	// Zero-pad to a total of 10 digits for the absolute value.
-	// (The '-' sign will be added later if needed.)
-	zerosNeeded := 10 - len(s)
-	if zerosNeeded < 0 {
-		zerosNeeded = 0
-	}
-
-	padded := strings.Repeat("0", zerosNeeded) + s
-
-	// If the original number was negative, prepend '-'.
-	if isNegative {
-		return "-" + padded
-	}
-	return padded
 }
