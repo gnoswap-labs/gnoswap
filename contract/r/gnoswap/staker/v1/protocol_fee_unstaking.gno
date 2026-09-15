@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"

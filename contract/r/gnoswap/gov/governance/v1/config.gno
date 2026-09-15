@@ -4,7 +4,7 @@ import (
 	"chain"
 	"time"
 
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 
 	"gno.land/r/gnoswap/access"
 	en "gno.land/r/gnoswap/emission"

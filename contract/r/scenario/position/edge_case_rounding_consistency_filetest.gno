@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	testutils "gno.land/p/nt/testutils/v0"

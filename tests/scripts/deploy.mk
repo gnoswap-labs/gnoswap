@@ -71,7 +71,7 @@ deploy-version_manager:
 
 deploy-utils:
 	$(info ************ deploy utils ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/utils -pkgpath gno.land/p/gnoswap/utils -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20000ugnot -gas-wanted 20000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/utils/v1 -pkgpath gno.land/p/gnoswap/utils/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 20000ugnot -gas-wanted 20000000 -memo "" gnoswap_admin
 	@echo
 
 deploy-rbac-realm:

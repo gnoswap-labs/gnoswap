@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/router"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	_ "gno.land/r/gnoswap/rbac"
 

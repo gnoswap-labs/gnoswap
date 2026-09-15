@@ -23,7 +23,7 @@ import (
 	sr "gno.land/r/gnoswap/staker"
 
 	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 	_ "gno.land/r/gnoswap/rbac"
 
 	_ "gno.land/r/gnoswap/common/v1"

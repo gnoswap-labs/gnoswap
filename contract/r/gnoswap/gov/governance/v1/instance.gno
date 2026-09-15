@@ -1,7 +1,7 @@
 package governance
 
 import (
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/gov/governance"

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"

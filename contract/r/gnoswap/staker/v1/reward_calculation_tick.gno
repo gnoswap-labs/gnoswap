@@ -7,7 +7,7 @@ import (
 	"gno.land/p/gnoswap/gnsmath"
 	i256 "gno.land/p/gnoswap/int256/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 	sr "gno.land/r/gnoswap/staker"
 )
 

@@ -11,7 +11,7 @@ import (
 
 	"gno.land/p/gnoswap/consts/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/launchpad"

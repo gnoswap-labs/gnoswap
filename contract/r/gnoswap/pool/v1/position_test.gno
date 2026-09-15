@@ -9,7 +9,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 	pl "gno.land/r/gnoswap/pool"
 )
 

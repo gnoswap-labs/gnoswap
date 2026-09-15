@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"gno.land/p/gnoswap/fuzz"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 	"gno.land/p/gnoswap/gnsmath"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"

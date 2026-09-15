@@ -9,7 +9,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/access"
 
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"

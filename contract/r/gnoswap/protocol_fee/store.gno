@@ -8,7 +8,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/p/gnoswap/store"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 )
 
 type StoreKey string
