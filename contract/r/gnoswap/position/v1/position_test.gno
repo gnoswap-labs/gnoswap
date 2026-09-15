@@ -12,7 +12,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/referral"
 

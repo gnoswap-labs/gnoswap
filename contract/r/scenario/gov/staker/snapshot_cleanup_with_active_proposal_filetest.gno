@@ -36,7 +36,7 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 )
 
 var t *testing.T

@@ -10,7 +10,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
-	_ "gno.land/r/gnoswap/halt"
+	_ "gno.land/r/gnoswap/halt/v1"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -973,7 +973,7 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 				"gno.land/r/gnoswap/staker*EXE*SetMinimumRewardAmount*EXE*600*GOV*" +
 				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*700*GOV*" +
 				"gno.land/r/gnoswap/emission*EXE*SetDistributionStartTime*EXE*800*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
 				"gno.land/r/gnoswap/rbac/v1*EXE*RegisterRole*EXE*new_role," + testutils.TestAddress("role").String(),
 			shouldFail: false,
 		},

@@ -8,7 +8,7 @@ import (
 
 	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 )
 
 // GetBalanceOf returns the balance of a specific token held by the community pool.

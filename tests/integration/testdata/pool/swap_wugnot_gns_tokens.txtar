@@ -25,7 +25,7 @@ loadpkg gno.land/p/gnoswap/version_manager/v1
 
 loadpkg gno.land/r/gnoswap/access/v1
 loadpkg gno.land/r/gnoswap/rbac/v1
-loadpkg gno.land/r/gnoswap/halt
+loadpkg gno.land/r/gnoswap/halt/v1
 loadpkg gno.land/r/gnoswap/common
 loadpkg gno.land/r/gnoswap/common/v1
 loadpkg gno.land/r/gnoswap/referral

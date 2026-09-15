@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	pl "gno.land/r/gnoswap/pool"
 
 	"gno.land/p/gnoswap/gnsmath/v1"

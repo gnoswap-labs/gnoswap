@@ -29,7 +29,7 @@ import (
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 	xgns "gno.land/r/gnoswap/gov/xgns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	launchpad "gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/launchpad/v1"
 	pool "gno.land/r/gnoswap/pool"

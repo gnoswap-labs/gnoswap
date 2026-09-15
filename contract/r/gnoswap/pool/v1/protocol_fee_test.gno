@@ -13,7 +13,7 @@ import (
 	"gno.land/r/gnoswap/common"
 	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	pl "gno.land/r/gnoswap/pool"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

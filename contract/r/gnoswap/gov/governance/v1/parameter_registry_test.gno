@@ -151,7 +151,7 @@ func TestCreateParameterHandlers(cur realm, t *testing.T) {
 		pkgPath  string
 		function string
 	}{
-		{"gno.land/r/gnoswap/halt", "SetHaltLevel"},
+		{"gno.land/r/gnoswap/halt/v1", "SetHaltLevel"},
 		{"gno.land/r/gnoswap/community_pool", "TransferToken"},
 		{"gno.land/r/gnoswap/emission", "ChangeDistributionPct"},
 		{"gno.land/r/gnoswap/protocol_fee", "UpgradeImpl"},
@@ -433,13 +433,13 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - halt SetHaltLevel",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			executions:    "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
 			expectedError: false,
 		},
 		{
 			name:          "Success - halt SetOperationStatus",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*pool,true",
+			executions:    "gno.land/r/gnoswap/halt/v1*EXE*SetOperationStatus*EXE*pool,true",
 			expectedError: false,
 		},
 		// pool
@@ -565,7 +565,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - multiple valid executions",
 			numToExecute:  2,
-			executions:    "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000",
+			executions:    "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/pool*EXE*SetPoolCreationFee*EXE*1000",
 			expectedError: false,
 		},
 
@@ -580,21 +580,21 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - invalid execution count (zero)",
 			numToExecute:          0,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
 			expectedError:         true,
 			expectedErrorContains: "numToExecute is less than or equal to 0",
 		},
 		{
 			name:                  "Failure - execution count mismatch",
 			numToExecute:          2,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
 			expectedError:         true,
 			expectedErrorContains: "executions count (1) does not match numToExecute (2)",
 		},
 		{
 			name:                  "Failure - malformed execution format",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*SetHaltLevel",
+			executions:            "gno.land/r/gnoswap/halt/v1*SetHaltLevel",
 			expectedError:         true,
 			expectedErrorContains: "expected 3 parts (pkgPath, function, params)",
 		},
@@ -608,31 +608,31 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - empty function name",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE**EXE*NONE",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE**EXE*NONE",
 			expectedError:         true,
 			expectedErrorContains: "function name is empty",
 		},
 		{
 			name:         "Failure - exceeds max executions",
 			numToExecute: 11,
-			executions: "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			executions: "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
 			expectedError:         true,
 			expectedErrorContains: "numToExecute is greater than 10",
 		},
 		{
 			name:                  "Failure - exceeds max executions takes precedence over count mismatch",
 			numToExecute:          11,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE",
 			expectedError:         true,
 			expectedErrorContains: "numToExecute is greater than 10",
 		},
@@ -648,14 +648,14 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - non-existent function in valid package",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE*NonExistentFunction*EXE*param1",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*NonExistentFunction*EXE*param1",
 			expectedError:         true,
-			expectedErrorContains: "handler not found for gno.land/r/gnoswap/halt:NonExistentFunction",
+			expectedErrorContains: "handler not found for gno.land/r/gnoswap/halt/v1:NonExistentFunction",
 		},
 		{
 			name:                  "Failure - mixed valid and invalid executions",
 			numToExecute:          2,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/fake*EXE*FakeFunction*EXE*param1",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*gno.land/r/gnoswap/fake*EXE*FakeFunction*EXE*param1",
 			expectedError:         true,
 			expectedErrorContains: "handler not found for gno.land/r/gnoswap/fake:FakeFunction",
 		},
@@ -664,9 +664,9 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - halt SetHaltLevel wrong param count",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*param1,param2",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*param1,param2",
 			expectedError:         true,
-			expectedErrorContains: "expected 1 parameters for gno.land/r/gnoswap/halt:SetHaltLevel",
+			expectedErrorContains: "expected 1 parameters for gno.land/r/gnoswap/halt/v1:SetHaltLevel",
 		},
 		{
 			name:                  "Failure - community_pool TransferToken wrong param count",
@@ -701,7 +701,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - halt SetOperationStatus invalid bool type",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetOperationStatus*EXE*pool,not_bool",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetOperationStatus*EXE*pool,not_bool",
 			expectedError:         true,
 			expectedErrorContains: "invalid bool value: not_bool",
 		},
@@ -820,7 +820,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - halt SetHaltLevel invalid level",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*INVALID",
+			executions:            "gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*INVALID",
 			expectedError:         true,
 			expectedErrorContains: "invalid halt level",
 		},

@@ -14,7 +14,7 @@ import (
 
 	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	// initialize rbac package
 )
 

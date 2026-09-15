@@ -25,7 +25,7 @@ import (
 
 	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	pl "gno.land/r/gnoswap/pool"
 	sr "gno.land/r/gnoswap/staker"
 

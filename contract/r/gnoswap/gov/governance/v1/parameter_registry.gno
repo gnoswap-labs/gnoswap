@@ -20,7 +20,7 @@ import (
 	rr "gno.land/r/gnoswap/router"
 	sr "gno.land/r/gnoswap/staker"
 
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 )
 
 // globalParameterRegistry is initialized once and reused for all validation and execution.
@@ -34,7 +34,7 @@ func init() {
 // Package paths
 const (
 	GNS_TOKEN_KEY       = "gno.land/r/gnoswap/gns.GNS"
-	HALT_PATH           = "gno.land/r/gnoswap/halt"
+	HALT_PATH           = "gno.land/r/gnoswap/halt/v1"
 	RBAC_PATH           = "gno.land/r/gnoswap/rbac/v1"
 	ACCESS_PATH         = "gno.land/r/gnoswap/access/v1"
 	EMISSION_PATH       = "gno.land/r/gnoswap/emission"

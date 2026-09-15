@@ -12,7 +12,7 @@ import (
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/gnoswap/launchpad"
 
 	gov_staker "gno.land/r/gnoswap/gov/staker"

@@ -17,7 +17,7 @@ import (
 	_ "gno.land/r/gnoswap/rbac/v1"
 
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	sr "gno.land/r/gnoswap/staker"
 
 	"gno.land/r/gnoswap/gns"

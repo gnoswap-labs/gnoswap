@@ -28,7 +28,7 @@ import (
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	_ "gno.land/r/gnoswap/rbac/v1"
 	"gno.land/r/gnoswap/staker"
 

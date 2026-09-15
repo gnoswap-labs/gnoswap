@@ -151,7 +151,7 @@ deploy-referral:
 
 deploy-halt-realm:
 	$(info ************ deploy r/halt ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/halt -pkgpath gno.land/r/gnoswap/halt -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 22679ugnot -gas-wanted 22679000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/halt/v1 -pkgpath gno.land/r/gnoswap/halt/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 22679ugnot -gas-wanted 22679000 -memo "" gnoswap_admin
 	@echo
 
 deploy-router:
