@@ -30,16 +30,16 @@ type SwapProcessor struct {
 	router *routerV1
 }
 
-// ProcessSingleSwap handles a single-hop swap simulation.
+// ProcessSingleSwap simulates one pool hop without executing transfers.
 //
 // Parameters:
-//   - route: Single pool path "TOKEN0:TOKEN1:FEE"
-//   - amountSpecified: Input/output amount depending on swap type
+//   - route: single pool path formatted as TOKEN0:TOKEN1:FEE
+//   - amountSpecified: signed input or output amount for the hop
 //
 // Returns:
-//   - amountIn: Expected input amount
-//   - amountOut: Expected output amount
-//   - err: Error if swap simulation fails
+//   - amountIn: input amount the pool would receive
+//   - amountOut: output amount the pool would send
+//   - err: always nil when the dry pool call returns; malformed paths or pool failures panic in the underlying helpers
 func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified int64) (amountIn, amountOut int64, err error) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
@@ -53,18 +53,18 @@ func (p *SwapProcessor) ProcessSingleSwap(route string, amountSpecified int64) (
 	return amountIn, amountOut, nil
 }
 
-// ProcessMultiSwap handles a multi-hop swap simulation.
+// ProcessMultiSwap simulates a multi-hop route in the requested direction.
 //
 // Parameters:
-//   - swapType: ExactIn or ExactOut
-//   - route: Multi-hop route with POOL_SEPARATOR
-//   - numHops: Number of hops in the route
-//   - amountSpecified: Input/output amount depending on swap type
+//   - swapType: ExactIn for forward execution or ExactOut for backward quoting
+//   - route: multi-hop path with POOL_SEPARATOR between hops
+//   - numHops: number of pools in route
+//   - amountSpecified: signed input or output amount for the route
 //
 // Returns:
-//   - amountIn: Expected input amount
-//   - amountOut: Expected output amount
-//   - err: Error if swap simulation fails
+//   - amountIn: input amount the route would consume
+//   - amountOut: output amount the route would produce
+//   - err: nil on successful simulation; invalid swap-type error or downstream dry-swap validation error otherwise (pool query failures panic)
 func (p *SwapProcessor) ProcessMultiSwap(
 	swapType SwapType,
 	route string,
@@ -91,20 +91,20 @@ func (p *SwapProcessor) ProcessMultiSwap(
 	}
 }
 
-// ValidateSwapResults checks if the swap results meet the required constraints.
+// ValidateSwapResults checks simulated amounts against exactness and slippage constraints.
 //
 // Parameters:
-//   - swapType: ExactIn or ExactOut
-//   - resultAmountIn, resultAmountOut: Swap simulation results
-//   - amountSpecified: User's specified exact amount
-//   - amountLimit: Slippage protection limit
-//   - swapCount: Number of swap operations (for tolerance)
+//   - swapType: ExactIn or ExactOut validation direction
+//   - resultAmountIn: simulated aggregate input amount
+//   - resultAmountOut: simulated aggregate output amount after router fee
+//   - amountSpecified: caller's exact input or output target
+//   - amountLimit: minimum output or maximum input slippage bound
+//   - swapCount: number of pool hops used for exact-output tolerance
 //
 // Returns:
-//   - amountIn: Input amount (same as resultAmountIn)
-//   - amountOut: Output amount (same as resultAmountOut)
-//   - err: nil on success; non-nil when liquidity is insufficient or
-//     slippage (tokenAmountLimit) constraints are not met
+//   - amountIn: resultAmountIn when validation reaches the return path
+//   - amountOut: resultAmountOut when validation reaches the return path
+//   - err: nil when liquidity, exactness, and slippage checks pass; relevant validation error otherwise
 func (p *SwapProcessor) ValidateSwapResults(
 	swapType SwapType,
 	resultAmountIn, resultAmountOut int64,
@@ -138,16 +138,18 @@ func (p *SwapProcessor) ValidateSwapResults(
 	return resultAmountIn, resultAmountOut, nil
 }
 
-// AddSwapResults safely adds swap result amounts, checking for overflow.
+// AddSwapResults adds one route's amounts to accumulated totals using overflow-safe arithmetic.
 //
 // Parameters:
-//   - resultAmountIn, resultAmountOut: Accumulated results from previous routes
-//   - amountIn, amountOut: Results from current route
+//   - resultAmountIn: accumulated input before this route
+//   - resultAmountOut: accumulated output before this route
+//   - amountIn: current route input amount
+//   - amountOut: current route output amount
 //
 // Returns:
-//   - newAmountIn: resultAmountIn + amountIn
-//   - newAmountOut: resultAmountOut + amountOut
-//   - err: Always nil (uses safe addition that panics on overflow)
+//   - newAmountIn: accumulated input after adding amountIn
+//   - newAmountOut: accumulated output after adding amountOut
+//   - err: always nil; overflow is raised by safe arithmetic rather than returned
 func (p *SwapProcessor) AddSwapResults(
 	resultAmountIn, resultAmountOut, amountIn, amountOut int64,
 ) (int64, int64, error) {
@@ -157,32 +159,21 @@ func (p *SwapProcessor) AddSwapResults(
 	return newAmountIn, newAmountOut, nil
 }
 
-// DrySwapRoute simulates a token swap route without executing the swap.
-//
-// Calculates expected amounts without modifying any state.
-// Useful for price quotes, UI previews, and slippage estimation.
+// DrySwapRoute simulates a token swap route without executing transfers or changing state.
 //
 // Parameters:
-//   - inputToken, outputToken: Token contract paths
-//   - specifiedAmount: Input amount (ExactIn) or output amount (ExactOut)
-//   - swapTypeStr: "EXACT_IN" or "EXACT_OUT"
-//   - strRouteArr: Swap routes (comma-separated, max 7)
-//   - quoteArr: Route split percentages (must sum to 100)
-//   - tokenAmountLimit: Min output (ExactIn) or max input (ExactOut)
+//   - inputToken: input token contract path
+//   - outputToken: output token contract path
+//   - specifiedAmount: exact input amount for EXACT_IN or exact output amount for EXACT_OUT
+//   - swapTypeStr: EXACT_IN or EXACT_OUT
+//   - strRouteArr: comma-separated route paths, with at most seven route entries
+//   - quoteArr: comma-separated route allocation percentages summing to 100
+//   - tokenAmountLimit: minimum output for EXACT_IN or maximum input for EXACT_OUT
 //
 // Returns:
-//   - amountIn: Expected input amount as string
-//   - amountOut: Expected output amount as string
-//   - err: nil on success; non-nil for any failure, including invalid
-//     input, invalid routes, missing pools, insufficient liquidity, or
-//     slippage (tokenAmountLimit) constraints not being met. Amounts remain
-//     available when a failure occurs after simulation. Unlike real swaps,
-//     DrySwapRoute reports failures as errors instead of reverting.
-//
-// Note: Does not validate deadline or execute actual transfers.
-// Route paths are validated the same way as real swaps: every route must
-// start with inputToken, end with outputToken, remain hop-connected, and
-// reference existing pools.
+//   - amountIn: simulated input amount encoded as a decimal string
+//   - amountOut: simulated net output amount encoded as a decimal string
+//   - err: nil on success; validation, liquidity, parsing, or slippage error otherwise
 func (r *routerV1) DrySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount string,
@@ -214,8 +205,21 @@ func (r *routerV1) DrySwapRoute(
 	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount), err
 }
 
-// drySwapRoute is the internal dry-run swap simulation that returns errors
-// instead of panicking on validation or liquidity failures.
+// drySwapRoute runs the internal integer-valued simulation used by DrySwapRoute.
+//
+// Parameters:
+//   - inputToken: input token contract path
+//   - outputToken: output token contract path
+//   - specifiedAmount: positive exact input or output amount in token units
+//   - swapTypeStr: EXACT_IN or EXACT_OUT
+//   - strRouteArr: comma-separated route paths
+//   - quoteArr: comma-separated route allocation percentages
+//   - tokenAmountLimit: minimum output or maximum input in token units
+//
+// Returns:
+//   - amountIn: simulated aggregate input amount
+//   - amountOut: simulated aggregate output after router fee
+//   - err: nil on successful validation and simulation; input, liquidity, or slippage error otherwise
 func (r *routerV1) drySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount int64,
@@ -327,7 +331,14 @@ func (r *routerV1) drySwapRoute(
 	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, tokenAmountLimit, swapCount)
 }
 
-// getPathIndex returns the path index based on swap type and number of hops.
+// getPathIndex selects the first hop for ExactIn or last hop for ExactOut.
+//
+// Parameters:
+//   - swapType: ExactIn or ExactOut direction
+//   - numHops: number of pools in the route
+//
+// Returns:
+//   - index: zero-based hop index used to initialize the simulation
 func getPathIndex(swapType SwapType, numHops int) int {
 	switch swapType {
 	case ExactIn:

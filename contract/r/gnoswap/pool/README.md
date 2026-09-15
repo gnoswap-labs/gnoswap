@@ -246,12 +246,14 @@ conditions, fees, and slippage.
 
 **Example Recovery Sequence**:
 
+This pseudocode assumes the integrating realm function has a current `cur` token.
+
 ```
 // Illustrative sequence; the caller must compose and execute these operations
-1. position.Mint(cross, ..., fullRange, largeAmount, ...)  // Add liquidity
-2. router.ExactInSwapRoute(cross, ..., targetRoute, ...)    // Fix price via arbitrage
-3. position.DecreaseLiquidity(cross, positionId, ...)       // Remove liquidity and collect principal
-4. position.CollectFee(cross, positionId)                   // Collect any remaining fees
+1. position.Mint(cross(cur), ..., fullRange, largeAmount, ...)  // Add liquidity
+2. router.ExactInSwapRoute(cross(cur), ..., targetRoute, ...)    // Fix price via arbitrage
+3. position.DecreaseLiquidity(cross(cur), positionId, ...)       // Remove liquidity and collect principal
+4. position.CollectFee(cross(cur), positionId)                   // Collect any remaining fees
 ```
 
 **Prevention**:

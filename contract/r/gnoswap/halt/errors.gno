@@ -11,7 +11,14 @@ const (
 	errOpTypeNotFound   = "operation type not found in config"
 )
 
-// makeErrorWithDetails creates an error with additional details appended to the base error message.
+// makeErrorWithDetails formats a base halt error together with operation-specific details.
+//
+// Parameters:
+//   - message: base error message describing the halt failure.
+//   - details: operation name or other context appended after the base message.
+//
+// Returns:
+//   - error: formatted error whose message joins message and details with ": ".
 func makeErrorWithDetails(message string, details string) error {
 	return ufmt.Errorf("%s: %s", message, details)
 }

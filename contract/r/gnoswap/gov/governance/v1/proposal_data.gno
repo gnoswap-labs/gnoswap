@@ -13,6 +13,13 @@ type ProposalMetadataResolver struct {
 	*governance.ProposalMetadata
 }
 
+// NewProposalMetadataResolver wraps proposal metadata for validation.
+//
+// Parameters:
+//   - metadata: proposal title and description to validate.
+//
+// Returns:
+//   - *ProposalMetadataResolver: resolver backed by metadata.
 func NewProposalMetadataResolver(metadata *governance.ProposalMetadata) *ProposalMetadataResolver {
 	return &ProposalMetadataResolver{
 		ProposalMetadata: metadata,
@@ -94,6 +101,14 @@ type ProposalDataResolver struct {
 	*governance.ProposalData
 }
 
+// NewProposalDataResolver wraps proposal data for type-specific validation and
+// execution-message parsing.
+//
+// Parameters:
+//   - proposalData: proposal data to resolve and validate.
+//
+// Returns:
+//   - *ProposalDataResolver: resolver backed by proposalData.
 func NewProposalDataResolver(proposalData *governance.ProposalData) *ProposalDataResolver {
 	return &ProposalDataResolver{
 		ProposalData: proposalData,
@@ -263,6 +278,14 @@ func NewProposalExecutionData(numToExecute int64, executions string) *governance
 
 // makeExecuteMessage creates a message to execute a function.
 // Message format: <pkgPath>*EXE*<function>*EXE*<params>.
+//
+// Parameters:
+//   - pkgPath: package path containing the function to call.
+//   - function: function name to execute.
+//   - params: argument strings joined into the encoded message parameter field.
+//
+// Returns:
+//   - string: encoded execution message using parameterSeparator.
 func makeExecuteMessage(pkgPath, function string, params []string) string {
 	messageParams := []string{
 		pkgPath,

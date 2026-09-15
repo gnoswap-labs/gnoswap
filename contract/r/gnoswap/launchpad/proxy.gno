@@ -1,22 +1,22 @@
 package launchpad
 
-// CreateProject creates a new launchpad project (callable by admin or governance).
+// CreateProject creates a new launchpad project callable by the administrator or governance.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - name: The name of a project.
-//   - tokenPath: The token path to distribute as reward.
-//   - recipient: The address of the project's to receive reward.
-//   - depositAmount: The amount of token to distribute as reward.
-//   - conditionTokens: A list of token paths to use as a condition when depositing (It's optional, and for multiple tokens, use `*PAD*` as separator).
-//   - conditionAmounts: A list of tokens' amount to use as condition when depositing (It's optional, and for multiple tokens, use `*PAD*` as separator).
-//   - tier30Ratio: The distribution ratio of the 30 days pool.
-//   - tier90Ratio: The distribution ratio of the 90 days pool.
-//   - tier180Ratio: The distribution ratio of the 180 days pool.
-//   - startTime: The start time of the project.
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm.
+//   - name: human-readable project name.
+//   - tokenPath: token path whose tokens are distributed as project rewards.
+//   - recipient: address authorized to receive project rewards and project proceeds.
+//   - depositAmount: total reward-token amount allocated to the project.
+//   - conditionTokens: optional `*PAD*`-separated token paths required for deposits.
+//   - conditionAmounts: optional `*PAD*`-separated required amounts matching conditionTokens.
+//   - tier30Ratio: reward allocation ratio for the 30-day tier.
+//   - tier90Ratio: reward allocation ratio for the 90-day tier.
+//   - tier180Ratio: reward allocation ratio for the 180-day tier.
+//   - startTime: Unix timestamp at which project reward distribution starts.
 //
 // Returns:
-//   - projectId: The ID of the created project.
+//   - projectId: identifier assigned to the newly created project.
 func CreateProject(
 	cur realm,
 	name string,
@@ -46,74 +46,80 @@ func CreateProject(
 	)
 }
 
-// CollectProtocolFee collects protocol-fee rewards from gov/staker for project
-// recipient wallets. Only project recipients can call this function.
+// CollectProtocolFee collects protocol-fee rewards allocated to project recipients.
+//
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm.
 func CollectProtocolFee(cur realm) {
 	getImplementation().CollectProtocolFee(0, cur)
 }
 
 // CollectEmissionReward collects accumulated launchpad emission rewards.
+//
+// Parameters:
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm.
 func CollectEmissionReward(cur realm) {
 	getImplementation().CollectEmissionReward(0, cur)
 }
 
-// CollectProtocolFeeReward collects accumulated launchpad protocol fee rewards for the provided token path.
+// CollectProtocolFeeReward collects accumulated launchpad protocol-fee rewards for a token path.
+//
+// Parameters:
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm.
+//   - tokenPath: token path whose accumulated protocol-fee reward is collected.
 func CollectProtocolFeeReward(cur realm, tokenPath string) {
 	getImplementation().CollectProtocolFeeReward(0, cur, tokenPath)
 }
 
-// TransferLeftFromProjectByAdmin transfers the remaining refundable project-token
-// balance from an ended project to the supplied recipient. Active depositor
-// claims are reserved and excluded from the transfer. Only admin may call it.
+// TransferLeftFromProjectByAdmin transfers unreserved reward tokens from an ended project.
+// Active depositor claims remain reserved and are excluded; only the administrator may call it.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - projectID: The ID of the ended project.
-//   - recipient: The recipient address to receive the remaining tokens.
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm.
+//   - projectID: identifier of the ended project whose remaining balance is transferred.
+//   - recipient: destination address for the transferable balance.
 //
 // Returns:
-//   - amount: The amount of transferred tokens.
+//   - amount: number of reward tokens transferred after active claims are reserved.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient address) int64 {
 	return getImplementation().TransferLeftFromProjectByAdmin(0, cur, projectID, recipient)
 }
 
-// DepositGns deposits GNS to a launchpad project pool.
+// DepositGns deposits GNS into a selected launchpad project tier.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - targetProjectTierID: The pool tier ID to deposit.
-//   - depositAmount: The amount of GNS token to deposit.
-//   - referrer: The referrer address for reward tracking.
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm.
+//   - targetProjectTierID: project-tier identifier in `{projectID}:{tierDuration}` form.
+//   - depositAmount: amount of GNS to stake in the selected tier.
+//   - referrer: optional referral address associated with the deposit.
 //
 // Returns:
-//   - depositId: The ID of the deposit.
+//   - depositId: identifier assigned to the newly created deposit.
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
 	return getImplementation().DepositGns(0, cur, targetProjectTierID, depositAmount, referrer)
 }
 
-// CollectDepositGns collects the deposited GNS using a depositID.
+// CollectDepositGns withdraws the GNS amount recorded by a deposit.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - depositID: The ID of a deposit to collect GNS.
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm.
+//   - depositID: identifier of the deposit whose GNS is collected.
 //
 // Returns:
-//   - amount: The collected amount of GNS.
-//   - err: Error if collection fails.
+//   - amount: GNS amount withdrawn from the deposit.
+//   - err: non-nil when the deposit cannot be collected.
 func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	return getImplementation().CollectDepositGns(0, cur, depositID)
 }
 
-// CollectRewardByDepositId collects the project token reward for users using a depositId.
+// CollectRewardByDepositId collects the project-token reward earned by a deposit.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - depositID: The ID of a deposit to collect reward token.
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm.
+//   - depositID: identifier of the deposit whose reward is collected.
 //
 // Returns:
-//   - amount: The amount of collected reward token.
+//   - amount: project-token reward amount transferred to the depositor.
 func CollectRewardByDepositId(cur realm, depositID string) int64 {
 	return getImplementation().CollectRewardByDepositId(0, cur, depositID)
 }

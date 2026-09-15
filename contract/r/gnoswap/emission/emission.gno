@@ -47,11 +47,18 @@ var (
 	defaultInitialPoolChecker func(poolPath string) bool
 )
 
+// init records the emission realm address used as the GNS mint recipient.
+//
+// Parameters:
+//   - cur: realm context supplied by the runtime during package initialization.
 func init(cur realm) {
 	emissionAddr = cur.Address()
 }
 
-// setLeftGNSAmount updates the undistributed GNS token amount
+// setLeftGNSAmount stores the GNS amount that remains undistributed for a later call.
+//
+// Parameters:
+//   - amount: undistributed GNS amount in token base units; must be nonnegative.
 func setLeftGNSAmount(amount int64) {
 	if amount < 0 {
 		panic("left GNS amount cannot be negative")
@@ -60,7 +67,10 @@ func setLeftGNSAmount(amount int64) {
 	leftGNSAmount = amount
 }
 
-// setLastExecutedTimestamp updates the timestamp of the last emission distribution execution.
+// setLastExecutedTimestamp records the timestamp of the most recent emission distribution.
+//
+// Parameters:
+//   - timestamp: nonnegative Unix timestamp of the most recent distribution execution.
 func setLastExecutedTimestamp(timestamp int64) {
 	if timestamp < 0 {
 		panic("last executed timestamp cannot be negative")
@@ -76,7 +86,7 @@ func setLastExecutedTimestamp(timestamp int64) {
 // last distribution and distributes them to predefined targets (staker, devops, etc.).
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //
 // Returns:
 //   - distributedAmount: total amount of GNS distributed in this call
@@ -187,17 +197,17 @@ func MintAndDistributeGns(cur realm) (int64, bool) {
 // the timestamp is reached, the start time is immutable.
 //
 // Parameters:
-//   - startTimestamp: Unix timestamp when emission should begin
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - startTimestamp: positive future Unix timestamp when emission should begin.
 //
 // Requirements:
-//   - Must be called before distribution starts
-//   - Timestamp must be in the future
-//   - Cannot be negative
+//   - Must be called before distribution starts.
+//   - Timestamp must be in the future and leave room for the 12-year schedule.
 //
 // Effects:
-//   - Sets global distribution start time
-//   - Initializes GNS emission state if not already started
-//   - Emission begins automatically when timestamp is reached
+//   - Sets global distribution start time.
+//   - Initializes GNS emission state if not already started.
+//   - Emission begins automatically when timestamp is reached.
 //
 // Only callable by admin or governance.
 func SetDistributionStartTime(cur realm, startTimestamp int64) {
@@ -252,7 +262,10 @@ func SetDistributionStartTime(cur realm, startTimestamp int64) {
 // when governance or admin changes emission rates.
 //
 // Parameters:
-//   - callback: function to call with emission amount per second, or nil to clear
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - callback: nil to clear the callback, or a function receiving its callback
+//     realm context and the current staker GNS emission rate per second; a nonnil
+//     callback is invoked immediately after registration.
 func SetOnDistributionPctChangeCallback(cur realm, callback func(cur realm, emissionAmountPerSecond int64)) {
 	caller := cur.Previous().Address()
 	access.AssertIsStaker(caller)
@@ -277,6 +290,11 @@ func SetOnDistributionPctChangeCallback(cur realm, callback func(cur realm, emis
 // The checker receives the pool path as a parameter so emission owns the
 // canonical path policy (DefaultInitialPoolTierPath) while pool supplies only
 // the generic "does this pool exist" capability.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - checker: nonnil function returning true when the supplied pool path exists;
+//     it is called with DefaultInitialPoolTierPath and nil causes a panic.
 //
 // Only callable by the pool contract.
 func SetDefaultInitialPoolChecker(cur realm, checker func(poolPath string) bool) {

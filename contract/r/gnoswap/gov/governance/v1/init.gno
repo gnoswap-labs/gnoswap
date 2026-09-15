@@ -6,10 +6,20 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
+// init registers the governance v1 initializer with the package's runtime realm.
+//
+// Parameters:
+//   - cur: runtime-supplied realm context for this package initialization.
 func init(cur realm) {
 	registerGovernanceV1(cur)
 }
 
+// registerGovernanceV1 registers the versioned governance initializer using the
+// current package realm as the cross-realm registration context.
+//
+// Parameters:
+//   - cur: current realm context; registration crosses into the governance realm
+//     with cross(cur).
 func registerGovernanceV1(cur realm) {
 	governance.RegisterInitializer(cross(cur), func(_ int, rlm realm, governanceStore governance.IGovernanceStore, stakerAccessor governance.GovStakerAccessor) governance.IGovernance {
 		// `rlm` here is the governance proxy realm threaded in by
@@ -24,6 +34,18 @@ func registerGovernanceV1(cur realm) {
 	})
 }
 
+// initStoreData initializes missing governance counters and storage trees.
+//
+// Parameters:
+//   - _: leading initializer discriminator; callers pass 0.
+//   - rlm: propagated governance proxy realm context used for store writes and
+//     authorization.
+//   - governanceStore: governance storage interface whose missing keys are
+//     initialized.
+//
+// Returns:
+//   - error: nil when all required state is initialized or already present;
+//     otherwise the first storage write error.
 func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore) error {
 	// Initialize counters if not already set
 	if !governanceStore.HasConfigCounterStoreKey() {
@@ -89,6 +111,14 @@ func initStoreData(_ int, rlm realm, governanceStore governance.IGovernanceStore
 	return nil
 }
 
+// formatConfigKey converts a configuration version to the decimal key used by
+// the configuration tree.
+//
+// Parameters:
+//   - version: configuration version to encode.
+//
+// Returns:
+//   - string: base-10 representation of version.
 func formatConfigKey(version int64) string {
 	return strconv.FormatInt(version, 10)
 }

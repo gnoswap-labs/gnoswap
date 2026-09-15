@@ -33,57 +33,90 @@ type Project struct {
 	createdAt     int64
 }
 
-// GetID returns the ID of the project.
+// ID returns the project identifier in "{tokenPath}:{createdHeight}" form.
+//
+// Returns:
+//   - id: unique identifier assigned to this project.
 func (p *Project) ID() string {
 	return p.id
 }
 
-// SetID sets the ID of the project.
+// SetID replaces the project's identifier.
+//
+// Parameters:
+//   - id: project identifier to store, normally in "{tokenPath}:{createdHeight}" form.
 func (p *Project) SetID(id string) {
 	p.id = id
 }
 
-// GetName returns the name of the project.
+// Name returns the project's human-readable name.
+//
+// Returns:
+//   - name: stored project name.
 func (p *Project) Name() string {
 	return p.name
 }
 
-// SetName sets the name of the project.
+// SetName replaces the project's human-readable name.
+//
+// Parameters:
+//   - name: project name to store.
 func (p *Project) SetName(name string) {
 	p.name = name
 }
 
-// GetTokenPath returns the token path of the project.
+// TokenPath returns the token path whose tokens are distributed as project rewards.
+//
+// Returns:
+//   - tokenPath: configured project reward-token path.
 func (p *Project) TokenPath() string {
 	return p.tokenPath
 }
 
-// SetTokenPath sets the token path of the project.
+// SetTokenPath replaces the project's reward-token path.
+//
+// Parameters:
+//   - tokenPath: token path to store as the project's reward token.
 func (p *Project) SetTokenPath(tokenPath string) {
 	p.tokenPath = tokenPath
 }
 
-// GetDepositAmount returns the deposit amount of the project.
+// DepositAmount returns the total reward-token allocation configured for the project.
+//
+// Returns:
+//   - amount: project reward-token allocation.
 func (p *Project) DepositAmount() int64 {
 	return p.depositAmount
 }
 
-// SetDepositAmount sets the deposit amount of the project.
+// SetDepositAmount replaces the project's total reward-token allocation.
+//
+// Parameters:
+//   - amount: total reward-token amount allocated to the project.
 func (p *Project) SetDepositAmount(amount int64) {
 	p.depositAmount = amount
 }
 
-// GetRecipient returns the recipient address of the project.
+// Recipient returns the address authorized to receive the project's rewards.
+//
+// Returns:
+//   - recipient: configured project recipient address.
 func (p *Project) Recipient() address {
 	return p.recipient
 }
 
-// SetRecipient sets the recipient address of the project.
+// SetRecipient replaces the address authorized to receive project rewards.
+//
+// Parameters:
+//   - recipient: address to store as the project recipient.
 func (p *Project) SetRecipient(recipient address) {
 	p.recipient = recipient
 }
 
-// GetConditions returns the conditions map of the project.
+// Conditions returns a copy of the project's token deposit conditions.
+//
+// Returns:
+//   - conditions: map from token path to cloned condition values; mutations do not alter project state.
 func (p *Project) Conditions() map[string]*ProjectCondition {
 	conditions := make(map[string]*ProjectCondition)
 
@@ -94,9 +127,11 @@ func (p *Project) Conditions() map[string]*ProjectCondition {
 	return conditions
 }
 
-// SetConditions sets the conditions map of the project. The map is rebuilt so
-// it is owned by this realm, allowing later in-domain mutations (e.g.
-// SetCondition) without hitting the readonly taint on a foreign map.
+// SetConditions replaces the project's token deposit conditions.
+// The map and its entries are retained in the project realm for later mutation.
+//
+// Parameters:
+//   - conditions: map from required token path to its deposit condition.
 func (p *Project) SetConditions(conditions map[string]*ProjectCondition) {
 	owned := make(map[string]*ProjectCondition, len(conditions))
 	for tokenPath, condition := range conditions {
@@ -105,14 +140,19 @@ func (p *Project) SetConditions(conditions map[string]*ProjectCondition) {
 	p.conditions = owned
 }
 
-// SetCondition sets a single condition by token path. Mutating the map inside
-// the domain method avoids the readonly taint that arises when a caller in
-// another realm round-trips Conditions()/SetConditions().
+// SetCondition replaces one token-path deposit condition in the project-owned map.
+//
+// Parameters:
+//   - tokenPath: token path whose condition is replaced.
+//   - condition: required balance condition for that token path.
 func (p *Project) SetCondition(tokenPath string, condition *ProjectCondition) {
 	p.conditions[tokenPath] = condition
 }
 
-// GetTiers returns the tiers map of the project.
+// Tiers returns a copy of the project's configured duration-to-tier map.
+//
+// Returns:
+//   - tiers: map from tier duration in seconds to cloned tier values.
 func (p *Project) Tiers() map[int64]*ProjectTier {
 	tiers := make(map[int64]*ProjectTier)
 
@@ -123,9 +163,10 @@ func (p *Project) Tiers() map[int64]*ProjectTier {
 	return tiers
 }
 
-// SetTiers sets the tiers map of the project. The map is rebuilt so it is owned
-// by this realm, allowing later in-domain mutations (e.g. SetTier) without
-// hitting the readonly taint on a map passed in from another realm.
+// SetTiers replaces the project's tier map with a project-owned map.
+//
+// Parameters:
+//   - tiers: map from tier duration in seconds to its tier configuration.
 func (p *Project) SetTiers(tiers map[int64]*ProjectTier) {
 	owned := make(map[int64]*ProjectTier, len(tiers))
 	for duration, tier := range tiers {
@@ -134,36 +175,62 @@ func (p *Project) SetTiers(tiers map[int64]*ProjectTier) {
 	p.tiers = owned
 }
 
-// GetTiersRatios returns the tiers ratios map of the project.
+// TiersRatios returns reward allocation ratios keyed by tier duration.
+//
+// Returns:
+//   - ratios: map from tier duration in seconds to its allocation ratio.
 func (p *Project) TiersRatios() map[int64]int64 {
 	return p.tiersRatios
 }
 
-// SetTiersRatios sets the tiers ratios map of the project.
+// SetTiersRatios replaces the project's tier allocation ratios.
+//
+// Parameters:
+//   - tiersRatios: map from tier duration in seconds to its reward allocation ratio.
 func (p *Project) SetTiersRatios(tiersRatios map[int64]int64) {
 	p.tiersRatios = tiersRatios
 }
 
-// GetCreatedHeight returns the created height of the project.
+// CreatedHeight returns the block height at which the project was created.
+//
+// Returns:
+//   - height: project creation block height.
 func (p *Project) CreatedHeight() int64 {
 	return p.createdHeight
 }
 
-// SetCreatedHeight sets the created height of the project.
+// SetCreatedHeight replaces the project's creation block height.
+//
+// Parameters:
+//   - height: block height to store as the project creation height.
 func (p *Project) SetCreatedHeight(height int64) {
 	p.createdHeight = height
 }
 
-// GetCreatedAt returns the created time of the project.
+// CreatedAt returns the Unix timestamp at which the project was created.
+//
+// Returns:
+//   - time: project creation Unix timestamp.
 func (p *Project) CreatedAt() int64 {
 	return p.createdAt
 }
 
-// SetCreatedAt sets the created time of the project.
+// SetCreatedAt replaces the project's creation timestamp.
+//
+// Parameters:
+//   - time: Unix timestamp to store as the project creation time.
 func (p *Project) SetCreatedAt(time int64) {
 	p.createdAt = time
 }
 
+// GetTier returns a copy of the project's tier for one duration.
+//
+// Parameters:
+//   - duration: tier duration in seconds.
+//
+// Returns:
+//   - tier: cloned tier configuration for the duration, or nil when absent.
+//   - err: non-nil when no tier is configured for duration.
 func (p *Project) GetTier(duration int64) (*ProjectTier, error) {
 	tier, exists := p.tiers[duration]
 	if !exists {
@@ -173,15 +240,38 @@ func (p *Project) GetTier(duration int64) (*ProjectTier, error) {
 	return tier.Clone(), nil
 }
 
+// SetTier replaces one duration entry in the project-owned tier map.
+//
+// Parameters:
+//   - duration: tier duration in seconds used as the map key.
+//   - tier: tier configuration to store for duration.
 func (p *Project) SetTier(duration int64, tier *ProjectTier) {
 	p.tiers[duration] = tier
 }
 
-// IsRecipient returns true if the project recipient is the given address.
+// IsRecipient reports whether recipient matches the project's configured recipient address.
+//
+// Parameters:
+//   - recipient: address to compare with the configured project recipient.
+//
+// Returns:
+//   - matches: true when recipient is the configured project recipient.
 func (p *Project) IsRecipient(recipient address) bool {
 	return p.recipient == recipient
 }
 
+// NewProject creates a project with empty conditions, tiers, and tier-ratio maps.
+//
+// Parameters:
+//   - name: human-readable project name.
+//   - tokenPath: token path whose tokens are distributed as project rewards.
+//   - depositAmount: total reward-token amount allocated to the project.
+//   - recipient: address authorized to receive project rewards.
+//   - createdHeight: block height at which the project is created.
+//   - createdAt: Unix timestamp at which the project is created.
+//
+// Returns:
+//   - project: initialized project with an ID derived from tokenPath and createdHeight.
 func NewProject(
 	name string,
 	tokenPath string,
@@ -204,9 +294,11 @@ func NewProject(
 	}
 }
 
-// Clone returns a copy of the project with independent condition, tier, and
-// tier-ratio maps. Condition and tier entries are cloned as well; scalar fields
-// are copied directly.
+// Clone returns a deep-enough copy of the project for independent map and nested
+// condition/tier mutation; scalar fields are copied directly.
+//
+// Returns:
+//   - clone: project copy with independently allocated condition, tier, and ratio maps.
 func (p Project) Clone() *Project {
 	conditions := make(map[string]*ProjectCondition)
 	for k, v := range p.conditions {
@@ -237,16 +329,14 @@ func (p Project) Clone() *Project {
 	}
 }
 
-// MakeProjectID generates a unique project ID based on the given token path and the current block height.
-//
-// The generated ID combines the `tokenPath` and the current block height in the following format:
-// "{tokenPath}:{height}"
+// MakeProjectID combines a token path and creation height into a project identifier.
 //
 // Parameters:
-// - tokenPath (string): The path of the token associated with the project.
+//   - tokenPath: token path associated with the project.
+//   - createdHeight: block height at which the project was created.
 //
 // Returns:
-// - string: A unique project ID in the format "tokenPath:height".
+//   - projectID: identifier in "{tokenPath}:{createdHeight}" form.
 func MakeProjectID(tokenPath string, createdHeight int64) string {
 	return ufmt.Sprintf("%s:%d", tokenPath, createdHeight)
 }

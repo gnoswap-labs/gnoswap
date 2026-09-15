@@ -18,6 +18,12 @@ const (
 
 // SetPoolTier assigns a tier level to a pool for internal GNS emission rewards.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - poolPath: Existing pool path whose internal GNS emission tier is being assigned.
+//   - tier: Emission tier to assign; valid values are below AllTierCount, including 0 for no emission target.
 func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -54,6 +60,12 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 
 // ChangePoolTier modifies the tier level of an existing pool.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - poolPath: Existing pool path whose emission tier is being changed.
+//   - tier: Replacement emission tier; values at or above AllTierCount are rejected.
 func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -98,6 +110,11 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 
 // RemovePoolTier removes a pool from internal GNS emission rewards.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - poolPath: Existing pool path to remove from the emission-tier accounting.
 func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -140,6 +157,12 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 // SetWarmUp configures the duration for the warm-up tier selected by its fixed ratio.
 // Finite tiers are capped at 365 days; the final 100% tier must remain math.MaxInt64.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - pct: Warm-up tier percentage selecting one of the configured 30%, 50%, 70%, or 100% templates.
+//   - timeDuration: Warm-up duration in seconds; finite tiers are capped at 365 days while the 100% tier uses the maximum int64 duration.
 func (s *stakerV1) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -161,6 +184,17 @@ func (s *stakerV1) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 }
 
 // setPoolTier internally sets the pool tier.
+//
+// Parameters:
+//   - _: Internal crossing discriminator forwarded as 0 to dependent realm calls.
+//   - rlm: Propagated realm context used for minting emission and updating staker state.
+//   - poolPath: Pool path whose tier state is updated.
+//   - tier: New emission tier to apply to the pool.
+//   - currentTime: Unix timestamp in seconds at which reward accounting is synchronized.
+//
+// Returns:
+//   - currentEmission: Updated aggregate GNS emission rate after applying the tier change.
+//   - tierRewards: Per-tier reward rates after the change, keyed by tier number.
 func (s *stakerV1) setPoolTier(_ int, rlm realm, poolPath string, tier uint64, currentTime int64) (int64, map[uint64]int64) {
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 
@@ -178,6 +212,19 @@ func (s *stakerV1) setPoolTier(_ int, rlm realm, poolPath string, tier uint64, c
 }
 
 // changePoolTier internally changes the pool tier and returns old and new tiers.
+//
+// Parameters:
+//   - _: Internal crossing discriminator forwarded as 0 to dependent realm calls.
+//   - rlm: Propagated realm context used for minting emission and updating staker state.
+//   - poolPath: Pool path whose existing tier is being replaced.
+//   - tier: Replacement emission tier.
+//   - currentTime: Unix timestamp in seconds at which reward accounting is synchronized.
+//
+// Returns:
+//   - previousTier: Emission tier assigned before the change.
+//   - newTier: Emission tier assigned after the change.
+//   - currentEmission: Updated aggregate GNS emission rate.
+//   - tierRewards: Per-tier reward rates after the change, keyed by tier number.
 func (s *stakerV1) changePoolTier(_ int, rlm realm, poolPath string, tier uint64, currentTime int64) (uint64, uint64, int64, map[uint64]int64) {
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 	poolTier := s.getPoolTier()
@@ -191,6 +238,16 @@ func (s *stakerV1) changePoolTier(_ int, rlm realm, poolPath string, tier uint64
 }
 
 // removePoolTier internally removes the pool from tier system.
+//
+// Parameters:
+//   - _: Internal crossing discriminator forwarded as 0 to dependent realm calls.
+//   - rlm: Propagated realm context used for minting emission and updating staker state.
+//   - poolPath: Pool path whose tier is being removed.
+//   - currentTime: Unix timestamp in seconds at which reward accounting is synchronized.
+//
+// Returns:
+//   - currentEmission: Updated aggregate GNS emission rate after removing the pool tier.
+//   - tierRewards: Per-tier reward rates after the removal, keyed by tier number.
 func (s *stakerV1) removePoolTier(_ int, rlm realm, poolPath string, currentTime int64) (int64, map[uint64]int64) {
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 
@@ -202,6 +259,12 @@ func (s *stakerV1) removePoolTier(_ int, rlm realm, poolPath string, currentTime
 }
 
 // setWarmUp internally sets the warm-up parameters.
+//
+// Parameters:
+//   - _: Internal crossing discriminator forwarded as 0 to dependent realm calls.
+//   - rlm: Propagated realm context used for minting emission and updating the warm-up template.
+//   - pct: Warm-up tier percentage selecting the template slot to modify.
+//   - timeDuration: Warm-up duration in seconds written into the selected template.
 func (s *stakerV1) setWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	s.emissionAccessor.MintAndDistributeGns(0, rlm)
 
@@ -215,6 +278,12 @@ func (s *stakerV1) setWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 }
 
 // pctToIndex converts percentage to warmup index.
+//
+// Parameters:
+//   - pct: Warm-up percentage whose template index is required; accepted values are 30, 50, 70, and 100.
+//
+// Returns:
+//   - index: Zero-based warm-up template index corresponding to pct.
 func pctToIndex(pct int64) int {
 	switch pct {
 	case 30:

@@ -39,6 +39,9 @@ var _systemRoleNames = map[string]SystemRole{
 
 // String returns the string representation of the SystemRole.
 // Returns "Unknown" if the role is not a valid system role.
+//
+// Returns:
+//   - string: Registered system-role name, or "Unknown" when r is not in the system-role registry.
 func (r SystemRole) String() string {
 	roleName := string(r)
 	if _, ok := _systemRoleNames[roleName]; !ok {
@@ -49,6 +52,12 @@ func (r SystemRole) String() string {
 }
 
 // IsSystemRole returns true if roleName is a system role.
+//
+// Parameters:
+//   - roleName: Exact string key to check against the reserved system-role registry.
+//
+// Returns:
+//   - bool: true when roleName names a registered system role; false otherwise.
 func IsSystemRole(roleName string) bool {
 	_, ok := _systemRoleNames[roleName]
 

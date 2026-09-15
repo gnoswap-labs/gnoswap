@@ -10,6 +10,14 @@ const (
 	errInvalidTokenKey     = "[GNOSWAP-COMMON-003] invalid token key"
 )
 
+// newErrorWithDetail formats a base error message together with contextual detail.
+//
+// Parameters:
+//   - message: base error message describing the failure.
+//   - detail: additional context appended to the base message.
+//
+// Returns:
+//   - formattedMessage: error text containing message and detail separated by " || ".
 func newErrorWithDetail(message string, detail string) string {
 	return ufmt.Errorf("%s || %s", message, detail).Error()
 }

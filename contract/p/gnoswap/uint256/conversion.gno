@@ -9,32 +9,54 @@ import (
 )
 
 // Uint64 returns the lower 64 bits of z as a uint64.
+//
+// Returns:
+//   - value: the low 64 bits of z
 func (z *Uint) Uint64() uint64 {
 	return z[0]
 }
 
 // Int64 returns the lower 64 bits of z as an int64.
+//
+// Returns:
+//   - value: the low 64 bits of z interpreted as int64
 func (z *Uint) Int64() int64 {
 	return int64(z.Uint64())
 }
 
 // Uint64WithOverflow returns the lower 64 bits of z and true if overflow occurred.
+//
+// Returns:
+//   - value: the low 64 bits of z
+//   - overflow: true when any upper 192 bits are non-zero
 func (z *Uint) Uint64WithOverflow() (uint64, bool) {
 	return z[0], (z[1] | z[2] | z[3]) != 0
 }
 
 // SetUint64 sets z to the value of x and returns z.
+//
+// Parameters:
+//   - x: the uint64 value assigned to z
+//
+// Returns:
+//   - result: z after setting it to x
 func (z *Uint) SetUint64(x uint64) *Uint {
 	z[3], z[2], z[1], z[0] = 0, 0, 0, x
 	return z
 }
 
 // IsUint64 reports whether z can be represented as a uint64.
+//
+// Returns:
+//   - fits: true when z is representable in 64 bits
 func (z *Uint) IsUint64() bool {
 	return (z[1] | z[2] | z[3]) == 0
 }
 
 // Dec returns the decimal representation of z.
+//
+// Returns:
+//   - decimal: the base-10 representation of z
 func (z *Uint) Dec() string {
 	if z.IsZero() {
 		return "0"
@@ -96,9 +118,11 @@ func (z *Uint) Dec() string {
 	return string(out[pos-len(bufSlice):])
 }
 
-
 // ToString returns the decimal string representation of z.
 // Returns an empty string if z is nil. This method doesn't exist in holiman's uint256.
+//
+// Returns:
+//   - decimal: z in base 10, or an empty string when z is nil
 func (z *Uint) ToString() string {
 	if z == nil {
 		return ""
@@ -109,6 +133,12 @@ func (z *Uint) ToString() string {
 
 // SetBytes interprets buf as a big-endian unsigned integer and sets z to that value.
 // If buf is larger than 32 bytes, uses only the last 32 bytes. Returns z.
+//
+// Parameters:
+//   - buf: the big-endian byte sequence; if longer than 32 bytes, only its final 32 bytes are used
+//
+// Returns:
+//   - result: z after decoding the selected big-endian bytes
 func (z *Uint) SetBytes(buf []byte) *Uint {
 	switch l := len(buf); l {
 	case 0:
@@ -183,6 +213,12 @@ func (z *Uint) SetBytes(buf []byte) *Uint {
 
 // SetBytes1 sets z from a 1-byte big-endian slice and returns z.
 // Panics if input is shorter than 1 byte.
+//
+// Parameters:
+//   - in: the first byte is decoded in big-endian order; it must be present
+//
+// Returns:
+//   - result: z after decoding the first byte of in
 func (z *Uint) SetBytes1(in []byte) *Uint {
 	z[3], z[2], z[1] = 0, 0, 0
 	z[0] = uint64(in[0])
@@ -191,6 +227,12 @@ func (z *Uint) SetBytes1(in []byte) *Uint {
 
 // SetBytes2 sets z from a 2-byte big-endian slice and returns z.
 // Panics if input is shorter than 2 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 2 bytes are decoded in big-endian order; it must contain at least 2 bytes
+//
+// Returns:
+//   - result: z after decoding the first 2 bytes of in in big-endian order
 func (z *Uint) SetBytes2(in []byte) *Uint {
 	_ = in[1] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2], z[1] = 0, 0, 0
@@ -200,6 +242,12 @@ func (z *Uint) SetBytes2(in []byte) *Uint {
 
 // SetBytes3 sets z from a 3-byte big-endian slice and returns z.
 // Panics if input is shorter than 3 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 3 bytes are decoded in big-endian order; it must contain at least 3 bytes
+//
+// Returns:
+//   - result: z after decoding the first 3 bytes of in in big-endian order
 func (z *Uint) SetBytes3(in []byte) *Uint {
 	_ = in[2] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2], z[1] = 0, 0, 0
@@ -209,6 +257,12 @@ func (z *Uint) SetBytes3(in []byte) *Uint {
 
 // SetBytes4 sets z from a 4-byte big-endian slice and returns z.
 // Panics if input is shorter than 4 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 4 bytes are decoded in big-endian order; it must contain at least 4 bytes
+//
+// Returns:
+//   - result: z after decoding the first 4 bytes of in in big-endian order
 func (z *Uint) SetBytes4(in []byte) *Uint {
 	_ = in[3] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2], z[1] = 0, 0, 0
@@ -218,6 +272,12 @@ func (z *Uint) SetBytes4(in []byte) *Uint {
 
 // SetBytes5 sets z from a 5-byte big-endian slice and returns z.
 // Panics if input is shorter than 5 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 5 bytes are decoded in big-endian order; it must contain at least 5 bytes
+//
+// Returns:
+//   - result: z after decoding the first 5 bytes of in in big-endian order
 func (z *Uint) SetBytes5(in []byte) *Uint {
 	_ = in[4] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2], z[1] = 0, 0, 0
@@ -227,6 +287,12 @@ func (z *Uint) SetBytes5(in []byte) *Uint {
 
 // SetBytes6 sets z from a 6-byte big-endian slice and returns z.
 // Panics if input is shorter than 6 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 6 bytes are decoded in big-endian order; it must contain at least 6 bytes
+//
+// Returns:
+//   - result: z after decoding the first 6 bytes of in in big-endian order
 func (z *Uint) SetBytes6(in []byte) *Uint {
 	_ = in[5] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2], z[1] = 0, 0, 0
@@ -236,6 +302,12 @@ func (z *Uint) SetBytes6(in []byte) *Uint {
 
 // SetBytes7 sets z from a 7-byte big-endian slice and returns z.
 // Panics if input is shorter than 7 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 7 bytes are decoded in big-endian order; it must contain at least 7 bytes
+//
+// Returns:
+//   - result: z after decoding the first 7 bytes of in in big-endian order
 func (z *Uint) SetBytes7(in []byte) *Uint {
 	_ = in[6] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2], z[1] = 0, 0, 0
@@ -245,6 +317,12 @@ func (z *Uint) SetBytes7(in []byte) *Uint {
 
 // SetBytes8 sets z from an 8-byte big-endian slice and returns z.
 // Panics if input is shorter than 8 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 8 bytes are decoded in big-endian order; it must contain at least 8 bytes
+//
+// Returns:
+//   - result: z after decoding the first 8 bytes of in in big-endian order
 func (z *Uint) SetBytes8(in []byte) *Uint {
 	_ = in[7] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2], z[1] = 0, 0, 0
@@ -254,6 +332,12 @@ func (z *Uint) SetBytes8(in []byte) *Uint {
 
 // SetBytes9 sets z from a 9-byte big-endian slice and returns z.
 // Panics if input is shorter than 9 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 9 bytes are decoded in big-endian order; it must contain at least 9 bytes
+//
+// Returns:
+//   - result: z after decoding the first 9 bytes of in in big-endian order
 func (z *Uint) SetBytes9(in []byte) *Uint {
 	_ = in[8] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2] = 0, 0
@@ -264,6 +348,12 @@ func (z *Uint) SetBytes9(in []byte) *Uint {
 
 // SetBytes10 sets z from a 10-byte big-endian slice and returns z.
 // Panics if input is shorter than 10 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 10 bytes are decoded in big-endian order; it must contain at least 10 bytes
+//
+// Returns:
+//   - result: z after decoding the first 10 bytes of in in big-endian order
 func (z *Uint) SetBytes10(in []byte) *Uint {
 	_ = in[9] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2] = 0, 0
@@ -274,6 +364,12 @@ func (z *Uint) SetBytes10(in []byte) *Uint {
 
 // SetBytes11 sets z from an 11-byte big-endian slice and returns z.
 // Panics if input is shorter than 11 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 11 bytes are decoded in big-endian order; it must contain at least 11 bytes
+//
+// Returns:
+//   - result: z after decoding the first 11 bytes of in in big-endian order
 func (z *Uint) SetBytes11(in []byte) *Uint {
 	_ = in[10] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2] = 0, 0
@@ -284,6 +380,12 @@ func (z *Uint) SetBytes11(in []byte) *Uint {
 
 // SetBytes12 sets z from a 12-byte big-endian slice and returns z.
 // Panics if input is shorter than 12 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 12 bytes are decoded in big-endian order; it must contain at least 12 bytes
+//
+// Returns:
+//   - result: z after decoding the first 12 bytes of in in big-endian order
 func (z *Uint) SetBytes12(in []byte) *Uint {
 	_ = in[11] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2] = 0, 0
@@ -294,6 +396,12 @@ func (z *Uint) SetBytes12(in []byte) *Uint {
 
 // SetBytes13 sets z from a 13-byte big-endian slice and returns z.
 // Panics if input is shorter than 13 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 13 bytes are decoded in big-endian order; it must contain at least 13 bytes
+//
+// Returns:
+//   - result: z after decoding the first 13 bytes of in in big-endian order
 func (z *Uint) SetBytes13(in []byte) *Uint {
 	_ = in[12] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2] = 0, 0
@@ -304,6 +412,12 @@ func (z *Uint) SetBytes13(in []byte) *Uint {
 
 // SetBytes14 sets z from a 14-byte big-endian slice and returns z.
 // Panics if input is shorter than 14 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 14 bytes are decoded in big-endian order; it must contain at least 14 bytes
+//
+// Returns:
+//   - result: z after decoding the first 14 bytes of in in big-endian order
 func (z *Uint) SetBytes14(in []byte) *Uint {
 	_ = in[13] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2] = 0, 0
@@ -314,6 +428,12 @@ func (z *Uint) SetBytes14(in []byte) *Uint {
 
 // SetBytes15 sets z from a 15-byte big-endian slice and returns z.
 // Panics if input is shorter than 15 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 15 bytes are decoded in big-endian order; it must contain at least 15 bytes
+//
+// Returns:
+//   - result: z after decoding the first 15 bytes of in in big-endian order
 func (z *Uint) SetBytes15(in []byte) *Uint {
 	_ = in[14] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2] = 0, 0
@@ -324,6 +444,12 @@ func (z *Uint) SetBytes15(in []byte) *Uint {
 
 // SetBytes16 sets z from a 16-byte big-endian slice and returns z.
 // Panics if input is shorter than 16 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 16 bytes are decoded in big-endian order; it must contain at least 16 bytes
+//
+// Returns:
+//   - result: z after decoding the first 16 bytes of in in big-endian order
 func (z *Uint) SetBytes16(in []byte) *Uint {
 	_ = in[15] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3], z[2] = 0, 0
@@ -334,6 +460,12 @@ func (z *Uint) SetBytes16(in []byte) *Uint {
 
 // SetBytes17 sets z from a 17-byte big-endian slice and returns z.
 // Panics if input is shorter than 17 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 17 bytes are decoded in big-endian order; it must contain at least 17 bytes
+//
+// Returns:
+//   - result: z after decoding the first 17 bytes of in in big-endian order
 func (z *Uint) SetBytes17(in []byte) *Uint {
 	_ = in[16] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = 0
@@ -345,6 +477,12 @@ func (z *Uint) SetBytes17(in []byte) *Uint {
 
 // SetBytes18 sets z from an 18-byte big-endian slice and returns z.
 // Panics if input is shorter than 18 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 18 bytes are decoded in big-endian order; it must contain at least 18 bytes
+//
+// Returns:
+//   - result: z after decoding the first 18 bytes of in in big-endian order
 func (z *Uint) SetBytes18(in []byte) *Uint {
 	_ = in[17] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = 0
@@ -356,6 +494,12 @@ func (z *Uint) SetBytes18(in []byte) *Uint {
 
 // SetBytes19 sets z from a 19-byte big-endian slice and returns z.
 // Panics if input is shorter than 19 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 19 bytes are decoded in big-endian order; it must contain at least 19 bytes
+//
+// Returns:
+//   - result: z after decoding the first 19 bytes of in in big-endian order
 func (z *Uint) SetBytes19(in []byte) *Uint {
 	_ = in[18] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = 0
@@ -367,6 +511,12 @@ func (z *Uint) SetBytes19(in []byte) *Uint {
 
 // SetBytes20 sets z from a 20-byte big-endian slice and returns z.
 // Panics if input is shorter than 20 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 20 bytes are decoded in big-endian order; it must contain at least 20 bytes
+//
+// Returns:
+//   - result: z after decoding the first 20 bytes of in in big-endian order
 func (z *Uint) SetBytes20(in []byte) *Uint {
 	_ = in[19] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = 0
@@ -378,6 +528,12 @@ func (z *Uint) SetBytes20(in []byte) *Uint {
 
 // SetBytes21 sets z from a 21-byte big-endian slice and returns z.
 // Panics if input is shorter than 21 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 21 bytes are decoded in big-endian order; it must contain at least 21 bytes
+//
+// Returns:
+//   - result: z after decoding the first 21 bytes of in in big-endian order
 func (z *Uint) SetBytes21(in []byte) *Uint {
 	_ = in[20] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = 0
@@ -389,6 +545,12 @@ func (z *Uint) SetBytes21(in []byte) *Uint {
 
 // SetBytes22 sets z from a 22-byte big-endian slice and returns z.
 // Panics if input is shorter than 22 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 22 bytes are decoded in big-endian order; it must contain at least 22 bytes
+//
+// Returns:
+//   - result: z after decoding the first 22 bytes of in in big-endian order
 func (z *Uint) SetBytes22(in []byte) *Uint {
 	_ = in[21] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = 0
@@ -400,6 +562,12 @@ func (z *Uint) SetBytes22(in []byte) *Uint {
 
 // SetBytes23 sets z from a 23-byte big-endian slice and returns z.
 // Panics if input is shorter than 23 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 23 bytes are decoded in big-endian order; it must contain at least 23 bytes
+//
+// Returns:
+//   - result: z after decoding the first 23 bytes of in in big-endian order
 func (z *Uint) SetBytes23(in []byte) *Uint {
 	_ = in[22] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = 0
@@ -411,6 +579,12 @@ func (z *Uint) SetBytes23(in []byte) *Uint {
 
 // SetBytes24 sets z from a 24-byte big-endian slice and returns z.
 // Panics if input is shorter than 24 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 24 bytes are decoded in big-endian order; it must contain at least 24 bytes
+//
+// Returns:
+//   - result: z after decoding the first 24 bytes of in in big-endian order
 func (z *Uint) SetBytes24(in []byte) *Uint {
 	_ = in[23] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = 0
@@ -422,6 +596,12 @@ func (z *Uint) SetBytes24(in []byte) *Uint {
 
 // SetBytes25 sets z from a 25-byte big-endian slice and returns z.
 // Panics if input is shorter than 25 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 25 bytes are decoded in big-endian order; it must contain at least 25 bytes
+//
+// Returns:
+//   - result: z after decoding the first 25 bytes of in in big-endian order
 func (z *Uint) SetBytes25(in []byte) *Uint {
 	_ = in[24] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = uint64(in[0])
@@ -433,6 +613,12 @@ func (z *Uint) SetBytes25(in []byte) *Uint {
 
 // SetBytes26 sets z from a 26-byte big-endian slice and returns z.
 // Panics if input is shorter than 26 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 26 bytes are decoded in big-endian order; it must contain at least 26 bytes
+//
+// Returns:
+//   - result: z after decoding the first 26 bytes of in in big-endian order
 func (z *Uint) SetBytes26(in []byte) *Uint {
 	_ = in[25] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = uint64(binary.BigEndian.Uint16(in[0:2]))
@@ -444,6 +630,12 @@ func (z *Uint) SetBytes26(in []byte) *Uint {
 
 // SetBytes27 sets z from a 27-byte big-endian slice and returns z.
 // Panics if input is shorter than 27 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 27 bytes are decoded in big-endian order; it must contain at least 27 bytes
+//
+// Returns:
+//   - result: z after decoding the first 27 bytes of in in big-endian order
 func (z *Uint) SetBytes27(in []byte) *Uint {
 	_ = in[26] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = uint64(binary.BigEndian.Uint16(in[1:3])) | uint64(in[0])<<16
@@ -455,6 +647,12 @@ func (z *Uint) SetBytes27(in []byte) *Uint {
 
 // SetBytes28 sets z from a 28-byte big-endian slice and returns z.
 // Panics if input is shorter than 28 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 28 bytes are decoded in big-endian order; it must contain at least 28 bytes
+//
+// Returns:
+//   - result: z after decoding the first 28 bytes of in in big-endian order
 func (z *Uint) SetBytes28(in []byte) *Uint {
 	_ = in[27] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = uint64(binary.BigEndian.Uint32(in[0:4]))
@@ -466,6 +664,12 @@ func (z *Uint) SetBytes28(in []byte) *Uint {
 
 // SetBytes29 sets z from a 29-byte big-endian slice and returns z.
 // Panics if input is shorter than 29 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 29 bytes are decoded in big-endian order; it must contain at least 29 bytes
+//
+// Returns:
+//   - result: z after decoding the first 29 bytes of in in big-endian order
 func (z *Uint) SetBytes29(in []byte) *Uint {
 	_ = in[28] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = bigEndianUint40(in[0:5])
@@ -477,6 +681,12 @@ func (z *Uint) SetBytes29(in []byte) *Uint {
 
 // SetBytes30 sets z from a 30-byte big-endian slice and returns z.
 // Panics if input is shorter than 30 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 30 bytes are decoded in big-endian order; it must contain at least 30 bytes
+//
+// Returns:
+//   - result: z after decoding the first 30 bytes of in in big-endian order
 func (z *Uint) SetBytes30(in []byte) *Uint {
 	_ = in[29] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = bigEndianUint48(in[0:6])
@@ -488,6 +698,12 @@ func (z *Uint) SetBytes30(in []byte) *Uint {
 
 // SetBytes31 sets z from a 31-byte big-endian slice and returns z.
 // Panics if input is shorter than 31 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 31 bytes are decoded in big-endian order; it must contain at least 31 bytes
+//
+// Returns:
+//   - result: z after decoding the first 31 bytes of in in big-endian order
 func (z *Uint) SetBytes31(in []byte) *Uint {
 	_ = in[30] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = bigEndianUint56(in[0:7])
@@ -499,6 +715,12 @@ func (z *Uint) SetBytes31(in []byte) *Uint {
 
 // SetBytes32 sets z from a 32-byte big-endian slice and returns z.
 // Panics if input is shorter than 32 bytes.
+//
+// Parameters:
+//   - in: the byte sequence whose first 32 bytes are decoded in big-endian order; it must contain at least 32 bytes
+//
+// Returns:
+//   - result: z after decoding the first 32 bytes of in in big-endian order
 func (z *Uint) SetBytes32(in []byte) *Uint {
 	_ = in[31] // bounds check hint to compiler; see golang.org/issue/14808
 	z[3] = binary.BigEndian.Uint64(in[0:8])
@@ -511,6 +733,12 @@ func (z *Uint) SetBytes32(in []byte) *Uint {
 // Utility methods that are "missing" among the bigEndian.UintXX methods.
 
 // bigEndianUint40 returns the uint64 value represented by the 5 bytes in big-endian order.
+//
+// Parameters:
+//   - b: the byte sequence containing at least 5 bytes to decode in big-endian order
+//
+// Returns:
+//   - value: the uint64 represented by the first five bytes of b
 func bigEndianUint40(b []byte) uint64 {
 	_ = b[4] // bounds check hint to compiler; see golang.org/issue/14808
 	return uint64(b[4]) | uint64(b[3])<<8 | uint64(b[2])<<16 | uint64(b[1])<<24 |
@@ -518,6 +746,12 @@ func bigEndianUint40(b []byte) uint64 {
 }
 
 // bigEndianUint56 returns the uint64 value represented by the 7 bytes in big-endian order.
+//
+// Parameters:
+//   - b: the byte sequence containing at least 7 bytes to decode in big-endian order
+//
+// Returns:
+//   - value: the uint64 represented by the first seven bytes of b
 func bigEndianUint56(b []byte) uint64 {
 	_ = b[6] // bounds check hint to compiler; see golang.org/issue/14808
 	return uint64(b[6]) | uint64(b[5])<<8 | uint64(b[4])<<16 | uint64(b[3])<<24 |
@@ -525,6 +759,12 @@ func bigEndianUint56(b []byte) uint64 {
 }
 
 // bigEndianUint48 returns the uint64 value represented by the 6 bytes in big-endian order.
+//
+// Parameters:
+//   - b: the byte sequence containing at least 6 bytes to decode in big-endian order
+//
+// Returns:
+//   - value: the uint64 represented by the first six bytes of b
 func bigEndianUint48(b []byte) uint64 {
 	_ = b[5] // bounds check hint to compiler; see golang.org/issue/14808
 	return uint64(b[5]) | uint64(b[4])<<8 | uint64(b[3])<<16 | uint64(b[2])<<24 |

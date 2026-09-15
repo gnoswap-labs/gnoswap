@@ -62,6 +62,10 @@ func AssertIsNotHaltedWithdraw() {
 
 // AssertIsNotHaltedOperation panics if the specified operation type is halted.
 // Panics with error details including operation type name.
+//
+// Parameters:
+//   - op: valid operation type whose halt status must permit execution; invalid
+//     operation types panic with an invalid-operation error.
 func AssertIsNotHaltedOperation(op OpType) {
 	if halted := isHaltedOperation(op); halted {
 		panic(makeErrorWithDetails(errHalted, op.String()))

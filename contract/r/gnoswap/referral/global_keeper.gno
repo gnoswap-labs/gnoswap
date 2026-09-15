@@ -10,13 +10,20 @@ var gReferralKeeper ReferralKeeper
 // Successful non-empty writes emit the RegisterReferral event.
 const EventRegisterFailed = "ReferralRegistrationFailed"
 
+// init initializes the package's referral keeper when no keeper has been installed.
 func init() {
 	if gReferralKeeper == nil {
 		gReferralKeeper = NewKeeper()
 	}
 }
 
-// GetReferral returns the referral address for the given address.
+// GetReferral returns the referral address string stored for the given address.
+//
+// Parameters:
+//   - addr: address string whose referral relationship is queried.
+//
+// Returns:
+//   - referral: stored referrer address string, or an empty string when no valid referral is found.
 func GetReferral(addr string) string {
 	referral, err := gReferralKeeper.get(address(addr))
 	if err != nil {
@@ -25,25 +32,43 @@ func GetReferral(addr string) string {
 	return referral.String()
 }
 
-// HasReferral returns true if the given address has a referral.
+// HasReferral reports whether the given address has a stored referral.
+//
+// Parameters:
+//   - addr: address string whose referral relationship is checked.
+//
+// Returns:
+//   - hasReferral: true when a referral record exists; false when it is absent or invalid.
 func HasReferral(addr string) bool {
 	_, err := gReferralKeeper.get(address(addr))
 	return err == nil
 }
 
-// IsEmpty returns true if no referrals exist in the system.
+// IsEmpty reports whether the referral keeper contains no referral records.
+//
+// Returns:
+//   - empty: true when the keeper store has zero referral records.
 func IsEmpty() bool {
 	return gReferralKeeper.isEmpty()
 }
 
-// GetLastOpTimestamp returns the last non-removal registration or update timestamp for the given address.
-// Returns ErrNotFound if no such operation exists.
+// GetLastOpTimestamp returns the last non-removal registration or update timestamp for an address.
+//
+// Parameters:
+//   - addr: address string whose last non-removal operation is queried.
+//
+// Returns:
+//   - timestamp: Unix timestamp of the last successful registration or update.
+//   - error: nil when a timestamp exists; otherwise an invalid-address or ErrNotFound error.
 func GetLastOpTimestamp(addr string) (int64, error) {
 	return gReferralKeeper.getLastOpTimestamp(address(addr))
 }
 
 // ContractAddress returns the address of the referral contract.
 // Use this address as the referral parameter in TryRegister to remove an existing referral.
+//
+// Returns:
+//   - address: referral contract address string, used as the removal sentinel.
 func ContractAddress() string {
 	return selfAddress.String()
 }
@@ -51,10 +76,13 @@ func ContractAddress() string {
 // TryRegister attempts to register, update, or remove a referral.
 //
 // Parameters:
-//   - addr: address to register
-//   - referral: referral address string, or ContractAddress() to remove
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - addr: address whose referral relationship is read or changed.
+//   - referral: empty string for a read, ContractAddress() to remove, or a candidate referrer address string.
 //
-// Returns the effective referrer after applying registration or fallback.
+// Returns:
+//   - effectiveReferral: stored referrer after the operation or fallback; empty when none is stored.
+//
 // Empty input is treated as a read and returns the stored referrer without
 // authorization, rate-limit checks, or event emission.
 // Non-empty input requires an authorized caller.

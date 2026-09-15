@@ -21,6 +21,12 @@ import (
 // initialRatio returns the LSB-selected initial ratio.
 // absTick&0x1 != 0 selects ratio0 (0xfffcb933bd6fad37aa2d162d1a594001),
 // otherwise ratio1 (2^128).
+//
+// Parameters:
+//   - odd: whether the absolute tick is odd; true selects the odd-bit ratio constant
+//
+// Returns:
+//   - result: a fresh Q128.128 ratio constant selected by odd
 func initialRatio(odd bool) *u256.Uint {
 	if odd {
 		return &u256.Uint{12262481743371124737, 18445821805675392311, 0, 0} // 0xfffcb933bd6fad37aa2d162d1a594001
@@ -29,6 +35,9 @@ func initialRatio(odd bool) *u256.Uint {
 }
 
 // ratioConstants returns the bit-mask ratio constants in order (bit 1 to bit 19).
+//
+// Returns:
+//   - constants: a fresh 19-element slice containing the Q128.128 constants for bits 1 through 19
 func ratioConstants() []*u256.Uint {
 	return []*u256.Uint{
 		{6459403834229662010, 18444899583751176498, 0, 0},  // 0xfff97272373d413259a46990580e213a (bit 1)
@@ -54,11 +63,27 @@ func ratioConstants() []*u256.Uint {
 }
 
 // Pre-computed constants for tick calculation - returned as fresh instances per call.
-func log2Multiplier() *i256.Int { return &i256.Int{11745905768312294533, 13863, 0, 0} }               // 255738958999603826347141
-func tickLowOffset() *i256.Int  { return &i256.Int{6552757943157144234, 184476617836266586, 0, 0} }   // 3402992956809132418596140100660247210
-func tickHiOffset() *i256.Int   { return &i256.Int{4998474450511881007, 15793544031827761793, 0, 0} } // 291339464771989622907027621153398088495
+//
+// Returns:
+//   - result: a fresh signed fixed-point multiplier used to convert log2 to the tick scale
+func log2Multiplier() *i256.Int { return &i256.Int{11745905768312294533, 13863, 0, 0} } // 255738958999603826347141
+
+// tickLowOffset returns a fresh fixed-point lower-bound offset for tick calculation.
+//
+// Returns:
+//   - result: a fresh signed fixed-point lower-bound offset for tick selection
+func tickLowOffset() *i256.Int { return &i256.Int{6552757943157144234, 184476617836266586, 0, 0} } // 3402992956809132418596140100660247210
+
+// tickHiOffset returns a fresh fixed-point upper-bound offset for tick calculation.
+//
+// Returns:
+//   - result: a fresh signed fixed-point upper-bound offset for tick selection
+func tickHiOffset() *i256.Int { return &i256.Int{4998474450511881007, 15793544031827761793, 0, 0} } // 291339464771989622907027621153398088495
 
 // oneLsh32 returns 1 << 32.
+//
+// Returns:
+//   - result: a fresh Uint equal to 2^32
 func oneLsh32() *u256.Uint { return &u256.Uint{4294967296, 0, 0, 0} }
 
 // TickMathGetSqrtRatioAtTick calculates sqrt price ratio for given tick.
@@ -68,11 +93,10 @@ func oneLsh32() *u256.Uint { return &u256.Uint{4294967296, 0, 0, 0} }
 // Uses bit manipulation for gas-efficient calculation.
 //
 // Parameters:
-//   - tick: Tick index in range [-887272, 887272]
+//   - tick: tick index in range [-887272, 887272]
 //
 // Returns:
-//   - Square root of price ratio as Q64.96 fixed-point
-//   - Result represents sqrt(token1/token0) price
+//   - sqrtPriceX96: the Q64.96 square root of the token1/token0 price, rounded up
 //
 // Mathematical formula:
 //
@@ -129,10 +153,10 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 // the upper bound equals the max-tick output but is itself excluded.
 //
 // Parameters:
-//   - sqrtPriceX96: Square root price ratio in Q64.96 format
+//   - sqrtPriceX96: square root price ratio in Q64.96 format within [MinSqrtRatio, MaxSqrtRatio)
 //
 // Returns:
-//   - Tick index corresponding to the price
+//   - tick: the greatest tick whose calculated ratio is at most sqrtPriceX96
 //
 // Algorithm:
 //  1. Scales ratio from Q64.96 to Q96.128 by left-shifting 32 bits
@@ -228,6 +252,12 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 
 // abs returns the absolute value of a signed 32-bit integer.
 // Used internally for tick math calculations to handle negative tick indices.
+//
+// Parameters:
+//   - x: the signed 32-bit integer whose non-negative magnitude is returned
+//
+// Returns:
+//   - magnitude: the non-negative absolute value of x
 func abs(x int32) int32 {
 	if x < 0 {
 		return -x
@@ -237,6 +267,9 @@ func abs(x int32) int32 {
 }
 
 // assertValidTickRange panics if tick is outside valid range [-887272, 887272].
+//
+// Parameters:
+//   - tick: the tick index to validate against [-887272, 887272]
 func assertValidTickRange(tick int32) {
 	if tick > maxTick {
 		panic(newErrorWithDetail(

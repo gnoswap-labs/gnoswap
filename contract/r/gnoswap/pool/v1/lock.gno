@@ -15,6 +15,14 @@ func (i *poolV1) assertPoolUnlocked() {
 	}
 }
 
+// lockPool marks the pool as locked after asserting that it is currently
+// unlocked.
+//
+// Parameters:
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Propagated realm context passed to the store write; the store
+//     validates that it is the current context.
 func (i *poolV1) lockPool(_ int, rlm realm) {
 	i.assertPoolUnlocked()
 
@@ -23,6 +31,13 @@ func (i *poolV1) lockPool(_ int, rlm realm) {
 	}
 }
 
+// unlockPool marks the pool as available for subsequent operations.
+//
+// Parameters:
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Propagated realm context passed to the store write; the store
+//     validates that it is the current context.
 func (i *poolV1) unlockPool(_ int, rlm realm) {
 	if err := i.store.SetUnlocked(0, rlm, true); err != nil {
 		panic(err)

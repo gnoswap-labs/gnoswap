@@ -36,12 +36,26 @@ const (
 )
 
 // newErrorWithDetail adds detail to an error message.
+// Parameters:
+//   - message: base error message or error code to prefix.
+//   - detail: operation-specific context appended after the separator.
+//
+// Returns:
+//   - text: formatted error text consisting of message and detail separated by
+//     " || ".
 func newErrorWithDetail(message string, detail string) string {
 	finalErr := ufmt.Errorf("%s || %s", message, detail)
 	return finalErr.Error()
 }
 
 // makeErrorWithDetails creates an error with additional context.
+// Parameters:
+//   - message: base error message or error code to prefix.
+//   - details: additional operation-specific context appended after the
+//     separator.
+//
+// Returns:
+//   - err: formatted error carrying message and details separated by " || ".
 func makeErrorWithDetails(message string, details string) error {
 	return ufmt.Errorf("%s || %s", message, details)
 }

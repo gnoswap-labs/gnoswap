@@ -105,28 +105,31 @@ Gov/staker exposes two reward streams:
 
 ## Usage
 
+These snippets call the public domain proxies from a realm function with a current `cur` token.
+Import the corresponding proxy packages and qualify their function names in integrating code.
+
 ```go
 // Through gov/staker: delegate GNS for xGNS voting power.
-Delegate(cross, delegatee, 1_000_000_000, "g1referrer...")
+Delegate(cross(cur), delegatee, 1_000_000_000, "g1referrer...")
 
 // Create a text or community-pool proposal.
-ProposeText(cross, "Title", "Description")
-ProposeCommunityPoolSpend(cross, "Title", "Description", recipient, tokenPath, amount)
+ProposeText(cross(cur), "Title", "Description")
+ProposeCommunityPoolSpend(cross(cur), "Title", "Description", recipient, tokenPath, amount)
 
 // A parameter-change execution uses a registered handler. This is one valid
 // Reconfigure message (all seven parameters are required).
 execution := "gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*86400,604800,86400,50,1000000000,86400,2592000"
-ProposeParameterChange(cross, "Update config", "Rationale", 1, execution)
+ProposeParameterChange(cross(cur), "Update config", "Rationale", 1, execution)
 
 // Vote; the return value is the applied weight formatted as a decimal string.
-voteWeight := Vote(cross, proposalId, true) // YES
+voteWeight := Vote(cross(cur), proposalId, true) // YES
 
 // Execute after the configured timelock and then, if needed, start undelegation.
-Execute(cross, proposalId)
-Undelegate(cross, delegatee, 250_000_000)
+Execute(cross(cur), proposalId)
+Undelegate(cross(cur), delegatee, 250_000_000)
 
 // Collect only after the configured undelegation lockup has expired.
-CollectUndelegatedGns(cross)
+CollectUndelegatedGns(cross(cur))
 ```
 
 ## Security

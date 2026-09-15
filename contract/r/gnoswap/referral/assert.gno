@@ -24,6 +24,9 @@ var validCallerRoles = []string{
 //
 // Errors:
 //   - ErrUnauthorized: the caller is not authorized to modify referral data
+//
+// Parameters:
+//   - caller: address whose authorization is checked against validCallerRoles
 func assertValidCaller(caller address) {
 	for _, role := range validCallerRoles {
 		if access.IsAuthorized(role, caller) {

@@ -3,11 +3,12 @@ package staker
 // StakeToken stakes a position NFT to earn rewards.
 //
 // Parameters:
-//   - positionId: ID of the position to stake
-//   - referrer: referrer address for reward tracking
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - positionId: LP position NFT token ID to stake.
+//   - referrer: Optional referral address string used for referral tracking.
 //
 // Returns:
-//   - string: pool path where the position was staked
+//   - string: Pool path where the position was staked.
 func StakeToken(cur realm, positionId uint64, referrer string) string {
 	return getImplementation().StakeToken(0, cur, positionId, referrer)
 }
@@ -18,10 +19,11 @@ func StakeToken(cur realm, positionId uint64, referrer string) string {
 // point afterward; collection of an exit checkpoint is permissionless and pays its pinned owner.
 //
 // Parameters:
-//   - positionId: ID of the position to unstake
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - positionId: LP position NFT token ID to unstake.
 //
 // Returns:
-//   - string: pool path where the position was staked
+//   - string: Pool path where the position was staked.
 func UnStakeToken(cur realm, positionId uint64) string {
 	return getImplementation().UnStakeToken(0, cur, positionId)
 }
@@ -33,13 +35,14 @@ func UnStakeToken(cur realm, positionId uint64) string {
 // and pays the owner pinned in the checkpoint.
 //
 // Parameters:
-//   - positionId: staked position NFT token ID or position with an exit checkpoint
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - positionId: Staked position NFT token ID or position with an exit checkpoint.
 //
 // Returns:
-//   - string: GNS emission amount sent to the user
-//   - string: GNS emission penalty amount sent to the community pool
-//   - map[string]int64: gross external reward amount per reward token, before the staking-reward fee
-//   - map[string]int64: external penalty amount per reward token
+//   - string: GNS emission amount sent to the user.
+//   - string: GNS emission penalty amount sent to the community pool.
+//   - map[string]int64: Gross external reward amount per reward token, before the staking-reward fee.
+//   - map[string]int64: External penalty amount per reward token.
 func CollectReward(cur realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	emissionToUser, emissionPenalty, externalRewards, externalPenalties := getImplementation().CollectReward(0, cur, positionId)
 	return emissionToUser, emissionPenalty, cloneStringInt64Map(externalRewards), cloneStringInt64Map(externalPenalties)
@@ -54,11 +57,12 @@ func CollectReward(cur realm, positionId uint64) (string, string, map[string]int
 // External incentive rewards keep accruing; collect them with CollectExternalIncentiveReward.
 //
 // Parameters:
-//   - positionId: staked position NFT token ID or position with an exit checkpoint
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - positionId: Staked position NFT token ID or position with an exit checkpoint.
 //
 // Returns:
-//   - int64: GNS emission amount sent to the user
-//   - int64: GNS emission penalty amount sent to the community pool
+//   - int64: GNS emission amount sent to the user.
+//   - int64: GNS emission penalty amount sent to the community pool.
 func CollectEmissionReward(cur realm, positionId uint64) (int64, int64) {
 	return getImplementation().CollectEmissionReward(0, cur, positionId)
 }
@@ -73,27 +77,42 @@ func CollectEmissionReward(cur realm, positionId uint64) (int64, int64) {
 // CollectEmissionReward and the other incentives by calling this with their own incentive id.
 //
 // Parameters:
-//   - positionId: staked position NFT token ID or position with an exit checkpoint
-//   - incentiveId: ID of the external incentive to collect
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - positionId: Staked position NFT token ID or position with an exit checkpoint.
+//   - incentiveId: External incentive identifier to collect.
 //
 // Returns:
-//   - int64: gross reward amount before the staking-reward fee
-//   - int64: penalty amount kept by the incentive
+//   - int64: Gross reward amount before the staking-reward fee.
+//   - int64: Penalty amount retained by the incentive.
 func CollectExternalIncentiveReward(cur realm, positionId uint64, incentiveId string) (int64, int64) {
 	return getImplementation().CollectExternalIncentiveReward(0, cur, positionId, incentiveId)
 }
 
-// SetPoolTier sets the reward tier for a pool.
+// SetPoolTier assigns a pool to an internal GNS emission reward tier.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - poolPath: Pool path whose emission tier is assigned.
+//   - tier: Target tier number from 0 through 3; zero removes the pool from emission targeting.
 func SetPoolTier(cur realm, poolPath string, tier uint64) {
 	getImplementation().SetPoolTier(0, cur, poolPath, tier)
 }
 
-// ChangePoolTier changes the reward tier of a pool.
+// ChangePoolTier changes the internal GNS emission tier assigned to a pool.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - poolPath: Pool path whose emission tier is changed.
+//   - tier: New tier number from 0 through 3; zero means no internal-emission target.
 func ChangePoolTier(cur realm, poolPath string, tier uint64) {
 	getImplementation().ChangePoolTier(0, cur, poolPath, tier)
 }
 
-// RemovePoolTier removes a pool from the tier system.
+// RemovePoolTier removes a pool from the internal GNS emission tier system.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - poolPath: Pool path to remove from emission-tier membership.
 func RemovePoolTier(cur realm, poolPath string) {
 	getImplementation().RemovePoolTier(0, cur, poolPath)
 }
@@ -101,11 +120,12 @@ func RemovePoolTier(cur realm, poolPath string) {
 // CreateExternalIncentive creates an external reward incentive for a pool.
 //
 // Parameters:
-//   - targetPoolPath: pool to incentivize
-//   - rewardToken: token to use as reward
-//   - rewardAmount: total reward amount in token units
-//   - startTimestamp: incentive start time in Unix seconds
-//   - endTimestamp: incentive end time in Unix seconds
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - targetPoolPath: Pool path whose liquidity providers will receive the incentive.
+//   - rewardToken: Registered token path used to pay the incentive.
+//   - rewardAmount: Total reward amount deposited, in reward-token units.
+//   - startTimestamp: Incentive start time as an inclusive Unix timestamp.
+//   - endTimestamp: Incentive end time as an inclusive Unix timestamp.
 //
 // Any caller may create an incentive after satisfying the token, duration, start-time,
 // reward-minimum, and GNS-deposit checks.
@@ -132,6 +152,12 @@ func CreateExternalIncentive(
 // sending the unclaimable/remainder reward portion and GNS deposit to the explicit refundAddress.
 // Only the incentive creator or admin may call it; an outstanding exit checkpoint for this
 // incentive must be collected or forfeited first.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - targetPoolPath: Pool path containing the incentive.
+//   - incentiveId: Unique incentive identifier to finalize.
+//   - refundAddress: Address receiving the refundable reward tokens and GNS deposit.
 func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string, refundAddress address) {
 	getImplementation().EndExternalIncentive(0, cur, targetPoolPath, incentiveId, refundAddress)
 }
@@ -139,23 +165,45 @@ func EndExternalIncentive(cur realm, targetPoolPath, incentiveId string, refundA
 // CancelExternalIncentive cancels an external incentive that has not started yet,
 // removing it and refunding the reward tokens and the GNS deposit to the creator.
 // Callable by admin, governance, or the incentive creator.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - targetPoolPath: Pool path containing the incentive.
+//   - incentiveId: Unique incentive identifier to cancel.
 func CancelExternalIncentive(cur realm, targetPoolPath, incentiveId string) {
 	getImplementation().CancelExternalIncentive(0, cur, targetPoolPath, incentiveId)
 }
 
-// CollectExternalIncentivePenalty collects accumulated warmup penalties after
+// CollectExternalIncentivePenalty collects accumulated warm-up penalties after
 // EndExternalIncentive has finalized the incentive, sending them to refundAddress.
 // Only the incentive creator or admin may call it.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - targetPoolPath: Pool path containing the incentive.
+//   - incentiveId: Unique incentive identifier whose penalty is collected.
+//   - refundAddress: Address receiving the collected penalty amount.
+//
+// Returns:
+//   - int64: Penalty amount transferred, capped by the staker's available reward-token balance.
 func CollectExternalIncentivePenalty(cur realm, targetPoolPath, incentiveId string, refundAddress address) int64 {
 	return getImplementation().CollectExternalIncentivePenalty(0, cur, targetPoolPath, incentiveId, refundAddress)
 }
 
 // AddToken adds a token to the reward token whitelist.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - tokenPath: Registered token path to add to the allowed reward-token list.
 func AddToken(cur realm, tokenPath string) {
 	getImplementation().AddToken(0, cur, tokenPath)
 }
 
 // RemoveToken removes a token from the reward token whitelist.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - tokenPath: Token path to remove from the allowed reward-token list.
 func RemoveToken(cur realm, tokenPath string) {
 	getImplementation().RemoveToken(0, cur, tokenPath)
 }
@@ -166,33 +214,59 @@ func RemoveToken(cur realm, tokenPath string) {
 // incentives in a pair token whose issuer turned hostile. Existing incentives
 // and their collection are deliberately unaffected; the ledger-level delivery
 // guard in the implementation bounds their blast radius instead.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - tokenPath: Reward-token path whose deny status is changed.
+//   - denied: True to block new incentives for tokenPath; false to clear that block.
 func SetDeniedRewardToken(cur realm, tokenPath string, denied bool) {
 	getImplementation().SetDeniedRewardToken(0, cur, tokenPath, denied)
 }
 
 // SetWarmUp configures the duration for the warm-up tier selected by its fixed ratio.
 // Finite tiers are capped at 365 days; the final 100% tier must retain math.MaxInt64.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - pct: Warm-up payout percentage selecting one of the 30%, 50%, 70%, or 100% tiers.
+//   - timeDuration: Warm-up duration in Unix seconds for the selected percentage tier; finite tiers are capped at 365 days and the 100% tier uses math.MaxInt64.
 func SetWarmUp(cur realm, pct, timeDuration int64) {
 	getImplementation().SetWarmUp(0, cur, pct, timeDuration)
 }
 
 // SetDepositGnsAmount sets the GNS deposit required for each external incentive.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - amount: GNS amount required as the per-incentive deposit.
 func SetDepositGnsAmount(cur realm, amount int64) {
 	getImplementation().SetDepositGnsAmount(0, cur, amount)
 }
 
 // SetMinimumRewardAmount sets the default minimum reward amount required to create an external
 // incentive. A token-specific override may apply.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - amount: Default minimum reward amount, measured in the reward token's units.
 func SetMinimumRewardAmount(cur realm, amount int64) {
 	getImplementation().SetMinimumRewardAmount(0, cur, amount)
 }
 
 // SetTokenMinimumRewardAmount sets minimum reward amounts per token.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - paramsStr: Colon-delimited token path and minimum amount (`tokenPath:amount`); amount zero removes the override.
 func SetTokenMinimumRewardAmount(cur realm, paramsStr string) {
 	getImplementation().SetTokenMinimumRewardAmount(0, cur, paramsStr)
 }
 
 // SetUnStakingFee sets the unstaking fee rate in basis points (0-1,000; 100 = 1%).
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - fee: Unstaking fee rate in basis points, from 0 through 1,000 inclusive.
 func SetUnStakingFee(cur realm, fee uint64) {
 	getImplementation().SetUnStakingFee(0, cur, fee)
 }

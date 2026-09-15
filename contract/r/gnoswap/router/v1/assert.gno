@@ -14,7 +14,10 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-// assertIsNotExpired ensures the transaction deadline has not passed.
+// assertIsNotExpired rejects a transaction whose deadline is earlier than the current Unix time.
+//
+// Parameters:
+//   - deadline: transaction expiration as a Unix timestamp
 func assertIsNotExpired(deadline int64) {
 	now := time.Now().Unix()
 
@@ -26,6 +29,10 @@ func assertIsNotExpired(deadline int64) {
 	}
 }
 
+// assertSingleSwap validates that a single-pool swap uses distinct registered tokens.
+//
+// Parameters:
+//   - p: single-pool swap parameters whose token paths are checked
 func assertSingleSwap(p *SingleSwapParams) {
 	if p.tokenIn == p.tokenOut {
 		panic(errors.New(errSameTokenSwap))
@@ -34,6 +41,10 @@ func assertSingleSwap(p *SingleSwapParams) {
 	common.MustRegistered(p.tokenIn, p.tokenOut)
 }
 
+// assertIsValidSqrtPriceLimitX96 validates a non-empty decimal Q64.96 price limit.
+//
+// Parameters:
+//   - sqrtPriceLimitX96: decimal square-root price limit; empty or unparsable values panic
 func assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96 string) {
 	if sqrtPriceLimitX96 == "" {
 		panic(makeErrorWithDetails(
@@ -51,6 +62,12 @@ func assertIsValidSqrtPriceLimitX96(sqrtPriceLimitX96 string) {
 	}
 }
 
+// assertIsValidSingleSwapRouteArrPath validates that routePaths is one connected single-hop route.
+//
+// Parameters:
+//   - routePaths: route path to validate; commas and multi-hop separators are rejected
+//   - inputToken: expected first token contract path
+//   - outputToken: expected last token contract path
 func assertIsValidSingleSwapRouteArrPath(routePaths, inputToken, outputToken string) {
 	if routePaths == "" {
 		panic(makeErrorWithDetails(
@@ -76,6 +93,12 @@ func assertIsValidSingleSwapRouteArrPath(routePaths, inputToken, outputToken str
 	assertIsValidRoutePaths(routePaths, inputToken, outputToken)
 }
 
+// assertIsValidRoutePaths validates all comma-separated routes against their endpoint tokens.
+//
+// Parameters:
+//   - routePaths: comma-separated route paths to validate
+//   - inputToken: expected first token contract path for every route
+//   - outputToken: expected last token contract path for every route
 func assertIsValidRoutePaths(routePaths, inputToken, outputToken string) {
 	err := validateRoutePaths(routePaths, inputToken, outputToken)
 	if err != nil {
@@ -83,6 +106,10 @@ func assertIsValidRoutePaths(routePaths, inputToken, outputToken string) {
 	}
 }
 
+// assertIsExistsPools verifies that every pool referenced by a route exists.
+//
+// Parameters:
+//   - routePathArr: comma-separated and multi-hop route paths whose pools are checked
 func assertIsExistsPools(routePathArr string) {
 	poolPaths, err := parsePoolPathsByRoutePathArr(routePathArr)
 	if err != nil {
@@ -99,6 +126,10 @@ func assertIsExistsPools(routePathArr string) {
 	}
 }
 
+// assertIsRouterImplementation rejects callbacks not originating from the registered v1 implementation address.
+//
+// Parameters:
+//   - caller: address reported as the callback caller
 func assertIsRouterImplementation(caller address) {
 	if caller != routerImplAddr {
 		panic(makeErrorWithDetails(
@@ -108,7 +139,12 @@ func assertIsRouterImplementation(caller address) {
 	}
 }
 
-// assertHopFullyConsumed reverts when an exact-in hop consumed less input than specified.
+// assertHopFullyConsumed rejects an exact-input hop that consumed less than requested.
+//
+// Parameters:
+//   - hopIndex: zero-based route hop index used in error detail
+//   - specifiedAmount: amount requested for the hop
+//   - consumedAmount: amount actually consumed by the pool
 func assertHopFullyConsumed(hopIndex int, specifiedAmount, consumedAmount int64) {
 	err := validateHopFullyConsumed(hopIndex, specifiedAmount, consumedAmount)
 	if err != nil {
@@ -116,6 +152,15 @@ func assertHopFullyConsumed(hopIndex int, specifiedAmount, consumedAmount int64)
 	}
 }
 
+// validateHopFullyConsumed checks whether an exact-input hop consumed its full request.
+//
+// Parameters:
+//   - hopIndex: zero-based route hop index used in error detail
+//   - specifiedAmount: amount requested for the hop
+//   - consumedAmount: amount actually consumed by the pool
+//
+// Returns:
+//   - err: nil when consumedAmount equals specifiedAmount; insufficient-liquidity error otherwise
 func validateHopFullyConsumed(hopIndex int, specifiedAmount, consumedAmount int64) error {
 	if consumedAmount != specifiedAmount {
 		return makeErrorWithDetails(

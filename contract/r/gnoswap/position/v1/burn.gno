@@ -15,6 +15,21 @@ import (
 
 // decreaseLiquidity performs the internal atomic flow: it collects swap fees,
 // reduces position liquidity, and returns fee-free principal amounts.
+//
+// Parameters:
+//   - _: leading realm-call discriminator forwarded to nested operations; callers pass 0
+//   - rlm: propagated realm context used by nested position and pool calls, which cross with cross(rlm)
+//   - params: decrease request containing the position ID, liquidity amount, minimum principal amounts, deadline, and caller
+//
+// Returns:
+//   - positionId: position NFT ID processed, equal to params.positionId on success
+//   - liquidity: decimal amount of liquidity removed from the position
+//   - fee0: token0 swap fees collected before the withdrawal, net of the configured withdrawal fee
+//   - fee1: token1 swap fees collected before the withdrawal, net of the configured withdrawal fee
+//   - amount0: token0 principal collected after the liquidity burn, without a withdrawal fee
+//   - amount1: token1 principal collected after the liquidity burn, without a withdrawal fee
+//   - poolPath: pool identifier associated with the position
+//   - err: nil on success; non-nil for recoverable zero-liquidity, excessive-liquidity, fee-growth, or slippage failures
 func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidityParams) (uint64, string, string, string, string, string, string, error) {
 	caller := params.caller
 
@@ -142,7 +157,16 @@ func (p *positionV1) decreaseLiquidity(_ int, rlm realm, params DecreaseLiquidit
 	return params.positionId, liquidityToRemove.ToString(), fee0Str, fee1Str, collect0, collect1, position.PoolKey(), nil
 }
 
-// calculateFees calculates the fees for the current position.
+// calculateFees computes each token's stored owed amount plus fees accrued
+// since the position's fee-growth checkpoints.
+//
+// Parameters:
+//   - position: position whose liquidity, checkpoints, and owed-token counters are used
+//   - currentFeeGrowth: current token0 and token1 fee-growth values inside the position's tick range
+//
+// Returns:
+//   - tokensOwed0: token0 amount owed after adding fees accrued since the last checkpoint
+//   - tokensOwed1: token1 amount owed after adding fees accrued since the last checkpoint
 func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth FeeGrowthInside) (int64, int64) {
 	posLiquidity := u256.MustFromDecimal(position.Liquidity())
 	fee0 := calculateTokensOwed(
@@ -160,6 +184,16 @@ func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth
 	return gnsmath.SafeAddInt64(position.TokensOwed0(), gnsmath.SafeConvertToInt64(fee0)), gnsmath.SafeAddInt64(position.TokensOwed1(), gnsmath.SafeConvertToInt64(fee1))
 }
 
+// calculateTokensOwed converts fee-growth delta into fees for a position by
+// multiplying by liquidity and dividing by the Q128 fixed-point scale.
+//
+// Parameters:
+//   - feeGrowthInsideLastX128: current fee growth inside the position's range, in Q128 fixed-point units
+//   - positionFeeGrowthInsideLastX128: fee-growth checkpoint stored on the position, in Q128 fixed-point units
+//   - positionLiquidity: position liquidity used to scale the fee-growth delta
+//
+// Returns:
+//   - tokensOwed: fees represented by the growth delta and position liquidity, as a uint256 value
 func calculateTokensOwed(
 	feeGrowthInsideLastX128 *u256.Uint,
 	positionFeeGrowthInsideLastX128 *u256.Uint,

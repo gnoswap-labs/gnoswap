@@ -23,6 +23,8 @@ import (
 // prevent manipulation. Votes are final and cannot be changed.
 //
 // Parameters:
+//   - _: leading realm-call discriminator; callers pass 0 while threading the realm context
+//   - rlm: current realm context; implementation validates it before reading or writing governance state
 //   - proposalID: ID of the proposal to vote on
 //   - yes: true for yes vote, false for no vote
 //
@@ -89,6 +91,21 @@ func (gv *governanceV1) Vote(_ int, rlm realm, proposalID int64, yes bool) strin
 }
 
 // vote handles core voting logic.
+//
+// Parameters:
+//   - _: leading realm-call discriminator; callers pass 0 while threading the realm context
+//   - rlm: propagated current realm context passed to the voting-info store, which validates it before writing
+//   - proposalID: identifier of the proposal whose voting period and tallies are evaluated
+//   - voterAddress: address whose historical delegation weight is used and whose vote is recorded
+//   - votedYes: true to add the weight to the yes tally, false to add it to the no tally
+//   - votedHeight: blockchain height at which the vote was cast
+//   - votedAt: Unix timestamp at which the vote was cast and voting-period validity is checked
+//
+// Returns:
+//   - VotingInfo: recorded vote details, or the default unvoted value when validation fails
+//   - int64: proposal's updated total yes-vote weight
+//   - int64: proposal's updated total no-vote weight
+//   - error: nil when the vote is stored and tallies update; otherwise the validation or storage error
 func (gv *governanceV1) vote(
 	_ int, rlm realm,
 	proposalID int64,

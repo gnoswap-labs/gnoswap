@@ -27,6 +27,14 @@ type Config struct {
 	ExecutionWindow int64
 }
 
+// IsValid reports whether the configuration's durations, threshold, quorum, and
+// cumulative schedule values satisfy the governance validation constraints.
+//
+// Parameters:
+//   - currentTime: current time value included when checking that the cumulative schedule does not become negative
+//
+// Returns:
+//   - error: nil when all fields and cumulative values are valid; otherwise an error describing the first invalid value
 func (c Config) IsValid(currentTime int64) error {
 	if c.VotingStartDelay < 0 {
 		return errors.New("votingStartDelay cannot be negative")
@@ -86,6 +94,20 @@ func (c Config) IsValid(currentTime int64) error {
 	return nil
 }
 
+// NewConfig constructs a governance configuration from the supplied delays,
+// thresholds, quorum percentage, and execution window.
+//
+// Parameters:
+//   - votingStartDelay: delay from proposal creation until voting opens, in seconds
+//   - votingPeriod: duration for which voting remains open, in seconds
+//   - votingWeightSmoothingDuration: interval used to smooth delegation weight, in seconds
+//   - quorum: required approval percentage of total xGNS supply, from 0 through 100
+//   - proposalCreationThreshold: minimum xGNS amount required to create a proposal
+//   - executionDelay: delay after voting ends before execution, in seconds
+//   - executionWindow: duration after the execution delay during which execution is allowed, in seconds
+//
+// Returns:
+//   - Config: configuration value populated with the supplied governance parameters
 func NewConfig(
 	votingStartDelay,
 	votingPeriod,
@@ -109,6 +131,18 @@ func NewConfig(
 // NewConfigPtr constructs a Config and returns a pointer to it. The Config is
 // allocated within the governance domain realm, satisfying realm allocation
 // checks for callers (such as tests) that require a *Config value.
+//
+// Parameters:
+//   - votingStartDelay: delay from proposal creation until voting opens, in seconds
+//   - votingPeriod: duration for which voting remains open, in seconds
+//   - votingWeightSmoothingDuration: interval used to smooth delegation weight, in seconds
+//   - quorum: required approval percentage of total xGNS supply, from 0 through 100
+//   - proposalCreationThreshold: minimum xGNS amount required to create a proposal
+//   - executionDelay: delay after voting ends before execution, in seconds
+//   - executionWindow: duration after the execution delay during which execution is allowed, in seconds
+//
+// Returns:
+//   - *Config: pointer to a configuration value populated with the supplied governance parameters
 func NewConfigPtr(
 	votingStartDelay,
 	votingPeriod,
@@ -130,6 +164,13 @@ func NewConfigPtr(
 	return &c
 }
 
+// NewDefaultConfig returns the governance configuration's built-in defaults:
+// one day before voting, seven days of voting, one day of weight smoothing,
+// 50% quorum, a 1-billion-xGNS creation threshold, one day execution delay,
+// and a 30-day execution window.
+//
+// Returns:
+//   - Config: default governance configuration value
 func NewDefaultConfig() Config {
 	return Config{
 		VotingStartDelay:              86400,         // 1 day - delay before voting starts
@@ -142,6 +183,11 @@ func NewDefaultConfig() Config {
 	}
 }
 
+// NewConfigTree creates an empty BPTree used to index configuration values by
+// their encoded int64 version.
+//
+// Returns:
+//   - *bptree.BPTree: empty configuration index tree
 func NewConfigTree() *bptree.BPTree {
 	return bptree.NewBPTreeN(16)
 }

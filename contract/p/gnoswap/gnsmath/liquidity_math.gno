@@ -8,21 +8,20 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// computeLiquidityForAmount0 calculates the liquidity for a given amount of token0.
+// computeLiquidityForAmount0 calculates the liquidity supported by a token0 amount.
 //
-// This function computes the maximum possible liquidity that can be provided for `token0`
-// based on the provided price boundaries (sqrtRatioAX96 and sqrtRatioBX96) in Q64.96 format.
+// It sorts the two Q64.96 square-root price bounds before applying the token0
+// liquidity formula. Equal bounds are rejected because their difference is zero.
 //
 // Parameters:
-//   - sqrtRatioAX96: *u256.Uint - The square root price at the lower tick boundary (Q64.96).
-//   - sqrtRatioBX96: *u256.Uint - The square root price at the upper tick boundary (Q64.96).
-//   - amount0: *u256.Uint - The amount of token0 to be converted to liquidity.
+//   - sqrtRatioAX96: Lower endpoint of the price range, encoded as a Q64.96 square-root ratio.
+//   - sqrtRatioBX96: Upper endpoint of the price range, encoded as a Q64.96 square-root ratio.
+//   - amount0: Available token0 amount to convert into liquidity.
 //
 // Returns:
-//   - *u256.Uint: The calculated liquidity, represented as an unsigned 128-bit integer (uint128).
+//   - liquidity: Liquidity supported by amount0, constrained to the uint128 range.
 //
-// Panics:
-//   - If the resulting liquidity exceeds the uint128 range, `SafeConvertToUint128` will trigger a panic.
+// Panics if the bounds are identical or the calculated liquidity exceeds uint128.
 func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	intermediate := u256.MulDiv(sqrtRatioAX96, sqrtRatioBX96, consts.Q96())
@@ -38,27 +37,20 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 	return SafeConvertToUint128(res)
 }
 
-// computeLiquidityForAmount1 calculates liquidity based on the provided token1 amount and price range.
+// computeLiquidityForAmount1 calculates the liquidity supported by a token1 amount.
 //
-// This function computes the liquidity for a given amount of token1 by using the difference
-// between the upper and lower square root price ratios. The calculation uses Q96 fixed-point
-// arithmetic to maintain precision.
+// It sorts the two Q96 square-root price bounds and divides the token1 amount
+// by their difference. Equal bounds are rejected because their difference is zero.
 //
 // Parameters:
-//   - sqrtRatioAX96: *u256.Uint - The square root ratio of price at the lower tick, represented in Q96 format.
-//   - sqrtRatioBX96: *u256.Uint - The square root ratio of price at the upper tick, represented in Q96 format.
-//   - amount1: *u256.Uint - The amount of token1 to calculate liquidity for.
+//   - sqrtRatioAX96: Lower endpoint of the price range, encoded as a Q64.96 square-root ratio.
+//   - sqrtRatioBX96: Upper endpoint of the price range, encoded as a Q64.96 square-root ratio.
+//   - amount1: Available token1 amount to convert into liquidity.
 //
 // Returns:
-//   - *u256.Uint: The calculated liquidity based on the provided amount of token1 and price range.
+//   - liquidity: Liquidity supported by amount1, constrained to the uint128 range.
 //
-// Notes:
-//   - The result is converted to uint128, so values above `MaxUint128` panic.
-//   - If `sqrtRatioAX96 == sqrtRatioBX96`, the function will panic due to division by zero.
-//   - Q96 is a constant representing `2^96`, ensuring that precision is maintained during division.
-//
-// Panics:
-//   - If the resulting liquidity exceeds the uint128 range, `SafeConvertToUint128` will trigger a panic.
+// Panics if the bounds are identical or the calculated liquidity exceeds uint128.
 func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 
@@ -73,28 +65,23 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 	return SafeConvertToUint128(res)
 }
 
-// GetLiquidityForAmounts calculates the maximum liquidity given the current price (sqrtRatioX96),
-// upper and lower price bounds (sqrtRatioAX96 and sqrtRatioBX96), and token amounts (amount0, amount1).
+// GetLiquidityForAmounts calculates the maximum liquidity supported by two token amounts.
 //
-// This function evaluates how much liquidity can be obtained for specified amounts of token0 and token1
-// within the provided price range. It returns the lesser liquidity based on available token0 or token1
-// to ensure the pool remains balanced.
+// The current square-root price determines which token amounts are active. Below
+// the range only token0 is used, above it only token1 is used, and inside it the
+// smaller of the token0- and token1-derived liquidities is returned.
 //
 // Parameters:
-// - sqrtRatioX96: The current price as a square root ratio in Q64.96 format (*u256.Uint).
-// - sqrtRatioAX96: The lower bound of the price range as a square root ratio in Q64.96 format (*u256.Uint).
-// - sqrtRatioBX96: The upper bound of the price range as a square root ratio in Q64.96 format (*u256.Uint).
-// - amount0: The amount of token0 available to provide liquidity (*u256.Uint).
-// - amount1: The amount of token1 available to provide liquidity (*u256.Uint).
+//   - sqrtRatioX96: Current square-root price, encoded as a Q64.96 ratio.
+//   - sqrtRatioAX96: First price-range endpoint, encoded as a Q64.96 ratio.
+//   - sqrtRatioBX96: Second price-range endpoint, encoded as a Q64.96 ratio; the endpoints are sorted.
+//   - amount0: Available token0 amount.
+//   - amount1: Available token1 amount.
 //
 // Returns:
-//   - *u256.Uint: The maximum possible liquidity that can be minted. The result
-//     is bounded by uint128; a value above `MaxUint128` panics.
+//   - liquidity: Maximum liquidity supported by the amounts, constrained to uint128.
 //
-// Notes:
-//   - The `Clone` method is used to prevent modification of the original values during computation.
-//   - The function ensures that liquidity calculations handle edge cases when the current price
-//     is outside the specified range by returning liquidity based on the dominant token.
+// Panics if a selected amount/range calculation has identical bounds or exceeds uint128.
 func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 *u256.Uint) (liquidity *u256.Uint) {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 
@@ -115,24 +102,19 @@ func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0,
 	return liquidity
 }
 
-// computeAmount0ForLiquidity calculates the required amount of token0 for a given liquidity level
-// within a specified price range (represented by sqrt ratios).
+// computeAmount0ForLiquidity calculates the token0 amount represented by liquidity.
 //
-// This function determines the amount of token0 needed to provide a specified amount of liquidity
-// within a price range defined by sqrtRatioAX96 (lower bound) and sqrtRatioBX96 (upper bound).
+// The price endpoints are sorted before applying the Q64.96 token0 formula.
+// Zero liquidity, a zero endpoint, or identical endpoints produces zero rather
+// than attempting a division by zero.
 //
 // Parameters:
-// - sqrtRatioAX96: The lower bound of the price range as a square root ratio in Q64.96 format (*u256.Uint).
-// - sqrtRatioBX96: The upper bound of the price range as a square root ratio in Q64.96 format (*u256.Uint).
-// - liquidity: The liquidity to be provided (*u256.Uint).
+//   - sqrtRatioAX96: First price-range endpoint, encoded as a Q64.96 square-root ratio.
+//   - sqrtRatioBX96: Second price-range endpoint, encoded as a Q64.96 square-root ratio.
+//   - liquidity: Non-negative liquidity to value.
 //
 // Returns:
-// - *u256.Uint: The amount of token0 required to achieve the specified liquidity level.
-//
-// Notes:
-// - This function assumes the price bounds are expressed in Q64.96 fixed-point format.
-// - The function returns 0 if the liquidity is 0 or the price bounds are invalid.
-// - Handles edge cases where sqrtRatioAX96 equals sqrtRatioBX96 by returning 0 (to prevent division by zero).
+//   - amount0: Token0 amount represented by liquidity over the ordered range; zero for the stated degenerate inputs.
 func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if sqrtRatioAX96.IsZero() || sqrtRatioBX96.IsZero() || liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
@@ -148,26 +130,18 @@ func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 	return res
 }
 
-// computeAmount1ForLiquidity calculates the required amount of token1 for a given liquidity level
-// within a specified price range (represented by sqrt ratios).
+// computeAmount1ForLiquidity calculates the token1 amount represented by liquidity.
 //
-// This function determines the amount of token1 needed to provide liquidity between the
-// lower (sqrtRatioAX96) and upper (sqrtRatioBX96) price bounds. The calculation is performed
-// in Q64.96 fixed-point format, which is standard for many liquidity calculations.
+// The price endpoints are sorted before computing liquidity times their Q64.96
+// difference divided by Q96. Zero liquidity or identical endpoints produces zero.
 //
 // Parameters:
-// - sqrtRatioAX96: The lower bound of the price range as a square root ratio in Q64.96 format (*u256.Uint).
-// - sqrtRatioBX96: The upper bound of the price range as a square root ratio in Q64.96 format (*u256.Uint).
-// - liquidity: The liquidity amount to be used in the calculation (*u256.Uint).
+//   - sqrtRatioAX96: First price-range endpoint, encoded as a Q64.96 square-root ratio.
+//   - sqrtRatioBX96: Second price-range endpoint, encoded as a Q64.96 square-root ratio.
+//   - liquidity: Non-negative liquidity to value.
 //
 // Returns:
-// - *u256.Uint: The amount of token1 required to achieve the specified liquidity level.
-//
-// Notes:
-//   - This function handles edge cases where the liquidity is zero or when sqrtRatioAX96 equals sqrtRatioBX96
-//     to prevent division by zero.
-//   - The calculation assumes sqrtRatioAX96 is always less than or equal to sqrtRatioBX96 after the initial
-//     ascending order sorting.
+//   - amount1: Token1 amount represented by liquidity over the ordered range; zero for the stated degenerate inputs.
 func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	if liquidity.IsZero() || sqrtRatioAX96.Eq(sqrtRatioBX96) {
@@ -188,19 +162,18 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 // price is within the range, both token0 and token1 are calculated.
 //
 // Parameters:
-// - sqrtRatioX96: The current price represented as a square root ratio in Q64.96 format (*u256.Uint).
-// - sqrtRatioAX96: The lower bound of the price range as a square root ratio in Q64.96 format (*u256.Uint).
-// - sqrtRatioBX96: The upper bound of the price range as a square root ratio in Q64.96 format (*u256.Uint).
-// - liquidity: The amount of liquidity to value (*u256.Uint).
+//   - sqrtRatioX96: Current square-root price in Q64.96 format.
+//   - sqrtRatioAX96: First price-range endpoint in Q64.96 format.
+//   - sqrtRatioBX96: Second price-range endpoint in Q64.96 format; the endpoints are ordered internally.
+//   - liquidity: Non-negative liquidity amount to value.
 //
 // Returns:
-//   - *u256.Uint: The calculated amount of token0.
-//   - *u256.Uint: The calculated amount of token1.
-//     Call `ToString()` on either value for decimal display.
+//   - amount0: Token0 amount represented by liquidity; zero when the current price is at or above the upper endpoint.
+//   - amount1: Token1 amount represented by liquidity; zero when the current price is at or below the lower endpoint.
+//     Call ToString() on either value for decimal display.
 //
 // Notes:
 //   - If liquidity is zero, the function returns zero values for both tokens.
-//   - The function orders the range bounds with `toAscendingOrder()`.
 //   - At a boundary, the corresponding out-of-range token amount is zero.
 //
 // Example:
@@ -241,18 +214,18 @@ func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidit
 	return amount0, amount1
 }
 
-// LiquidityMathAddDelta calculates the new liquidity by applying the delta liquidity to the current liquidity.
-// If delta liquidity is negative, it subtracts the absolute value of delta liquidity from the current liquidity.
-// If delta liquidity is positive, it adds the absolute value of delta liquidity to the current liquidity.
+// LiquidityMathAddDelta calculates the new liquidity after applying a signed delta.
+// A negative delta subtracts its magnitude; a non-negative delta adds its magnitude.
 //
 // Parameters:
-//   - x: current liquidity as unsigned 256-bit integer
-//   - y: delta liquidity as signed 256-bit integer (positive to add, negative to subtract)
+//   - x: Current non-negative liquidity value.
+//   - y: Signed liquidity delta; positive values add and negative values subtract.
 //
-// Returns the new liquidity as a uint256 value constrained to the uint128 range.
+// Returns:
+//   - liquidity: Updated liquidity, constrained to the uint128 range.
 //
-// Panics if x or y is nil, if subtraction underflows, if addition overflows uint256,
-// or if the resulting liquidity exceeds `MaxUint128`.
+// Panics if x or y is nil, subtraction underflows, addition overflows uint256,
+// or the resulting liquidity exceeds MaxUint128.
 func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	if x == nil || y == nil {
 		panic("liquidity_math: x or y is nil")
@@ -290,7 +263,15 @@ func LiquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	return z
 }
 
-// toAscendingOrder returns the two values in ascending order.
+// toAscendingOrder returns the two unsigned values ordered from lower to higher.
+//
+// Parameters:
+//   - a: First value to compare.
+//   - b: Second value to compare.
+//
+// Returns:
+//   - lower: The lesser of a and b; a is returned on ties.
+//   - upper: The greater of a and b; b is returned on ties.
 func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 	if a.Gt(b) {
 		return b, a
@@ -299,28 +280,18 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 	return a, b
 }
 
-// SafeConvertToUint128 safely ensures a *u256.Uint value fits within the uint128 range.
+// SafeConvertToUint128 verifies that value fits in the uint128 range.
 //
-// This function verifies that the provided unsigned 256-bit integer does not exceed the maximum value for uint128 (`2^128 - 1`).
-// If the value is within the uint128 range, it is returned as is; otherwise, the function triggers a panic.
+// No representation conversion is performed: the original pointer is returned
+// when its value is at most 2^128 - 1.
 //
 // Parameters:
-// - value (*u256.Uint): The unsigned 256-bit integer to be checked.
+//   - value: Non-nil unsigned 256-bit value to validate.
 //
 // Returns:
-// - *u256.Uint: The same value if it is within the uint128 range.
+//   - converted: The same *u256.Uint pointer when value fits in uint128.
 //
-// Panics:
-//   - If the value exceeds the maximum uint128 value (`2^128 - 1`), the function will panic with a descriptive error
-//     indicating the overflow and the original value.
-//
-// Notes:
-// - The constant `MAX_UINT128` is defined as `340282366920938463463374607431768211455` (the largest uint128 value).
-// - No actual conversion occurs since the function works directly with *u256.Uint types.
-//
-// Example:
-// validUint128 := SafeConvertToUint128(u256.MustFromDecimal("340282366920938463463374607431768211455")) // Valid
-// SafeConvertToUint128(u256.MustFromDecimal("340282366920938463463374607431768211456")) // Panics due to overflow
+// Panics if value is nil or exceeds the maximum uint128 value.
 func SafeConvertToUint128(value *u256.Uint) *u256.Uint {
 	if value.Gt(consts.MaxUint128()) {
 		panic(ufmt.Sprintf(

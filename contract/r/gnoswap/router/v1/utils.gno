@@ -15,7 +15,15 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// calculateSwapAmountByQuote calculates swap amount based on quote percentage.
+// calculateSwapAmountByQuote allocates a signed swap amount by a route quote percentage.
+//
+// Parameters:
+//   - amountSpecified: total signed amount to distribute across routes
+//   - quote: decimal percentage string; must be within the configured quote range
+//
+// Returns:
+//   - amount: allocated signed amount after percentage scaling
+//   - err: nil for a valid quote producing a nonzero amount; parse, range, or zero-amount error otherwise
 func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, error) {
 	quoteInt, err := strconv.ParseInt(quote, 10, 64)
 	if err != nil {
@@ -34,7 +42,10 @@ func calculateSwapAmountByQuote(amountSpecified int64, quote string) (int64, err
 	return toSwap, nil
 }
 
-// assertHopsInRange ensures the number of hops is within the valid range of 1-3.
+// assertHopsInRange panics unless the route contains one, two, or three pool hops.
+//
+// Parameters:
+//   - hops: number of pools in the route
 func assertHopsInRange(hops int) {
 	switch hops {
 	case 1, 2, 3:
@@ -44,10 +55,16 @@ func assertHopsInRange(hops int) {
 	}
 }
 
-// getDataForSinglePath extracts token addresses and fee from a single pool path.
+// getDataForSinglePath extracts the route-ordered token paths and fee from one pool path.
+// Tokens remain in route direction rather than canonical pool ordering.
 //
-// IMPORTANT: This function returns tokens in the order they appear in the route string,
-// which represents the swap direction (tokenIn:tokenOut:fee), NOT the canonical pool ordering.
+// Parameters:
+//   - poolPath: single-hop path formatted as token0:token1:fee
+//
+// Returns:
+//   - token0: first token path as written in poolPath
+//   - token1: second token path as written in poolPath
+//   - fee: parsed pool fee tier
 func getDataForSinglePath(poolPath string) (token0, token1 string, fee uint32) {
 	token0, token1, fee, err := getDataForSinglePathWithError(poolPath)
 	if err != nil {
@@ -57,7 +74,16 @@ func getDataForSinglePath(poolPath string) (token0, token1 string, fee uint32) {
 	return token0, token1, fee
 }
 
-// getDataForSinglePathWithError extracts token addresses and fee from a single pool path with error handling.
+// getDataForSinglePathWithError parses one token0:token1:fee path without panicking.
+//
+// Parameters:
+//   - poolPath: single-hop path with exactly two non-empty token paths and a decimal fee
+//
+// Returns:
+//   - token0: first token path as written in poolPath, or empty on error
+//   - token1: second token path as written in poolPath, or empty on error
+//   - fee: parsed fee tier, or zero on error
+//   - err: nil for a valid path; malformed path, empty token, or invalid fee error otherwise
 func getDataForSinglePathWithError(poolPath string) (string, string, uint32, error) {
 	poolPathSplit := strings.Split(poolPath, ":")
 	if len(poolPathSplit) != 3 {
@@ -88,7 +114,16 @@ func getDataForSinglePathWithError(poolPath string) (string, string, uint32, err
 	return poolPathSplit[0], poolPathSplit[1], uint32(f), nil
 }
 
-// getDataForMultiPath extracts token addresses and fee from a multi-hop path at specified index.
+// getDataForMultiPath extracts route-ordered token paths and fee from one indexed hop.
+//
+// Parameters:
+//   - possiblePath: multi-hop path whose hops are separated by POOL_SEPARATOR
+//   - poolIdx: zero-based hop index; indexes outside 0-2 return zero values, while an in-range index must exist in possiblePath
+//
+// Returns:
+//   - token0: first token path for the selected hop
+//   - token1: second token path for the selected hop
+//   - fee: selected hop's pool fee tier
 func getDataForMultiPath(possiblePath string, poolIdx int) (token0, token1 string, fee uint32) {
 	pools := strings.Split(possiblePath, POOL_SEPARATOR)
 
@@ -104,7 +139,15 @@ func getDataForMultiPath(possiblePath string, poolIdx int) (token0, token1 strin
 	}
 }
 
-// i256MinMax returns the absolute values of x and y in min-max order.
+// i256MinMax returns absolute values in the order selected by signed comparison of x and y.
+//
+// Parameters:
+//   - x: signed integer whose absolute value is compared
+//   - y: signed integer whose absolute value is compared
+//
+// Returns:
+//   - min: absolute value of x when x <= y, otherwise absolute value of y
+//   - max: absolute value of y when x <= y, otherwise absolute value of x
 func i256MinMax(x, y *i256.Int) (min, max *u256.Uint) {
 	if x.Lt(y) || x.Eq(y) {
 		return x.Abs(), y.Abs()
@@ -112,27 +155,16 @@ func i256MinMax(x, y *i256.Int) (min, max *u256.Uint) {
 	return y.Abs(), x.Abs()
 }
 
-// validateRoutePaths validates multiple route paths to ensure they all start with inputToken and end with outputToken.
-// This function processes comma-separated route paths and validates each path individually.
-//
-// Validates:
-// - Each route path starts with the specified inputToken
-// - Each route path ends with the specified outputToken
-// - Multi-hop paths have continuous adjacent hops
-//
-// It does not reject repeated intermediate tokens or otherwise enforce an
-// acyclic route.
+// validateRoutePaths validates every comma-separated route against common endpoints
+// and checks hop-to-hop continuity.
 //
 // Parameters:
-// - routePathArrString: comma-separated route paths (e.g., "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000*POOL*gno.land/r/demo/gns:gno.land/r/demo/usdc:500")
-// - inputToken: expected first token in all route paths
-// - outputToken: expected last token in all route paths
+//   - routePathArrString: comma-separated route paths to validate
+//   - inputToken: expected first token path for every route
+//   - outputToken: expected last token path for every route
 //
-// Examples:
-// - Single route: "tokenA:tokenB:500" with inputToken="tokenA", outputToken="tokenB"
-// - Multi-route: "tokenA:tokenB:500,tokenA:tokenC:3000*POOL*tokenC:tokenB:500" with inputToken="tokenA", outputToken="tokenB"
-//
-// Returns error if any route path validation fails.
+// Returns:
+//   - err: nil when all routes are valid; the first route or continuity validation error otherwise
 func validateRoutePaths(routePathArrString, inputToken, outputToken string) error {
 	routePaths := strings.Split(routePathArrString, ",")
 
@@ -145,28 +177,15 @@ func validateRoutePaths(routePathArrString, inputToken, outputToken string) erro
 	return nil
 }
 
-// validateRoutePath validates a single route path to ensure it starts with inputToken and ends with outputToken.
-// This function handles both single-hop and multi-hop route paths.
-//
-// Validates:
-// - Route path starts with the specified inputToken
-// - Route path ends with the specified outputToken
-// - Multi-hop paths have continuous adjacent hops
-//
-// Route Path Formats:
-// - single-hop: "tokenA:tokenB:fee" (direct swap between two tokens)
-// - multi-hop: "tokenA:tokenB:fee1*POOL*tokenB:tokenC:fee2" (swap through intermediate tokens)
+// validateRoutePath validates one single-hop or multi-hop route against its endpoints.
 //
 // Parameters:
-// - routePath: single route path string (e.g., "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500")
-// - inputToken: expected first token in the route path
-// - outputToken: expected last token in the route path
+//   - routePath: route containing one or more token:token:fee hops
+//   - inputToken: expected first token path
+//   - outputToken: expected last token path
 //
-// Examples:
-// - single-hop: "tokenA:tokenB:500" with inputToken="tokenA", outputToken="tokenB"
-// - multi-hop: "tokenA:tokenB:3000*POOL*tokenB:tokenC:500" with inputToken="tokenA", outputToken="tokenC"
-//
-// Returns error with specific details if validation fails.
+// Returns:
+//   - err: nil when route format, hop continuity, and endpoints are valid; a detailed validation error otherwise
 func validateRoutePath(routePath, inputToken, outputToken string) error {
 	// Extract first and last tokens from the routePath
 	var (
@@ -221,6 +240,13 @@ func validateRoutePath(routePath, inputToken, outputToken string) error {
 	return nil
 }
 
+// validatePoolPathHopContinuity checks that each hop's output token equals the next hop's input token.
+//
+// Parameters:
+//   - routePoolPaths: ordered single-hop pool paths composing a route
+//
+// Returns:
+//   - err: nil for fewer than two hops or continuous hops; parse or disconnection error otherwise
 func validatePoolPathHopContinuity(routePoolPaths []string) error {
 	if len(routePoolPaths) < 2 {
 		return nil
@@ -250,9 +276,14 @@ func validatePoolPathHopContinuity(routePoolPaths []string) error {
 	return nil
 }
 
-// splitSingleChar splits a string by a single character separator.
-// This function is optimized for splitting strings with a single-byte separator
-// and is more memory efficient than strings.Split for this use case.
+// splitSingleChar splits a string on one byte separator while preserving empty segments.
+//
+// Parameters:
+//   - s: string to split
+//   - sep: single-byte separator
+//
+// Returns:
+//   - parts: segments in order, including empty leading, trailing, or repeated-separator segments
 func splitSingleChar(s string, sep byte) []string {
 	if s == "" {
 		return []string{""}
@@ -270,28 +301,14 @@ func splitSingleChar(s string, sep byte) []string {
 	return result
 }
 
-// parsePoolPathsByRoutePathArr parses route path array string and returns a slice of pool paths.
-// This function converts route paths (which maintain swap direction) into canonical pool paths
-// (which use alphabetical token ordering).
-//
-// The function processes comma-separated route paths and extracts individual pool information
-// from each route, ensuring tokens are ordered alphabetically for consistent pool identification.
+// parsePoolPathsByRoutePathArr converts route-direction paths to canonical pool paths.
 //
 // Parameters:
-//   - routePathArr: comma-separated route paths string containing single or multi-hop routes
-//     Format examples:
-//   - Single route: "tokenA:tokenB:500"
-//   - Multiple routes: "tokenA:tokenB:500,tokenC:tokenD:3000"
-//   - Multi-hop routes: "tokenA:tokenB:500*POOL*tokenB:tokenC:3000"
+//   - routePathArr: comma-separated single- or multi-hop route paths
 //
 // Returns:
-// - []string: slice of canonical pool paths with alphabetically ordered tokens
-// - error: parsing error if any route path is invalid
-//
-// Example:
-//
-//	input: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/usdc:gno.land/r/demo/gns:3000"
-//	output: ["gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500", "gno.land/r/demo/gns:gno.land/r/demo/usdc:3000"]
+//   - poolPaths: canonical pool paths with alphabetically ordered token endpoints
+//   - err: nil on successful parsing; malformed hop-path error otherwise
 func parsePoolPathsByRoutePathArr(routePathArr string) ([]string, error) {
 	poolPaths := make([]string, 0)
 
@@ -314,20 +331,15 @@ func parsePoolPathsByRoutePathArr(routePathArr string) ([]string, error) {
 	return poolPaths, nil
 }
 
-// BuildSingleHopPath creates a single-hop route path string.
-// Format: "tokenA:tokenB:fee"
+// BuildSingleHopRoutePath formats one route-direction single-hop path.
 //
 // Parameters:
-// - tokenA: input token address
-// - tokenB: output token address
-// - fee: pool fee (e.g., 500, 3000, 10000)
+//   - tokenA: input token contract path
+//   - tokenB: output token contract path
+//   - fee: pool fee tier appended as a decimal value
 //
 // Returns:
-// - string: formatted single-hop route path
-//
-// Example:
-//   - BuildSingleHopPath("gno.land/r/demo/wugnot", "gno.land/r/demo/usdc", 500)
-//     returns "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500"
+//   - routePath: tokenA:tokenB:fee formatted route string; panics for empty or identical tokens
 func BuildSingleHopRoutePath(tokenA, tokenB string, fee uint32) string {
 	if tokenA == "" || tokenB == "" {
 		panic("token addresses cannot be empty")

@@ -23,11 +23,33 @@ const (
 )
 
 type RouterOperation interface {
+	// Validate checks operation parameters before processing.
+	//
+	// Returns:
+	//   - err: nil when operation input is valid; validation error otherwise
 	Validate() error
+	// Process executes the operation in the propagated realm context.
+	//
+	// Parameters:
+	//   - _: leading operation discriminator; callers pass 0
+	//   - rlm: propagated current realm context used for pool interaction
+	//
+	// Returns:
+	//   - result: swap amounts and route metadata, or nil when processing fails
+	//   - err: nil on success; execution error otherwise
 	Process(_ int, rlm realm) (*SwapResult, error)
 }
 
-// executeSwapOperation validates and processes a swap operation.
+// executeSwapOperation validates an operation and then processes it.
+//
+// Parameters:
+//   - _: leading operation discriminator; callers pass 0
+//   - rlm: propagated current realm context used by the operation
+//   - op: swap operation to validate and execute
+//
+// Returns:
+//   - result: populated swap result, or nil when validation or processing fails
+//   - err: nil on success; validation or processing error otherwise
 func executeSwapOperation(_ int, rlm realm, op RouterOperation) (*SwapResult, error) {
 	if err := op.Validate(); err != nil {
 		return nil, err
@@ -58,7 +80,18 @@ type baseSwapOperation struct {
 	amountSpecified   int64
 }
 
-// processRoutes processes all swap routes and returns total amounts.
+// processRoutes allocates the requested amount across all route strings and aggregates results.
+//
+// Parameters:
+//   - _: leading operation discriminator; callers pass 0
+//   - rlm: propagated current realm context used for each pool swap
+//   - r: router implementation that executes each route
+//   - swapType: ExactIn or ExactOut execution direction
+//
+// Returns:
+//   - amountIn: aggregate input consumed by all routes
+//   - amountOut: aggregate output produced by all routes
+//   - err: nil on success; quote parsing or route execution error otherwise
 func (op *baseSwapOperation) processRoutes(_ int, rlm realm, r *routerV1, swapType SwapType) (int64, int64, error) {
 	resultAmountIn, resultAmountOut := int64(0), int64(0)
 	remainRequestAmount := op.amountSpecified
@@ -94,7 +127,20 @@ func (op *baseSwapOperation) processRoutes(_ int, rlm realm, r *routerV1, swapTy
 	return resultAmountIn, resultAmountOut, nil
 }
 
-// processRoute processes a single route with specified swap amount.
+// processRoute executes one route, selecting single- or multi-hop processing by hop count.
+//
+// Parameters:
+//   - _: leading operation discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool interaction
+//   - r: router implementation that executes the route
+//   - route: one route path containing one to three pool hops
+//   - toSwap: signed amount assigned to this route
+//   - swapType: ExactIn or ExactOut execution direction
+//
+// Returns:
+//   - amountIn: input amount consumed by this route
+//   - amountOut: output amount produced by this route
+//   - err: always nil after a one-to-three-hop dispatch; an out-of-range hop count panics before returning
 func (op *baseSwapOperation) processRoute(
 	_ int,
 	rlm realm,
@@ -116,7 +162,18 @@ func (op *baseSwapOperation) processRoute(
 	return amountIn, amountOut, nil
 }
 
-// handleSingleSwap executes a single-hop swap with the specified amount.
+// handleSingleSwap executes one pool swap from a route string.
+//
+// Parameters:
+//   - _: leading operation discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool interaction
+//   - route: single-hop token path and fee
+//   - amountSpecified: signed input or output amount for the hop
+//   - sqrtPriceLimitX96: optional Q64.96 price limit; zero selects a directional boundary
+//
+// Returns:
+//   - amountIn: input amount received by the pool
+//   - amountOut: output amount sent by the pool
 func (r *routerV1) handleSingleSwap(_ int, rlm realm, route string, amountSpecified int64, sqrtPriceLimitX96 *u256.Uint) (int64, int64) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
@@ -130,7 +187,19 @@ func (r *routerV1) handleSingleSwap(_ int, rlm realm, route string, amountSpecif
 	return r.singleSwap(0, rlm, &singleParams)
 }
 
-// handleMultiSwap processes multi-hop swaps across multiple pools.
+// handleMultiSwap executes a multi-hop route in the direction selected by swapType.
+//
+// Parameters:
+//   - _: leading operation discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool interaction
+//   - swapType: ExactIn for forward execution or ExactOut for backward quoting
+//   - route: multi-hop path separated by POOL_SEPARATOR
+//   - numHops: number of pool hops in route
+//   - amountSpecified: signed amount assigned to the route
+//
+// Returns:
+//   - amountIn: input amount consumed by the route
+//   - amountOut: output amount produced by the route
 func (r *routerV1) handleMultiSwap(
 	_ int,
 	rlm realm,
@@ -168,11 +237,21 @@ type SwapRouteParams struct {
 	sqrtPriceLimitX96 *u256.Uint // if sqrtPriceLimitX96 is zero string, it will be set to MIN_PRICE or MAX_PRICE
 }
 
+// ExactAmount returns the requested exact input or output amount.
+//
+// Returns:
+//   - amount: exactAmount configured for the route
 func (p *SwapRouteParams) ExactAmount() int64 {
 	return p.exactAmount
 }
 
-// when exact out, calculate amount to fetch from pool including router fee
+// ExpectedExactAmountByFee returns the amount needed by pool execution after router-fee adjustment.
+//
+// Parameters:
+//   - feeBps: router fee in basis points
+//
+// Returns:
+//   - amount: exact input amount for ExactIn, or gross pool amount for ExactOut
 func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) int64 {
 	if p.typ == ExactIn {
 		return p.exactAmount
@@ -181,6 +260,10 @@ func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) int64 {
 	return calculateExactOutWithRouterFee(p.exactAmount, feeBps)
 }
 
+// SwapCount counts pool hops across all comma-separated routes.
+//
+// Returns:
+//   - count: total number of pool swaps represented by routeArr
 func (p *SwapRouteParams) SwapCount() int64 {
 	swapCount := int64(0)
 
@@ -191,6 +274,13 @@ func (p *SwapRouteParams) SwapCount() int64 {
 	return swapCount
 }
 
+// buildRouteEventAttrs expands comma-separated routes into event key/value attributes.
+//
+// Parameters:
+//   - routeArr: comma-separated route paths
+//
+// Returns:
+//   - attrs: alternating routes[index] keys and route values for event emission
 func buildRouteEventAttrs(routeArr string) []string {
 	routes := strings.Split(routeArr, ",")
 	routeEventAttrs := make([]string, 0, len(routes)*2)
@@ -203,11 +293,23 @@ func buildRouteEventAttrs(routeArr string) []string {
 	return routeEventAttrs
 }
 
+// IsSetSqrtPriceLimitX96 reports whether a nonzero caller price limit is configured.
+//
+// Returns:
+//   - set: true when sqrtPriceLimitX96 is non-nil and nonzero
 func (p *SwapRouteParams) IsSetSqrtPriceLimitX96() bool {
 	return p.sqrtPriceLimitX96 != nil && !p.sqrtPriceLimitX96.IsZero()
 }
 
-// createSwapOperation creates the appropriate swap operation based on swap type.
+// createSwapOperation constructs the exact-in or exact-out operation for params.
+//
+// Parameters:
+//   - r: router implementation used by the operation
+//   - params: validated route settings and exact amount/limit configuration
+//
+// Returns:
+//   - op: exact-in or exact-out operation selected by params.typ
+//   - err: nil for a supported swap type; invalid-swap-type error otherwise
 func createSwapOperation(r *routerV1, params SwapRouteParams) (RouterOperation, error) {
 	baseParams := BaseSwapParams{
 		InputToken:        params.inputToken,
@@ -232,7 +334,17 @@ func createSwapOperation(r *routerV1, params SwapRouteParams) (RouterOperation, 
 	}
 }
 
-// commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps.
+// commonSwapRoute executes and finalizes either an exact-in or exact-out route.
+//
+// Parameters:
+//   - _: leading operation discriminator; callers pass 0
+//   - rlm: propagated current realm context used for swaps and fee settlement
+//   - params: route tokens, quotes, amounts, deadline, type, and price limit
+//
+// Returns:
+//   - amountIn: input amount consumed across routes
+//   - amountOut: net output after router fee
+//   - err: nil on success; operation validation or execution error otherwise
 func (r *routerV1) commonSwapRoute(_ int, rlm realm, params SwapRouteParams) (int64, int64, error) {
 	op, err := createSwapOperation(r, params)
 	if err != nil {

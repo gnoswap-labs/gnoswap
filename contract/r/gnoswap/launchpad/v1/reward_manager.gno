@@ -12,10 +12,26 @@ import (
 
 // Helper functions for RewardManager
 
+// isRewardManagerInitialized reports whether any deposit reward state has been stored.
+//
+// Parameters:
+//   - r: reward manager whose reward-state tree is inspected.
+//
+// Returns:
+//   - initialized: true when the reward tree contains at least one state.
 func isRewardManagerInitialized(r *launchpad.RewardManager) bool {
 	return r.Rewards().Size() > 0
 }
 
+// getDepositRewardState retrieves one deposit's reward state from the manager.
+//
+// Parameters:
+//   - r: reward manager containing the deposit reward states.
+//   - depositId: identifier of the deposit to look up.
+//
+// Returns:
+//   - rewardState: stored reward state for depositId.
+//   - err: non-nil when the deposit is absent or the stored value has an unexpected type.
 func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launchpad.RewardState, error) {
 	rewardStateI := r.Rewards().Get(depositId)
 	if rewardStateI == nil {
@@ -30,6 +46,17 @@ func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launc
 	return rewardState, nil
 }
 
+// calculateRewardPerDepositX128 computes the reward-per-deposit increment for elapsed time.
+//
+// Parameters:
+//   - r: reward manager providing distribution start/end and accumulated-time bounds.
+//   - rewardPerSecondX128: Q128-scaled reward-token rate per second.
+//   - totalStaked: current aggregate staked amount used as the divisor.
+//   - currentTime: current Unix timestamp in seconds.
+//
+// Returns:
+//   - rewardPerDepositX128: Q128-scaled reward increment, or zero when distribution is inactive or no stake exists.
+//   - err: non-nil when the configured per-second reward rate is zero.
 func calculateRewardPerDepositX128(r *launchpad.RewardManager, rewardPerSecondX128 *u256.Uint, totalStaked int64, currentTime int64) (*u256.Uint, error) {
 	accumulatedTime := r.AccumulatedTime()
 	if r.DistributeStartTime() > accumulatedTime {
@@ -74,6 +101,14 @@ func calculateRewardPerDepositX128(r *launchpad.RewardManager, rewardPerSecondX1
 	return rewardPerDepositX128, nil
 }
 
+// addRewardStateByDeposit creates and stores a reward state derived from a deposit.
+//
+// Parameters:
+//   - r: reward manager receiving the new reward state.
+//   - deposit: deposit whose amount, creation time, and ID seed the state.
+//
+// Returns:
+//   - rewardState: initialized and registered reward state for deposit.
 func addRewardStateByDeposit(r *launchpad.RewardManager, deposit launchpad.Deposit) *launchpad.RewardState {
 	claimableTime := deposit.CreatedAt() + r.RewardClaimableDuration()
 	if claimableTime > r.DistributeEndTime() {
@@ -99,6 +134,15 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit launchpad.Depos
 	return addRewardState(r, deposit, rewardState)
 }
 
+// addRewardState registers rewardState as both active state and deposit-indexed state.
+//
+// Parameters:
+//   - r: reward manager receiving the state.
+//   - deposit: deposit whose ID indexes the reward state.
+//   - rewardState: reward state to activate and store.
+//
+// Returns:
+//   - storedState: the rewardState after registration.
 func addRewardState(r *launchpad.RewardManager, deposit launchpad.Deposit, rewardState *launchpad.RewardState) *launchpad.RewardState {
 	addActiveRewardState(r, rewardState)
 	r.SetReward(deposit.ID(), rewardState)
@@ -106,6 +150,14 @@ func addRewardState(r *launchpad.RewardManager, deposit launchpad.Deposit, rewar
 	return rewardState
 }
 
+// removeRewardState removes a deposit's reward state from active accounting and storage.
+//
+// Parameters:
+//   - r: reward manager containing the state.
+//   - depositId: identifier of the deposit state to remove.
+//
+// Returns:
+//   - err: non-nil when the deposit state is missing or cannot be decoded.
 func removeRewardState(r *launchpad.RewardManager, depositId string) error {
 	rewardState, err := getDepositRewardState(r, depositId)
 	if err != nil {
@@ -117,6 +169,11 @@ func removeRewardState(r *launchpad.RewardManager, depositId string) error {
 	return nil
 }
 
+// addActiveRewardState adds a reward state's deposit amount and price debt to active totals.
+//
+// Parameters:
+//   - r: reward manager whose active totals are updated.
+//   - rewardState: reward state whose amount and Q128 price debt are included.
 func addActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.RewardState) {
 	debt, overflow := u256.Zero().MulOverflow(
 		rewardState.PriceDebtX128(),
@@ -130,6 +187,11 @@ func addActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.Rew
 	r.SetActivePriceDebtX128(u256.Zero().Add(r.ActivePriceDebtX128(), debt))
 }
 
+// removeActiveRewardState subtracts a reward state's amount, claimed amount, and price debt from active totals.
+//
+// Parameters:
+//   - r: reward manager whose active totals are updated.
+//   - rewardState: reward state whose accounting values are removed.
 func removeActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.RewardState) {
 	debt, overflow := u256.Zero().MulOverflow(
 		rewardState.PriceDebtX128(),
@@ -144,6 +206,15 @@ func removeActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.
 	r.SetActivePriceDebtX128(u256.Zero().Sub(r.ActivePriceDebtX128(), debt))
 }
 
+// addRewardPerDepositX128 advances accumulated reward-per-deposit accounting.
+//
+// Parameters:
+//   - r: reward manager whose accumulated reward and timestamp are updated.
+//   - rewardPerDepositX128: Q128-scaled increment to add.
+//   - currentTime: Unix timestamp through which rewards are accumulated.
+//
+// Returns:
+//   - err: nil; this helper currently ignores zero or out-of-window increments rather than returning an error.
 func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u256.Uint, currentTime int64) error {
 	if rewardPerDepositX128.IsZero() {
 		return nil
@@ -164,16 +235,15 @@ func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u
 	return nil
 }
 
-// updateRewardPerDepositX128 updates the reward per deposit state.
-// This function calculates and updates the accumulated reward per deposit
-// based on the current total deposit amount and time.
+// updateRewardPerDepositX128 calculates and applies accumulated reward-per-deposit accounting.
 //
 // Parameters:
-// - totalDepositAmount (int64): Current total deposit amount
-// - time (int64): Current timestamp
+//   - r: reward manager whose reward accumulator is updated.
+//   - totalDepositAmount: current aggregate GNS amount staked across deposits.
+//   - currentTime: current Unix timestamp in seconds; non-positive values are rejected.
 //
 // Returns:
-// - error: If the update fails
+//   - err: non-nil when currentTime is invalid or reward calculation fails.
 func updateRewardPerDepositX128(r *launchpad.RewardManager, totalDepositAmount int64, currentTime int64) error {
 	if currentTime <= 0 {
 		return makeErrorWithDetails(errInvalidTime, "time must be positive")
@@ -198,6 +268,13 @@ func updateRewardPerDepositX128(r *launchpad.RewardManager, totalDepositAmount i
 	return nil
 }
 
+// updateDistributeAmountPerSecondX128 derives and stores the Q128-scaled distribution rate.
+//
+// Parameters:
+//   - r: reward manager receiving the distribution schedule and rate.
+//   - totalDistributeAmount: total reward-token amount allocated to the schedule.
+//   - distributeStartTime: schedule start Unix timestamp.
+//   - distributeEndTime: schedule end Unix timestamp; a non-positive duration leaves the manager unchanged.
 func updateDistributeAmountPerSecondX128(r *launchpad.RewardManager, totalDistributeAmount int64, distributeStartTime int64, distributeEndTime int64) {
 	// Use time duration for per-second calculation
 	timeDuration := distributeEndTime - distributeStartTime
@@ -221,17 +298,16 @@ func updateDistributeAmountPerSecondX128(r *launchpad.RewardManager, totalDistri
 	r.SetDistributeEndTime(distributeEndTime)
 }
 
-// collectReward processes the reward collection for a specific deposit.
-// This function ensures that the reward collection is valid and updates
-// the claimed amount accordingly.
+// collectReward computes and records the claimable reward for one deposit.
 //
 // Parameters:
-// - depositId (string): The ID of the deposit
-// - currentTime (int64): Current timestamp
+//   - r: reward manager containing the deposit state and accumulated reward-per-deposit value.
+//   - depositId: identifier of the deposit whose reward is collected.
+//   - currentTime: current Unix timestamp used for claimability checks.
 //
 // Returns:
-// - int64: The amount of reward collected
-// - error: If the collection fails
+//   - amount: newly claimable reward-token amount, zero when no additional reward is available.
+//   - err: non-nil when the time is before accumulated/distribution/claimable boundaries or the deposit state is invalid.
 func collectReward(r *launchpad.RewardManager, depositId string, currentTime int64) (int64, error) {
 	if currentTime < r.AccumulatedTime() {
 		return 0, makeErrorWithDetails(
@@ -274,7 +350,16 @@ func collectReward(r *launchpad.RewardManager, depositId string, currentTime int
 	return claimableReward, nil
 }
 
-// newRewardManager returns a pointer to a new RewardManager with the given values.
+// newRewardManager creates a reward manager and initializes its Q128-scaled distribution rate.
+//
+// Parameters:
+//   - totalDistributeAmount: total reward-token amount allocated to the schedule.
+//   - distributeStartTime: schedule start Unix timestamp.
+//   - distributeEndTime: schedule end Unix timestamp.
+//   - rewardCollectableDuration: delay in seconds before a deposit's reward becomes claimable.
+//
+// Returns:
+//   - manager: initialized reward manager with schedule and per-second rate.
 func newRewardManager(
 	totalDistributeAmount int64,
 	distributeStartTime int64,
@@ -288,9 +373,14 @@ func newRewardManager(
 	return manager
 }
 
-// calculateMaximumClaimableRewardsForActiveDeposits reserves every active
-// claim without traversing the attacker-controlled reward tree. Aggregating
-// before Q128 truncation retains rounding dust but cannot under-reserve claims.
+// calculateMaximumClaimableRewardsForActiveDeposits aggregates the maximum unclaimed reward
+// for active deposits without traversing the reward-state tree.
+//
+// Parameters:
+//   - r: reward manager whose active totals and accumulated Q128 reward are aggregated.
+//
+// Returns:
+//   - amount: aggregate reward-token amount that active deposits can still claim.
 func calculateMaximumClaimableRewardsForActiveDeposits(r *launchpad.RewardManager) int64 {
 	reward, overflow := u256.Zero().MulOverflow(
 		r.AccumulatedRewardPerDepositX128(),

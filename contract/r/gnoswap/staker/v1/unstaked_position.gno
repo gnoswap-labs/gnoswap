@@ -20,6 +20,9 @@ type UnstakedPositions struct {
 }
 
 // NewUnstakedPositions creates a new UnstakedPositions instance.
+//
+// Returns:
+//   - *UnstakedPositions: Empty exit-checkpoint manager backed by a new B+ tree.
 func NewUnstakedPositions() *UnstakedPositions {
 	return &UnstakedPositions{
 		tree: sr.NewBPTreeN(16), // positionId -> *UnstakedPosition
@@ -27,11 +30,23 @@ func NewUnstakedPositions() *UnstakedPositions {
 }
 
 // Has checks if a position ID has an exit checkpoint.
+//
+// Parameters:
+//   - positionId: Position ID whose exit-checkpoint membership is checked.
+//
+// Returns:
+//   - bool: true when an exit checkpoint exists for positionId; false otherwise.
 func (self *UnstakedPositions) Has(positionId uint64) bool {
 	return self.tree.Has(utils.EncodeUint64(positionId))
 }
 
 // get retrieves an exit checkpoint by position ID, or nil when there is none.
+//
+// Parameters:
+//   - positionId: Position ID whose exit checkpoint is retrieved.
+//
+// Returns:
+//   - *sr.UnstakedPosition: Stored exit checkpoint, or nil when positionId has none.
 func (self *UnstakedPositions) get(positionId uint64) *sr.UnstakedPosition {
 	value := self.tree.Get(utils.EncodeUint64(positionId))
 	if value == nil {
@@ -47,16 +62,26 @@ func (self *UnstakedPositions) get(positionId uint64) *sr.UnstakedPosition {
 }
 
 // set stores an exit checkpoint for a position ID.
+//
+// Parameters:
+//   - positionId: Position ID used as the checkpoint key.
+//   - position: Exit-checkpoint state to store for positionId.
 func (self *UnstakedPositions) set(positionId uint64, position *sr.UnstakedPosition) {
 	self.tree.Set(utils.EncodeUint64(positionId), position)
 }
 
 // remove deletes an exit checkpoint by position ID.
+//
+// Parameters:
+//   - positionId: Position ID whose exit checkpoint is deleted.
 func (self *UnstakedPositions) remove(positionId uint64) {
 	self.tree.Remove(utils.EncodeUint64(positionId))
 }
 
 // getUnstakedPositions returns the exit checkpoints backed by the store.
+//
+// Returns:
+//   - *UnstakedPositions: Manager wrapping the staker store's exit-checkpoint tree.
 func (s *stakerV1) getUnstakedPositions() *UnstakedPositions {
 	return &UnstakedPositions{tree: s.store.GetUnstakedPositions()}
 }
@@ -65,6 +90,12 @@ func (s *stakerV1) getUnstakedPositions() *UnstakedPositions {
 //
 // The count is per incentive, not per pool: one checkpoint that can never be funded would
 // otherwise lock the refunds of every other incentive in the same pool.
+//
+// Parameters:
+//   - incentiveId: External incentive identifier whose outstanding checkpoint count is queried.
+//
+// Returns:
+//   - int64: Number of exit checkpoints that still owe incentiveId, or zero when none are recorded.
 func (s *stakerV1) uncollectedIncentiveCountOf(incentiveId string) int64 {
 	value := s.store.GetUncollectedIncentiveCounts().Get(incentiveId)
 	if value == nil {
@@ -79,11 +110,22 @@ func (s *stakerV1) uncollectedIncentiveCountOf(incentiveId string) int64 {
 	return count
 }
 
-// addUncollectedIncentiveCount moves the incentive's count by delta, dropping the entry at zero.
+// addUncollectedIncentiveCount moves the incentive's outstanding-checkpoint count by delta,
+// removing the entry when the resulting count reaches zero.
+//
+// Parameters:
+//   - incentiveId: External incentive identifier whose count is changed.
+//   - delta: Signed change to the outstanding-checkpoint count.
 func (s *stakerV1) addUncollectedIncentiveCount(incentiveId string, delta int64) {
 	addUncollectedIncentiveCountTo(s.store.GetUncollectedIncentiveCounts(), incentiveId, delta)
 }
 
+// addUncollectedIncentiveCountTo applies a signed checkpoint-count change directly to counts.
+//
+// Parameters:
+//   - counts: B+ tree mapping external incentive IDs to outstanding checkpoint counts.
+//   - incentiveId: External incentive identifier whose count is changed.
+//   - delta: Signed count change; the resulting count must not be negative.
 func addUncollectedIncentiveCountTo(counts *bptree.BPTree, incentiveId string, delta int64) {
 	count := int64(0)
 	if value := counts.Get(incentiveId); value != nil {
@@ -113,6 +155,16 @@ func addUncollectedIncentiveCountTo(counts *bptree.BPTree, incentiveId string, d
 // recordUnstakedPosition writes the exit checkpoint before the teardown touches the pool.
 // The deposit's incentive index is brought up to date first, so the checkpoint owes exactly
 // the incentives the position accrued from.
+//
+// Parameters:
+//   - _: Internal call discriminator; callers pass 0.
+//   - rlm: Propagated realm context associated with the unstake transition; retained for the internal call convention while checkpoint data is written from the supplied deposit.
+//   - positionId: LP position NFT token ID whose stake is ending.
+//   - deposit: Live deposit state being converted into an exit checkpoint.
+//   - exitTime: Unix timestamp at which the position stopped accruing rewards.
+//
+// Returns:
+//   - *sr.UnstakedPosition: Newly stored checkpoint containing the position's reward-accounting snapshot.
 func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, deposit *sr.Deposit, exitTime int64) *sr.UnstakedPosition {
 	poolPath := deposit.TargetPoolPath()
 
@@ -171,6 +223,11 @@ func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, d
 }
 
 // dropUnstakedPositionIfCollected removes the checkpoint once every reward source is collected.
+//
+// Parameters:
+//   - _: Internal call discriminator; callers pass 0.
+//   - rlm: Propagated realm context used for checkpoint removal and event emission.
+//   - target: Collection target containing the checkpoint, position ID, and deposit metadata.
 func (s *stakerV1) dropUnstakedPositionIfCollected(_ int, rlm realm, target *collectTarget) {
 	if !target.checkpoint.FullyCollected() {
 		return
@@ -191,12 +248,25 @@ func (s *stakerV1) dropUnstakedPositionIfCollected(_ int, rlm realm, target *col
 	)
 }
 
-// HasUnstakedPosition reports whether a position has uncollected rewards from a past stake.
+// HasUnstakedPosition reports whether a position is staked no longer but still has uncollected rewards.
+//
+// Parameters:
+//   - positionId: Position ID whose exit-checkpoint membership is checked.
+//
+// Returns:
+//   - bool: true when positionId has an exit checkpoint; false otherwise.
 func (s *stakerV1) HasUnstakedPosition(positionId uint64) bool {
 	return s.getUnstakedPositions().Has(positionId)
 }
 
 // GetUnstakedPositionExitTime returns when an unstaked position stopped accruing rewards.
+//
+// Parameters:
+//   - positionId: Position ID whose exit checkpoint is queried.
+//
+// Returns:
+//   - int64: Exit timestamp in Unix seconds.
+//   - error: Non-nil when positionId has no uncollected exit checkpoint; nil on success.
 func (s *stakerV1) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
 	position := s.getUnstakedPositions().get(positionId)
 	if position == nil {
@@ -208,6 +278,13 @@ func (s *stakerV1) GetUnstakedPositionExitTime(positionId uint64) (int64, error)
 
 // GetUnstakedPositionPendingIncentives returns the incentives an unstaked position has yet to
 // collect.
+//
+// Parameters:
+//   - positionId: Position ID whose pending incentive IDs are queried.
+//
+// Returns:
+//   - []string: External incentive IDs with rewards still pending for the checkpoint.
+//   - error: Non-nil when positionId has no uncollected exit checkpoint; nil on success.
 func (s *stakerV1) GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
 	position := s.getUnstakedPositions().get(positionId)
 	if position == nil {
@@ -219,6 +296,12 @@ func (s *stakerV1) GetUnstakedPositionPendingIncentives(positionId uint64) ([]st
 
 // GetUncollectedIncentiveCount returns how many unstaked positions still owe a reward from the
 // incentive; EndExternalIncentive is refused while it is non-zero.
+//
+// Parameters:
+//   - incentiveId: External incentive identifier whose outstanding checkpoint count is queried.
+//
+// Returns:
+//   - int64: Number of exit checkpoints still owing incentiveId; zero permits incentive finalization.
 func (s *stakerV1) GetUncollectedIncentiveCount(incentiveId string) int64 {
 	return s.uncollectedIncentiveCountOf(incentiveId)
 }

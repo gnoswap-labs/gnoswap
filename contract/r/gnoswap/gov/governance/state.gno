@@ -24,6 +24,10 @@ var (
 	implementation IGovernance
 )
 
+// init captures the governance realm identity and initializes versioned storage.
+//
+// Parameters:
+//   - cur: realm supplied by the runtime for this governance domain
 func init(cur realm) {
 	currentAddress = cur.Address()
 	domainPath = cur.PkgPath()
@@ -34,10 +38,23 @@ func init(cur realm) {
 	implementation = nil
 }
 
+// initializeDomainStore creates the governance store used by a version manager.
+//
+// Parameters:
+//   - _: Noncrossing initialization-callback discriminator; pass 0.
+//   - rlm: propagated realm context associated with the store initialization callback
+//   - kvStore: key-value store bound to this governance domain
+//
+// Returns:
+//   - any: newly created governance store value
 func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return NewGovernanceStore(kvStore)
 }
 
+// getImplementation returns the currently selected governance implementation.
+//
+// Returns:
+//   - IGovernance: active governance implementation; panics if initialization has not selected one
 func getImplementation() IGovernance {
 	if implementation == nil {
 		panic("implementation is not initialized")
@@ -46,6 +63,10 @@ func getImplementation() IGovernance {
 	return implementation
 }
 
+// updateImplementation loads and installs the current versioned governance implementation.
+//
+// Returns:
+//   - error: nil when the implementation is installed, or an error when no current implementation exists or its type is invalid
 func updateImplementation() error {
 	result := versionManager.GetCurrentImplementation()
 	if result == nil {

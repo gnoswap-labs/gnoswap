@@ -41,103 +41,178 @@ type RewardManager struct {
 }
 
 // Rewards returns the rewards tree of the reward manager.
+//
+// Returns:
+//   - rewards: reward-state tree keyed by deposit ID.
 func (rm *RewardManager) Rewards() *bptree.BPTree {
 	return rm.rewards
 }
 
 // SetRewards sets the rewards tree of the reward manager.
+//
+// Parameters:
+//   - rewards: reward-state tree to use for this manager.
 func (rm *RewardManager) SetRewards(rewards *bptree.BPTree) {
 	rm.rewards = rewards
 }
 
+// SetReward associates a reward state with a deposit ID in the manager's reward tree.
+//
+// Parameters:
+//   - depositID: deposit identifier used as the reward-tree key.
+//   - rewardState: reward state to store for that deposit.
 func (rm *RewardManager) SetReward(depositID string, rewardState *RewardState) {
 	rm.rewards.Set(depositID, rewardState)
 }
 
+// RemoveReward removes the reward state associated with a deposit ID.
+//
+// Parameters:
+//   - depositID: deposit identifier whose reward state is removed.
 func (rm *RewardManager) RemoveReward(depositID string) {
 	rm.rewards.Remove(depositID)
 }
 
 // DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the reward manager.
+//
+// Returns:
+//   - amountPerSecondX128: reward distribution rate in Q128 fixed-point token units per second.
 func (rm *RewardManager) DistributeAmountPerSecondX128() *u256.Uint {
 	return rm.distributeAmountPerSecondX128
 }
 
 // SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the reward manager.
+//
+// Parameters:
+//   - amount: replacement reward distribution rate in Q128 fixed-point token units per second; the value is copied.
 func (rm *RewardManager) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
 	rm.distributeAmountPerSecondX128 = u256.Zero().Set(amount)
 }
 
 // AccumulatedRewardPerDepositX128 returns the accumulated reward per deposit (Q128) of the reward manager.
+//
+// Returns:
+//   - accumulatedRewardPerDepositX128: accumulated reward index per deposited GNS unit in Q128 fixed-point units.
 func (rm *RewardManager) AccumulatedRewardPerDepositX128() *u256.Uint {
 	return rm.accumulatedRewardPerDepositX128
 }
 
 // SetAccumulatedRewardPerDepositX128 sets the accumulated reward per deposit (Q128) of the reward manager.
+//
+// Parameters:
+//   - amount: replacement accumulated reward-per-deposit index in Q128 fixed-point units; the value is copied.
 func (rm *RewardManager) SetAccumulatedRewardPerDepositX128(amount *u256.Uint) {
 	rm.accumulatedRewardPerDepositX128 = u256.Zero().Set(amount)
 }
 
 // TotalDistributeAmount returns the total distribute amount of the reward manager.
+//
+// Returns:
+//   - amount: total reward allocation for the tier in token base units.
 func (rm *RewardManager) TotalDistributeAmount() int64 {
 	return rm.totalDistributeAmount
 }
 
 // SetTotalDistributeAmount sets the total distribute amount of the reward manager.
+//
+// Parameters:
+//   - amount: total reward allocation for the tier in token base units.
 func (rm *RewardManager) SetTotalDistributeAmount(amount int64) {
 	rm.totalDistributeAmount = amount
 }
 
 // TotalClaimedAmount returns the total claimed amount of the reward manager.
+//
+// Returns:
+//   - amount: total reward amount claimed from the tier in token base units.
 func (rm *RewardManager) TotalClaimedAmount() int64 {
 	return rm.totalClaimedAmount
 }
 
 // SetTotalClaimedAmount sets the total claimed amount of the reward manager.
+//
+// Parameters:
+//   - amount: total claimed reward amount in token base units.
 func (rm *RewardManager) SetTotalClaimedAmount(amount int64) {
 	rm.totalClaimedAmount = amount
 }
 
+// ActiveDepositAmount returns the principal represented by currently active reward states.
+//
+// Returns:
+//   - amount: active deposited GNS principal in base units.
 func (rm *RewardManager) ActiveDepositAmount() int64 {
 	return rm.activeDepositAmount
 }
 
+// SetActiveDepositAmount replaces the principal represented by currently active reward states.
+//
+// Parameters:
+//   - amount: active deposited GNS principal in base units.
 func (rm *RewardManager) SetActiveDepositAmount(amount int64) {
 	rm.activeDepositAmount = amount
 }
 
+// ActiveClaimedAmount returns the reward amount claimed by currently active reward states.
+//
+// Returns:
+//   - amount: active claimed reward amount in token base units.
 func (rm *RewardManager) ActiveClaimedAmount() int64 {
 	return rm.activeClaimedAmount
 }
 
+// SetActiveClaimedAmount replaces the reward amount claimed by currently active reward states.
+//
+// Parameters:
+//   - amount: active claimed reward amount in token base units.
 func (rm *RewardManager) SetActiveClaimedAmount(amount int64) {
 	rm.activeClaimedAmount = amount
 }
 
+// ActivePriceDebtX128 returns the sum of active deposits' initial reward-index debts.
+//
+// Returns:
+//   - debt: aggregate active price debt in Q128 fixed-point units.
 func (rm *RewardManager) ActivePriceDebtX128() *u256.Uint {
 	return rm.activePriceDebtX128
 }
 
+// SetActivePriceDebtX128 replaces the aggregate active price-index debt.
+//
+// Parameters:
+//   - debt: aggregate active price debt in Q128 fixed-point units; the value is copied.
 func (rm *RewardManager) SetActivePriceDebtX128(debt *u256.Uint) {
 	rm.activePriceDebtX128 = u256.Zero().Set(debt)
 }
 
 // DistributeStartTime returns the distribute start time of the reward manager.
+//
+// Returns:
+//   - startTime: reward distribution start timestamp in Unix seconds.
 func (rm *RewardManager) DistributeStartTime() int64 {
 	return rm.distributeStartTime
 }
 
 // SetDistributeStartTime sets the distribute start time of the reward manager.
+//
+// Parameters:
+//   - time: reward distribution start timestamp in Unix seconds.
 func (rm *RewardManager) SetDistributeStartTime(time int64) {
 	rm.distributeStartTime = time
 }
 
 // DistributeEndTime returns the distribute end time of the reward manager.
+//
+// Returns:
+//   - endTime: reward distribution end timestamp in Unix seconds.
 func (rm *RewardManager) DistributeEndTime() int64 {
 	return rm.distributeEndTime
 }
 
 // SetDistributeEndTime sets the distribute end time of the reward manager.
+//
+// Parameters:
+//   - time: reward distribution end timestamp in Unix seconds.
 func (rm *RewardManager) SetDistributeEndTime(time int64) {
 	rm.distributeEndTime = time
 }
@@ -145,36 +220,58 @@ func (rm *RewardManager) SetDistributeEndTime(time int64) {
 // AccumulatedDistributeAmount returns the legacy reward-manager field.
 // v1 reward paths do not maintain it, so normal reads return zero unless it was
 // explicitly set.
+//
+// Returns:
+//   - amount: legacy accumulated distribution amount in token base units; v1 accounting normally leaves it at zero unless explicitly set.
 func (rm *RewardManager) AccumulatedDistributeAmount() int64 {
 	return rm.accumulatedDistributeAmount
 }
 
 // SetAccumulatedDistributeAmount sets the legacy reward-manager field. It is not
 // used by v1 reward accounting.
+//
+// Parameters:
+//   - amount: legacy accumulated distribution amount in token base units; v1 accounting does not update this field.
 func (rm *RewardManager) SetAccumulatedDistributeAmount(amount int64) {
 	rm.accumulatedDistributeAmount = amount
 }
 
 // AccumulatedTime returns the accumulated time of the reward manager.
+//
+// Returns:
+//   - time: last reward-accumulation timestamp in Unix seconds, or zero before accumulation.
 func (rm *RewardManager) AccumulatedTime() int64 {
 	return rm.accumulatedTime
 }
 
 // SetAccumulatedTime sets the accumulated time of the reward manager.
+//
+// Parameters:
+//   - time: last reward-accumulation timestamp in Unix seconds.
 func (rm *RewardManager) SetAccumulatedTime(time int64) {
 	rm.accumulatedTime = time
 }
 
 // RewardClaimableDuration returns the reward claimable duration of the reward manager.
+//
+// Returns:
+//   - duration: time after a reward becomes claimable during which it remains collectible, in seconds.
 func (rm *RewardManager) RewardClaimableDuration() int64 {
 	return rm.rewardClaimableDuration
 }
 
 // SetRewardClaimableDuration sets the reward claimable duration of the reward manager.
+//
+// Parameters:
+//   - duration: claimable reward window in seconds.
 func (rm *RewardManager) SetRewardClaimableDuration(duration int64) {
 	rm.rewardClaimableDuration = duration
 }
 
+// Clone returns an independent copy of the reward manager, including its reward states and Q128 values.
+//
+// Returns:
+//   - rewardManager: deep copy with a separate reward tree and mutable numeric values.
 func (rm RewardManager) Clone() *RewardManager {
 	rewardsTree := bptree.NewBPTreeN(16)
 	rm.rewards.Iterate("", "", func(key string, value interface{}) bool {
@@ -204,6 +301,15 @@ func (rm RewardManager) Clone() *RewardManager {
 }
 
 // NewRewardManager returns a pointer to a new RewardManager with the given values.
+//
+// Parameters:
+//   - totalDistributeAmount: total reward allocation for the tier in token base units.
+//   - distributeStartTime: reward distribution start timestamp in Unix seconds.
+//   - distributeEndTime: reward distribution end timestamp in Unix seconds.
+//   - rewardCollectableDuration: duration in seconds for which each accrued reward remains claimable.
+//
+// Returns:
+//   - rewardManager: initialized manager with zeroed accounting counters and an empty reward tree.
 func NewRewardManager(
 	totalDistributeAmount int64,
 	distributeStartTime int64,

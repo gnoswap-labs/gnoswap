@@ -14,6 +14,16 @@ const maxObservationCardinality uint16 = 65535
 
 // oracleConsult calculates the time-weighted average price between two points in time.
 // It returns the arithmetic mean tick and harmonic mean liquidity over the time period.
+//
+// Parameters:
+//   - p: pool whose current tick, price, and active liquidity anchor the consultation.
+//   - observations: circular observation tree containing historical oracle samples.
+//   - secondsAgo: positive lookback duration in seconds from the current block time.
+//
+// Returns:
+//   - int32: arithmetic mean tick over the lookback, rounded toward negative infinity.
+//   - *u256.Uint: harmonic mean liquidity over the lookback, or zero when no liquidity growth accrued.
+//   - error: non-nil when the lookback is zero, observations are unavailable, or consultation fails.
 func oracleConsult(p *pl.Pool, observations *pl.ObservationTree, secondsAgo uint32) (int32, *u256.Uint, error) {
 	if secondsAgo == 0 {
 		return 0, nil, errors.New("secondsAgo must be greater than 0")
@@ -67,6 +77,18 @@ func oracleConsult(p *pl.Pool, observations *pl.ObservationTree, secondsAgo uint
 // snapshotCumulativesInside returns the accumulators that accrued while the
 // current price was inside [tickLower, tickUpper), following Uniswap V3's
 // snapshotCumulativesInside flow.
+//
+// Parameters:
+//   - p: pool whose current tick and initialized boundary ticks define the range state.
+//   - observations: observation tree used to obtain a current cumulative snapshot when price is in range.
+//   - tickLower: inclusive lower tick boundary of the position range.
+//   - tickUpper: exclusive upper tick boundary of the position range.
+//
+// Returns:
+//   - int64: cumulative tick value accrued inside the range.
+//   - *u256.Uint: seconds-per-liquidity accumulator accrued inside, scaled by 2^128.
+//   - uint32: seconds spent with the price inside the range.
+//   - error: non-nil when bounds are invalid, a boundary is uninitialized, or observations cannot be read.
 func snapshotCumulativesInside(
 	p *pl.Pool,
 	observations *pl.ObservationTree,
@@ -134,6 +156,17 @@ func snapshotCumulativesInside(
 		upper.SecondsOutside() - lower.SecondsOutside(), nil
 }
 
+// transform creates an observation at blockTimestamp from the previous observation.
+//
+// Parameters:
+//   - last: previous initialized observation used as the cumulative baseline.
+//   - blockTimestamp: timestamp for the new observation; it must not precede last's timestamp.
+//   - tick: current tick applied over the elapsed interval.
+//   - liquidity: active liquidity used for seconds-per-liquidity accumulation; zero is treated as one.
+//
+// Returns:
+//   - pl.Observation: observation with updated tick and seconds-per-liquidity cumulatives.
+//   - error: non-nil when blockTimestamp is earlier than the previous observation.
 func transform(last pl.Observation, blockTimestamp int64, tick int32, liquidity *u256.Uint) (pl.Observation, error) {
 	timeDelta := blockTimestamp - last.BlockTimestamp()
 	if timeDelta < 0 {
@@ -171,6 +204,16 @@ func transform(last pl.Observation, blockTimestamp int64, tick int32, liquidity 
 	return observation, nil
 }
 
+// grow reserves observation slots until the requested cardinality is reached.
+//
+// Parameters:
+//   - observations: observation tree to populate with uninitialized slots.
+//   - current: current observation cardinality; it must be greater than zero.
+//   - next: requested cardinality; it must not exceed maxObservationCardinality.
+//
+// Returns:
+//   - uint16: resulting cardinality, unchanged when next is not greater than current.
+//   - error: non-nil when the tree is nil, current is zero, or next exceeds the maximum.
 func grow(observations *pl.ObservationTree, current, next uint16) (uint16, error) {
 	if observations == nil {
 		return current, errors.New("observations not initialized")
@@ -198,6 +241,21 @@ func grow(observations *pl.ObservationTree, current, next uint16) (uint16, error
 	return next, nil
 }
 
+// writeObservation writes a transformed observation when the timestamp changed.
+//
+// Parameters:
+//   - observations: circular observation tree receiving the new sample.
+//   - index: index of the most recently written observation.
+//   - blockTimestamp: timestamp for the observation.
+//   - tick: current tick used to advance cumulative tick.
+//   - liquidity: active liquidity used to advance seconds-per-liquidity.
+//   - cardinality: current number of usable observation slots.
+//   - cardinalityNext: requested future capacity; it is applied when the ring is full.
+//
+// Returns:
+//   - indexUpdated: index at which the new observation is stored, or the input index when the timestamp is unchanged.
+//   - cardinalityUpdated: observation capacity after any growth.
+//   - err: non-nil when observations or cardinality are invalid or transformation fails.
 func writeObservation(
 	observations *pl.ObservationTree,
 	index uint16,
@@ -240,8 +298,15 @@ func writeObservation(
 	return indexUpdated, cardinalityUpdated, nil
 }
 
-// observationAt returns the observation at a specific index
-// Returns error if the observation doesn't exist
+// observationAt returns the observation at a specific index.
+//
+// Parameters:
+//   - observations: observation tree to query.
+//   - index: ring-buffer index to read.
+//
+// Returns:
+//   - pl.Observation: stored observation at the index.
+//   - error: non-nil when the tree is nil or no observation exists at the index.
 func observationAt(observations *pl.ObservationTree, index uint16) (pl.Observation, error) {
 	if observations == nil {
 		return pl.DefaultObservation(), errors.New("observations not initialized")
@@ -254,7 +319,22 @@ func observationAt(observations *pl.ObservationTree, index uint16) (pl.Observati
 	return obs, nil
 }
 
-// observeSingle returns the data for a single observation at a specific time ago
+// observeSingle returns cumulative tick and seconds-per-liquidity data for one
+// observation time relative to the supplied current time.
+//
+// Parameters:
+//   - observations: circular observation tree containing historical samples.
+//   - time: current timestamp used as the reference for secondsAgo.
+//   - secondsAgo: lookback duration in seconds; zero returns the current cumulative values.
+//   - tick: current tick used to create a virtual current observation when needed.
+//   - index: index of the latest observation in the ring.
+//   - liquidity: current active liquidity used for a virtual observation.
+//   - cardinality: number of observation slots available for the search.
+//
+// Returns:
+//   - int64: cumulative tick at the requested target time.
+//   - string: seconds-per-liquidity cumulative value at the target, scaled by 2^128 and encoded as decimal.
+//   - error: non-nil when the target predates available history, an observation is missing, or interpolation fails.
 func observeSingle(
 	observations *pl.ObservationTree,
 	time int64,
@@ -341,6 +421,19 @@ func observeSingle(
 // getSurroundingObservations finds the observations immediately before and after the target timestamp.
 // It uses binary search over the logical time-ordered view of the circular buffer.
 // Logical order starts at (index+1) % cardinality (oldest) and ends at index (latest).
+//
+// Parameters:
+//   - observations: circular observation tree to search.
+//   - target: timestamp for which surrounding observations are required.
+//   - tick: current tick used to transform a target after the latest observation.
+//   - index: index of the latest observation in the ring.
+//   - liquidity: current active liquidity used for a transformed target observation.
+//   - cardinality: number of observation slots in the ring.
+//
+// Returns:
+//   - pl.Observation: initialized observation at or before target.
+//   - pl.Observation: observation at or after target, or a default value when target equals the latest sample.
+//   - error: non-nil when observations are missing or target is older than retained history.
 func getSurroundingObservations(
 	observations *pl.ObservationTree,
 	target int64,
@@ -390,6 +483,18 @@ func getSurroundingObservations(
 	return binarySearch(observations, target, index, cardinality)
 }
 
+// binarySearch locates the initialized observations surrounding a target timestamp.
+//
+// Parameters:
+//   - observations: circular observation tree to search.
+//   - target: timestamp that must fall within retained observation history.
+//   - index: index of the latest observation in the ring.
+//   - cardinality: number of observation slots in the ring.
+//
+// Returns:
+//   - pl.Observation: initialized observation at or before target.
+//   - pl.Observation: observation at or after target.
+//   - error: non-nil when an observation slot cannot be read.
 func binarySearch(
 	observations *pl.ObservationTree,
 	target int64,
@@ -436,7 +541,22 @@ func binarySearch(
 	return beforeOrAt, atOrAfter, nil
 }
 
-// observe returns the cumulative tick and liquidity as of each timestamp secondsAgo from the current time.
+// observe returns cumulative tick and seconds-per-liquidity values for each
+// requested lookback in secondsAgos.
+//
+// Parameters:
+//   - observations: circular observation tree containing historical samples.
+//   - time: current timestamp used as the reference for each lookback.
+//   - secondsAgos: lookback durations in seconds, one output pair per entry.
+//   - tick: current tick used for virtual current observations.
+//   - index: index of the latest observation in the ring.
+//   - liquidity: current active liquidity used for virtual observations.
+//   - cardinality: number of observation slots available for lookup.
+//
+// Returns:
+//   - []int64: cumulative tick values aligned with secondsAgos.
+//   - []string: seconds-per-liquidity cumulative values aligned with secondsAgos, scaled by 2^128.
+//   - error: non-nil when cardinality is zero or any requested lookback cannot be resolved.
 func observe(
 	observations *pl.ObservationTree,
 	time int64,

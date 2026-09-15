@@ -13,16 +13,28 @@ import (
 )
 
 // GetDepositGnsAmount returns the current GNS deposit amount required for each external incentive.
+//
+// Returns:
+//   - amount: GNS deposit amount required per external incentive, in token smallest units.
 func (s *stakerV1) GetDepositGnsAmount() int64 {
 	return s.store.GetDepositGnsAmount()
 }
 
 // GetMinimumRewardAmount returns the default minimum reward amount required for external incentives.
+//
+// Returns:
+//   - amount: Default minimum external-incentive reward amount in token smallest units.
 func (s *stakerV1) GetMinimumRewardAmount() int64 {
 	return s.store.GetMinimumRewardAmount()
 }
 
 // GetMinimumRewardAmountForToken returns the minimum reward amount for a specific token.
+//
+// Parameters:
+//   - tokenPath: Token path whose configured minimum reward amount should be read.
+//
+// Returns:
+//   - amount: Token-specific minimum reward amount when configured, otherwise the default minimum amount.
 func (s *stakerV1) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 	amount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
 	if found {
@@ -33,6 +45,13 @@ func (s *stakerV1) GetMinimumRewardAmountForToken(tokenPath string) int64 {
 }
 
 // GetSpecificTokenMinimumRewardAmount returns the explicitly set minimum reward amount for a token.
+//
+// Parameters:
+//   - tokenPath: Token path whose explicit minimum reward override should be read.
+//
+// Returns:
+//   - amount: Explicit minimum reward amount in token smallest units, or 0 when no override is configured.
+//   - found: True when tokenPath has an explicit override; false when the default would be used.
 func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64, bool) {
 	amount, found := s.store.GetTokenSpecificMinimumRewards()[tokenPath]
 	if !found {
@@ -43,6 +62,11 @@ func (s *stakerV1) GetSpecificTokenMinimumRewardAmount(tokenPath string) (int64,
 
 // SetDepositGnsAmount sets the GNS deposit amount required for creating external incentives.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - amount: Non-negative GNS deposit amount in token smallest units to require per external incentive.
 func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -68,6 +92,11 @@ func (s *stakerV1) SetDepositGnsAmount(_ int, rlm realm, amount int64) {
 
 // SetMinimumRewardAmount sets the default minimum reward amount for external incentives.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - amount: Non-negative default minimum reward amount in token smallest units for external incentives.
 func (s *stakerV1) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -93,6 +122,11 @@ func (s *stakerV1) SetMinimumRewardAmount(_ int, rlm realm, amount int64) {
 
 // SetTokenMinimumRewardAmount sets the minimum reward amount for a specific token.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - paramsStr: Reward override specification in the form "tokenPath:amount"; amount 0 removes an existing token-specific override, while a nonzero amount stores it.
 func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -144,16 +178,29 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr strin
 }
 
 // setDepositGnsAmount internally updates the deposit GNS amount.
+//
+// Parameters:
+//   - _: Realm-call discriminator forwarded to the store update; pass 0.
+//   - rlm: Propagated realm context used by the store's persistent update.
+//   - amount: GNS deposit amount in token smallest units to store.
 func (s *stakerV1) setDepositGnsAmount(_ int, rlm realm, amount int64) {
 	s.store.SetDepositGnsAmount(0, rlm, amount)
 }
 
 // setMinimumRewardAmount internally updates the minimum reward amount.
+//
+// Parameters:
+//   - _: Realm-call discriminator forwarded to the store update; pass 0.
+//   - rlm: Propagated realm context used by the store's persistent update.
+//   - amount: Default minimum reward amount in token smallest units to store.
 func (s *stakerV1) setMinimumRewardAmount(_ int, rlm realm, amount int64) {
 	s.store.SetMinimumRewardAmount(0, rlm, amount)
 }
 
 // getMinimumRewardAmount internally retrieves the minimum reward amount.
+//
+// Returns:
+//   - amount: Persisted default minimum reward amount in token smallest units.
 func (s *stakerV1) getMinimumRewardAmount() int64 {
 	return s.store.GetMinimumRewardAmount()
 }

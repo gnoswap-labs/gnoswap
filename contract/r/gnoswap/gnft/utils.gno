@@ -9,8 +9,11 @@ import (
 	"gno.land/p/nt/ufmt/v0"
 )
 
-// generateRandInstance creates time-seeded pseudo-random artwork parameters.
-// It is not a source of secure or cryptographic randomness.
+// generateRandInstance creates a time- and supply-seeded pseudo-random generator
+// for artwork parameters; it is not suitable for secure or cryptographic randomness.
+//
+// Returns:
+//   - rand: pseudo-random generator initialized from the current time and token supply
 func generateRandInstance() *rand.Rand {
 	now := time.Now()
 	seed1 := now.Unix() + TotalSupply()
@@ -19,14 +22,26 @@ func generateRandInstance() *rand.Rand {
 	return rand.New(pcg)
 }
 
-// checkErr panics if an error occurs.
+// checkErr panics with err's message when err is non-nil and otherwise returns.
+//
+// Parameters:
+//   - err: operation error to check; nil means the operation succeeded
 func checkErr(err error) {
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
-// checkTransferErr wraps transfer errors with more specific context.
+// checkTransferErr translates a failed GRC721 transfer into a contextual panic.
+// It verifies the token owner before distinguishing ownership, approval,
+// destination-address, source-owner, and token-ID failures.
+//
+// Parameters:
+//   - err: error returned by the attempted GRC721 transfer
+//   - caller: address that initiated the transfer
+//   - from: source address supplied to the transfer
+//   - to: destination address supplied to the transfer
+//   - tid: token identifier involved in the transfer
 func checkTransferErr(err error, caller, from, to address, tid grc721.TokenID) {
 	if err == nil {
 		return
@@ -68,7 +83,13 @@ func checkTransferErr(err error, caller, from, to address, tid grc721.TokenID) {
 	}
 }
 
-// checkApproveErr wraps approve errors with more specific context.
+// checkApproveErr translates a failed GRC721 approval into a contextual panic.
+//
+// Parameters:
+//   - err: error returned by the attempted approval
+//   - caller: address that initiated the approval
+//   - approved: address designated to receive token approval
+//   - tid: token identifier for which approval was attempted
 func checkApproveErr(err error, caller, approved address, tid grc721.TokenID) {
 	if err == nil {
 		return

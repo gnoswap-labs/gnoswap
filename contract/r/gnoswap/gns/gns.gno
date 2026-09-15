@@ -34,6 +34,11 @@ var (
 	lastMintedTimestamp  int64 // last block time that gns was minted for emission
 )
 
+// init creates the GNS token, registers it, mints the initial administrative
+// supply, and initializes emission counters.
+//
+// Parameters:
+//   - cur: initialization realm supplied by the Gno runtime
 func init(cur realm) {
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6, tokenID, cur)
 	userTeller = privateLedger.CallerTeller()
@@ -105,10 +110,12 @@ func Allowance(owner, spender address) int64 { return token.Allowance(owner, spe
 // MintGns mints new GNS tokens according to the emission schedule.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - address: recipient address for minted tokens
 //
 // Returns:
-//   - amount: amount of GNS minted
+//   - amount: GNS minted for the current timestamp; zero when emission is
+//     already processed for that timestamp or the schedule has ended
 //
 // Only callable by emission contract.
 //
@@ -163,8 +170,9 @@ func MintGns(cur realm, address address) int64 {
 // Transfer transfers GNS tokens from caller to recipient.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - to: recipient address
-//   - amount: amount to transfer
+//   - amount: number of GNS base units to transfer
 func Transfer(cur realm, to address, amount int64) {
 	checkErr(userTeller.Transfer(0, cur, to, amount))
 }
@@ -172,8 +180,9 @@ func Transfer(cur realm, to address, amount int64) {
 // Approve allows spender to transfer GNS tokens from caller's account.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - spender: address authorized to spend
-//   - amount: maximum amount spender can transfer
+//   - amount: maximum number of GNS base units spender can transfer
 func Approve(cur realm, spender address, amount int64) {
 	checkErr(userTeller.Approve(0, cur, spender, amount))
 }
@@ -181,9 +190,10 @@ func Approve(cur realm, spender address, amount int64) {
 // TransferFrom transfers GNS tokens on behalf of owner.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - from: token owner address
 //   - to: recipient address
-//   - amount: amount to transfer
+//   - amount: number of GNS base units to transfer
 func TransferFrom(cur realm, from, to address, amount int64) {
 	checkErr(userTeller.TransferFrom(0, cur, from, to, amount))
 }
@@ -212,6 +222,9 @@ func Render(path string) string {
 }
 
 // checkErr panics if error is not nil.
+//
+// Parameters:
+//   - err: operation error to inspect
 func checkErr(err error) {
 	if err != nil {
 		panic(err.Error())
@@ -221,6 +234,17 @@ func checkErr(err error) {
 // calculateAmountToMint calculates and allocates GNS tokens to mint for given timestamp range.
 // This function has side effects: it updates the accumulated and remaining amounts
 // for each halving year in the emission state.
+//
+// Parameters:
+//   - state: emission state whose halving-year allocation counters are updated
+//   - fromTimestamp: inclusive Unix timestamp at which allocation begins
+//   - toTimestamp: inclusive Unix timestamp at which allocation ends
+//
+// Returns:
+//   - amount: total GNS allocation for the overlapping schedule interval; zero
+//     when the interval does not overlap the schedule
+//   - error: nil after all affected halving-year counters are updated; an error
+//     when state bookkeeping rejects an allocation
 func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int64) (int64, error) {
 	// Cache state to avoid repeated lookups
 	endTimestamp := state.getEndTimestamp()
@@ -309,10 +333,19 @@ func LeftEmissionAmount() int64 { return leftEmissionAmount }
 func MintedEmissionAmount() int64 { return mintedEmissionAmount }
 
 // setLastMintedTimestamp sets the timestamp of the last emission mint.
+//
+// Parameters:
+//   - timestamp: Unix timestamp recorded as the last emission mint
 func setLastMintedTimestamp(timestamp int64) { lastMintedTimestamp = timestamp }
 
 // setLeftEmissionAmount sets the remaining emission amount.
+//
+// Parameters:
+//   - amount: remaining GNS amount available for emission
 func setLeftEmissionAmount(amount int64) { leftEmissionAmount = amount }
 
 // setMintedEmissionAmount sets the total minted emission amount.
+//
+// Parameters:
+//   - amount: cumulative GNS amount minted through emission
 func setMintedEmissionAmount(amount int64) { mintedEmissionAmount = amount }

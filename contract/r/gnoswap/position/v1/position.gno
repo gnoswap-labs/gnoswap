@@ -20,24 +20,26 @@ import (
 // Mint creates a new liquidity position NFT.
 //
 // Parameters:
-//   - token0: token0 contract path
-//   - token1: token1 contract path
-//   - fee: pool fee tier
-//   - tickLower: lower tick boundary
-//   - tickUpper: upper tick boundary
-//   - amount0Desired: desired token0 amount
-//   - amount1Desired: desired token1 amount
-//   - amount0Min: minimum acceptable token0 amount
-//   - amount1Min: minimum acceptable token1 amount
-//   - deadline: transaction deadline
-//   - mintTo: position NFT recipient
-//   - referrer: referral address
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the position proxy.
+//   - token0: token0 contract path for the pool
+//   - token1: token1 contract path for the pool
+//   - fee: pool fee tier used to select the pool
+//   - tickLower: lower tick boundary of the position's range
+//   - tickUpper: upper tick boundary of the position's range
+//   - amount0Desired: desired token0 amount, supplied as a decimal string
+//   - amount1Desired: desired token1 amount, supplied as a decimal string
+//   - amount0Min: minimum acceptable token0 amount for slippage protection
+//   - amount1Min: minimum acceptable token1 amount for slippage protection
+//   - deadline: Unix timestamp after which the transaction is rejected
+//   - mintTo: address that receives the newly minted position NFT
+//   - referrer: referral value submitted for registration with the caller
 //
 // Returns:
 //   - positionId: newly minted position NFT ID
 //   - liquidity: liquidity amount minted for the position
-//   - amount0: token0 amount actually deposited
-//   - amount1: token1 amount actually deposited
+//   - amount0: token0 amount actually deposited into the pool
+//   - amount1: token1 amount actually deposited into the pool
 //
 // Note: Slippage protection via amount0Min/amount1Min.
 func (p *positionV1) Mint(
@@ -146,19 +148,21 @@ func (p *positionV1) Mint(
 // Calculates optimal token ratio for current price.
 //
 // Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the position proxy.
 //   - positionId: NFT token ID to increase
-//   - amount0DesiredStr: Desired token0 amount
-//   - amount1DesiredStr: Desired token1 amount
-//   - amount0MinStr: Minimum token0 (slippage protection)
-//   - amount1MinStr: Minimum token1 (slippage protection)
-//   - deadline: Transaction expiration timestamp
+//   - amount0DesiredStr: desired token0 amount, supplied as a decimal string
+//   - amount1DesiredStr: desired token1 amount, supplied as a decimal string
+//   - amount0MinStr: minimum acceptable token0 amount for slippage protection
+//   - amount1MinStr: minimum acceptable token1 amount for slippage protection
+//   - deadline: Unix timestamp after which the transaction is rejected
 //
 // Returns:
-//   - positionId: Same NFT ID
-//   - liquidity: Liquidity amount added (the delta, not total)
-//   - amount0: Token0 actually deposited
-//   - amount1: Token1 actually deposited
-//   - poolPath: Pool identifier
+//   - positionId: same NFT ID
+//   - liquidity: liquidity amount added (the delta, not total)
+//   - amount0: token0 amount actually deposited
+//   - amount1: token1 amount actually deposited
+//   - poolPath: pool identifier for the position
 //
 // Requirements:
 //   - Caller must own the position NFT
@@ -256,20 +260,22 @@ func (p *positionV1) IncreaseLiquidity(
 // and principal is collected through the pool's fee-free `Collect` path.
 //
 // Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the position proxy.
 //   - positionId: NFT token ID
-//   - liquidityStr: Amount of liquidity to remove
-//   - amount0MinStr: Min token0 principal to receive (slippage)
-//   - amount1MinStr: Min token1 principal to receive (slippage)
-//   - deadline: Transaction expiration
+//   - liquidityStr: amount of liquidity to remove, supplied as a decimal string
+//   - amount0MinStr: minimum token0 principal to receive, for slippage protection
+//   - amount1MinStr: minimum token1 principal to receive, for slippage protection
+//   - deadline: Unix timestamp after which the transaction is rejected
 //
 // Returns:
-//   - positionId: Same NFT ID
-//   - liquidity: Amount of liquidity removed (the delta)
-//   - fee0: Token0 fee amount returned net of the withdrawal fee
-//   - fee1: Token1 fee amount returned net of the withdrawal fee
-//   - amount0: Token0 principal collected without a withdrawal fee
-//   - amount1: Token1 principal collected without a withdrawal fee
-//   - poolPath: Pool identifier
+//   - positionId: same NFT ID
+//   - liquidity: amount of liquidity removed (the delta)
+//   - fee0: token0 fee amount returned net of the withdrawal fee
+//   - fee1: token1 fee amount returned net of the withdrawal fee
+//   - amount0: token0 principal collected without a withdrawal fee
+//   - amount1: token1 principal collected without a withdrawal fee
+//   - poolPath: pool identifier
 //
 // Amount-minimum checks apply to the principal actually collected.
 func (p *positionV1) DecreaseLiquidity(
@@ -355,15 +361,17 @@ func (p *positionV1) DecreaseLiquidity(
 // Applies the configured withdrawal fee to the collected swap fees.
 //
 // Parameters:
-//   - positionId: NFT token ID
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the position proxy.
+//   - positionId: NFT token ID whose accrued swap fees are collected
 //
 // Returns:
-//   - positionId: Same NFT ID
-//   - tokensCollected0: Token0 amount sent to caller (after withdrawal fee)
-//   - tokensCollected1: Token1 amount sent to caller (after withdrawal fee)
-//   - poolPath: Pool identifier
-//   - totalAmount0: Raw token0 collected (before withdrawal fee)
-//   - totalAmount1: Raw token1 collected (before withdrawal fee)
+//   - positionId: same NFT ID
+//   - tokensCollected0: token0 amount sent to caller after the withdrawal fee
+//   - tokensCollected1: token1 amount sent to caller after the withdrawal fee
+//   - poolPath: pool identifier
+//   - totalAmount0: raw token0 amount collected before the withdrawal fee
+//   - totalAmount1: raw token1 amount collected before the withdrawal fee
 //
 // Requirements:
 //   - Caller must own an unstaked NFT; a staked position uses its configured operator
@@ -382,6 +390,20 @@ func (p *positionV1) CollectFee(_ int, rlm realm, positionId uint64) (uint64, st
 }
 
 // collectFee performs fee collection and withdrawal fee calculation.
+//
+// Parameters:
+//   - _: leading realm-call discriminator forwarded to nested pool and position operations; callers pass 0
+//   - rlm: propagated realm context used by nested calls, which cross with cross(rlm)
+//   - positionId: position NFT ID whose accrued swap fees are collected
+//   - caller: address that receives the collected fees and is recorded in pool calls
+//
+// Returns:
+//   - positionId: same position NFT ID
+//   - tokensCollected0: token0 amount sent to caller after the withdrawal fee
+//   - tokensCollected1: token1 amount sent to caller after the withdrawal fee
+//   - poolPath: pool identifier stored on the position
+//   - totalAmount0: raw token0 amount collected before the withdrawal fee
+//   - totalAmount1: raw token1 amount collected before the withdrawal fee
 func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller address) (uint64, string, string, string, string, string) {
 	// verify position
 	position := p.mustGetPosition(positionId)
@@ -473,6 +495,12 @@ func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller addr
 
 // SetPositionOperator sets an operator for a position.
 // Only staker can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the position proxy.
+//   - id: position NFT ID whose operator is changed
+//   - operator: valid address to approve, or the empty address to remove the operator
 func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator address) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -498,6 +526,14 @@ func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator a
 }
 
 // getCurrentFeeGrowth retrieves current fee growth values for a position.
+//
+// Parameters:
+//   - position: position whose pool and tick range identify the aggregate fee-growth entry
+//   - owner: position owner address supplied by the collection flow; retained for call-site context and not used in the lookup
+//
+// Returns:
+//   - feeGrowthInside: current token0 and token1 fee-growth values inside the position's range
+//   - err: nil when the pool entry is read; otherwise the pool fee-growth lookup error
 func (p *positionV1) getCurrentFeeGrowth(position *pos.Position, owner address) (FeeGrowthInside, error) {
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128, err := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
@@ -516,12 +552,26 @@ func (p *positionV1) getCurrentFeeGrowth(position *pos.Position, owner address) 
 // computePositionKey generates a compact deterministic key for a pool's
 // aggregate liquidity accounting entry. It encodes only the lower/upper ticks;
 // the pool path supplies the scope.
+//
+// Parameters:
+//   - tickLower: lower tick boundary encoded into the aggregate key
+//   - tickUpper: upper tick boundary encoded into the aggregate key
+//
+// Returns:
+//   - positionKey: deterministic key encoding tickLower and tickUpper
 func computePositionKey(tickLower, tickUpper int32) string {
 	return pl.EncodePositionKey(tickLower, tickUpper)
 }
 
 // calculatePositionBalances derives current token balances from the position's
 // liquidity and range together with the current pool price.
+//
+// Parameters:
+//   - position: position whose pool, tick range, and liquidity determine the balances
+//
+// Returns:
+//   - token0Balance: current token0 amount represented by the position's liquidity at the pool price
+//   - token1Balance: current token1 amount represented by the position's liquidity at the pool price
 func calculatePositionBalances(position *pos.Position) (int64, int64) {
 	liquidity := u256.MustFromDecimal(position.Liquidity())
 	if liquidity.IsZero() {

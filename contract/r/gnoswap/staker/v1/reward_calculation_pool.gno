@@ -21,13 +21,24 @@ type Pools struct {
 	tree *bptree.BPTree // string poolPath -> pool
 }
 
+// NewPools creates an empty resolver for global pool storage.
+//
+// Returns:
+//   - pools: Pools resolver backed by a new B+ tree keyed by pool path.
 func NewPools() *Pools {
 	return &Pools{
 		tree: sr.NewBPTreeN(16),
 	}
 }
 
-// Get returns the pool for the given poolPath
+// Get returns the pool stored under the given pool path.
+//
+// Parameters:
+//   - poolPath: Pool path used as the storage key.
+//
+// Returns:
+//   - pool: Stored pool pointer when poolPath exists; nil when absent.
+//   - found: True when poolPath resolves to a pool; false when no entry exists.
 func (self *Pools) Get(poolPath string) (*sr.Pool, bool) {
 	v := self.tree.Get(poolPath)
 	if v == nil {
@@ -40,7 +51,13 @@ func (self *Pools) Get(poolPath string) (*sr.Pool, bool) {
 	return p, true
 }
 
-// GetPoolOrNil returns the pool for the given poolPath, or returns nil if it does not exist
+// GetPoolOrNil returns the pool for the given pool path, or nil when it does not exist.
+//
+// Parameters:
+//   - poolPath: Pool path used as the storage key.
+//
+// Returns:
+//   - pool: Stored pool pointer, or nil when poolPath is absent.
 func (self *Pools) GetPoolOrNil(poolPath string) *sr.Pool {
 	pool, ok := self.Get(poolPath)
 	if !ok {
@@ -49,16 +66,30 @@ func (self *Pools) GetPoolOrNil(poolPath string) *sr.Pool {
 	return pool
 }
 
-// set sets the pool for the given poolPath.
+// set stores a pool under its path.
+//
+// Parameters:
+//   - poolPath: Pool path used as the storage key.
+//   - pool: Pool state to associate with poolPath.
 func (self *Pools) set(poolPath string, pool *sr.Pool) {
 	self.tree.Set(poolPath, pool)
 }
 
-// Has returns true if the pool exists for the given poolPath
+// Has reports whether a pool exists for the given pool path.
+//
+// Parameters:
+//   - poolPath: Pool path used as the storage key.
+//
+// Returns:
+//   - exists: True when poolPath is present in the pool tree; false otherwise.
 func (self *Pools) Has(poolPath string) bool {
 	return self.tree.Has(poolPath)
 }
 
+// IterateAll visits every stored pool until the callback requests that traversal stop.
+//
+// Parameters:
+//   - fn: Callback receiving each pool path and pool pointer; return true to stop iteration, false to continue.
 func (self *Pools) IterateAll(fn func(key string, pool *sr.Pool) bool) {
 	self.tree.Iterate("", "", func(key string, value any) bool {
 		p, ok := value.(*sr.Pool)
@@ -77,12 +108,22 @@ type PoolResolver struct {
 	exit *sr.UnstakedPosition
 }
 
+// IncentivesResolver returns a resolver over the pool's external-incentive state.
+//
+// Returns:
+//   - resolver: Incentives resolver backed by this pool's incentive tree and unclaimable periods.
 func (self *PoolResolver) IncentivesResolver() *IncentivesResolver {
 	return NewIncentivesResolver(self.Incentives())
 }
 
-// Get the latest global reward ratio accumulation in [0, currentTime] range.
-// Returns the time and the accumulation.
+// CurrentGlobalRewardRatioAccumulation returns the latest stored global reward-ratio checkpoint in the [0, currentTime] range.
+//
+// Parameters:
+//   - currentTime: Unix timestamp bounding the checkpoint lookup.
+//
+// Returns:
+//   - time: Timestamp of the latest stored checkpoint at or before currentTime; zero when no checkpoint exists.
+//   - acc: Decimal-encoded Q128-scaled global reward-ratio accumulation at time.
 func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64) (time int64, acc string) {
 	acc = "0"
 
@@ -102,8 +143,13 @@ func (self *PoolResolver) CurrentGlobalRewardRatioAccumulation(currentTime int64
 	return time, acc
 }
 
-// Get the latest tick in [0, currentTime] range.
-// Returns the tick.
+// CurrentTick returns the latest historical tick in the [0, currentTime] range.
+//
+// Parameters:
+//   - currentTime: Unix timestamp bounding the historical-tick lookup.
+//
+// Returns:
+//   - tick: Latest historical tick at or before currentTime; an exit resolver uses its pinned exit tick at or after exit time.
 func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
 	if self.exit != nil && currentTime >= self.exit.ExitTime() {
 		return self.exit.ExitTick()
@@ -120,6 +166,13 @@ func (self *PoolResolver) CurrentTick(currentTime int64) (tick int32) {
 	return tick
 }
 
+// CurrentStakedLiquidity returns the latest staked-liquidity checkpoint in the [0, currentTime] range.
+//
+// Parameters:
+//   - currentTime: Unix timestamp bounding the staked-liquidity lookup.
+//
+// Returns:
+//   - liquidity: Uint256 staked liquidity effective at or before currentTime; zero when no checkpoint exists.
 func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *u256.Uint) {
 	liquidity = u256.Zero()
 
@@ -135,6 +188,12 @@ func (self *PoolResolver) CurrentStakedLiquidity(currentTime int64) (liquidity *
 }
 
 // GetOrNewTick returns the existing tick or a new zero-valued tick.
+//
+// Parameters:
+//   - tickId: Boundary tick identifier to retrieve or initialize.
+//
+// Returns:
+//   - tick: Existing stored tick, or a zero-valued tick with tickId when no entry exists.
 //
 // Substituting a zero-valued tick on a read is safe because ticks are pruned
 // only when their staked gross liquidity reaches zero, in the same call that
@@ -161,6 +220,13 @@ func (self *PoolResolver) GetOrNewTick(tickId int32) *sr.Tick {
 // An exit checkpoint answers for its own exit timestamp from the value pinned when it was
 // written: a tick cross later in the same block overwrites the entry at that timestamp, while
 // earlier entries can no longer change.
+//
+// Parameters:
+//   - tickId: Boundary tick identifier whose outside accumulation is requested.
+//   - currentTime: Unix timestamp at which the outside accumulation is evaluated.
+//
+// Returns:
+//   - accumulation: Q128-scaled outside reward-ratio accumulation for tickId at currentTime.
 func (self *PoolResolver) outsideAccumulationAt(tickId int32, currentTime int64) *u256.Uint {
 	if self.exit != nil && currentTime == self.exit.ExitTime() {
 		switch tickId {
@@ -174,9 +240,13 @@ func (self *PoolResolver) outsideAccumulationAt(tickId int32, currentTime int64)
 	return NewTickResolver(self.GetOrNewTick(tickId)).CurrentOutsideAccumulation(currentTime)
 }
 
-// initializeNewTickOutsideAccumulation seeds a just-created boundary tick so
-// that below(tick) == globalAccumulation holds across the three branches of
-// outsideAccumulationAt.
+// initializeNewTickOutsideAccumulation seeds a newly created boundary tick's outside accumulation.
+//
+// Parameters:
+//   - currentTime: Unix timestamp at which the boundary tick is initialized.
+//   - currentTick: Pool tick used to determine whether the new boundary is below or above the current range.
+//   - tickId: Identifier of the boundary tick being initialized.
+//   - tick: Tick object whose outside accumulation is updated when tickId is not above currentTick.
 func (self *PoolResolver) initializeNewTickOutsideAccumulation(currentTime int64, currentTick, tickId int32, tick *sr.Tick) {
 	if tickId > currentTick {
 		return
@@ -186,8 +256,11 @@ func (self *PoolResolver) initializeNewTickOutsideAccumulation(currentTime int64
 	tick.SetOutsideAccumulationAt(currentTime, globalAcc)
 }
 
-// IsExternallyIncentivizedPool returns true if the pool has an external incentive
-// that has not ended, including incentives that have not started yet.
+// IsExternallyIncentivizedPool reports whether the pool has any external incentive that has not ended,
+// including incentives whose start time is still in the future.
+//
+// Returns:
+//   - incentivized: True when at least one non-ended external incentive is indexed for the pool; false when all are ended or none exist.
 func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 	currentTime := time.Now().Unix()
 	hasIncentive := false
@@ -211,8 +284,13 @@ func (self *PoolResolver) IsExternallyIncentivizedPool() bool {
 	return hasIncentive
 }
 
-// Get the latest reward in [0, currentTime] range.
-// Returns the reward.
+// CurrentReward returns the latest cached per-pool reward rate in the [0, currentTime] range.
+//
+// Parameters:
+//   - currentTime: Unix timestamp bounding the reward-cache lookup.
+//
+// Returns:
+//   - reward: Latest cached GNS reward rate at or before currentTime, in units per second; zero when no checkpoint exists.
 func (self *PoolResolver) CurrentReward(currentTime int64) (reward int64) {
 	self.RewardCache().ReverseIterate(0, currentTime, func(key int64, value any) bool {
 		res, ok := value.(int64)
@@ -225,6 +303,14 @@ func (self *PoolResolver) CurrentReward(currentTime int64) (reward int64) {
 	return reward
 }
 
+// isChangedTick reports whether the supplied tick differs from the latest recorded historical tick.
+//
+// Parameters:
+//   - currentTime: Unix timestamp used to find the latest historical tick.
+//   - currentTick: Tick value to compare with the stored historical value.
+//
+// Returns:
+//   - changed: True when no historical tick exists or the latest tick differs from currentTick.
 func (self *PoolResolver) isChangedTick(currentTime int64, currentTick int32) bool {
 	if self.HistoricalTick().Size() == 0 {
 		return true
@@ -235,13 +321,13 @@ func (self *PoolResolver) isChangedTick(currentTime int64, currentTick int32) bo
 	return previousTick != currentTick
 }
 
-// cacheReward sets the current reward for the pool
-// If the pool is in unclaimable period, it will end the unclaimable period, updates the reward, and start the unclaimable period again.
+// cacheReward sets the current reward rate for the pool and maintains unclaimable-period tracking.
 //
-// Important behavior for initial tier assignment:
-// - When a pool first receives a tier, oldTierReward=0 and currentTierReward>0
-// - If the pool has zero liquidity at this point, startUnclaimablePeriod() is called
-// - This ensures unclaimable period tracking begins from the moment rewards start emitting
+// Parameters:
+//   - currentTime: Unix timestamp at which the reward checkpoint and any period transition occur.
+//   - currentTierReward: New per-pool reward rate for the pool's current tier, in GNS units per second.
+//
+// When a pool first receives a positive reward with zero liquidity, tracking starts at currentTime so the emission window is accounted for.
 func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64) {
 	oldTierReward := self.CurrentReward(currentTime)
 	if oldTierReward == currentTierReward {
@@ -264,6 +350,14 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 	}
 }
 
+// calculateGlobalRewardRatioAccumulation derives the pool's global reward-ratio accumulation at a time and liquidity value.
+//
+// Parameters:
+//   - currentTime: Unix timestamp at which elapsed reward ratio is evaluated; times before the latest checkpoint panic.
+//   - currentStakedLiquidity: Staked liquidity denominator for elapsed accrual; zero liquidity preserves the prior accumulation.
+//
+// Returns:
+//   - accumulation: Q128-scaled global reward-ratio accumulation including elapsed time when liquidity is positive.
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	oldAccTime, oldAccStr := self.CurrentGlobalRewardRatioAccumulation(currentTime)
 	timeDiff := gnsmath.SafeSubInt64(currentTime, oldAccTime)
@@ -287,16 +381,16 @@ func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int
 	return u256.Zero().Add(oldAcc, acc)
 }
 
-// globalRewardRatioAccumulationAt returns the global reward ratio accumulation *at* currentTime.
+// globalRewardRatioAccumulationAt computes the global reward-ratio accumulation at currentTime.
 //
-// CurrentGlobalRewardRatioAccumulation returns the latest stored checkpoint (<= currentTime), which is
-// only equal to the accumulation at currentTime when a checkpoint was written at that very timestamp.
-// Checkpoints are written exclusively by modifyDeposit (staked liquidity changes), so on any other path
-// the stored value lags by (currentTime - lastCheckpointTime) * q128 / stakedLiquidity.
+// Unlike CurrentGlobalRewardRatioAccumulation, this derives elapsed accumulation from the latest stored checkpoint and current staked liquidity, so it includes time since the checkpoint.
 //
-// Reward calculation never has this problem because it derives the accumulation on demand
-// (CalculateRawRewardForPosition). Event emission must do the same, otherwise off-chain indexers that
-// treat the emitted accumulator as authoritative at the event timestamp silently drop that interval.
+// Parameters:
+//   - currentTime: Unix timestamp at which the ratio and liquidity are evaluated.
+//
+// Returns:
+//   - accumulation: Q128-scaled global reward-ratio accumulation at currentTime.
+//   - stakedLiquidity: Staked liquidity value effective at currentTime.
 func (self *PoolResolver) globalRewardRatioAccumulationAt(currentTime int64) (*u256.Uint, *u256.Uint) {
 	stakedLiquidity := self.CurrentStakedLiquidity(currentTime)
 	accumulation := self.calculateGlobalRewardRatioAccumulation(currentTime, stakedLiquidity)
@@ -304,7 +398,14 @@ func (self *PoolResolver) globalRewardRatioAccumulationAt(currentTime int64) (*u
 	return accumulation, stakedLiquidity
 }
 
-// updateGlobalRewardRatioAccumulation updates the global reward ratio accumulation and returns the new accumulation.
+// updateGlobalRewardRatioAccumulation computes and persists the pool's global reward-ratio accumulation.
+//
+// Parameters:
+//   - currentTime: Unix timestamp at which the checkpoint is written.
+//   - currentStakedLiquidity: Staked liquidity used to accrue the ratio over elapsed time.
+//
+// Returns:
+//   - accumulation: Newly calculated Q128-scaled global reward-ratio accumulation.
 func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	newAcc := self.calculateGlobalRewardRatioAccumulation(currentTime, currentStakedLiquidity)
 
@@ -313,7 +414,13 @@ func (self *PoolResolver) updateGlobalRewardRatioAccumulation(currentTime int64,
 	return newAcc
 }
 
-// RewardStateOf initializes a new RewardState for the given deposit.
+// RewardStateOf initializes a new RewardState for the given deposit, allocating reward and penalty slots for each warmup.
+//
+// Parameters:
+//   - deposit: Staked deposit whose pool, liquidity, and warmup schedule will be resolved.
+//
+// Returns:
+//   - state: RewardState initialized with zeroed per-warmup reward and penalty accumulators.
 func (self *PoolResolver) RewardStateOf(deposit *sr.Deposit) *RewardState {
 	warmups := len(deposit.Warmups())
 	result := &RewardState{
@@ -334,7 +441,13 @@ func (self *RewardState) reset() {
 	}
 }
 
-// NewPool creates a new pool with the given poolPath and currentHeight.
+// NewPoolResolver wraps a pool's persisted reward, liquidity, tick, and incentive state for calculations.
+//
+// Parameters:
+//   - pool: Pool state to resolve.
+//
+// Returns:
+//   - resolver: Pool resolver backed by pool.
 func NewPoolResolver(pool *sr.Pool) *PoolResolver {
 	return &PoolResolver{
 		Pool: pool,
@@ -342,6 +455,13 @@ func NewPoolResolver(pool *sr.Pool) *PoolResolver {
 }
 
 // newPoolResolverWithExit builds a resolver that reads the pool through an exit checkpoint.
+//
+// Parameters:
+//   - pool: Pool state containing the live reward and tick histories.
+//   - exit: Unstaked position checkpoint whose pinned tick, boundaries, and tier context override live reads at exit time.
+//
+// Returns:
+//   - resolver: Pool resolver configured to reproduce reward calculations for exit.
 func newPoolResolverWithExit(pool *sr.Pool, exit *sr.UnstakedPosition) *PoolResolver {
 	return &PoolResolver{
 		Pool: pool,
@@ -362,9 +482,15 @@ type RewardState struct {
 // calculateInternalReward computes the position's per-warmup rewards and penalties from a pre-resolved
 // per-second reward-rate schedule (see PoolResolver.resolveInternalRewardSegments).
 //
-// It is pure: it neither queries pool tier/emission state nor writes any state, so the read-only view
-// path and the collect path use it identically. Each segment [start, end) is applied at its constant
-// per-second rate; rewardPerWarmup is a no-op for empty segments (start == end).
+// It is pure with respect to pool state: it reads no tier/emission state and writes no persistent state.
+// Each segment [start, end) is applied at its constant per-second rate, then warmup ratios are applied.
+//
+// Parameters:
+//   - segments: Ordered internal reward-rate segments, each describing a time interval and its per-second rate.
+//
+// Returns:
+//   - rewards: Per-warmup rewards after warmup ratios, in GNS units and warmup order.
+//   - penalties: Per-warmup amounts withheld by warmup ratios, in GNS units and warmup order.
 func (self *RewardState) calculateInternalReward(segments []internalRewardSegment) ([]int64, []int64) {
 	for _, seg := range segments {
 		if err := self.rewardPerWarmup(seg.start, seg.end, seg.rewardPerSecond); err != nil {
@@ -377,9 +503,16 @@ func (self *RewardState) calculateInternalReward(segments []internalRewardSegmen
 	return self.rewards, self.penalties
 }
 
-// updateExternalReward updates the external reward for the deposit.
-// It updates the last collect time for the external reward for the given incentive ID.
-// It returns an error if the current time is less than the last collect time for the external reward for the given incentive ID.
+// updateExternalReward advances external reward accounting for a deposit over a requested interval.
+// It clamps start and end to the deposit cursor and the incentive's active window before calculating rewards.
+//
+// Parameters:
+//   - startTime: Requested interval start as a Unix timestamp.
+//   - endTime: Requested interval end as a Unix timestamp.
+//   - incentive: External incentive whose ID, window, and Q128 reward rate are used.
+//
+// Returns:
+//   - err: Nil when the interval is processed or lies outside the incentive window; arithmetic failures panic.
 func (self *RewardState) updateExternalReward(startTime, endTime int64, incentive *sr.ExternalIncentive) error {
 	lastCollectTime := self.deposit.ExternalRewardLastCollectTime(incentive.IncentiveId())
 	if startTime < lastCollectTime {
@@ -408,9 +541,16 @@ func (self *RewardState) updateExternalReward(startTime, endTime int64, incentiv
 	return self.rewardPerWarmupX128(startTime, endTime, incentive.RewardPerSecondX128())
 }
 
-// calculateCollectableExternalReward calculates the calculated external reward for the deposit.
-// It calls updateExternalReward for the incentive period, applies warmup and returns the rewards and penalties.
-// used for reward calculation for a calculatable incentive
+// calculateCollectableExternalReward calculates the total external reward generated for a requested interval.
+// It clamps the interval to the incentive window and the deposit cursor, then sums the raw per-warmup entries.
+//
+// Parameters:
+//   - startTime: Requested interval start as a Unix timestamp.
+//   - endTime: Requested interval end as a Unix timestamp.
+//   - incentive: External incentive whose reward rate and window are used.
+//
+// Returns:
+//   - reward: Sum of generated external reward entries in incentive-token units; warmup ratios are not applied by this helper.
 func (self *RewardState) calculateCollectableExternalReward(startTime, endTime int64, incentive *sr.ExternalIncentive) int64 {
 	err := self.updateExternalReward(startTime, endTime, incentive)
 	if err != nil {
@@ -426,8 +566,17 @@ func (self *RewardState) calculateCollectableExternalReward(startTime, endTime i
 	return gnsmath.SafeConvertToInt64(currentReward)
 }
 
-// calculateExternalReward calculates the external reward for the deposit.
-// It calls rewardPerWarmup for startTime to endTime(clamped to the incentive period), applies warmup and returns the rewards and penalties.
+// calculateExternalReward calculates per-warmup external reward and penalty for a requested interval.
+// The interval is clamped to the incentive window and the deposit's last collection cursor before warmup ratios are applied.
+//
+// Parameters:
+//   - startTime: Requested interval start as a Unix timestamp.
+//   - endTime: Requested interval end as a Unix timestamp.
+//   - incentive: External incentive whose reward rate and window are used.
+//
+// Returns:
+//   - rewards: Reward amounts after each warmup ratio, in incentive-token units and warmup order.
+//   - penalties: Amount withheld by each warmup ratio, in incentive-token units and warmup order.
 func (self *RewardState) calculateExternalReward(startTime, endTime int64, incentive *sr.ExternalIncentive) ([]int64, []int64) {
 	err := self.updateExternalReward(startTime, endTime, incentive)
 	if err != nil {
@@ -440,7 +589,7 @@ func (self *RewardState) calculateExternalReward(startTime, endTime int64, incen
 	return self.rewards, self.penalties
 }
 
-// applyWarmup applies the warmup to the rewards and calculate penalties.
+// applyWarmup applies each deposit warmup ratio to accumulated rewards and records the withheld amount as a penalty.
 func (self *RewardState) applyWarmup() {
 	for i, warmup := range self.deposit.Warmups() {
 		warmupReward := self.rewards[i]
@@ -453,8 +602,15 @@ func (self *RewardState) applyWarmup() {
 	}
 }
 
-// rewardPerWarmup calculates the reward for each warmup, adds to the RewardState's rewards array.
-// Used by the internal reward path where rewardPerSecond is an int64 emission rate.
+// rewardPerWarmup computes each warmup's internal-emission reward over a time interval using an integer per-second rate.
+//
+// Parameters:
+//   - startTime: Unix timestamp at the beginning of the interval.
+//   - endTime: Unix timestamp at the end of the interval; empty intervals produce no reward.
+//   - rewardPerSecond: Integer GNS reward rate per second.
+//
+// Returns:
+//   - err: Nil when reward entries are updated; arithmetic overflow is raised as a panic rather than returned.
 func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSecond int64) error {
 	// Return early if startTime equals endTime to avoid unnecessary computation
 	if startTime == endTime {
@@ -510,11 +666,15 @@ func (self *RewardState) rewardPerWarmup(startTime, endTime int64, rewardPerSeco
 	return nil
 }
 
-// rewardPerWarmupX128 calculates the reward for each warmup using a Q128-scaled
-// per-second rate. Used by the external incentive path; the per-second rate is
-// stored as `(rewardAmount << 128) / duration` in ExternalIncentive, so an
-// extra `>> 128` is needed after the standard `MulDiv(rewardAcc, rps, q128)`
-// to materialize the integer result.
+// rewardPerWarmupX128 computes each warmup's external-incentive reward over a time interval using a Q128-scaled rate.
+//
+// Parameters:
+//   - startTime: Unix timestamp at the beginning of the interval.
+//   - endTime: Unix timestamp at the end of the interval; empty intervals produce no reward.
+//   - rewardPerSecondX128: Per-second reward rate scaled by 2^128, as stored on an external incentive.
+//
+// Returns:
+//   - err: Nil when reward entries are updated; arithmetic overflow is raised as a panic rather than returned.
 func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPerSecondX128 *u256.Uint) error {
 	if startTime == endTime {
 		return nil
@@ -570,8 +730,15 @@ func (self *RewardState) rewardPerWarmupX128(startTime, endTime int64, rewardPer
 	return nil
 }
 
-// modifyDeposit updates the pool's staked liquidity and returns the new staked liquidity.
-// updates when there is a change in the staked liquidity(tick cross, stake, unstake)
+// modifyDeposit applies a signed staked-liquidity change and updates time-dependent pool checkpoints.
+//
+// Parameters:
+//   - delta: Signed liquidity change to apply; a negative result is rejected if it would underflow.
+//   - currentTime: Unix timestamp at which the liquidity and reward-ratio checkpoints are updated.
+//   - nextTick: Tick value to record when the historical tick changes.
+//
+// Returns:
+//   - accumulation: New global reward-ratio accumulation computed at currentTime before applying delta.
 func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, nextTick int32) *u256.Uint {
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentTime)
@@ -613,7 +780,12 @@ func (self *PoolResolver) modifyDeposit(delta *i256.Int, currentTime int64, next
 	return result
 }
 
-// startUnclaimablePeriod starts the unclaimable period.
+// startUnclaimablePeriod starts tracking reward while the pool has no staked liquidity.
+//
+// Parameters:
+//   - currentTime: Unix timestamp at which zero-liquidity tracking begins.
+//
+// If tracking is already active, currentTime does not replace the original start.
 func (self *PoolResolver) startUnclaimablePeriod(currentTime int64) {
 	if self.LastUnclaimableTime() == 0 {
 		// We set only if it's the first time entering(0 indicates not set yet)
@@ -621,8 +793,12 @@ func (self *PoolResolver) startUnclaimablePeriod(currentTime int64) {
 	}
 }
 
-// endUnclaimablePeriod ends the unclaimable period.
-// Accumulates to unclaimableAcc and resets lastUnclaimableTime to 0.
+// endUnclaimablePeriod ends an open unclaimable period and records its accumulated reward.
+//
+// Parameters:
+//   - currentTime: Unix timestamp at which the period ends and its reward is accrued.
+//
+// If no period is being tracked, the operation is a no-op; otherwise it resets the period marker after accumulation.
 func (self *PoolResolver) endUnclaimablePeriod(currentTime int64) {
 	if self.LastUnclaimableTime() == 0 {
 		// lastUnclaimableTime = 0 means tracking hasn't started yet
@@ -635,8 +811,12 @@ func (self *PoolResolver) endUnclaimablePeriod(currentTime int64) {
 	self.SetLastUnclaimableTime(0)
 }
 
-// updateUnclaimableAccumulateRewards ends the unclaimable period.
-// Accumulates to unclaimableAcc and resets lastUnclaimableTime to 0.
+// updateUnclaimableAccumulateRewards accrues reward for the current unclaimable period.
+//
+// Parameters:
+//   - currentTime: Unix timestamp through which the open period is accrued.
+//
+// When currentTime is not after the period start, the accumulator is left unchanged.
 func (self *PoolResolver) updateUnclaimableAccumulateRewards(currentTime int64) {
 	if self.LastUnclaimableTime() >= currentTime {
 		return
@@ -647,8 +827,13 @@ func (self *PoolResolver) updateUnclaimableAccumulateRewards(currentTime int64) 
 	self.SetUnclaimableAcc(gnsmath.SafeAddInt64(self.UnclaimableAcc(), currentUnclaimableReward))
 }
 
-// processUnclaimableReward processes the unclaimable reward and returns the accumulated reward.
-// It resets unclaimableAcc to 0 and properly manages lastUnclaimableTime based on pool state.
+// processUnclaimableReward finalizes and returns the pool's accumulated unclaimable internal reward.
+//
+// Parameters:
+//   - endTime: Unix timestamp through which an open unclaimable period is accrued.
+//
+// Returns:
+//   - reward: Accumulated unclaimable internal reward in GNS units; the stored accumulator is reset to zero.
 func (self *PoolResolver) processUnclaimableReward(endTime int64) int64 {
 	// Check current pool liquidity state
 	isZeroStakedLiquidity := self.CurrentStakedLiquidity(endTime).IsZero()
@@ -680,8 +865,15 @@ func (self *PoolResolver) processUnclaimableReward(endTime int64) int64 {
 	return internalUnClaimable
 }
 
-// Calculates reward for a position *without* considering debt or warmup
-// It calculates the theoretical total reward for the position if it has been staked since the pool creation
+// CalculateRawRewardForPosition calculates the theoretical reward accumulator for a position without debt or warmup adjustments.
+//
+// Parameters:
+//   - currentTime: Unix timestamp at which pool reward state is evaluated.
+//   - currentTick: Pool tick used to determine whether the position is below, inside, or above its range.
+//   - deposit: Position deposit whose liquidity and boundary ticks determine the raw reward.
+//
+// Returns:
+//   - reward: Q128-scaled raw reward accumulator for the position; debt, warmup ratios, and fees are not applied.
 func (self *PoolResolver) CalculateRawRewardForPosition(currentTime int64, currentTick int32, deposit *sr.Deposit) *u256.Uint {
 	var rewardAcc *u256.Uint
 

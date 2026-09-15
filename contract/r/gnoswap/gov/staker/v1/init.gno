@@ -4,10 +4,21 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
+// init registers the governance staker v1 initializer with the package's runtime
+// realm.
+//
+// Parameters:
+//   - cur: runtime-supplied realm context for this package initialization.
 func init(cur realm) {
 	registerGovStakerV1(cur)
 }
 
+// registerGovStakerV1 registers the versioned staker initializer using the
+// current package realm as the cross-realm registration context.
+//
+// Parameters:
+//   - cur: current realm context; registration crosses into the staker realm
+//     with cross(cur).
 func registerGovStakerV1(cur realm) {
 	staker.RegisterInitializer(cross(cur), func(_ int, rlm realm, store staker.IGovStakerStore) staker.IGovStaker {
 		// `rlm` here is the gov/staker proxy realm threaded in by
@@ -22,6 +33,19 @@ func registerGovStakerV1(cur realm) {
 	})
 }
 
+// initStoreData initializes missing governance-staker configuration, histories,
+// reward managers, and delegation state.
+//
+// Parameters:
+//   - _: leading initializer discriminator; callers pass 0.
+//   - rlm: propagated staker proxy realm context used for store writes and
+//     authorization.
+//   - store: governance-staker storage interface whose missing keys are
+//     initialized.
+//
+// Returns:
+//   - error: nil when all required state is initialized or already present;
+//     otherwise the first storage write error.
 func initStoreData(_ int, rlm realm, store staker.IGovStakerStore) error {
 	// Initialize basic configuration
 	if !store.HasUnDelegationLockupPeriodStoreKey() {

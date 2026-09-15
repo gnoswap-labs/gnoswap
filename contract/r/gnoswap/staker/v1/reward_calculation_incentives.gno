@@ -12,17 +12,39 @@ type IncentivesResolver struct {
 	*sr.Incentives
 }
 
+// NewIncentivesResolver wraps the persisted external-incentive state for lookup and mutation.
+//
+// Parameters:
+//   - incentives: External incentive state containing the incentive tree and unclaimable periods.
+//
+// Returns:
+//   - resolver: Resolver backed by incentives.
 func NewIncentivesResolver(incentives *sr.Incentives) *IncentivesResolver {
 	return &IncentivesResolver{
 		Incentives: incentives,
 	}
 }
 
-// Get incentive by incentiveId
+// Get resolves an external incentive by its identifier.
+//
+// Parameters:
+//   - incentiveId: External incentive identifier used as the tree key.
+//
+// Returns:
+//   - incentive: Stored external incentive pointer when the ID exists; nil when it is absent.
+//   - found: True when incentiveId is present in the tree; false otherwise.
 func (self *IncentivesResolver) Get(incentiveId string) (*sr.ExternalIncentive, bool) {
 	return retrieveIncentive(self.IncentiveTrees(), incentiveId)
 }
 
+// GetIncentiveResolver resolves an incentive ID to its field accessor.
+//
+// Parameters:
+//   - incentiveId: External incentive identifier to resolve.
+//
+// Returns:
+//   - resolver: Resolver for the stored incentive when found; nil when incentiveId is absent.
+//   - found: True when incentiveId resolves to a stored incentive; false otherwise.
 func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*ExternalIncentiveResolver, bool) {
 	if incentive, ok := self.Get(incentiveId); ok {
 		return NewExternalIncentiveResolver(incentive), true
@@ -30,6 +52,15 @@ func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*Exter
 	return nil, false
 }
 
+// retrieveIncentive looks up an external incentive in a B+ tree.
+//
+// Parameters:
+//   - tree: Incentive tree keyed by incentive ID.
+//   - id: Incentive identifier to retrieve.
+//
+// Returns:
+//   - incentive: Stored external incentive pointer when id exists; nil when absent.
+//   - found: True when id resolves to an external incentive; false when the tree has no such key.
 func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, bool) {
 	value := tree.Get(id)
 	if value == nil {
@@ -42,33 +73,50 @@ func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, b
 	return v, true
 }
 
-// Create a new external incentive
-// Panics if the incentive already exists.
+// create inserts a new external incentive into the incentive tree and start-time index.
+//
+// Parameters:
+//   - incentive: New external incentive to store; its ID must not already exist.
+//
+// The underlying store panics when the incentive ID already exists.
 func (self *IncentivesResolver) create(incentive *sr.ExternalIncentive) {
 	self.Incentives.SetIncentive(incentive.IncentiveId(), incentive)
 	self.Incentives.AddIncentiveByStartTime(incentive.StartTimestamp(), incentive.IncentiveId())
 }
 
-// update updates an existing incentive with new information
+// update replaces the stored record for an existing external incentive.
+//
+// Parameters:
+//   - incentive: Updated external incentive whose ID selects the record to replace.
 func (self *IncentivesResolver) update(incentive *sr.ExternalIncentive) {
 	self.Incentives.SetIncentive(incentive.IncentiveId(), incentive)
 }
 
-// remove drops an incentive from both the incentive tree and the start-time
-// discovery index. It is only valid for an incentive that has not started: no
-// deposit can reference it yet, so nothing is left pointing at a missing record.
+// remove drops an incentive from both the incentive tree and the start-time discovery index.
+//
+// Parameters:
+//   - incentive: Stored external incentive to remove; it must not have started.
+//
+// Removal is safe before start because no deposit can reference the incentive yet.
 func (self *IncentivesResolver) remove(incentive *sr.ExternalIncentive) {
 	self.Incentives.RemoveIncentive(incentive.IncentiveId())
 	self.Incentives.RemoveIncentiveByStartTime(incentive.StartTimestamp(), incentive.IncentiveId())
 }
 
-// starts incentive unclaimable period for this pool
+// startUnclaimablePeriod starts an unclaimable period for this pool.
+//
+// Parameters:
+//   - startTimestamp: Unix timestamp at which the period begins; it is stored with an open end marker.
 func (self *IncentivesResolver) startUnclaimablePeriod(startTimestamp int64) {
 	self.Incentives.SetUnclaimablePeriod(startTimestamp, int64(0))
 }
 
-// ends incentive unclaimable period for this pool
-// ignores if currently not in unclaimable period
+// endUnclaimablePeriod closes the currently open unclaimable period for this pool.
+//
+// Parameters:
+//   - endTimestamp: Unix timestamp at which the unclaimable period ends.
+//
+// If no period is open, this operation does nothing; otherwise it records the end and accrues the overlap to incentives.
 func (self *IncentivesResolver) endUnclaimablePeriod(endTimestamp int64) {
 	startTimestamp := int64(0)
 	self.UnclaimablePeriods().ReverseIterate(0, endTimestamp, func(key int64, value any) bool {
@@ -100,10 +148,13 @@ func (self *IncentivesResolver) endUnclaimablePeriod(endTimestamp int64) {
 	self.accumulateUnclaimableSeconds(startTimestamp, endTimestamp)
 }
 
-// accumulateUnclaimableSeconds adds the unclaimable duration between
-// startTimestamp and endTimestamp to every non-refunded incentive whose window
-// overlaps the period. The accumulator is updated in place on the stored
-// incentive pointers, so no tree write is required here.
+// accumulateUnclaimableSeconds adds overlap duration between the supplied period and each non-refunded incentive's window.
+//
+// Parameters:
+//   - startTimestamp: Unix timestamp at which the unclaimable period begins.
+//   - endTimestamp: Unix timestamp at which the unclaimable period ends.
+//
+// The overlapping seconds are added in place to each stored incentive; no tree write is required.
 func (self *IncentivesResolver) accumulateUnclaimableSeconds(startTimestamp, endTimestamp int64) {
 	self.Incentives.IterateIncentives(func(_ string, incentive *sr.ExternalIncentive) bool {
 		if incentive.Refunded() {
@@ -123,8 +174,13 @@ func (self *IncentivesResolver) accumulateUnclaimableSeconds(startTimestamp, end
 	})
 }
 
-// calculate unclaimable reward from the per-incentive unclaimable seconds
-// accumulator instead of scanning the unbounded unclaimable periods tree.
+// calculateUnclaimableReward calculates the reward made unclaimable during closed and ongoing periods for one incentive.
+//
+// Parameters:
+//   - incentiveId: External incentive identifier whose unclaimable duration should be converted to reward.
+//
+// Returns:
+//   - reward: Unclaimable reward amount in the incentive's token units; zero when the incentive is absent.
 func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) int64 {
 	incentive, ok := self.Get(incentiveId)
 	if !ok {
@@ -206,7 +262,16 @@ func (self *IncentivesResolver) calculateUnclaimableReward(incentiveId string) i
 	return gnsmath.SafeConvertToInt64(unclaimable)
 }
 
-// calculateUnClaimableDuration calculates the duration of overlap between an unclaimable period and incentive period
+// calculateUnClaimableDuration calculates the duration of overlap between an unclaimable period and incentive period.
+//
+// Parameters:
+//   - unclaimableStart: Unix timestamp at which the unclaimable period begins.
+//   - unclaimableEnd: Unix timestamp at which the unclaimable period ends.
+//   - incentiveStartTimestamp: Unix timestamp at which the incentive reward window begins.
+//   - incentiveEndTimestamp: Unix timestamp at which the incentive reward window ends.
+//
+// Returns:
+//   - duration: Overlap duration in seconds, or zero when the two periods do not overlap.
 func calculateUnClaimableDuration(unclaimableStart, unclaimableEnd, incentiveStartTimestamp, incentiveEndTimestamp int64) int64 {
 	// Use later timestamp between unclaimable start and incentive start
 	startTime := unclaimableStart

@@ -3,7 +3,7 @@ package router
 // ExactInSwapRoute executes a multi-hop swap for an exact input amount.
 //
 // Parameters:
-//   - cur: pass `cross` as argument
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
 //   - inputToken: input token path
 //   - outputToken: output token path
 //   - amountIn: exact input amount
@@ -23,7 +23,7 @@ func ExactInSwapRoute(cur realm, inputToken string, outputToken string, amountIn
 // ExactInSingleSwapRoute executes a single-hop swap for an exact input amount.
 //
 // Parameters:
-//   - cur: pass `cross` as argument
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
 //   - inputToken: input token path
 //   - outputToken: output token path
 //   - amountIn: exact input amount
@@ -44,7 +44,7 @@ func ExactInSingleSwapRoute(cur realm, inputToken string, outputToken string, am
 // target.
 //
 // Parameters:
-//   - cur: pass `cross` as argument
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
 //   - inputToken: input token path
 //   - outputToken: output token path
 //   - amountOut: requested net output target
@@ -65,7 +65,7 @@ func ExactOutSwapRoute(cur realm, inputToken string, outputToken string, amountO
 // output target.
 //
 // Parameters:
-//   - cur: pass `cross` as argument
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
 //   - inputToken: input token path
 //   - outputToken: output token path
 //   - amountOut: requested net output target
@@ -111,7 +111,7 @@ func DrySwapRoute(
 // SwapCallback transfers amounts owed by a pool during a swap.
 //
 // Parameters:
-//   - cur: pass `cross` as argument
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
 //   - token0Path: token0 path
 //   - token1Path: token1 path
 //   - amount0Delta: token0 amount owed to or by the pool
@@ -135,7 +135,7 @@ func GetSwapFee() uint64 {
 // SetSwapFee sets the router fee rate.
 //
 // Parameters:
-//   - cur: pass `cross` as argument
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
 //   - fee: fee rate in basis points
 func SetSwapFee(cur realm, fee uint64) {
 	getImplementation().SetSwapFee(0, cur, fee)

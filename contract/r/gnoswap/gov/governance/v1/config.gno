@@ -13,7 +13,20 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-// makeConfig creates a new governance configuration.
+// makeConfig creates a new governance configuration from the supplied timing,
+// quorum, threshold, and execution settings.
+//
+// Parameters:
+//   - votingStartDelay: delay in seconds from proposal creation until voting starts
+//   - votingPeriod: duration in seconds for which voting remains open
+//   - votingWeightSmoothingDuration: duration in seconds used to smooth voting weight snapshots
+//   - quorum: quorum percentage applied to the proposal's quorum-weight base
+//   - proposalCreationThreshold: minimum voting weight required to create a proposal
+//   - executionDelay: delay in seconds from voting end until execution becomes available
+//   - executionWindow: duration in seconds during which an executable proposal may run
+//
+// Returns:
+//   - governance.Config: configuration containing the supplied governance parameters
 func makeConfig(
 	votingStartDelay int64,
 	votingPeriod int64,
@@ -40,6 +53,20 @@ func makeConfig(
 // Reconfigure updates governance configuration.
 // Only admin or governance contract can call this function.
 // Updates all governance parameters and emits a "Reconfigure" event.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the governance proxy; validated before external calls.
+//   - votingStartDelay: delay in seconds from proposal creation until voting starts
+//   - votingPeriod: duration in seconds for which voting remains open
+//   - votingWeightSmoothingDuration: duration in seconds used to smooth voting weight snapshots
+//   - quorum: quorum percentage applied to the proposal's quorum-weight base
+//   - proposalCreationThreshold: minimum voting weight required to create a proposal
+//   - executionDelay: delay in seconds from voting end until execution becomes available
+//   - executionWindow: duration in seconds during which an executable proposal may run
+//
+// Returns:
+//   - int64: newly stored governance configuration version
 func (gv *governanceV1) Reconfigure(
 	_ int, rlm realm,
 	votingStartDelay int64,
@@ -106,6 +133,14 @@ func (gv *governanceV1) Reconfigure(
 }
 
 // reconfigure stores the validated configuration with incremented version number.
+//
+// Parameters:
+//   - _: integer discriminator required by the internal realm-threading convention; callers use 0
+//   - rlm: propagated governance realm context used to select and update the versioned store
+//   - cfg: validated governance configuration to store
+//
+// Returns:
+//   - int64: newly stored governance configuration version
 func (gv *governanceV1) reconfigure(_ int, rlm realm, cfg governance.Config) int64 {
 	// Generate next version number
 	nextVersion := gv.nextConfigVersion(0, rlm)

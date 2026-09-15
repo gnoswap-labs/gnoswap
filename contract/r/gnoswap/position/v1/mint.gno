@@ -13,6 +13,17 @@ import (
 
 // mint creates a new liquidity position by adding liquidity to a pool and minting an NFT.
 // Panics if position ID already exists or adding liquidity fails.
+//
+// Parameters:
+//   - _: leading realm-call discriminator forwarded to nested position, pool, and NFT operations; callers pass 0
+//   - rlm: propagated realm context used by nested calls, which cross with cross(rlm)
+//   - params: mint request containing token pair, fee tier, tick range, desired and minimum amounts, recipient, and caller
+//
+// Returns:
+//   - positionId: newly allocated position NFT ID
+//   - liquidity: liquidity minted for the new position
+//   - amount0: token0 amount actually deposited into the pool
+//   - amount1: token1 amount actually deposited into the pool
 func (p *positionV1) mint(_ int, rlm realm, params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	poolKey := pl.GetPoolPath(params.token0, params.token1, params.fee)
 	liquidity, amount0, amount1 := p.addLiquidity(
@@ -76,6 +87,13 @@ func (p *positionV1) mint(_ int, rlm realm, params MintParams) (uint64, *u256.Ui
 
 // processMintInput processes and validates user input for minting liquidity.
 // It handles token ordering and amount validation.
+//
+// Parameters:
+//   - input: user-supplied token pair, fee, tick range, decimal amount strings, deadline, recipient, and caller
+//
+// Returns:
+//   - processedInput: normalized token order, parsed amounts, adjusted ticks, and derived pool path
+//   - err: nil when token paths are distinct and registered; errInvalidTokenPath when validation fails
 func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, error) {
 	token0, token1 := input.token0, input.token1
 	if err := validateTokenPath(token0, token1); err != nil {
@@ -113,6 +131,19 @@ func (p *positionV1) processMintInput(input MintInput) (ProcessedMintInput, erro
 }
 
 // increaseLiquidity increases the liquidity of an existing position.
+//
+// Parameters:
+//   - _: leading realm-call discriminator forwarded to nested position and pool operations; callers pass 0
+//   - rlm: propagated realm context used by nested calls, which cross with cross(rlm)
+//   - params: increase request containing position ID, desired and minimum amounts, deadline, and caller
+//
+// Returns:
+//   - positionId: existing position NFT ID processed
+//   - liquidity: liquidity delta added to the position
+//   - amount0: token0 amount actually deposited into the pool
+//   - amount1: token1 amount actually deposited into the pool
+//   - poolPath: pool identifier associated with the position
+//   - err: nil on success; non-nil when fee-growth retrieval or the position update fails
 func (p *positionV1) increaseLiquidity(_ int, rlm realm, params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string, error) {
 	caller := params.caller
 	position := p.mustGetPosition(params.positionId)
@@ -170,7 +201,14 @@ func (p *positionV1) increaseLiquidity(_ int, rlm realm, params IncreaseLiquidit
 	return params.positionId, liquidity, amount0, amount1, position.PoolKey(), nil
 }
 
-// validateTokenPath validates token paths are not identical, not conflicting, and in valid format.
+// validateTokenPath validates token paths are distinct and registered.
+//
+// Parameters:
+//   - token0: first token contract path to validate
+//   - token1: second token contract path to validate
+//
+// Returns:
+//   - err: nil when the paths differ and both are registered; errInvalidTokenPath otherwise
 func validateTokenPath(token0, token1 string) error {
 	if token0 == token1 {
 		return errors.New(errInvalidTokenPath)
@@ -181,12 +219,33 @@ func validateTokenPath(token0, token1 string) error {
 	return nil
 }
 
-// isValidTokenPath checks if the token path is registered in the system.
+// isValidTokenPath reports whether a token path is registered in the common
+// token registry.
+//
+// Parameters:
+//   - tokenPath: token contract path to look up in the registry
+//
+// Returns:
+//   - valid: true when common.IsRegistered(tokenPath) succeeds
 func isValidTokenPath(tokenPath string) bool {
 	return common.IsRegistered(tokenPath) == nil
 }
 
-// parseAmounts converts amount strings to u256.Uint values.
+// parseAmounts converts decimal amount strings to uint256 values.
+//
+// Parameters:
+//   - amount0Desired: decimal desired amount of token0
+//   - amount1Desired: decimal desired amount of token1
+//   - amount0Min: decimal minimum acceptable amount of token0
+//   - amount1Min: decimal minimum acceptable amount of token1
+//
+// Returns:
+//   - amount0DesiredUint: parsed token0 desired amount
+//   - amount1DesiredUint: parsed token1 desired amount
+//   - amount0MinUint: parsed token0 minimum amount
+//   - amount1MinUint: parsed token1 minimum amount
+//
+// Invalid decimal strings panic through u256.MustFromDecimal.
 func parseAmounts(amount0Desired, amount1Desired, amount0Min, amount1Min string) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) {
 	return u256.MustFromDecimal(amount0Desired), u256.MustFromDecimal(amount1Desired), u256.MustFromDecimal(amount0Min), u256.MustFromDecimal(amount1Min)
 }

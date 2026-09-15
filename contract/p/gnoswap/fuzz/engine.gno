@@ -21,17 +21,42 @@ const (
 // "testing" stdlib. *testing.T satisfies it structurally, so callers pass
 // their *testing.T unchanged.
 type TestingT interface {
+	// Errorf records a formatted test error and marks the test as failed.
+	//
+	// Parameters:
+	//   - format: Format string used to render the diagnostic message.
+	//   - args: Values substituted into format.
 	Errorf(format string, args ...any)
+	// Fatalf records a formatted test error and stops the current test immediately.
+	//
+	// Parameters:
+	//   - format: Format string used to render the diagnostic message.
+	//   - args: Values substituted into format.
 	Fatalf(format string, args ...any)
+	// Logf formats a diagnostic message for the test log.
+	//
+	// Parameters:
+	//   - format: Format string used to render the diagnostic message.
+	//   - args: Values substituted into format.
 	Logf(format string, args ...any)
 }
 
+// assert panics with an assertion failure when ok is false.
+//
+// Parameters:
+//   - ok: Condition that must be true for execution to continue.
 func assert(ok bool) {
 	if !ok {
 		panic("assertion failed")
 	}
 }
 
+// assertf panics with a formatted assertion failure when ok is false.
+//
+// Parameters:
+//   - ok: Condition that must be true for execution to continue.
+//   - format: Format string for the assertion failure message.
+//   - args: Values substituted into format when the assertion fails.
 func assertf(ok bool, format string, args ...any) {
 	if !ok {
 		panic(ufmt.Sprintf(format, args...))
@@ -51,6 +76,14 @@ type T struct {
 	failed   stopTest
 }
 
+// newT creates a property-test state around the supplied bit stream.
+//
+// Parameters:
+//   - s: Bit stream used to generate values for this test state.
+//   - refDraws: Optional reference values retained for draw bookkeeping; the current Gno implementation does not compare them.
+//
+// Returns:
+//   - *T: A test state initialized with s, refDraws, and no draws or failure.
 func newT(s bitStream, refDraws ...any) *T {
 	return &T{
 		s:        s,
@@ -61,24 +94,38 @@ func newT(s bitStream, refDraws ...any) *T {
 }
 
 // Logf logs a formatted message.
+//
+// Parameters:
+//   - format: Format string for the message.
+//   - args: Values substituted into format.
 func (t *T) Logf(format string, args ...any) {
 	// In Gno, we can't use log.Logger, so we just format the message
 	_ = ufmt.Sprintf(format, args...)
 }
 
 // Log logs a message.
+//
+// Parameters:
+//   - args: Values rendered as one log message.
 func (t *T) Log(args ...any) {
 	// In Gno, we can't use log.Logger
 	_ = ufmt.Sprint(args...)
 }
 
 // Skipf is equivalent to Logf followed by SkipNow.
+//
+// Parameters:
+//   - format: Format string for the skip message.
+//   - args: Values substituted into format before the test is marked invalid.
 func (t *T) Skipf(format string, args ...any) {
 	t.Logf(format, args...)
 	t.skip(ufmt.Sprintf(format, args...))
 }
 
 // Skip is equivalent to Log followed by SkipNow.
+//
+// Parameters:
+//   - args: Values rendered as the skip message before the test is marked invalid.
 func (t *T) Skip(args ...any) {
 	t.Log(args...)
 	t.skip(ufmt.Sprint(args...))
@@ -100,24 +147,38 @@ func (t *T) SkipNow() {
 }
 
 // Errorf is equivalent to Logf followed by Fail.
+//
+// Parameters:
+//   - format: Format string for the error message.
+//   - args: Values substituted into format.
 func (t *T) Errorf(format string, args ...any) {
 	t.Logf(format, args...)
 	t.fail(false, ufmt.Sprintf(format, args...))
 }
 
 // Error is equivalent to Log followed by Fail.
+//
+// Parameters:
+//   - args: Values rendered as the error message.
 func (t *T) Error(args ...any) {
 	t.Log(args...)
 	t.fail(false, ufmt.Sprint(args...))
 }
 
 // Fatalf is equivalent to Logf followed by FailNow.
+//
+// Parameters:
+//   - format: Format string for the fatal message.
+//   - args: Values substituted into format before execution stops.
 func (t *T) Fatalf(format string, args ...any) {
 	t.Logf(format, args...)
 	t.fail(true, ufmt.Sprintf(format, args...))
 }
 
 // Fatal is equivalent to Log followed by FailNow.
+//
+// Parameters:
+//   - args: Values rendered as the fatal message before execution stops.
 func (t *T) Fatal(args ...any) {
 	t.Log(args...)
 	t.fail(true, ufmt.Sprint(args...))
@@ -134,14 +195,26 @@ func (t *T) Fail() {
 }
 
 // Failed returns whether the test has failed.
+//
+// Returns:
+//   - bool: True when a failure has been recorded on t; false when the test state is still successful.
 func (t *T) Failed() bool {
 	return t.failed != ""
 }
 
+// skip marks the current test case as invalid by panicking with invalidData.
+//
+// Parameters:
+//   - msg: Explanation attached to the invalid-data panic.
 func (t *T) skip(msg string) {
 	panic(invalidData(msg))
 }
 
+// fail records msg as a test failure and optionally stops execution.
+//
+// Parameters:
+//   - now: Whether to panic immediately after recording the failure; false leaves execution running.
+//   - msg: Failure message recorded on the test state and, when now is true, propagated by the panic.
 func (t *T) fail(now bool, msg string) {
 	t.failed = stopTest(msg)
 	if now {
@@ -149,6 +222,7 @@ func (t *T) fail(now bool, msg string) {
 	}
 }
 
+// failOnError panics with the recorded failure when t has been marked failed.
 func (t *T) failOnError() {
 	if t.failed != "" {
 		panic(t.failed)
@@ -175,12 +249,21 @@ func (t *T) failOnError() {
 //	        }
 //	    })
 //	}
+//
+// Parameters:
+//   - t: Test sink receiving failure and progress messages.
+//   - prop: Property callback invoked with a newly seeded *T for each generated test case.
 func Check(t TestingT, prop func(*T)) {
 	CheckN(t, defaultChecks, prop)
 }
 
 // CheckN runs property-based tests with a specific number of checks.
 // It's like Check but allows you to specify how many random test cases to generate.
+//
+// Parameters:
+//   - t: Test sink receiving failure and progress messages.
+//   - checks: Number of valid property cases requested; invalid cases are retried up to the configured limit.
+//   - prop: Property callback invoked for each generated test state.
 func CheckN(t TestingT, checks int, prop func(*T)) {
 	seed := baseSeed()
 
@@ -215,6 +298,13 @@ func CheckN(t TestingT, checks int, prop func(*T)) {
 }
 
 // checkOnce runs the property function once and catches panics
+//
+// Parameters:
+//   - ft: Test state supplied to the property callback.
+//   - prop: Property callback to execute once.
+//
+// Returns:
+//   - err: nil when the callback completes without a recorded failure; otherwise the recovered panic value, including invalidData or a failure panic.
 func checkOnce(ft *T, prop func(*T)) (err any) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -229,6 +319,12 @@ func checkOnce(ft *T, prop func(*T)) (err any) {
 }
 
 // isInvalidData checks if the error is an invalidData type
+//
+// Parameters:
+//   - err: Value returned from a recovered property panic, or nil when no panic occurred.
+//
+// Returns:
+//   - bool: True only when err has the package's invalidData type, indicating an intentionally invalid generated case; false for nil and all other values.
 func isInvalidData(err any) bool {
 	_, ok := err.(invalidData)
 	return ok

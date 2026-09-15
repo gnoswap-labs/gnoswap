@@ -17,6 +17,10 @@ import (
 //
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - initializer: callback that receives the proxy realm context and protocol-fee store, initializes version-specific state, and returns the implementation instance
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, protocolFeeStore IProtocolFeeStore) IProtocolFee) {
 	// `cur` captured here is the protocol_fee crossing frame. The wrapping
 	// closure forwards it to the v1 initializer so any store writes the
@@ -50,6 +54,10 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, protocolF
 //
 // Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - packagePath: registered implementation package path to activate
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
 	prev := cur.Previous()

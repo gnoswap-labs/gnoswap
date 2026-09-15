@@ -11,6 +11,9 @@ const (
 )
 
 // String returns the human-readable string representation of the proposal type.
+//
+// Returns:
+//   - string: "Text", "CommunityPoolSpend", or "ParameterChange" for a known type; "Unknown" otherwise
 func (p ProposalType) String() string {
 	switch p {
 	case Text:
@@ -26,6 +29,9 @@ func (p ProposalType) String() string {
 
 // IsExecutable determines whether this proposal type can be executed.
 // Text proposals are informational only and cannot be executed.
+//
+// Returns:
+//   - bool: true for executable CommunityPoolSpend or ParameterChange types; false for Text and unknown types
 func (p ProposalType) IsExecutable() bool {
 	switch p {
 	case Text:

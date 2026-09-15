@@ -18,7 +18,17 @@ type AddLiquidityParams struct {
 	caller         address    // address to call the function
 }
 
-// addLiquidity calculates liquidity amounts and mints position tokens to a pool.
+// addLiquidity calculates liquidity from the pool price and desired amounts, then mints the resulting position liquidity.
+//
+// Parameters:
+//   - _: leading integer discriminator; callers pass 0
+//   - rlm: propagated realm context forwarded to the pool mint call
+//   - params: pool key, tick range, desired and minimum token amounts, and caller address used for the mint
+//
+// Returns:
+//   - liquidity: liquidity calculated for the supplied price range and desired amounts
+//   - amount0: actual token0 amount minted into the position after pool calculation
+//   - amount1: actual token1 amount minted into the position after pool calculation
 func (p *positionV1) addLiquidity(_ int, rlm realm, params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) {
 	sqrtPriceX96String, err := pl.GetSlot0SqrtPriceX96(params.poolKey)
 	if err != nil {

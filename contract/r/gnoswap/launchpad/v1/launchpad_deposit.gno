@@ -23,12 +23,14 @@ import (
 // DepositGns deposits GNS tokens to a launchpad project tier.
 //
 // Parameters:
-//   - targetProjectTierID: format "{projectId}:{tierType}"
-//   - depositAmount: amount of GNS to deposit
-//   - referrer: referral address (optional)
+//   - _: leading integer discriminator for the forwarded realm call; callers pass 0.
+//   - rlm: propagated realm context; the implementation validates it is the current realm.
+//   - targetProjectTierID: project-tier identifier in `{projectID}:{tierDuration}` form.
+//   - depositAmount: amount of GNS to deposit into the tier.
+//   - referrer: optional referral address associated with the deposit.
 //
 // Returns:
-//   - depositID: newly created deposit ID
+//   - depositID: identifier assigned to the newly created deposit.
 func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -108,7 +110,23 @@ func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, 
 	return deposit.ID()
 }
 
-// depositGns deposits GNS to a project tier.
+// depositGns validates conditions, creates a deposit, updates tier/reward accounting,
+// and persists the updated deposit tree.
+//
+// Parameters:
+//   - _: leading integer discriminator for the forwarded realm call; callers pass 0.
+//   - rlm: propagated realm context forwarded to store persistence.
+//   - project: project receiving the deposit.
+//   - tierDuration: selected tier duration in seconds.
+//   - depositAmount: amount of GNS to stake.
+//   - callerAddress: address whose token balance and deposit ownership are used.
+//
+// Returns:
+//   - deposit: newly created deposit, or a zero deposit when validation fails.
+//   - rewardState: initialized reward state, or nil when creation fails.
+//   - isFirstDeposit: true when this is the first deposit for the tier's reward manager.
+//   - distributeAmountPerSecondX128: Q128-scaled per-second reward rate as a decimal string.
+//   - err: non-nil when conditions, tier, reward manager, or deposit persistence fails.
 func (lp *launchpadV1) depositGns(
 	_ int,
 	rlm realm,
@@ -192,7 +210,19 @@ func (lp *launchpadV1) depositGns(
 		nil
 }
 
-// stakeGovernance stakes governance token to the project.
+// stakeGovernance stakes governance tokens for the project recipient and transfers GNS
+// from the caller to the launchpad address.
+//
+// Parameters:
+//   - _: leading integer discriminator for the forwarded realm call; callers pass 0.
+//   - rlm: propagated realm context used for cross-realm token operations.
+//   - recipient: project recipient wallet credited in governance accounting.
+//   - depositAmount: GNS amount to stake and transfer.
+//   - launchpadAddress: destination address receiving the transferred GNS.
+//   - callerAddress: address whose GNS is transferred.
+//
+// Returns:
+//   - err: nil after both operations return; underlying token or staking failures panic.
 func (lp *launchpadV1) stakeGovernance(_ int, rlm realm, recipient address, depositAmount int64, launchpadAddress address, callerAddress address) error {
 	gov_staker.SetAmountByProjectWallet(cross(rlm), recipient, depositAmount, true)
 

@@ -4,14 +4,17 @@ import (
 	"math/bits"
 )
 
-// Some utility functions
-
-// Reciprocal computes a 320-bit value representing 1/m
+// Reciprocal computes the 320-bit reciprocal estimate used by Barrett reduction.
 //
-// Notes:
-// - specialized for m[3] != 0, hence limited to 2^192 <= m < 2^256
-// - returns zero if m[3] == 0
-// - starts with a 32-bit division, refines with newton-raphson iterations
+// The implementation is specialized for a four-word modulus with m[3] non-zero
+// (2^192 <= m < 2^256). For a modulus whose most-significant word is zero it
+// returns an all-zero estimate instead of running the refinement steps.
+//
+// Parameters:
+//   - m: Four-word unsigned modulus; its most-significant word selects the supported range.
+//
+// Returns:
+//   - mu: Five little-endian uint64 words containing the reciprocal estimate for m.
 func Reciprocal(m *Uint) (mu [5]uint64) {
 	if m[3] == 0 {
 		return mu
@@ -416,10 +419,16 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 	return mu
 }
 
-// reduce4 computes the least non-negative residue of x modulo m.
+// reduce4 computes the least non-negative residue of an eight-word value modulo a
+// four-word unsigned modulus using a precomputed Barrett reciprocal.
 //
-// It requires a four-word modulus with a nonzero most-significant word
-// (`m[3] != 0`) and its inverse (`mu`).
+// Parameters:
+//   - x: Eight little-endian uint64 words representing the 512-bit value to reduce.
+//   - m: Four-word modulus with a non-zero most-significant word.
+//   - mu: Five-word reciprocal estimate produced for m by Reciprocal.
+//
+// Returns:
+//   - z: Residue x modulo m, represented as a Uint in the range [0, m).
 func reduce4(x [8]uint64, m *Uint, mu [5]uint64) (z Uint) {
 	// NB: Most variable names in the comments match the pseudocode for
 	// 	Barrett reduction in the Handbook of Applied Cryptography.

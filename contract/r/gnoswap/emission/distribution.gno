@@ -66,14 +66,15 @@ func init() {
 // application of new ratios to past emissions.
 //
 // Parameters:
-//   - liquidityStakerPct: Percentage for liquidity stakers in basis points (100 = 1%, 10000 = 100%)
-//   - devOpsPct: Percentage for devops in basis points
-//   - communityPoolPct: Percentage for community pool in basis points
-//   - govStakerPct: Percentage for governance stakers in basis points
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - liquidityStakerPct: percentage for liquidity stakers in basis points (100 = 1%, 10000 = 100%).
+//   - devOpsPct: percentage for DevOps in basis points (100 = 1%, 10000 = 100%).
+//   - communityPoolPct: percentage for the community pool in basis points (100 = 1%, 10000 = 100%).
+//   - govStakerPct: percentage for governance stakers in basis points (100 = 1%, 10000 = 100%).
 //
 // Requirements:
-//   - Percentages must sum to exactly 10000 (100%)
-//   - Each percentage must be 0-10000
+//   - Percentages must sum to exactly 10000 (100%).
+//   - Each percentage must be between 0 and 10000 inclusive.
 //
 // Example:
 //
@@ -128,7 +129,13 @@ func ChangeDistributionPct(
 	)
 }
 
-// changeDistributionPcts updates the distribution percentages for all targets.
+// changeDistributionPcts updates the basis-point distribution percentage for each target.
+//
+// Parameters:
+//   - liquidityStakerPct: validated liquidity-staker share in basis points.
+//   - devOpsPct: validated DevOps share in basis points.
+//   - communityPoolPct: validated community-pool share in basis points.
+//   - govStakerPct: validated governance-staker share in basis points.
 func changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct int64) {
 	setDistributionBpsPct(LIQUIDITY_STAKER, liquidityStakerPct)
 	setDistributionBpsPct(DEVOPS, devOpsPct)
@@ -136,6 +143,15 @@ func changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, gov
 	setDistributionBpsPct(GOV_STAKER, govStakerPct)
 }
 
+// calculateDistributableAmounts splits an amount across the configured distribution targets
+// and calculates the undistributed remainder after integer division.
+//
+// Parameters:
+//   - amount: total nonnegative GNS amount available for distribution, in token base units.
+//
+// Returns:
+//   - distributable: nonzero token amounts keyed by distribution target constant.
+//   - leftAmount: amount not assigned after applying each target's basis-point share.
 func calculateDistributableAmounts(amount int64) (map[int]int64, int64) {
 	distributable := make(map[int]int64, 0)
 	totalSent := int64(0)
@@ -154,7 +170,14 @@ func calculateDistributableAmounts(amount int64) (map[int]int64, int64) {
 	return distributable, leftAmount
 }
 
-// calculateAmount converts basis points to actual token amount.
+// calculateAmount converts a basis-point share into an integer token amount using floor division.
+//
+// Parameters:
+//   - amount: total token amount in base units; must be nonnegative and small enough to avoid multiplication overflow.
+//   - bptPct: target share in basis points, from 0 through 10000 inclusive (100 = 1%).
+//
+// Returns:
+//   - calculatedAmount: floor(amount * bptPct / 10000), or zero when bptPct is zero.
 func calculateAmount(amount, bptPct int64) int64 {
 	if amount < 0 || bptPct < 0 || bptPct > 10000 {
 		panic("invalid amount or bptPct")
@@ -174,6 +197,15 @@ func calculateAmount(amount, bptPct int64) int64 {
 	return amount * bptPct / 10000
 }
 
+// applyDistribution maps each distribution target to its configured recipient address and
+// updates the pending and historical totals for the target amounts.
+//
+// Parameters:
+//   - targets: token amounts keyed by distribution target constant.
+//
+// Returns:
+//   - amountByAddress: token amounts keyed by recipient address, aggregating amounts for a shared address.
+//   - error: nil when every target is recognized; otherwise an invalid-target error.
 func applyDistribution(targets map[int]int64) (map[address]int64, error) {
 	amountByAddress := make(map[address]int64, 0)
 
@@ -214,6 +246,15 @@ func applyDistribution(targets map[int]int64) (map[address]int64, error) {
 	return amountByAddress, nil
 }
 
+// transferToTarget forwards each recipient amount to the GNS token contract.
+//
+// Parameters:
+//   - _: leading integer discriminator for the realm-crossing ABI; pass 0.
+//   - rlm: propagated realm context used for the GNS transfer crossings.
+//   - targets: recipient addresses mapped to GNS amounts in token base units.
+//
+// Returns:
+//   - error: nil after all target transfers are invoked; this helper does not return per-transfer status.
 func transferToTarget(_ int, rlm realm, targets map[address]int64) error {
 	for address, amount := range targets {
 		gns.Transfer(cross(rlm), address, amount)
@@ -222,7 +263,14 @@ func transferToTarget(_ int, rlm realm, targets map[address]int64) error {
 	return nil
 }
 
-// GetDistributionBpsPct returns the distribution percentage in basis points for a specific target.
+// GetDistributionBpsPct returns the configured distribution percentage in basis points for a target.
+//
+// Parameters:
+//   - target: distribution target constant whose configured share is queried.
+//
+// Returns:
+//   - pct: configured target share in basis points (100 = 1%, 10000 = 100%).
+//   - error: nil when the target exists in the initialized map; otherwise an invalid-target error.
 func GetDistributionBpsPct(target int) (int64, error) {
 	if err := validateDistributionTarget(target); err != nil {
 		return 0, err
@@ -246,26 +294,45 @@ func GetDistributionBpsPct(target int) (int64, error) {
 	return pct, nil
 }
 
-// GetDistributedToStaker returns pending GNS for liquidity stakers.
+// GetDistributedToStaker returns the pending GNS amount allocated to liquidity stakers.
+//
+// Returns:
+//   - amount: pending liquidity-staker allocation in GNS base units since the last clear.
 func GetDistributedToStaker() int64 {
 	return distributedToStaker
 }
 
-// GetDistributedToDevOps returns accumulated GNS for DevOps.
+// GetDistributedToDevOps returns the GNS amount currently accumulated for DevOps.
+//
+// Returns:
+//   - amount: accumulated DevOps allocation in GNS base units.
 func GetDistributedToDevOps() int64 {
 	return distributedToDevOps
 }
 
-// GetDistributedToCommunityPool returns the amount of GNS distributed to Community Pool.
+// GetDistributedToCommunityPool returns the GNS amount currently accumulated for the community pool.
+//
+// Returns:
+//   - amount: accumulated community-pool allocation in GNS base units.
 func GetDistributedToCommunityPool() int64 {
 	return distributedToCommunityPool
 }
 
-// GetDistributedToGovStaker returns the amount of GNS distributed to governance stakers since last clear.
+// GetDistributedToGovStaker returns the pending GNS amount allocated to governance stakers.
+//
+// Returns:
+//   - amount: pending governance-staker allocation in GNS base units since the last clear.
 func GetDistributedToGovStaker() int64 {
 	return distributedToGovStaker
 }
 
+// AccumulateDistributedInfo returns the current pending allocation for every distribution target.
+//
+// Returns:
+//   - toStaker: pending GNS allocation for liquidity stakers, in token base units.
+//   - toDevOps: accumulated GNS allocation for DevOps, in token base units.
+//   - toCommunityPool: accumulated GNS allocation for the community pool, in token base units.
+//   - toGovStaker: pending GNS allocation for governance stakers, in token base units.
 func AccumulateDistributedInfo() (toStaker, toDevOps, toCommunityPool, toGovStaker int64) {
 	toStaker = GetDistributedToStaker()
 	toDevOps = GetDistributedToDevOps()
@@ -274,32 +341,55 @@ func AccumulateDistributedInfo() (toStaker, toDevOps, toCommunityPool, toGovStak
 	return
 }
 
-// GetAccuDistributedToStaker returns the total historical GNS distributed to liquidity stakers.
+// GetAccuDistributedToStaker returns the total historical GNS amount allocated to liquidity stakers.
+//
+// Returns:
+//   - amount: cumulative liquidity-staker allocation in GNS base units; this value is not cleared.
 func GetAccuDistributedToStaker() int64 {
 	return accuDistributedToStaker
 }
 
-// GetAccuDistributedToDevOps returns the total historical GNS distributed to DevOps.
+// GetAccuDistributedToDevOps returns the total historical GNS amount allocated to DevOps.
+//
+// Returns:
+//   - amount: cumulative DevOps allocation in GNS base units; this value is not cleared.
 func GetAccuDistributedToDevOps() int64 {
 	return accuDistributedToDevOps
 }
 
-// GetAccuDistributedToCommunityPool returns the total historical GNS distributed to Community Pool.
+// GetAccuDistributedToCommunityPool returns the total historical GNS amount allocated to the community pool.
+//
+// Returns:
+//   - amount: cumulative community-pool allocation in GNS base units; this value is not cleared.
 func GetAccuDistributedToCommunityPool() int64 {
 	return accuDistributedToCommunityPool
 }
 
-// GetAccuDistributedToGovStaker returns the total historical GNS distributed to governance stakers.
+// GetAccuDistributedToGovStaker returns the total historical GNS amount allocated to governance stakers.
+//
+// Returns:
+//   - amount: cumulative governance-staker allocation in GNS base units; this value is not cleared.
 func GetAccuDistributedToGovStaker() int64 {
 	return accuDistributedToGovStaker
 }
 
-// GetEmissionAmountPerSecondBy returns the emission amount per second for a given timestamp and distribution percentage.
+// GetEmissionAmountPerSecondBy returns the GNS emission rate per second for a timestamp and target share.
+//
+// Parameters:
+//   - timestamp: Unix timestamp at which the base emission rate is queried.
+//   - distributionPct: target share in basis points, from 0 through 10000 inclusive.
+//
+// Returns:
+//   - amountPerSecond: target's GNS emission rate in token base units per second, or zero outside the schedule.
 func GetEmissionAmountPerSecondBy(timestamp, distributionPct int64) int64 {
 	return calculateAmount(gns.GetEmissionAmountPerSecondByTimestamp(timestamp), distributionPct)
 }
 
-// GetStakerEmissionAmountPerSecond returns the current per-second emission amount allocated to liquidity stakers.
+// GetStakerEmissionAmountPerSecond returns the current GNS emission rate allocated to liquidity stakers.
+//
+// Returns:
+//   - amountPerSecond: current liquidity-staker emission rate in GNS base units per second.
+//   - error: nil when the liquidity-staker distribution share is available; otherwise the target lookup error.
 func GetStakerEmissionAmountPerSecond() (int64, error) {
 	currentTimestamp := time.Now().Unix()
 	pct, err := GetDistributionBpsPct(LIQUIDITY_STAKER)
@@ -309,7 +399,16 @@ func GetStakerEmissionAmountPerSecond() (int64, error) {
 	return GetEmissionAmountPerSecondBy(currentTimestamp, pct), nil
 }
 
-// GetStakerEmissionAmountPerSecondInRange returns emission amounts allocated to liquidity stakers for a time range.
+// GetStakerEmissionAmountPerSecondInRange returns liquidity-staker emission-rate change points in a time range.
+//
+// Parameters:
+//   - start: inclusive start Unix timestamp for the range.
+//   - end: inclusive end Unix timestamp for the range.
+//
+// Returns:
+//   - timestamps: ordered timestamps in the range where the base emission rate changes.
+//   - amountsPerSecond: liquidity-staker GNS rates corresponding to timestamps, in token base units per second.
+//   - error: nil when the liquidity-staker distribution share is available; otherwise the target lookup error.
 func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64, error) {
 	gnsHalvingBlocks, gnsHalvingEmissions := gns.GetEmissionAmountPerSecondInRange(start, end)
 	halvingBlocks := make([]int64, len(gnsHalvingBlocks))
@@ -331,6 +430,9 @@ func GetStakerEmissionAmountPerSecondInRange(start, end int64) ([]int64, []int64
 
 // ClearDistributedToStaker resets the pending distribution amount for liquidity stakers.
 //
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//
 // Only callable by staker contract.
 func ClearDistributedToStaker(cur realm) {
 	caller := cur.Previous().Address()
@@ -341,6 +443,9 @@ func ClearDistributedToStaker(cur realm) {
 
 // ClearDistributedToGovStaker resets the pending distribution amount for governance stakers.
 //
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//
 // Only callable by governance staker contract.
 func ClearDistributedToGovStaker(cur realm) {
 	caller := cur.Previous().Address()
@@ -348,8 +453,12 @@ func ClearDistributedToGovStaker(cur realm) {
 	distributedToGovStaker = 0
 }
 
-// setDistributionBpsPct changes percentage of each target for how much GNS it will get by emission.
-// Creates new map if nil.
+// setDistributionBpsPct stores a target's distribution share in the basis-point map.
+// It creates the map when the package has not initialized it.
+//
+// Parameters:
+//   - target: distribution target constant whose share is updated.
+//   - pct: target share in basis points (100 = 1%; validation is performed by the caller).
 func setDistributionBpsPct(target int, pct int64) {
 	if distributionBpsPct == nil {
 		distributionBpsPct = make(map[int]int64)
@@ -358,7 +467,13 @@ func setDistributionBpsPct(target int, pct int64) {
 	distributionBpsPct[target] = pct
 }
 
-// targetToStr converts target constant to string representation.
+// targetToStr converts a distribution target constant to its event/log string.
+//
+// Parameters:
+//   - target: distribution target constant to convert.
+//
+// Returns:
+//   - name: target name, or "UNKNOWN" when target is not recognized.
 func targetToStr(target int) string {
 	switch target {
 	case LIQUIDITY_STAKER:

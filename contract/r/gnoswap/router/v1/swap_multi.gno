@@ -8,6 +8,17 @@ import (
 )
 
 // multiSwap performs a multi-hop exact-input swap in forward order.
+//
+// Parameters:
+//   - _: leading call discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool interaction and callbacks
+//   - sp: current hop's token, fee, recipient, and signed amount parameters
+//   - numPools: number of pool hops in swapPath
+//   - swapPath: POOL_SEPARATOR-delimited route path
+//
+// Returns:
+//   - amountIn: input amount consumed by the first hop
+//   - amountOut: output amount produced by the final hop
 func (r *routerV1) multiSwap(_ int, rlm realm, sp SwapParams, numPools int, swapPath string) (int64, int64) {
 	payer := rlm.Previous().Address()
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
@@ -45,14 +56,34 @@ func (r *routerV1) multiSwap(_ int, rlm realm, sp SwapParams, numPools int, swap
 	}
 }
 
-// multiSwapNegative performs a multi-hop exact-output swap. It first quotes
-// every hop backward, then executes the collected swaps forward.
+// multiSwapNegative performs a multi-hop exact-output swap by quoting backward then executing forward.
+//
+// Parameters:
+//   - _: leading call discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool interaction and callbacks
+//   - sp: final-hop token, fee, recipient, and requested output parameters
+//   - numPools: number of pool hops in swapPath
+//   - swapPath: POOL_SEPARATOR-delimited route path
+//
+// Returns:
+//   - amountIn: input amount consumed by the first hop
+//   - amountOut: output amount produced by the final hop
 func (r *routerV1) multiSwapNegative(_ int, rlm realm, sp SwapParams, numPools int, swapPath string) (int64, int64) {
 	swapInfo := r.collectBackwardDrySwapInfo(sp.SingleSwapParams, numPools, swapPath)
 	return r.executeCollectedSwaps(0, rlm, swapInfo, sp.recipient)
 }
 
 // multiDrySwap simulates a multi-hop exact-input swap in forward order.
+//
+// Parameters:
+//   - sp: current hop's token, fee, and signed amount parameters
+//   - numPools: number of pool hops in swapPath
+//   - swapPath: POOL_SEPARATOR-delimited route path
+//
+// Returns:
+//   - amountIn: input amount the first hop would consume
+//   - amountOut: output amount the final hop would produce
+//   - err: nil on successful simulation; full-consumption validation error otherwise (pool query failures panic)
 func (r *routerV1) multiDrySwap(sp SingleSwapParams, numPools int, swapPath string) (int64, int64, error) {
 	firstAmountIn := int64(0)
 
@@ -87,13 +118,30 @@ func (r *routerV1) multiDrySwap(sp SingleSwapParams, numPools int, swapPath stri
 }
 
 // multiDrySwapNegative simulates a multi-hop exact-output swap.
-// It first quotes every hop backward, then simulates the collected swaps forward.
+//
+// Parameters:
+//   - sp: final-hop token, fee, and requested output parameters
+//   - numPools: number of pool hops in swapPath
+//   - swapPath: POOL_SEPARATOR-delimited route path
+//
+// Returns:
+//   - amountIn: input amount the first hop would consume
+//   - amountOut: output amount the final hop would produce
+//   - err: nil on successful simulation; full-consumption validation error otherwise (pool query failures panic)
 func (r *routerV1) multiDrySwapNegative(sp SingleSwapParams, numPools int, swapPath string) (int64, int64, error) {
 	swapInfo := r.collectBackwardDrySwapInfo(sp, numPools, swapPath)
 	return r.executeCollectedDrySwaps(swapInfo)
 }
 
-// collectBackwardDrySwapInfo quotes an exact-output route backward before real execution.
+// collectBackwardDrySwapInfo quotes each exact-output hop from final to first.
+//
+// Parameters:
+//   - sp: final-hop token, fee, and requested output parameters
+//   - numPools: number of pool hops in swapPath
+//   - swapPath: POOL_SEPARATOR-delimited route path
+//
+// Returns:
+//   - swapInfo: hop parameters with amounts filled for forward exact-output execution
 func (r *routerV1) collectBackwardDrySwapInfo(sp SingleSwapParams, numPools int, swapPath string) []SingleSwapParams {
 	swapInfo := make([]SingleSwapParams, 0, numPools)
 
@@ -116,7 +164,17 @@ func (r *routerV1) collectBackwardDrySwapInfo(sp SingleSwapParams, numPools int,
 	return swapInfo
 }
 
-// executeCollectedSwaps executes the backward-quoted exact-output swaps in forward order.
+// executeCollectedSwaps executes backward-collected exact-output hops in forward order.
+//
+// Parameters:
+//   - _: leading call discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool interaction and callbacks
+//   - swapInfo: ordered hop parameters collected by collectBackwardDrySwapInfo
+//   - recipient: address receiving the final output
+//
+// Returns:
+//   - amountIn: input amount consumed by the first hop
+//   - amountOut: output amount produced by the final hop
 func (r *routerV1) executeCollectedSwaps(_ int, rlm realm, swapInfo []SingleSwapParams, recipient address) (int64, int64) {
 	payer := rlm.Previous().Address()
 	routerAddr := access.MustGetAddress(prbac.ROLE_ROUTER.String())
@@ -154,6 +212,15 @@ func (r *routerV1) executeCollectedSwaps(_ int, rlm realm, swapInfo []SingleSwap
 	return firstAmountIn, 0
 }
 
+// executeCollectedDrySwaps simulates collected exact-output hops in forward order.
+//
+// Parameters:
+//   - swapInfo: ordered hop parameters collected by collectBackwardDrySwapInfo
+//
+// Returns:
+//   - amountIn: input amount the first hop would consume
+//   - amountOut: output amount the final hop would produce
+//   - err: nil on successful simulation; full-consumption validation error otherwise (pool query failures panic)
 func (r *routerV1) executeCollectedDrySwaps(swapInfo []SingleSwapParams) (int64, int64, error) {
 	firstAmountIn := int64(0)
 

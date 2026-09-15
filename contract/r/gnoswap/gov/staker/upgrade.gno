@@ -4,15 +4,14 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-// RegisterInitializer registers an implementation.
-// This function is called by each implementation version during init.
+// RegisterInitializer registers an implementation initializer for this realm.
+// Each implementation version calls it during initialization. The callback
+// receives the current realm context and shared gov/staker store so it can
+// construct the versioned implementation.
 //
-// The initializer function creates a new instance of the implementation
-// using the provided IGovStakerStore. It receives a realm value that
-// resolves to the gov/staker proxy realm — the only address with write
-// permission on the shared KV store — so any per-version store
-// bootstrapping performed inside the initializer passes the proxy's
-// authorization check.
+// Parameters:
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - initializer: callback invoked with discriminator 0, validated propagated realm context, and IGovStakerStore, returning the implementation
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, govStakerStore IGovStakerStore) IGovStaker) {
 	// `cur` captured here is the gov/staker crossing frame. The wrapping
 	// closure forwards it to the v1 initializer so any store writes the
@@ -40,8 +39,12 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, govStaker
 	}
 }
 
-// UpgradeImpl upgrades the implementation to a new version
-// Only admin or governance can call this function
+// UpgradeImpl upgrades the active implementation to packagePath.
+// Only admin or governance can call this function.
+//
+// Parameters:
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - packagePath: package path of the implementation version to activate
 func UpgradeImpl(cur realm, packagePath string) {
 	// Check admin or governance permission
 	prev := cur.Previous()

@@ -12,7 +12,15 @@ import (
 
 const maxDurationOneYear = int64(365 * 86400) // 31,536,000 seconds
 
-// expected to be called by governance
+// modifyWarmup updates one warmup tier duration while enforcing schedule bounds; it is expected to be called by governance.
+//
+// Parameters:
+//   - warmupTemplate: Warmup tiers to modify.
+//   - index: Zero-based tier index to update; out-of-range values panic.
+//   - timeDuration: New tier duration in seconds; non-final tiers are limited to one year and the final tier must use math.MaxInt64.
+//
+// Returns:
+//   - warmups: The warmup template with the selected tier's duration updated; the final tier is returned unchanged.
 func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) []sr.Warmup {
 	if index >= len(warmupTemplate) {
 		panic(ufmt.Sprintf("index(%d) is out of range", index))
@@ -42,6 +50,14 @@ func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) []s
 	return warmupTemplate
 }
 
+// instantiateWarmup creates a position-specific warmup schedule from a template.
+//
+// Parameters:
+//   - warmupTemplate: Template tiers whose durations and ratios define the schedule.
+//   - currentTime: Position start time in Unix seconds from which tier end times are calculated.
+//
+// Returns:
+//   - warmups: New warmup slice with cumulative NextWarmupTime values derived from currentTime.
 func instantiateWarmup(warmupTemplate []sr.Warmup, currentTime int64) []sr.Warmup {
 	warmups := make([]sr.Warmup, 0, len(warmupTemplate))
 	for i, warmup := range warmupTemplate {
@@ -57,6 +73,17 @@ func instantiateWarmup(warmupTemplate []sr.Warmup, currentTime int64) []sr.Warmu
 	return warmups
 }
 
+// applyWarmup splits a position's proportional pool reward into credited reward and warmup penalty.
+//
+// Parameters:
+//   - warmup: Warmup tier whose ratio determines the reward/penalty split.
+//   - poolReward: Reward amount available for the pool interval in token smallest units.
+//   - positionLiquidity: Position liquidity used to determine its share of poolReward.
+//   - stakedLiquidity: Total in-range staked liquidity used as the allocation denominator; zero yields two zero results.
+//
+// Returns:
+//   - reward: Position reward after applying warmup.WarmupRatio percent.
+//   - penalty: Portion withheld by the warmup, equal to the complementary percentage.
 func applyWarmup(warmup sr.Warmup, poolReward int64, positionLiquidity, stakedLiquidity *u256.Uint) (int64, int64) {
 	if stakedLiquidity.IsZero() {
 		return 0, 0
@@ -87,6 +114,13 @@ func applyWarmup(warmup sr.Warmup, poolReward int64, positionLiquidity, stakedLi
 }
 
 // safeAddTime performs safe addition with overflow protection
+//
+// Parameters:
+//   - currentTime: Base timestamp in Unix seconds.
+//   - duration: Duration in seconds to add; math.MaxInt64 is treated as an unbounded end time.
+//
+// Returns:
+//   - endTime: Checked sum of currentTime and duration, saturated at math.MaxInt64 for the unbounded duration or positive overflow.
 func safeAddTime(currentTime, duration int64) int64 {
 	if duration == math.MaxInt64 {
 		return math.MaxInt64

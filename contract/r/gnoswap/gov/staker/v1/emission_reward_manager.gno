@@ -13,11 +13,31 @@ type EmissionRewardManagerResolver struct {
 	*staker.EmissionRewardManager
 }
 
+// NewEmissionRewardManagerResolver wraps an emission reward manager with reward
+// calculation and stake-accounting helpers.
+//
+// Parameters:
+//   - emissionRewardManager: manager state to resolve and mutate.
+//
+// Returns:
+//   - *EmissionRewardManagerResolver: resolver backed by emissionRewardManager.
 func NewEmissionRewardManagerResolver(emissionRewardManager *staker.EmissionRewardManager) *EmissionRewardManagerResolver {
 	return &EmissionRewardManagerResolver{emissionRewardManager}
 }
 
 // GetClaimableRewardAmount calculates the claimable reward amount for a specific address.
+//
+// Parameters:
+//   - currentDistributedAmount: total emission amount distributed to the staker
+//     manager at the current observation point.
+//   - address: reward-state identifier whose claimable amount is requested.
+//   - currentTimestamp: Unix timestamp used to settle the address's reward state.
+//
+// Returns:
+//   - int64: emission reward currently claimable by address, or zero when no
+//     reward state exists.
+//   - error: nil on success; an error from accumulated-reward or reward-state
+//     resolution when calculation fails.
 func (self *EmissionRewardManagerResolver) GetClaimableRewardAmount(
 	currentDistributedAmount int64,
 	address string,
@@ -41,6 +61,15 @@ func (self *EmissionRewardManagerResolver) GetClaimableRewardAmount(
 }
 
 // calculateAccumulatedRewardX128PerStake calculates the updated accumulated reward per stake.
+//
+// Parameters:
+//   - currentDistributedAmount: total emission amount distributed at the current
+//     observation point.
+//   - currentTimestamp: Unix timestamp at which the accumulator is evaluated.
+//
+// Returns:
+//   - *u256.Uint: accumulated emission reward per stake scaled by 2^128.
+//   - error: nil; this calculation currently has no explicit error path.
 func (self *EmissionRewardManagerResolver) calculateAccumulatedRewardX128PerStake(
 	currentDistributedAmount int64,
 	currentTimestamp int64,
@@ -78,7 +107,15 @@ func (self *EmissionRewardManagerResolver) calculateAccumulatedRewardX128PerStak
 
 // updateAccumulatedRewardX128PerStake updates the internal accumulated reward state.
 // This method should be called before any stake changes to ensure accurate reward calculations.
-// Updates accumulated reward per stake with current distribution data.
+//
+// Parameters:
+//   - currentDistributedAmount: total emission amount distributed at the current
+//     observation point.
+//   - currentTimestamp: Unix timestamp used as the manager's accumulation cursor.
+//
+// Returns:
+//   - error: nil when the state is updated or the timestamp is older than the
+//     current cursor; otherwise the calculation error.
 func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 	currentDistributedAmount int64,
 	currentTimestamp int64,
@@ -106,7 +143,15 @@ func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 
 // addStake adds a stake for an address and updates their reward state.
 // This method ensures rewards are properly calculated before the stake change.
-// Adds stake for specified address and updates reward calculations.
+//
+// Parameters:
+//   - address: reward-state identifier receiving the stake.
+//   - amount: non-negative stake amount to add.
+//   - currentTimestamp: Unix timestamp at which the stake is added.
+//
+// Returns:
+//   - error: nil on success; an error when amount is negative, reward state
+//     resolution fails, or total stake would overflow.
 func (self *EmissionRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
 	if amount < 0 {
 		return errors.New(errAmountMustBeNonNegative)
@@ -140,7 +185,15 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 
 // removeStake removes a stake for an address and updates their reward state.
 // This method ensures rewards are properly calculated before the stake change.
-// Removes stake for specified address and updates reward calculations.
+//
+// Parameters:
+//   - address: reward-state identifier whose stake is reduced.
+//   - amount: non-negative stake amount to remove.
+//   - currentTimestamp: Unix timestamp at which the stake is removed.
+//
+// Returns:
+//   - error: nil on success; an error when amount is negative, exceeds total
+//     stake, or reward-state resolution fails.
 func (self *EmissionRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
 	if amount < 0 {
 		return errors.New(errAmountMustBeNonNegative)
@@ -178,7 +231,16 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 
 // claimRewards processes reward claiming for an address.
 // This method calculates and returns the amount of rewards claimed.
-// Claims available rewards for specified address.
+//
+// Parameters:
+//   - address: reward-state identifier whose emission rewards are claimed.
+//   - currentTimestamp: Unix timestamp used to settle the reward state.
+//
+// Returns:
+//   - claimedRewardAmount: whole-unit emission reward amount claimed; zero when
+//     no reward state exists or an error prevents claiming.
+//   - err: nil on success; an error returned while resolving or updating the
+//     address's reward state.
 func (self *EmissionRewardManagerResolver) claimRewards(address string, currentTimestamp int64) (claimedRewardAmount int64, err error) {
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil || !ok {
@@ -195,18 +257,37 @@ func (self *EmissionRewardManagerResolver) claimRewards(address string, currentT
 	return claimedRewardAmount, nil
 }
 
+// setRewardStates persists the reward state for an address in the manager.
+//
+// Parameters:
+//   - address: reward-state identifier to update.
+//   - rewardState: updated emission reward state to store.
 func (self *EmissionRewardManagerResolver) setRewardStates(address string, rewardState *staker.EmissionRewardState) {
 	self.SetRewardState(address, rewardState)
 }
 
+// setAccumulatedRewardX128PerStake updates the manager's accumulated emission
+// reward per stake value.
+//
+// Parameters:
+//   - accumulatedRewardX128PerStake: new Q128-scaled accumulated reward per
+//     stake.
 func (self *EmissionRewardManagerResolver) setAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake *u256.Uint) {
 	self.SetAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake)
 }
 
+// setDistributedAmount updates the manager's total distributed emission cursor.
+//
+// Parameters:
+//   - distributedAmount: total emission amount recorded as distributed.
 func (self *EmissionRewardManagerResolver) setDistributedAmount(distributedAmount int64) {
 	self.SetDistributedAmount(distributedAmount)
 }
 
+// setAccumulatedTimestamp updates the manager's timestamp cursor.
+//
+// Parameters:
+//   - accumulatedTimestamp: Unix timestamp represented by the accumulated state.
 func (self *EmissionRewardManagerResolver) setAccumulatedTimestamp(accumulatedTimestamp int64) {
 	self.SetAccumulatedTimestamp(accumulatedTimestamp)
 }

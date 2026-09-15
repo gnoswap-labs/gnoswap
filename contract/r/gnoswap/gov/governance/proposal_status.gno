@@ -19,7 +19,7 @@ const (
 // String returns the string representation of ProposalStatusType for display purposes.
 //
 // Returns:
-//   - string: human-readable status name
+//   - string: lowercase status name, or "unknown" for an unrecognized value
 func (s ProposalStatusType) String() string {
 	switch s {
 	case StatusUpcoming:
@@ -51,6 +51,15 @@ type ProposalStatus struct {
 	voteStatus   *ProposalVoteStatus     // Voting tallies and requirements
 }
 
+// NewProposalStatusBy combines schedule, action, and vote state into a proposal status.
+//
+// Parameters:
+//   - schedule: time-based lifecycle schedule for the proposal
+//   - actionStatus: execution and cancellation state for the proposal
+//   - voteStatus: vote tallies and voting requirements for the proposal
+//
+// Returns:
+//   - *ProposalStatus: status object containing the supplied lifecycle components
 func NewProposalStatusBy(
 	schedule *ProposalScheduleStatus,
 	actionStatus *ProposalActionStatus,
@@ -64,9 +73,23 @@ func NewProposalStatusBy(
 }
 
 /* Getter methods */
-func (s *ProposalStatus) Schedule() *ProposalScheduleStatus   { return s.schedule }
+// Schedule returns the proposal's time-based scheduling state.
+//
+// Returns:
+//   - *ProposalScheduleStatus: schedule containing proposal lifecycle timestamps
+func (s *ProposalStatus) Schedule() *ProposalScheduleStatus { return s.schedule }
+
+// ActionStatus returns the proposal's execution and cancellation state.
+//
+// Returns:
+//   - *ProposalActionStatus: action state associated with the proposal
 func (s *ProposalStatus) ActionStatus() *ProposalActionStatus { return s.actionStatus }
-func (s *ProposalStatus) VoteStatus() *ProposalVoteStatus     { return s.voteStatus }
+
+// VoteStatus returns the proposal's vote tallies and voting requirements.
+//
+// Returns:
+//   - *ProposalVoteStatus: vote state associated with the proposal
+func (s *ProposalStatus) VoteStatus() *ProposalVoteStatus { return s.voteStatus }
 
 /* Delegation getters for vote data */
 
@@ -86,7 +109,11 @@ func (s *ProposalStatus) NoWeight() int64 {
 	return s.voteStatus.NoWeight()
 }
 
-// Clone creates a deep copy of the ProposalStatus.
+// Clone creates a deep copy of the ProposalStatus, or nil when the
+// receiver is nil.
+//
+// Returns:
+//   - *ProposalStatus: independent copy of the status, or nil for a nil receiver
 func (s *ProposalStatus) Clone() *ProposalStatus {
 	if s == nil {
 		return nil

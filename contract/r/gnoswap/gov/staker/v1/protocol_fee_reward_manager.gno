@@ -19,6 +19,13 @@ type ProtocolFeeRewardManagerResolver struct {
 	*staker.ProtocolFeeRewardManager
 }
 
+// NewProtocolFeeRewardManagerResolver wraps the shared protocol-fee reward manager.
+//
+// Parameters:
+//   - manager: Protocol-fee reward state to resolve and mutate.
+//
+// Returns:
+//   - *ProtocolFeeRewardManagerResolver: resolver operating on manager's accounting state.
 func NewProtocolFeeRewardManagerResolver(manager *staker.ProtocolFeeRewardManager) *ProtocolFeeRewardManagerResolver {
 	return &ProtocolFeeRewardManagerResolver{
 		ProtocolFeeRewardManager: manager,
@@ -29,6 +36,13 @@ func NewProtocolFeeRewardManagerResolver(manager *staker.ProtocolFeeRewardManage
 //
 // epoch is the accrual epoch protocol_fee just opened for this change, so it must not
 // be older than the epoch in force.
+// Parameters:
+//   - rewardID: Identifier of the staker reward state to increase.
+//   - amount: Positive stake amount added to the reward state.
+//   - epoch: Accrual epoch from which the added stake participates; must not precede the current epoch.
+//
+// Returns:
+//   - error: nil on success; non-nil when amount/epoch is invalid, totals overflow, or reward-state storage fails.
 func (self *ProtocolFeeRewardManagerResolver) addStake(rewardID string, amount int64, epoch int64) error {
 	if amount <= 0 {
 		return errors.New(errAmountMustBePositive)
@@ -62,6 +76,13 @@ func (self *ProtocolFeeRewardManagerResolver) addStake(rewardID string, amount i
 }
 
 // removeStake records that rewardID staked amount less from epoch on.
+// Parameters:
+//   - rewardID: Identifier of the staker reward state to decrease.
+//   - amount: Non-negative stake amount removed from the reward state.
+//   - epoch: Accrual epoch from which the removed stake stops participating; must not precede the current epoch.
+//
+// Returns:
+//   - error: nil on success; non-nil when amount/epoch is invalid, removal exceeds total stake, or state storage fails.
 func (self *ProtocolFeeRewardManagerResolver) removeStake(rewardID string, amount int64, epoch int64) error {
 	if amount < 0 {
 		return errors.New(errAmountMustBeNonNegative)
@@ -94,6 +115,11 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(rewardID string, amoun
 	return nil
 }
 
+// recordTotalStakedAmount records the aggregate stake for an accrual epoch.
+//
+// Parameters:
+//   - epoch: Epoch at which the aggregate stake becomes effective.
+//   - totalStakedAmount: Aggregate stake amount effective from epoch.
 func (self *ProtocolFeeRewardManagerResolver) recordTotalStakedAmount(epoch int64, totalStakedAmount int64) {
 	self.SetCurrentEpoch(epoch)
 	self.SetTotalStakedAmount(totalStakedAmount)
@@ -107,6 +133,15 @@ func (self *ProtocolFeeRewardManagerResolver) recordTotalStakedAmount(epoch int6
 // dropped, the same policy the emission accumulator applies. exhausted reports that
 // no bucket is left pending, which lets the accumulator mark every closed epoch as
 // fully folded.
+// Parameters:
+//   - tokenPath: Token path whose pending protocol-fee buckets are folded.
+//   - epochs: Pending bucket epochs in ascending order, parallel to amounts.
+//   - amounts: Fee amounts for epochs, in the token's smallest unit.
+//   - exhausted: Whether the supplied buckets are the complete pending set.
+//   - currentTimestamp: Unix timestamp saved as the latest accumulation time.
+//
+// Returns:
+//   - error: nil on success; non-nil when bucket lengths/order/values are invalid or accumulator state cannot be updated.
 func (self *ProtocolFeeRewardManagerResolver) applyAccrualBuckets(
 	tokenPath string,
 	epochs []int64,
@@ -183,6 +218,14 @@ func (self *ProtocolFeeRewardManagerResolver) applyAccrualBuckets(
 // is what an exhaustive fold would leave behind. A query uses the latter so that it
 // reports what a collect would pay even when a previous bounded fold consumed exactly
 // its limit and left foldedEpoch behind the epoch in force.
+// Parameters:
+//   - tokenPath: Token path whose accumulator is projected.
+//   - pendingEpochs: Pending bucket epochs parallel to pendingAmounts.
+//   - pendingAmounts: Pending fee amounts parallel to pendingEpochs.
+//   - pendingComplete: Whether the pending arrays represent the token's complete pending set.
+//
+// Returns:
+//   - *protocolFeeAccumulatorView: read-only projection used to settle or quote rewards without persisting the projection.
 func (self *ProtocolFeeRewardManagerResolver) accumulatorView(tokenPath string, pendingEpochs []int64, pendingAmounts []int64, pendingComplete bool) *protocolFeeAccumulatorView {
 	view := &protocolFeeAccumulatorView{
 		extraEpochs:  []int64{},
@@ -226,6 +269,14 @@ func (self *ProtocolFeeRewardManagerResolver) accumulatorView(tokenPath string, 
 
 // claimTokenReward settles tokenPath for rewardID and returns the reward collected.
 // See ProtocolFeeRewardStateResolver.claimTokenReward for the maxEvents bound.
+// Parameters:
+//   - rewardID: Identifier of the staker whose token reward is settled.
+//   - tokenPath: Token path whose protocol-fee reward is collected.
+//   - maxEvents: Maximum reward-state events to process; zero uses the unbounded claim path.
+//
+// Returns:
+//   - int64: protocol-fee reward collected for tokenPath in token base units.
+//   - error: nil on success; non-nil when reward-state event processing fails.
 func (self *ProtocolFeeRewardManagerResolver) claimTokenReward(rewardID string, tokenPath string, maxEvents int64) (int64, error) {
 	rewardState, ok, err := self.GetRewardState(rewardID)
 	if err != nil {
@@ -249,6 +300,13 @@ func (self *ProtocolFeeRewardManagerResolver) claimTokenReward(rewardID string, 
 // claimRewards settles every folded token for rewardID and returns the reward
 // collected per token. Its cost grows with the number of tokens that ever collected a
 // fee; claimTokenReward is the bounded alternative.
+// Parameters:
+//   - rewardID: Identifier of the staker whose rewards are settled.
+//   - currentTimestamp: Unix timestamp recorded as the staker's latest claim time.
+//
+// Returns:
+//   - map[string]int64: collected protocol-fee amounts keyed by token path.
+//   - error: nil on success; non-nil when reward-state lookup or token settlement fails.
 func (self *ProtocolFeeRewardManagerResolver) claimRewards(rewardID string, currentTimestamp int64) (map[string]int64, error) {
 	rewards := make(map[string]int64)
 
@@ -281,6 +339,15 @@ func (self *ProtocolFeeRewardManagerResolver) claimRewards(rewardID string, curr
 
 // GetClaimableRewardAmount returns what collecting tokenPath for rewardID would pay,
 // with the given pending buckets projected on top of the accumulator.
+// Parameters:
+//   - rewardID: Identifier of the staker whose claimable reward is quoted.
+//   - tokenPath: Token path whose claimable protocol-fee reward is quoted.
+//   - pendingEpochs: Pending bucket epochs projected on the accumulator.
+//   - pendingAmounts: Pending fee amounts parallel to pendingEpochs.
+//
+// Returns:
+//   - int64: protocol-fee amount that collecting tokenPath would pay in token base units.
+//   - error: nil on success; non-nil when reward-state lookup or projection fails.
 func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmount(rewardID string, tokenPath string, pendingEpochs []int64, pendingAmounts []int64) (int64, error) {
 	rewardState, ok, err := self.GetRewardState(rewardID)
 	if err != nil {
@@ -295,6 +362,14 @@ func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmount(rewardID 
 	return resolvedState.getClaimableReward(tokenPath, self.accumulatorView(tokenPath, pendingEpochs, pendingAmounts, true)), nil
 }
 
+// maxInt64 returns the greater of two signed 64-bit values.
+//
+// Parameters:
+//   - a: First signed 64-bit value.
+//   - b: Second signed 64-bit value.
+//
+// Returns:
+//   - int64: a when a is greater; otherwise b.
 func maxInt64(a, b int64) int64 {
 	if a > b {
 		return a
@@ -302,6 +377,14 @@ func maxInt64(a, b int64) int64 {
 	return b
 }
 
+// minInt64 returns the lesser of two signed 64-bit values.
+//
+// Parameters:
+//   - a: First signed 64-bit value.
+//   - b: Second signed 64-bit value.
+//
+// Returns:
+//   - int64: a when a is less; otherwise b.
 func minInt64(a, b int64) int64 {
 	if a < b {
 		return a

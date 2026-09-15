@@ -22,19 +22,21 @@ import (
 // CreateProject creates a new launchpad project with tiered allocations.
 //
 // Parameters:
-//   - name: project name
-//   - tokenPath: reward token contract path
-//   - recipient: project recipient address
-//   - depositAmount: amount of tokens to deposit
-//   - conditionTokens: `*PAD*`-separated token paths for conditions
-//   - conditionAmounts: `*PAD*`-separated minimum amounts for conditions
-//   - tier30Ratio: allocation ratio for 30-day tier
-//   - tier90Ratio: allocation ratio for 90-day tier
-//   - tier180Ratio: allocation ratio for 180-day tier
-//   - startTime: unix timestamp for project start
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the launchpad proxy.
+//   - name: project name, limited by the project validation rules.
+//   - tokenPath: reward token contract path whose balance is deposited into the project.
+//   - recipient: project recipient address recorded for authorization and later collection.
+//   - depositAmount: amount of reward tokens to deposit into the project.
+//   - conditionTokens: `*PAD*`-separated token paths for eligibility conditions.
+//   - conditionAmounts: `*PAD*`-separated minimum balances aligned with conditionTokens.
+//   - tier30Ratio: percentage of the allocation assigned to the 30-day tier.
+//   - tier90Ratio: percentage of the allocation assigned to the 90-day tier.
+//   - tier180Ratio: percentage of the allocation assigned to the 180-day tier.
+//   - startTime: project start timestamp in Unix seconds, subject to the minimum delay.
 //
 // Returns:
-//   - projectID: newly created launchpad project ID
+//   - projectID: newly created launchpad project identifier.
 //
 // Only callable by admin or governance.
 func (lp *launchpadV1) CreateProject(
@@ -152,10 +154,16 @@ func (lp *launchpadV1) CreateProject(
 	return project.ID()
 }
 
-// createProject creates a new project with the given parameters.
-// This function validates the input parameters, creates the project structure,
-// and sets up the project tiers and reward managers.
-// Returns the created project and any error.
+// createProject validates parameters, builds a project with its tiers and reward managers, and persists the resulting state.
+//
+// Parameters:
+//   - _: leading integer discriminator; this helper is invoked with 0.
+//   - rlm: propagated current realm context passed to store setters for validation.
+//   - params: validated project creation values, including metadata, allocation ratios, conditions, and runtime timestamps.
+//
+// Returns:
+//   - project: created project pointer; nil when validation or a state write fails.
+//   - err: nil on successful creation; non-nil when inputs are invalid, the project is duplicated, or state persistence fails.
 func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectParams) (*launchpad.Project, error) {
 	if err := params.validate(); err != nil {
 		return nil, err
@@ -254,11 +262,13 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 // claims are excluded from the transfer.
 //
 // Parameters:
-//   - projectID: ID of the ended project
-//   - recipient: address that receives the remaining project-token balance
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the launchpad proxy.
+//   - projectID: ID of the ended project.
+//   - recipient: address that receives the remaining project-token balance.
 //
 // Returns:
-//   - amount: amount of project-token balance transferred to the recipient
+//   - amount: amount of project-token balance transferred to the recipient.
 func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64 {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -317,10 +327,19 @@ func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectI
 	return projectLeftReward
 }
 
-// transferLeftFromProject transfers the remaining rewards of a project to a specified recipient.
-// This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
-// It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
-// Returns the amount of rewards transferred to the recipient and any error.
+// transferLeftFromProject validates and transfers the refundable balance of an ended project.
+// Active depositor claims are reserved before the remaining project balance is sent.
+//
+// Parameters:
+//   - _: leading integer discriminator; this helper is invoked with 0.
+//   - rlm: propagated current realm context used for the token transfer.
+//   - project: ended project whose tier balances are settled.
+//   - recipient: address receiving the refundable project-token balance.
+//   - currentTime: current timestamp in Unix seconds used to verify that the project has ended.
+//
+// Returns:
+//   - amount: project-token balance transferred after reserving active claims; zero when no transfer is made.
+//   - err: nil on a successful settlement; non-nil when validation, reward accounting, or balance invariants fail.
 func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launchpad.Project, recipient address, currentTime int64) (int64, error) {
 	if err := validateRefundProject(project, recipient, currentTime); err != nil {
 		return 0, err
@@ -395,9 +414,16 @@ func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launch
 	return projectRefundableAmount, nil
 }
 
-// applyTierRewardGrowthWithRewards updates a tier index and returns a
-// conservative aggregate reservation for active claims. Rounding dust remains
-// in the project instead of risking an under-reserved depositor claim.
+// applyTierRewardGrowthWithRewards updates a tier's reward index and computes a conservative reservation for active claims.
+// Rounding dust remains in the project instead of under-reserving depositor claims.
+//
+// Parameters:
+//   - tier: project tier whose reward manager index is advanced.
+//   - currentTime: current timestamp in Unix seconds used to calculate reward growth.
+//
+// Returns:
+//   - amount: maximum aggregate reward currently claimable by active deposits in the tier.
+//   - err: nil on successful index update; non-nil when the tier's reward manager is missing or accounting fails.
 func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectTier, currentTime int64) (int64, error) {
 	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
 	if err != nil {
@@ -413,7 +439,15 @@ func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectT
 	return calculateMaximumClaimableRewardsForActiveDeposits(rewardManager), nil
 }
 
-// validateTransferLeft validates the transfer of remaining tokens
+// validateRefundProject verifies that a recipient is valid and that a project has refundable balance after ending.
+//
+// Parameters:
+//   - project: project whose recipient and remaining balance are checked.
+//   - recipient: address that would receive the remaining project-token balance.
+//   - currentTime: timestamp in Unix seconds used to determine whether the project has ended.
+//
+// Returns:
+//   - err: nil when recipient and refund conditions pass; non-nil for an invalid recipient, an active project, or no remaining amount.
 func validateRefundProject(project *launchpad.Project, recipient address, currentTime int64) error {
 	if !recipient.IsValid() {
 		return errors.New(ufmt.Sprintf("invalid recipient address(%s)", recipient.String()))
@@ -438,6 +472,10 @@ type createProjectParams struct {
 	minimumStartDelayTime int64
 }
 
+// validate runs every validation rule for project creation parameters.
+//
+// Returns:
+//   - err: nil when all name, token, recipient, amount, ratio, start-time, and condition checks pass; otherwise the first validation error.
 func (p *createProjectParams) validate() error {
 	if err := p.validateName(); err != nil {
 		return err
@@ -471,6 +509,9 @@ func (p *createProjectParams) validate() error {
 }
 
 // validateName checks if the project name is valid.
+//
+// Returns:
+//   - err: nil when the name is non-empty and at most 100 characters; non-nil when it is empty or exceeds the limit.
 func (p *createProjectParams) validateName() error {
 	if p.name == "" {
 		return makeErrorWithDetails(errInvalidInput, "project name cannot be empty")
@@ -484,6 +525,9 @@ func (p *createProjectParams) validateName() error {
 }
 
 // validateTokenPath validates the token path is not empty and is registered.
+//
+// Returns:
+//   - err: nil when tokenPath is registered or is the governance token path; non-nil when it is empty or unavailable.
 func (p *createProjectParams) validateTokenPath() error {
 	if p.tokenPath == "" {
 		return makeErrorWithDetails(errInvalidInput, "tokenPath cannot be empty")
@@ -497,6 +541,9 @@ func (p *createProjectParams) validateTokenPath() error {
 }
 
 // validateRecipient checks if the recipient address is valid.
+//
+// Returns:
+//   - err: nil when the configured recipient address is valid; non-nil when it is invalid.
 func (p *createProjectParams) validateRecipient() error {
 	if !p.recipient.IsValid() {
 		return makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf("recipient address(%s)", p.recipient.String()))
@@ -506,6 +553,9 @@ func (p *createProjectParams) validateRecipient() error {
 }
 
 // validateDepositAmount ensures that the deposit amount is greater than zero.
+//
+// Returns:
+//   - err: nil when depositAmount is greater than zero; non-nil when it is zero or negative.
 func (p *createProjectParams) validateDepositAmount() error {
 	if p.depositAmount == 0 {
 		return makeErrorWithDetails(errInvalidInput, "deposit amount cannot be 0")
@@ -519,6 +569,9 @@ func (p *createProjectParams) validateDepositAmount() error {
 }
 
 // validateRatio checks if each tier ratio is non-negative and the sum equals 100.
+//
+// Returns:
+//   - err: nil when every tier ratio is non-negative and their sum is exactly 100; non-nil otherwise.
 func (p *createProjectParams) validateRatio() error {
 	if p.tier30Ratio < 0 || p.tier90Ratio < 0 || p.tier180Ratio < 0 {
 		return makeErrorWithDetails(
@@ -539,6 +592,13 @@ func (p *createProjectParams) validateRatio() error {
 }
 
 // validateStartTime checks if the start time is available with minimum delay requirement.
+//
+// Parameters:
+//   - now: current timestamp in Unix seconds used as the start-time reference.
+//   - minimumStartDelayTime: required lead time in the same timestamp units before a project may start.
+//
+// Returns:
+//   - err: nil when startTime is at least now + minimumStartDelayTime; non-nil when it is earlier.
 func (p *createProjectParams) validateStartTime(now int64, minimumStartDelayTime int64) error {
 	availableStartTime := now + minimumStartDelayTime
 
@@ -549,6 +609,10 @@ func (p *createProjectParams) validateStartTime(now int64, minimumStartDelayTime
 	return nil
 }
 
+// validateConditions validates the optional token eligibility conditions for project creation.
+//
+// Returns:
+//   - err: nil when both lists are empty or contain matching, registered, unique token paths and positive int64 amounts within the maximum count; non-nil otherwise.
 func (p *createProjectParams) validateConditions() error {
 	if p.conditionTokens == "" && p.conditionAmounts == "" {
 		return nil
@@ -593,6 +657,13 @@ func (p *createProjectParams) validateConditions() error {
 	return nil
 }
 
+// isGovernanceToken reports whether a token path is the configured governance-token path.
+//
+// Parameters:
+//   - tokenPath: token contract path to compare with GOV_XGNS_PATH.
+//
+// Returns:
+//   - governance: true only when tokenPath exactly equals GOV_XGNS_PATH; false otherwise.
 func isGovernanceToken(tokenPath string) bool {
 	return tokenPath == GOV_XGNS_PATH
 }

@@ -3,7 +3,7 @@ package governance
 // ProposeText creates a new text proposal with the provided data.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - title: The title of the proposal.
 //   - description: The description of the proposal.
 //
@@ -25,7 +25,7 @@ func ProposeText(
 // The transfer is attempted when an approved proposal executes.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - title: The title of the proposal.
 //   - description: The description of the proposal.
 //   - to: A valid address to receive the spent token.
@@ -57,7 +57,7 @@ func ProposeCommunityPoolSpend(
 // ProposeParameterChange creates a ParameterChange proposal with the provided data.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - title: The title of the proposal.
 //   - description: The description of the proposal.
 //   - numToExecute: The number of changes to execute.
@@ -87,7 +87,7 @@ func ProposeParameterChange(
 // weight. A vote cannot be changed after it is recorded.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - proposalId: The ID of the proposal to vote.
 //   - yes: The flag to vote as yes or not.
 //
@@ -108,7 +108,7 @@ func Vote(
 // Execute executes the given proposal.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - proposalId: The ID of the proposal to execute.
 //
 // Returns:
@@ -123,7 +123,7 @@ func Execute(
 // Cancel cancels the proposal with the given ID.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - proposalId: The ID of the proposal to cancel.
 //
 // Returns:
@@ -137,6 +137,9 @@ func Cancel(
 
 // RemoveInactiveProposalFromIndex removes an inactive proposal from the
 // timestamp-ordered index without deleting its proposal or voting history.
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - proposalID: Identifier of the inactive proposal to remove from the active index.
 func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
 	getImplementation().RemoveInactiveProposalFromIndex(0, cur, proposalID)
 }
@@ -145,7 +148,7 @@ func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
 // Only callable by admin or governance.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - votingStartDelay: delay before voting starts (seconds)
 //   - votingPeriod: voting duration (seconds)
 //   - votingWeightSmoothingDuration: weight smoothing duration (seconds)

@@ -16,8 +16,19 @@ const (
 	MAX_SQRT_RATIO_MINUS_ONE string = "1461446703485210103287273052203988822378723970341"
 )
 
-// swapInner executes the core swap logic by interacting with the pool contract.
-// Returns poolRecv (tokens received by pool) and poolOut (tokens sent by pool).
+// swapInner executes the core swap through the pool contract and pays the callback.
+//
+// Parameters:
+//   - _: leading call discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool cross-call and callback
+//   - amountSpecified: signed amount; positive exact input or negative exact output
+//   - recipient: address receiving pool output
+//   - sqrtPriceLimitX96: Q64.96 price limit; zero selects direction boundary
+//   - data: callback payload containing token paths, fee, and payer
+//
+// Returns:
+//   - poolRecv: input amount received by the pool
+//   - poolOut: output amount sent by the pool
 func (r *routerV1) swapInner(
 	_ int,
 	rlm realm,
@@ -64,7 +75,16 @@ func (r *routerV1) swapInner(
 	return poolRecv.Int64(), poolOut.Int64()
 }
 
-// swapDryInner performs a dry-run of a swap operation without executing it.
+// swapDryInner simulates the core pool swap without callbacks, transfers, or state changes.
+//
+// Parameters:
+//   - amountSpecified: signed amount; positive exact input or negative exact output
+//   - sqrtPriceLimitX96: Q64.96 price limit; zero selects direction boundary
+//   - data: callback payload containing token paths and fee for the dry pool query
+//
+// Returns:
+//   - poolRecv: input amount the pool would receive
+//   - poolOut: output amount the pool would send
 func (r *routerV1) swapDryInner(
 	amountSpecified int64,
 	sqrtPriceLimitX96 *u256.Uint,
@@ -109,9 +129,14 @@ func (r *routerV1) swapDryInner(
 	return poolRecv.Int64(), poolOut.Int64()
 }
 
-// calculateSqrtPriceLimitToStr returns the price-limit string for a swap operation.
-// A non-zero caller limit is formatted as-is; a zero limit uses the global
-// TickMath boundary for the swap direction.
+// calculateSqrtPriceLimitToStr formats a caller limit or selects a directional boundary.
+//
+// Parameters:
+//   - zeroForOne: true for token0-to-token1 direction, false for reverse
+//   - sqrtPriceLimitX96: optional Q64.96 limit; zero selects MIN or MAX boundary
+//
+// Returns:
+//   - limit: decimal price-limit string passed to the pool
 func calculateSqrtPriceLimitToStr(zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) string {
 	if !sqrtPriceLimitX96.IsZero() {
 		return sqrtPriceLimitX96.ToString()

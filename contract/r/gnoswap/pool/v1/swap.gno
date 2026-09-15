@@ -39,6 +39,13 @@ var (
 // Used for reward calculation when positions enter/exit range.
 //
 // Only callable by staker contract.
+// Parameters:
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Propagated realm context validated as current before the hook is
+//     stored.
+//   - hook: Callback invoked after an initialized tick is crossed with the
+//     current pool realm, pool path, tick index, swap direction, and timestamp.
 func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -62,6 +69,14 @@ func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPat
 // Captures timestamp for time-weighted calculations.
 //
 // Only callable by staker contract.
+//
+// Parameters:
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Propagated realm context validated as current before the hook is
+//     stored.
+//   - hook: Callback invoked before swap computation with the current pool
+//     realm, pool path, and block timestamp.
 func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -85,6 +100,14 @@ func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPat
 // Allows error propagation to revert invalid swaps.
 //
 // Only callable by staker contract.
+//
+// Parameters:
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Propagated realm context validated as current before the hook is
+//     stored.
+//   - hook: Callback invoked after swap settlement with the current pool realm
+//     and pool path; a non-nil error aborts the surrounding swap.
 func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -136,16 +159,31 @@ type SwapComputation struct {
 // 4. Pool validates its balance increased correctly
 //
 // Parameters:
-//   - token0Path: Path of token0 in the pool
-//   - token1Path: Path of token1 in the pool
-//   - fee: Pool fee tier
-//   - recipient: Address to receive output tokens
-//   - zeroForOne: Direction of swap (true = token0 to token1)
-//   - amountSpecified: Exact input (positive) or exact output (negative)
-//   - sqrtPriceLimitX96: Price limit for the swap
-//   - swapCallback: Callback function to handle token transfers
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Current propagated realm context; it is validated as current and
+//     used for token transfers and callbacks.
+//   - token0Path: Registered path of token0; it must be the first token in the
+//     pool's canonical token ordering.
+//   - token1Path: Registered path of token1; it must be the second token in
+//     the pool's canonical token ordering.
+//   - fee: Fee tier identifying the registered pool to swap against.
+//   - recipient: Address that receives the output token transfer.
+//   - zeroForOne: Swap direction; true sells token0 for token1, false sells
+//     token1 for token0.
+//   - amountSpecified: Signed decimal amount; positive values request exact
+//     input, negative values request exact output, and zero is invalid.
+//   - sqrtPriceLimitX96: Decimal Q96 square-root-price limit that bounds the
+//     swap in its direction; an invalid bound causes the call to panic.
+//   - swapCallback: Callback that must settle the input delta after output is
+//     sent; it receives signed int64 token deltas and a callback marker, and a
+//     non-nil error aborts the swap.
 //
-// Returns amount0 and amount1 deltas as strings.
+// Returns:
+//   - string: Signed decimal token0 delta from the pool's perspective; a
+//     positive value is owed to the pool and a negative value is sent out.
+//   - string: Signed decimal token1 delta from the pool's perspective; a
+//     positive value is owed to the pool and a negative value is sent out.
 func (i *poolV1) Swap(
 	_ int,
 	rlm realm,
@@ -318,8 +356,30 @@ func (i *poolV1) Swap(
 	return token0Amount, token1Amount
 }
 
-// DrySwap simulates a swap without modifying pool state.
-// Returns amount0, amount1 and an error.
+// DrySwap simulates a swap against an isolated pool and observation snapshot;
+// it never writes stored pool or oracle state.
+//
+// Parameters:
+//   - token0Path: Registered path of token0; it must be the first token in the
+//     pool's canonical token ordering.
+//   - token1Path: Registered path of token1; it must be the second token in
+//     the pool's canonical token ordering.
+//   - fee: Fee tier identifying the registered pool to simulate.
+//   - zeroForOne: Swap direction; true sells token0 for token1, false sells
+//     token1 for token0.
+//   - amountSpecified: Signed decimal amount; positive values request exact
+//     input, negative values request exact output, and zero is invalid.
+//   - sqrtPriceLimitX96: Decimal Q96 square-root-price limit that bounds the
+//     simulation in its direction.
+//
+// Returns:
+//   - amount0: Signed decimal token0 delta from the pool's perspective, or
+//     "0" when simulation fails.
+//   - amount1: Signed decimal token1 delta from the pool's perspective, or
+//     "0" when simulation fails.
+//   - err: Nil when the simulation succeeds; non-nil for invalid inputs,
+//     missing pool state, invalid limits, computation failures, or insufficient
+//     pool output balance.
 func (i *poolV1) DrySwap(
 	token0Path string,
 	token1Path string,
@@ -387,28 +447,34 @@ func (i *poolV1) DrySwap(
 
 // tickCrossHookFn is invoked after an initialized tick is crossed. Swap uses it
 // for externally visible side effects; DrySwap passes nil.
+//
+// Parameters:
+//   - pool: Pool whose initialized tick was crossed; it contains the updated
+//     in-memory tick and liquidity state visible to the callback.
+//   - tickId: Index of the initialized tick that was crossed.
+//   - zeroForOne: Swap direction; true moves toward lower ticks and false
+//     moves toward higher ticks.
+//   - timestamp: Block timestamp in Unix seconds for the crossing.
 type tickCrossHookFn func(pool *pl.Pool, tickId int32, zeroForOne bool, timestamp int64)
 
-// computeSwap performs the core swap computation without modifying pool state.
-// The computation continues until either:
-// - The entire amount is consumed (amountSpecifiedRemaining = 0)
-// - The price limit is reached (sqrtPriceX96 = sqrtPriceLimitX96)
+// newDrySwapSnapshot builds the isolated pool and oracle state used by DrySwap.
 //
-// Important: This function is critical for AMM price discovery. It iterates through
-// tick ranges, calculating swap amounts and fees for each liquidity segment.
-// Returns an error if the computation fails at any step.
+// Pool.Clone copies the pool's scalar fields, while the tick tree and tick
+// bitmap are copied separately because the swap loop rewrites and scans them.
+// The observation tree starts fresh so simulation cannot extend stored oracle
+// observations.
 //
-// The optional `onTickCross` callback is invoked when an initialized tick is
-// crossed; Swap supplies a hook that performs a cross-realm call into the
-// configured tick-cross hook, while DrySwap passes nil.
-// newDrySwapSnapshot builds the pool DrySwap simulates against.
+// Parameters:
+//   - pool: Stored pool state to clone; its stored collections and scalar fields
+//     are left unchanged.
+//   - blockTimestamp: Unix-second timestamp used for the snapshot's initial
+//     observation.
 //
-// The swap loop writes through the pool it is given -- tickCross rewrites each
-// tick it crosses -- so the simulation must not run against stored state.
-// Pool.Clone copies the pool's own fields and leaves its collections nil, so
-// assemble the two the loop reads: the tick tree (crossed and rewritten) and
-// the tick bitmaps (scanned for the next initialized tick). The oracle state is
-// a fresh one, because the simulation must not extend the stored observations.
+// Returns:
+//   - *pl.Pool: Isolated pool snapshot with independently writable ticks and
+//     tick bitmaps.
+//   - *pl.ObservationTree: Fresh observation tree initialized at
+//     blockTimestamp.
 func newDrySwapSnapshot(pool *pl.Pool, blockTimestamp int64) (*pl.Pool, *pl.ObservationTree) {
 	snapshot := pool.Clone()
 	snapshot.SetTicks(copyPoolTicks(pool.Ticks()))
@@ -424,6 +490,13 @@ func newDrySwapSnapshot(pool *pl.Pool, blockTimestamp int64) (*pl.Pool, *pl.Obse
 
 // copyPoolTicks copies a tick tree slot by slot. TickInfo is a value type, so
 // the snapshot's writes replace its own slots and leave the source untouched.
+//
+// Parameters:
+//   - src: Source tick tree to copy; nil is treated as an empty tree.
+//
+// Returns:
+//   - *bptree.BPTree: Independent tick tree containing the source entries; a
+//     nil source therefore produces an empty tree.
 func copyPoolTicks(src *bptree.BPTree) *bptree.BPTree {
 	copied := pl.NewPoolTicksTree()
 	if src == nil {
@@ -438,6 +511,16 @@ func copyPoolTicks(src *bptree.BPTree) *bptree.BPTree {
 	return copied
 }
 
+// copyPoolTickBitmaps returns an independent copy of the pool's initialized
+// tick bitmap map.
+//
+// Parameters:
+//   - src: Source bitmap keyed by signed 16-bit word position; nil yields an
+//     empty map.
+//
+// Returns:
+//   - map[int16]string: Fresh bitmap map containing each source word position
+//     and its encoded bitmap.
 func copyPoolTickBitmaps(src map[int16]string) map[int16]string {
 	copied := make(map[int16]string, len(src))
 	for wordPos, bitmap := range src {
@@ -447,6 +530,27 @@ func copyPoolTickBitmaps(src map[int16]string) map[int16]string {
 	return copied
 }
 
+// computeSwap performs the core swap computation on the supplied working pool.
+// The loop runs until the specified amount is consumed or the directional
+// square-root-price limit is reached. Crossing an initialized tick updates the
+// supplied pool's tick records and can invoke `onTickCross`; DrySwap supplies a
+// fully isolated pool and nil callback.
+//
+// Parameters:
+//   - pool: Working pool supplying liquidity, ticks, fee growth, and protocol
+//     fee state; crossed tick records may be updated in place.
+//   - observations: Observation tree used to obtain oracle data for tick
+//     crossings; it must correspond to pool.
+//   - comp: Initial amount, price limit, direction, exact-input mode, swap
+//     state, and cache for this computation.
+//   - onTickCross: Optional callback invoked after each initialized tick is
+//     crossed with the updated pool, tick index, direction, and timestamp.
+//
+// Returns:
+//   - *SwapResult: Computed signed token deltas, terminal price/tick/liquidity,
+//     protocol fees, and global fee-growth accumulators; nil on error.
+//   - error: Nil on success; non-nil when a swap step, arithmetic operation, or
+//     oracle observation fails.
 func (i *poolV1) computeSwap(pool *pl.Pool, observations *pl.ObservationTree, comp SwapComputation, onTickCross tickCrossHookFn) (*SwapResult, error) {
 	state := comp.InitialState
 	var err error
@@ -497,6 +601,12 @@ func (i *poolV1) computeSwap(pool *pl.Pool, observations *pl.ObservationTree, co
 
 // applySwapResult updates pool state with computed results.
 // All state changes are applied at once to maintain consistency
+//
+// Parameters:
+//   - pool: Pool whose slot0, liquidity, protocol-fee, and global fee-growth
+//     fields are replaced in place.
+//   - result: Completed swap result supplying the terminal state and fee
+//     accumulators to apply atomically.
 func applySwapResult(pool *pl.Pool, result *SwapResult) {
 	slot0 := pool.Slot0()
 	slot0.SetSqrtPriceX96(result.NewSqrtPrice)
@@ -519,6 +629,13 @@ func applySwapResult(pool *pl.Pool, result *SwapResult) {
 // For !zeroForOne (selling token1):
 //   - Price limit must be above current price
 //   - Price limit must be below MAX_SQRT_RATIO
+//
+// Parameters:
+//   - slot0: Current pool slot state whose square-root price is the reference.
+//   - zeroForOne: Direction of the swap; true requires movement below the
+//     current price, false requires movement above it.
+//   - sqrtPriceLimitX96: Candidate Q96 square-root-price limit; it must remain
+//     strictly between the directional current-price and protocol boundary.
 func validatePriceLimits(slot0 pl.Slot0, zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) {
 	if zeroForOne {
 		cond1 := sqrtPriceLimitX96.Lt(slot0.SqrtPriceX96())
@@ -552,6 +669,16 @@ func validatePriceLimits(slot0 pl.Slot0, zeroForOne bool, sqrtPriceLimitX96 *u25
 // getFeeProtocol returns the appropriate fee protocol based on zero for one.
 // When zeroForOne is true, we want the lower 4 bits (% 16).
 // Otherwise, we want the upper 4 bits (/ 16).
+//
+// Parameters:
+//   - slot0: Pool slot state containing packed token0/token1 protocol-fee
+//     divisors.
+//   - zeroForOne: Selects the low four bits for token0 when true, or the high
+//     four bits for token1 when false.
+//
+// Returns:
+//   - uint8: Selected protocol-fee divisor; zero means no protocol fee is
+//     charged for the direction.
 func getFeeProtocol(slot0 pl.Slot0, zeroForOne bool) uint8 {
 	shift := uint8(0)
 	if !zeroForOne {
@@ -561,6 +688,14 @@ func getFeeProtocol(slot0 pl.Slot0, zeroForOne bool) uint8 {
 }
 
 // getFeeGrowthGlobal returns the appropriate fee growth global based on zero for one.
+//
+// Parameters:
+//   - pool: Pool whose global fee-growth accumulators are read.
+//   - zeroForOne: Selects token0 growth when true and token1 growth otherwise.
+//
+// Returns:
+//   - *u256.Uint: Clone of the selected global fee-growth accumulator in X128
+//     precision.
 func getFeeGrowthGlobal(pool *pl.Pool, zeroForOne bool) *u256.Uint {
 	if zeroForOne {
 		return pool.FeeGrowthGlobal0X128().Clone()
@@ -569,11 +704,39 @@ func getFeeGrowthGlobal(pool *pl.Pool, zeroForOne bool) *u256.Uint {
 }
 
 // shouldContinueSwap checks if swap should continue based on remaining amount and price limit.
+//
+// Parameters:
+//   - state: Current swap state, including remaining specified amount and
+//     square-root price.
+//   - sqrtPriceLimitX96: Directional terminal Q96 square-root-price limit.
+//
+// Returns:
+//   - bool: True while a nonzero amount remains and current price differs from
+//     the limit; false when either stopping condition is met.
 func shouldContinueSwap(state SwapState, sqrtPriceLimitX96 *u256.Uint) bool {
 	return !state.amountSpecifiedRemaining.IsZero() && !state.sqrtPriceX96.Eq(sqrtPriceLimitX96)
 }
 
 // computeSwapStep executes a single step of swap and returns new state
+//
+// Parameters:
+//   - state: Current swap state to advance by one liquidity segment.
+//   - pool: Working pool supplying ticks, liquidity, fee growth, and protocol
+//     fee state.
+//   - observations: Oracle observation tree used when crossing an initialized
+//     tick.
+//   - zeroForOne: Swap direction; true moves toward lower ticks.
+//   - sqrtPriceLimitX96: Directional terminal Q96 square-root-price limit.
+//   - exactInput: True to consume an exact input amount; false to satisfy an
+//     exact output amount.
+//   - cache: Per-swap fee, liquidity, timestamp, and slot-start cache.
+//   - onTickCross: Optional callback invoked after an initialized tick cross;
+//     nil disables callback side effects.
+//
+// Returns:
+//   - SwapState: State after this segment, or the input state when an error is
+//     reported.
+//   - error: Nil on success; non-nil for arithmetic or oracle failures.
 func (i *poolV1) computeSwapStep(
 	state SwapState,
 	pool *pl.Pool,
@@ -631,6 +794,18 @@ func (i *poolV1) computeSwapStep(
 }
 
 // updateFeeProtocol calculates and updates protocol fees for the current step.
+//
+// Parameters:
+//   - step: Current step whose fee amount is reduced by the protocol share.
+//   - feeProtocol: Nonzero protocol-fee divisor used to calculate the share.
+//   - state: Current swap state whose accumulated protocol fee is increased.
+//
+// Returns:
+//   - SwapState: State with the protocol fee accumulator increased.
+//   - StepComputations: Step with the trader fee amount reduced by the protocol
+//     share.
+//   - error: Nil on success; non-nil when fee subtraction or protocol-fee
+//     accumulation overflows or underflows.
 func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState) (SwapState, StepComputations, error) {
 	delta := u256.Zero().Div(step.feeAmount, u256.NewUint(uint64(feeProtocol)))
 
@@ -651,6 +826,17 @@ func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState
 }
 
 // computeSwapStepInit initializes the computation for a single swap step.
+//
+// Parameters:
+//   - state: Current swap state supplying the starting square-root price and
+//     tick.
+//   - pool: Pool whose tick spacing and bitmap identify the next initialized
+//     tick.
+//   - zeroForOne: Swap direction used to search for the next tick.
+//
+// Returns:
+//   - StepComputations: Step initialized with the start price, next tick,
+//     initialization flag, and next-tick square-root price.
 func computeSwapStepInit(state SwapState, pool *pl.Pool, zeroForOne bool) StepComputations {
 	var step StepComputations
 	step.sqrtPriceStartX96 = state.sqrtPriceX96
@@ -672,6 +858,16 @@ func computeSwapStepInit(state SwapState, pool *pl.Pool, zeroForOne bool) StepCo
 }
 
 // computeTargetSqrtRatio determines the target sqrt price for the current swap step.
+//
+// Parameters:
+//   - step: Step containing the next initialized tick's square-root price.
+//   - sqrtPriceLimitX96: Directional terminal Q96 square-root-price limit.
+//   - zeroForOne: Swap direction determining whether the lower or upper target
+//     is reached first.
+//
+// Returns:
+//   - *u256.Uint: Price limit when it is reached before the next tick, otherwise
+//     the next tick's square-root price.
 func computeTargetSqrtRatio(step StepComputations, sqrtPriceLimitX96 *u256.Uint, zeroForOne bool) *u256.Uint {
 	if shouldUsePriceLimit(step.sqrtPriceNextX96, sqrtPriceLimitX96, zeroForOne) {
 		return sqrtPriceLimitX96
@@ -680,6 +876,16 @@ func computeTargetSqrtRatio(step StepComputations, sqrtPriceLimitX96 *u256.Uint,
 }
 
 // shouldUsePriceLimit returns true if the price limit should be used instead of the next tick price
+//
+// Parameters:
+//   - sqrtPriceNext: Candidate next-tick Q96 square-root price.
+//   - sqrtPriceLimit: Directional terminal Q96 square-root-price limit.
+//   - zeroForOne: Swap direction; true compares for downward movement, false
+//     for upward movement.
+//
+// Returns:
+//   - bool: True when the candidate tick price lies beyond the directional
+//     limit and the limit must be used instead.
 func shouldUsePriceLimit(sqrtPriceNext, sqrtPriceLimit *u256.Uint, zeroForOne bool) bool {
 	if zeroForOne {
 		return sqrtPriceNext.Lt(sqrtPriceLimit)
@@ -688,6 +894,19 @@ func shouldUsePriceLimit(sqrtPriceNext, sqrtPriceLimit *u256.Uint, zeroForOne bo
 }
 
 // computeAmounts calculates the input and output amounts for the current swap step.
+//
+// Parameters:
+//   - state: Current swap state containing price, liquidity, and remaining
+//     signed amount.
+//   - sqrtRatioTargetX96: Q96 square-root-price target for this step.
+//   - pool: Pool supplying the fee tier used by swap math.
+//   - step: Step whose input, output, and fee fields are populated.
+//
+// Returns:
+//   - SwapState: State with its square-root price advanced to the computed step
+//     price.
+//   - StepComputations: Step populated with input amount, output amount, and
+//     fee amount in base units.
 func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *pl.Pool, step StepComputations) (SwapState, StepComputations) {
 	sqrtPriceX96, amountIn, amountOut, feeAmount := gnsmath.SwapMathComputeSwapStep(
 		state.sqrtPriceX96,
@@ -714,6 +933,17 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *pl.Poo
 // For exact output swaps:
 //   - Increments remaining output amount by amountOut
 //   - Increments calculated amount by (amountIn + feeAmount)
+//
+// Parameters:
+//   - step: Computed input, output, and fee amounts for the current step.
+//   - state: Current signed remaining and calculated amounts.
+//   - exactInput: True subtracts input plus fee and output; false adds output
+//     and input plus fee according to exact-output semantics.
+//
+// Returns:
+//   - SwapState: State with checked remaining and calculated amounts updated.
+//   - error: Nil on success; non-nil when int256 or int64 values overflow or
+//     underflow.
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) (SwapState, error) {
 	amountInWithFeeU256 := u256.Zero().Add(step.amountIn, step.feeAmount)
 	if amountInWithFeeU256.Gt(maxInt256) {
@@ -768,6 +998,25 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) (Swa
 }
 
 // tickTransition handles the transition between price ticks during a swap
+//
+// Parameters:
+//   - step: Step identifying the next tick and whether it is initialized.
+//   - zeroForOne: Swap direction; true negates crossed liquidity net and moves
+//     the active tick below the crossed tick.
+//   - state: Current swap state to update with liquidity and tick changes.
+//   - pool: Working pool whose crossed tick record and liquidity context are
+//     read or updated.
+//   - observations: Oracle tree used to compute latest cumulative values on
+//     the first initialized cross.
+//   - cache: Per-swap cache holding start slot, timestamp, liquidity, and
+//     computed oracle values.
+//   - onTickCross: Optional callback invoked after the tick is crossed; nil
+//     skips callback execution.
+//
+// Returns:
+//   - SwapState: State with crossed-tick liquidity and next active tick.
+//   - error: Nil on success; non-nil when oracle observation or liquidity
+//     transition computation fails.
 func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *pl.Pool, observations *pl.ObservationTree, cache *SwapCache, onTickCross tickCrossHookFn) (SwapState, error) {
 	// ensure existing state to keep immutability
 	newState := state

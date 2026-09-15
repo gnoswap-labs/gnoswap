@@ -11,11 +11,18 @@ import (
 
 var manager *prbac.RBAC
 
+// init initializes the RBAC manager and default role mappings during realm initialization.
+//
+// Parameters:
+//   - cur: realm context supplied by the runtime during package initialization.
 func init(cur realm) {
 	initRbac(cur)
 }
 
-// initRbac initializes RBAC manager with default admin and role mappings.
+// initRbac initializes the RBAC manager with the default admin and role mappings.
+//
+// Parameters:
+//   - cur: current realm context used to register each default role in access control.
 func initRbac(cur realm) {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
@@ -38,8 +45,9 @@ func initRbac(cur realm) {
 // RegisterRole registers a new role in the RBAC system.
 //
 // Parameters:
-//   - roleName: name of the role to register
-//   - roleAddress: address to assign to the role
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - roleName: nonempty role name to register in the RBAC manager.
+//   - roleAddress: address assigned to the new role and mirrored in access control.
 //
 // Only callable by admin or governance.
 func RegisterRole(cur realm, roleName string, roleAddress address) {
@@ -74,8 +82,9 @@ func RegisterRole(cur realm, roleName string, roleAddress address) {
 // UpdateRoleAddress updates the address assigned to a role.
 //
 // Parameters:
-//   - roleName: name of the role
-//   - addr: new address for the role
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - roleName: existing non-admin role name whose address is changed.
+//   - addr: valid replacement address assigned to the role and access-control mapping.
 //
 // Only callable by admin or governance.
 func UpdateRoleAddress(cur realm, roleName string, addr address) {
@@ -110,7 +119,8 @@ func UpdateRoleAddress(cur realm, roleName string, addr address) {
 // RemoveRole removes a role from the RBAC system.
 //
 // Parameters:
-//   - roleName: name of the role to remove
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - roleName: existing non-admin role name to remove from RBAC and access control.
 //
 // Only callable by admin or governance.
 func RemoveRole(cur realm, roleName string) {
@@ -140,6 +150,13 @@ func RemoveRole(cur realm, roleName string) {
 }
 
 // GetRoleAddress returns the address assigned to roleName.
+//
+// Parameters:
+//   - roleName: exact role name to look up in the RBAC manager.
+//
+// Returns:
+//   - roleAddress: address assigned to roleName, or the empty address when absent.
+//   - error: nil when roleName exists; otherwise the manager's role-not-found error.
 func GetRoleAddress(roleName string) (address, error) {
 	return manager.GetRoleAddress(roleName)
 }

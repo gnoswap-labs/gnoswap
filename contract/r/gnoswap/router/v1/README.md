@@ -156,12 +156,15 @@ For live liquidity-changing swaps:
 
 ## Usage
 
+These snippets call the public domain proxy from a realm function with a current `cur` token.
+Import the proxy package and qualify its function names in integrating code.
+
 ### Basic Token Swaps
 
 ```go
 // Simple exact input swap
 amountIn, amountOut := ExactInSwapRoute(
-    cross,
+    cross(cur),
     "gno.land/r/demo/bar",     // input token
     "gno.land/r/demo/baz",     // output token
     "1000000",                 // amount (6 decimals)
@@ -174,7 +177,7 @@ amountIn, amountOut := ExactInSwapRoute(
 
 // Multi-hop swap
 ExactInSwapRoute(
-    cross,
+    cross(cur),
     "gno.land/r/demo/bar",
     "gno.land/r/demo/baz",
     "1000000",
@@ -187,7 +190,7 @@ ExactInSwapRoute(
 
 // Split route for large trades
 ExactInSwapRoute(
-    cross,
+    cross(cur),
     "gno.land/r/demo/usdc",
     "gno.land/r/gnoland/wugnot",
     "10000000000",
@@ -205,7 +208,7 @@ Single-hop functions support partial execution through a nonzero
 ```go
 // Partial swap with price limit - may not consume full input amount
 amountIn, amountOut := ExactInSingleSwapRoute(
-    cross,
+    cross(cur),
     "gno.land/r/demo/bar",     // input token
     "gno.land/r/demo/baz",     // output token
     "1000000",                 // max amount to swap

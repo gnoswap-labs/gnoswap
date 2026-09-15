@@ -14,6 +14,14 @@ import (
 //
 // Proposal.Clone leaves the type-specific data nil; see it for which lookups
 // read it instead.
+// cloneProposalEntry clones a stored proposal before exposing it through a read-only tree.
+// Values of other types are rejected with a nil result.
+//
+// Parameters:
+//   - value: stored tree value expected to be a *governance.Proposal.
+//
+// Returns:
+//   - any: deep-cloned proposal, or nil when value is not a proposal pointer.
 func cloneProposalEntry(value any) any {
 	proposal, ok := value.(*governance.Proposal)
 	if !ok {
@@ -26,6 +34,13 @@ func cloneProposalEntry(value any) any {
 // cloneProposalIDsEntry is the transformation for the user proposal tree. The
 // stored value is a slice, so hand out a copy rather than letting a reader
 // write through the shared backing array.
+// Values of other types are rejected with a nil result.
+//
+// Parameters:
+//   - value: stored tree value expected to be a []int64 of proposal IDs.
+//
+// Returns:
+//   - any: copied []int64 slice, or nil when value is not a proposal-ID slice.
 func cloneProposalIDsEntry(value any) any {
 	proposalIDs, ok := value.([]int64)
 	if !ok {

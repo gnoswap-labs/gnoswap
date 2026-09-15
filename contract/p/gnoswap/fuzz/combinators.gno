@@ -20,14 +20,33 @@ type customGen struct {
 	fn func(bitStream) any
 }
 
+// String returns the display name of the custom generator.
+//
+// Returns:
+//   - string: The name "Custom", used to identify this generator in draw groups and logs.
 func (g *customGen) String() string {
 	return "Custom"
 }
 
+// value invokes the custom callback, retrying attempts that report invalid data.
+//
+// Parameters:
+//   - t: Test state whose bit stream is passed to the custom callback.
+//
+// Returns:
+//   - any: The first value produced by a successful callback attempt; panics with invalidData if all retry attempts fail.
 func (g *customGen) value(t *T) any {
 	return find(g.maybeValue, t, small)
 }
 
+// maybeValue runs one custom generator attempt and converts invalidData panics into a failed attempt.
+//
+// Parameters:
+//   - t: Test state providing the bit stream used by the callback.
+//
+// Returns:
+//   - any: The callback-produced value when the attempt completes successfully; zero when the callback reports invalid data.
+//   - bool: True when the callback completes, or false when an invalidData panic is recovered and the attempt should be retried.
 func (g *customGen) maybeValue(t *T) (any, bool) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -43,6 +62,12 @@ func (g *customGen) maybeValue(t *T) (any, bool) {
 // Custom creates a generator which produces results of calling fn. Its callback
 // takes the package-private bitStream type, so external callers should prefer
 // Map, OneOf, or another public combinator.
+//
+// Parameters:
+//   - fn: Callback that receives the generator's bit stream and returns one generated value; an invalidData panic requests a retry.
+//
+// Returns:
+//   - *Generator: A generator that invokes fn and retries invalid-data attempts.
 func Custom(fn func(bitStream) any) *Generator {
 	return newGenerator(&customGen{
 		fn: fn,
@@ -50,6 +75,14 @@ func Custom(fn func(bitStream) any) *Generator {
 }
 
 // find attempts to generate a suitable value by retrying the generator function
+//
+// Parameters:
+//   - gen: Callback for one generation attempt; it returns a candidate value and whether that value is usable.
+//   - t: Test state passed to each generation attempt.
+//   - tries: Maximum number of attempts before invalidData is raised.
+//
+// Returns:
+//   - any: The first candidate accepted by gen; panics with invalidData when every attempt is rejected.
 func find(gen func(*T) (any, bool), t *T, tries int) any {
 	for n := 0; n < tries; n++ {
 		i := t.s.beginGroup(tryLabel, false)
@@ -69,10 +102,21 @@ type deferredGen struct {
 	fn func() *Generator
 }
 
+// String returns the display name of the deferred generator.
+//
+// Returns:
+//   - string: The name "Deferred", used to identify this generator in draw groups and logs.
 func (g *deferredGen) String() string {
 	return "Deferred"
 }
 
+// value initializes the deferred generator on first use and delegates value generation to it.
+//
+// Parameters:
+//   - t: Test state whose bit stream is consumed by the lazily created generator.
+//
+// Returns:
+//   - any: The value produced by the generator returned by the deferred callback.
 func (g *deferredGen) value(t *T) any {
 	if g.g == nil {
 		g.g = g.fn()
@@ -81,6 +125,12 @@ func (g *deferredGen) value(t *T) any {
 }
 
 // Deferred creates a generator which defers calling fn until attempting to produce a value.
+//
+// Parameters:
+//   - fn: Callback invoked lazily on the first generation attempt to construct the underlying generator.
+//
+// Returns:
+//   - *Generator: A generator that postpones fn until a value is requested.
 func Deferred(fn func() *Generator) *Generator {
 	return newGenerator(&deferredGen{
 		fn: fn,
@@ -93,15 +143,33 @@ type mappedGen struct {
 	fn func(any) any
 }
 
+// String returns the display name of the mapped generator, including its source generator.
+//
+// Returns:
+//   - string: A "Map(...)" description identifying the source generator.
 func (g *mappedGen) String() string {
 	return ufmt.Sprintf("Map(%v, ...)", g.g)
 }
 
+// value draws one source value and applies the mapping callback to it.
+//
+// Parameters:
+//   - t: Test state used when drawing the source generator's value.
+//
+// Returns:
+//   - any: The value returned by the mapping callback for the source value.
 func (g *mappedGen) value(t *T) any {
 	return g.fn(g.g.value(t))
 }
 
 // Map creates a generator producing fn(u) for each u produced by g.
+//
+// Parameters:
+//   - g: Source generator whose values are passed to fn.
+//   - fn: Callback that transforms each value produced by g.
+//
+// Returns:
+//   - *Generator: A generator that applies fn to every value drawn from g.
 func Map(g *Generator, fn func(any) any) *Generator {
 	return newGenerator(&mappedGen{
 		g:  g,
@@ -110,6 +178,12 @@ func Map(g *Generator, fn func(any) any) *Generator {
 }
 
 // Just creates a generator which always produces the given value.
+//
+// Parameters:
+//   - val: Value that the returned generator must produce on every draw.
+//
+// Returns:
+//   - *Generator: A singleton generator that always returns val.
 func Just(val any) *Generator {
 	return SampledFrom([]any{val})
 }
@@ -119,6 +193,10 @@ type sampledGen struct {
 	slice []any
 }
 
+// String returns a description of the sampled generator and its candidate count.
+//
+// Returns:
+//   - string: "Just(...)" for one candidate, or "SampledFrom(n items)" for multiple candidates.
 func (g *sampledGen) String() string {
 	if len(g.slice) == 1 {
 		return ufmt.Sprintf("Just(%v)", g.slice[0])
@@ -126,12 +204,25 @@ func (g *sampledGen) String() string {
 	return ufmt.Sprintf("SampledFrom(%v items)", len(g.slice))
 }
 
+// value selects one candidate from the sampled slice using the test state's bit stream.
+//
+// Parameters:
+//   - t: Test state providing randomness for selecting a candidate.
+//
+// Returns:
+//   - any: The selected element of the generator's non-empty candidate slice.
 func (g *sampledGen) value(t *T) any {
 	i := genIndex(t.s, len(g.slice), true)
 	return g.slice[i]
 }
 
 // SampledFrom creates a generator which produces values from the given slice.
+//
+// Parameters:
+//   - slice: Non-empty set of candidate values from which each draw selects one element; an empty slice causes an assertion panic.
+//
+// Returns:
+//   - *Generator: A generator that samples one value from slice on each draw.
 func SampledFrom(slice []any) *Generator {
 	assertf(len(slice) > 0, "slice should not be empty")
 
@@ -145,10 +236,21 @@ type permGen struct {
 	slice []any
 }
 
+// String returns a description of the permutation generator and its item count.
+//
+// Returns:
+//   - string: A "Permutation(n items)" description for the generator.
 func (g *permGen) String() string {
 	return ufmt.Sprintf("Permutation(%v items)", len(g.slice))
 }
 
+// value returns a shuffled copy of the configured slice.
+//
+// Parameters:
+//   - t: Test state whose bit stream determines the permutation.
+//
+// Returns:
+//   - any: A new []any containing the same elements as the source slice in a generated permutation; the source slice is not modified.
 func (g *permGen) value(t *T) any {
 	result := make([]any, len(g.slice))
 	copy(result, g.slice)
@@ -170,6 +272,12 @@ func (g *permGen) value(t *T) any {
 }
 
 // Permutation creates a generator which produces permutations of the given slice.
+//
+// Parameters:
+//   - slice: Values to include in each generated permutation; duplicates and an empty slice are preserved.
+//
+// Returns:
+//   - *Generator: A generator that produces a shuffled copy of slice on each draw.
 func Permutation(slice []any) *Generator {
 	return newGenerator(&permGen{
 		slice: slice,
@@ -181,6 +289,10 @@ type oneOfGen struct {
 	gens []*Generator
 }
 
+// String returns a description containing the selected generators' names.
+//
+// Returns:
+//   - string: A "OneOf(...)" description listing the configured generator descriptions.
 func (g *oneOfGen) String() string {
 	strs := make([]string, len(g.gens))
 	for i, gen := range g.gens {
@@ -189,12 +301,25 @@ func (g *oneOfGen) String() string {
 	return ufmt.Sprintf("OneOf(%v)", strings.Join(strs, ", "))
 }
 
+// value selects one configured generator and delegates the draw to it.
+//
+// Parameters:
+//   - t: Test state providing randomness and bookkeeping for the selected generator.
+//
+// Returns:
+//   - any: The value produced by the selected generator.
 func (g *oneOfGen) value(t *T) any {
 	i := genIndex(t.s, len(g.gens), true)
 	return g.gens[i].value(t)
 }
 
 // OneOf creates a generator which produces each value by selecting one of gens.
+//
+// Parameters:
+//   - gens: One or more generators eligible for selection; an empty list causes an assertion panic.
+//
+// Returns:
+//   - *Generator: A generator that selects one of gens for each draw.
 func OneOf(gens ...*Generator) *Generator {
 	assertf(len(gens) > 0, "at least one generator should be specified")
 

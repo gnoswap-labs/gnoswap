@@ -19,10 +19,18 @@ const (
 	defaultUnstakingFee = uint64(100) // 1%
 )
 
+// init registers the staker v1 initializer with the supplied realm context.
+//
+// Parameters:
+//   - cur: Realm context supplied by the runtime for this package initialization.
 func init(cur realm) {
 	registerStakerV1(cur)
 }
 
+// registerStakerV1 installs the staker v1 initializer that seeds storage and hooks.
+//
+// Parameters:
+//   - cur: Current package realm context used to register a callback with cross(cur).
 func registerStakerV1(cur realm) {
 	sr.RegisterInitializer(cross(cur), func(_ int, rlm realm, stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) sr.IStaker {
 		access.AssertIsRlmCurrent(0, rlm)
@@ -40,6 +48,16 @@ func registerStakerV1(cur realm) {
 	})
 }
 
+// initStoreData initializes missing staker storage keys and seeds pool-tier state.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded callback; callers pass 0.
+//   - rlm: Propagated current staker realm context; storage setters validate it before writes.
+//   - stakerStore: Persistent staker storage interface to inspect and initialize.
+//   - emissionAccessor: Emission interface used to obtain initial emission and halving callbacks.
+//
+// Returns:
+//   - error: The first storage initialization error; nil after all required keys and tier state are initialized.
 func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAccessor) error {
 	if !stakerStore.HasDepositGnsAmountStoreKey() {
 		err := stakerStore.SetDepositGnsAmount(0, rlm, defaultDepositGnsAmount)
@@ -236,6 +254,14 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 // accrual. Keeping both sides on emission's single constant structurally
 // enforces that invariant and removes any risk of the two realms drifting
 // apart on the canonical default pool identity.
+// Parameters:
+//   - stakerStore: Existing staker storage interface accepted by the initializer helper; this function does not read it.
+//
+// Returns:
+//   - *PoolTier: Initialized tier manager containing the default pool and reward settings.
+//   - *Pools: Pool collection containing the canonical initial pool.
+//   - int64: Unix timestamp used when the initial tier state was created.
+//   - map[uint64]int64: Initial per-tier pool reward rates keyed by tier number.
 func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools, int64, map[uint64]int64) {
 	pools := NewPools()
 	currentTime := time.Now().Unix()

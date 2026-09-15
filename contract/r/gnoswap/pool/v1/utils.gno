@@ -72,11 +72,11 @@ func toUint128(value *u256.Uint) *u256.Uint {
 // If `num1` is less than `num2`, it returns `num1`; otherwise, it returns `num2`.
 //
 // Parameters:
-// - num1 (*u256.Uint): The first unsigned 256-bit integer.
-// - num2 (*u256.Uint): The second unsigned 256-bit integer.
+//   - num1 (*u256.Uint): The first unsigned 256-bit integer.
+//   - num2 (*u256.Uint): The second unsigned 256-bit integer.
 //
 // Returns:
-// - *u256.Uint: The smaller of `num1` and `num2`.
+//   - min (*u256.Uint): The smaller of num1 and num2.
 //
 // Notes:
 //   - This function uses the `Lt` (less than) method of `*u256.Uint` to perform the comparison.
@@ -94,6 +94,8 @@ func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 }
 
 // checkOverFlowInt128 checks if the value overflows the int128 range.
+// Parameters:
+//   - value: Signed 256-bit amount to validate against the inclusive int128 bounds.
 func checkOverFlowInt128(value *i256.Int) {
 	if value.Gt(maxInt128FromDecimal) || value.Lt(minInt128FromDecimal) {
 		panic(ufmt.Sprintf(
@@ -104,6 +106,9 @@ func checkOverFlowInt128(value *i256.Int) {
 }
 
 // checkTickSpacing checks if the tick is divisible by the tickSpacing.
+// Parameters:
+//   - tick: Tick index whose alignment is being checked.
+//   - tickSpacing: Pool tick-spacing interval; tickSpacing must be nonzero and divide tick exactly.
 func checkTickSpacing(tick, tickSpacing int32) {
 	if tick%tickSpacing != 0 {
 		panic(newErrorWithDetail(

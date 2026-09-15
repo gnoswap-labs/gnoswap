@@ -9,6 +9,13 @@ import (
 )
 
 // Add sets z to the sum x+y and returns z.
+//
+// Parameters:
+//   - x: the first addend; its 256-bit value is added modulo 2^256
+//   - y: the second addend; its 256-bit value is added modulo 2^256
+//
+// Returns:
+//   - result: z containing x+y modulo 2^256; any carry beyond bit 255 is discarded
 func (z *Uint) Add(x, y *Uint) *Uint {
 	var carry uint64
 	z[0], carry = bits.Add64(x[0], y[0], 0)
@@ -19,6 +26,14 @@ func (z *Uint) Add(x, y *Uint) *Uint {
 }
 
 // AddOverflow sets z to the sum x+y and returns z and true if overflow occurred.
+//
+// Parameters:
+//   - x: the first addend
+//   - y: the second addend
+//
+// Returns:
+//   - result: z containing x+y modulo 2^256
+//   - overflow: true when x+y exceeds the 256-bit range
 func (z *Uint) AddOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
 	z[0], carry = bits.Add64(x[0], y[0], 0)
@@ -29,6 +44,13 @@ func (z *Uint) AddOverflow(x, y *Uint) (*Uint, bool) {
 }
 
 // Sub sets z to the difference x-y and returns z.
+//
+// Parameters:
+//   - x: the minuend
+//   - y: the subtrahend
+//
+// Returns:
+//   - result: z containing x-y modulo 2^256; underflow wraps in the unsigned representation
 func (z *Uint) Sub(x, y *Uint) *Uint {
 	var carry uint64
 	z[0], carry = bits.Sub64(x[0], y[0], 0)
@@ -39,6 +61,14 @@ func (z *Uint) Sub(x, y *Uint) *Uint {
 }
 
 // SubOverflow sets z to the difference x-y and returns z and true if underflow occurred.
+//
+// Parameters:
+//   - x: the minuend
+//   - y: the subtrahend
+//
+// Returns:
+//   - result: z containing x-y modulo 2^256
+//   - underflow: true when x is less than y
 func (z *Uint) SubOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
 	z[0], carry = bits.Sub64(x[0], y[0], 0)
@@ -49,11 +79,24 @@ func (z *Uint) SubOverflow(x, y *Uint) (*Uint, bool) {
 }
 
 // Neg returns -x mod 2^256.
+//
+// Parameters:
+//   - x: the value whose additive inverse modulo 2^256 is computed
+//
+// Returns:
+//   - result: z containing -x modulo 2^256
 func (z *Uint) Neg(x *Uint) *Uint {
 	return z.Sub(Zero(), x)
 }
 
 // Mul sets z to the product x*y and returns z.
+//
+// Parameters:
+//   - x: the first multiplicand
+//   - y: the second multiplicand
+//
+// Returns:
+//   - result: z containing the low 256 bits of x*y
 func (z *Uint) Mul(x, y *Uint) *Uint {
 	var (
 		res              Uint
@@ -79,6 +122,14 @@ func (z *Uint) Mul(x, y *Uint) *Uint {
 }
 
 // MulOverflow sets z to the product x*y and returns z and true if overflow occurred.
+//
+// Parameters:
+//   - x: the first multiplicand
+//   - y: the second multiplicand
+//
+// Returns:
+//   - result: z containing the low 256 bits of x*y
+//   - overflow: true when the full product needs more than 256 bits
 func (z *Uint) MulOverflow(x, y *Uint) (*Uint, bool) {
 	p := umul(x, y)
 	copy(z[:], p[:4])
@@ -87,6 +138,13 @@ func (z *Uint) MulOverflow(x, y *Uint) (*Uint, bool) {
 
 // Div sets z to the quotient x/y and returns z.
 // It panics if y == 0.
+//
+// Parameters:
+//   - x: the dividend
+//   - y: the non-zero divisor; zero causes a division-by-zero panic
+//
+// Returns:
+//   - result: z containing the unsigned quotient x/y
 func (z *Uint) Div(x, y *Uint) *Uint {
 	if y.IsZero() {
 		panic("division by zero")
@@ -112,6 +170,13 @@ func (z *Uint) Div(x, y *Uint) *Uint {
 
 // Mod sets z to the modulus x%y and returns z.
 // It panics if y == 0.
+//
+// Parameters:
+//   - x: the dividend
+//   - y: the non-zero divisor; zero causes a modulo-by-zero panic
+//
+// Returns:
+//   - result: z containing the unsigned remainder x%y
 func (z *Uint) Mod(x, y *Uint) *Uint {
 	if y.IsZero() {
 		panic("modulo by zero")
@@ -146,6 +211,14 @@ func (z *Uint) Mod(x, y *Uint) *Uint {
 
 // MulMod sets z to (x * y) mod m and returns z.
 // It panics if m == 0.
+//
+// Parameters:
+//   - x: the first multiplicand
+//   - y: the second multiplicand
+//   - m: the non-zero modulus; zero causes a modulo-by-zero panic
+//
+// Returns:
+//   - result: z containing (x*y) modulo m
 func (z *Uint) MulMod(x, y, m *Uint) *Uint {
 	if m.IsZero() {
 		panic("modulo by zero")
@@ -181,6 +254,15 @@ func (z *Uint) MulMod(x, y, m *Uint) *Uint {
 
 // DivMod sets z to the quotient x/y and m to the modulus x%y, returning the pair (z, m).
 // It panics if y == 0.
+//
+// Parameters:
+//   - x: the dividend
+//   - y: the non-zero divisor; zero causes a division-by-zero panic
+//   - m: the destination overwritten with x modulo y
+//
+// Returns:
+//   - quotient: z containing x/y
+//   - remainder: m containing x%y
 func (z *Uint) DivMod(x, y, m *Uint) (*Uint, *Uint) {
 	if y.IsZero() {
 		panic("division by zero")
@@ -216,6 +298,14 @@ func (z *Uint) DivMod(x, y, m *Uint) (*Uint, *Uint) {
 // The quotient is stored in provided quot - len(u)-len(d)+1 words.
 // It loosely follows the Knuth's division algorithm (sometimes referenced as "schoolbook" division) using 64-bit words.
 // See Knuth, Volume 2, section 4.3.1, Algorithm D.
+//
+// Parameters:
+//   - quot: the output word slice receiving the quotient
+//   - u: the dividend represented as little-endian 64-bit words
+//   - d: the non-zero divisor Uint
+//
+// Returns:
+//   - rem: the Uint remainder after dividing u by d
 func udivrem(quot, u []uint64, d *Uint) (rem Uint) {
 	var dLen int
 	for i := len(d) - 1; i >= 0; i-- {
@@ -272,6 +362,13 @@ func udivrem(quot, u []uint64, d *Uint) (rem Uint) {
 }
 
 // umul computes full 256 x 256 -> 512 multiplication.
+//
+// Parameters:
+//   - x: the first 256-bit multiplicand
+//   - y: the second 256-bit multiplicand
+//
+// Returns:
+//   - product: eight little-endian uint64 words containing the full 512-bit x*y
 func umul(x, y *Uint) [8]uint64 {
 	var res [8]uint64
 
@@ -309,6 +406,12 @@ func umul(x, y *Uint) [8]uint64 {
 }
 
 // highestNonZeroWord returns the highest index with non-zero value or -1 if the Uint is zero.
+//
+// Parameters:
+//   - u: the Uint whose highest non-zero little-endian word index is sought
+//
+// Returns:
+//   - wordIndex: the greatest word index containing a non-zero value, or -1 for zero
 func highestNonZeroWord(u *Uint) int {
 	for i := 3; i >= 0; i-- {
 		if u[i] != 0 {
@@ -319,6 +422,16 @@ func highestNonZeroWord(u *Uint) int {
 }
 
 // umulStep computes (hi * 2^64 + lo) = z + (x * y) + carry.
+//
+// Parameters:
+//   - z: the existing low word to add
+//   - x: the first 64-bit multiplicand
+//   - y: the second 64-bit multiplicand
+//   - carry: the incoming carry word
+//
+// Returns:
+//   - hi: the high 64 bits of z+x*y+carry
+//   - lo: the low 64 bits of z+x*y+carry
 func umulStep(z, x, y, carry uint64) (hi, lo uint64) {
 	hi, lo = bits.Mul64(x, y)
 	lo, carry = bits.Add64(lo, carry, 0)
@@ -329,6 +442,15 @@ func umulStep(z, x, y, carry uint64) (hi, lo uint64) {
 }
 
 // umulHop computes (hi * 2^64 + lo) = z + (x * y)
+//
+// Parameters:
+//   - z: the existing low word to add
+//   - x: the first 64-bit multiplicand
+//   - y: the second 64-bit multiplicand
+//
+// Returns:
+//   - hi: the high 64 bits of z+x*y
+//   - lo: the low 64 bits of z+x*y
 func umulHop(z, x, y uint64) (hi, lo uint64) {
 	hi, lo = bits.Mul64(x, y)
 	lo, carry := bits.Add64(lo, z, 0)
@@ -338,6 +460,14 @@ func umulHop(z, x, y uint64) (hi, lo uint64) {
 
 // udivremBy1 divides u by single normalized word d and produces both quotient and remainder.
 // The quotient is stored in provided quot.
+//
+// Parameters:
+//   - quot: the output word slice receiving quotient words
+//   - u: the normalized dividend words
+//   - d: the normalized single-word divisor
+//
+// Returns:
+//   - rem: the unnormalized remainder word after division by d
 func udivremBy1(quot, u []uint64, d uint64) (rem uint64) {
 	reciprocal := reciprocal2by1(d)
 	rem = u[len(u)-1] // Set the top word as remainder.
@@ -350,6 +480,11 @@ func udivremBy1(quot, u []uint64, d uint64) (rem uint64) {
 // udivremKnuth implements the division of u by normalized multiple word d from the Knuth's division algorithm.
 // The quotient is stored in provided quot - len(u)-len(d) words.
 // Updates u to contain the remainder - len(d) words.
+//
+// Parameters:
+//   - quot: the output word slice receiving quotient words
+//   - u: the normalized dividend words, updated in place to the remainder
+//   - d: the normalized multi-word divisor
 func udivremKnuth(quot, u, d []uint64) {
 	dLen := len(d)
 	dh := d[dLen-1]
@@ -388,16 +523,33 @@ func udivremKnuth(quot, u, d []uint64) {
 
 // isBitSet returns true if bit n-th is set, where n = 0 is LSB.
 // The n must be <= 255.
+//
+// Parameters:
+//   - n: the zero-based bit index to inspect; it must be at most 255
+//
+// Returns:
+//   - bitSet: true when bit n is set in z
 func (z *Uint) isBitSet(n uint) bool {
 	return (z[n/64] & (1 << (n % 64))) != 0
 }
 
+// IsOverflow reports whether the highest bit of z is set.
+//
+// Returns:
+//   - overflow: true when z has bit 255 set
 func (z *Uint) IsOverflow() bool {
 	return z.isBitSet(255)
 }
 
 // addTo computes x += y.
 // Requires len(x) >= len(y).
+//
+// Parameters:
+//   - x: the mutable word slice receiving x+y; it must be at least as long as y
+//   - y: the word slice added to x
+//
+// Returns:
+//   - carry: the carry word left after adding all words of y into x
 func addTo(x, y []uint64) uint64 {
 	var carry uint64
 	for i := 0; i < len(y); i++ {
@@ -408,6 +560,14 @@ func addTo(x, y []uint64) uint64 {
 
 // subMulTo computes x -= y * multiplier.
 // Requires len(x) >= len(y).
+//
+// Parameters:
+//   - x: the mutable word slice reduced in place
+//   - y: the multiplier word slice subtracted from x
+//   - multiplier: the scalar applied to every word of y before subtraction
+//
+// Returns:
+//   - borrow: the final borrow after subtracting y*multiplier from x
 func subMulTo(x, y []uint64, multiplier uint64) uint64 {
 	var borrow uint64
 	for i := 0; i < len(y); i++ {
@@ -421,6 +581,12 @@ func subMulTo(x, y []uint64, multiplier uint64) uint64 {
 }
 
 // reciprocal2by1 computes <^d, ^0> / d.
+//
+// Parameters:
+//   - d: the normalized non-zero divisor word for which the reciprocal is computed
+//
+// Returns:
+//   - reciprocal: the reciprocal used to estimate division by d
 func reciprocal2by1(d uint64) uint64 {
 	reciprocal, _ := bits.Div64(^d, 18446744073709551615, d)
 	return reciprocal
@@ -430,6 +596,16 @@ func reciprocal2by1(d uint64) uint64 {
 // It uses the provided d's reciprocal.
 // Implementation ported from https://github.com/chfast/intx and is based on
 // "Improved division by invariant integers", Algorithm 4.
+//
+// Parameters:
+//   - uh: the high word of the two-word dividend
+//   - ul: the low word of the two-word dividend
+//   - d: the normalized non-zero divisor word
+//   - reciprocal: the precomputed reciprocal of d
+//
+// Returns:
+//   - quot: the quotient of the two-word dividend by d
+//   - rem: the remainder, strictly less than d
 func udivrem2by1(uh, ul, d, reciprocal uint64) (quot, rem uint64) {
 	qh, ql := bits.Mul64(reciprocal, uh)
 	ql, carry := bits.Add64(ql, ul, 0)

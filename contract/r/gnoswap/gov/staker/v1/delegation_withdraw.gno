@@ -2,6 +2,7 @@ package staker
 
 import (
 	"errors"
+
 	gnsmath "gno.land/p/gnoswap/gnsmath"
 
 	"gno.land/r/gnoswap/gov/staker"
@@ -11,10 +12,22 @@ type DelegationWithdrawResolver struct {
 	withdraw *staker.DelegationWithdraw
 }
 
+// NewDelegationWithdrawResolver wraps a delegation withdrawal for collection
+// state and lockup calculations.
+//
+// Parameters:
+//   - withdraw: delegation withdrawal state to resolve
+//
+// Returns:
+//   - *DelegationWithdrawResolver: resolver retaining the supplied withdrawal pointer
 func NewDelegationWithdrawResolver(withdraw *staker.DelegationWithdraw) *DelegationWithdrawResolver {
 	return &DelegationWithdrawResolver{withdraw}
 }
 
+// Get returns the wrapped delegation withdrawal value.
+//
+// Returns:
+//   - *staker.DelegationWithdraw: wrapped withdrawal pointer, or nil when the resolver was constructed with nil
 func (r *DelegationWithdrawResolver) Get() *staker.DelegationWithdraw {
 	return r.withdraw
 }
@@ -75,11 +88,11 @@ func (r *DelegationWithdrawResolver) IsCollected() bool {
 // This method validates collectability and updates the collection state.
 //
 // Parameters:
-//   - amount: amount to collect
-//   - currentTime: current timestamp
+//   - amount: GNS amount to add to this withdrawal's collected amount
+//   - currentTime: Unix timestamp used to check lockup expiry and record collection time
 //
 // Returns:
-//   - error: nil on success, error if collection is not allowed
+//   - error: nil after the collection state is updated; errWithdrawNotCollectable when the withdrawal is not collectable
 func (r *DelegationWithdrawResolver) Collect(amount int64, currentTime int64) error {
 	if !r.IsCollectable(currentTime) {
 		return errors.New(errWithdrawNotCollectable)
@@ -106,7 +119,7 @@ func (r *DelegationWithdrawResolver) Collect(amount int64, currentTime int64) er
 //   - unDelegationLockupPeriod: duration of the lockup period in seconds
 //
 // Returns:
-//   - *staker.DelegationWithdraw: new withdrawal instance with lockup
+//   - staker.DelegationWithdraw: new withdrawal instance with lockup
 func NewDelegationWithdraw(
 	delegationID,
 	unDelegateAmount,
@@ -133,7 +146,7 @@ func NewDelegationWithdraw(
 //   - createdAt: timestamp when the withdrawal was created
 //
 // Returns:
-//   - *staker.DelegationWithdraw: new withdrawal instance that is immediately collected
+//   - staker.DelegationWithdraw: new withdrawal instance that is immediately collectable
 func NewDelegationWithdrawWithoutLockup(
 	delegationID,
 	unDelegateAmount,

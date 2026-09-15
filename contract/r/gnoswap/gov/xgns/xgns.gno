@@ -24,6 +24,10 @@ var (
 	ledger *grc20.PrivateLedger
 )
 
+// init creates the xGNS token and private ledger for the runtime realm.
+//
+// Parameters:
+//   - cur: runtime-supplied realm context used to initialize the token ledger.
 func init(cur realm) {
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6, tokenID, cur)
 }
@@ -72,11 +76,13 @@ func Render(path string) string {
 	}
 }
 
-// Mint mints tokens to address.
+// Mint mints tokens to an address.
 //
 // Parameters:
-//   - to: recipient address
-//   - amount: amount to mint
+//   - cur: current realm context; callers use cross(cur) when crossing into this
+//     realm.
+//   - to: recipient address receiving the newly minted tokens.
+//   - amount: number of xGNS token units to mint.
 //
 // Only callable by governance staker contract.
 func Mint(cur realm, to address, amount int64) {
@@ -88,11 +94,13 @@ func Mint(cur realm, to address, amount int64) {
 	checkErr(ledger.Mint(to, amount))
 }
 
-// Burn burns tokens from address.
+// Burn burns tokens from an address.
 //
 // Parameters:
-//   - from: address to burn from
-//   - amount: amount to burn
+//   - cur: current realm context; callers use cross(cur) when crossing into this
+//     realm.
+//   - from: address whose xGNS balance is burned.
+//   - amount: number of xGNS token units to burn.
 //
 // Only callable by governance staker contract.
 func Burn(cur realm, from address, amount int64) {
@@ -110,7 +118,8 @@ func Burn(cur realm, from address, amount int64) {
 //   - totalIssued: total xGNS tokens issued
 //   - issuedByDelegate: tokens issued through governance delegation
 //   - issuedByDepositGns: tokens issued through launchpad deposit
-//   - error: error if launchpad address not found
+//   - err: nil when the launchpad address is registered; an error when it cannot
+//     be found.
 func SupplyInfo() (totalIssued, issuedByDelegate, issuedByDepositGns int64, err error) {
 	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	if !ok {
@@ -124,6 +133,10 @@ func SupplyInfo() (totalIssued, issuedByDelegate, issuedByDepositGns int64, err 
 	return totalIssued, issuedByDelegate, issuedByDepositGns, nil
 }
 
+// checkErr panics when err is non-nil.
+//
+// Parameters:
+//   - err: token-ledger operation error to check; nil indicates success.
 func checkErr(err error) {
 	if err != nil {
 		panic(err)

@@ -8,6 +8,13 @@ type DelegationManagerResolver struct {
 	*staker.DelegationManager
 }
 
+// NewDelegationManagerResolver creates a resolver over an existing delegation manager.
+//
+// Parameters:
+//   - delegationManager: manager whose domain-owned delegation trees will be queried or updated.
+//
+// Returns:
+//   - *DelegationManagerResolver: resolver exposing address-typed delegation operations.
 func NewDelegationManagerResolver(delegationManager *staker.DelegationManager) *DelegationManagerResolver {
 	return &DelegationManagerResolver{delegationManager}
 }
@@ -20,7 +27,7 @@ func NewDelegationManagerResolver(delegationManager *staker.DelegationManager) *
 //   - delegatee: address of the user who received the delegation
 //
 // Returns:
-//   - []int64: list of delegation IDs for the specified pair
+//   - []int64: matching delegation IDs, or an empty slice when no pair is stored.
 func (dm *DelegationManagerResolver) GetUserDelegationIDsWithDelegatee(delegator, delegatee address) []int64 {
 	delegatorAddress := delegator.String()
 	delegateeAddress := delegatee.String()
@@ -39,7 +46,7 @@ func (dm *DelegationManagerResolver) GetUserDelegationIDsWithDelegatee(delegator
 //   - delegator: address of the user whose delegations to retrieve
 //
 // Returns:
-//   - []int64: list of all delegation IDs for the delegator
+//   - []int64: concatenated delegation IDs from every stored delegatee entry, or an empty slice when absent.
 func (dm *DelegationManagerResolver) GetUserDelegationIDs(delegator address) []int64 {
 	delegatorAddress := delegator.String()
 	delegationIDs := make([]int64, 0)
@@ -66,9 +73,9 @@ func (dm *DelegationManagerResolver) GetUserDelegationIDs(delegator address) []i
 // and ensures no duplicate delegation IDs are stored.
 //
 // Parameters:
-//   - delegator: address of the user who made the delegation
-//   - delegatee: address of the user who received the delegation
-//   - delegationID: unique identifier for the delegation
+//   - delegator: address that supplied the delegation.
+//   - delegatee: address that received the delegation.
+//   - delegationID: unique delegation record identifier to add.
 func (dm *DelegationManagerResolver) addDelegation(delegator, delegatee address, delegationID int64) {
 	// Delegate the read-modify-write to the domain method so the nested BPTree
 	// mutation stays within the owning realm; splitting the get and set across

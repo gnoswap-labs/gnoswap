@@ -10,6 +10,13 @@ type ProposalScheduleStatusResolver struct {
 	*governance.ProposalScheduleStatus
 }
 
+// NewProposalScheduleStatusResolver wraps a proposal schedule for phase-boundary queries.
+//
+// Parameters:
+//   - status: proposal schedule containing creation, voting, and execution timestamps
+//
+// Returns:
+//   - *ProposalScheduleStatusResolver: resolver backed by status
 func NewProposalScheduleStatusResolver(status *governance.ProposalScheduleStatus) *ProposalScheduleStatusResolver {
 	return &ProposalScheduleStatusResolver{status}
 }

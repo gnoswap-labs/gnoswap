@@ -16,7 +16,14 @@ const (
 	kindUint64
 )
 
-// parseNumber parses a string to a number (int, int64, or uint64) with proper validation.
+// parseNumber parses a non-empty decimal string as the requested numeric type.
+//
+// Parameters:
+//   - s: decimal number text; whitespace-only or malformed input panics
+//   - kind: numeric result kind, one of int, int64, or uint64
+//
+// Returns:
+//   - any: parsed int, int64, or uint64 value selected by kind
 func parseNumber(s string, kind numberKind) any {
 	if len(strings.TrimSpace(s)) == 0 {
 		panic(ufmt.Sprint("invalid number value: empty or whitespace string"))
@@ -46,7 +53,13 @@ func parseNumber(s string, kind numberKind) any {
 	}
 }
 
-// parseBool parses a string to a boolean.
+// parseBool parses a string to a boolean, accepting only the exact values "true" and "false".
+//
+// Parameters:
+//   - s: boolean text to parse
+//
+// Returns:
+//   - bool: true for "true" and false for "false"; invalid or empty text panics
 func parseBool(s string) bool {
 	if len(strings.TrimSpace(s)) == 0 {
 		panic(ufmt.Sprint("invalid bool value: empty or whitespace string"))
@@ -62,7 +75,13 @@ func parseBool(s string) bool {
 	}
 }
 
-// parseInt parses a string to int with proper validation and overflow checking.
+// parseInt parses a non-empty decimal string to int with overflow checking.
+//
+// Parameters:
+//   - s: decimal integer text to parse
+//
+// Returns:
+//   - int: parsed value within the platform int range; malformed or overflowing input panics
 func parseInt(s string) int {
 	if len(strings.TrimSpace(s)) == 0 {
 		panic(ufmt.Sprint("invalid int value: empty or whitespace string"))
@@ -83,7 +102,13 @@ func parseInt(s string) int {
 	return int(num)
 }
 
-// parseInt64 parses a string to int64 with proper validation.
+// parseInt64 parses a non-empty decimal string to int64.
+//
+// Parameters:
+//   - s: decimal signed integer text to parse
+//
+// Returns:
+//   - int64: parsed signed 64-bit value; malformed or empty input panics
 func parseInt64(s string) int64 {
 	if len(strings.TrimSpace(s)) == 0 {
 		panic(ufmt.Sprint("invalid int64 value: empty or whitespace string"))
@@ -97,7 +122,13 @@ func parseInt64(s string) int64 {
 	return num
 }
 
-// parseUint64 parses a string to uint64 with proper validation.
+// parseUint64 parses a non-empty decimal string to uint64.
+//
+// Parameters:
+//   - s: decimal non-negative integer text to parse
+//
+// Returns:
+//   - uint64: parsed unsigned 64-bit value; malformed, negative, or empty input panics
 func parseUint64(s string) uint64 {
 	if len(strings.TrimSpace(s)) == 0 {
 		panic(ufmt.Sprint("invalid uint64 value: empty or whitespace string"))

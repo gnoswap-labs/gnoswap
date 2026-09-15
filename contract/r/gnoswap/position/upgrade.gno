@@ -11,6 +11,10 @@ import (
 // The initializer function creates a new instance of the implementation
 // using the provided positionStore interface.
 //
+// Parameters:
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - initializer: callback that receives the implementation realm context and position store, then returns that version's IPosition implementation
+//
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, positionStore IPositionStore) IPosition) {
@@ -39,6 +43,10 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, positionS
 // UpgradeImpl switches the active position implementation to a different version.
 // This function allows seamless upgrades from one version to another without
 // data migration or downtime.
+//
+// Parameters:
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - packagePath: fully qualified package path of a previously registered replacement implementation
 //
 // Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.

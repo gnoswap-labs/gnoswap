@@ -22,7 +22,11 @@ type keeper struct {
 
 var _ ReferralKeeper = &keeper{}
 
-// NewKeeper creates a new ReferralKeeper instance.
+// NewKeeper creates an empty ReferralKeeper backed by independent referral and
+// last-operation BPTrees.
+//
+// Returns:
+//   - keeper: new referral store with no relationships or operation timestamps
 func NewKeeper() ReferralKeeper {
 	return &keeper{
 		store:   bptree.NewBPTreeN(16),
@@ -30,9 +34,17 @@ func NewKeeper() ReferralKeeper {
 	}
 }
 
-// register creates, updates, or removes a referral relationship between addresses.
-// Setting refAddr to the contract's own address removes the referral without
-// changing the last non-removal operation timestamp.
+// register creates, updates, or removes a referral relationship.
+// Passing the contract-address removal sentinel as refAddr removes an existing
+// relationship without changing its last non-removal operation timestamp.
+//
+// Parameters:
+//   - addr: valid account address whose referral relationship is changed
+//   - refAddr: valid referral target address, or the contract-address sentinel to remove the relationship
+//
+// Returns:
+//   - referral: refAddr after a successful create/update, or the zero address after removal or failure
+//   - error: nil on a successful operation; non-nil for invalid/self addresses, cooldown violations, or an inconsistent removal
 func (k *keeper) register(addr, refAddr address) (address, error) {
 	if err := k.validateAddresses(addr, refAddr); err != nil {
 		return zeroAddress, err
@@ -62,7 +74,15 @@ func (k *keeper) register(addr, refAddr address) (address, error) {
 	return refAddr, nil
 }
 
-// validateAddresses validates that addresses are properly formatted and not self-referencing.
+// validateAddresses validates addr and refAddr formats and rejects self-referrals.
+// The removal sentinel is allowed in refAddr without ordinary address validation.
+//
+// Parameters:
+//   - addr: account address whose relationship is being validated
+//   - refAddr: referral target address or the contract-address removal sentinel
+//
+// Returns:
+//   - error: nil for valid, non-self-referential addresses; ErrInvalidAddress or ErrSelfReferral otherwise
 func (k *keeper) validateAddresses(addr, refAddr address) error {
 	if !addr.IsValid() || (!isRemovalRequest(refAddr) && !refAddr.IsValid()) {
 		return errors.New(ErrInvalidAddress)
@@ -73,14 +93,26 @@ func (k *keeper) validateAddresses(addr, refAddr address) error {
 	return nil
 }
 
-// has returns true if a referral exists for the given address.
+// has reports whether the store contains a referral entry for addr.
+//
+// Parameters:
+//   - addr: account address whose stored relationship is checked
+//
+// Returns:
+//   - exists: true when an entry is present; false when no entry is stored
 func (k *keeper) has(addr address) bool {
 	exists := k.store.Get(addr.String()) != nil
 	return exists
 }
 
-// get retrieves the referral address for a given address.
-// Returns ErrNotFound if no referral exists.
+// get retrieves the stored referral address for addr.
+//
+// Parameters:
+//   - addr: valid account address whose referral target is queried
+//
+// Returns:
+//   - refAddr: stored referral address, or the zero address when lookup fails
+//   - error: nil on success; ErrInvalidAddress for invalid input or corrupt value, or ErrNotFound when no referral exists
 func (k *keeper) get(addr address) (address, error) {
 	if !addr.IsValid() {
 		return zeroAddress, errors.New(ErrInvalidAddress)
@@ -99,13 +131,23 @@ func (k *keeper) get(addr address) (address, error) {
 	return address(refAddr), nil
 }
 
-// isEmpty returns true if no referrals exist in the store.
+// isEmpty reports whether the referral store has no entries.
+//
+// Returns:
+//   - empty: true when no referral relationships are stored; false otherwise
 func (k *keeper) isEmpty() bool {
 	return k.store.Size() == 0
 }
 
-// getLastOpTimestamp retrieves the last non-removal registration or update
-// timestamp for a given address. Returns ErrNotFound if no such operation exists.
+// getLastOpTimestamp retrieves the last non-removal operation time for addr.
+// Timestamps are stored as Unix seconds; removing a referral does not clear it.
+//
+// Parameters:
+//   - addr: valid account address whose operation timestamp is queried
+//
+// Returns:
+//   - timestamp: last non-removal operation time in Unix seconds, or 0 when lookup fails
+//   - error: nil on success; ErrInvalidAddress for invalid input or ErrNotFound when no timestamp exists, with ErrInvalidTime for corrupt storage
 func (k *keeper) getLastOpTimestamp(addr address) (int64, error) {
 	if !addr.IsValid() {
 		return 0, errors.New(ErrInvalidAddress)
@@ -124,8 +166,14 @@ func (k *keeper) getLastOpTimestamp(addr address) (int64, error) {
 	return ts, nil
 }
 
-// checkRateLimit verifies whether enough time has passed since the last
-// non-removal operation. Returns ErrTooManyRequests if the cooldown is exceeded.
+// checkRateLimit checks whether addr's next non-removal operation is outside
+// the 24-hour cooldown from its stored Unix-second timestamp.
+//
+// Parameters:
+//   - addr: string key identifying the account whose cooldown is checked
+//
+// Returns:
+//   - error: nil when no prior timestamp exists or at least 24 hours have elapsed; ErrTooManyRequests during cooldown or ErrInvalidTime for corrupt storage
 func (k *keeper) checkRateLimit(addr string) error {
 	now := time.Now().Unix()
 

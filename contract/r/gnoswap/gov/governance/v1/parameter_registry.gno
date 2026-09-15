@@ -27,6 +27,7 @@ import (
 // This provides consistent validation at proposal creation time and execution time.
 var globalParameterRegistry *ParameterRegistry
 
+// init creates the process-wide registry of supported governance parameter handlers.
 func init() {
 	globalParameterRegistry = CreateParameterHandlers()
 }
@@ -54,10 +55,18 @@ const (
 // Each handler is responsible for executing specific parameter changes in the system.
 type ParameterHandler interface {
 	// Execute processes the parameters and applies the changes to the system.
-	// The `_ int, cur realm` discriminator pair forwards the governance proxy's
+	// The `_ int, rlm realm` discriminator pair forwards the governance proxy's
 	// realm value into the handler so any cross-realm calls inside the closure
 	// run under the proxy's identity (the only address with caller-allowlist
 	// permission against the targeted /r/ realms).
+	//
+	// Parameters:
+	//   - _: integer discriminator required by the crossing entrypoint; callers use 0
+	//   - rlm: current governance proxy realm context forwarded to the handler
+	//   - params: serialized parameter values to validate and apply in handler order
+	//
+	// Returns:
+	//   - error: nil when the parameter change succeeds, or an execution/validation error
 	Execute(_ int, rlm realm, params []string) error
 }
 
@@ -82,11 +91,23 @@ type ParameterHandlerOptions struct {
 }
 
 // paramValidator validates a single parameter value and returns an error on failure.
+//
+// Parameters:
+//   - value: serialized parameter value to validate
+//
+// Returns:
+//   - error: nil when value satisfies the validator, or a validation error otherwise
 type paramValidator func(string) error
 
 // compositeValidator validates relationships between a handler's parameters.
 // It must only enforce deterministic, state-independent rules so that a
 // proposal is not rejected merely because on-chain state changes while voting.
+//
+// Parameters:
+//   - values: serialized handler parameters whose cross-parameter relationship is checked
+//
+// Returns:
+//   - error: nil when the parameter relationship is valid, or a deterministic business-rule error
 type compositeValidator func([]string) error
 
 // NewParameterHandlerOptions creates a new parameter handler with the specified configuration.
@@ -95,7 +116,7 @@ type compositeValidator func([]string) error
 //   - pkgPath: package path of the target contract
 //   - function: function name to be called
 //   - paramCount: expected number of parameters
-//   - handlerFunc: function that executes the parameter change
+//   - handlerFunc: callback receiving the discriminator, propagated realm, and serialized parameters to execute the change
 //   - paramValidators: optional validators for each parameter (must match paramCount if provided)
 //
 // Returns:
@@ -135,12 +156,12 @@ func (h *ParameterHandlerOptions) HandlerKey() string {
 // This method ensures the correct number of parameters are provided before execution.
 //
 // Parameters:
-//   - rlm: governance proxy realm threaded in by the caller; forwarded to the
-//     wrapped closure so its cross-realm calls run under the proxy.
-//   - params: slice of string parameters to pass to the handler
+//   - _: integer discriminator required by the crossing entrypoint; callers use 0
+//   - rlm: governance proxy realm threaded into the wrapped handler
+//   - params: serialized parameter values to pass to the handler
 //
 // Returns:
-//   - error: execution error if parameter count mismatch or handler execution fails
+//   - error: parameter-count error or the error returned by the wrapped handler
 func (h *ParameterHandlerOptions) Execute(_ int, rlm realm, params []string) error {
 	if len(params) != h.paramCount {
 		return ufmt.Errorf("expected %d parameters, got %d", h.paramCount, len(params))
@@ -149,7 +170,13 @@ func (h *ParameterHandlerOptions) Execute(_ int, rlm realm, params []string) err
 	return h.handlerFunc(0, rlm, params)
 }
 
-// ValidateParams runs parameter count and per-parameter validation without executing the handler.
+// ValidateParams checks the parameter count and runs configured individual and composite validators without executing the handler.
+//
+// Parameters:
+//   - params: serialized parameter values to validate in handler order
+//
+// Returns:
+//   - error: nil when all configured checks pass, or the first count/type/business-rule validation error
 func (h *ParameterHandlerOptions) ValidateParams(params []string) error {
 	if len(params) != h.paramCount {
 		return ufmt.Errorf(
@@ -240,7 +267,7 @@ func makeHandlerKey(pkgPath, function string) string {
 	return pkgPath + ":" + function
 }
 
-// createParameterHandlers initializes and configures all supported parameter handlers.
+// CreateParameterHandlers initializes and configures all supported parameter handlers.
 // This function defines all the parameter changes that can be executed through governance proposals.
 // It covers configuration changes for various system components including pools, staking, fees, etc.
 //
@@ -941,7 +968,13 @@ func registerHandlers(registry *ParameterRegistry, handlerOptions []*ParameterHa
 	}
 }
 
-// runValidator executes a validator function and converts panics to errors.
+// runValidator executes a validator callback and converts any panic into an error.
+//
+// Parameters:
+//   - fn: validation callback whose panic should be captured as an error
+//
+// Returns:
+//   - err: nil when fn returns normally, otherwise the recovered error or panic value
 func runValidator(fn func()) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -982,6 +1015,13 @@ var (
 	}
 )
 
+// numberValidator creates a validator that parses each string using the requested numeric kind.
+//
+// Parameters:
+//   - kind: numeric representation to parse, such as int, int64, or uint64
+//
+// Returns:
+//   - paramValidator: validator returning an error when the string is empty, malformed, or out of range
 func numberValidator(kind numberKind) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -990,6 +1030,13 @@ func numberValidator(kind numberKind) paramValidator {
 	}
 }
 
+// uint8RangeValidator creates a validator for an integer constrained to the uint8 range.
+//
+// Parameters:
+//   - name: field label included in out-of-range validation errors
+//
+// Returns:
+//   - paramValidator: validator accepting values from 0 through 255 inclusive
 func uint8RangeValidator(name string) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1001,6 +1048,13 @@ func uint8RangeValidator(name string) paramValidator {
 	}
 }
 
+// roleNameValidator validates that a role name is non-empty after trimming whitespace.
+//
+// Parameters:
+//   - s: role name text to validate
+//
+// Returns:
+//   - error: nil for a non-empty role name, or an error describing the empty value
 func roleNameValidator(s string) error {
 	return runValidator(func() {
 		roleName := strings.TrimSpace(s)
@@ -1010,6 +1064,13 @@ func roleNameValidator(s string) error {
 	})
 }
 
+// updatableRoleNameValidator validates a role name that may be updated.
+//
+// Parameters:
+//   - s: role name text; the admin system role is not updateable
+//
+// Returns:
+//   - error: nil for a non-empty non-admin role, or an error when the role is invalid
 func updatableRoleNameValidator(s string) error {
 	return runValidator(func() {
 		roleName := strings.TrimSpace(s)
@@ -1023,6 +1084,13 @@ func updatableRoleNameValidator(s string) error {
 	})
 }
 
+// removableRoleNameValidator validates a role name that may be removed.
+//
+// Parameters:
+//   - s: role name text; system roles cannot be removed
+//
+// Returns:
+//   - error: nil for a non-empty removable role, or an error when the role is invalid
 func removableRoleNameValidator(s string) error {
 	return runValidator(func() {
 		roleName := strings.TrimSpace(s)
@@ -1036,6 +1104,13 @@ func removableRoleNameValidator(s string) error {
 	})
 }
 
+// nonNegativeInt64Validator creates a validator for an int64 value that cannot be negative.
+//
+// Parameters:
+//   - name: field label included in validation errors
+//
+// Returns:
+//   - paramValidator: validator accepting parsed values greater than or equal to zero
 func nonNegativeInt64Validator(name string) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1047,6 +1122,13 @@ func nonNegativeInt64Validator(name string) paramValidator {
 	}
 }
 
+// positiveInt64Validator creates a validator for an int64 value greater than zero.
+//
+// Parameters:
+//   - name: field label included in validation errors
+//
+// Returns:
+//   - paramValidator: validator accepting parsed values strictly greater than zero
 func positiveInt64Validator(name string) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1058,6 +1140,15 @@ func positiveInt64Validator(name string) paramValidator {
 	}
 }
 
+// int64RangeValidator creates a validator for an inclusive int64 range.
+//
+// Parameters:
+//   - name: field label included in validation errors
+//   - min: inclusive lower bound for the accepted value
+//   - max: inclusive upper bound for the accepted value
+//
+// Returns:
+//   - paramValidator: validator accepting values from min through max inclusive
 func int64RangeValidator(name string, min, max int64) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1069,6 +1160,14 @@ func int64RangeValidator(name string, min, max int64) paramValidator {
 	}
 }
 
+// uint64RangeValidator creates a validator for an unsigned integer upper-bounded by max.
+//
+// Parameters:
+//   - name: field label included in validation errors
+//   - max: inclusive maximum accepted uint64 value
+//
+// Returns:
+//   - paramValidator: validator accepting values from zero through max inclusive
 func uint64RangeValidator(name string, max uint64) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1080,6 +1179,13 @@ func uint64RangeValidator(name string, max uint64) paramValidator {
 	}
 }
 
+// haltLevelValidator validates a textual halt level against the halt package's allowed values.
+//
+// Parameters:
+//   - s: halt level string to validate
+//
+// Returns:
+//   - error: nil for a recognized halt level, or an error for an invalid level
 func haltLevelValidator(s string) error {
 	return runValidator(func() {
 		if !halt.HaltLevel(s).IsValid() {
@@ -1088,6 +1194,13 @@ func haltLevelValidator(s string) error {
 	})
 }
 
+// haltOperationTypeValidator validates a textual operation type against the halt package.
+//
+// Parameters:
+//   - s: operation type string to validate
+//
+// Returns:
+//   - error: nil for a recognized operation type, or an error for an invalid type
 func haltOperationTypeValidator(s string) error {
 	return runValidator(func() {
 		if !halt.OpType(s).IsValid() {
@@ -1096,6 +1209,13 @@ func haltOperationTypeValidator(s string) error {
 	})
 }
 
+// tokenMinimumRewardAmountValidator validates a tokenPath:amount setting.
+//
+// Parameters:
+//   - s: token path and non-negative minimum amount separated by a colon
+//
+// Returns:
+//   - error: nil for a valid tokenPath:amount string, or an error for malformed or negative input
 func tokenMinimumRewardAmountValidator(s string) error {
 	return runValidator(func() {
 		parts := strings.SplitN(s, ":", 2)
@@ -1109,6 +1229,13 @@ func tokenMinimumRewardAmountValidator(s string) error {
 	})
 }
 
+// distributionPctCompositeValidator validates a complete distribution percentage set.
+//
+// Parameters:
+//   - params: percentage strings; each must be in 0..10000 and the values must sum to 10000
+//
+// Returns:
+//   - error: nil when all percentages are valid and sum to 10000, or the first validation error
 func distributionPctCompositeValidator(params []string) error {
 	return runValidator(func() {
 		sum := int64(0)
@@ -1125,6 +1252,13 @@ func distributionPctCompositeValidator(params []string) error {
 	})
 }
 
+// splitExecutionsRaw splits a delimiter-joined execution string into individual messages.
+//
+// Parameters:
+//   - executions: execution messages joined with the governance message separator
+//
+// Returns:
+//   - []string: individual execution messages, or an empty slice when executions is empty
 func splitExecutionsRaw(executions string) []string {
 	if executions == "" {
 		return []string{}
@@ -1133,6 +1267,16 @@ func splitExecutionsRaw(executions string) []string {
 	return strings.Split(executions, messageSeparator)
 }
 
+// parseExecutionMessage parses one execution message into its package, function, and parameters.
+//
+// Parameters:
+//   - msg: execution text separated into package, function, and parameter parts
+//
+// Returns:
+//   - pkgPath: target package path, or an empty string when the format is not three parts
+//   - function: target function name, or an empty string when the format is not three parts
+//   - params: comma-separated handler parameters, or nil for malformed input and an empty slice for no parameters
+//   - partCount: number of separator-delimited parts found in msg
 func parseExecutionMessage(msg string) (pkgPath string, function string, params []string, partCount int) {
 	parts := strings.Split(msg, parameterSeparator)
 	partCount = len(parts)

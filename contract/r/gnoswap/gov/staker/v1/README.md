@@ -80,24 +80,27 @@ Collects both reward streams for a registered launchpad project wallet. This ent
 
 ## Usage
 
+These snippets call the public domain proxy from a realm function with a current `cur` token.
+Import the proxy package and qualify its function names in integrating code.
+
 ```go
 // Delegate GNS to another address; xGNS voting power is minted 1:1.
-delegatedAmount := Delegate(cross, delegatee, 1_000_000_000, "g1referrer...")
+delegatedAmount := Delegate(cross(cur), delegatee, 1_000_000_000, "g1referrer...")
 
 // Redelegate part of the active balance immediately.
-Redelegate(cross, delegatee, newDelegatee, 500_000_000)
+Redelegate(cross(cur), delegatee, newDelegatee, 500_000_000)
 
 // Claim both GNS emission and all known protocol-fee tokens.
-CollectReward(cross)
+CollectReward(cross(cur))
 
 // Or claim only one stream/token.
-CollectEmissionReward(cross)
-CollectProtocolFeeReward(cross, tokenPath)
+CollectEmissionReward(cross(cur))
+CollectProtocolFeeReward(cross(cur), tokenPath)
 
 // Start undelegation. Collect only after the configured lockup (7 days by default).
-Undelegate(cross, delegatee, 250_000_000)
+Undelegate(cross(cur), delegatee, 250_000_000)
 // ...wait until the lockup has expired...
-CollectUndelegatedGns(cross)
+CollectUndelegatedGns(cross(cur))
 ```
 
 ## Security

@@ -26,6 +26,9 @@ import (
 //   - tickUpper: Upper boundary tick of position range
 //
 // Key Format: EncodePositionKey(tickLower, tickUpper)
+//
+// Returns:
+//   - string: deterministic key encoding the lower and upper tick boundaries.
 func getPositionKey(
 	tickLower int32,
 	tickUpper int32,
@@ -33,8 +36,18 @@ func getPositionKey(
 	return pl.EncodePositionKey(tickLower, tickUpper)
 }
 
-// positionUpdate updates a position's liquidity and calculates fees owed.
-// Returns the updated position information and any error.
+// positionUpdate applies a signed liquidity delta and refreshes fee-growth checkpoints
+// and tokens owed for one position.
+//
+// Parameters:
+//   - position: current position state to update.
+//   - liquidityDelta: signed liquidity change; negative values remove liquidity.
+//   - feeGrowthInside0X128: current token0 fee growth inside the position range, scaled by 2^128.
+//   - feeGrowthInside1X128: current token1 fee growth inside the position range, scaled by 2^128.
+//
+// Returns:
+//   - pl.PositionInfo: updated position state with liquidity, fee checkpoints, and owed tokens.
+//   - error: non-nil when both current and delta liquidity are zero or removal exceeds current liquidity.
 func positionUpdate(
 	position pl.PositionInfo,
 	liquidityDelta *i256.Int,
@@ -103,17 +116,44 @@ func positionUpdate(
 	return position, nil
 }
 
-// calculateToken0Amount calculates the amount of token0 based on price range and liquidity delta.
+// calculateToken0Amount calculates the signed token0 amount implied by a price range and liquidity delta.
+//
+// Parameters:
+//   - sqrtPriceLower: lower range price as a Q96 square-root ratio.
+//   - sqrtPriceUpper: upper range price as a Q96 square-root ratio.
+//   - liquidityDelta: signed liquidity to add or remove.
+//
+// Returns:
+//   - *i256.Int: signed token0 amount required for the liquidity change.
 func calculateToken0Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
 	return gnsmath.GetAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
-// calculateToken1Amount calculates the amount of token1 based on price range and liquidity delta.
+// calculateToken1Amount calculates the signed token1 amount implied by a price range and liquidity delta.
+//
+// Parameters:
+//   - sqrtPriceLower: lower range price as a Q96 square-root ratio.
+//   - sqrtPriceUpper: upper range price as a Q96 square-root ratio.
+//   - liquidityDelta: signed liquidity to add or remove.
+//
+// Returns:
+//   - *i256.Int: signed token1 amount required for the liquidity change.
 func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
 	return gnsmath.GetAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
-// positionUpdateWithKey updates a position in the pool and returns the updated position.
+// positionUpdateWithKey loads, updates, and stores one pool position by its encoded range key.
+//
+// Parameters:
+//   - p: pool whose aggregate position tree is updated.
+//   - positionKey: encoded lower/upper tick-range key.
+//   - liquidityDelta: signed liquidity change; negative values remove liquidity.
+//   - feeGrowthInside0X128: current token0 inside fee growth, scaled by 2^128.
+//   - feeGrowthInside1X128: current token1 inside fee growth, scaled by 2^128.
+//
+// Returns:
+//   - pl.PositionInfo: resulting position state stored under positionKey.
+//   - error: non-nil when the position update rejects the liquidity delta.
 func positionUpdateWithKey(
 	p *pl.Pool,
 	positionKey string,
@@ -139,7 +179,12 @@ func positionUpdateWithKey(
 	return positionAfterUpdate, nil
 }
 
-// setPosition sets the position info for a given key.
+// setPosition stores position information under an encoded range key.
+//
+// Parameters:
+//   - p: pool whose position tree receives the entry.
+//   - posKey: encoded lower/upper tick-range key.
+//   - positionInfo: aggregate position state to store.
 func setPosition(p *pl.Pool, posKey string, positionInfo pl.PositionInfo) {
 	p.SetPosition(posKey, positionInfo)
 }
@@ -154,12 +199,15 @@ func setPosition(p *pl.Pool, posKey string, positionInfo pl.PositionInfo) {
 //  3. Current price above range (tick >= tickUpper): only token1 is used/returned
 //
 // Parameters:
-//   - params: ModifyPositionParams containing owner, tickLower, tickUpper, and liquidityDelta
+//   - p: pool whose slot0, liquidity, ticks, and position state are updated.
+//   - observations: pool observation tree used when the current price is inside the range.
+//   - params: owner, tick bounds, and signed liquidity delta for the position update.
 //
 // Returns:
-//   - PositionInfo: updated position information
-//   - *u256.Uint: amount of token0 needed/returned
-//   - *u256.Uint: amount of token1 needed/returned
+//   - pl.PositionInfo: updated aggregate position information.
+//   - *u256.Uint: absolute token0 amount needed or returned.
+//   - *u256.Uint: absolute token1 amount needed or returned.
+//   - error: non-nil when tick bounds, observations, or position accounting are invalid.
 func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyPositionParams) (pl.PositionInfo, *u256.Uint, *u256.Uint, error) {
 	if err := validateTicks(params.tickLower, params.tickUpper); err != nil {
 		return pl.NewDefaultPositionInfo(), zero, zero, err

@@ -14,10 +14,12 @@ import (
 // Only admin or governance can add a token.
 //
 // Parameters:
-//   - tokenPath (string): The registered token key to add
+//   - _: Leading realm-call discriminator; callers pass 0.
+//   - rlm: Current staker realm context, validated before storage is changed.
+//   - tokenPath: Registered token path to add to the allowed-token list.
 //
 // Panics:
-//   - If the caller is not admin or governance, or the token key is not registered
+//   - If the caller is not admin or governance, or the token key is not registered.
 func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -46,15 +48,17 @@ func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 }
 
 // RemoveToken removes a token path from the list of allowed tokens.
-// Only the admin  can remove a token.
+// Only the admin can remove a token.
 //
 // Default tokens cannot be removed.
 //
 // Parameters:
-//   - tokenPath (string): The path of the token to remove
+//   - _: Leading realm-call discriminator; callers pass 0.
+//   - rlm: Current staker realm context, validated before storage is changed.
+//   - tokenPath: Token path to remove from the allowed-token list.
 //
 // Panics:
-//   - If the caller is not the admin
+//   - If the caller is not admin or governance, or the token path is a protected default token.
 func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -80,6 +84,13 @@ func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
 	)
 }
 
+// checkCannotAddDefaultToken rejects attempts to add a token already supplied by protocol defaults.
+//
+// Parameters:
+//   - tokenPath: Token path to compare with the default allowed-token set.
+//
+// Returns:
+//   - error: An explanatory error when tokenPath is already a default; nil when it may be added.
 func checkCannotAddDefaultToken(tokenPath string) error {
 	if contains(sr.DefaultAllowedTokens(), tokenPath) {
 		return ufmt.Errorf("%v: cannot add existing token(%s)", errAddExistingToken, tokenPath)
@@ -88,6 +99,13 @@ func checkCannotAddDefaultToken(tokenPath string) error {
 	return nil
 }
 
+// checkCannotRemoveDefaultToken rejects attempts to remove a protocol default token.
+//
+// Parameters:
+//   - tokenPath: Token path to compare with the default allowed-token set.
+//
+// Returns:
+//   - error: An explanatory error when tokenPath is protected; nil when it may be removed.
 func checkCannotRemoveDefaultToken(tokenPath string) error {
 	if contains(sr.DefaultAllowedTokens(), tokenPath) {
 		return ufmt.Errorf("%v: cannot remove default token(%s)", errDefaultExternalToken, tokenPath)
@@ -110,6 +128,12 @@ func checkCannotRemoveDefaultToken(tokenPath string) error {
 // Default protocol tokens (GNS, WUGNOT) cannot be denied.
 //
 // Only the admin or governance can set the flag.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator; callers pass 0.
+//   - rlm: Current staker realm context, validated before the deny list is changed.
+//   - tokenPath: Reward-token path whose denied status is being changed.
+//   - denied: True to add tokenPath to the deny list, false to remove it.
 func (s *stakerV1) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -147,6 +171,13 @@ func (s *stakerV1) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, deni
 	)
 }
 
+// checkCannotDenyDefaultToken rejects attempts to deny a protocol default reward token.
+//
+// Parameters:
+//   - tokenPath: Token path to compare with the default allowed-token set.
+//
+// Returns:
+//   - error: An explanatory error when tokenPath is a protected default; nil otherwise.
 func checkCannotDenyDefaultToken(tokenPath string) error {
 	if contains(sr.DefaultAllowedTokens(), tokenPath) {
 		return ufmt.Errorf("%v: cannot deny default token(%s)", errCannotDenyDefaultToken, tokenPath)

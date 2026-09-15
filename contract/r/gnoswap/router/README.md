@@ -149,13 +149,16 @@ The current router implementation does **not** handle native `ugnot` directly. I
 
 #### Example with Wrapped GNOT
 
+Examples in this document call the public domain proxy from a realm function with a current `cur` token.
+Import the proxy package and qualify its function names in integrating code.
+
 ```go
 // 1. Approve WUGNOT spending for the router
-wugnot.Approve(cross, routerAddress, 1000000)
+wugnot.Approve(cross(cur), routerAddress, 1000000)
 
 // 2. Call swap function with wrapped GNOT paths
 amountIn, amountOut := ExactInSwapRoute(
-    cross,
+    cross(cur),
     "gno.land/r/gnoland/wugnot",               // input token
     "gno.land/r/demo/bar",                    // output token
     "1000000",                                // amount in wrapped token units
@@ -181,7 +184,7 @@ For live liquidity-changing swaps:
 ```go
 // Simple exact input swap
 amountIn, amountOut := ExactInSwapRoute(
-    cross,
+    cross(cur),
     "gno.land/r/demo/bar",     // input token
     "gno.land/r/demo/baz",     // output token
     "1000000",                 // amount (6 decimals)
@@ -194,7 +197,7 @@ amountIn, amountOut := ExactInSwapRoute(
 
 // Multi-hop swap
 ExactInSwapRoute(
-    cross,
+    cross(cur),
     "gno.land/r/demo/bar",
     "gno.land/r/demo/baz",
     "1000000",
@@ -207,7 +210,7 @@ ExactInSwapRoute(
 
 // Split route for large trades
 ExactInSwapRoute(
-    cross,
+    cross(cur),
     "gno.land/r/demo/usdc",
     "gno.land/r/gnoland/wugnot",
     "10000000000",
@@ -225,7 +228,7 @@ Single-hop functions support partial execution through a nonzero
 ```go
 // Partial swap with price limit - may not consume full input amount
 amountIn, amountOut := ExactInSingleSwapRoute(
-    cross,
+    cross(cur),
     "gno.land/r/demo/bar",     // input token
     "gno.land/r/demo/baz",     // output token
     "1000000",                 // max amount to swap

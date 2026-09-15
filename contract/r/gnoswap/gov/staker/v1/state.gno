@@ -17,7 +17,9 @@ import (
 // This affects all future undelegation operations.
 //
 // Parameters:
-//   - period: new lockup period in seconds
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for the authorized store write.
+//   - period: new undelegation lockup period in seconds.
 func (g *govStakerV1) setUnDelegationLockupPeriod(_ int, rlm realm, period int64) {
 	if err := g.store.SetUnDelegationLockupPeriod(0, rlm, period); err != nil {
 		panic(err)
@@ -52,11 +54,13 @@ func (g *govStakerV1) getDelegation(delegationID int64) *staker.Delegation {
 // setDelegation stores or updates a delegation in the storage tree.
 //
 // Parameters:
-//   - delegationID: unique identifier of the delegation
-//   - delegation: delegation instance to store
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for the authorized store write.
+//   - delegationID: unique identifier of the delegation to store.
+//   - delegation: delegation instance to store.
 //
 // Returns:
-//   - error: nil on success, otherwise the storage write error
+//   - error: nil on success, otherwise the storage write error.
 func (g *govStakerV1) setDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) error {
 	return g.store.SetDelegation(0, rlm, delegationID, delegation)
 }
@@ -64,11 +68,13 @@ func (g *govStakerV1) setDelegation(_ int, rlm realm, delegationID int64, delega
 // addDelegation adds a new delegation to storage and updates the delegation manager.
 //
 // Parameters:
-//   - delegationID: unique identifier of the delegation to add
-//   - delegation: delegation instance to add
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for delegation and manager writes.
+//   - delegationID: unique identifier of the delegation to add.
+//   - delegation: delegation instance whose delegator/delegatee pair is indexed.
 //
 // Returns:
-//   - error: nil on success, otherwise the delegation or manager storage error
+//   - error: nil on success; otherwise the delegation or manager storage error.
 func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delegation *staker.Delegation) error {
 	if err := g.setDelegation(0, rlm, delegationID, delegation); err != nil {
 		return err
@@ -88,10 +94,13 @@ func (g *govStakerV1) addDelegation(_ int, rlm realm, delegationID int64, delega
 // removeDelegation removes a delegation from storage and updates the delegation manager.
 //
 // Parameters:
-//   - delegationID: unique identifier of the delegation to remove
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for delegation and manager writes.
+//   - delegationID: unique identifier of the delegation to remove.
 //
 // Returns:
-//   - error: nil on success, otherwise an error when the delegation is absent or storage fails
+//   - error: nil on success; an error when the delegation is absent or a storage
+//     write fails.
 func (g *govStakerV1) removeDelegation(_ int, rlm realm, delegationID int64) error {
 	delegation := g.getDelegation(delegationID)
 	if delegation == nil {
@@ -165,9 +174,12 @@ func (g *govStakerV1) getUserDelegationIDsWithDelegatee(user address, delegatee 
 // Updates both total and user delegation histories with cumulative values.
 //
 // Parameters:
-//   - delegateeAddr: address of the delegatee
-//   - amount: amount change (positive for delegate, negative for undelegate)
-//   - timestamp: timestamp of the delegation change
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for history writes.
+//   - delegateeAddr: address of the delegatee whose user history changes.
+//   - amount: delegation amount change, positive for delegation and negative for
+//     undelegation.
+//   - timestamp: Unix timestamp of the delegation change.
 func (g *govStakerV1) addDelegationRecord(_ int, rlm realm, delegateeAddr address, amount int64, timestamp int64) {
 	// Update total delegation history
 	g.updateTotalDelegationHistory(0, rlm, amount, timestamp)
@@ -179,8 +191,11 @@ func (g *govStakerV1) addDelegationRecord(_ int, rlm realm, delegateeAddr addres
 // updateTotalDelegationHistory updates the total delegation history with cumulative value.
 //
 // Parameters:
-//   - amount: amount change (positive for delegate, negative for undelegate)
-//   - timestamp: timestamp of the change
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for the history write.
+//   - amount: total delegation change, positive for delegation and negative for
+//     undelegation.
+//   - timestamp: Unix timestamp at which the cumulative value is stored.
 func (g *govStakerV1) updateTotalDelegationHistory(_ int, rlm realm, amount int64, timestamp int64) {
 	history := g.store.GetTotalDelegationHistory()
 
@@ -203,9 +218,12 @@ func (g *govStakerV1) updateTotalDelegationHistory(_ int, rlm realm, amount int6
 // Structure: single BPTree keyed by composite key "addrStr|paddedTimestamp" -> int64
 //
 // Parameters:
-//   - delegateeAddr: address of the delegatee
-//   - amount: amount change (positive for delegate, negative for undelegate)
-//   - timestamp: timestamp of the change
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for the history write.
+//   - delegateeAddr: address whose delegation history is updated.
+//   - amount: delegation amount change, positive for delegation and negative for
+//     undelegation.
+//   - timestamp: Unix timestamp at which the cumulative value is stored.
 func (g *govStakerV1) updateUserDelegationHistory(_ int, rlm realm, delegateeAddr address, amount int64, timestamp int64) {
 	history := g.store.GetUserDelegationHistory()
 	addrStr := delegateeAddr.String()
@@ -226,6 +244,12 @@ func (g *govStakerV1) updateUserDelegationHistory(_ int, rlm realm, delegateeAdd
 }
 
 // getLatestTotalDelegation gets the latest total delegation amount from history.
+//
+// Parameters:
+//   - history: timestamp-keyed delegation history to inspect.
+//
+// Returns:
+//   - int64: most recent cumulative total, or zero when history is empty.
 func (g *govStakerV1) getLatestTotalDelegation(history *staker.UintTree) int64 {
 	if history.Size() == 0 {
 		return 0
@@ -249,6 +273,13 @@ func (g *govStakerV1) getLatestTotalDelegation(history *staker.UintTree) int64 {
 
 // getLatestUserDelegationByAddress gets the latest delegation amount for a user
 // from the composite-keyed user delegation history.
+//
+// Parameters:
+//   - history: composite-keyed user delegation history to inspect.
+//   - addrStr: string form of the user address whose latest amount is requested.
+//
+// Returns:
+//   - int64: most recent cumulative amount for addrStr, or zero when none exists.
 func (g *govStakerV1) getLatestUserDelegationByAddress(history *bptree.BPTree, addrStr string) int64 {
 	lo, hi := userHistoryKeyRange(addrStr)
 
@@ -269,12 +300,18 @@ func (g *govStakerV1) getLatestUserDelegationByAddress(history *bptree.BPTree, a
 }
 
 // addStakeEmissionReward adds stake to emission reward tracking for an address.
-// This method updates the emission reward distribution state and adds stake for the specified address.
+// This method updates the emission reward distribution state and adds stake for
+// the specified address.
 //
 // Parameters:
-//   - address: staker's address
-//   - amount: amount of stake to add
-//   - currentTimestamp: current timestamp
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for the reward-manager store write.
+//   - address: reward-state identifier receiving the stake.
+//   - amount: stake amount to add.
+//   - currentTimestamp: Unix timestamp at which the stake is added.
+//
+// Returns:
+//   - error: nil on success; an error from reward-state calculation or storage.
 func (g *govStakerV1) addStakeEmissionReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
@@ -300,13 +337,19 @@ func (g *govStakerV1) addStakeEmissionReward(_ int, rlm realm, address string, a
 	return nil
 }
 
-// removeStakeEmissionReward removes stake from emission reward tracking for an address.
-// This method updates the emission reward distribution state and removes stake for the specified address.
+// removeStakeEmissionReward removes stake from emission reward tracking for an
+// address. This method updates the emission reward distribution state.
 //
 // Parameters:
-//   - address: staker's address
-//   - amount: amount of stake to remove
-//   - currentTimestamp: current timestamp
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for the reward-manager store write.
+//   - address: reward-state identifier whose stake is reduced.
+//   - amount: stake amount to remove.
+//   - currentTimestamp: Unix timestamp at which the stake is removed.
+//
+// Returns:
+//   - error: nil on success; an error when the amount is invalid, exceeds stake,
+//     or reward-manager storage fails.
 func (g *govStakerV1) removeStakeEmissionReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
@@ -332,15 +375,18 @@ func (g *govStakerV1) removeStakeEmissionReward(_ int, rlm realm, address string
 }
 
 // claimRewardsEmissionReward claims emission rewards for an address.
-// This method updates the emission reward distribution state and processes reward claiming.
+// This method updates the emission reward distribution state and processes reward
+// claiming.
 //
 // Parameters:
-//   - address: staker's address claiming rewards
-//   - currentTimestamp: current timestamp
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for the reward-manager store write.
+//   - address: reward-state identifier whose emission rewards are claimed.
+//   - currentTimestamp: Unix timestamp used to settle the reward state.
 //
 // Returns:
-//   - int64: amount of emission rewards claimed
-//   - error: nil on success, error if claiming fails
+//   - int64: amount of emission rewards claimed.
+//   - error: nil on success; an error from reward calculation or storage.
 func (g *govStakerV1) claimRewardsEmissionReward(_ int, rlm realm, address string, currentTimestamp int64) (int64, error) {
 	distributedAmount := emission.GetAccuDistributedToGovStaker()
 
@@ -380,13 +426,20 @@ func (g *govStakerV1) removeLaunchpadProjectDeposit(ownerAddress string) bool {
 
 // addStakeProtocolFeeReward records a stake increase for protocol fee rewards.
 //
-// The change only opens a new accrual epoch and appends one stake event, so its cost
-// does not depend on how many tokens collected fees.
+// The change only opens a new accrual epoch and appends one stake event, so its
+// cost does not depend on how many tokens collected fees.
 //
 // Parameters:
-//   - address: staker's address
-//   - amount: amount of stake to add
-//   - currentTimestamp: current timestamp
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for protocol-fee cross calls and
+//     manager storage writes.
+//   - address: reward-state identifier receiving the stake.
+//   - amount: positive stake amount to add.
+//   - currentTimestamp: Unix timestamp recorded on the manager.
+//
+// Returns:
+//   - error: nil on success; an error when the amount or manager storage update
+//     is rejected.
 func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
 	epoch := pf.AdvanceAccrualEpoch(cross(rlm))
 
@@ -408,13 +461,20 @@ func (g *govStakerV1) addStakeProtocolFeeReward(_ int, rlm realm, address string
 }
 
 // removeStakeProtocolFeeReward records a stake decrease for protocol fee rewards.
-// Like addStakeProtocolFeeReward it never folds fees, so a withdrawal never pays for
-// the reward calculation; that happens on collect, one token at a time if need be.
+// Like addStakeProtocolFeeReward it never folds fees, so a withdrawal never pays
+// for the reward calculation; that happens on collect, one token at a time if need be.
 //
 // Parameters:
-//   - address: staker's address
-//   - amount: amount of stake to remove
-//   - currentTimestamp: current timestamp
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for protocol-fee cross calls and
+//     manager storage writes.
+//   - address: reward-state identifier whose stake is reduced.
+//   - amount: non-negative stake amount to remove.
+//   - currentTimestamp: Unix timestamp recorded on the manager.
+//
+// Returns:
+//   - error: nil on success; an error when the amount or manager storage update
+//     is rejected.
 func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
 	epoch := pf.AdvanceAccrualEpoch(cross(rlm))
 
@@ -435,9 +495,22 @@ func (g *govStakerV1) removeStakeProtocolFeeReward(_ int, rlm realm, address str
 	return nil
 }
 
-// foldProtocolFeeAccrual consumes up to limit pending accrual buckets of tokenPath from
-// the protocol fee realm and folds them into the token's accumulator. A limit of zero
-// or less consumes every pending bucket.
+// foldProtocolFeeAccrual consumes up to limit pending accrual buckets of tokenPath
+// from the protocol fee realm and folds them into the token's accumulator. A limit
+// of zero or less consumes every pending bucket.
+//
+// Parameters:
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used with cross(rlm) for protocol-fee
+//     bucket consumption and for manager storage access.
+//   - resolvedManager: protocol-fee reward manager being updated.
+//   - tokenPath: token identifier whose pending accrual buckets are folded.
+//   - limit: positive maximum number of buckets to consume; zero or negative
+//     consumes all pending buckets.
+//   - currentTimestamp: Unix timestamp recorded after applying the buckets.
+//
+// Returns:
+//   - error: nil on success; an error from applying the consumed accrual buckets.
 func (g *govStakerV1) foldProtocolFeeAccrual(_ int, rlm realm, resolvedManager *ProtocolFeeRewardManagerResolver, tokenPath string, limit int, currentTimestamp int64) error {
 	epochs, amounts := pf.ConsumeAccrualBuckets(cross(rlm), tokenPath, limit)
 	exhausted := limit <= 0 || len(epochs) < limit
@@ -445,17 +518,22 @@ func (g *govStakerV1) foldProtocolFeeAccrual(_ int, rlm realm, resolvedManager *
 	return resolvedManager.applyAccrualBuckets(tokenPath, epochs, amounts, exhausted, currentTimestamp)
 }
 
-// claimRewardsProtocolFeeReward claims protocol fee rewards for an address in every token.
+// claimRewardsProtocolFeeReward claims protocol fee rewards for an address in
+// every token.
 // It folds every pending token first, so its cost grows with the number of tokens
 // that collected a fee. claimRewardProtocolFeeRewardByTokenPath is the bounded path.
 //
 // Parameters:
-//   - address: staker's address claiming rewards
-//   - currentTimestamp: current timestamp
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used with cross(rlm) for distribution
+//     and protocol-fee bucket consumption.
+//   - address: reward-state identifier claiming rewards.
+//   - currentTimestamp: Unix timestamp used to settle reward state.
 //
 // Returns:
-//   - map[string]int64: protocol fee rewards claimed by token
-//   - error: nil on success, error if claiming fails
+//   - map[string]int64: protocol fee rewards claimed, keyed by token path.
+//   - error: nil on success; an error from accrual folding, reward settlement, or
+//     manager storage.
 func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address string, currentTimestamp int64) (map[string]int64, error) {
 	// Claiming pays out of gov/staker's own balance, so the reserved fees are pulled in
 	// from the protocol fee realm first.
@@ -501,11 +579,24 @@ func (g *govStakerV1) claimRewardsProtocolFeeReward(_ int, rlm realm, address st
 	return rewards, nil
 }
 
-// claimRewardProtocolFeeRewardByTokenPath claims one protocol fee reward token for an address.
+// claimRewardProtocolFeeRewardByTokenPath claims one protocol fee reward token
+// for an address.
 //
 // Both the fold and the settlement are bounded per call (maxAccrualBucketsPerCollect,
 // maxStakeEventsPerCollect); a token with more pending work pays what is settled and
 // keeps the rest for a later collect.
+//
+// Parameters:
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used with cross(rlm) for distribution
+//     and manager storage access.
+//   - address: reward-state identifier claiming the token reward.
+//   - tokenPath: token identifier whose reward is collected.
+//   - currentTimestamp: Unix timestamp used to settle reward state.
+//
+// Returns:
+//   - int64: whole-token protocol fee reward settled in this call.
+//   - error: nil on success; an error from bucket folding, settlement, or storage.
 func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, address string, tokenPath string, currentTimestamp int64) (int64, error) {
 	pf.DistributeProtocolFeeByTokenPath(cross(rlm), tokenPath)
 
@@ -530,8 +621,17 @@ func (g *govStakerV1) claimRewardProtocolFeeRewardByTokenPath(_ int, rlm realm, 
 	return reward, nil
 }
 
-// getClaimableProtocolFeeRewards reports what collecting every token would pay for a
-// reward ID right now, pending accrual buckets included, without changing any state.
+// getClaimableProtocolFeeRewards reports what collecting every token would pay
+// for a reward ID right now, pending accrual buckets included, without changing
+// any state.
+//
+// Parameters:
+//   - rewardID: emission/protocol-fee reward state identifier to inspect.
+//
+// Returns:
+//   - map[string]int64: projected whole-token rewards keyed by token path.
+//   - error: nil on success; an error when a token's projected reward cannot be
+//     calculated.
 func (g *govStakerV1) getClaimableProtocolFeeRewards(rewardID string) (map[string]int64, error) {
 	protocolFeeRewardManager := g.store.GetProtocolFeeRewardManager()
 	resolvedManager := NewProtocolFeeRewardManagerResolver(protocolFeeRewardManager)
@@ -573,11 +673,13 @@ func (g *govStakerV1) getLaunchpadProjectDeposit(ownerAddress string) (int64, bo
 // setLaunchpadProjectDeposit sets the deposit amount for a launchpad project.
 //
 // Parameters:
-//   - ownerAddress: project owner's address identifier
-//   - deposit: deposit amount to set
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for the authorized store write.
+//   - ownerAddress: project owner/reward identifier whose deposit is set.
+//   - deposit: new deposit amount to store.
 //
 // Returns:
-//   - error: nil on success, otherwise the storage write error
+//   - error: nil on success, otherwise the storage write error.
 func (g *govStakerV1) setLaunchpadProjectDeposit(_ int, rlm realm, ownerAddress string, deposit int64) error {
 	launchpadDeposits := g.store.GetLaunchpadProjectDeposits()
 	resolvedDeposits := NewLaunchpadProjectDepositsResolver(launchpadDeposits)
@@ -586,13 +688,20 @@ func (g *govStakerV1) setLaunchpadProjectDeposit(_ int, rlm realm, ownerAddress 
 	return g.store.SetLaunchpadProjectDeposits(0, rlm, launchpadDeposits)
 }
 
-// addStakeFromLaunchpad adds stake for a launchpad project and updates reward tracking.
-// This method creates a special reward ID for launchpad projects and manages their deposit tracking.
+// addStakeFromLaunchpad adds stake for a launchpad project and updates reward
+// tracking. This method creates a special reward ID and manages its deposit.
 //
 // Parameters:
-//   - address: project wallet address
-//   - amount: amount of stake to add
-//   - currentTimestamp: current timestamp
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for reward-manager and deposit
+//     storage writes.
+//   - address: launchpad project wallet address.
+//   - amount: stake amount to add to the project.
+//   - currentTimestamp: Unix timestamp used for reward accounting.
+//
+// Returns:
+//   - error: nil on success; an error from emission/protocol reward updates or
+//     deposit storage.
 func (g *govStakerV1) addStakeFromLaunchpad(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
 	launchpadRewardID := g.makeLaunchpadRewardID(address)
 	err := g.addStakeEmissionReward(0, rlm, launchpadRewardID, amount, currentTimestamp)
@@ -618,13 +727,20 @@ func (g *govStakerV1) addStakeFromLaunchpad(_ int, rlm realm, address string, am
 	return nil
 }
 
-// removeStakeFromLaunchpad removes stake for a launchpad project and updates reward tracking.
-// This method manages launchpad project deposit tracking and ensures non-negative deposits.
+// removeStakeFromLaunchpad removes stake for a launchpad project and updates
+// reward tracking. This method manages its deposit and clamps it at zero.
 //
 // Parameters:
-//   - address: project wallet address
-//   - amount: amount of stake to remove
-//   - currentTimestamp: current timestamp
+//   - _: Noncrossing helper-call discriminator; pass 0.
+//   - rlm: propagated staker realm context used for reward-manager and deposit
+//     storage writes.
+//   - address: launchpad project wallet address.
+//   - amount: stake amount to remove from the project.
+//   - currentTimestamp: Unix timestamp used for reward accounting.
+//
+// Returns:
+//   - error: nil on success; an error from emission/protocol reward updates or
+//     deposit storage.
 func (g *govStakerV1) removeStakeFromLaunchpad(_ int, rlm realm, address string, amount int64, currentTimestamp int64) error {
 	launchpadRewardID := g.makeLaunchpadRewardID(address)
 	err := g.removeStakeEmissionReward(0, rlm, launchpadRewardID, amount, currentTimestamp)

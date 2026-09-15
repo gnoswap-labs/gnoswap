@@ -15,9 +15,25 @@ import (
 )
 
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
+//
+// Returns:
+//   - uint64: Current fee rate in basis points; 100 basis points equals 1%.
 func (s *stakerV1) GetUnstakingFee() uint64 { return s.store.GetUnstakingFee() }
 
-// handleStakingRewardFee calculates and applies the unstaking fee.
+// handleStakingRewardFee calculates the unstaking fee and settles it for the reward token.
+//
+// Parameters:
+//   - _: Internal call discriminator; callers pass 0.
+//   - rlm: Propagated realm context used to settle the fee through token and protocol-fee realms.
+//   - tokenPath: Reward-token path; replaced with GNS_TOKEN_KEY when internal is true.
+//   - amount: Reward amount before the unstaking fee, in token units.
+//   - internal: True when amount is an internal GNS reward; false for an external reward token.
+//   - unstakingFee: Fee rate in basis points used by the 10,000-basis-point calculation.
+//
+// Returns:
+//   - int64: Reward amount remaining after the fee.
+//   - int64: Fee amount sent or recorded as pending for the protocol-fee realm.
+//   - error: Non-nil if fee calculation produces a negative fee amount; nil otherwise.
 func (s *stakerV1) handleStakingRewardFee(
 	_ int,
 	rlm realm,
@@ -51,11 +67,21 @@ func (s *stakerV1) handleStakingRewardFee(
 	return gnsmath.SafeSubInt64(amount, feeAmount), feeAmount, nil
 }
 
-// GetPendingProtocolFees returns the pending protocol fee amount per token path.
+// GetPendingProtocolFees returns pending protocol fee amounts keyed by reward-token path.
+//
+// Returns:
+//   - map[string]int64: Pending fee amount per token path awaiting a later settlement.
 func (s *stakerV1) GetPendingProtocolFees() map[string]int64 {
 	return s.store.GetPendingProtocolFees()
 }
 
+// addPendingProtocolFee adds a positive amount to the pending protocol fee for tokenPath.
+//
+// Parameters:
+//   - _: Internal call discriminator; callers pass 0.
+//   - rlm: Propagated realm context used to persist the updated pending amount.
+//   - tokenPath: Reward-token path whose pending fee entry is updated.
+//   - amount: Fee amount to add; zero or a negative amount is ignored.
 func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if amount <= 0 {
 		return
@@ -67,14 +93,15 @@ func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amo
 	}
 }
 
-// settleProtocolFee forwards amount, plus anything already pending for tokenPath, to
-// the protocol fee realm. When collection is halted or the transfer fails, the amount
-// is recorded as pending instead and settled by a later call for the same token, which
-// every fee path makes even when the fee is zero.
+// settleProtocolFee forwards amount and any existing pending fee for tokenPath to the protocol-fee
+// realm. When collection is halted or forwarding fails, the amount remains pending for a later call.
+// Every fee path invokes this helper even when amount is zero, so an older pending balance can settle.
 //
-// Only tokenPath is touched, so an unrelated token can never block settlement. The
-// pending entry is written only when the fee cannot be forwarded, so the common path
-// performs no store write at all.
+// Parameters:
+//   - _: Internal call discriminator; callers pass 0.
+//   - rlm: Propagated realm context used for token approval, transfer, and pending-state updates.
+//   - tokenPath: Reward-token path whose current and pending fee amounts are settled.
+//   - amount: Newly accrued fee amount to add to the pending balance before forwarding.
 func (s *stakerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if halt.IsHaltedProtocolFee() {
 		s.addPendingProtocolFee(0, rlm, tokenPath, amount)
@@ -105,6 +132,11 @@ func (s *stakerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount 
 
 // SetUnStakingFee sets the unstaking fee rate in basis points.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Internal call discriminator; callers pass 0.
+//   - rlm: Propagated realm context; it must be current before changing the stored fee.
+//   - fee: New unstaking fee rate in basis points, validated against the configured maximum.
 func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -132,7 +164,15 @@ func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 	)
 }
 
-// setUnStakingFee internally updates the unstaking fee.
+// setUnStakingFee persists the unstaking fee rate for the staker implementation.
+//
+// Parameters:
+//   - _: Internal call discriminator; callers pass 0.
+//   - rlm: Propagated realm context passed to the store update.
+//   - fee: Unstaking fee rate in basis points to store.
+//
+// Returns:
+//   - error: Store update error, or nil when the fee is persisted.
 func (s *stakerV1) setUnStakingFee(_ int, rlm realm, fee uint64) error {
 	return s.store.SetUnstakingFee(0, rlm, fee)
 }

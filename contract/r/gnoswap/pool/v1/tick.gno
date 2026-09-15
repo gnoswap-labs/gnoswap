@@ -28,18 +28,36 @@ const (
 // the value directly to callers, and a shared singleton could otherwise be
 // mutated in place and corrupt every caller. Values are built from little-endian
 // [4]uint64 literals to avoid runtime decimal parsing.
+// Returns:
+//   - *u256.Uint: Fresh 256-bit maximum gross liquidity permitted for a tick
+//     when the spacing-1 precomputed limit is selected.
 func maxLiquidityPerTickSpacing1FromDec() *u256.Uint {
 	return &u256.Uint{3639524637645646277, 10395196556700, 0, 0} // 191757530477355301479181766273477
 }
 
+// maxLiquidityPerTickSpacing10FromDec returns a fresh precomputed maximum
+// liquidity value for tick spacing 10.
+// Returns:
+//   - *u256.Uint: Fresh 256-bit maximum gross liquidity permitted for a tick
+//     when the spacing-10 precomputed limit is selected.
 func maxLiquidityPerTickSpacing10FromDec() *u256.Uint {
 	return &u256.Uint{4727306266354938262, 103951672670308, 0, 0} // 1917569901783203986719870431555990
 }
 
+// maxLiquidityPerTickSpacing60FromDec returns a fresh precomputed maximum
+// liquidity value for tick spacing 60.
+// Returns:
+//   - *u256.Uint: Fresh 256-bit maximum gross liquidity permitted for a tick
+//     when the spacing-60 precomputed limit is selected.
 func maxLiquidityPerTickSpacing60FromDec() *u256.Uint {
 	return &u256.Uint{1428959955126579298, 623727610269131, 0, 0} // 11505743598341114571880798222544994
 }
 
+// maxLiquidityPerTickSpacing200FromDec returns a fresh precomputed maximum
+// liquidity value for tick spacing 200.
+// Returns:
+//   - *u256.Uint: Fresh 256-bit maximum gross liquidity permitted for a tick
+//     when the spacing-200 precomputed limit is selected.
 func maxLiquidityPerTickSpacing200FromDec() *u256.Uint {
 	return &u256.Uint{6592429331424883148, 2078974875882965, 0, 0} // 38350317471085141830651933667504588
 }
@@ -52,6 +70,7 @@ func maxLiquidityPerTickSpacing200FromDec() *u256.Uint {
 // from the global fee growth.
 //
 // Parameters:
+//   - p: Pool whose lower and upper tick records provide outside fee growth.
 //   - tickLower: int32, the lower tick boundary of the range.
 //   - tickUpper: int32, the upper tick boundary of the range.
 //   - tickCurrent: int32, the current tick index.
@@ -114,6 +133,7 @@ func getFeeGrowthInside(
 // maximum allowed value and ensures the net liquidity stays within the valid int128 range.
 //
 // Parameters:
+//   - p: Pool whose tick record is updated in place.
 //   - tick:          int32, the index of the tick to update.
 //   - tickCurrent:   int32, the current active tick index.
 //   - liquidityDelta: *i256.Int, the amount of liquidity to add or remove.
@@ -218,7 +238,22 @@ func tickUpdate(
 }
 
 // tickCross updates a tick's state when it is crossed and returns the liquidity net.
-// Updates fee growth and oracle accumulator values for the tick.
+// It updates fee growth and oracle accumulator values for the tick in place.
+//
+// Parameters:
+//   - p: Pool whose crossed tick record is updated.
+//   - tick: Tick index being crossed.
+//   - feeGrowthGlobal0X128: Current global token0 fee-growth accumulator.
+//   - feeGrowthGlobal1X128: Current global token1 fee-growth accumulator.
+//   - secondsPerLiquidityCumulativeX128: Current oracle seconds-per-liquidity
+//     accumulator in X128 precision.
+//   - tickCumulative: Current oracle tick accumulator.
+//   - blockTimestamp: Current block timestamp in seconds, used to update
+//     secondsOutside.
+//
+// Returns:
+//   - *i256.Int: Tick's signed net liquidity, used to adjust active pool
+//     liquidity after the cross.
 func tickCross(
 	p *pl.Pool,
 	tick int32,
@@ -246,11 +281,21 @@ func tickCross(
 }
 
 // setTick updates the tick data for the specified tick index in the pool.
+//
+// Parameters:
+//   - p: Pool whose tick record is replaced.
+//   - tick: Tick index whose state is stored.
+//   - newTickInfo: Updated liquidity, fee-growth, and oracle accumulator fields
+//     for tick.
 func setTick(p *pl.Pool, tick int32, newTickInfo pl.TickInfo) {
 	p.SetTick(tick, newTickInfo)
 }
 
-// deleteTick deletes the tick data for the specified tick index in the pool.
+// deleteTick removes the tick record at the specified index from the pool.
+//
+// Parameters:
+//   - p: Pool whose tick record map is updated.
+//   - tick: Tick index whose stored record is deleted.
 func deleteTick(p *pl.Pool, tick int32) {
 	p.DeleteTick(tick)
 }
@@ -259,6 +304,8 @@ func deleteTick(p *pl.Pool, tick int32) {
 // If the TickInfo contains any nil fields, they are replaced with zero values using valueOrZero.
 //
 // Parameters:
+//   - p: Pool whose tick map is queried.
+//
 // - tick: The tick index (int32) for which the TickInfo is to be retrieved.
 //
 // Behavior:
@@ -287,6 +334,7 @@ func getTick(p *pl.Pool, tick int32) pl.TickInfo {
 // If the tick does not exist, it panics with an appropriate error message.
 //
 // Parameters:
+//   - p: Pool whose tick map is queried; a missing tick causes a panic.
 //   - tick: int32, the index of the tick to retrieve.
 //
 // Returns:
@@ -317,8 +365,16 @@ func mustGetTick(p *pl.Pool, tick int32) *pl.TickInfo {
 	return &tickInfo
 }
 
-// calculateMaxLiquidityPerTick calculates the maximum liquidity
-// per tick for a given tick spacing.
+// calculateMaxLiquidityPerTick calculates the maximum liquidity per tick for a
+// given tick spacing.
+//
+// Parameters:
+//   - tickSpacing: Positive spacing between initialized ticks; supported
+//     spacings use precomputed constants and other spacings divide MaxUint128
+//     across the representable tick count.
+//
+// Returns:
+//   - *u256.Uint: Maximum gross liquidity allowed for one tick at tickSpacing.
 func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	switch tickSpacing {
 	case 1:
@@ -454,8 +510,15 @@ func getFeeGrowthAboveX128(
 
 // validateTicks validates the tick range for a liquidity position.
 //
-// This function performs three essential checks to ensure the provided
-// tick values are valid before creating or modifying a liquidity position.
+// Parameters:
+//   - tickLower: Lower tick boundary; must be at least MIN_TICK and strictly
+//     less than tickUpper.
+//   - tickUpper: Upper tick boundary; must be at most MAX_TICK and strictly
+//     greater than tickLower.
+//
+// Returns:
+//   - error: Nil when the range satisfies ordering and MIN_TICK/MAX_TICK bounds;
+//     otherwise an error identifying the invalid range or boundary.
 func validateTicks(tickLower, tickUpper int32) error {
 	if tickLower >= tickUpper {
 		return makeErrorWithDetails(

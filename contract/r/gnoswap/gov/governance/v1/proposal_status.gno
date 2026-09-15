@@ -13,6 +13,13 @@ type ProposalStatusResolver struct {
 	voteStatusResolver   *ProposalVoteStatusResolver
 }
 
+// NewProposalStatusResolver wraps proposal status components for lifecycle and vote queries.
+//
+// Parameters:
+//   - status: proposal status containing schedule, action, and vote state
+//
+// Returns:
+//   - *ProposalStatusResolver: resolver backed by status
 func NewProposalStatusResolver(status *governance.ProposalStatus) *ProposalStatusResolver {
 	return &ProposalStatusResolver{
 		ProposalStatus:       status,

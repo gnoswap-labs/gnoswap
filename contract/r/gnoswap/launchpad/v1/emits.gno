@@ -17,6 +17,11 @@ import (
 // tier's accumulator this update belongs to. totalDepositAmount is the current tier
 // deposit total after the stake change (the divisor for the next accumulation delta),
 // and distributeAmountPerSecondX128 lets indexers project the accumulator forward.
+//
+// Parameters:
+//   - projectTierID: project-tier identifier whose accumulated reward state is emitted.
+//   - r: reward manager containing the Q128 accumulator, distribution rate, and accumulated timestamp.
+//   - totalDepositAmount: current total GNS deposited in the tier, in base units, used by indexers as the next accumulation divisor.
 func emitUpdateLaunchpadRewardAccumulation(projectTierID string, r *launchpad.RewardManager, totalDepositAmount int64) {
 	chain.Emit(
 		"UpdateLaunchpadRewardAccumulation",

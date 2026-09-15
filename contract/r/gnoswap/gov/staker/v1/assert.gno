@@ -9,14 +9,12 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-// assertIsValidDelegateAmount validates that the delegation amount meets system requirements.
-// This function checks minimum amount and multiple requirements.
+// assertIsValidDelegateAmount validates that the delegation amount meets system
+// requirements and panics when it does not.
 //
 // Parameters:
-//   - amount: amount to validate
-//
-// Returns:
-//   - error: nil if valid, error describing validation failure
+//   - amount: delegation amount; it must be at least minimumAmount and an exact
+//     multiple of minimumAmount.
 func assertIsValidDelegateAmount(amount int64) {
 	if amount < minimumAmount {
 		panic(makeErrorWithDetails(
@@ -33,6 +31,12 @@ func assertIsValidDelegateAmount(amount int64) {
 	}
 }
 
+// assertIsValidSnapshotTime validates that a history lookup timestamp is old
+// enough for the configured smoothing window.
+//
+// Parameters:
+//   - snapshotTime: Unix timestamp to validate; it must be non-negative and no
+//     later than the current time minus maxSmoothingPeriod.
 func assertIsValidSnapshotTime(snapshotTime int64) {
 	if snapshotTime < 0 {
 		panic(makeErrorWithDetails(
@@ -52,7 +56,12 @@ func assertIsValidSnapshotTime(snapshotTime int64) {
 	}
 }
 
-// assertIsAvailableCleanupSnapshotTime checks that no active proposals need
+// assertIsAvailableCleanupSnapshotTime ensures delegation-history cleanup will
+// not remove data needed by an active governance proposal.
+//
+// Parameters:
+//   - cleanupSnapshotTime: oldest history timestamp that cleanup would retain;
+//     it must not be later than the oldest active proposal snapshot.
 func assertIsAvailableCleanupSnapshotTime(cleanupSnapshotTime int64) {
 	oldestActiveSnapshotTime, hasActiveProposal, err := governance.GetOldestActiveProposalSnapshotTime()
 	if err != nil {
@@ -75,12 +84,19 @@ func assertIsAvailableCleanupSnapshotTime(cleanupSnapshotTime int64) {
 	}
 }
 
+// assertNoSameDelegatee rejects a delegation change that keeps the same delegatee.
+//
+// Parameters:
+//   - delegatee: existing delegatee address.
+//   - newDelegatee: replacement delegatee address; it must differ from delegatee.
 func assertNoSameDelegatee(delegatee, newDelegatee address) {
 	if delegatee == newDelegatee {
 		panic(errors.New(errSameDelegatee))
 	}
 }
 
+// assertNotImplementYet unconditionally panics because the requested operation
+// has not been implemented.
 func assertNotImplementYet() {
 	panic("NotImplementYet")
 }

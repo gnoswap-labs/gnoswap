@@ -28,11 +28,24 @@ func NewVotingInfo(availableVoteWeight int64) VotingInfo {
 }
 
 // DefaultVotingInfo creates an empty voting information value.
+//
+// Returns:
+//   - VotingInfo: zero-valued voting record with no available weight and no vote recorded
 func DefaultVotingInfo() VotingInfo {
 	return VotingInfo{}
 }
 
 // NewVotedVotingInfo creates a voting information value with a recorded vote.
+//
+// Parameters:
+//   - availableVoteWeight: total voting weight available to the user for this proposal
+//   - votedYes: true when the recorded vote is yes, false when it is no
+//   - votedWeight: voting weight applied to the recorded vote
+//   - votedHeight: block height at which the vote was recorded
+//   - votedAt: Unix timestamp at which the vote was recorded
+//
+// Returns:
+//   - VotingInfo: voting record populated with the supplied weight, choice, height, and timestamp and marked as voted
 func NewVotedVotingInfo(availableVoteWeight int64, votedYes bool, votedWeight, votedHeight, votedAt int64) VotingInfo {
 	return VotingInfo{
 		availableVoteWeight: availableVoteWeight,

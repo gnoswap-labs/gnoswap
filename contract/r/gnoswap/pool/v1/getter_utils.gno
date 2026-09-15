@@ -14,6 +14,11 @@ import (
 //
 // Pool.Clone leaves the pool's collections nil; see it for which lookups read
 // them instead.
+// Parameters:
+//   - value: Tree value expected to be a *pl.Pool; unexpected types produce nil.
+//
+// Returns:
+//   - cloned: A detached pool clone for read-only callers, or nil when value is not a *pl.Pool.
 func clonePoolEntry(value any) any {
 	pool, ok := value.(*pl.Pool)
 	if !ok {

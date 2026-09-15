@@ -5,7 +5,13 @@ import (
 	"gno.land/p/nt/ufmt/v0"
 )
 
-// EncodeUint16 converts a uint16 into a fixed-width 2-byte big-endian string.
+// EncodeUint16 converts a uint16 to a fixed-width two-byte big-endian string.
+//
+// Parameters:
+//   - value: Unsigned 16-bit integer to encode.
+//
+// Returns:
+//   - encoded: Exactly two bytes in big-endian order; lexicographic order matches numeric order.
 func EncodeUint16(value uint16) string {
 	var buf [2]byte
 	buf[0] = byte(value >> 8)
@@ -13,7 +19,15 @@ func EncodeUint16(value uint16) string {
 	return string(buf[:])
 }
 
-// DecodeUint16 converts a fixed-width 2-byte big-endian string into a uint16.
+// DecodeUint16 decodes a fixed-width two-byte big-endian string.
+//
+// Parameters:
+//   - key: Exactly two encoded bytes, with the most-significant byte first.
+//
+// Returns:
+//   - value: The uint16 represented by key.
+//
+// Panics if key is not exactly two bytes long.
 func DecodeUint16(key string) uint16 {
 	if len(key) != 2 {
 		panic(ufmt.Sprintf("invalid uint16 key length: %d", len(key)))
@@ -21,8 +35,14 @@ func DecodeUint16(key string) uint16 {
 	return uint16(key[0])<<8 | uint16(key[1])
 }
 
-// EncodeInt32 converts an int32 into a fixed-width 4-byte big-endian string
-// whose lexicographic order matches the signed numeric order.
+// EncodeInt32 converts an int32 to a fixed-width four-byte big-endian string.
+// Flipping the sign bit makes lexicographic order match signed numeric order.
+//
+// Parameters:
+//   - value: Signed 32-bit integer to encode.
+//
+// Returns:
+//   - encoded: Exactly four order-preserving big-endian bytes.
 func EncodeInt32(value int32) string {
 	ordered := uint32(value) ^ (uint32(1) << 31)
 	var buf [4]byte
@@ -33,7 +53,15 @@ func EncodeInt32(value int32) string {
 	return string(buf[:])
 }
 
-// DecodeInt32 converts an order-preserving 4-byte big-endian string into an int32.
+// DecodeInt32 decodes a four-byte order-preserving big-endian string.
+//
+// Parameters:
+//   - key: Exactly four bytes produced by EncodeInt32.
+//
+// Returns:
+//   - value: The signed int32 recovered after reversing the sign-bit transform.
+//
+// Panics if key is not exactly four bytes long.
 func DecodeInt32(key string) int32 {
 	if len(key) != 4 {
 		panic(ufmt.Sprintf("invalid int32 key length: %d", len(key)))
@@ -45,7 +73,13 @@ func DecodeInt32(key string) int32 {
 	return int32(ordered ^ (uint32(1) << 31))
 }
 
-// EncodeUint64 converts a uint64 into a fixed-width 8-byte big-endian string.
+// EncodeUint64 converts a uint64 to a fixed-width eight-byte big-endian string.
+//
+// Parameters:
+//   - value: Unsigned 64-bit integer to encode.
+//
+// Returns:
+//   - encoded: Exactly eight bytes in big-endian order.
 func EncodeUint64(value uint64) string {
 	var buf [8]byte
 	buf[0] = byte(value >> 56)
@@ -59,7 +93,15 @@ func EncodeUint64(value uint64) string {
 	return string(buf[:])
 }
 
-// DecodeUint64 converts a fixed-width 8-byte big-endian string into a uint64.
+// DecodeUint64 decodes a fixed-width eight-byte big-endian string.
+//
+// Parameters:
+//   - key: Exactly eight encoded bytes, with the most-significant byte first.
+//
+// Returns:
+//   - value: The uint64 represented by key.
+//
+// Panics if key is not exactly eight bytes long.
 func DecodeUint64(key string) uint64 {
 	if len(key) != 8 {
 		panic(ufmt.Sprintf("invalid uint64 key length: %d", len(key)))
@@ -74,14 +116,28 @@ func DecodeUint64(key string) uint64 {
 		uint64(key[7])
 }
 
-// EncodeUint256 converts a uint256 into a fixed-width 32-byte big-endian string.
+// EncodeUint256 converts a 256-bit unsigned integer to a fixed-width 32-byte
+// big-endian string, emitting the most-significant limb first.
+//
+// Parameters:
+//   - value: Non-nil *u256.Uint value to encode.
+//
+// Returns:
+//   - encoded: Exactly 32 big-endian bytes representing value.
 func EncodeUint256(value *u256.Uint) string {
 	return EncodeUint64(value[3]) + EncodeUint64(value[2]) +
 		EncodeUint64(value[1]) + EncodeUint64(value[0])
 }
 
-// DecodeUint256 converts a fixed-width 32-byte big-endian string into a uint256.
-// It returns a new value and panics if the input is not exactly 32 bytes.
+// DecodeUint256 decodes a fixed-width 32-byte big-endian uint256 encoding.
+//
+// Parameters:
+//   - encoded: Exactly 32 bytes containing the most-significant byte first.
+//
+// Returns:
+//   - value: A new *u256.Uint populated from encoded.
+//
+// Panics if encoded is not exactly 32 bytes long.
 func DecodeUint256(encoded string) *u256.Uint {
 	if len(encoded) != 32 {
 		panic(ufmt.Sprintf("invalid uint256 encoding length: %d", len(encoded)))

@@ -25,7 +25,15 @@ const (
 	errProposalIndexNeedsCleanup    = "[GNOSWAP-GOVERNANCE-018] active proposal index requires pruning"
 )
 
-// makeErrorWithDetails creates an error with additional context.
+// makeErrorWithDetails creates an error whose message combines a base message
+// with additional detail separated by " || ".
+//
+// Parameters:
+//   - message: base error message to report
+//   - detail: contextual detail appended to the base message
+//
+// Returns:
+//   - error: newly formatted error containing both message and detail
 func makeErrorWithDetails(message string, detail string) error {
 	return ufmt.Errorf("%s || %s", message, detail)
 }

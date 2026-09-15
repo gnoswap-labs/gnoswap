@@ -10,9 +10,10 @@ import (
 // This function is essential for AMM calculations involving price ranges and tick boundaries.
 //
 // Parameters:
-//   - x: the value for which to compute the most significant bit
+//   - x: the non-zero value for which to compute the most significant set bit
 //
-// Returns the index of the most significant bit (0-255).
+// Returns:
+//   - bitIndex: the zero-based position of the most significant set bit (0-255)
 //
 // Panics if x is zero.
 func BitMathMostSignificantBit(x *u256.Uint) uint8 {
@@ -27,9 +28,10 @@ func BitMathMostSignificantBit(x *u256.Uint) uint8 {
 // This function is used in AMM calculations for efficient bit manipulation and range queries.
 //
 // Parameters:
-//   - x: the value for which to compute the least significant bit
+//   - x: the non-zero value for which to compute the least significant set bit
 //
-// Returns the index of the least significant bit (0-255).
+// Returns:
+//   - bitIndex: the zero-based position of the least significant set bit (0-255)
 //
 // Panics if x is zero.
 func BitMathLeastSignificantBit(x *u256.Uint) uint8 {

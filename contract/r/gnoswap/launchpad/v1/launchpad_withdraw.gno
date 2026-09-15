@@ -23,11 +23,13 @@ import (
 // reward for the deposit.
 //
 // Parameters:
-//   - depositID: ID of the deposit to withdraw
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the launchpad proxy; invalid contexts return an error.
+//   - depositID: ID of the deposit to withdraw.
 //
 // Returns:
-//   - amount: original GNS deposit amount returned to the depositor
-//   - err: non-nil for a spoofed-realm call; other withdrawal failures panic before returning
+//   - amount: original GNS deposit amount returned to the depositor, in base units.
+//   - err: non-nil for a spoofed-realm call; other withdrawal failures panic before returning.
 //
 // Only callable by deposit owner when the current time is strictly after the
 // selected tier's end time.
@@ -103,6 +105,18 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 }
 
 // withdrawDeposit withdraws a deposit and updates the reward manager.
+//
+// Parameters:
+//   - _: internal call discriminator; callers pass 0.
+//   - rlm: propagated realm context used to persist withdrawal and reward-manager updates.
+//   - deposit: deposit value being withdrawn.
+//   - currentHeight: chain block height recorded as the withdrawal height.
+//   - currentTime: current Unix timestamp in seconds; it must be after the deposit end time.
+//
+// Returns:
+//   - recipient: project recipient address associated with the withdrawn deposit.
+//   - withdrawalAmount: original GNS principal returned, in base units.
+//   - err: nil after state updates are persisted; non-nil for invalid state, project/tier/manager lookup, reward update, or storage failures.
 func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
 	// Input validation
 	if currentTime <= 0 {
@@ -168,6 +182,12 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit launchpad.Depos
 }
 
 // unStakeGovernance removes the staked amount from governance system
+//
+// Parameters:
+//   - _: internal call discriminator; callers pass 0.
+//   - rlm: propagated current realm context used to cross into governance staking.
+//   - recipient: project recipient wallet whose governance stake is reduced.
+//   - withdrawalAmount: GNS amount to remove from that wallet's stake, in base units.
 func unStakeGovernance(_ int, rlm realm, recipient address, withdrawalAmount int64) {
 	gov_staker.SetAmountByProjectWallet(cross(rlm), recipient, withdrawalAmount, false)
 }

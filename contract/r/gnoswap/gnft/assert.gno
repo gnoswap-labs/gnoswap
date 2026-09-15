@@ -7,7 +7,10 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-// assertIsValidTokenURI panics if the token already has a URI set.
+// assertIsValidTokenURI panics when tid already has a non-empty token URI.
+//
+// Parameters:
+//   - tid: token identifier whose stored metadata URI is checked
 func assertIsValidTokenURI(tid grc721.TokenID) {
 	uri, _ := meta.TokenURI(tid)
 	if uri != "" {
@@ -15,37 +18,52 @@ func assertIsValidTokenURI(tid grc721.TokenID) {
 	}
 }
 
-// assertIsNonEmptyTokenURI panics if the new URI is empty.
+// assertIsNonEmptyTokenURI panics when tURI is empty.
+//
+// Parameters:
+//   - tURI: new token metadata URI that must contain at least one character
 func assertIsNonEmptyTokenURI(tURI string) {
 	if tURI == "" {
 		panic(makeErrorWithDetails(errCannotSetURI, "empty token URI"))
 	}
 }
 
-// assertIsValidAddress panics if the address is invalid.
+// assertIsValidAddress panics when addr is not a valid address.
+//
+// Parameters:
+//   - addr: address value to validate
 func assertIsValidAddress(addr address) {
 	if !addr.IsValid() {
 		panic(makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf("address (%s)", addr.String())))
 	}
 }
 
-// assertFromIsValidAddress panics if the from address is invalid.
+// assertFromIsValidAddress panics when from is not a valid source address.
+//
+// Parameters:
+//   - from: source address used by a transfer
 func assertFromIsValidAddress(from address) {
 	if !from.IsValid() {
 		panic(makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf("from address (%s)", from.String())))
 	}
 }
 
-// assertToIsValidAddress panics if the to address is invalid.
+// assertToIsValidAddress panics when to is not a valid destination address.
+//
+// Parameters:
+//   - to: destination address used by a transfer
 func assertToIsValidAddress(to address) {
 	if !to.IsValid() {
 		panic(makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf("to address (%s)", to.String())))
 	}
 }
 
-// assertIsAllowedTransfer enforces that NFTs held
-// by the staker (i.e. currently staked) can only be moved by the staker itself.
-// Other tokens fall through to the standard GRC721 owner/approval checks performed inside ledger.
+// assertIsAllowedTransfer permits ordinary ledger transfers and restricts
+// staked NFTs held by the staker to transfers initiated by that staker.
+//
+// Parameters:
+//   - caller: address initiating the transfer
+//   - tid: token identifier whose owner and staking status are checked
 func assertIsAllowedTransfer(caller address, tid grc721.TokenID) {
 	owner, err := token.OwnerOf(tid)
 	if err != nil {

@@ -32,6 +32,18 @@ type poolCreateConfig struct {
 }
 
 // newPoolParams defines the essential parameters for creating a new pool.
+// Parameters:
+//   - token0Path: path of the first token contract.
+//   - token1Path: path of the second token contract.
+//   - fee: fee tier stored with the pool configuration.
+//   - sqrtPriceX96: initial square-root price encoded as a decimal Q64.96
+//     integer; invalid decimal text causes the underlying conversion to panic.
+//   - tickSpacing: signed tick interval permitted for this fee tier.
+//   - slot0FeeProtocol: packed token0/token1 protocol-fee denominator setting.
+//
+// Returns:
+//   - config: pool-creation configuration containing the parsed price and all
+//     supplied pool parameters.
 func newPoolParams(
 	token0Path string,
 	token1Path string,
@@ -51,12 +63,30 @@ func newPoolParams(
 	}
 }
 
+// Returns:
+//   - sqrtPriceX96: configured initial square-root price as a mutable u256
+//     integer in Q64.96 representation.
 func (p *poolCreateConfig) SqrtPriceX96() *u256.Uint { return p.sqrtPriceX96 }
-func (p *poolCreateConfig) TickSpacing() int32       { return p.tickSpacing }
-func (p *poolCreateConfig) Token0Path() string       { return p.token0Path }
-func (p *poolCreateConfig) Token1Path() string       { return p.token1Path }
-func (p *poolCreateConfig) Fee() uint32              { return p.fee }
 
+// Returns:
+//   - tickSpacing: configured spacing between usable initialized ticks.
+func (p *poolCreateConfig) TickSpacing() int32 { return p.tickSpacing }
+
+// Returns:
+//   - token0Path: configured token0 contract path.
+func (p *poolCreateConfig) Token0Path() string { return p.token0Path }
+
+// Returns:
+//   - token1Path: configured token1 contract path.
+func (p *poolCreateConfig) Token1Path() string { return p.token1Path }
+
+// Returns:
+//   - fee: configured pool fee tier as a uint32 fee-unit value.
+func (p *poolCreateConfig) Fee() uint32 { return p.fee }
+
+// Returns:
+//   - err: nil after validating the price and canonicalizing token order; an
+//     error when the original or reciprocal square-root price is out of range.
 func (p *poolCreateConfig) update() error {
 	token0Path := p.token0Path
 	token1Path := p.token1Path
@@ -87,6 +117,9 @@ func (p *poolCreateConfig) update() error {
 }
 
 // isInOrder checks if token paths are in lexicographical (or, alphabetical) order
+// Returns:
+//   - inOrder: true when token0Path sorts lexicographically before token1Path;
+//     false otherwise.
 func (p *poolCreateConfig) isInOrder() bool {
 	if strings.Compare(p.token0Path, p.token1Path) < 0 {
 		return true
@@ -94,11 +127,20 @@ func (p *poolCreateConfig) isInOrder() bool {
 	return false
 }
 
+// Returns:
+//   - poolPath: pool identifier derived from the configuration's token paths and
+//     fee tier.
 func (p *poolCreateConfig) poolPath() string {
 	return pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
 }
 
 // validateSqrtPriceX96 validates that the given sqrtPriceX96 is within valid range
+// Parameters:
+//   - sqrtPriceX96: square-root price in Q64.96 integer form to validate.
+//
+// Returns:
+//   - err: nil when sqrtPriceX96 is in [MIN_SQRT_RATIO, MAX_SQRT_RATIO); an
+//     out-of-range error otherwise.
 func validateSqrtPriceX96(sqrtPriceX96 *u256.Uint) error {
 	// Valid range is [minSqrtRatio, maxSqrtRatio) - same as TickMathGetTickAtSqrtRatio
 	if sqrtPriceX96.Lt(consts.MinSqrtRatio()) || sqrtPriceX96.Gte(consts.MaxSqrtRatio()) {
@@ -110,6 +152,11 @@ func validateSqrtPriceX96(sqrtPriceX96 *u256.Uint) error {
 	return nil
 }
 
+// Parameters:
+//   - feeTier: fee tier to check against the four supported FeeTier constants.
+//
+// Returns:
+//   - valid: true only for FeeTier100, FeeTier500, FeeTier3000, or FeeTier10000.
 func isValidFeeTier(feeTier uint32) bool {
 	switch feeTier {
 	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:

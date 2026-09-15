@@ -20,10 +20,12 @@ import (
 // capped at the selected tier's end time.
 //
 // Parameters:
-//   - depositID: ID of the deposit to collect from
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the launchpad proxy.
+//   - depositID: ID of the deposit to collect from.
 //
 // Returns:
-//   - amount: reward token amount collected for the deposit
+//   - amount: project-token reward amount collected for the deposit, in the token's base units; failures panic before returning.
 //
 // Only callable by deposit owner after the claimable time.
 func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID string) int64 {
@@ -65,6 +67,18 @@ func (lp *launchpadV1) CollectRewardByDepositId(_ int, rlm realm, depositID stri
 }
 
 // collectDepositReward calculates and collects the reward for a deposit.
+//
+// Parameters:
+//   - _: internal call discriminator; callers pass 0.
+//   - rlm: propagated realm context used to persist project-tier updates.
+//   - deposit: deposit whose project-token reward state is updated and collected.
+//   - currentHeight: current chain block height supplied for the collection operation.
+//   - currentTime: current Unix timestamp in seconds; it must be positive and determines reward accrual and claimability.
+//
+// Returns:
+//   - rewardTokenPath: project token contract path associated with the deposit's project.
+//   - rewardAmount: claimable project-token amount collected, in token base units.
+//   - err: nil on successful calculation and state update; non-nil for invalid time, missing project/tier/manager, reward-state failures, or persistence errors.
 func (lp *launchpadV1) collectDepositReward(_ int, rlm realm, deposit launchpad.Deposit, currentHeight, currentTime int64) (string, int64, error) {
 	if currentTime <= 0 {
 		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")

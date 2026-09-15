@@ -5,10 +5,10 @@ package staker
 // Delegate delegates GNS to a delegate.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - to: The address to delegate.
-//   - amount: The amount of GNS.
-//   - referrer: The referrer address for reward tracking.
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - to: delegatee address that receives voting power
+//   - amount: positive GNS amount to delegate and convert to xGNS voting power
+//   - referrer: optional referral identifier to register for reward tracking
 //
 // Returns:
 //   - delegatedAmount: The amount of GNS delegated and mirrored as xGNS.
@@ -19,9 +19,9 @@ func Delegate(cur realm, to address, amount int64, referrer string) int64 {
 // Undelegate undelegates xGNS from the existing delegate.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - from: The address to undelegate.
-//   - amount: The amount of xGNS.
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - from: delegatee address from which the caller removes delegation
+//   - amount: positive xGNS amount to move into undelegation lockup
 //
 // Returns:
 //   - amount: The amount of GNS moved into undelegation lockup.
@@ -32,10 +32,10 @@ func Undelegate(cur realm, from address, amount int64) int64 {
 // Redelegate redelegates xGNS from the existing delegate to another.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - delegatee: The current delegatee address.
-//   - newDelegatee: The new delegatee address.
-//   - amount: The amount of xGNS.
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - delegatee: current delegatee address whose voting power is reduced
+//   - newDelegatee: destination address that receives the redelegated voting power
+//   - amount: positive xGNS amount to move without a user-facing lockup
 //
 // Returns:
 //   - redelegatedAmount: The amount moved from the current delegatee to the new delegatee.
@@ -46,10 +46,10 @@ func Redelegate(cur realm, delegatee, newDelegatee address, amount int64) int64 
 // CollectUndelegatedGns collects the amount of the undelegated GNS.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //
 // Returns:
-//   - amount: The amount of GNS token collected.
+//   - amount: GNS amount released to the caller after eligible undelegation withdrawals are collected
 func CollectUndelegatedGns(cur realm) int64 {
 	return getImplementation().CollectUndelegatedGns(0, cur)
 }
@@ -61,6 +61,9 @@ func CollectUndelegatedGns(cur realm) int64 {
 //
 // The all-token path folds and settles every known token. It is not a
 // single-current-xGNS-balance formula.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 func CollectReward(cur realm) {
 	getImplementation().CollectReward(0, cur)
 }
@@ -69,6 +72,9 @@ func CollectReward(cur realm) {
 //
 // The call is subject to the withdrawal halt and transfers GNS when a reward
 // is available.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 func CollectEmissionReward(cur realm) {
 	getImplementation().CollectEmissionReward(0, cur)
 }
@@ -76,6 +82,10 @@ func CollectEmissionReward(cur realm) {
 // CollectProtocolFeeReward claims accumulated protocol-fee rewards for one
 // registered token path. Folding and settlement are bounded per call; any
 // remaining buckets or stake events are collected by a later call.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - tokenPath: registered token path whose accumulated protocol-fee reward is claimed
 func CollectProtocolFeeReward(cur realm, tokenPath string) {
 	getImplementation().CollectProtocolFeeReward(0, cur, tokenPath)
 }
@@ -85,8 +95,8 @@ func CollectProtocolFeeReward(cur realm, tokenPath string) {
 // call this entry point.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - to: The registered project wallet that receives the rewards.
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - to: registered launchpad project wallet that receives both reward streams
 func CollectRewardFromLaunchPad(cur realm, to address) {
 	getImplementation().CollectRewardFromLaunchPad(0, cur, to)
 }
@@ -95,8 +105,8 @@ func CollectRewardFromLaunchPad(cur realm, to address) {
 // rewards for a registered launchpad project wallet.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - to: address to collect rewards for
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - to: registered launchpad project wallet whose emission reward is claimed
 func CollectEmissionRewardFromLaunchPad(cur realm, to address) {
 	getImplementation().CollectEmissionRewardFromLaunchPad(0, cur, to)
 }
@@ -105,9 +115,9 @@ func CollectEmissionRewardFromLaunchPad(cur realm, to address) {
 // protocol-fee rewards for a registered launchpad project wallet.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - to: address to collect rewards for
-//   - tokenPath: registered token path to collect
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - to: registered launchpad project wallet whose protocol-fee reward is claimed
+//   - tokenPath: registered token path whose accumulated protocol-fee reward is claimed
 func CollectProtocolFeeRewardFromLaunchPad(cur realm, to address, tokenPath string) {
 	getImplementation().CollectProtocolFeeRewardFromLaunchPad(0, cur, to, tokenPath)
 }
@@ -116,10 +126,10 @@ func CollectProtocolFeeRewardFromLaunchPad(cur realm, to address, tokenPath stri
 // Only callable by launchpad contract.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - addr: project wallet address
-//   - amount: stake amount delta to add or remove
-//   - add: true to add, false to subtract
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - addr: registered project wallet whose launchpad-backed stake is adjusted
+//   - amount: stake amount delta passed to the launchpad reward accounting
+//   - add: true to add stake and mint xGNS; false to remove stake and burn xGNS
 func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
 	getImplementation().SetAmountByProjectWallet(0, cur, addr, amount, add)
 }
@@ -131,8 +141,8 @@ func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
 // Only callable by admin.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - threshold: timestamp threshold for cleanup
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - threshold: Unix timestamp cutoff for removing eligible old delegation history
 //   - target: user address whose delegation history to clean
 func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64, target address) {
 	getImplementation().CleanStakerDelegationSnapshotByAdmin(0, cur, threshold, target)
@@ -142,8 +152,8 @@ func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64, target add
 // Only callable by admin.
 //
 // Parameters:
-//   - cur: Live realm token; external realm callers pass cross(cur).
-//   - period: lockup period in seconds
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - period: non-negative undelegation lockup duration in seconds
 func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
 	getImplementation().SetUnDelegationLockupPeriodByAdmin(0, cur, period)
 }

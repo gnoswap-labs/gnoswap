@@ -2,6 +2,17 @@ package int256
 
 import "math/bits"
 
+// udivrem divides an unsigned multi-word dividend by a four-word divisor.
+//
+// Parameters:
+//   - quot: Destination word slice that receives the quotient in little-endian limb order.
+//   - u: Unsigned dividend words in little-endian limb order; the slice may be normalized in place.
+//   - d: Non-zero *Int whose limbs are treated as an unsigned divisor.
+//
+// Returns:
+//   - rem: Non-negative remainder represented in the Int's low limbs.
+//
+// The quotient destination must be large enough for the computed quotient.
 func udivrem(quot, u []uint64, d *Int) (rem Int) {
 	var dLen int
 	for i := len(d) - 1; i >= 0; i-- {
@@ -57,6 +68,15 @@ func udivrem(quot, u []uint64, d *Int) (rem Int) {
 	return rem
 }
 
+// udivremBy1 divides a multi-word unsigned dividend by a single uint64 word.
+//
+// Parameters:
+//   - quot: Destination word slice receiving quotient limbs in little-endian order.
+//   - u: Unsigned dividend words in little-endian order; its top word is processed first.
+//   - d: Non-zero single-word divisor.
+//
+// Returns:
+//   - rem: Unsigned remainder in the range [0, d).
 func udivremBy1(quot, u []uint64, d uint64) (rem uint64) {
 	reciprocal := reciprocal2by1(d)
 	rem = u[len(u)-1]
@@ -66,6 +86,13 @@ func udivremBy1(quot, u []uint64, d uint64) (rem uint64) {
 	return rem
 }
 
+// udivremKnuth performs the normalized multi-word division step used by udivrem.
+// It updates the dividend workspace while estimating and correcting each quotient word.
+//
+// Parameters:
+//   - quot: Destination for quotient words in little-endian order.
+//   - u: Normalized dividend workspace, modified during subtraction and correction.
+//   - d: Normalized multi-word divisor with at least two words.
 func udivremKnuth(quot, u, d []uint64) {
 	dLen := len(d)
 	dh := d[dLen-1]
@@ -99,11 +126,29 @@ func udivremKnuth(quot, u, d []uint64) {
 	}
 }
 
+// reciprocal2by1 computes the reciprocal estimate used by two-word division.
+//
+// Parameters:
+//   - d: Non-zero high divisor word used to form the reciprocal estimate.
+//
+// Returns:
+//   - reciprocal: Reciprocal estimate for the 128-by-64-bit division step.
 func reciprocal2by1(d uint64) uint64 {
 	reciprocal, _ := bits.Div64(^d, ^uint64(0), d)
 	return reciprocal
 }
 
+// udivrem2by1 divides a two-word unsigned numerator by one uint64 word.
+//
+// Parameters:
+//   - uh: High 64-bit word of the unsigned numerator.
+//   - ul: Low 64-bit word of the unsigned numerator.
+//   - d: Non-zero uint64 divisor.
+//   - reciprocal: Reciprocal estimate for d returned by reciprocal2by1.
+//
+// Returns:
+//   - quot: Quotient word for (uh<<64 | ul) / d.
+//   - rem: Remainder word in the range [0, d).
 func udivrem2by1(uh, ul, d, reciprocal uint64) (quot, rem uint64) {
 	qh, ql := bits.Mul64(reciprocal, uh)
 	ql, carry := bits.Add64(ql, ul, 0)
@@ -125,6 +170,15 @@ func udivrem2by1(uh, ul, d, reciprocal uint64) (quot, rem uint64) {
 	return qh, r
 }
 
+// subMulTo subtracts multiplier*y from x in place, one little-endian word at a time.
+//
+// Parameters:
+//   - x: Destination word slice whose low words are reduced in place.
+//   - y: Little-endian multiplicand words; x must have at least len(y) words.
+//   - multiplier: Unsigned word multiplier applied to every y word.
+//
+// Returns:
+//   - borrow: Carry-out borrow remaining after subtracting the product.
 func subMulTo(x, y []uint64, multiplier uint64) uint64 {
 	var borrow uint64
 	for i := 0; i < len(y); i++ {
@@ -137,6 +191,14 @@ func subMulTo(x, y []uint64, multiplier uint64) uint64 {
 	return borrow
 }
 
+// addTo adds y to x in place using little-endian words.
+//
+// Parameters:
+//   - x: Destination word slice updated with the low-word sum.
+//   - y: Addend words in little-endian order; x must have at least len(y) words.
+//
+// Returns:
+//   - carry: Final carry word, zero when the addition fits in x's supplied words.
 func addTo(x, y []uint64) uint64 {
 	var carry uint64
 	for i := 0; i < len(y); i++ {

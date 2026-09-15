@@ -36,114 +36,192 @@ type ProjectTier struct {
 }
 
 // DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the project tier.
+//
+// Returns:
+//   - amount: per-second distribution rate encoded as a Q128 fixed-point value.
 func (pt *ProjectTier) DistributeAmountPerSecondX128() *u256.Uint {
 	return pt.distributeAmountPerSecondX128
 }
 
 // SetDistributeAmountPerSecondX128 sets the distribute amount per second (Q128) of the project tier.
+//
+// Parameters:
+//   - amount: per-second distribution rate to store, encoded as a Q128 fixed-point value.
 func (pt *ProjectTier) SetDistributeAmountPerSecondX128(amount *u256.Uint) {
 	pt.distributeAmountPerSecondX128 = u256.Zero().Set(amount)
 }
 
 // ID returns the ID of the project tier.
+//
+// Returns:
+//   - id: tier identifier in the "{projectID}:{duration}" form.
 func (pt *ProjectTier) ID() string {
 	return pt.id
 }
 
 // SetID sets the ID of the project tier.
+//
+// Parameters:
+//   - id: tier identifier to store, normally "{projectID}:{duration}".
 func (pt *ProjectTier) SetID(id string) {
 	pt.id = id
 }
 
 // TotalDistributeAmount returns the total distribute amount of the project tier.
+//
+// Returns:
+//   - amount: total token amount allocated for distribution by this tier.
 func (pt *ProjectTier) TotalDistributeAmount() int64 {
 	return pt.totalDistributeAmount
 }
 
 // SetTotalDistributeAmount sets the total distribute amount of the project tier.
+//
+// Parameters:
+//   - amount: total token amount allocated for distribution by this tier.
 func (pt *ProjectTier) SetTotalDistributeAmount(amount int64) {
 	pt.totalDistributeAmount = amount
 }
 
 // TotalDepositAmount returns the total deposit amount of the project tier.
+//
+// Returns:
+//   - amount: aggregate token amount deposited into this tier.
 func (pt *ProjectTier) TotalDepositAmount() int64 {
 	return pt.totalDepositAmount
 }
 
 // SetTotalDepositAmount sets the total deposit amount of the project tier.
+//
+// Parameters:
+//   - amount: aggregate token amount to record as deposited into this tier.
 func (pt *ProjectTier) SetTotalDepositAmount(amount int64) {
 	pt.totalDepositAmount = amount
 }
 
 // TotalWithdrawAmount returns the total withdraw amount of the project tier.
+//
+// Returns:
+//   - amount: aggregate token amount withdrawn from this tier.
 func (pt *ProjectTier) TotalWithdrawAmount() int64 {
 	return pt.totalWithdrawAmount
 }
 
 // SetTotalWithdrawAmount sets the total withdraw amount of the project tier.
+//
+// Parameters:
+//   - amount: aggregate token amount to record as withdrawn from this tier.
 func (pt *ProjectTier) SetTotalWithdrawAmount(amount int64) {
 	pt.totalWithdrawAmount = amount
 }
 
 // TotalDepositCount returns the total deposit count of the project tier.
+//
+// Returns:
+//   - count: number of deposits recorded for this tier.
 func (pt *ProjectTier) TotalDepositCount() int64 {
 	return pt.totalDepositCount
 }
 
 // SetTotalDepositCount sets the total deposit count of the project tier.
+//
+// Parameters:
+//   - count: number of deposits to record for this tier.
 func (pt *ProjectTier) SetTotalDepositCount(count int64) {
 	pt.totalDepositCount = count
 }
 
 // TotalWithdrawCount returns the total withdraw count of the project tier.
+//
+// Returns:
+//   - count: number of withdrawals recorded for this tier.
 func (pt *ProjectTier) TotalWithdrawCount() int64 {
 	return pt.totalWithdrawCount
 }
 
 // SetTotalWithdrawCount sets the total withdraw count of the project tier.
+//
+// Parameters:
+//   - count: number of withdrawals to record for this tier.
 func (pt *ProjectTier) SetTotalWithdrawCount(count int64) {
 	pt.totalWithdrawCount = count
 }
 
 // TotalCollectedAmount returns the total collected amount of the project tier.
+//
+// Returns:
+//   - amount: aggregate reward amount collected from this tier.
 func (pt *ProjectTier) TotalCollectedAmount() int64 {
 	return pt.totalCollectedAmount
 }
 
 // SetTotalCollectedAmount sets the total collected amount of the project tier.
+//
+// Parameters:
+//   - amount: aggregate reward amount to record as collected from this tier.
 func (pt *ProjectTier) SetTotalCollectedAmount(amount int64) {
 	pt.totalCollectedAmount = amount
 }
 
 // StartTime returns the start time of the project tier.
+//
+// Returns:
+//   - time: tier start timestamp in Unix seconds.
 func (pt *ProjectTier) StartTime() int64 {
 	return pt.startTime
 }
 
 // SetStartTime sets the start time of the project tier.
+//
+// Parameters:
+//   - time: tier start timestamp in Unix seconds.
 func (pt *ProjectTier) SetStartTime(time int64) {
 	pt.startTime = time
 }
 
 // EndTime returns the end time of the project tier.
+//
+// Returns:
+//   - time: tier end timestamp in Unix seconds.
 func (pt *ProjectTier) EndTime() int64 {
 	return pt.endTime
 }
 
 // SetEndTime sets the end time of the project tier.
+//
+// Parameters:
+//   - time: tier end timestamp in Unix seconds.
 func (pt *ProjectTier) SetEndTime(time int64) {
 	pt.endTime = time
 }
 
+// IsActivated reports whether the tier is active at the supplied timestamp.
+//
+// Parameters:
+//   - currentTime: timestamp in Unix seconds to compare with the tier window.
+//
+// Returns:
+//   - activated: true when startTime <= currentTime and currentTime < endTime; false otherwise.
 func (pt *ProjectTier) IsActivated(currentTime int64) bool {
 	return pt.startTime <= currentTime && currentTime < pt.endTime
 }
 
 // IsEnded returns true if the project tier has ended.
+//
+// Parameters:
+//   - currentTime: timestamp in Unix seconds to compare with the tier end time.
+//
+// Returns:
+//   - ended: true when endTime is strictly less than currentTime; false at or before the end time.
 func (pt *ProjectTier) IsEnded(currentTime int64) bool {
 	return pt.endTime < currentTime
 }
 
+// Clone returns an independent copy of the project tier, including a cloned
+// Q128 distribution-rate value and all aggregate counters.
+//
+// Returns:
+//   - clone: copy whose mutable fixed-point value is independent of the receiver.
 func (pt ProjectTier) Clone() *ProjectTier {
 	return &ProjectTier{
 		id:                            pt.id,
@@ -160,6 +238,16 @@ func (pt ProjectTier) Clone() *ProjectTier {
 }
 
 // NewProjectTier returns a pointer to a new ProjectTier with the given values.
+//
+// Parameters:
+//   - projectID: launchpad project identifier associated with the tier.
+//   - tierDuration: tier duration in days; launchpad tiers use 30, 90, or 180.
+//   - totalDistributeAmount: total token amount allocated for this tier.
+//   - startTime: tier start timestamp in Unix seconds.
+//   - endTime: tier end timestamp in Unix seconds.
+//
+// Returns:
+//   - tier: new ProjectTier with the supplied identity, allocation, and time window; counters and rates start at zero.
 func NewProjectTier(
 	projectID string,
 	tierDuration int64,
@@ -181,17 +269,15 @@ func NewProjectTier(
 	}
 }
 
-// MakeProjectTierID generates a unique tier ID based on the given project ID and the tier duration.
-//
-// The generated ID combines the `projectId` and the `duration` in the following format:
-// "{projectId}:{duration}"
+// MakeProjectTierID constructs the tier identifier from a project ID and duration.
+// The resulting identifier uses the "{projectID}:{duration}" format.
 //
 // Parameters:
-// - projectId (string): The unique ID of the project associated with the tier.
-// - duration (uint64): The duration of the tier (e.g., 30, 90, 180 days).
+//   - projectID: unique launchpad project identifier associated with the tier.
+//   - duration: tier duration in days, such as 30, 90, or 180.
 //
 // Returns:
-// - string: A unique tier ID in the format "projectId:duration".
+//   - projectTierID: identifier combining projectID and duration with a colon.
 func MakeProjectTierID(projectID string, duration int64) string {
 	return ufmt.Sprintf("%s:%d", projectID, duration)
 }

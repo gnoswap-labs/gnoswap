@@ -20,6 +20,12 @@ type Reward struct {
 }
 
 // aggregateRewards sums the per-warmup rewards/penalties into a single Reward.
+//
+// Parameters:
+//   - rewards: Per-warmup reward records to combine.
+//
+// Returns:
+//   - aggregate: One reward containing summed internal values and per-incentive external values and penalties.
 func aggregateRewards(rewards []Reward) Reward {
 	internal := int64(0)
 	internalPenalty := int64(0)
@@ -68,6 +74,9 @@ type calculatePositionRewardParam struct {
 }
 
 // deposit resolves the deposit the calculation runs against.
+//
+// Returns:
+//   - deposit: Explicit parameter deposit when present; otherwise the deposit loaded for PositionId (missing stored data panics).
 func (self *calculatePositionRewardParam) deposit() *sr.Deposit {
 	if self.Deposit != nil {
 		return self.Deposit
@@ -111,6 +120,12 @@ type positionRewardContext struct {
 // newPositionRewardContext resolves the deposit, its pool and a fresh RewardState WITHOUT mutating
 // persisted state. A missing pool is created ephemerally and its persistence is deferred to the
 // update path.
+//
+// Parameters:
+//   - param: Calculation inputs containing the position, deposit/pool stores, current time, and optional exit checkpoint.
+//
+// Returns:
+//   - context: Read-only reward-calculation context with resolved deposit, pool, warmups, and deferred update state.
 func (s *stakerV1) newPositionRewardContext(param *calculatePositionRewardParam) *positionRewardContext {
 	deposit := param.deposit()
 	poolPath := deposit.TargetPoolPath()
@@ -137,6 +152,9 @@ func (s *stakerV1) newPositionRewardContext(param *calculatePositionRewardParam)
 }
 
 // newRewards allocates the empty per-warmup reward slice the compute* methods write into.
+//
+// Returns:
+//   - rewards: Zero-initialized reward record for each warmup tier, including empty external reward and penalty maps.
 func (self *positionRewardContext) newRewards() []Reward {
 	rewards := make([]Reward, self.warmupLen)
 	for i := 0; i < self.warmupLen; i++ {
@@ -153,6 +171,13 @@ func (self *positionRewardContext) newRewards() []Reward {
 //
 // The per-second emission-rate schedule is resolved up-front (resolveInternalRewardSegments) and fed to
 // the single internal-reward calculator, so the calculation needs no reward-cache update.
+//
+// Parameters:
+//   - param: Calculation inputs used to resolve the pool's internal emission schedule and collection interval.
+//   - rewards: Per-warmup reward records to populate with internal reward and penalty amounts.
+//
+// Returns:
+//   - err: Non-nil when resolving the internal reward schedule fails; nil after all warmup slots are populated.
 func (self *positionRewardContext) computeInternalRewards(param *calculatePositionRewardParam, rewards []Reward) error {
 	lastCollectTime := self.depositResolver.InternalRewardLastCollectTime()
 
@@ -178,6 +203,9 @@ func (self *positionRewardContext) computeInternalRewards(param *calculatePositi
 //
 // ExternalRewardLastCollectTime falls back to StakeTime for ids not yet persisted, so a newly-discovered
 // incentive yields the same calculation whether or not it is written to the deposit.
+//
+// Parameters:
+//   - param: Calculation inputs whose deposit cursor and current time bound incentive discovery.
 func (self *positionRewardContext) discoverExternalIncentives(param *calculatePositionRewardParam) {
 	lastExternalIncentiveUpdatedAt := self.depositResolver.LastExternalIncentiveUpdatedAt()
 	if lastExternalIncentiveUpdatedAt >= param.CurrentTime {
@@ -199,6 +227,9 @@ func (self *positionRewardContext) discoverExternalIncentives(param *calculatePo
 
 // externalIncentiveIds returns the deposit's effective incentive-id set: the ids stored on the deposit
 // plus the ones discoverExternalIncentives found. Call it after discoverExternalIncentives.
+//
+// Returns:
+//   - incentiveIds: Deposit-indexed incentive IDs combined with IDs newly discovered during this calculation, without duplicates.
 func (self *positionRewardContext) externalIncentiveIds() []string {
 	seen := make(map[string]bool)
 	incentiveIds := make([]string, 0)
@@ -223,6 +254,11 @@ func (self *positionRewardContext) externalIncentiveIds() []string {
 
 // computeExternalReward writes one incentive's external reward and penalty of each warmup into rewards.
 // An incentive that does not exist on the pool or has not started yet contributes nothing.
+//
+// Parameters:
+//   - param: Calculation inputs containing the current time and pool/incentive state.
+//   - rewards: Per-warmup reward records to populate for incentiveId.
+//   - incentiveId: External incentive ID to calculate; missing or not-yet-started incentives add no rewards.
 func (self *positionRewardContext) computeExternalReward(param *calculatePositionRewardParam, rewards []Reward, incentiveId string) {
 	incentive, ok := self.poolResolver.IncentivesResolver().Get(incentiveId)
 	if !ok {
@@ -253,6 +289,10 @@ func (self *positionRewardContext) computeExternalReward(param *calculatePositio
 }
 
 // computeExternalRewards writes every incentive of the deposit into rewards.
+//
+// Parameters:
+//   - param: Calculation inputs containing the deposit, current time, and pool state.
+//   - rewards: Per-warmup reward records to populate for every effective incentive.
 func (self *positionRewardContext) computeExternalRewards(param *calculatePositionRewardParam, rewards []Reward) {
 	self.discoverExternalIncentives(param)
 
@@ -265,6 +305,15 @@ func (self *positionRewardContext) computeExternalRewards(param *calculatePositi
 //
 // It is the shared, read-only entry point used by the Collectable* view getters.
 // This keeps the calculation identical for every caller and guarantees views never write.
+//
+// Parameters:
+//   - currentHeight: Chain height associated with this read-only calculation.
+//   - currentTimestamp: Evaluation time in Unix seconds; an exit checkpoint overrides this with its exit time.
+//   - positionId: LP position NFT ID whose accumulated rewards should be calculated.
+//
+// Returns:
+//   - reward: Aggregated internal and external rewards across all warmup tiers.
+//   - err: Non-nil when internal reward schedule resolution fails; nil when reward calculation succeeds.
 func (s *stakerV1) calculateCollectablePositionReward(currentHeight, currentTimestamp int64, positionId uint64) (Reward, error) {
 	param := &calculatePositionRewardParam{
 		CurrentHeight: currentHeight,
@@ -293,6 +342,14 @@ func (s *stakerV1) calculateCollectablePositionReward(currentHeight, currentTime
 // calculatePositionReward computes a position's per-warmup internal AND external rewards WITHOUT
 // mutating persisted state. All would-be state changes are returned as a positionRewardUpdate for the
 // caller to apply (collect only).
+//
+// Parameters:
+//   - param: Position calculation inputs, including stores, time, position ID, and optional exit state.
+//
+// Returns:
+//   - rewards: Per-warmup internal and external reward records.
+//   - update: Deferred pool and deposit-index changes produced by the read-only calculation.
+//   - err: Non-nil when internal reward schedule resolution fails; nil on success.
 func (s *stakerV1) calculatePositionReward(param *calculatePositionRewardParam) ([]Reward, positionRewardUpdate, error) {
 	ctx := s.newPositionRewardContext(param)
 	rewards := ctx.newRewards()
@@ -307,6 +364,14 @@ func (s *stakerV1) calculatePositionReward(param *calculatePositionRewardParam) 
 
 // calculateInternalPositionReward computes only a position's per-warmup GNS emission rewards, WITHOUT
 // mutating persisted state. Used by the emission collect path.
+//
+// Parameters:
+//   - param: Position calculation inputs, including stores, time, position ID, and optional exit state.
+//
+// Returns:
+//   - rewards: Per-warmup GNS emission reward and penalty records.
+//   - update: Deferred pool-cache changes produced by the read-only calculation.
+//   - err: Non-nil when internal reward schedule resolution fails; nil on success.
 func (s *stakerV1) calculateInternalPositionReward(param *calculatePositionRewardParam) ([]Reward, positionRewardUpdate, error) {
 	ctx := s.newPositionRewardContext(param)
 	rewards := ctx.newRewards()
@@ -323,6 +388,14 @@ func (s *stakerV1) calculateInternalPositionReward(param *calculatePositionRewar
 //
 // Incentive discovery still runs over every incentive, so the deposit's incentive index stays complete
 // no matter which incentive the caller asked for.
+//
+// Parameters:
+//   - param: Position calculation inputs, including stores, time, position ID, and optional exit state.
+//   - incentiveId: External incentive ID whose per-warmup reward should be calculated.
+//
+// Returns:
+//   - rewards: Per-warmup records containing the requested incentive's reward and penalty when applicable.
+//   - update: Deferred pool persistence and newly discovered deposit-incentive index changes.
 func (s *stakerV1) calculateExternalPositionReward(param *calculatePositionRewardParam, incentiveId string) ([]Reward, positionRewardUpdate) {
 	ctx := s.newPositionRewardContext(param)
 	rewards := ctx.newRewards()
@@ -334,6 +407,10 @@ func (s *stakerV1) calculateExternalPositionReward(param *calculatePositionRewar
 }
 
 // persistLazyPool persists a pool that calculation created ephemerally because it did not exist yet.
+//
+// Parameters:
+//   - param: Calculation inputs whose Pools store receives a lazily created pool.
+//   - updateParams: Deferred update containing the pool path, pool value, and whether it already existed.
 func (s *stakerV1) persistLazyPool(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
 	if !updateParams.poolExisted {
 		param.Pools.set(updateParams.poolPath, updateParams.pool)
@@ -343,6 +420,10 @@ func (s *stakerV1) persistLazyPool(param *calculatePositionRewardParam, updatePa
 // updateInternalRewardCache advances the reward cache up to CurrentTime (halving boundaries). The
 // calculation itself no longer needs this, but downstream unclaimable processing (which reads
 // CurrentReward) and off-chain history rely on the cache, so it is advanced on the emission collect path.
+//
+// Parameters:
+//   - param: Calculation inputs containing the pool tier, pool store, and calculation timestamp.
+//   - updateParams: Deferred update identifying the pool whose cache should be advanced.
 func (s *stakerV1) updateInternalRewardCache(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
 	// Always at the current time, never at param.CurrentTime: the cache and the unclaimable
 	// tracking it drives are pool-global, and a checkpoint collect would rewind them to its exit
@@ -351,6 +432,10 @@ func (s *stakerV1) updateInternalRewardCache(param *calculatePositionRewardParam
 }
 
 // applyExternalIncentiveIndex persists the deposit incentive-index updates discovered during calculation.
+//
+// Parameters:
+//   - param: Calculation inputs whose deposit receives discovered incentive IDs and cursor changes.
+//   - updateParams: Deferred update containing newly discovered IDs and the cursor-advance flag.
 func (s *stakerV1) applyExternalIncentiveIndex(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
 	if len(updateParams.newExternalIncentiveIds) == 0 && !updateParams.advanceExternalIncentiveCursor {
 		return
@@ -367,6 +452,10 @@ func (s *stakerV1) applyExternalIncentiveIndex(param *calculatePositionRewardPar
 
 // updatePositionReward applies the persisted-state changes produced by calculatePositionReward.
 // It is called ONLY by the collect path; the Collectable* view getters discard the update.
+//
+// Parameters:
+//   - param: Position calculation inputs used to resolve the target deposit and pool stores.
+//   - updateParams: Deferred internal-cache, lazy-pool, and external-incentive-index changes to apply.
 func (s *stakerV1) updatePositionReward(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
 	s.persistLazyPool(param, updateParams)
 	s.updateInternalRewardCache(param, updateParams)
@@ -374,12 +463,20 @@ func (s *stakerV1) updatePositionReward(param *calculatePositionRewardParam, upd
 }
 
 // updateInternalPositionReward applies the state changes belonging to the emission collect path only.
+//
+// Parameters:
+//   - param: Position calculation inputs used for lazy-pool persistence and cache advancement.
+//   - updateParams: Deferred pool and internal reward-cache changes from emission calculation.
 func (s *stakerV1) updateInternalPositionReward(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
 	s.persistLazyPool(param, updateParams)
 	s.updateInternalRewardCache(param, updateParams)
 }
 
 // updateExternalPositionReward applies the state changes belonging to the external collect path only.
+//
+// Parameters:
+//   - param: Position calculation inputs whose deposit may receive newly discovered incentive IDs.
+//   - updateParams: Deferred lazy-pool and external-incentive-index changes from incentive calculation.
 func (s *stakerV1) updateExternalPositionReward(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
 	s.persistLazyPool(param, updateParams)
 	s.applyExternalIncentiveIndex(param, updateParams)
@@ -402,6 +499,16 @@ type internalRewardSegment struct {
 // tail rate is recomputed with the same calculatePoolReward arithmetic the cache writer uses, so a
 // schedule resolved from a fully materialized cache and one resolved from the emission halvings are
 // identical.
+//
+// Parameters:
+//   - poolTier: Pool-tier state used to derive reward rates after the persisted cache tail.
+//   - poolPath: Pool identifier whose tier context and halving schedule are resolved.
+//   - startTime: Inclusive beginning of the requested schedule in Unix seconds.
+//   - endTime: Exclusive end of the requested schedule in Unix seconds.
+//
+// Returns:
+//   - segments: Constant-rate spans covering [startTime, endTime).
+//   - err: Non-nil when tier or halving data cannot be resolved; nil for a complete schedule.
 func (self *PoolResolver) resolveInternalRewardSegments(poolTier *PoolTier, poolPath string, startTime, endTime int64) ([]internalRewardSegment, error) {
 	segments := make([]internalRewardSegment, 0)
 	if startTime >= endTime {
@@ -437,6 +544,19 @@ func (self *PoolResolver) resolveInternalRewardSegments(poolTier *PoolTier, pool
 // appendInternalRewardTailSegments appends the schedule for the tail [startTime, endTime], where no
 // persisted cache entry exists beyond startTime. Over this span tier/count are constant, so the rate
 // changes only at halving boundaries.
+//
+// Parameters:
+//   - segments: Existing constant-rate spans to extend.
+//   - poolTier: Pool-tier state used to resolve live tier context and halving emissions.
+//   - poolPath: Pool identifier whose tier and halving schedule are used.
+//   - startTime: Inclusive beginning of the uncached tail in Unix seconds.
+//   - endTime: Exclusive end of the requested tail in Unix seconds.
+//   - baseReward: Rate already effective at startTime, in reward-token units per second.
+//   - exit: Optional exit checkpoint supplying the tier context captured when the position unstaked.
+//
+// Returns:
+//   - segments: Input spans followed by tail spans split at applicable halving times.
+//   - err: Non-nil when live tier context or halving data cannot be resolved; nil on success.
 func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier *PoolTier, poolPath string, startTime, endTime, baseReward int64, exit *sr.UnstakedPosition) ([]internalRewardSegment, error) {
 	// A checkpoint reads the tier context it exited under: this window closed at the exit, and
 	// the live lookup is skipped so a checkpoint collect never depends on live tier state.
@@ -490,7 +610,14 @@ func appendInternalRewardTailSegments(segments []internalRewardSegment, poolTier
 	return append(segments, internalRewardSegment{start: segStart, end: endTime, rewardPerSecond: rate}), nil
 }
 
-// calculates internal unclaimable reward for the pool
+// processUnClaimableReward settles the pool's accumulated internal reward that cannot be claimed by positions.
+//
+// Parameters:
+//   - poolPath: Pool identifier whose unclaimable internal reward should be processed.
+//   - endTimestamp: Unix timestamp through which unclaimable reward is settled.
+//
+// Returns:
+//   - amount: Internal reward amount moved from the pool's unclaimable accumulator, or 0 when the pool is absent.
 func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64) int64 {
 	pool, ok := s.getPools().Get(poolPath)
 	if !ok {
@@ -501,7 +628,15 @@ func (s *stakerV1) processUnClaimableReward(poolPath string, endTimestamp int64)
 	return poolResolver.processUnclaimableReward(endTimestamp)
 }
 
-// update deposit's incentive list with new incentives created since last update
+// getExternalIncentiveIdsBy returns incentive IDs created for a pool during the requested time range.
+//
+// Parameters:
+//   - poolPath: Pool identifier whose incentive start-time index should be queried.
+//   - startTime: Inclusive beginning of the incentive-discovery time range in Unix seconds.
+//   - endTime: End of the incentive-discovery time range in Unix seconds.
+//
+// Returns:
+//   - incentiveIds: Incentive IDs indexed for poolPath in the requested time range, in index iteration order.
 func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime int64) []string {
 	currentIncentiveIds := make([]string, 0)
 
@@ -533,6 +668,13 @@ func (s *stakerV1) getExternalIncentiveIdsBy(poolPath string, startTime, endTime
 // This function is used for lazy initialization when a position collects
 // from an incentive for the first time, avoiding the need to iterate through
 // all deposits when a new incentive is created.
+//
+// Parameters:
+//   - deposit: Deposit whose stake time bounds reward eligibility.
+//   - incentive: External incentive whose start time bounds reward eligibility.
+//
+// Returns:
+//   - collectTime: Later of deposit.StakeTime() and incentive.StartTimestamp(), in Unix seconds.
 func getInitialCollectTime(deposit *sr.Deposit, incentive *sr.ExternalIncentive) int64 {
 	if deposit.StakeTime() > incentive.StartTimestamp() {
 		return deposit.StakeTime()

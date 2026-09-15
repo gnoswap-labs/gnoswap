@@ -134,10 +134,13 @@ amount1 = L * (sqrtUpper - sqrtLower)
 
 ## Usage
 
+These snippets call the public domain proxy from a realm function with a current `cur` token.
+Import the proxy package and qualify its function names in integrating code.
+
 ```go
 // Mint a new position through the domain proxy
 tokenId, liquidity, amount0, amount1 := Mint(
-    cross,
+    cross(cur),
     "gno.land/r/onbloc/weth",  // token0
     "gno.land/r/gnoswap/test_token/test_usdc",  // token1
     3000,                      // fee
@@ -154,7 +157,7 @@ tokenId, liquidity, amount0, amount1 := Mint(
 
 // Add liquidity
 positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
-    cross,
+    cross(cur),
     tokenId,
     "500000",
     "1000000000",
@@ -165,13 +168,13 @@ positionId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
 
 // Collect swap fees
 positionId, collected0, collected1, poolPath, rawAmount0, rawAmount1 := CollectFee(
-    cross,
+    cross(cur),
     tokenId,
 )
 
 // Reposition to a new range (requires a clear position)
 positionId, liquidity, tickLower, tickUpper, amount0, amount1 := Reposition(
-    cross,
+    cross(cur),
     tokenId,
     -443610,                   // new tickLower
     443610,                    // new tickUpper

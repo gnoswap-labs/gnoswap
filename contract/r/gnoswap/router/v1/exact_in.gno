@@ -23,6 +23,8 @@ import (
 // Applies slippage protection via minimum output amount.
 //
 // Parameters:
+//   - _: leading implementation discriminator; callers pass 0
+//   - rlm: propagated current realm context; this implementation validates and forwards it
 //   - inputToken: Input token contract path
 //   - outputToken: Output token contract path
 //   - amountIn: Exact input amount to swap
@@ -90,6 +92,8 @@ func (r *routerV1) ExactInSwapRoute(
 // Applies slippage protection via minimum output amount.
 //
 // Parameters:
+//   - _: leading implementation discriminator; callers pass 0
+//   - rlm: propagated current realm context; this implementation validates and forwards it
 //   - inputToken: Input token contract path
 //   - outputToken: Output token contract path
 //   - amountIn: Exact input amount to swap
@@ -158,6 +162,8 @@ func (r *routerV1) ExactInSingleSwapRoute(
 // - Event emission for swap completion
 //
 // Parameters:
+//   - _: leading implementation discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool swaps and transfers
 //   - params: SwapRouteParams containing all swap configuration
 //   - referrer: Referral address for registration
 //
@@ -211,6 +217,14 @@ type ExactInSwapOperation struct {
 	router *routerV1
 }
 
+// NewExactInSwapOperation creates an exact-input operation for router execution.
+//
+// Parameters:
+//   - r: router implementation used to execute pool swaps
+//   - pp: exact-input amount and route settings
+//
+// Returns:
+//   - operation: initialized ExactInSwapOperation
 func NewExactInSwapOperation(r *routerV1, pp ExactInParams) *ExactInSwapOperation {
 	return &ExactInSwapOperation{
 		router: r,
@@ -221,7 +235,10 @@ func NewExactInSwapOperation(r *routerV1, pp ExactInParams) *ExactInSwapOperatio
 	}
 }
 
-// Validate validates the exact-in swap operation parameters.
+// Validate checks the exact-input amount and parses route/quote allocations.
+//
+// Returns:
+//   - err: nil when amount, routes, and quotes are valid; validation error otherwise
 func (op *ExactInSwapOperation) Validate() error {
 	amountIn := op.params.AmountIn
 
@@ -244,7 +261,15 @@ func (op *ExactInSwapOperation) Validate() error {
 	return nil
 }
 
-// Process executes the exact-in swap operation.
+// Process executes the validated exact-input operation in the propagated realm.
+//
+// Parameters:
+//   - _: leading operation discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool swaps
+//
+// Returns:
+//   - result: aggregate swap amounts and route metadata, or nil on processing error
+//   - err: nil on success; pool or route execution error otherwise
 func (op *ExactInSwapOperation) Process(_ int, rlm realm) (*SwapResult, error) {
 	resultAmountIn, resultAmountOut, err := op.processRoutes(0, rlm, op.router, ExactIn)
 	if err != nil {

@@ -14,12 +14,22 @@ import (
 
 const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
+// mustGetStakerAddress returns the address configured for the staker role.
+//
+// Returns:
+//   - stakerAddress: address registered for the staker role; panics if the role is missing
 func mustGetStakerAddress() address {
 	return access.MustGetAddress(prabc.ROLE_STAKER.String())
 }
 
 // mustGetPool returns the read-only snapshot for poolPath.
 // It panics when poolPath does not identify a pool.
+//
+// Parameters:
+//   - poolPath: pool identifier whose stored pool snapshot is requested
+//
+// Returns:
+//   - pool: read-only pool snapshot associated with poolPath
 func mustGetPool(poolPath string) *pl.Pool {
 	pool, ok := pl.GetPools().Get(poolPath).(*pl.Pool)
 	if !ok || pool == nil {
@@ -28,25 +38,37 @@ func mustGetPool(poolPath string) *pl.Pool {
 	return pool
 }
 
-// positionIdFrom converts positionId to grc721.TokenID type
-// input: positionId uint64
-// output: grc721.TokenID
+// positionIdFrom converts a numeric position ID to the decimal token ID used
+// by the position NFT ledger.
+//
+// Parameters:
+//   - positionId: numeric position identifier to encode
+//
+// Returns:
+//   - tid: decimal-string GRC721 token ID corresponding to positionId
 func positionIdFrom(positionId uint64) grc721.TokenID {
 	return grc721.TokenID(strconv.FormatUint(positionId, 10))
 }
 
-// exists checks whether positionId exists
-// If positionId doesn't exist, return false, otherwise return true
-// input: positionId uint64
-// output: bool
+// exists reports whether the position NFT ledger contains positionId.
+//
+// Parameters:
+//   - positionId: numeric position identifier to test
+//
+// Returns:
+//   - exists: true when the corresponding position NFT exists
 func (p *positionV1) exists(positionId uint64) bool {
 	return p.nftAccessor.Exists(positionIdFrom(positionId))
 }
 
-// isOwner checks whether the caller is the owner of the positionId
-// If the caller is the owner of the positionId, return true, otherwise return false
-// input: positionId uint64, addr address
-// output: bool
+// isOwner reports whether addr owns the position NFT for positionId.
+//
+// Parameters:
+//   - positionId: numeric position identifier whose NFT ownership is checked
+//   - addr: address compared with the NFT ledger's owner
+//
+// Returns:
+//   - owner: true when addr is the current owner; false when ownership lookup fails or the addresses differ
 func (p *positionV1) isOwner(positionId uint64, addr address) bool {
 	owner, err := p.nftAccessor.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
@@ -55,19 +77,26 @@ func (p *positionV1) isOwner(positionId uint64, addr address) bool {
 	return owner == addr
 }
 
-// isOperator checks whether the caller is the approved operator of the positionId
-// If the caller is the approved operator of the positionId, return true, otherwise return false
-// input: positionId uint64, addr address
+// isOperator reports whether addr is the approved operator for positionId.
+//
+// Parameters:
+//   - positionId: numeric position identifier whose operator is checked
+//   - addr: address compared with the position's stored operator
+//
+// Returns:
+//   - operator: true when the stored operator equals addr and the lookup succeeds; false on lookup error or mismatch
 func (p *positionV1) isOperator(positionId uint64, addr address) bool {
 	operator, err := p.GetPositionOperator(positionId)
 	return err == nil && operator == addr
 }
 
-// isStaked checks whether positionId is staked
-// If positionId is staked, owner of positionId is staker contract
-// If positionId is staked, return true, otherwise return false
-// input: positionId grc721.TokenID
-// output: bool
+// isStaked reports whether the position NFT is currently owned by the staker contract.
+//
+// Parameters:
+//   - positionId: GRC721 token ID whose existence and owner are checked
+//
+// Returns:
+//   - staked: true when the token exists and its owner is the configured staker address
 func (p *positionV1) isStaked(positionId grc721.TokenID) bool {
 	exist := p.nftAccessor.Exists(positionId)
 	if !exist {
@@ -80,10 +109,16 @@ func (p *positionV1) isStaked(positionId grc721.TokenID) bool {
 	return false
 }
 
-// isOwnerOrOperator checks whether the caller is the owner or approved operator of the positionId
-// If the caller is the owner or approved operator of the positionId, return true, otherwise return false
-// input: addr address, positionId uint64
-// output: bool
+// isOwnerOrOperator reports whether addr may operate on positionId.
+// Staked positions accept only their configured operator; unstaked positions
+// accept their NFT owner.
+//
+// Parameters:
+//   - positionId: numeric position identifier whose authorization is checked
+//   - addr: address tested as owner or approved operator
+//
+// Returns:
+//   - authorized: true when addr passes the applicable owner/operator check; false for invalid addresses, missing tokens, lookup errors, or mismatches
 func (p *positionV1) isOwnerOrOperator(positionId uint64, addr address) bool {
 	if !addr.IsValid() || !p.exists(positionId) {
 		return false
@@ -96,14 +131,17 @@ func (p *positionV1) isOwnerOrOperator(positionId uint64, addr address) bool {
 	return p.isOwner(positionId, addr)
 }
 
-// splitOf divides poolKey into pToken0, pToken1, and pFee
-// If poolKey is invalid, it will panic
+// splitOf divides a pool key into token0 path, token1 path, and fee tier.
+// It panics when poolKey does not contain exactly three colon-delimited components
+// or its fee component is not an integer.
 //
-// input: poolKey string
-// output:
-// - token0Path string
-// - token1Path string
-// - fee uint32
+// Parameters:
+//   - poolKey: colon-delimited pool identifier in token0:token1:fee form
+//
+// Returns:
+//   - token0Path: first token contract path from poolKey
+//   - token1Path: second token contract path from poolKey
+//   - fee: fee tier parsed from the third poolKey component
 func splitOf(poolKey string) (string, string, uint32) {
 	res := strings.Split(poolKey, ":")
 	if len(res) != 3 {
@@ -120,12 +158,32 @@ func splitOf(poolKey string) (string, string, uint32) {
 	return pToken0, pToken1, uint32(pFee)
 }
 
+// isSlippageExceeded reports whether either collected amount is below its
+// corresponding minimum.
+//
+// Parameters:
+//   - amount0: actual token0 amount
+//   - amount1: actual token1 amount
+//   - amount0Min: minimum acceptable token0 amount
+//   - amount1Min: minimum acceptable token1 amount
+//
+// Returns:
+//   - exceeded: true when amount0 < amount0Min or amount1 < amount1Min
 func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) bool {
 	return !(amount0.Gte(amount0Min) && amount1.Gte(amount1Min))
 }
 
 // currentPoolObservation derives the latest stored observation from the
 // Uniswap-V3-aligned Slot0 and observations surfaces.
+//
+// Parameters:
+//   - poolPath: pool identifier whose current observation is requested
+//
+// Returns:
+//   - tickCumulative: cumulative tick value from the latest observation
+//   - secondsPerLiquidityCumulativeX128: Q128 cumulative seconds-per-liquidity value
+//   - observationTimestamp: block timestamp recorded on the latest observation
+//   - err: nil when the observation is read; otherwise the pool observation lookup error
 func currentPoolObservation(poolPath string) (int64, string, int64, error) {
 	slot0 := pl.GetSlot0(poolPath)
 	observation, err := pl.GetObservationAt(poolPath, slot0.ObservationIndex())

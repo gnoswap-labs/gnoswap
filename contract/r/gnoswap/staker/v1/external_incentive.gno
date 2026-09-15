@@ -21,11 +21,13 @@ import (
 // CreateExternalIncentive creates an external incentive program for a pool.
 //
 // Parameters:
-//   - targetPoolPath: pool to incentivize
-//   - rewardToken: registered reward token path
-//   - rewardAmount: total reward amount in token units
-//   - startTimestamp: incentive start time in Unix seconds
-//   - endTimestamp: incentive end time in Unix seconds
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - targetPoolPath: Pool path to incentivize.
+//   - rewardToken: Registered reward-token path.
+//   - rewardAmount: Total reward amount deposited, in reward-token units.
+//   - startTimestamp: Incentive start time as Unix seconds.
+//   - endTimestamp: Incentive end time as Unix seconds; it must follow startTimestamp by a valid duration.
 //
 // Any caller may create an incentive after satisfying token, duration, start-time, reward-minimum,
 // and GNS-deposit checks.
@@ -128,15 +130,17 @@ func (s *stakerV1) CreateExternalIncentive(
 // CollectExternalIncentivePenalty after this function succeeds.
 //
 // Parameters:
-//   - targetPoolPath: Pool with the incentive
-//   - incentiveId: Unique incentive identifier
-//   - refundAddress: Address receiving the refundable reward amount and GNS deposit
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - targetPoolPath: Pool containing the incentive to end.
+//   - incentiveId: Unique identifier of the incentive to finalize.
+//   - refundAddress: Address receiving the refundable reward amount and GNS deposit.
 //
 // Process:
-//  1. Validates that the incentive end time has been reached and no exit checkpoint still owes it
-//  2. Calculates unclaimable/remainder rewards
-//  3. Marks the incentive refunded and retains its record
-//  4. Transfers the refundable rewards and deposited GNS to refundAddress
+//  1. Validates that the incentive end time has been reached and no exit checkpoint still owes it.
+//  2. Calculates unclaimable/remainder rewards.
+//  3. Marks the incentive refunded and retains its record.
+//  4. Transfers the refundable rewards and deposited GNS to refundAddress.
 //
 // Only callable by the incentive creator or admin.
 func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
@@ -235,7 +239,18 @@ func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incent
 	)
 }
 
-// endExternalIncentive processes the end of an external incentive program.
+// endExternalIncentive validates and calculates the refundable amount for an ended incentive.
+//
+// Parameters:
+//   - resolver: Pool resolver providing the pool's incentive state.
+//   - incentiveResolver: Resolver for the specific incentive being ended.
+//   - caller: Address requesting the end operation, checked against the creator and admin role.
+//   - currentTime: Current Unix timestamp used to enforce the incentive end time.
+//
+// Returns:
+//   - incentive: Stored incentive record with its pre-refund accounting state.
+//   - refund: Reward-token amount made refundable after unclaimable rewards and remainder are calculated, capped at the remaining reward amount.
+//   - err: Non-nil when the incentive has not ended, caller lacks permission, or the calculated refund is invalid.
 func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolver *ExternalIncentiveResolver, caller address, currentTime int64) (*sr.ExternalIncentive, int64, error) {
 	if currentTime < incentiveResolver.EndTimestamp() {
 		return nil, 0, makeErrorWithDetails(
@@ -300,13 +315,15 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 // instead of being marked refunded.
 //
 // Parameters:
-//   - targetPoolPath: pool the incentive was created for
-//   - incentiveId: unique incentive identifier
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - targetPoolPath: Pool path for which the incentive was created.
+//   - incentiveId: Unique identifier of the incentive to cancel.
 //
 // Process:
-//  1. Validates the incentive exists and has not started
-//  2. Removes it from the incentive tree and the start-time index
-//  3. Refunds the available reward-token balance (capped by the staker balance) and the GNS deposit to the creator
+//  1. Validates the incentive exists and has not started.
+//  2. Removes it from the incentive tree and the start-time index.
+//  3. Refunds the available reward-token balance (capped by the staker balance) and the GNS deposit to the creator.
 //
 // Only callable by admin, governance, or the incentive creator. The permission
 // check runs after the incentive is resolved because the creator identity comes
@@ -413,7 +430,16 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 // external incentive. The incentive must first be finalized with EndExternalIncentive.
 // Penalties are accumulated during CollectReward and stored in the incentive.
 // This function transfers the accumulated penalty to the specified refund address.
-// Returns the penalty amount collected.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - targetPoolPath: Pool containing the ended incentive.
+//   - incentiveId: Unique identifier of the ended incentive whose penalty is collected.
+//   - refundAddress: Address receiving the transferred penalty amount.
+//
+// Returns:
+//   - penaltyAmount: Accumulated warmup penalty transferred, capped by the staker's available reward-token balance.
 //
 // Only callable by the incentive creator or admin.
 func (s *stakerV1) CollectExternalIncentivePenalty(

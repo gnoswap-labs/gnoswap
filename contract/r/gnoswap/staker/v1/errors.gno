@@ -34,6 +34,14 @@ const (
 	errInsufficientRewardTokenBalance = "[GNOSWAP-STAKER-027] insufficient reward token balance"
 )
 
+// makeErrorWithDetails combines a stable staker error message with operation-specific details.
+//
+// Parameters:
+//   - message: Base error code and message identifying the failure category.
+//   - details: Context describing the input or state that caused the failure.
+//
+// Returns:
+//   - error: Error containing message and details separated by the staker error formatting delimiter.
 func makeErrorWithDetails(message string, details string) error {
 	return ufmt.Errorf("%s || %s", message, details)
 }

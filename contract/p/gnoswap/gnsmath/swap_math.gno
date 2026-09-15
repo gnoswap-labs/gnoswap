@@ -10,19 +10,25 @@ import (
 // For example, feePips=3000 means 3000/1000000 = 0.3% fee.
 const denominator = uint64(1_000_000)
 
-// SwapMathComputeSwapStep computes the next sqrt price, amount in, amount out, and fee amount
-// for a swap step within a single tick range.
+// SwapMathComputeSwapStep computes one swap step within a single tick range.
+// It determines the next square-root price, input amount, output amount, and fee,
+// using exact-input or exact-output semantics from amountRemaining.
 //
 // Parameters:
-//   - sqrtRatioCurrentX96: current sqrt price in Q96 format
-//   - sqrtRatioTargetX96: target sqrt price (tick boundary)
-//   - liquidity: available liquidity in the range
-//   - amountRemaining: amount left to swap (positive=exact in, negative=exact out)
-//   - feePips: fee in hundredths of a bip (3000 = 0.3%)
+//   - sqrtRatioCurrentX96: Current pool square-root price in Q96 fixed-point format.
+//   - sqrtRatioTargetX96: Tick-boundary square-root price that this step may reach.
+//   - liquidity: Non-negative liquidity active between the current and target prices.
+//   - amountRemaining: Signed amount remaining; non-negative selects exact input, negative selects exact output.
+//   - feePips: Fee rate in millionths of the input amount (3,000 represents 0.3%).
 //
-// Returns sqrtRatioNextX96, amountIn, amountOut, feeAmount.
+// Returns:
+//   - sqrtRatioNextX96: Square-root price after applying this step, within the valid pool price bounds.
+//   - amountIn: Amount of the input token consumed by this step, excluding the fee.
+//   - amountOut: Amount of the output token produced by this step.
+//   - feeAmount: Input-token fee charged for this step.
 //
-// Panics if any input parameter is nil or if feePips >= 1000000.
+// Panics if an input pointer is nil, feePips is at least 1,000,000, arithmetic
+// overflows, or the resulting square-root price is outside the valid bounds.
 func SwapMathComputeSwapStep(
 	sqrtRatioCurrentX96 *u256.Uint,
 	sqrtRatioTargetX96 *u256.Uint,
@@ -149,11 +155,22 @@ func SwapMathComputeSwapStep(
 	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
 }
 
-// handleExactIn handles the EXACT_IN scenario for swaps, returning the next sqrt price and
-// a provisional amount. When the target price is reached, it returns the exact amount needed.
-// When the target is not reached, it returns the amount needed to reach the target (which will
-// be recalculated by the caller since we only moved partially).
-// This internal function processes swaps where the input amount is specified exactly.
+// handleExactIn handles a swap whose remaining amount is an exact input.
+// It reaches the target when the post-fee input suffices; otherwise it computes
+// a partial next price and leaves the target amount for the caller to recalculate.
+//
+// Parameters:
+//   - zeroForOne: True for token0-to-token1 swaps; false for token1-to-token0 swaps.
+//   - sqrtRatioCurrentX96: Current square-root price in Q96 fixed-point format.
+//   - sqrtRatioTargetX96: Target tick-boundary square-root price for this step.
+//   - liquidity: Non-negative liquidity active over the step's price range.
+//   - amountRemainingAbs: Absolute remaining input amount before applying the fee.
+//   - withoutFeeRateInPips: Fee-free fraction of the input in millionths (1,000,000 minus feePips).
+//
+// Returns:
+//   - nextSqrtPriceX96: Target price if reached, otherwise the partial next price.
+//   - amountInForTarget: Input amount required to reach the target price; for a partial move
+//     the caller recomputes the actual amount consumed.
 func handleExactIn(
 	zeroForOne bool,
 	sqrtRatioCurrentX96,
@@ -202,11 +219,22 @@ func handleExactIn(
 	return nextSqrt, amountIn
 }
 
-// handleExactOut handles the EXACT_OUT scenario for swaps, returning the next sqrt price and
-// a provisional amount. When the target price is reached, it returns the exact amount produced.
-// When the target is not reached due to insufficient liquidity, it returns the amount that would
-// be produced if we reached the target (which will be recalculated by the caller).
-// This internal function processes swaps where the output amount is specified exactly.
+// handleExactOut handles a swap whose remaining amount is an exact output.
+// It reaches the target when the target output is available; otherwise it computes
+// a partial next price from the requested output and leaves the target output for
+// the caller to recalculate.
+//
+// Parameters:
+//   - zeroForOne: True for token0-to-token1 swaps; false for token1-to-token0 swaps.
+//   - sqrtRatioCurrentX96: Current square-root price in Q96 fixed-point format.
+//   - sqrtRatioTargetX96: Target tick-boundary square-root price for this step.
+//   - liquidity: Non-negative liquidity active over the step's price range.
+//   - amountRemainingAbs: Absolute remaining output amount requested by the swap.
+//
+// Returns:
+//   - nextSqrtPriceX96: Target price if reached, otherwise the partial next price.
+//   - amountOutForTarget: Output amount produced on the full move to target; for a partial
+//     move the caller recomputes the actual amount produced.
 func handleExactOut(
 	zeroForOne bool,
 	sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, amountRemainingAbs *u256.Uint,

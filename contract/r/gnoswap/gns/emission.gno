@@ -13,7 +13,7 @@ import (
 // It creates the 12-year schedule with two-year halving periods.
 //
 // Parameters:
-//   - cur: pass `cross` as argument
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - createdHeight: block height when the schedule is initialized
 //   - startTimestamp: Unix timestamp when emission begins
 //

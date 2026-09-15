@@ -10,6 +10,13 @@ type LaunchpadProjectDepositsResolver struct {
 	*staker.LaunchpadProjectDeposits
 }
 
+// NewLaunchpadProjectDepositsResolver wraps launchpad project deposit state.
+//
+// Parameters:
+//   - launchpadProjectDeposits: project deposit state to resolve and mutate
+//
+// Returns:
+//   - *LaunchpadProjectDepositsResolver: resolver retaining the supplied deposit state pointer
 func NewLaunchpadProjectDepositsResolver(launchpadProjectDeposits *staker.LaunchpadProjectDeposits) *LaunchpadProjectDepositsResolver {
 	return &LaunchpadProjectDepositsResolver{launchpadProjectDeposits}
 }
@@ -33,7 +40,7 @@ func (lpdr *LaunchpadProjectDepositsResolver) getLaunchpadProjectDeposit(ownerAd
 //   - deposit: deposit amount to set
 //
 // Returns:
-//   - bool: true if successfully set
+//   - bool: always true after the deposit value is written
 func (lpdr *LaunchpadProjectDepositsResolver) setLaunchpadProjectDeposit(ownerAddress string, deposit int64) bool {
 	lpdr.LaunchpadProjectDeposits.SetDeposit(ownerAddress, deposit)
 	return true
@@ -41,6 +48,7 @@ func (lpdr *LaunchpadProjectDepositsResolver) setLaunchpadProjectDeposit(ownerAd
 
 // addDeposit adds to the deposit amount for a launchpad project.
 // This method ensures the deposit doesn't go negative.
+// Missing records are treated as a zero deposit before applying the amount.
 //
 // Parameters:
 //   - ownerAddress: project owner's address identifier
@@ -56,6 +64,7 @@ func (lpdr *LaunchpadProjectDepositsResolver) addDeposit(ownerAddress string, am
 
 // removeDeposit removes from the deposit amount for a launchpad project.
 // This method ensures the deposit doesn't go negative.
+// If no deposit exists for ownerAddress, the method leaves the state unchanged.
 //
 // Parameters:
 //   - ownerAddress: project owner's address identifier

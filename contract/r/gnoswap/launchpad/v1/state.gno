@@ -9,6 +9,14 @@ import (
 
 // Helper functions that access state through launchpadState
 
+// getProject retrieves a project value from the persisted projects tree.
+//
+// Parameters:
+//   - projectID: unique launchpad project identifier to look up.
+//
+// Returns:
+//   - project: stored project pointer; nil when the ID is absent or the entry has an invalid type.
+//   - err: nil for a valid project; non-nil when the ID is absent or the entry has an invalid type.
 func (lp *launchpadV1) getProject(projectID string) (*launchpad.Project, error) {
 	projects := lp.store.GetProjects()
 	project := projects.Get(projectID)
@@ -24,6 +32,15 @@ func (lp *launchpadV1) getProject(projectID string) (*launchpad.Project, error) 
 	return p, nil
 }
 
+// getProjectTier retrieves a tier from a stored project.
+//
+// Parameters:
+//   - projectID: unique launchpad project identifier containing the tier.
+//   - tierDuration: tier duration in days used as the tier lookup key.
+//
+// Returns:
+//   - tier: stored project tier; nil when the project or tier is absent.
+//   - err: nil for a valid tier; non-nil when the project or tier cannot be found.
 func (lp *launchpadV1) getProjectTier(projectID string, tierDuration int64) (*launchpad.ProjectTier, error) {
 	project, err := lp.getProject(projectID)
 	if err != nil {
@@ -38,6 +55,14 @@ func (lp *launchpadV1) getProjectTier(projectID string, tierDuration int64) (*la
 	return tier, nil
 }
 
+// getProjectTierRewardManager retrieves a reward manager from persisted state.
+//
+// Parameters:
+//   - projectTierID: composite project-tier identifier used as the manager key.
+//
+// Returns:
+//   - manager: stored reward manager; nil when the ID is absent or the entry has an invalid type.
+//   - err: nil for a valid manager; non-nil when the ID is absent or the entry has an invalid type.
 func (lp *launchpadV1) getProjectTierRewardManager(projectTierID string) (*launchpad.RewardManager, error) {
 	managers := lp.store.GetProjectTierRewardManagers()
 	rewardManager := managers.Get(projectTierID)
@@ -53,6 +78,14 @@ func (lp *launchpadV1) getProjectTierRewardManager(projectTierID string) (*launc
 	return manager, nil
 }
 
+// getDepositValue retrieves a deposit payload from the persisted deposits tree.
+//
+// Parameters:
+//   - depositId: unique deposit identifier used as the tree key.
+//
+// Returns:
+//   - deposit: stored deposit value; zero-valued when the ID is absent or the entry has an invalid type.
+//   - err: nil for a valid deposit; non-nil when the ID is absent or the entry has an invalid type.
 func (lp *launchpadV1) getDepositValue(depositId string) (launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
 	value := deposits.Get(depositId)
@@ -67,6 +100,14 @@ func (lp *launchpadV1) getDepositValue(depositId string) (launchpad.Deposit, err
 	return deposit, nil
 }
 
+// getDeposit retrieves and type-checks a deposit payload from persisted state.
+//
+// Parameters:
+//   - depositID: unique deposit identifier used as the tree key.
+//
+// Returns:
+//   - deposit: stored deposit value; zero-valued when the ID is absent or the entry has an invalid type.
+//   - err: nil for a valid deposit; non-nil when the ID is absent or the entry has an invalid type.
 func (lp *launchpadV1) getDeposit(depositID string) (launchpad.Deposit, error) {
 	deposits := lp.store.GetDeposits()
 	depositI := deposits.Get(depositID)
@@ -81,6 +122,13 @@ func (lp *launchpadV1) getDeposit(depositID string) (launchpad.Deposit, error) {
 	return deposit, nil
 }
 
+// mustGetDeposit retrieves a deposit and aborts execution if the lookup fails.
+//
+// Parameters:
+//   - depositID: unique deposit identifier used as the tree key.
+//
+// Returns:
+//   - deposit: valid stored deposit; the function panics instead of returning when lookup or type validation fails.
 func (lp *launchpadV1) mustGetDeposit(depositID string) launchpad.Deposit {
 	deposit, err := lp.getDeposit(depositID)
 	if err != nil {
@@ -92,6 +140,9 @@ func (lp *launchpadV1) mustGetDeposit(depositID string) launchpad.Deposit {
 
 // nextDepositID increments and returns the next unique deposit ID.
 // This is used when creating new deposits.
+//
+// Returns:
+//   - depositID: next unique deposit identifier after incrementing the store counter.
 func (lp *launchpadV1) nextDepositID() string {
 	return lp.store.NextDepositID()
 }

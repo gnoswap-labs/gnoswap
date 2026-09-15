@@ -65,14 +65,12 @@ type versionManager struct {
 //  3. Stores the initializer function for later version switching
 //
 // Parameters:
-//   - rlm: the live realm token threaded in by the caller; rlm.Previous() identifies the
-//     version package that is registering. The leading `_ int` is a v2 sentinel that surfaces
-//     as a `0` at every call site so the realm-threading is visible to the reader.
-//   - initializer: A function receiving the sentinel, live realm token, and storage
-//     interface, and returning an implementation instance.
+//   - _: Interrealm-call discriminator; callers pass 0.
+//   - rlm: Propagated current realm context from the domain wrapper; this implementation validates rlm.IsCurrent() and inspects rlm.Previous() to identify and authorize the registering version package.
+//   - initializer: Callback receiving the discriminator, current realm context, and domain-specific storage wrapper, and returning the version implementation instance.
 //
 // Returns:
-//   - error: If realm token is spoofed, caller is unauthorized, already registered, or initializer is nil
+//   - error: nil when the initializer is registered (and the first one is activated); otherwise an error for a spoofed realm, nil initializer, user caller, caller outside the domain path, or duplicate package path.
 //
 // Security: Only packages under the domainPath prefix can register (enforced by isContainDomainPath).
 func (vm *versionManager) RegisterInitializer(_ int, rlm realm, initializer func(_ int, rlm realm, store any) any) error {
@@ -139,13 +137,12 @@ func (vm *versionManager) RegisterInitializer(_ int, rlm realm, initializer func
 // (see each module's upgrade.gno).
 //
 // Parameters:
-//   - rlm: the live realm token threaded in by the caller. The leading `_ int` is a v2
-//     sentinel that surfaces as a `0` at every call site so the realm-threading is visible.
-//   - packagePath: The full package path of the target version (e.g., "gno.land/r/gnoswap/protocol_fee/v2")
+//   - _: Interrealm-call discriminator; callers pass 0.
+//   - rlm: Propagated current realm context from the domain wrapper; this implementation validates rlm.IsCurrent() before switching.
+//   - packagePath: Full package path of the target version; it must be a key in the registered initializer map.
 //
 // Returns:
-//   - error: If realm token is spoofed, target version is not registered, or the
-//     registered initializer is nil (an internal invalid state)
+//   - error: nil when packagePath becomes active; otherwise ErrSpoofedRealm, an unknown-package error, or an invalid-initializer error.
 func (vm *versionManager) ChangeImplementation(_ int, rlm realm, packagePath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -177,6 +174,9 @@ func (vm *versionManager) ChangeImplementation(_ int, rlm realm, packagePath str
 
 // GetDomainPath returns the base domain path for this version manager.
 // Example: "gno.land/r/gnoswap/protocol_fee"
+//
+// Returns:
+//   - string: Base package path used to scope registered version implementations.
 func (vm *versionManager) GetDomainPath() string {
 	return vm.domainPath
 }
@@ -184,17 +184,26 @@ func (vm *versionManager) GetDomainPath() string {
 // GetInitializers returns the map containing all registered initializer functions.
 // Keys are package paths, values are initializer functions.
 // Useful for inspecting which versions are available.
+//
+// Returns:
+//   - map[string]func(_ int, rlm realm, store any) any: Current registry mapping version package paths to initializer callbacks.
 func (vm *versionManager) GetInitializers() map[string]func(_ int, rlm realm, store any) any {
 	return vm.initializers
 }
 
 // GetCurrentPackagePath returns the package path of the currently active implementation.
+//
+// Returns:
+//   - string: Active implementation's package path, or the empty string before registration.
 func (vm *versionManager) GetCurrentPackagePath() string {
 	return vm.currentPackagePath
 }
 
 // GetCurrentImplementation returns the instance of the currently active version.
 // The returned value should be type-asserted to the domain-specific interface.
+//
+// Returns:
+//   - any: Active version implementation instance, or nil before the first initializer is registered.
 func (vm *versionManager) GetCurrentImplementation() any {
 	return vm.currentImplementation
 }
@@ -205,6 +214,12 @@ func (vm *versionManager) GetCurrentImplementation() any {
 //
 // Validation rules:
 //   - Package path must start with domainPath + "/"
+//
+// Parameters:
+//   - targetPackagePath: Package path to test against the configured domainPath prefix.
+//
+// Returns:
+//   - bool: true when targetPackagePath starts with domainPath followed by "/", allowing it as a version package; false otherwise.
 //
 // Example:
 //   - domainPath: "gno.land/r/gnoswap/protocol_fee"

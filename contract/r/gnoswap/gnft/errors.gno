@@ -20,7 +20,14 @@ const (
 	errSpoofedRealm            = "[GNOSWAP-GNFT-010] rlm does not match the current crossing frame"
 )
 
-// makeErrorWithDetails creates an error with additional context.
+// makeErrorWithDetails formats an error message together with contextual details.
+//
+// Parameters:
+//   - message: base message describing the GNFT failure.
+//   - details: additional context identifying the invalid operation or value.
+//
+// Returns:
+//   - error: formatted error containing message and details.
 func makeErrorWithDetails(message string, details string) error {
 	return ufmt.Errorf("%s || %s", message, details)
 }

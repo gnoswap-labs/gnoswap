@@ -29,8 +29,12 @@ import (
 // The all-token path intentionally grows with the number of known fee tokens.
 // Use the token-specific entry point when bounded work is required.
 //
-// No parameters are required; the caller's reward ID is used. Rewards are
-// transferred directly to the caller.
+// No business parameters are required; the caller's reward ID is used.
+// Rewards are transferred directly to the caller.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before settlement and transfers.
 func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -82,6 +86,10 @@ func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 }
 
 // CollectEmissionReward collects accumulated GNS emission rewards only.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before settlement and transfer.
 func (gs *govStakerV1) CollectEmissionReward(_ int, rlm realm) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -112,6 +120,11 @@ func (gs *govStakerV1) CollectEmissionReward(_ int, rlm realm) {
 }
 
 // CollectProtocolFeeReward collects accumulated protocol fee rewards for the provided token path.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before settlement and transfer.
+//   - tokenPath: registered fee-token path whose reward should be collected
 func (gs *govStakerV1) CollectProtocolFeeReward(_ int, rlm realm, tokenPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -148,7 +161,9 @@ func (gs *govStakerV1) CollectProtocolFeeReward(_ int, rlm realm, tokenPath stri
 // CollectRewardFromLaunchPad collects rewards for launchpad project wallets.
 //
 // Parameters:
-//   - to: recipient address for rewards
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad reward settlement.
+//   - to: project wallet address receiving its emission and protocol-fee rewards
 //
 // Only callable by launchpad contract.
 func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
@@ -213,6 +228,11 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) 
 }
 
 // CollectEmissionRewardFromLaunchPad collects emission rewards only for launchpad project wallets.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad reward settlement.
+//   - to: project wallet address receiving its emission reward
 func (gs *govStakerV1) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to address) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -254,6 +274,12 @@ func (gs *govStakerV1) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to a
 }
 
 // CollectProtocolFeeRewardFromLaunchPad collects one token path of protocol fee rewards for launchpad project wallets.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad reward settlement.
+//   - to: project wallet address receiving the protocol-fee reward
+//   - tokenPath: registered fee-token path whose reward should be collected
 func (gs *govStakerV1) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, to address, tokenPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -298,7 +324,7 @@ func (gs *govStakerV1) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, t
 	}
 }
 
-// SetAmountByProjectWallet sets the amount of reward for the project wallet.
+// SetAmountByProjectWallet sets the amount of reward stake for the project wallet.
 // This function is exclusively callable by the launchpad contract to manage
 // xGNS balances for project wallets that participate in launchpad offerings.
 //
@@ -308,6 +334,8 @@ func (gs *govStakerV1) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, t
 // Adjusts stake amount for project wallet address.
 //
 // Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad authorization and staking changes.
 //   - addr: project wallet address whose launchpad-backed stake should be adjusted
 //   - amount: amount of stake to add or remove
 //   - add: true to add stake and mint xGNS to launchpad, false to remove stake and burn xGNS from launchpad
@@ -354,6 +382,17 @@ func (gs *govStakerV1) SetAmountByProjectWallet(_ int, rlm realm, addr address, 
 
 // claimRewards claims both emission and protocol fee rewards.
 // Coordinates claiming process for both reward types.
+//
+// Parameters:
+//   - _: integer discriminator required by the internal realm-threading convention; callers use 0
+//   - rlm: propagated realm context used by the reward settlement calls
+//   - rewardID: reward-state identifier whose emission and fee rewards are settled
+//   - currentTimestamp: Unix timestamp used to settle rewards through this instant
+//
+// Returns:
+//   - int64: emission reward amount ready for transfer
+//   - map[string]int64: protocol-fee reward amount keyed by token path
+//   - error: first error from emission or protocol-fee settlement, or nil on success
 func (gs *govStakerV1) claimRewards(_ int, rlm realm, rewardID string, currentTimestamp int64) (int64, map[string]int64, error) {
 	emissionReward, err := gs.claimRewardsEmissionReward(0, rlm, rewardID, currentTimestamp)
 	if err != nil {
@@ -369,7 +408,18 @@ func (gs *govStakerV1) claimRewards(_ int, rlm realm, rewardID string, currentTi
 }
 
 // claimRewardsFromLaunchpad claims rewards for launchpad project wallets.
-// Uses special reward ID format for launchpad integration.
+// Uses a special reward ID format for launchpad integration.
+//
+// Parameters:
+//   - _: integer discriminator required by the internal realm-threading convention; callers use 0
+//   - rlm: propagated realm context used by the reward settlement calls
+//   - address: project wallet address string used to construct the launchpad reward ID
+//   - currentTimestamp: Unix timestamp used to settle rewards through this instant
+//
+// Returns:
+//   - int64: emission reward amount ready for transfer
+//   - map[string]int64: protocol-fee reward amount keyed by token path
+//   - error: first settlement error, or nil on success
 func (gs *govStakerV1) claimRewardsFromLaunchpad(_ int, rlm realm, address string, currentTimestamp int64) (int64, map[string]int64, error) {
 	launchpadRewardID := gs.makeLaunchpadRewardID(address)
 
@@ -382,6 +432,17 @@ func (gs *govStakerV1) claimRewardsFromLaunchpad(_ int, rlm realm, address strin
 // Non-crossing helper: takes `_ int, rlm realm` so the realm token threaded
 // in by the public reward-collection entry points reaches the underlying
 // GRC-20 transfer without forcing each caller to recompute it.
+//
+// Parameters:
+//   - _: integer discriminator required by the internal realm-threading convention; callers use 0
+//   - rlm: propagated realm context forwarded to the underlying GRC-20 transfer
+//   - tokenPath: registered token path to transfer
+//   - from: staker-contract address whose balance funds the transfer
+//   - to: recipient address that receives the tokens
+//   - amount: non-negative token amount to transfer
+//
+// Returns:
+//   - error: nil when the transfer succeeds, or an error for an unregistered token, invalid recipient, negative amount, or insufficient balance
 func transferToken(
 	_ int,
 	rlm realm,
