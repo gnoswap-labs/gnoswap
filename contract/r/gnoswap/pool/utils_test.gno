@@ -12,20 +12,20 @@ func TestEncodeTickKey(cur realm, t *testing.T) {
 		tick int32
 		want string
 	}{
-		{"zero tick", 0, "0000887272"},
-		{"positive tick", 100, "0000887372"},
-		{"negative tick", -100, "0000887172"},
-		{"max tick", MAX_TICK, "0001774544"},
-		{"min tick", -MAX_TICK, "0000000000"},
-		{"large positive", 500000, "0001387272"},
-		{"large negative", -500000, "0000387272"},
+		{"zero tick", 0, "\x80\x00\x00\x00"},
+		{"positive tick", 100, "\x80\x00\x00\x64"},
+		{"negative tick", -100, "\x7f\xff\xff\x9c"},
+		{"max tick", MAX_TICK, "\x80\x0d\x89\xe8"},
+		{"min tick", -MAX_TICK, "\x7f\xf2\x76\x18"},
+		{"large positive", 500000, "\x80\x07\xa1\x20"},
+		{"large negative", -500000, "\x7f\xf8\x5e\xe0"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got := EncodeTickKey(tt.tick)
 			uassert.Equal(t, tt.want, got)
-			uassert.Equal(t, 10, len(got))
+			uassert.Equal(t, 4, len(got))
 		})
 	}
 }
@@ -36,13 +36,13 @@ func TestDecodeTickKey(cur realm, t *testing.T) {
 		encoded string
 		want    int32
 	}{
-		{"zero tick", "0000887272", 0},
-		{"positive tick", "0000887372", 100},
-		{"negative tick", "0000887172", -100},
-		{"max tick", "0001774544", MAX_TICK},
-		{"min tick", "0000000000", -MAX_TICK},
-		{"large positive", "0001387272", 500000},
-		{"large negative", "0000387272", -500000},
+		{"zero tick", "\x80\x00\x00\x00", 0},
+		{"positive tick", "\x80\x00\x00\x64", 100},
+		{"negative tick", "\x7f\xff\xff\x9c", -100},
+		{"max tick", "\x80\x0d\x89\xe8", MAX_TICK},
+		{"min tick", "\x7f\xf2\x76\x18", -MAX_TICK},
+		{"large positive", "\x80\x07\xa1\x20", 500000},
+		{"large negative", "\x7f\xf8\x5e\xe0", -500000},
 	}
 
 	for _, tt := range tests {
@@ -51,6 +51,10 @@ func TestDecodeTickKey(cur realm, t *testing.T) {
 			uassert.Equal(t, tt.want, got)
 		})
 	}
+
+	uassert.PanicsWithMessage(t, cur, "invalid int32 key length: 3", func() {
+		DecodeTickKey("123")
+	})
 }
 
 func TestEncodeDecodeTickKey_RoundTrip(cur realm, t *testing.T) {
@@ -80,16 +84,16 @@ func TestEncodePositionKey(cur realm, t *testing.T) {
 		tickUpper int32
 		want      string
 	}{
-		{"narrow range", -60, 60, "00008872120000887332"},
-		{"negative range", -2000, -1000, "00008852720000886272"},
-		{"wide range", -887220, 887220, "00000000520001774492"},
+		{"narrow range", -60, 60, "\x7f\xff\xff\xc4\x80\x00\x00\x3c"},
+		{"negative range", -2000, -1000, "\x7f\xff\xf8\x30\x7f\xff\xfc\x18"},
+		{"wide range", -887220, 887220, "\x7f\xf2\x76\x4c\x80\x0d\x89\xb4"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			got := EncodePositionKey(tt.tickLower, tt.tickUpper)
 			uassert.Equal(t, tt.want, got)
-			uassert.Equal(t, 20, len(got))
+			uassert.Equal(t, 8, len(got))
 		})
 	}
 }

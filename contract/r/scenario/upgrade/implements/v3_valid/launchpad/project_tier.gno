@@ -18,7 +18,7 @@ func getCalculatedLeftReward(t *launchpad.ProjectTier) int64 {
 	return safeSubInt64(t.TotalDistributeAmount(), t.TotalCollectedAmount())
 }
 
-func depositToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
+func depositToTier(t *launchpad.ProjectTier, deposit launchpad.Deposit) {
 	totalDepositAmount := safeAddInt64(t.TotalDepositAmount(), deposit.DepositAmount())
 	totalDepositCount := safeAddInt64(t.TotalDepositCount(), 1)
 
@@ -26,7 +26,7 @@ func depositToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
 	t.SetTotalDepositCount(totalDepositCount)
 }
 
-func withdrawToTier(t *launchpad.ProjectTier, deposit *launchpad.Deposit) {
+func withdrawToTier(t *launchpad.ProjectTier, deposit launchpad.Deposit) {
 	totalWithdrawAmount := safeAddInt64(t.TotalWithdrawAmount(), deposit.DepositAmount())
 	totalWithdrawCount := safeAddInt64(t.TotalWithdrawCount(), 1)
 

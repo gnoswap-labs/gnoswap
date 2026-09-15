@@ -24,12 +24,12 @@ func (s *stakerV1) handleStakingRewardFee(
 	tokenPath string,
 	amount int64,
 	internal bool,
+	unstakingFee uint64,
 ) (int64, int64, error) {
 	if internal {
 		tokenPath = GNS_TOKEN_KEY
 	}
 
-	unstakingFee := s.GetUnstakingFee()
 	if unstakingFee == 0 {
 		s.settleProtocolFee(0, rlm, tokenPath, 0)
 		return amount, 0, nil
@@ -61,14 +61,8 @@ func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amo
 		return
 	}
 
-	// The stored map is readonly tainted here, so it is copied before being updated.
-	existingProtocolFees := s.store.GetPendingProtocolFees()
-	pendingProtocolFees := make(map[string]int64)
-	for pendingTokenPath, pendingAmount := range existingProtocolFees {
-		pendingProtocolFees[pendingTokenPath] = pendingAmount
-	}
-	pendingProtocolFees[tokenPath] = gnsmath.SafeAddInt64(pendingProtocolFees[tokenPath], amount)
-	if err := s.store.SetPendingProtocolFees(0, rlm, pendingProtocolFees); err != nil {
+	pendingAmount := gnsmath.SafeAddInt64(s.store.GetPendingProtocolFee(tokenPath), amount)
+	if err := s.store.SetPendingProtocolFee(0, rlm, tokenPath, pendingAmount); err != nil {
 		panic(err)
 	}
 }
@@ -87,8 +81,7 @@ func (s *stakerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount 
 		return
 	}
 
-	pendingProtocolFees := s.store.GetPendingProtocolFees()
-	pendingAmount, hasPending := pendingProtocolFees[tokenPath]
+	pendingAmount := s.store.GetPendingProtocolFee(tokenPath)
 	totalAmount := gnsmath.SafeAddInt64(pendingAmount, amount)
 
 	if totalAmount > 0 {
@@ -105,20 +98,7 @@ func (s *stakerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount 
 		}
 	}
 
-	if !hasPending {
-		return
-	}
-
-	remainingProtocolFees := make(map[string]int64)
-	for pendingTokenPath, pending := range pendingProtocolFees {
-		if pendingTokenPath == tokenPath {
-			continue
-		}
-
-		remainingProtocolFees[pendingTokenPath] = pending
-	}
-
-	if err := s.store.SetPendingProtocolFees(0, rlm, remainingProtocolFees); err != nil {
+	if err := s.store.RemovePendingProtocolFee(0, rlm, tokenPath); err != nil {
 		panic(err)
 	}
 }

@@ -2,8 +2,10 @@ package utils
 
 import (
 	"math"
+	"strings"
 	"testing"
 
+	u256 "gno.land/p/gnoswap/uint256"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -35,6 +37,49 @@ func TestUint16Codec(cur realm, t *testing.T) {
 	uassert.PanicsWithMessage(t, cur, "invalid uint16 key length: 1", func() {
 		DecodeUint16("x")
 	})
+}
+
+func TestInt32Codec(cur realm, t *testing.T) {
+	tests := []struct {
+		value   int32
+		encoded string
+	}{
+		{math.MinInt32, "\x00\x00\x00\x00"},
+		{math.MinInt32 + 1, "\x00\x00\x00\x01"},
+		{-887272, "\x7f\xf2\x76\x18"},
+		{-65536, "\x7f\xff\x00\x00"},
+		{-257, "\x7f\xff\xfe\xff"},
+		{-256, "\x7f\xff\xff\x00"},
+		{-255, "\x7f\xff\xff\x01"},
+		{-1, "\x7f\xff\xff\xff"},
+		{0, "\x80\x00\x00\x00"},
+		{1, "\x80\x00\x00\x01"},
+		{255, "\x80\x00\x00\xff"},
+		{256, "\x80\x00\x01\x00"},
+		{257, "\x80\x00\x01\x01"},
+		{65535, "\x80\x00\xff\xff"},
+		{65536, "\x80\x01\x00\x00"},
+		{887272, "\x80\x0d\x89\xe8"},
+		{math.MaxInt32 - 1, "\xff\xff\xff\xfe"},
+		{math.MaxInt32, "\xff\xff\xff\xff"},
+	}
+
+	previous := ""
+	for _, tt := range tests {
+		encoded := EncodeInt32(tt.value)
+		uassert.Equal(t, tt.encoded, encoded)
+		uassert.Equal(t, tt.value, DecodeInt32(encoded))
+		if previous != "" && !(previous < encoded) {
+			t.Errorf("encoded keys are not lexicographically ordered: %d", tt.value)
+		}
+		previous = encoded
+	}
+
+	for _, length := range []int{0, 3, 5} {
+		uassert.PanicsContains(t, cur, "invalid int32 key length:", func() {
+			DecodeInt32(string(make([]byte, length)))
+		})
+	}
 }
 
 func TestEncodeUint64(t *testing.T) {
@@ -103,5 +148,84 @@ func TestDecodeUint64(cur realm, t *testing.T) {
 			continue
 		}
 		uassert.Equal(t, tt.want, DecodeUint64(tt.key))
+	}
+}
+
+func TestUint256Codec(t *testing.T) {
+	tests := []struct {
+		name    string
+		value   u256.Uint
+		encoded string
+	}{
+		{"zero", u256.Uint{}, strings.Repeat("\x00", 32)},
+		{"one", u256.Uint{1}, strings.Repeat("\x00", 31) + "\x01"},
+		{"uint64 max", u256.Uint{math.MaxUint64}, strings.Repeat("\x00", 24) + strings.Repeat("\xff", 8)},
+		{"uint64 boundary", u256.Uint{0, 1}, strings.Repeat("\x00", 23) + "\x01" + strings.Repeat("\x00", 8)},
+		{"uint128 max", u256.Uint{math.MaxUint64, math.MaxUint64}, strings.Repeat("\x00", 16) + strings.Repeat("\xff", 16)},
+		{"uint128 boundary", u256.Uint{0, 0, 1}, strings.Repeat("\x00", 15) + "\x01" + strings.Repeat("\x00", 16)},
+		{"uint192 max", u256.Uint{math.MaxUint64, math.MaxUint64, math.MaxUint64}, strings.Repeat("\x00", 8) + strings.Repeat("\xff", 24)},
+		{"uint192 boundary", u256.Uint{0, 0, 0, 1}, strings.Repeat("\x00", 7) + "\x01" + strings.Repeat("\x00", 24)},
+		{"high bit", u256.Uint{0, 0, 0, uint64(1) << 63}, "\x80" + strings.Repeat("\x00", 31)},
+		{"uint256 max", u256.Uint{math.MaxUint64, math.MaxUint64, math.MaxUint64, math.MaxUint64}, strings.Repeat("\xff", 32)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Independent byte vectors catch matching encoder/decoder mistakes.
+			uassert.Equal(t, tt.encoded, EncodeUint256(&tt.value))
+			uassert.Equal(t, tt.value.ToString(), DecodeUint256(tt.encoded).ToString())
+		})
+	}
+}
+
+func TestEncodeUint256PreservesOrder(t *testing.T) {
+	values := []u256.Uint{
+		{},
+		{1},
+		{math.MaxUint64},
+		{0, 1},
+		{math.MaxUint64, math.MaxUint64},
+		{0, 0, 1},
+		{math.MaxUint64, math.MaxUint64, math.MaxUint64},
+		{0, 0, 0, 1},
+		{0, 0, 0, uint64(1) << 63},
+		{math.MaxUint64, math.MaxUint64, math.MaxUint64, math.MaxUint64},
+	}
+	previous := ""
+	for _, value := range values {
+		encoded := EncodeUint256(&value)
+		if previous != "" && !(previous < encoded) {
+			t.Errorf("encoded keys are not lexicographically ordered: %s", value.ToString())
+		}
+		previous = encoded
+	}
+}
+
+func TestUint256CodecByteOrder(t *testing.T) {
+	value := &u256.Uint{
+		0x18191a1b1c1d1e1f,
+		0x1011121314151617,
+		0x08090a0b0c0d0e0f,
+		0x0001020304050607,
+	}
+	var bytes [32]byte
+	for i := range bytes {
+		bytes[i] = byte(i)
+	}
+	encoded := string(bytes[:])
+	uassert.Equal(t, encoded, EncodeUint256(value))
+	uassert.Equal(t, value.ToString(), DecodeUint256(encoded).ToString())
+
+	// Decoding must not share mutable values between callers.
+	decoded := DecodeUint256(encoded)
+	decoded.Set(u256.Zero())
+	uassert.Equal(t, value.ToString(), DecodeUint256(encoded).ToString())
+}
+
+func TestDecodeUint256RejectsInvalidLength(cur realm, t *testing.T) {
+	for _, length := range []int{0, 31, 33} {
+		uassert.PanicsContains(t, cur, "", func() {
+			DecodeUint256(string(make([]byte, length)))
+		})
 	}
 }

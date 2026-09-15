@@ -225,7 +225,7 @@ func newTwapConsistencyObservationTree(observations []twapConsistencyObservation
 	os := pl.NewPoolObservationsTree(observations[0].timestamp)
 
 	for i, observation := range observations {
-		os.Set(uint16(i), pl.NewObservation(
+		os.Set(uint16(i), pl.MakeObservation(
 			observation.timestamp,
 			observation.tickCumulative,
 			"0",

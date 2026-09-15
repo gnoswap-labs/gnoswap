@@ -9,6 +9,7 @@ import (
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/gov/governance"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
@@ -72,6 +73,19 @@ func createMockGovernanceStore() *mockGovernanceStore {
 	}
 }
 
+func withVote(votingInfo governance.VotingInfo, votedYes bool, weight, votedHeight, votedAt int64) (governance.VotingInfo, bool) {
+	if votingInfo.IsVoted() {
+		return votingInfo, false
+	}
+	return governance.NewVotedVotingInfo(
+		votingInfo.AvailableVoteWeight(),
+		votedYes,
+		weight,
+		votedHeight,
+		votedAt,
+	), true
+}
+
 func newTestProposal(
 	id int64,
 	status *governance.ProposalStatus,
@@ -93,6 +107,7 @@ func newTestProposal(
 		100, // createdHeight
 	)
 }
+
 // Crossing test wrappers.
 //
 // The governance impl methods read their caller via rlm.Previous(). To

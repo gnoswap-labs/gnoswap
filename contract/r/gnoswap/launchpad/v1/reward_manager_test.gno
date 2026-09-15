@@ -133,7 +133,7 @@ func TestRewardManager_AddRewardStateByDeposit(cur realm, t *testing.T) {
 	}{
 		{
 			name: "add reward state succeed for first deposit",
-			deposit: launchpad.NewDeposit(
+			deposit: newDeposit(
 				"1",
 				"test",
 				30,
@@ -154,7 +154,7 @@ func TestRewardManager_AddRewardStateByDeposit(cur realm, t *testing.T) {
 		},
 		{
 			name: "add reward state succeed for subsequent deposit",
-			deposit: launchpad.NewDeposit(
+			deposit: newDeposit(
 				"1",
 				"test",
 				30,
@@ -168,7 +168,7 @@ func TestRewardManager_AddRewardStateByDeposit(cur realm, t *testing.T) {
 			distributeStart:       150,
 			distributeEnd:         250,
 			existingDeposits: []*launchpad.Deposit{
-				launchpad.NewDeposit(
+				newDeposit(
 					"1",
 					"existing",
 					500,
@@ -203,14 +203,14 @@ func TestRewardManager_AddRewardStateByDeposit(cur realm, t *testing.T) {
 				totalDepositAmount += int64(deposit.DepositAmount())
 				// Use timestamp based on deposit height offset
 				updateRewardPerDepositX128(manager, totalDepositAmount, deposit.CreatedAt())
-				addRewardStateByDeposit(manager, deposit)
+				addRewardStateByDeposit(manager, *deposit)
 			}
 
 			// Execute
 			totalDepositAmount += tt.deposit.DepositAmount()
 			// Use timestamp based on deposit height offset
 			updateRewardPerDepositX128(manager, totalDepositAmount, tt.deposit.CreatedAt())
-			rewardState := addRewardStateByDeposit(manager, tt.deposit)
+			rewardState := addRewardStateByDeposit(manager, *tt.deposit)
 
 			// Use timestamp based on collection height offset
 			updateRewardPerDepositX128(manager, totalDepositAmount, tt.collectHeight)
@@ -246,7 +246,7 @@ func TestRewardManager_CollectReward(cur realm, t *testing.T) {
 			distributeStartTime:   100,
 			distributeEndTime:     200,
 			currentHeight:         150,
-			deposit: launchpad.NewDeposit(
+			deposit: newDeposit(
 				"1",
 				"test",
 				30,
@@ -264,7 +264,7 @@ func TestRewardManager_CollectReward(cur realm, t *testing.T) {
 		},
 		{
 			name: "collect reward fail with nonexistent deposit",
-			deposit: launchpad.NewDeposit(
+			deposit: newDeposit(
 				"1",
 				"test",
 				30,
@@ -297,12 +297,12 @@ func TestRewardManager_CollectReward(cur realm, t *testing.T) {
 			for _, deposit := range tt.existingDeposits {
 				// Use timestamp based on deposit height offset
 				updateRewardPerDepositX128(manager, tt.totalDistributeAmount, deposit.CreatedAt())
-				addRewardStateByDeposit(manager, deposit)
+				addRewardStateByDeposit(manager, *deposit)
 			}
 
 			// Use timestamp based on deposit height offset
 			updateRewardPerDepositX128(manager, tt.totalDistributeAmount, tt.deposit.CreatedAt())
-			addRewardStateByDeposit(manager, tt.deposit)
+			addRewardStateByDeposit(manager, *tt.deposit)
 
 			// Execute
 			// Use timestamp based on collection height offset
@@ -380,7 +380,7 @@ func TestTimestampBasedRewardCalculation_ConstantTime(cur realm, t *testing.T) {
 	)
 
 	// Create two deposits to test reward distribution
-	deposit1 := launchpad.NewDeposit(
+	deposit1 := newDeposit(
 		"1",
 		"test",
 		30,
@@ -391,7 +391,7 @@ func TestTimestampBasedRewardCalculation_ConstantTime(cur realm, t *testing.T) {
 		distributeEndTime,
 	)
 
-	deposit2 := launchpad.NewDeposit(
+	deposit2 := newDeposit(
 		"2",
 		"test",
 		30,
@@ -405,11 +405,11 @@ func TestTimestampBasedRewardCalculation_ConstantTime(cur realm, t *testing.T) {
 	// Add both deposits at start time
 	err := updateRewardPerDepositX128(manager, 1000, distributeStartTime)
 	uassert.NoError(t, err)
-	addRewardStateByDeposit(manager, deposit1)
+	addRewardStateByDeposit(manager, *deposit1)
 
 	err = updateRewardPerDepositX128(manager, 2000, distributeStartTime)
 	uassert.NoError(t, err)
-	addRewardStateByDeposit(manager, deposit2)
+	addRewardStateByDeposit(manager, *deposit2)
 
 	// Move time forward by 50 seconds (half way through)
 	halfwayTime := distributeStartTime + 50
@@ -462,7 +462,7 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(cur realm, t *testing
 	)
 
 	// Create first deposit at start
-	deposit1 := launchpad.NewDeposit(
+	deposit1 := newDeposit(
 		"1",
 		"test",
 		30,
@@ -475,7 +475,7 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(cur realm, t *testing
 
 	err := updateRewardPerDepositX128(manager, 1000, distributeStartTime)
 	uassert.NoError(t, err)
-	addRewardStateByDeposit(manager, deposit1)
+	addRewardStateByDeposit(manager, *deposit1)
 
 	// Simulate irregular block times:
 	// Block 101 comes after 30 seconds (normally would be 1 second)
@@ -484,7 +484,7 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(cur realm, t *testing
 	uassert.NoError(t, err)
 
 	// Add second deposit
-	deposit2 := launchpad.NewDeposit(
+	deposit2 := newDeposit(
 		"2",
 		"test",
 		30,
@@ -498,7 +498,7 @@ func TestTimestampBasedRewardCalculation_VariableBlockTime(cur realm, t *testing
 	totalDeposits := int64(2000)
 	err = updateRewardPerDepositX128(manager, totalDeposits, time1)
 	uassert.NoError(t, err)
-	addRewardStateByDeposit(manager, deposit2)
+	addRewardStateByDeposit(manager, *deposit2)
 
 	// Block 105 comes after 80 seconds total (another 50 seconds gap)
 	time2 := baseTime + 80
@@ -542,7 +542,7 @@ func TestRewardManager_VaryingBlockTime_FastBlocks(cur realm, t *testing.T) {
 	)
 
 	// Add deposit at start
-	deposit := launchpad.NewDeposit(
+	deposit := newDeposit(
 		"1",
 		"test",
 		30,
@@ -552,7 +552,7 @@ func TestRewardManager_VaryingBlockTime_FastBlocks(cur realm, t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 	)
-	addRewardStateByDeposit(manager, deposit)
+	addRewardStateByDeposit(manager, *deposit)
 
 	// Simulate fast blocks: 50 blocks in 50 seconds (1 block/second)
 	midTime := distributeStartTime + 50
@@ -588,7 +588,7 @@ func TestRewardManager_VaryingBlockTime_SlowBlocks(cur realm, t *testing.T) {
 	)
 
 	// Add deposit at start
-	deposit := launchpad.NewDeposit(
+	deposit := newDeposit(
 		"1",
 		"test",
 		30,
@@ -598,7 +598,7 @@ func TestRewardManager_VaryingBlockTime_SlowBlocks(cur realm, t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 	)
-	addRewardStateByDeposit(manager, deposit)
+	addRewardStateByDeposit(manager, *deposit)
 
 	// Simulate slow blocks: only 3 blocks in 60 seconds (20 seconds/block)
 	midTime := distributeStartTime + 60
@@ -634,7 +634,7 @@ func TestRewardManager_VaryingBlockTime_IrregularBlocks(cur realm, t *testing.T)
 	)
 
 	// Add deposit at start
-	deposit := launchpad.NewDeposit(
+	deposit := newDeposit(
 		"1",
 		"test",
 		30,
@@ -644,7 +644,7 @@ func TestRewardManager_VaryingBlockTime_IrregularBlocks(cur realm, t *testing.T)
 		distributeStartTime,
 		distributeEndTime,
 	)
-	addRewardStateByDeposit(manager, deposit)
+	addRewardStateByDeposit(manager, *deposit)
 
 	// Simulate irregular blocks over 70 seconds
 	irregularTime := distributeStartTime + 70
@@ -695,7 +695,7 @@ func TestRewardManager_EdgeCase_TimeGoesBackward(cur realm, t *testing.T) {
 	)
 
 	// Add deposit
-	deposit := launchpad.NewDeposit(
+	deposit := newDeposit(
 		"1",
 		"test",
 		30,
@@ -705,7 +705,7 @@ func TestRewardManager_EdgeCase_TimeGoesBackward(cur realm, t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 	)
-	addRewardStateByDeposit(manager, deposit)
+	addRewardStateByDeposit(manager, *deposit)
 
 	// First update at time 1500
 	err := updateRewardPerDepositX128(manager, 1000000, 1500)
@@ -734,7 +734,7 @@ func TestRewardManager_EdgeCase_RewardAfterEnd(cur realm, t *testing.T) {
 	)
 
 	// Add deposit
-	deposit := launchpad.NewDeposit(
+	deposit := newDeposit(
 		"1",
 		"test",
 		30,
@@ -744,7 +744,7 @@ func TestRewardManager_EdgeCase_RewardAfterEnd(cur realm, t *testing.T) {
 		distributeStartTime,
 		distributeEndTime,
 	)
-	addRewardStateByDeposit(manager, deposit)
+	addRewardStateByDeposit(manager, *deposit)
 
 	// Update past end time
 	err := updateRewardPerDepositX128(manager, 1000000, distributeEndTime)
@@ -774,7 +774,7 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(cur realm, t *testing.T
 	)
 
 	// Deposit 1: Joins at start
-	deposit1 := launchpad.NewDeposit(
+	deposit1 := newDeposit(
 		"1",
 		"test",
 		30,
@@ -784,7 +784,7 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(cur realm, t *testing.T
 		distributeStartTime,
 		distributeEndTime,
 	)
-	addRewardStateByDeposit(manager, deposit1)
+	addRewardStateByDeposit(manager, *deposit1)
 
 	// Update after 250 seconds (deposit1 alone)
 	timeAfter250s := distributeStartTime + 250
@@ -792,7 +792,7 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(cur realm, t *testing.T
 	uassert.NoError(t, err)
 
 	// Deposit 2: Joins after 250 seconds
-	deposit2 := launchpad.NewDeposit(
+	deposit2 := newDeposit(
 		"2",
 		"test",
 		30,
@@ -802,7 +802,7 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(cur realm, t *testing.T
 		timeAfter250s,
 		distributeEndTime,
 	)
-	addRewardStateByDeposit(manager, deposit2)
+	addRewardStateByDeposit(manager, *deposit2)
 
 	// Update after 500 seconds total (250 seconds shared)
 	timeAfter500s := distributeStartTime + 500
@@ -810,7 +810,7 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(cur realm, t *testing.T
 	uassert.NoError(t, err)
 
 	// Deposit 3: Joins after 500 seconds
-	deposit3 := launchpad.NewDeposit(
+	deposit3 := newDeposit(
 		"3",
 		"test",
 		30,
@@ -820,7 +820,7 @@ func TestRewardManager_MultipleDeposits_DifferentTimings(cur realm, t *testing.T
 		timeAfter500s,
 		distributeEndTime,
 	)
-	addRewardStateByDeposit(manager, deposit3)
+	addRewardStateByDeposit(manager, *deposit3)
 
 	// Final update at end (500 seconds with 3 deposits)
 	err = updateRewardPerDepositX128(manager, 4000000, distributeEndTime)
@@ -897,7 +897,7 @@ func TestRewardManager_ClaimableTimeOverflow(cur realm, t *testing.T) {
 			)
 			manager.SetRewardClaimableDuration(tt.claimableDuration)
 
-			deposit := launchpad.NewDeposit(
+			deposit := newDeposit(
 				"test_deposit",
 				"test_project:100",
 				30,
@@ -909,7 +909,7 @@ func TestRewardManager_ClaimableTimeOverflow(cur realm, t *testing.T) {
 			)
 
 			// when
-			rewardState := addRewardStateByDeposit(manager, deposit)
+			rewardState := addRewardStateByDeposit(manager, *deposit)
 			claimableTime := rewardState.ClaimableTime()
 
 			// then
@@ -962,7 +962,7 @@ func TestRewardManager_ClaimedAmountOverflow(cur realm, t *testing.T) {
 			)
 			manager.SetRewardClaimableDuration(100)
 
-			deposit := launchpad.NewDeposit(
+			deposit := newDeposit(
 				"test_deposit",
 				"test_project:100",
 				30,
@@ -973,7 +973,7 @@ func TestRewardManager_ClaimedAmountOverflow(cur realm, t *testing.T) {
 				distributeEnd,
 			)
 
-			rewardState := addRewardStateByDeposit(manager, deposit)
+			rewardState := addRewardStateByDeposit(manager, *deposit)
 
 			// Setup: Set initial claimed amount
 			rewardState.SetClaimedAmount(tt.initialClaimed)
@@ -1064,7 +1064,7 @@ func TestRewardManager_TotalClaimedAmountOverflow(cur realm, t *testing.T) {
 				distributeEnd,
 			)
 
-			rewardState := addRewardStateByDeposit(manager, deposit)
+			rewardState := addRewardStateByDeposit(manager, *deposit)
 
 			// Setup: Configure accumulated reward to generate exact claimableReward
 			priceDebtX128 := rewardState.PriceDebtX128()
@@ -1935,7 +1935,7 @@ func TestRewardManager_addRewardState(cur realm, t *testing.T) {
 				0,
 			)
 
-			deposit := launchpad.NewDeposit(
+			deposit := newDeposit(
 				tt.depositId,
 				"project:tier",
 				30,
@@ -1955,7 +1955,7 @@ func TestRewardManager_addRewardState(cur realm, t *testing.T) {
 			)
 
 			// when
-			result := addRewardState(manager, deposit, rewardState)
+			result := addRewardState(manager, *deposit, rewardState)
 
 			// then
 			uassert.NotNil(t, result)

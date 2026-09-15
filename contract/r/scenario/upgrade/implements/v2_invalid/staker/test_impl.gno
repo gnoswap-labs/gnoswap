@@ -130,6 +130,13 @@ func (t *TestStaker) AddToken(_ int, rlm realm, tokenPath string) {
 	t.instance.AddToken(0, rlm, tokenPath)
 }
 
+func (t *TestStaker) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool) {
+	if !t.isActive("SetDeniedRewardToken") {
+		panic("test implementation: SetDeniedRewardToken not supported")
+	}
+	t.instance.SetDeniedRewardToken(0, rlm, tokenPath, denied)
+}
+
 func (t *TestStaker) RemoveToken(_ int, rlm realm, tokenPath string) {
 	if !t.isActive("RemoveToken") {
 		panic("test implementation: RemoveToken not supported")
@@ -495,6 +502,34 @@ func (t *TestStaker) GetUnstakingFee() uint64 {
 	return t.instance.GetUnstakingFee()
 }
 
+func (t *TestStaker) HasUnstakedPosition(positionId uint64) bool {
+	if !t.isActive("HasUnstakedPosition") {
+		panic("test implementation: HasUnstakedPosition not supported")
+	}
+	return t.instance.HasUnstakedPosition(positionId)
+}
+
+func (t *TestStaker) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
+	if !t.isActive("GetUnstakedPositionExitTime") {
+		panic("test implementation: GetUnstakedPositionExitTime not supported")
+	}
+	return t.instance.GetUnstakedPositionExitTime(positionId)
+}
+
+func (t *TestStaker) GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
+	if !t.isActive("GetUnstakedPositionPendingIncentives") {
+		panic("test implementation: GetUnstakedPositionPendingIncentives not supported")
+	}
+	return t.instance.GetUnstakedPositionPendingIncentives(positionId)
+}
+
+func (t *TestStaker) GetUncollectedIncentiveCount(incentiveId string) int64 {
+	if !t.isActive("GetUncollectedIncentiveCount") {
+		panic("test implementation: GetUncollectedIncentiveCount not supported")
+	}
+	return t.instance.GetUncollectedIncentiveCount(incentiveId)
+}
+
 func (t *TestStaker) IsStaked(positionId uint64) bool {
 	if !t.isActive("IsStaked") {
 		panic("test implementation: IsStaked not supported")
@@ -514,6 +549,13 @@ func (t *TestStaker) GetAllowedTokens() []string {
 		panic("test implementation: GetAllowedTokens not supported")
 	}
 	return t.instance.GetAllowedTokens()
+}
+
+func (t *TestStaker) GetDeniedRewardTokens() []string {
+	if !t.isActive("GetDeniedRewardTokens") {
+		panic("test implementation: GetDeniedRewardTokens not supported")
+	}
+	return t.instance.GetDeniedRewardTokens()
 }
 
 func (t *TestStaker) GetWarmupTemplate() []staker.Warmup {

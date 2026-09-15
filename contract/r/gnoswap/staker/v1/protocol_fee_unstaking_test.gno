@@ -11,6 +11,7 @@ import (
 
 	_ "gno.land/r/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 )
@@ -79,7 +80,7 @@ func TestHandleStakingRewardFee(cur realm, t *testing.T) {
 			testing.SetRealm(stakerRealm)
 
 			handleStakingRewardFeeFn := func() (int64, int64, error) {
-				return getMockInstance().handleStakingRewardFee(0, cur, tc.tokenPath, tc.amount, tc.internal)
+				return getMockInstance().handleStakingRewardFee(0, cur, tc.tokenPath, tc.amount, tc.internal, getMockInstance().GetUnstakingFee())
 			}
 
 			if tc.expectedHasPanic {
@@ -120,18 +121,14 @@ func TestAddPendingProtocolFee(cur realm, t *testing.T) {
 func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	initStakerTest(cur, t)
 	instance := getMockInstance()
-	originalPendingProtocolFees := map[string]int64{
-		barPath: 0,
-		gnsPath: -10,
-	}
-	instance.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
+	instance.store.SetPendingProtocolFee(0, cur, barPath, 0)
+	instance.store.SetPendingProtocolFee(0, cur, gnsPath, -10)
 
 	instance.settleProtocolFee(0, cur, barPath, 0)
 	instance.settleProtocolFee(0, cur, gnsPath, 0)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)
-	uassert.Equal(t, len(originalPendingProtocolFees), 2)
 }
 
 func TestSetUnStakingFee(cur realm, t *testing.T) {
@@ -394,7 +391,7 @@ func TestHandleStakingRewardFeeEdgeCases(cur realm, t *testing.T) {
 			}
 
 			testing.SetRealm(stakerRealm)
-			netAmount, feeAmount, err := instance.handleStakingRewardFee(0, cur, tt.tokenPath, tt.amount, tt.internal)
+			netAmount, feeAmount, err := instance.handleStakingRewardFee(0, cur, tt.tokenPath, tt.amount, tt.internal, instance.GetUnstakingFee())
 
 			if tt.expectError {
 				uassert.Error(t, err)

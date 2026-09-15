@@ -2,12 +2,12 @@ package staker
 
 import (
 	"errors"
-	"strconv"
 	"time"
 
 	"gno.land/p/gnoswap/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -669,7 +669,7 @@ func (t *Ticks) SetTree(tree *bptree.BPTree) {
 
 // Get returns the tick for the given tickId, or nil if it does not exist.
 func (t *Ticks) Get(tickId int32) *Tick {
-	v := t.tree.Get(EncodeInt(tickId))
+	v := t.tree.Get(utils.EncodeInt32(tickId))
 	if v == nil {
 		return nil
 	}
@@ -682,17 +682,17 @@ func (t *Ticks) Get(tickId int32) *Tick {
 }
 
 func (self *Ticks) Has(tickId int32) bool {
-	return self.tree.Has(EncodeInt(tickId))
+	return self.tree.Has(utils.EncodeInt32(tickId))
 }
 
 // SetTick sets a tick by ID
 func (t *Ticks) SetTick(tickId int32, tick *Tick) {
 	if tick.stakedLiquidityGross.IsZero() {
-		t.tree.Remove(EncodeInt(tickId))
+		t.tree.Remove(utils.EncodeInt32(tickId))
 		return
 	}
 
-	t.tree.Set(EncodeInt(tickId), tick)
+	t.tree.Set(utils.EncodeInt32(tickId), tick)
 }
 
 // IterateTicks iterates over all ticks
@@ -703,13 +703,7 @@ func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 			return false
 		}
 
-		// Convert string key back to int32
-		tickId, err := strconv.Atoi(key)
-		if err != nil {
-			return false // skip invalid keys
-		}
-
-		return fn(int32(tickId), tick)
+		return fn(utils.DecodeInt32(key), tick)
 	})
 }
 
@@ -751,7 +745,7 @@ type Tick struct {
 
 	// currentOutsideAccumulation is the accumulation of the time / TotalStake outside the tick.
 	// It is calculated by subtracting the current tick's currentOutsideAccumulation from the global reward ratio accumulation.
-	outsideAccumulation *UintTree // timestamp -> *u256.Uint
+	outsideAccumulation *UintTree // timestamp -> fixed 32-byte big-endian string
 }
 
 // Tick Getter/Setter methods
@@ -798,7 +792,7 @@ func (t *Tick) SetOutsideAccumulation(outsideAccumulation *UintTree) {
 
 // SetOutsideAccumulationAt sets the outside accumulation at the timestamp.
 func (t *Tick) SetOutsideAccumulationAt(timestamp int64, acc *u256.Uint) {
-	t.outsideAccumulation.Set(timestamp, u256.Zero().Set(acc))
+	t.outsideAccumulation.Set(timestamp, utils.EncodeUint256(acc))
 }
 
 // Clone returns a deep copy of the tick.

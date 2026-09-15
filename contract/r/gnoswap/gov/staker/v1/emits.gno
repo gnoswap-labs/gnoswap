@@ -28,24 +28,37 @@ func emitUpdateEmissionRewardAccumulation(manager *staker.EmissionRewardManager)
 	)
 }
 
-// emitUpdateProtocolFeeRewardAccumulation emits the persisted per-token protocol fee
-// reward accumulation state for every accrued token. Like the emission variant it
-// must be emitted after every path that calls updateAccumulatedProtocolFeeX128PerStake
-// (add/remove/claim). protocolFeeAmount and the accumulator are read from the manager's
-// persisted state so the emitted tuple stays internally consistent.
-func emitUpdateProtocolFeeRewardAccumulation(manager *staker.ProtocolFeeRewardManager, accruedAmounts map[string]int64) {
-	for tokenPath := range accruedAmounts {
+// emitUpdateProtocolFeeStakeAccrual emits the accrual epoch opened by a stake change
+// together with the total stake in force from it, so that off-chain indexers can
+// attribute fees bucketed under that epoch without re-deriving the stake history.
+func emitUpdateProtocolFeeStakeAccrual(manager *staker.ProtocolFeeRewardManager) {
+	chain.Emit(
+		"UpdateProtocolFeeStakeAccrual",
+		"epoch", utils.FormatInt(manager.GetCurrentEpoch()),
+		"totalStakedAmount", utils.FormatInt(manager.GetTotalStakedAmount()),
+	)
+}
+
+// emitUpdateProtocolFeeRewardAccumulation emits the persisted accumulation state of
+// every token that was just folded. Like the emission variant it must be emitted after
+// every path that folds accrual buckets, otherwise the off-chain accumulator drifts
+// from the contract.
+func emitUpdateProtocolFeeRewardAccumulation(manager *staker.ProtocolFeeRewardManager, tokenPaths []string) {
+	for _, tokenPath := range tokenPaths {
 		accumulatedProtocolFeeX128PerStake := "0"
-		if acc := manager.GetAccumulatedProtocolFeeX128PerStake(tokenPath); acc != nil {
-			accumulatedProtocolFeeX128PerStake = acc.ToString()
+		foldedEpoch := int64(-1)
+		if accumulator, ok := manager.GetTokenAccumulator(tokenPath); ok {
+			accumulatedProtocolFeeX128PerStake = accumulator.GetAccumulatedX128PerStake().ToString()
+			foldedEpoch = accumulator.GetFoldedEpoch()
 		}
 
 		chain.Emit(
 			"UpdateProtocolFeeRewardAccumulation",
 			"tokenPath", tokenPath,
 			"totalStakedAmount", utils.FormatInt(manager.GetTotalStakedAmount()),
-			"protocolFeeAmount", utils.FormatInt(manager.GetProtocolFeeAmounts()[tokenPath]),
+			"protocolFeeAmount", utils.FormatInt(manager.GetProtocolFeeAmount(tokenPath)),
 			"accumulatedProtocolFeeX128PerStake", accumulatedProtocolFeeX128PerStake,
+			"foldedEpoch", utils.FormatInt(foldedEpoch),
 			"accumulatedTimestamp", utils.FormatInt(manager.GetAccumulatedTimestamp()),
 		)
 	}

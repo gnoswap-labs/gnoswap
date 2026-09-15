@@ -1,6 +1,7 @@
 package protocol_fee
 
 import (
+	"chain"
 	"chain/runtime"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
 
 	"gno.land/r/onbloc/bar"
@@ -505,73 +507,38 @@ func TestAddToProtocolFee(cur realm, t *testing.T) {
 	}
 }
 
-func TestConsumeAccrualPendingProtocolFees(cur realm, t *testing.T) {
+func TestAdvanceAccrualEpoch(cur realm, t *testing.T) {
 	pf := createTestProtocolFee(t)
-	poolRealm := testing.NewCodeRealm(poolPath)
-	barPath := "gno.land/r/onbloc/bar.BAR"
-	quxPath := "gno.land/r/onbloc/qux.QUX"
 
-	fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, barPath, 100)
-	testing.SetRealm(poolRealm)
-	func(cur realm) {
-		pf.AddToProtocolFee(0, cur, barPath, 100)
-	}(cross(cur))
+	uassert.Equal(t, pf.GetAccrualEpoch(), int64(0))
 
-	fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, quxPath, 50)
-	testing.SetRealm(poolRealm)
-	func(cur realm) {
-		pf.AddToProtocolFee(0, cur, quxPath, 50)
-	}(cross(cur))
-
-	// A query reports the pending fees without advancing accrual state.
-	pending := pf.GetAccrualPendingProtocolFees()
-	uassert.Equal(t, len(pending), 2)
-	uassert.Equal(t, pending[barPath], int64(100))
-	uassert.Equal(t, pending[quxPath], int64(50))
-	uassert.Equal(t, len(pf.store.GetAccrualPendingTokens()), 2)
+	// Only gov/staker may advance the epoch.
+	testing.SetRealm(testing.NewCodeRealm(poolPath))
+	uassert.AbortsWithMessage(t, cur, "unauthorized: caller "+chain.PackageAddress(poolPath).String()+" is not "+prbac.ROLE_GOV_STAKER.String(), func() {
+		func(cur realm) {
+			pf.AdvanceAccrualEpoch(0, cur)
+		}(cross(cur))
+	})
 
 	testing.SetRealm(govStakerRealm)
-	consumed := func(cur realm) map[string]int64 {
-		return pf.ConsumeAccrualPendingProtocolFees(0, cur)
+	epoch := func(cur realm) int64 {
+		return pf.AdvanceAccrualEpoch(0, cur)
 	}(cross(cur))
-
-	uassert.Equal(t, len(consumed), 2)
-	uassert.Equal(t, consumed[barPath], int64(100))
-	uassert.Equal(t, consumed[quxPath], int64(50))
-	uassert.Equal(t, len(pf.store.GetAccrualPendingTokens()), 0)
-
-	// Consuming again yields nothing until another fee arrives.
-	testing.SetRealm(govStakerRealm)
-	reconsumed := func(cur realm) map[string]int64 {
-		return pf.ConsumeAccrualPendingProtocolFees(0, cur)
-	}(cross(cur))
-	uassert.Equal(t, len(reconsumed), 0)
-
-	// A later fee re-lists only its own token, and reports the cumulative total.
-	fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, barPath, 25)
-	testing.SetRealm(poolRealm)
-	func(cur realm) {
-		pf.AddToProtocolFee(0, cur, barPath, 25)
-	}(cross(cur))
-
-	testing.SetRealm(govStakerRealm)
-	afterMoreFees := func(cur realm) map[string]int64 {
-		return pf.ConsumeAccrualPendingProtocolFees(0, cur)
-	}(cross(cur))
-	uassert.Equal(t, len(afterMoreFees), 1)
-	uassert.Equal(t, afterMoreFees[barPath], int64(125))
+	uassert.Equal(t, epoch, int64(1))
+	uassert.Equal(t, pf.GetAccrualEpoch(), int64(1))
 }
 
-func TestConsumeAccrualPendingProtocolFeeByTokenPath(cur realm, t *testing.T) {
+func TestConsumeAccrualBuckets(cur realm, t *testing.T) {
 	pf := createTestProtocolFee(t)
 	poolRealm := testing.NewCodeRealm(poolPath)
 	barPath := "gno.land/r/onbloc/bar.BAR"
 	quxPath := "gno.land/r/onbloc/qux.QUX"
 
+	// Two fees in the same epoch share one bucket; a later epoch opens a new one.
 	for _, fee := range []struct {
 		tokenPath string
 		amount    int64
-	}{{barPath, 100}, {quxPath, 50}} {
+	}{{barPath, 100}, {barPath, 20}, {quxPath, 50}} {
 		fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, fee.tokenPath, fee.amount)
 		testing.SetRealm(poolRealm)
 		func(cur realm) {
@@ -579,24 +546,74 @@ func TestConsumeAccrualPendingProtocolFeeByTokenPath(cur realm, t *testing.T) {
 		}(cross(cur))
 	}
 
-	// Consuming one token leaves the others listed.
 	testing.SetRealm(govStakerRealm)
-	consumed := func(cur realm) int64 {
-		return pf.ConsumeAccrualPendingProtocolFeeByTokenPath(0, cur, barPath)
+	func(cur realm) {
+		pf.AdvanceAccrualEpoch(0, cur)
 	}(cross(cur))
 
-	uassert.Equal(t, consumed, int64(100))
-	uassert.Equal(t, len(pf.store.GetAccrualPendingTokens()), 1)
-	uassert.Equal(t, pf.store.GetAccrualPendingTokens()[0], quxPath)
-
-	// A later all-token consume no longer hands the claimed token back.
-	testing.SetRealm(govStakerRealm)
-	remaining := func(cur realm) map[string]int64 {
-		return pf.ConsumeAccrualPendingProtocolFees(0, cur)
+	fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, barPath, 7)
+	testing.SetRealm(poolRealm)
+	func(cur realm) {
+		pf.AddToProtocolFee(0, cur, barPath, 7)
 	}(cross(cur))
 
-	uassert.Equal(t, len(remaining), 1)
-	uassert.Equal(t, remaining[quxPath], int64(50))
+	// A query reports the buckets without clearing them.
+	epochs, amounts := pf.GetAccrualBuckets(barPath, 0)
+	uassert.Equal(t, len(epochs), 2)
+	uassert.Equal(t, epochs[0], int64(0))
+	uassert.Equal(t, amounts[0], int64(120))
+	uassert.Equal(t, epochs[1], int64(1))
+	uassert.Equal(t, amounts[1], int64(7))
+	uassert.Equal(t, len(pf.GetAccrualPendingTokens()), 2)
+
+	// Only gov/staker may consume.
+	testing.SetRealm(poolRealm)
+	uassert.AbortsWithMessage(t, cur, "unauthorized: caller "+chain.PackageAddress(poolPath).String()+" is not "+prbac.ROLE_GOV_STAKER.String(), func() {
+		func(cur realm) {
+			pf.ConsumeAccrualBuckets(0, cur, barPath, 0)
+		}(cross(cur))
+	})
+
+	// A limited consume takes the oldest bucket and keeps the token pending.
+	testing.SetRealm(govStakerRealm)
+	epochs, amounts = func(cur realm) ([]int64, []int64) {
+		return pf.ConsumeAccrualBuckets(0, cur, barPath, 1)
+	}(cross(cur))
+	uassert.Equal(t, len(epochs), 1)
+	uassert.Equal(t, epochs[0], int64(0))
+	uassert.Equal(t, amounts[0], int64(120))
+	uassert.Equal(t, len(pf.GetAccrualPendingTokens()), 2)
+
+	// Consuming the rest drops the token from the pending set, leaving the other token.
+	testing.SetRealm(govStakerRealm)
+	epochs, amounts = func(cur realm) ([]int64, []int64) {
+		return pf.ConsumeAccrualBuckets(0, cur, barPath, 0)
+	}(cross(cur))
+	uassert.Equal(t, len(epochs), 1)
+	uassert.Equal(t, epochs[0], int64(1))
+	uassert.Equal(t, amounts[0], int64(7))
+	uassert.Equal(t, len(pf.GetAccrualPendingTokens()), 1)
+	uassert.Equal(t, pf.GetAccrualPendingTokens()[0], quxPath)
+
+	// Consuming again yields nothing until another fee arrives.
+	testing.SetRealm(govStakerRealm)
+	epochs, _ = func(cur realm) ([]int64, []int64) {
+		return pf.ConsumeAccrualBuckets(0, cur, barPath, 0)
+	}(cross(cur))
+	uassert.Equal(t, len(epochs), 0)
+
+	// A later fee re-lists the token under the epoch in force.
+	fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, barPath, 25)
+	testing.SetRealm(poolRealm)
+	func(cur realm) {
+		pf.AddToProtocolFee(0, cur, barPath, 25)
+	}(cross(cur))
+
+	epochs, amounts = pf.GetAccrualBuckets(barPath, 0)
+	uassert.Equal(t, len(epochs), 1)
+	uassert.Equal(t, epochs[0], int64(1))
+	uassert.Equal(t, amounts[0], int64(25))
+	uassert.Equal(t, len(pf.GetAccrualPendingTokens()), 2)
 }
 
 func TestAddToProtocolFee_NoGovStakerShareIsNotListedForAccrual(cur realm, t *testing.T) {

@@ -26,6 +26,7 @@ import (
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 	govstaker "gno.land/r/gnoswap/gov/staker"
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 	xgns "gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt"

@@ -143,6 +143,7 @@ func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incent
 	// checks pool registry
 	assertIsPoolExists(s, targetPoolPath)
 	assertIsValidAddress(refundAddress)
+	assertHasNoUncollectedIncentive(s, incentiveId)
 
 	// checks if the pool has been incentivized
 	pool, ok := s.getPools().Get(targetPoolPath)

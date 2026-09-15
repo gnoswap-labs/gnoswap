@@ -118,6 +118,20 @@ func (s *mockPoolStore) SetPendingProtocolFees(_ int, rlm realm, pendingProtocol
 	return nil
 }
 
+func (s *mockPoolStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.pendingProtocolFees[tokenPath]
+}
+
+func (s *mockPoolStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	s.pendingProtocolFees[tokenPath] = amount
+	return nil
+}
+
+func (s *mockPoolStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(s.pendingProtocolFees, tokenPath)
+	return nil
+}
+
 func (s *mockPoolStore) HasWithdrawalFeeBPS() bool {
 	return true
 }
@@ -306,6 +320,20 @@ func (r *mockRouterStore) SetPendingProtocolFees(_ int, rlm realm, fees map[stri
 	return nil
 }
 
+func (r *mockRouterStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return r.GetPendingProtocolFees()[tokenPath]
+}
+
+func (r *mockRouterStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	r.GetPendingProtocolFees()[tokenPath] = amount
+	return nil
+}
+
+func (r *mockRouterStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(r.GetPendingProtocolFees(), tokenPath)
+	return nil
+}
+
 // Mock NFT Accessor
 type mockNFTAccessor struct {
 	approved map[grc721.TokenID]map[address]bool
@@ -381,10 +409,13 @@ type MockStakerStore struct {
 	externalIncentives               *bptree.BPTree
 	totalEmissionSent                int64
 	allowedTokens                    []string
+	deniedRewardTokens               []string
 	incentiveCounter                 *sr.Counter
 	tokenSpecificMinimumRewards      map[string]int64
 	unstakingFee                     uint64
 	pendingProtocolFees              map[string]int64
+	unstakedPositions                *bptree.BPTree
+	uncollectedIncentiveCounts       *bptree.BPTree
 	pools                            *bptree.BPTree
 	poolTierMemberships              *bptree.BPTree
 	poolTierRatio                    sr.TierRatio
@@ -504,6 +535,37 @@ func (s *MockStakerStore) RemoveAllowedToken(_ int, rlm realm, tokenPath string)
 	return nil
 }
 
+// DeniedRewardTokens
+func (s *MockStakerStore) HasDeniedRewardTokensStoreKey() bool {
+	return s.deniedRewardTokens != nil
+}
+
+func (s *MockStakerStore) GetDeniedRewardTokens() []string {
+	return s.deniedRewardTokens
+}
+
+func (s *MockStakerStore) AddDeniedRewardToken(_ int, rlm realm, tokenPath string) error {
+	for _, token := range s.deniedRewardTokens {
+		if token == tokenPath {
+			return nil
+		}
+	}
+
+	s.deniedRewardTokens = append(s.deniedRewardTokens, tokenPath)
+	return nil
+}
+
+func (s *MockStakerStore) RemoveDeniedRewardToken(_ int, rlm realm, tokenPath string) error {
+	for i, token := range s.deniedRewardTokens {
+		if token == tokenPath {
+			s.deniedRewardTokens = append(s.deniedRewardTokens[:i], s.deniedRewardTokens[i+1:]...)
+			break
+		}
+	}
+
+	return nil
+}
+
 // IncentiveCounter
 func (s *MockStakerStore) HasIncentiveCounterStoreKey() bool {
 	return s.incentiveCounter != nil
@@ -577,6 +639,48 @@ func (s *MockStakerStore) GetPendingProtocolFees() map[string]int64 {
 
 func (s *MockStakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
 	s.pendingProtocolFees = fees
+	return nil
+}
+
+// UnstakedPositions
+func (s *MockStakerStore) HasUnstakedPositionsStoreKey() bool {
+	return s.unstakedPositions != nil
+}
+
+func (s *MockStakerStore) GetUnstakedPositions() *bptree.BPTree {
+	return s.unstakedPositions
+}
+
+func (s *MockStakerStore) SetUnstakedPositions(_ int, rlm realm, positions *bptree.BPTree) error {
+	s.unstakedPositions = positions
+	return nil
+}
+
+// UncollectedIncentiveCounts
+func (s *MockStakerStore) HasUncollectedIncentiveCountsStoreKey() bool {
+	return s.uncollectedIncentiveCounts != nil
+}
+
+func (s *MockStakerStore) GetUncollectedIncentiveCounts() *bptree.BPTree {
+	return s.uncollectedIncentiveCounts
+}
+
+func (s *MockStakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error {
+	s.uncollectedIncentiveCounts = counts
+	return nil
+}
+
+func (s *MockStakerStore) GetPendingProtocolFee(tokenPath string) int64 {
+	return s.pendingProtocolFees[tokenPath]
+}
+
+func (s *MockStakerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
+	s.pendingProtocolFees[tokenPath] = amount
+	return nil
+}
+
+func (s *MockStakerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
+	delete(s.pendingProtocolFees, tokenPath)
 	return nil
 }
 
@@ -753,6 +857,8 @@ func newMockStakerStore() *MockStakerStore {
 		tokenSpecificMinimumRewards:      make(map[string]int64),
 		unstakingFee:                     0,
 		pendingProtocolFees:              make(map[string]int64),
+		unstakedPositions:                sr.NewBPTreeN(16),
+		uncollectedIncentiveCounts:       sr.NewBPTreeN(16),
 		pools:                            sr.NewBPTreeN(16),
 		poolTierMemberships:              sr.NewBPTreeN(16),
 		poolTierRatio:                    sr.NewTierRatio(0, 0, 0),

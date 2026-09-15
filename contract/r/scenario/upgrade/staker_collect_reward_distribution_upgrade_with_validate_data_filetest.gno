@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/r/gnoswap/scenarioutils"
-	"gno.land/p/nt/grc721/v0"
 	prbac "gno.land/p/gnoswap/rbac"
+	"gno.land/p/nt/grc721/v0"
 	uassert "gno.land/p/nt/uassert/v0"
+	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/r/gnoswap/access"
 	"gno.land/r/gnoswap/emission"
@@ -26,6 +26,7 @@ import (
 
 	mock "gno.land/r/gnoswap/staker/mock"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 	_ "gno.land/r/gnoswap/staker/v3_valid"
 )

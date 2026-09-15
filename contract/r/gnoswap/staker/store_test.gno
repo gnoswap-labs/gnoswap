@@ -91,6 +91,7 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 			if !ss.HasAllowedTokensStoreKey() {
 				ss.SetAllowedTokens(0, cur, []string{})
 			}
+			uassert.NoError(t, ss.SetPendingProtocolFees(0, cur, map[string]int64{"token": 10}))
 
 			testing.SetRealm(tc.callerRealm)
 			if tc.expectedErrorWithRead {
@@ -106,6 +107,25 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
 			} else {
 				uassert.NoError(t, err)
+			}
+
+			err = ss.SetPendingProtocolFee(0, cur, "token", 20)
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+				uassert.Equal(t, int64(10), ss.GetPendingProtocolFee("token"))
+			} else {
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(20), ss.GetPendingProtocolFee("token"))
+			}
+
+			err = ss.RemovePendingProtocolFee(0, cur, "token")
+			if tc.expectedErrorWithWrite {
+				uassert.ErrorContains(t, err, tc.expectedErrorMessageWithWrite)
+				uassert.Equal(t, int64(10), ss.GetPendingProtocolFee("token"))
+			} else {
+				uassert.NoError(t, err)
+				_, exists := ss.GetPendingProtocolFees()["token"]
+				uassert.False(t, exists)
 			}
 		})
 	}
@@ -1007,7 +1027,7 @@ func TestStoreSetAndGetPoolTierGetEmission(cur realm, t *testing.T) {
 		{
 			name: "set and get pool tier get emission successfully",
 			setupFn: func(cur realm, ss IStakerStore) {
-			emissionFunc := func() (int64, error) { return 1000, nil }
+				emissionFunc := func() (int64, error) { return 1000, nil }
 				ss.SetPoolTierGetEmission(0, cur, emissionFunc)
 			},
 			testFn: func(cur realm, t *testing.T, ss IStakerStore) {
@@ -1067,8 +1087,8 @@ func TestStoreSetAndGetPoolTierGetHalvingBlocksInRange(cur realm, t *testing.T) 
 		{
 			name: "set and get pool tier get halving blocks in range successfully",
 			setupFn: func(cur realm, ss IStakerStore) {
-			halvingFunc := func(start, end int64) ([]int64, []int64, error) {
-				return []int64{100, 200}, []int64{10, 20}, nil
+				halvingFunc := func(start, end int64) ([]int64, []int64, error) {
+					return []int64{100, 200}, []int64{10, 20}, nil
 				}
 				ss.SetPoolTierGetHalvingBlocksInRange(0, cur, halvingFunc)
 			},

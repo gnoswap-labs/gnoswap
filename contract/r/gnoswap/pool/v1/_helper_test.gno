@@ -69,12 +69,6 @@ func mustGetPositionByPool(p *pl.Pool, positionKey string) *pl.PositionInfo {
 }
 
 var (
-	fooToken = common.GetToken(fooPath)
-	barToken = common.GetToken(barPath)
-	bazToken = common.GetToken(bazPath)
-)
-
-var (
 	adminAddr, _  = access.GetAddress(prabc.ROLE_ADMIN.String())
 	devOpsAddr, _ = access.GetAddress(prabc.ROLE_DEVOPS.String())
 
@@ -646,7 +640,7 @@ func observationsForTest(pool *pl.Pool) *pl.ObservationTree {
 	return observations
 }
 
-func mustObservation(observations *pl.ObservationTree, index uint16) *pl.Observation {
+func mustObservation(observations *pl.ObservationTree, index uint16) pl.Observation {
 	observation, ok := observations.Get(index)
 	if !ok {
 		panic("missing observation test fixture")

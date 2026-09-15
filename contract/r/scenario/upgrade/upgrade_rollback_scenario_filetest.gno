@@ -12,6 +12,7 @@ import (
 	"gno.land/r/gnoswap/access"
 
 	// Import v1 contracts for initial registration
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/gov/governance/v1"
 	_ "gno.land/r/gnoswap/gov/staker/v1"
 	_ "gno.land/r/gnoswap/pool/v1"

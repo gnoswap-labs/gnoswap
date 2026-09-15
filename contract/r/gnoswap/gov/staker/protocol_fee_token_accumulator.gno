@@ -1,0 +1,95 @@
+package staker
+
+import (
+	ufmt "gno.land/p/nt/ufmt/v0"
+
+	u256 "gno.land/p/gnoswap/uint256"
+)
+
+// ProtocolFeeTokenAccumulator tracks the accumulated protocol fee per stake of one token.
+//
+// Fees are folded in per accrual epoch, each against the total stake in force during
+// that epoch. The value after folding each epoch is kept in history so that a staker's
+// reward can be settled later against the accumulator as it stood at any epoch.
+type ProtocolFeeTokenAccumulator struct {
+	// accumulatedX128PerStake is the latest accumulated fee per stake, scaled by 2^128
+	accumulatedX128PerStake *u256.Uint
+	// history maps an epoch to the accumulated value after that epoch's fees were folded
+	history *UintTree // epoch -> *u256.Uint
+	// firstEpoch is the first epoch a fee was folded for, or -1 when none was
+	firstEpoch int64
+	// foldedEpoch is the last epoch whose fees are known to be fully folded, or -1
+	foldedEpoch int64
+	// protocolFeeAmount is the total fee amount folded in
+	protocolFeeAmount int64
+}
+
+// NewProtocolFeeTokenAccumulator creates an empty accumulator.
+func NewProtocolFeeTokenAccumulator() *ProtocolFeeTokenAccumulator {
+	return &ProtocolFeeTokenAccumulator{
+		accumulatedX128PerStake: u256.Zero(),
+		history:                 NewUintTree(),
+		firstEpoch:              -1,
+		foldedEpoch:             -1,
+		protocolFeeAmount:       0,
+	}
+}
+
+/* Getters */
+
+func (a *ProtocolFeeTokenAccumulator) GetAccumulatedX128PerStake() *u256.Uint {
+	return a.accumulatedX128PerStake
+}
+
+// GetAccumulatedX128PerStakeAt returns the accumulated value after the fees of the
+// latest folded epoch at or before epoch, or zero when no fee was folded by then.
+func (a *ProtocolFeeTokenAccumulator) GetAccumulatedX128PerStakeAt(epoch int64) *u256.Uint {
+	if epoch < 0 {
+		return u256.Zero()
+	}
+
+	accumulated := u256.Zero()
+	a.history.ReverseIterate(0, epoch, func(_ int64, value any) bool {
+		stored, castOk := value.(*u256.Uint)
+		if !castOk {
+			panic(ufmt.Sprintf("failed to cast accumulated value: %T", value))
+		}
+		accumulated = stored
+		return true
+	})
+
+	return accumulated
+}
+
+func (a *ProtocolFeeTokenAccumulator) GetFirstEpoch() int64 {
+	return a.firstEpoch
+}
+
+func (a *ProtocolFeeTokenAccumulator) GetFoldedEpoch() int64 {
+	return a.foldedEpoch
+}
+
+func (a *ProtocolFeeTokenAccumulator) GetProtocolFeeAmount() int64 {
+	return a.protocolFeeAmount
+}
+
+/* Setters */
+
+// SetAccumulatedX128PerStakeAt stores value as the accumulated amount after epoch's
+// fees and makes it the latest value.
+func (a *ProtocolFeeTokenAccumulator) SetAccumulatedX128PerStakeAt(epoch int64, value *u256.Uint) {
+	stored := u256.Zero().Set(value)
+	a.accumulatedX128PerStake = stored
+	a.history.Set(epoch, stored)
+	if a.firstEpoch < 0 || epoch < a.firstEpoch {
+		a.firstEpoch = epoch
+	}
+}
+
+func (a *ProtocolFeeTokenAccumulator) SetFoldedEpoch(epoch int64) {
+	a.foldedEpoch = epoch
+}
+
+func (a *ProtocolFeeTokenAccumulator) SetProtocolFeeAmount(amount int64) {
+	a.protocolFeeAmount = amount
+}

@@ -11,6 +11,7 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	"gno.land/r/gnoswap/common"
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
 	pl "gno.land/r/gnoswap/pool"
@@ -229,18 +230,14 @@ func TestAddPendingProtocolFee(cur realm, t *testing.T) {
 func TestAddToProtocolFeeClearsNonPositiveAmounts(cur realm, t *testing.T) {
 	initPoolTest(cur, t)
 	instance := getMockInstance()
-	originalPendingProtocolFees := map[string]int64{
-		barPath: 0,
-		gnsPath: -10,
-	}
-	instance.store.SetPendingProtocolFees(0, cur, originalPendingProtocolFees)
+	instance.store.SetPendingProtocolFee(0, cur, barPath, 0)
+	instance.store.SetPendingProtocolFee(0, cur, gnsPath, -10)
 
 	instance.settleProtocolFee(0, cur, barPath, 0)
 	instance.settleProtocolFee(0, cur, gnsPath, 0)
 
 	pendingProtocolFees := instance.store.GetPendingProtocolFees()
 	uassert.Equal(t, len(pendingProtocolFees), 0)
-	uassert.Equal(t, len(originalPendingProtocolFees), 2)
 }
 
 func TestSettleProtocolFee_HaltedFeeIsSettledByLaterActivity(cur realm, t *testing.T) {

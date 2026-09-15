@@ -19,6 +19,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
@@ -142,14 +143,18 @@ func undelegateAll(cur realm) {
 	ufmt.Printf("[INFO] alice undelegated, totalStaked now %d\n", staker.GetTotalDelegated())
 }
 
-// reportCursors shows that both accumulators moved past the zero stake window without
-// crediting anyone: their cursors caught up with the source of truth while the per-stake
-// accumulators stayed where they were.
+// reportCursors shows that the emission accumulator moved past the zero stake window
+// without crediting anyone: its cursor caught up with the source of truth while the
+// per-stake accumulator stayed where it was. Protocol fees are folded on collect rather
+// than on a stake change, so the window's fee is still bucketed under the epoch that
+// had no stake; the query below reports that nobody can claim it.
 func reportCursors(cur realm) {
 	ufmt.Printf("[EXPECTED] emission cursor advanced to accu: %t\n",
 		staker.GetEmissionDistributedAmount() == emission.GetAccuDistributedToGovStaker())
-	ufmt.Printf("[EXPECTED] protocol fee cursor advanced to accu: %t\n",
-		staker.GetProtocolFeeAmount(barPath) == protocol_fee.GetAccuTransferToGovStakerByTokenPath(barPath))
+	ufmt.Printf("[EXPECTED] protocol fee still pending for collect: %t\n",
+		staker.GetProtocolFeeAmount(barPath) < protocol_fee.GetAccuTransferToGovStakerByTokenPath(barPath))
+	ufmt.Printf("[EXPECTED] protocol fee per stake stays at zero: %t\n",
+		staker.GetProtocolFeeAccumulatedX128PerStake(barPath).IsZero())
 }
 
 func reportClaimable(cur realm, name string, addr address) {
@@ -185,7 +190,8 @@ func reportResidue(cur realm) {
 // [SCENARIO] 3. Alice makes the first delegation
 // [INFO] delegated 1000000 GNS, totalStaked now 1000000
 // [EXPECTED] emission cursor advanced to accu: true
-// [EXPECTED] protocol fee cursor advanced to accu: true
+// [EXPECTED] protocol fee still pending for collect: true
+// [EXPECTED] protocol fee per stake stays at zero: true
 //
 // [SCENARIO] 4. Alice earns over 100 blocks, the pre-stake window is not hers
 // [INFO] totalStaked over the window: 1000000
@@ -203,7 +209,8 @@ func reportResidue(cur realm) {
 // [SCENARIO] 6. Bob delegates after the window and earns over 100 blocks
 // [INFO] delegated 1000000 GNS, totalStaked now 1000000
 // [EXPECTED] emission cursor advanced to accu: true
-// [EXPECTED] protocol fee cursor advanced to accu: true
+// [EXPECTED] protocol fee still pending for collect: true
+// [EXPECTED] protocol fee per stake stays at zero: true
 // [INFO] totalStaked over the window: 1000000
 // [INFO] BAR reserved for gov/staker over the window: 2000
 // [INFO] emission reaching gov/staker over the window: 1783675750

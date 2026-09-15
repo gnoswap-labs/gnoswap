@@ -21,6 +21,7 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac"
 
+	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 )
 
