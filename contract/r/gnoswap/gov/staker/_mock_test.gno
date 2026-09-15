@@ -76,6 +76,14 @@ func (m *MockGovStaker) CollectUndelegatedGns(_ int, rlm realm) int64 {
 	return res[0].(int64)
 }
 
+func (m *MockGovStaker) CollectUndelegatedGnsByID(_ int, rlm realm, delegationID int64) int64 {
+	res, ok := m.Response.Get("CollectUndelegatedGnsByID")
+	if !ok {
+		return 0
+	}
+	return res[0].(int64)
+}
+
 func (m *MockGovStaker) CollectReward(_ int, rlm realm) {
 	m.Response.Get("CollectReward")
 }

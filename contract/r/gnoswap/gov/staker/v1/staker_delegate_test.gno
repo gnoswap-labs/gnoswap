@@ -586,6 +586,49 @@ func TestStakerDelegate_XgnsBurnOccursOnCollect(cur realm, t *testing.T) {
 	uassert.Equal(t, xgns.BalanceOf(user), initialBalance)
 }
 
+func TestStakerDelegate_CollectUndelegatedGnsByID(cur realm, t *testing.T) {
+	user := testutils.TestAddress("collectid-user")
+	otherUser := testutils.TestAddress("collectid-other")
+	validator := testutils.TestAddress("collectid-validator")
+	amount := int64(minimumAmount)
+	fundUserForStakerDelegate(cur, user, amount*2)
+
+	testing.SetRealm(testing.NewUserRealm(admin))
+	staker.SetUnDelegationLockupPeriodByAdmin(cross(cur), 0)
+
+	testing.SetRealm(testing.NewUserRealm(user))
+	callStakerDelegate(cur, validator, amount, "")
+	callStakerDelegate(cur, validator, amount, "")
+	delegationIDs := staker.GetUserDelegationIDs(user, validator)
+	uassert.Equal(t, len(delegationIDs), 2)
+	firstID := delegationIDs[0]
+	secondID := delegationIDs[1]
+	callStakerUndelegate(cur, validator, amount*2)
+
+	gnsBefore := gns.BalanceOf(user)
+	xgnsBefore := xgns.BalanceOf(user)
+	lockedBefore := staker.GetTotalLockedAmount()
+
+	collected := callStakerCollectUndelegatedGnsByID(cur, firstID)
+
+	uassert.Equal(t, collected, amount)
+	uassert.Equal(t, gns.BalanceOf(user), gnsmath.SafeAddInt64(gnsBefore, amount))
+	uassert.Equal(t, xgns.BalanceOf(user), gnsmath.SafeSubInt64(xgnsBefore, amount))
+	uassert.Equal(t, staker.GetTotalLockedAmount(), gnsmath.SafeSubInt64(lockedBefore, amount))
+	uassert.False(t, staker.ExistsDelegation(firstID))
+	uassert.True(t, staker.ExistsDelegation(secondID))
+
+	testing.SetRealm(testing.NewUserRealm(otherUser))
+	uassert.AbortsWithMessage(t, cur, errDelegationNotFound, func() {
+		callStakerCollectUndelegatedGnsByID(cur, secondID)
+	})
+	uassert.True(t, staker.ExistsDelegation(secondID))
+
+	testing.SetRealm(testing.NewUserRealm(user))
+	uassert.Equal(t, callStakerCollectUndelegatedGnsByID(cur, secondID), amount)
+	uassert.False(t, staker.ExistsDelegation(secondID))
+}
+
 // Test CollectUndelegatedGns function
 func TestStakerDelegate_CollectUndelegatedGns(cur realm, t *testing.T) {
 	tests := []struct {

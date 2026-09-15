@@ -2,8 +2,8 @@ package staker
 
 import (
 	"gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 )
 
 // Main interface that combines all sub-interfaces
@@ -27,6 +27,7 @@ type IGovStakerDelegation interface {
 	Undelegate(_ int, rlm realm, from address, amount int64) int64
 	Redelegate(_ int, rlm realm, delegatee, newDelegatee address, amount int64) int64
 	CollectUndelegatedGns(_ int, rlm realm) int64
+	CollectUndelegatedGnsByID(_ int, rlm realm, delegationID int64) int64
 }
 
 // Reward management interface

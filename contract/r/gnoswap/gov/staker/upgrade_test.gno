@@ -232,6 +232,21 @@ func TestCollectUndelegatedGns(cur realm, t *testing.T) {
 	}
 }
 
+// TestCollectUndelegatedGnsByID tests the ID-scoped collection proxy function.
+func TestCollectUndelegatedGnsByID(cur realm, t *testing.T) {
+	resetTestState(t)
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker/v1"))
+	RegisterInitializer(cross(cur), makeMockInitializer("v1"))
+
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/staker"))
+	CollectUndelegatedGnsByID(cross(cur), 42)
+
+	mockGovStaker := implementation.(*MockGovStaker)
+	if mockGovStaker.Response.CallCount("CollectUndelegatedGnsByID") != 1 {
+		t.Error("CollectUndelegatedGnsByID was not called on the implementation")
+	}
+}
+
 // TestCollectReward tests the CollectReward proxy function
 func TestCollectReward(cur realm, t *testing.T) {
 	tests := []struct {

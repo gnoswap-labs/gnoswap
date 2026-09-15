@@ -293,6 +293,54 @@ func (gs *govStakerV1) CollectUndelegatedGns(_ int, rlm realm) int64 {
 		panic(err)
 	}
 
+	return gs.settleUndelegatedGns(0, rlm, prev, caller, collectedAmount)
+}
+
+// CollectUndelegatedGnsByID collects unlocked GNS from one delegation.
+// The caller must own the delegation.
+func (gs *govStakerV1) CollectUndelegatedGnsByID(_ int, rlm realm, delegationID int64) int64 {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedWithdraw()
+
+	prev := rlm.Previous()
+	caller := prev.Address()
+	currentTime := time.Now().Unix()
+
+	emission.MintAndDistributeGns(cross(rlm))
+
+	delegation := gs.getDelegation(delegationID)
+	if delegation == nil || delegation.DelegateFrom().String() != caller.String() {
+		panic(errDelegationNotFound)
+	}
+
+	resolver := NewDelegationResolver(delegation)
+	collectedAmount, err := resolver.processCollection(currentTime)
+	if err != nil {
+		panic(err)
+	}
+	if collectedAmount == 0 {
+		return 0
+	}
+
+	if resolver.IsEmpty() {
+		if err := gs.removeDelegation(0, rlm, delegationID); err != nil {
+			panic(err)
+		}
+	} else if err := gs.setDelegation(0, rlm, delegationID, delegation); err != nil {
+		panic(err)
+	}
+
+	return gs.settleUndelegatedGns(0, rlm, prev, caller, collectedAmount)
+}
+
+func (gs *govStakerV1) settleUndelegatedGns(
+	_ int,
+	rlm realm,
+	prev realm,
+	caller address,
+	collectedAmount int64,
+) int64 {
 	if collectedAmount == 0 {
 		return 0
 	}

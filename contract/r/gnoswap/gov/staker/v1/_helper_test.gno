@@ -88,8 +88,12 @@ func callStakerCollectUndelegatedGns(cur realm) int64 {
 	return staker.CollectUndelegatedGns(cross(cur))
 }
 
+// callStakerCollectUndelegatedGnsByID crosses into gov/staker.CollectUndelegatedGnsByID.
+func callStakerCollectUndelegatedGnsByID(cur realm, delegationID int64) int64 {
+	return staker.CollectUndelegatedGnsByID(cross(cur), delegationID)
+}
+
 // callStakerCollectReward crosses into gov/staker.CollectReward after SetRealm(caller).
 func callStakerCollectReward(cur realm) {
 	staker.CollectReward(cross(cur))
 }
-

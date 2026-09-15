@@ -48,6 +48,17 @@ func CollectUndelegatedGns(cur realm) int64 {
 	return getImplementation().CollectUndelegatedGns(0, cur)
 }
 
+// CollectUndelegatedGnsByID collects unlocked GNS for one delegation.
+//
+// Parameters:
+//   - delegationID: delegation to collect from
+//
+// Returns:
+//   - int64: amount of GNS collected
+func CollectUndelegatedGnsByID(cur realm, delegationID int64) int64 {
+	return getImplementation().CollectUndelegatedGnsByID(0, cur, delegationID)
+}
+
 // Reward operations
 
 // CollectReward claims accumulated staking rewards.
