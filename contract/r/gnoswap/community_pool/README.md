@@ -22,6 +22,18 @@ state.
 - An approved external execution may call `TransferToken`, but the package itself performs no proposal validation or automatic execution.
 - Successful transfers emit a `TransferToken` event.
 
+### Emergency admin policy
+
+Governance is the recommended normal route for treasury transfers. While
+governance is not yet mature, admin authorization is retained for emergency-only
+use.
+
+This restriction is an operational policy, not an on-chain emergency check.
+The admin can call `TransferToken` directly without an approved governance
+proposal. The contract does not verify an emergency or automatically remove
+admin access when governance matures. Withdrawal-halt and token-transfer
+checks still apply; emergency admin access does not bypass them.
+
 ## Key Functions
 
 ### `TransferToken`
@@ -33,7 +45,7 @@ transfer validation applies.
 ## Usage
 
 ```go
-// Direct transfer by an admin or governance execution
+// Governance execution, or emergency admin action under the operational policy
 TransferToken(
     cross(cur),
     "gno.land/r/demo/usdc",

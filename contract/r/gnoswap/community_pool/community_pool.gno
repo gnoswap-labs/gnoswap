@@ -38,6 +38,11 @@ func GetBalanceOf(tokenPath string) (int64, error) {
 //   - amount: number of token units to transfer; transfer failure panics through the safe wrapper
 //
 // Only callable by admin or governance while withdrawals are not halted.
+// Governance is the recommended normal route. While governance is not yet
+// mature, admin access is retained for emergency-only use as an operational
+// policy, not a contract-enforced condition. Admin calls do not require an
+// approved proposal; emergency status is not checked and admin access does
+// not expire automatically.
 func TransferToken(cur realm, tokenPath string, to address, amount int64) {
 	halt.AssertIsNotHaltedWithdraw()
 

@@ -42,7 +42,7 @@ contract/
 │   ├── emission/        # GNS minting/distribution
 │   ├── gns/             # GNS token contract
 │   ├── gnft/            # GnoSwap NFT helpers/metadata
-│   ├── community_pool/  # Governance-controlled treasury transfers
+│   ├── community_pool/  # Treasury transfers: governance, with emergency admin access
 │   ├── halt/            # Granular emergency pause
 │   ├── referral/        # Referral tracking
 │   ├── common/          # Shared token/native-coin helpers, with a v1/ implementation
@@ -138,6 +138,7 @@ Low-level `PreviousRealm()` / `CurrentRealm()` now live in `chain/runtime/unsafe
 - Use the current threaded realm token and `cur.Previous().Address()` for caller checks. Explicit crossings validate their source token in the VM; forwarded helper contexts still need their current-context checks. Never use `OriginCaller` as production authorization.
 - Keep intentional `chain/runtime/unsafe` usage narrowly scoped. Reading the transaction's original coin envelope, as native-coin rejection does, is different from authenticating an immediate caller or attributing a payment.
 - Privileged configuration/upgrades require the relevant role assertions. User-facing operations may instead enforce owner, approval, allowance, or other operation-specific checks; public router swaps do not require a user whitelist.
+- Community-pool transfers should normally use governance. While governance is not yet mature, admin authorization is retained for emergency-only use. This is an operational policy, not an on-chain emergency check: `TransferToken` accepts either role while withdrawals are not halted and does not require proposal approval for admin calls.
 - On the router callback path, the pool-origin closure uses `access.AssertIsPool(caller)`, then delegated `SwapCallback` uses `assertIsRouterImplementation(caller)`. There is no `assertIsRouterV1` helper.
 - Typed callback and initializer APIs are intentional. Preserve their fixed signatures, registration checks, caller checks, and settlement invariants rather than imposing a blanket ban on function arguments.
 

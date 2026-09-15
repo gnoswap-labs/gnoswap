@@ -26,7 +26,8 @@ The community pool holds registered protocol assets and is one execution target 
 - Governance spend proposals validate a positive amount, valid recipient address, and registered token path at creation.
 - The pool balance is checked only when the encoded `TransferToken` action runs. An underfunded proposal can therefore pass voting but fail during execution.
 - Token balance tracking must match actual held balance — mismatch is an accounting bug.
-- Direct `TransferToken` calls are authorized for admin or governance; they are not an admin-only bypass. Review deployment policy separately if every transfer is intended to require a proposal.
+- Governance is the recommended normal route for treasury transfers. While governance is not yet mature, the current admin-or-governance authorization is retained so the admin can act in emergencies only.
+- Emergency-only admin use is an operational policy, not a contract-enforced condition. An admin can call `TransferToken` directly without an approved governance proposal; the contract does not verify an emergency or automatically remove admin access when governance matures. Withdrawal-halt and token-transfer checks still apply.
 
 ## Gov Staker (`gov/staker/`)
 
