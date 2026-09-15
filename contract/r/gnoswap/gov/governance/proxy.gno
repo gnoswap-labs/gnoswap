@@ -9,6 +9,8 @@ package governance
 //
 // Returns:
 //   - proposalId: The ID of the proposal.
+//
+// Halt check: reverts while the Governance halt scope is active.
 func ProposeText(
 	cur realm,
 	title string,
@@ -36,6 +38,8 @@ func ProposeText(
 //
 // Returns:
 //   - proposalId: The ID of the proposal.
+//
+// Halt check: reverts while the Governance halt scope is active.
 func ProposeCommunityPoolSpend(
 	cur realm,
 	title string,
@@ -65,6 +69,8 @@ func ProposeCommunityPoolSpend(
 //
 // Returns:
 //   - proposalId: The ID of the proposal.
+//
+// Halt check: reverts while the Governance halt scope is active, except for halt-recovery proposals that only target the halt realm.
 func ProposeParameterChange(
 	cur realm,
 	title string,
@@ -93,6 +99,8 @@ func ProposeParameterChange(
 //
 // Returns:
 //   - voteWeight: The caller's calculated vote weight, formatted as a decimal string.
+//
+// Halt check: reverts while the Governance halt scope is active, except for halt-recovery proposals that only target the halt realm.
 func Vote(
 	cur realm,
 	proposalId int64,
@@ -113,6 +121,8 @@ func Vote(
 //
 // Returns:
 //   - proposalId: The ID of the proposal.
+//
+// Halt check: reverts while the Governance halt scope is active, except for halt-recovery proposals that only target the halt realm.
 func Execute(
 	cur realm,
 	proposalId int64,
@@ -128,6 +138,8 @@ func Execute(
 //
 // Returns:
 //   - proposalId: The ID of the proposal.
+//
+// Halt check: reverts while the Governance halt scope is active.
 func Cancel(
 	cur realm,
 	proposalId int64,
@@ -140,6 +152,8 @@ func Cancel(
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - proposalID: Identifier of the inactive proposal to remove from the active index.
+//
+// Halt check: reverts while the Governance halt scope is active.
 func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
 	getImplementation().RemoveInactiveProposalFromIndex(0, cur, proposalID)
 }
@@ -159,6 +173,8 @@ func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
 //
 // Returns:
 //   - int64: new configuration version
+//
+// Halt check: reverts while the Governance halt scope is active.
 func Reconfigure(
 	cur realm,
 	votingStartDelay int64,

@@ -5,6 +5,8 @@ package protocol_fee
 //
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//
+// Halt check: returns without distributing while the Withdraw halt scope is active.
 func DistributeProtocolFee(cur realm) {
 	getImplementation().DistributeProtocolFee(0, cur)
 }
@@ -15,6 +17,8 @@ func DistributeProtocolFee(cur realm) {
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - tokenPath: token contract path whose reserved fee balance should be distributed
+//
+// Halt check: returns without distributing while the Withdraw halt scope is active.
 func DistributeProtocolFeeByTokenPath(cur realm, tokenPath string) {
 	getImplementation().DistributeProtocolFeeByTokenPath(0, cur, tokenPath)
 }
@@ -24,6 +28,8 @@ func DistributeProtocolFeeByTokenPath(cur realm, tokenPath string) {
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - pct: DevOps allocation in basis-point units, from 0 through 10000 inclusive (10000 = 100%)
+//
+// Halt check: reverts while the ProtocolFee halt scope is active.
 func SetDevOpsPct(cur realm, pct int64) {
 	getImplementation().SetDevOpsPct(0, cur, pct)
 }
@@ -33,6 +39,8 @@ func SetDevOpsPct(cur realm, pct int64) {
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - pct: GovStaker allocation in basis-point units, from 0 through 10000 inclusive (10000 = 100%)
+//
+// Halt check: reverts while the ProtocolFee halt scope is active.
 func SetGovStakerPct(cur realm, pct int64) {
 	getImplementation().SetGovStakerPct(0, cur, pct)
 }
@@ -48,6 +56,8 @@ func SetGovStakerPct(cur realm, pct int64) {
 //
 // Returns:
 //   - err: nil on success; errSpoofedRealm for a spoofed-realm call; errProtocolFeeHalted when protocol-fee collection is halted
+//
+// Halt check: returns errProtocolFeeHalted without transferring while the ProtocolFee halt scope is active.
 func AddToProtocolFee(cur realm, tokenPath string, amount int64) error {
 	return getImplementation().AddToProtocolFee(0, cur, tokenPath, amount)
 }

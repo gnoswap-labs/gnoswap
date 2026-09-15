@@ -214,9 +214,22 @@ feeGrowthInside = feeGrowthGlobal - feeGrowthOutside
 
 ### Reentrancy Protection
 
-- Pools lock during swaps (`slot0.unlocked`)
-- External calls after state updates
-- Checks-effects-interactions pattern
+- The live guard is the pool-wide `Unlocked` key in the pool KV store, managed
+  by `pool/v1/lock.gno`. `Slot0.unlocked` is a separate stored field and is not
+  the guard; `GetSlot0Unlocked` reports that field, not the live lock.
+- The lock is not swap-specific. `CreatePool`, `Mint`, `Burn`, `Collect`,
+  `CollectSwapFee`, `CollectProtocol`, `SetFeeProtocol`, `SetWithdrawalFee`,
+  `SetPoolCreationFee`, `IncreaseObservationCardinalityNext`,
+  `SetSwapStartHook`, `SetSwapEndHook`, `SetTickCrossHook`, `Swap`, and the
+  read-only `DrySwap` all assert that the pool is unlocked before doing any
+  work.
+- The unlocked assertion is read-only and runs before the access checks, so a
+  call that aborts on authorization leaves no persisted lock behind.
+- Settlement order is operation-specific rather than uniformly
+  checks-effects-interactions. `Swap` settles optimistically through the
+  callback and verifies the resulting balance increase afterwards, while `Mint`
+  pulls tokens before its final pool save. Review the specific path rather than
+  assuming every write precedes every external call.
 
 ### Price Manipulation
 

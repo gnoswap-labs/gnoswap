@@ -172,6 +172,30 @@ The system maintains:
 - **Tick accumulation**: Tracks rewards "outside" each tick
 - **Position state**: Individual reward calculation parameters
 
+## Approval Requirements
+
+- `StakeToken` moves the position NFT to the staker realm through
+  `gnft.TransferFrom`, so the caller must approve the staker on that NFT first
+  with `gnft.Approve(cross(cur), stakerAddress, positionId)`, or grant
+  `gnft.SetApprovalForAll(cross(cur), stakerAddress, true)`.
+- `CreateExternalIncentive` pulls two amounts into the staker realm: the reward
+  token amount and the GNS deposit. Approve the staker realm for both token
+  contracts before calling.
+- `UnStakeToken`, the reward-collection functions, `EndExternalIncentive`, and
+  `CancelExternalIncentive` pay out to the caller or to a supplied address and
+  require no approval.
+
+```go
+// Approve the staker on the position NFT, then stake
+stakerAddress := access.MustGetAddress(prabc.ROLE_STAKER.String())
+gnft.Approve(cross(cur), stakerAddress, grc721.TokenID("123"))
+StakeToken(cross(cur), 123, "")
+
+// Approve both the reward token and the GNS deposit before creating an incentive
+reward.Approve(cross(cur), stakerAddress, 1_000_000_000)
+gns.Approve(cross(cur), stakerAddress, GetDepositGnsAmount())
+```
+
 ## Usage
 
 The proxy functions receive a realm argument. From a caller realm with `cur realm`, pass

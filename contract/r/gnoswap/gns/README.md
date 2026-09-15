@@ -52,16 +52,19 @@ Calculates tokens to mint based on elapsed time and updates halving year state.
 
 ## Usage
 
+These snippets call the GNS realm from a realm function with a current `cur`
+token. Import the package and qualify its function names in integrating code.
+
 ```go
 // Transfer tokens
-Transfer(to, amount)
+Transfer(cross(cur), to, amount)
 
 // Approve and transfer
-Approve(spender, amount)
-TransferFrom(from, to, amount)
+Approve(cross(cur), spender, amount)
+TransferFrom(cross(cur), from, to, amount)
 
 // Mint per emission schedule (called by emission contract)
-MintGns(recipientAddress)
+MintGns(cross(cur), recipientAddress)
 ```
 
 ## Distribution

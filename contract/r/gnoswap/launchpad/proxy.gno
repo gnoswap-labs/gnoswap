@@ -17,6 +17,8 @@ package launchpad
 //
 // Returns:
 //   - projectId: identifier assigned to the newly created project.
+//
+// Halt check: reverts while the Launchpad halt scope is active.
 func CreateProject(
 	cur realm,
 	name string,
@@ -50,6 +52,8 @@ func CreateProject(
 //
 // Parameters:
 //   - cur: current realm context; callers use cross(cur) when crossing into this realm.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectProtocolFee(cur realm) {
 	getImplementation().CollectProtocolFee(0, cur)
 }
@@ -58,6 +62,8 @@ func CollectProtocolFee(cur realm) {
 //
 // Parameters:
 //   - cur: current realm context; callers use cross(cur) when crossing into this realm.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectEmissionReward(cur realm) {
 	getImplementation().CollectEmissionReward(0, cur)
 }
@@ -67,6 +73,8 @@ func CollectEmissionReward(cur realm) {
 // Parameters:
 //   - cur: current realm context; callers use cross(cur) when crossing into this realm.
 //   - tokenPath: token path whose accumulated protocol-fee reward is collected.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectProtocolFeeReward(cur realm, tokenPath string) {
 	getImplementation().CollectProtocolFeeReward(0, cur, tokenPath)
 }
@@ -81,6 +89,8 @@ func CollectProtocolFeeReward(cur realm, tokenPath string) {
 //
 // Returns:
 //   - amount: number of reward tokens transferred after active claims are reserved.
+//
+// Halt check: reverts while the Launchpad halt scope is active.
 func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient address) int64 {
 	return getImplementation().TransferLeftFromProjectByAdmin(0, cur, projectID, recipient)
 }
@@ -95,6 +105,8 @@ func TransferLeftFromProjectByAdmin(cur realm, projectID string, recipient addre
 //
 // Returns:
 //   - depositId: identifier assigned to the newly created deposit.
+//
+// Halt check: reverts while the Launchpad halt scope is active.
 func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, referrer string) string {
 	return getImplementation().DepositGns(0, cur, targetProjectTierID, depositAmount, referrer)
 }
@@ -108,6 +120,8 @@ func DepositGns(cur realm, targetProjectTierID string, depositAmount int64, refe
 // Returns:
 //   - amount: GNS amount withdrawn from the deposit.
 //   - err: non-nil when the deposit cannot be collected.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectDepositGns(cur realm, depositID string) (int64, error) {
 	return getImplementation().CollectDepositGns(0, cur, depositID)
 }
@@ -120,6 +134,8 @@ func CollectDepositGns(cur realm, depositID string) (int64, error) {
 //
 // Returns:
 //   - amount: project-token reward amount transferred to the depositor.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectRewardByDepositId(cur realm, depositID string) int64 {
 	return getImplementation().CollectRewardByDepositId(0, cur, depositID)
 }

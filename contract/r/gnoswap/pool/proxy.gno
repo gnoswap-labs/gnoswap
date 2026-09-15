@@ -12,6 +12,8 @@ package pool
 //   - fee: Fee tier for the pool; determines its tick spacing and swap fee.
 //   - sqrtPriceX96: Initial square-root price in Q64.96 fixed-point form; it is
 //     inverted when the supplied token order is reversed and must be in bounds.
+//
+// Halt check: reverts while the Pool halt scope is active.
 func CreatePool(
 	cur realm,
 	token0Path string,
@@ -35,6 +37,8 @@ func CreatePool(
 //   - cur: Current realm context; callers use cross(cur) when crossing into this
 //     realm.
 //   - fee: New pool creation fee, in the configured native-token base units.
+//
+// Halt check: reverts while the Pool halt scope is active.
 func SetPoolCreationFee(cur realm, fee int64) {
 	getImplementation().SetPoolCreationFee(0, cur, fee)
 }
@@ -49,6 +53,8 @@ func SetPoolCreationFee(cur realm, fee int64) {
 //   - fee: Fee tier identifying the pool.
 //   - cardinalityNext: Requested maximum number of oracle observations retained
 //     for the pool.
+//
+// Halt check: reverts while the Pool halt scope is active.
 func IncreaseObservationCardinalityNext(
 	cur realm,
 	token0Path string,
@@ -85,6 +91,8 @@ func IncreaseObservationCardinalityNext(
 //     string.
 //   - amount1: Token1 amount required for the liquidity addition, as a decimal
 //     string.
+//
+// Halt check: reverts while the Pool halt scope is active.
 func Mint(
 	cur realm,
 	token0Path string,
@@ -126,6 +134,8 @@ func Mint(
 //     the pool operation leaves it owed until a subsequent collection.
 //   - amount1: Token1 principal credited to the position, as a decimal string;
 //     the pool operation leaves it owed until a subsequent collection.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func Burn(
 	cur realm,
 	token0Path string,
@@ -174,6 +184,8 @@ func Burn(
 //     decimal string.
 //   - fee0: Withdrawal fee withheld from token0, as a decimal string.
 //   - fee1: Withdrawal fee withheld from token1, as a decimal string.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectSwapFee(
 	cur realm,
 	token0Path string,
@@ -220,6 +232,8 @@ func CollectSwapFee(
 // Returns:
 //   - amount0: Token0 principal transferred to recipient, as a decimal string.
 //   - amount1: Token1 principal transferred to recipient, as a decimal string.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func Collect(
 	cur realm,
 	token0Path string,
@@ -251,6 +265,8 @@ func Collect(
 //   - cur: Current realm context; callers use cross(cur) when crossing into this
 //     realm.
 //   - fee: Withdrawal fee in basis points; zero disables the fee.
+//
+// Halt check: reverts while the Pool halt scope is active.
 func SetWithdrawalFee(cur realm, fee uint64) {
 	getImplementation().SetWithdrawalFee(0, cur, fee)
 }
@@ -277,6 +293,8 @@ func SetWithdrawalFee(cur realm, fee uint64) {
 // Returns:
 //   - amount0: Signed token0 delta for the swap, as a decimal string.
 //   - amount1: Signed token1 delta for the swap, as a decimal string.
+//
+// Halt check: reverts while the Pool halt scope is active.
 func Swap(
 	cur realm,
 	token0Path string,
@@ -386,6 +404,8 @@ func SetTickCrossHook(cur realm, hook func(cur realm, poolPath string, tickId in
 // Returns:
 //   - amount0: Token0 protocol fee transferred to recipient, as a decimal string.
 //   - amount1: Token1 protocol fee transferred to recipient, as a decimal string.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectProtocol(
 	cur realm,
 	token0Path string,
@@ -416,6 +436,8 @@ func CollectProtocol(
 //     non-zero supported values route the corresponding fraction to protocol.
 //   - feeProtocol1: Token1 protocol-fee denominator; zero disables it, while
 //     non-zero supported values route the corresponding fraction to protocol.
+//
+// Halt check: reverts while the Pool halt scope is active.
 func SetFeeProtocol(cur realm, feeProtocol0, feeProtocol1 uint8) {
 	getImplementation().SetFeeProtocol(0, cur, feeProtocol0, feeProtocol1)
 }

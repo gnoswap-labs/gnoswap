@@ -132,6 +132,28 @@ amount0 = 0
 amount1 = L * (sqrtUpper - sqrtLower)
 ```
 
+## Approval and Transfer Requirements
+
+`Mint`, `IncreaseLiquidity`, and `Reposition` pull token0 and token1 from the
+caller inside the **pool** realm, so the approved spender is the pool realm
+address, not the position realm.
+
+- Approve the pool realm for both token contracts before calling a
+  liquidity-adding function.
+- Approving the position realm alone is not sufficient; the position realm never
+  holds or pulls the pair tokens itself.
+- Approve at least `amount0Desired` / `amount1Desired`. Any desired amount the
+  pool does not consume stays with the caller.
+- `DecreaseLiquidity` and `CollectFee` pay out to the caller and require no
+  approval.
+
+```go
+// Approve the pool realm for both pair tokens before minting
+poolAddress := access.MustGetAddress(prabc.ROLE_POOL.String())
+weth.Approve(cross(cur), poolAddress, 1000000)
+usdc.Approve(cross(cur), poolAddress, 2000000000)
+```
+
 ## Usage
 
 These snippets call the public domain proxy from a realm function with a current `cur` token.

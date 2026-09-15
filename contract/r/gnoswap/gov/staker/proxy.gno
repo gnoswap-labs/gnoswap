@@ -12,6 +12,8 @@ package staker
 //
 // Returns:
 //   - delegatedAmount: The amount of GNS delegated and mirrored as xGNS.
+//
+// Halt check: reverts while the GovStaker halt scope is active.
 func Delegate(cur realm, to address, amount int64, referrer string) int64 {
 	return getImplementation().Delegate(0, cur, to, amount, referrer)
 }
@@ -25,6 +27,8 @@ func Delegate(cur realm, to address, amount int64, referrer string) int64 {
 //
 // Returns:
 //   - amount: The amount of GNS moved into undelegation lockup.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func Undelegate(cur realm, from address, amount int64) int64 {
 	return getImplementation().Undelegate(0, cur, from, amount)
 }
@@ -39,6 +43,8 @@ func Undelegate(cur realm, from address, amount int64) int64 {
 //
 // Returns:
 //   - redelegatedAmount: The amount moved from the current delegatee to the new delegatee.
+//
+// Halt check: reverts while the GovStaker halt scope is active.
 func Redelegate(cur realm, delegatee, newDelegatee address, amount int64) int64 {
 	return getImplementation().Redelegate(0, cur, delegatee, newDelegatee, amount)
 }
@@ -50,6 +56,8 @@ func Redelegate(cur realm, delegatee, newDelegatee address, amount int64) int64 
 //
 // Returns:
 //   - amount: GNS amount released to the caller after eligible undelegation withdrawals are collected
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectUndelegatedGns(cur realm) int64 {
 	return getImplementation().CollectUndelegatedGns(0, cur)
 }
@@ -64,6 +72,8 @@ func CollectUndelegatedGns(cur realm) int64 {
 //
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectReward(cur realm) {
 	getImplementation().CollectReward(0, cur)
 }
@@ -75,6 +85,8 @@ func CollectReward(cur realm) {
 //
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectEmissionReward(cur realm) {
 	getImplementation().CollectEmissionReward(0, cur)
 }
@@ -86,6 +98,8 @@ func CollectEmissionReward(cur realm) {
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - tokenPath: registered token path whose accumulated protocol-fee reward is claimed
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectProtocolFeeReward(cur realm, tokenPath string) {
 	getImplementation().CollectProtocolFeeReward(0, cur, tokenPath)
 }
@@ -97,6 +111,8 @@ func CollectProtocolFeeReward(cur realm, tokenPath string) {
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - to: registered launchpad project wallet that receives both reward streams
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectRewardFromLaunchPad(cur realm, to address) {
 	getImplementation().CollectRewardFromLaunchPad(0, cur, to)
 }
@@ -107,6 +123,8 @@ func CollectRewardFromLaunchPad(cur realm, to address) {
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - to: registered launchpad project wallet whose emission reward is claimed
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectEmissionRewardFromLaunchPad(cur realm, to address) {
 	getImplementation().CollectEmissionRewardFromLaunchPad(0, cur, to)
 }
@@ -118,6 +136,8 @@ func CollectEmissionRewardFromLaunchPad(cur realm, to address) {
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - to: registered launchpad project wallet whose protocol-fee reward is claimed
 //   - tokenPath: registered token path whose accumulated protocol-fee reward is claimed
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectProtocolFeeRewardFromLaunchPad(cur realm, to address, tokenPath string) {
 	getImplementation().CollectProtocolFeeRewardFromLaunchPad(0, cur, to, tokenPath)
 }
@@ -130,6 +150,8 @@ func CollectProtocolFeeRewardFromLaunchPad(cur realm, to address, tokenPath stri
 //   - addr: registered project wallet whose launchpad-backed stake is adjusted
 //   - amount: stake amount delta passed to the launchpad reward accounting
 //   - add: true to add stake and mint xGNS; false to remove stake and burn xGNS
+//
+// Halt check: reverts while the GovStaker halt scope is active when add is true, or while the Withdraw halt scope is active when add is false.
 func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
 	getImplementation().SetAmountByProjectWallet(0, cur, addr, amount, add)
 }
@@ -144,6 +166,8 @@ func SetAmountByProjectWallet(cur realm, addr address, amount int64, add bool) {
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - threshold: Unix timestamp cutoff for removing eligible old delegation history
 //   - target: user address whose delegation history to clean
+//
+// Halt check: reverts while the GovStaker halt scope is active.
 func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64, target address) {
 	getImplementation().CleanStakerDelegationSnapshotByAdmin(0, cur, threshold, target)
 }
@@ -154,6 +178,8 @@ func CleanStakerDelegationSnapshotByAdmin(cur realm, threshold int64, target add
 // Parameters:
 //   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - period: non-negative undelegation lockup duration in seconds
+//
+// Halt check: reverts while the GovStaker halt scope is active.
 func SetUnDelegationLockupPeriodByAdmin(cur realm, period int64) {
 	getImplementation().SetUnDelegationLockupPeriodByAdmin(0, cur, period)
 }

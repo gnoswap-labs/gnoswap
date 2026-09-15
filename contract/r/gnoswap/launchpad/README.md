@@ -56,6 +56,19 @@ Transfers the remaining refundable project-token balance from an ended project
 to the supplied recipient. Only admin may call it; amounts reserved for active
 depositor claims are not transferred.
 
+## Approval Requirements
+
+- `DepositGns` pulls GNS from the caller into the launchpad realm, so approve
+  the launchpad realm for at least the deposit amount before calling.
+- `CollectRewardByDepositId` and `CollectDepositGns` pay out to the caller and
+  require no approval.
+
+```go
+// Approve the launchpad realm before depositing
+launchpadAddress := access.MustGetAddress(prabc.ROLE_LAUNCHPAD.String())
+gns.Approve(cross(cur), launchpadAddress, 10_000_000)
+```
+
 ## Usage
 
 ```go

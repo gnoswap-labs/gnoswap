@@ -22,6 +22,8 @@ package position
 //   - liquidity: liquidity minted into the position, represented as a decimal string
 //   - amount0: actual amount of token0 added to the position, represented as a decimal string
 //   - amount1: actual amount of token1 added to the position, represented as a decimal string
+//
+// Halt check: reverts while the Position halt scope is active.
 func Mint(
 	cur realm,
 	token0 string,
@@ -57,6 +59,8 @@ func Mint(
 //   - amount0: actual token0 amount added, represented as a decimal string
 //   - amount1: actual token1 amount added, represented as a decimal string
 //   - poolKey: canonical pool key for the position
+//
+// Halt check: reverts while the Position halt scope is active.
 func IncreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -90,6 +94,8 @@ func IncreaseLiquidity(
 //   - amount0: principal amount of token0 returned to the caller
 //   - amount1: principal amount of token1 returned to the caller
 //   - poolKey: canonical pool key for the position
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func DecreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -121,6 +127,8 @@ func DecreaseLiquidity(
 //   - tickUpper: new upper tick boundary
 //   - amount0: actual token0 amount added to the new range, represented as a decimal string
 //   - amount1: actual token1 amount added to the new range, represented as a decimal string
+//
+// Halt check: reverts while the Position halt scope is active.
 func Reposition(
 	cur realm,
 	positionId uint64,
@@ -148,6 +156,8 @@ func Reposition(
 //   - poolKey: canonical pool key for the position
 //   - totalAmount0: token0 fees collected before the withdrawal fee
 //   - totalAmount1: token1 fees collected before the withdrawal fee
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectFee(
 	cur realm,
 	positionId uint64,

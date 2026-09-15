@@ -16,6 +16,8 @@ package router
 // Returns:
 //   - amountIn: input amount consumed
 //   - amountOut: net output amount delivered after the router fee
+//
+// Halt check: reverts while the Router halt scope is active.
 func ExactInSwapRoute(cur realm, inputToken string, outputToken string, amountIn string, routeArr string, quoteArr string, amountOutMin string, deadline int64, referrer string) (string, string) {
 	return getImplementation().ExactInSwapRoute(0, cur, inputToken, outputToken, amountIn, routeArr, quoteArr, amountOutMin, deadline, referrer)
 }
@@ -36,6 +38,8 @@ func ExactInSwapRoute(cur realm, inputToken string, outputToken string, amountIn
 // Returns:
 //   - amountIn: input amount consumed (a nonzero price limit may stop early)
 //   - amountOut: net output amount delivered after the router fee
+//
+// Halt check: reverts while the Router halt scope is active.
 func ExactInSingleSwapRoute(cur realm, inputToken string, outputToken string, amountIn string, routeArr string, amountOutMin string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string) {
 	return getImplementation().ExactInSingleSwapRoute(0, cur, inputToken, outputToken, amountIn, routeArr, amountOutMin, sqrtPriceLimitX96, deadline, referrer)
 }
@@ -57,6 +61,8 @@ func ExactInSingleSwapRoute(cur realm, inputToken string, outputToken string, am
 // Returns:
 //   - amountIn: input amount consumed
 //   - amountOut: net output delivered after the router fee
+//
+// Halt check: reverts while the Router halt scope is active.
 func ExactOutSwapRoute(cur realm, inputToken string, outputToken string, amountOut string, routeArr string, quoteArr string, amountInMax string, deadline int64, referrer string) (string, string) {
 	return getImplementation().ExactOutSwapRoute(0, cur, inputToken, outputToken, amountOut, routeArr, quoteArr, amountInMax, deadline, referrer)
 }
@@ -79,6 +85,8 @@ func ExactOutSwapRoute(cur realm, inputToken string, outputToken string, amountO
 //   - amountIn: input amount consumed (a nonzero price limit may stop early)
 //   - amountOut: net output delivered after the router fee; it may be below
 //     the requested target when the limit is reached
+//
+// Halt check: reverts while the Router halt scope is active.
 func ExactOutSingleSwapRoute(cur realm, inputToken string, outputToken string, amountOut string, routeArr string, amountInMax string, sqrtPriceLimitX96 string, deadline int64, referrer string) (string, string) {
 	return getImplementation().ExactOutSingleSwapRoute(0, cur, inputToken, outputToken, amountOut, routeArr, amountInMax, sqrtPriceLimitX96, deadline, referrer)
 }
@@ -120,6 +128,8 @@ func DrySwapRoute(
 //
 // Returns:
 //   - err: non-nil when payment validation or transfer fails
+//
+// Halt check: reverts while the Router halt scope is active.
 func SwapCallback(cur realm, token0Path string, token1Path string, amount0Delta int64, amount1Delta int64, payer address) error {
 	return getImplementation().SwapCallback(0, cur, token0Path, token1Path, amount0Delta, amount1Delta, payer)
 }
@@ -137,6 +147,8 @@ func GetSwapFee() uint64 {
 // Parameters:
 //   - cur: current realm context; callers use cross(cur) when crossing into this realm
 //   - fee: fee rate in basis points
+//
+// Halt check: reverts while the Router or ProtocolFee halt scope is active.
 func SetSwapFee(cur realm, fee uint64) {
 	getImplementation().SetSwapFee(0, cur, fee)
 }
