@@ -1,54 +1,85 @@
 # Pool Module (`v1/pool/`)
 
-Core AMM. All pools live in a single singleton realm.
+Concentrated-liquidity AMM pools with tick-based price ranges, oracle
+observations, protocol-fee accounting, and callback settlement.
 
-## Key Files
+## Key Concepts
 
-| File           | Purpose                                      |
-| -------------- | -------------------------------------------- |
-| `swap.gno`     | Swap execution, reentrancy lock, oracle      |
-| `pool.gno`     | Pool data structures, Slot0                  |
-| `position.gno` | Per-pool position tracking                   |
-| `manager.gno`  | Pool creation                                |
-| `transfer.gno` | Token transfer helpers (`SafeGRC20Transfer`) |
+- **Pool key**: `token0:token1:fee`, with token paths canonicalized so
+  `token0 < token1`.
+- **Slot0**: current `sqrtPriceX96`, current tick, observation index/cardinality,
+  protocol-fee denominator, and the pool's `unlocked` reentrancy state.
+- **Oracle**: `ObservationTree` is the pool-local observation ring buffer.
+- **Ticks**: initialized ticks track gross liquidity and fee-growth-outside
+  values; tick spacing is selected by the fee tier.
+- **Position accounting**: a pool position key encodes only the lower and upper
+  ticks. Positions with the same range in one pool share that pool-level
+  accounting entry; the Position module separately tracks each NFT's state.
 
 ## Rules
 
 - **Slot0**: holds `sqrtPriceX96`, `tick`, `unlocked`, and the oracle's `observationIndex`, `observationCardinality`, and `observationCardinalityNext`. `ObservationState` stores only the observation buffer. Persist changes via `SetSlot0(...)` — local copy mutation has no effect.
+- `GetSlot0Unlocked` returns whether the pool is currently unlocked, not a
+  lock-status value with the opposite polarity.
 - **Oracle**: write with **pre-swap** tick and liquidity. Post-swap values produce wrong TWAP.
 - **feeGrowthOutside** on ticks: invert correctly at every `tickCross`.
 - **DrySwap**: reject quotes while the global pool lock is held. Use the shared swap math with `SwapCache.readOnly`: read only the traversed bitmap words and crossed ticks' `liquidityNet`; never copy whole collections or write tick/oracle accounting or dispatch hooks.
+- Protocol fee values are denominators: `0` disables the fee, and `4` through
+  `10` route one quarter through one tenth of swap fees to the protocol. The
+  setting is managed globally for the pools; it is not a per-pool percentage.
 - **Protocol fee**: capped at 25% of swap fees per token. Validate upper bound on any change.
+- The withdrawal fee is separate from the swap protocol fee. It defaults to
+  1% (100 bps) and is configurable up to 10% (1000 bps) for fee-bearing
+  collection.
 - **Transfer**: use `SafeGRC20Transfer` in `transfer.gno`. Never add direct `tokenTeller` calls without panic-on-failure.
+- Maximum liquidity per tick is dependent on the pool's tick spacing; it is
+  not the `2^128 - 1` maximum.
 - **Tick range**: `[-887272, 887272]`. `MIN_SQRT_RATIO` / `MAX_SQRT_RATIO` are hard bounds.
 
-## Swap Loop
+## CreatePool
 
-Find next tick → `ComputeSwapStep` → accumulate fees → cross tick (update `liquidityNet`) → repeat until `amountSpecifiedRemaining == 0` or price limit hit.
+`CreatePool` accepts either token path order and canonicalizes the pair. If the
+paths are supplied in reverse order, the initial square-root price is inverted
+to match the canonical token0/token1 order. The resulting
+`sqrtPriceX96` must be in `[MIN_SQRT_RATIO, MAX_SQRT_RATIO)`; there is no
+external oracle or market-price sanity check at creation.
+
+## Liquidity and Collection
+
+- `Mint` adds liquidity and transfers the required token amounts.
+- `Burn` removes liquidity from the pool position and credits principal to its
+  `tokensOwed`; it does not transfer tokens.
+- `Collect` pays owed tokens without a withdrawal fee. This is the fee-free
+  principal path normally used after `Burn`.
+- `CollectSwapFee` pays accrued swap fees and applies the configured withdrawal
+  fee, returning the gross amounts and fee withheld.
+- `Position.DecreaseLiquidity` wraps the fee collection, `Burn`, and fee-free
+  principal collection in one caller-visible operation.
 
 ## Swap Callback
 
-```
-Pool sends output → SwapCallback on router → router sends input to pool
-```
+The pool sends output tokens before invoking the callback with positive input
+delta(s). In the router flow, the closure supplied to the pool first checks
+that the caller is the pool, then delegates to `router.SwapCallback`, which
+checks that the caller is the Router-v1 implementation. This two-stage
+invariant protects both the pool-origin and router-implementation boundaries.
+The callback must transfer each positive delta back to the pool.
 
-Both checks required: `access.AssertIsPool(caller)` + `assertIsRouterImplementation()`.
+## Swap Flow
 
-## Reentrancy
-
-`Slot0.unlocked` is the guard. Always call `SetSlot0(...)` to persist before any external call.
-
-## AMM Primitives
-
-| Primitive       | Format   | Detail                                               |
-| --------------- | -------- | ---------------------------------------------------- |
-| sqrtPriceX96    | Q64.96   | √price × 2^96                                        |
-| feeGrowthGlobal | Q128.128 | Cumulative fee per unit liquidity                    |
-| Tick range      | int      | `[-887272, 887272]`                                  |
-| Fee tiers       | fixed    | 0.01% / 0.05% / 0.3% / 1% — no new tiers post-deploy |
+1. Validate token direction and the square-root price limit.
+2. Find the next initialized tick in the swap direction.
+3. Compute the step to the next tick or price limit.
+4. Update liquidity and fee growth when crossing a tick.
+5. Invoke the callback to settle input, then verify the pool balance increase.
+6. Persist `Slot0`, tick, liquidity, and fee-growth state.
 
 ## Pitfalls
 
-- Reentrancy lock on local `Slot0` copy → lock never persists.
-- Oracle written with post-swap tick → wrong TWAP.
-- `CreatePool` accepts arbitrary initial `sqrtPriceX96` with no price-oracle sanity check (audit N-03). Recovery: wide-range mint → corrective swap → remove.
+- Pool math rounds in the direction required by the input/output invariant;
+  treating every division as an unconditional round-down can misstate who
+  receives the rounding remainder.
+- A callback that does not settle the full positive input delta causes the
+  swap to revert.
+- Pool creation validates square-root bounds, but callers still need to
+  choose an economically appropriate initial price.

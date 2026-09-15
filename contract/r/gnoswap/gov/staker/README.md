@@ -1,194 +1,112 @@
-# Staker
+# Gov Staker
 
-Liquidity mining and reward distribution for LP positions.
+Governance delegation and xGNS-based voting power management.
 
 ## Overview
 
-Staker manages distribution of internal (GNS emission) and external (user-provided) rewards to staked LP positions, with time-weighted rewards and warmup periods.
+Gov Staker accepts GNS staking, mints and burns xGNS, maintains delegatee balances and timestamped delegation history, tracks undelegation lockups, and settles two reward streams for stakers: GNS emission rewards and protocol-fee rewards in any registered token.
 
 ## Configuration
 
-- **Deposit GNS Amount**: 1,000 GNS for external incentives (default)
-- **Minimum Reward Amount**: 1,000 tokens (default)
-- **Unstaking Fee**: 1% (default)
-- **Pool Tiers**: 1, 2, or 3 (assigned per pool)
-- **Warmup Schedule**: 30/50/70/100% over 30/60/90 days
-- **External Token Whitelist**: Approved reward tokens
+- **Undelegation Lockup**: configurable; the default is 7 days before undelegated GNS can be collected.
+- **Reward Sources**: GNS emission (single token) and protocol-fee distribution (one accumulator per fee token).
+- **Delegation State**: per-delegator/delegatee records, total and user timestamp histories, and reward stake events.
 
 ## Core Features
 
-### Internal Rewards (GNS Emission)
+### Delegation
 
-- Allocated to tiered pools (tiers 1, 2, 3)
-- Split across tiers by TierRatio
-- Distributed proportionally to in-range liquidity
-- Unclaimed rewards go to community pool
+- Delegate GNS to any valid address; the delegated amount is mirrored as xGNS voting power.
+- Redelegate between delegatees without a lockup. Redelegation performs an immediate remove-plus-add for reward accounting.
+- Track undelegated balances until the configured lockup expires; collecting then burns the corresponding xGNS and returns GNS.
 
-### External Rewards (User Incentives)
+### Rewards
 
-- Created for specific pools
-- Constant reward per block
-- Proportional to staked liquidity
-- Unclaimed rewards returned to creator
+- `CollectReward` claims both the emission stream and all known protocol-fee tokens.
+- `CollectEmissionReward` claims only GNS emission rewards.
+- `CollectProtocolFeeReward` claims one protocol-fee token; its bucket and stake-event work is bounded per call, so remaining work is collected later.
+- Launchpad can collect the matching emission and protocol-fee rewards for a registered project wallet through launchpad-only entry points.
 
-### Warmup Periods
+Protocol-fee rewards are not calculated as a single current-balance share. Each token's fee buckets are divided by the total stake in force during their accrual epochs, accumulated in Q128 fixed point, and settled across each staker's timestamped stake-event segments. Fractional remainders remain in state for later collection.
 
-Every staked position progresses through warmup periods:
+### History and Snapshots
 
-- 0-30 days: 30% rewards (70% to community/creator)
-- 30-60 days: 50% rewards (50% to community/creator)
-- 60-90 days: 70% rewards (30% to community/creator)
-- 90+ days: 100% rewards
+- Historical delegation snapshots are timestamp lookups used by governance's configured smoothing calculation; they are not block-height snapshots.
+- Cleanup functions preserve history needed by active proposals.
 
 ## Key Functions
 
-### `StakeToken`
+### `Delegate`
 
-Stakes LP position NFT to earn rewards.
+Transfers GNS from the caller, mints the same amount of xGNS, and assigns the delegated voting power to a target address. The caller must approve the GNS transfer first.
 
-### `UnStakeToken`
+### `Undelegate`
 
-Unstakes position and collects all rewards.
+Removes voting power immediately and creates a withdrawal subject to the configured lockup.
+
+### `Redelegate`
+
+Moves delegated balance from one delegatee to another immediately, without creating a user-facing lockup.
 
 ### `CollectReward`
 
-Collects accumulated rewards without unstaking.
+Claims the caller's GNS emission rewards and all known protocol-fee rewards. The all-token path intentionally grows with the number of known fee tokens.
 
-### `CreateExternalIncentive`
+### `CollectEmissionReward`
 
-Creates external reward program for specific pool.
+Claims only the caller's accumulated GNS emission reward.
 
-### `EndExternalIncentive`
+### `CollectProtocolFeeReward`
 
-Ends incentive program and returns unused rewards.
+Claims one token path's accumulated protocol-fee reward. A later call may be required when pending accrual buckets or stake events exceed the per-call bound.
 
-## Reward Calculation Logic
+### `CollectUndelegatedGns`
 
-### Tier Ratio Distribution
+Collects GNS after the configured undelegation lockup has passed and burns the corresponding xGNS.
 
-Emission split across tiers based on active pools:
+### `CollectRewardFromLaunchPad`
 
-```
-If only tier 1 has pools:    [100%, 0%, 0%]
-If tiers 1 & 3 have pools:   [80%, 0%, 20%]
-If tiers 1 & 2 have pools:   [70%, 30%, 0%]
-If all tiers have pools:     [50%, 30%, 20%]
-```
+Collects both reward streams for a registered launchpad project wallet. This entry point is callable only by the launchpad contract and sends rewards to the supplied project-wallet address.
 
-Mathematical representation:
+## Delegation Logic
 
-```math
-TierRatio(t) =
-  [1, 0, 0]        if Count(2) = 0 ∧ Count(3) = 0
-  [0.8, 0, 0.2]    if Count(2) = 0
-  [0.7, 0.3, 0]    if Count(3) = 0
-  [0.5, 0.3, 0.2]  otherwise
-```
+### Delegation Flow
 
-### Pool Reward Formula
-
-```math
-poolReward(pool) = (emission × TierRatio[tier(pool)]) / Count(tier(pool))
-```
-
-Where emission is calculated as:
-
-```math
-emission = GNSEmissionPerSecond × (avgMsPerBlock/1000) × StakerEmissionRatio
-```
-
-### Position Reward Calculation
-
-The reward for each position is calculated through:
-
-1. **Cache pool rewards** up to current block
-2. **Retrieve position state** from deposit records
-3. **Calculate internal rewards** if pool is tiered
-4. **Calculate external rewards** for active incentives
-5. **Apply warmup penalties** based on stake duration
-
-Mathematical formula for total reward ratio:
-
-```math
-TotalRewardRatio(s,e) = Σ[i=0 to m-1] ΔRaw(αᵢ, βᵢ) × rᵢ
-
-where:
-  αᵢ = max(s, Hᵢ₋₁)
-  βᵢ = min(e, Hᵢ)
-
-ΔRaw(a, b) = CalcRaw(b) - CalcRaw(a)
-
-CalcRaw(h) =
-  L(h) - U(h)           if tick(h) < ℓ
-  U(h) - L(h)           if tick(h) ≥ u
-  G(h) - (L(h) + U(h))  otherwise
-
-where:
-  L(h) = tickLower.OutsideAccumulation(h)
-  U(h) = tickUpper.OutsideAccumulation(h)
-  G(h) = globalRewardRatioAccumulation(h)
-  ℓ = tickLower.id
-  u = tickUpper.id
-```
-
-Final position reward:
-
-```math
-finalReward = TotalRewardRatio × poolReward × positionLiquidity
-            = ∫[s to e] (poolReward × positionLiquidity) / TotalStakedLiquidity(h) dh
-```
-
-### Tick Cross Hook
-
-When price crosses an initialized tick with staked positions:
-
-1. **Updates staked liquidity** - Adjusts total staked liquidity
-2. **Updates reward accumulation** - Recalculates `globalRewardRatioAccumulation`
-3. **Manages unclaimable periods** - Starts/ends periods with no in-range liquidity
-4. **Updates tick accumulation** - Adjusts `CurrentOutsideAccumulation`
-
-The `globalRewardRatioAccumulation` tracks the integral:
-
-```math
-globalRewardRatioAccumulation = ∫ 1/TotalStakedLiquidity(h) dh
-```
-
-This integral is only computed when `TotalStakedLiquidity(h) ≠ 0`, enabling precise reward calculation even as liquidity changes.
-
-### Reward State Tracking
-
-The system maintains:
-
-- **Global accumulation**: Tracks reward ratio across all positions
-- **Tick accumulation**: Tracks rewards "outside" each tick
-- **Position state**: Individual reward calculation parameters
+1. Approve GNS spending by the gov/staker realm.
+2. Delegate GNS to a delegatee; xGNS is minted and timestamped history is updated.
+3. Governance reads the delegatee's history at proposal-defined timestamps for vote weight.
+4. Undelegate to start the lockup, or redelegate immediately to another delegatee.
+5. After the lockup expires, collect undelegated GNS.
 
 ## Usage
 
+These snippets call the public domain proxy from a realm function with a current `cur` token.
+Import the proxy package and qualify its function names in integrating code.
+
 ```go
-// Stake existing position
-StakeToken(123, "g1referrer...")
+// Delegate GNS to another address; xGNS voting power is minted 1:1.
+delegatedAmount := Delegate(cross(cur), delegatee, 1_000_000_000, "g1referrer...")
 
-// Create external incentive
-CreateExternalIncentive(
-    "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",
-    "gno.land/r/demo/reward",
-    "1000000000",  // 1000 tokens
-    startTime,
-    endTime,
-)
+// Redelegate part of the active balance immediately.
+Redelegate(cross(cur), delegatee, newDelegatee, 500_000_000)
 
-// Collect rewards without unstaking
-CollectReward(123)
+// Claim both GNS emission and all known protocol-fee tokens.
+CollectReward(cross(cur))
 
-// Unstake and collect all rewards
-UnStakeToken(123)
+// Or claim only one stream/token.
+CollectEmissionReward(cross(cur))
+CollectProtocolFeeReward(cross(cur), tokenPath)
+
+// Start undelegation. Collect only after the configured lockup (7 days by default).
+Undelegate(cross(cur), delegatee, 250_000_000)
+// ...wait until the lockup has expired...
+CollectUndelegatedGns(cross(cur))
 ```
 
 ## Security
 
-- Positions locked during staking
-- External incentives require GNS deposit
-- Warmup periods prevent gaming
-- Unclaimed rewards properly redirected
-- Hook integration ensures accurate tracking
+- Timestamped delegation history and configurable smoothing reduce flash-loan-style voting manipulation; they do not provide a block snapshot.
+- Undelegation removes voting power immediately, while the lockup delays GNS withdrawal.
+- Protocol-fee stake changes must remain independent of the number of fee tokens; only collection folds fee buckets.
+- Launchpad reward entry points are restricted to the launchpad contract and registered project wallets.
+- Snapshot cleanup must preserve data still needed by active proposals.

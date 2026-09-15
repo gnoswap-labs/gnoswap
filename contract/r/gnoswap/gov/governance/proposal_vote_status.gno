@@ -10,8 +10,17 @@ type ProposalVoteStatus struct {
 }
 
 /* Getter methods */
+// MaxVotingWeight returns the maximum voting weight captured for the proposal.
+//
+// Returns:
+//   - int64: maximum voting weight used when evaluating the proposal's quorum.
 func (p *ProposalVoteStatus) MaxVotingWeight() int64 { return p.maxVotingWeight }
-func (p *ProposalVoteStatus) QuorumAmount() int64    { return p.quorumAmount }
+
+// QuorumAmount returns the voting weight required for the proposal to satisfy quorum.
+//
+// Returns:
+//   - int64: minimum total vote weight required by this proposal.
+func (p *ProposalVoteStatus) QuorumAmount() int64 { return p.quorumAmount }
 
 // YesWeight returns the total weight of "yes" votes.
 //
@@ -30,18 +39,34 @@ func (p *ProposalVoteStatus) NoWeight() int64 {
 }
 
 /* Setter methods */
+// SetYesWeight replaces the proposal's accumulated yes-vote weight.
+//
+// Parameters:
+//   - yes: total weight to record for affirmative votes.
 func (p *ProposalVoteStatus) SetYesWeight(yes int64) {
 	p.yea = yes
 }
 
+// SetNoWeight replaces the proposal's accumulated no-vote weight.
+//
+// Parameters:
+//   - no: total weight to record for negative votes.
 func (p *ProposalVoteStatus) SetNoWeight(no int64) {
 	p.nay = no
 }
 
+// SetMaxVotingWeight records the proposal's maximum voting-weight snapshot.
+//
+// Parameters:
+//   - maxVotingWeight: maximum voting weight available when the proposal was created.
 func (p *ProposalVoteStatus) SetMaxVotingWeight(maxVotingWeight int64) {
 	p.maxVotingWeight = maxVotingWeight
 }
 
+// SetQuorumAmount records the proposal's quorum requirement.
+//
+// Parameters:
+//   - quorumAmount: minimum total vote weight required for this proposal.
 func (p *ProposalVoteStatus) SetQuorumAmount(quorumAmount int64) {
 	p.quorumAmount = quorumAmount
 }
@@ -67,7 +92,10 @@ func NewProposalVoteStatus(
 	}
 }
 
-// Clone creates a deep copy of the ProposalVoteStatus.
+// Clone returns an independent copy of the vote status, or nil when the receiver is nil.
+//
+// Returns:
+//   - *ProposalVoteStatus: copied vote tallies and requirements, or nil for a nil receiver.
 func (p *ProposalVoteStatus) Clone() *ProposalVoteStatus {
 	if p == nil {
 		return nil

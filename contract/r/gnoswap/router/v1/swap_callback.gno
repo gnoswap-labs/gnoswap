@@ -13,28 +13,23 @@ import (
 )
 
 // SwapCallback implements the pool's SwapCallback interface.
-// This is called by the pool after it has sent output tokens to the recipient.
-// The router must transfer the required input tokens to the pool.
-//
-// This callback pattern enables:
-// 1. Flash swaps (receive tokens before paying)
-// 2. Just-in-time token transfers
-// 3. Complex multi-hop swaps without intermediate transfers
+// The pool invokes it after sending output tokens; the router then transfers the
+// positive input delta to the pool.
 //
 // Parameters:
-//   - token0Path, token1Path: Pool token paths
-//   - amount0Delta, amount1Delta: Token deltas (positive = owe, negative = received)
-//   - payer: Address that will pay for the swap
-//
-// Access:
-//   - Only callable by Router v1 address (self-callback from pool)
+//   - _: leading callback discriminator; callers pass 0
+//   - rlm: propagated current realm context; must remain the current crossing frame
+//   - token0Path: token-0 contract path in canonical pool order
+//   - token1Path: token-1 contract path in canonical pool order
+//   - amount0Delta: signed token-0 delta; positive means the pool is owed this amount
+//   - amount1Delta: signed token-1 delta; positive means the pool is owed this amount
+//   - payer: address whose balance supplies the positive input delta
 //
 // Returns:
-//   - error: nil on success, error if transfer fails
+//   - err: nil after the owed input transfer; an error for spoofed realm, invalid liquidity delta, or failed payment
 //
-// Delta convention (Uniswap V3):
-//   - Positive delta: tokens the pool must receive (input token)
-//   - Negative delta: tokens the pool has sent (output token)
+// Positive deltas are tokens the pool must receive; negative deltas are tokens
+// the pool has sent to the recipient.
 func (r *routerV1) SwapCallback(
 	_ int,
 	rlm realm,

@@ -136,6 +136,10 @@ func (e *EmissionState) subHalvingYearLeftAmount(year int64, amount int64) error
 	return e.halvingData.setLeftAmount(year, leftAmount)
 }
 
+// Clone returns a deep copy of the emission state, including independent halving data.
+//
+// Returns:
+//   - clone: independent EmissionState copy with the same schedule values.
 func (e *EmissionState) Clone() *EmissionState {
 	return &EmissionState{
 		createdHeight:  e.createdHeight,
@@ -145,8 +149,14 @@ func (e *EmissionState) Clone() *EmissionState {
 	}
 }
 
-// NewEmissionState creates a new EmissionState with specified start height and timestamp.
-// Calculates emission end time based on 12-year schedule and initializes halving data.
+// NewEmissionState creates an emission state and its 12-year halving schedule.
+//
+// Parameters:
+//   - createdHeight: blockchain height recorded as the schedule's creation height.
+//   - startTimestamp: Unix timestamp at which the first halving year begins.
+//
+// Returns:
+//   - state: newly allocated emission state with an end timestamp and initialized halving data.
 func NewEmissionState(createdHeight int64, startTimestamp int64) *EmissionState {
 	emissionEndTime := gnsmath.SafeAddInt64(startTimestamp, SECONDS_IN_YEAR*HALVING_END_YEAR-1)
 

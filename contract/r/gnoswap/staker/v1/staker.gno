@@ -39,6 +39,9 @@ type Deposits struct {
 }
 
 // NewDeposits creates a new Deposits instance.
+//
+// Returns:
+//   - deposits: Empty deposit collection backed by a position-ID tree.
 func NewDeposits() *Deposits {
 	return &Deposits{
 		tree: sr.NewBPTreeN(16), // positionId -> *Deposit
@@ -46,11 +49,22 @@ func NewDeposits() *Deposits {
 }
 
 // Has checks if a position ID exists in deposits.
+//
+// Parameters:
+//   - positionId: LP position NFT ID whose deposit presence should be checked.
+//
+// Returns:
+//   - exists: True when positionId is stored in the deposit tree; false otherwise.
 func (self *Deposits) Has(positionId uint64) bool {
 	return self.tree.Has(utils.EncodeUint64(positionId))
 }
 
 // Iterate traverses deposits within the specified range.
+//
+// Parameters:
+//   - start: Lower position-ID bound passed to the tree iterator.
+//   - end: Upper position-ID bound passed to the tree iterator.
+//   - fn: Callback receiving each decoded position ID and deposit; return true to stop iteration or false to continue.
 func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint64, deposit *sr.Deposit) bool) {
 	self.tree.Iterate(utils.EncodeUint64(start), utils.EncodeUint64(end), func(positionId string, depositI any) bool {
 		dpst := retrieveDeposit(depositI)
@@ -58,6 +72,13 @@ func (self *Deposits) Iterate(start uint64, end uint64, fn func(positionId uint6
 	})
 }
 
+// IterateByPoolPath traverses deposits in the ID range and invokes fn only for the requested pool.
+//
+// Parameters:
+//   - start: Lower position-ID bound passed to the tree iterator.
+//   - end: Upper position-ID bound passed to the tree iterator.
+//   - poolPath: Pool identifier deposits must match before the callback is invoked.
+//   - fn: Callback receiving each matching position ID and deposit; return true to stop iteration or false to continue.
 func (self *Deposits) IterateByPoolPath(start, end uint64, poolPath string, fn func(positionId uint64, deposit *sr.Deposit) bool) {
 	self.tree.Iterate(utils.EncodeUint64(start), utils.EncodeUint64(end), func(positionId string, depositI any) bool {
 		deposit := retrieveDeposit(depositI)
@@ -70,6 +91,9 @@ func (self *Deposits) IterateByPoolPath(start, end uint64, poolPath string, fn f
 }
 
 // Size returns the number of deposits.
+//
+// Returns:
+//   - size: Number of deposits currently stored.
 func (self *Deposits) Size() int {
 	return self.tree.Size()
 }
@@ -111,6 +135,9 @@ type ExternalIncentives struct {
 }
 
 // NewExternalIncentives creates a new ExternalIncentives instance.
+//
+// Returns:
+//   - incentives: Empty external-incentive collection backed by an incentive-ID tree.
 func NewExternalIncentives() *ExternalIncentives {
 	return &ExternalIncentives{
 		tree: sr.NewBPTreeN(16),
@@ -118,9 +145,18 @@ func NewExternalIncentives() *ExternalIncentives {
 }
 
 // Has checks if an incentive ID exists.
+//
+// Parameters:
+//   - incentiveId: External incentive ID whose presence should be checked.
+//
+// Returns:
+//   - exists: True when incentiveId is stored in the incentive tree; false otherwise.
 func (self *ExternalIncentives) Has(incentiveId string) bool { return self.tree.Has(incentiveId) }
 
 // Size returns the number of external incentives.
+//
+// Returns:
+//   - size: Number of external incentives currently stored.
 func (self *ExternalIncentives) Size() int { return self.tree.Size() }
 
 // get retrieves an external incentive by ID.
@@ -186,20 +222,22 @@ func stakeScanLowerBound(currentTime int64) int64 {
 //
 // Transfers position NFT to staker and begins reward accumulation.
 // Eligible for internal incentives (GNS emission) and external rewards.
-// Position must have liquidity and be in eligible pool tier.
+// A pool is stakeable when it has an internal tier or an active/future external incentive.
 //
 // Parameters:
-//   - positionId: LP position NFT token ID to stake
-//   - referrer: Optional referral address for tracking
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - positionId: LP position NFT token ID to stake.
+//   - referrer: Optional referral address for tracking.
 //
 // Returns:
-//   - poolPath: Pool identifier (token0:token1:fee)
+//   - poolPath: Pool identifier (token0:token1:fee).
 //
 // Requirements:
-//   - Caller must own the position NFT
-//   - Position must have active liquidity
-//   - Pool must be in tier 1, 2, or 3
-//   - Position not already staked
+//   - Caller must own the position NFT.
+//   - Position must have non-zero liquidity.
+//   - Pool must have an internal tier or an active/future external incentive.
+//   - Position not already staked.
 //
 // Note: Out-of-range positions earn no rewards but can be staked.
 func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer string) string {
@@ -667,7 +705,8 @@ func (s *stakerV1) newRewardCollectParam(target *collectTarget, currentTime, blo
 	}
 }
 
-// CollectEmissionReward harvests only the GNS emission (internal) reward of a staked position.
+// CollectEmissionReward harvests only the GNS emission (internal) reward for a live staked deposit
+// or an exit checkpoint left by UnStakeToken.
 //
 // The emission and the external incentive rewards track their collection cursors independently
 // (a single lastCollectTime on the deposit for emission, one per incentive id for external), so
@@ -683,13 +722,17 @@ func (s *stakerV1) newRewardCollectParam(target *collectTarget, currentTime, blo
 // Requirements:
 //   - Withdrawals must not be halted
 //   - An emission halt returns zero without advancing internal reward state
-//   - Caller must be the position owner
-//   - Position must be staked (have a deposit record)
+//   - Caller must be the position owner for a live deposit; checkpoint collection is permissionless
+//   - Position must be staked or have an exit checkpoint
 //
 // Parameters:
-//   - positionId: LP position NFT token ID
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - positionId: LP position NFT token ID or position with an exit checkpoint.
 //
-// Returns the GNS amount sent to the user and the penalty amount sent to the community pool.
+// Returns:
+//   - rewardToUser: GNS emission amount sent to the position owner, in token smallest units.
+//   - rewardPenalty: GNS warmup penalty sent to the community pool, in token smallest units.
 func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (int64, int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -730,11 +773,14 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 	return rewardToUser, rewardPenalty
 }
 
-// CollectExternalIncentiveReward harvests one external incentive reward of a staked position.
+// CollectExternalIncentiveReward harvests one external incentive reward for a live staked deposit
+// or an exit checkpoint left by UnStakeToken.
 //
 // Each incentive keeps its own lastCollectTime, so the emission reward and every incentive other than
-// the requested one stay collectible afterwards. The requested incentive is itself left collectible when
-// it cannot be delivered (not started, zero reward, or underfunded).
+// the requested one stay collectible afterwards. For a live deposit, a not-started, zero-reward, or
+// reward-token-balance-short incentive remains collectible because its cursor is not advanced. For
+// an exit checkpoint, an incentive-balance shortfall is forfeited to release the checkpoint rather
+// than left as an unpayable claim.
 //
 // State Transition:
 //  1. Incentives created since the deposit's last update are added to its incentive index
@@ -744,16 +790,19 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 //
 // Requirements:
 //   - Contract must not be halted
-//   - Caller must be the position owner
-//   - Position must be staked (have a deposit record)
+//   - Caller must be the position owner for a live deposit; checkpoint collection is permissionless
+//   - Position must be staked or have an exit checkpoint
 //   - Incentive must exist and target the pool the position is staked in
 //
 // Parameters:
-//   - positionId: LP position NFT token ID
-//   - incentiveId: external incentive to collect
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - positionId: LP position NFT token ID or position with an exit checkpoint.
+//   - incentiveId: External incentive to collect.
 //
-// Returns the collected reward amount, before the staking reward fee is taken, and the penalty amount
-// kept by the incentive.
+// Returns:
+//   - rewardAmount: Gross external reward amount delivered before the staking reward fee, in token smallest units.
+//   - rewardPenalty: External warmup penalty retained by the incentive, in token smallest units.
 func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId uint64, incentiveId string) (int64, int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -787,8 +836,8 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 	return rewardAmount, rewardPenalty
 }
 
-// CollectReward harvests accumulated rewards for a staked position. This includes both
-// internal GNS emission and external incentive rewards.
+// CollectReward harvests accumulated rewards for a live staked deposit or an exit checkpoint left
+// by UnStakeToken. This includes both internal GNS emission and external incentive rewards.
 //
 // It is the "collect everything" entry point kept for callers that do not want to choose a side. It
 // delivers each incentive, then the emission reward, through the same delivery functions the
@@ -797,14 +846,19 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 //
 // Requirements:
 //   - Withdrawals must not be halted
-//   - Caller must be the position owner
-//   - Position must be staked (have a deposit record)
+//   - Caller must be the position owner for a live deposit; checkpoint collection is permissionless
+//   - Position must be staked or have an exit checkpoint
 //
 // Parameters:
-//   - positionId: LP position NFT token ID
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - positionId: LP position NFT token ID or position with an exit checkpoint.
 //
-// Returns the GNS amount sent to the user, the GNS penalty amount, and the per-token external
-// reward and penalty amounts.
+// Returns:
+//   - internalRewardToUser: GNS emission amount sent to the owner, formatted as a decimal string.
+//   - internalRewardPenalty: GNS warmup penalty sent to the community pool, formatted as a decimal string.
+//   - externalRewards: Map from reward-token path to gross external reward amounts before staking fees.
+//   - externalPenalties: Map from reward-token path to external warmup penalty amounts.
 func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, string, map[string]int64, map[string]int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -1219,8 +1273,9 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 // and the Collect* entry points settle it per source.
 //
 // Parameters:
-//   - positionId: LP position NFT token ID to unstake
-//   - unwrapResult: Convert WUGNOT to GNOT if true
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - positionId: LP position NFT token ID to unstake.
 //
 // Process:
 //  1. Records an exit checkpoint owing every reward source (GNS + external)
@@ -1230,7 +1285,7 @@ func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, 
 //  5. Cleans up all staking metadata
 //
 // Returns:
-//   - poolPath: Pool identifier where position was staked
+//   - poolPath: Pool identifier where position was staked.
 //
 // Requirements:
 //   - Caller must be the depositor

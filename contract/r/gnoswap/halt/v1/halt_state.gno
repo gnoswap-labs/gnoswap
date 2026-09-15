@@ -2,11 +2,22 @@ package halt
 
 type HaltStateManager map[OpType]bool
 
+// IsOperationHalted returns the halt state for an operation type.
+//
+// Parameters:
+//   - op: operation type whose halt flag is queried.
+//
+// Returns:
+//   - halted: configured halt flag for op.
+//   - error: nil when op exists; otherwise errOpTypeNotFound.
 func (h HaltStateManager) IsOperationHalted(op OpType) (bool, error) {
 	return h.getOperationHalted(op)
 }
 
-// ToConfig converts the `HaltStateManager` to a HaltConfig.
+// ToConfig converts the HaltStateManager to an independent HaltConfig copy.
+//
+// Returns:
+//   - config: copied operation-to-halt-flag map.
 func (h HaltStateManager) ToConfig() HaltConfig {
 	config := make(HaltConfig)
 	for op, halted := range h {

@@ -54,9 +54,11 @@ func ratioConstants() []*u256.Uint {
 }
 
 // Pre-computed constants for tick calculation - returned as fresh instances per call.
-func log2Multiplier() *i256.Int { return &i256.Int{11745905768312294533, 13863, 0, 0} }               // 255738958999603826347141
-func tickLowOffset() *i256.Int  { return &i256.Int{6552757943157144234, 184476617836266586, 0, 0} }   // 3402992956809132418596140100660247210
-func tickHiOffset() *i256.Int   { return &i256.Int{4998474450511881007, 15793544031827761793, 0, 0} } // 291339464771989622907027621153398088495
+func log2Multiplier() *i256.Int { return &i256.Int{11745905768312294533, 13863, 0, 0} } // 255738958999603826347141
+
+func tickLowOffset() *i256.Int { return &i256.Int{6552757943157144234, 184476617836266586, 0, 0} } // 3402992956809132418596140100660247210
+
+func tickHiOffset() *i256.Int { return &i256.Int{4998474450511881007, 15793544031827761793, 0, 0} } // 291339464771989622907027621153398088495
 
 // oneLsh32 returns 1 << 32.
 func oneLsh32() *u256.Uint { return &u256.Uint{4294967296, 0, 0, 0} }
@@ -68,11 +70,10 @@ func oneLsh32() *u256.Uint { return &u256.Uint{4294967296, 0, 0, 0} }
 // Uses bit manipulation for gas-efficient calculation.
 //
 // Parameters:
-//   - tick: Tick index in range [-887272, 887272]
+//   - tick: tick index in range [-887272, 887272]
 //
 // Returns:
-//   - Square root of price ratio as Q64.96 fixed-point
-//   - Result represents sqrt(token1/token0) price
+//   - sqrtPriceX96: the Q64.96 square root of the token1/token0 price, rounded up
 //
 // Mathematical formula:
 //
@@ -125,13 +126,14 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint {
 //
 // Converts a square root price ratio in Q64.96 format back to its tick index,
 // returning the greatest tick where TickMathGetSqrtRatioAtTick(tick) <= sqrtPriceX96.
-// This matches Uniswap V3's behavior exactly.
+// For this inverse API, sqrtPriceX96 must be in `[MinSqrtRatio, MaxSqrtRatio)`;
+// the upper bound equals the max-tick output but is itself excluded.
 //
 // Parameters:
-//   - sqrtPriceX96: Square root price ratio in Q64.96 format
+//   - sqrtPriceX96: square root price ratio in Q64.96 format within [MinSqrtRatio, MaxSqrtRatio)
 //
 // Returns:
-//   - Tick index corresponding to the price
+//   - tick: the greatest tick whose calculated ratio is at most sqrtPriceX96
 //
 // Algorithm:
 //  1. Scales ratio from Q64.96 to Q96.128 by left-shifting 32 bits

@@ -21,6 +21,14 @@ type ProtocolFeeRewardStateResolver struct {
 	*staker.ProtocolFeeRewardState
 }
 
+// NewProtocolFeeRewardStateResolver wraps one staker's protocol fee reward state
+// with settlement operations.
+//
+// Parameters:
+//   - protocolFeeRewardState: staker reward state to resolve and mutate.
+//
+// Returns:
+//   - *ProtocolFeeRewardStateResolver: resolver backed by protocolFeeRewardState.
 func NewProtocolFeeRewardStateResolver(protocolFeeRewardState *staker.ProtocolFeeRewardState) *ProtocolFeeRewardStateResolver {
 	return &ProtocolFeeRewardStateResolver{
 		ProtocolFeeRewardState: protocolFeeRewardState,
@@ -288,6 +296,12 @@ func (p *ProtocolFeeRewardStateResolver) removeStake(amount int64, epoch int64) 
 }
 
 // IsClaimable reports whether every token may be collected at once at currentTimestamp.
+//
+// Parameters:
+//   - currentTimestamp: current Unix timestamp used to compare the last collection.
+//
+// Returns:
+//   - bool: true when currentTimestamp is later than the state's claimed timestamp.
 func (p *ProtocolFeeRewardStateResolver) IsClaimable(currentTimestamp int64) bool {
 	return p.GetClaimedTimestamp() < currentTimestamp
 }

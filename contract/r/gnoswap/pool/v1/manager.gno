@@ -22,14 +22,21 @@ const GNS_TOKEN_KEY string = "gno.land/r/gnoswap/gns.GNS"
 
 // CreatePool creates a new concentrated liquidity pool.
 //
-// Deploys new AMM pool for token pair with specified fee tier.
-// Charges 100 GNS creation fee to prevent spam.
-// Sets initial price and tick spacing based on fee tier.
+// Deploys a new AMM pool for a token pair with the specified fee tier.
+// Charges the configured pool-creation fee (100 GNS by default).
+// Accepts either token path order, canonicalizes token0/token1, and sets the
+// initial price and tick spacing for that canonical order.
 //
 // Parameters:
-//   - token0Path, token1Path: Token contract paths (ordered by address)
-//   - fee: Fee tier (100=0.01%, 500=0.05%, 3000=0.3%, 10000=1%)
-//   - sqrtPriceX96: Initial sqrt price in Q64.96 format
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the pool proxy.
+//   - token0Path: first token contract path; either order is accepted and the
+//     stored pair is canonicalized.
+//   - token1Path: second token contract path; either order is accepted and the
+//     stored pair is canonicalized.
+//   - fee: supported pool fee tier (100=0.01%, 500=0.05%, 3000=0.3%, 10000=1%).
+//   - sqrtPriceX96: initial square-root price in Q64.96 format, constrained to
+//     [MIN_SQRT_RATIO, MAX_SQRT_RATIO).
 //
 // Tick spacing by fee tier:
 //   - 0.01%: 1 tick
@@ -38,23 +45,23 @@ const GNS_TOKEN_KEY string = "gno.land/r/gnoswap/gns.GNS"
 //   - 1.00%: 200 ticks
 //
 // Requirements:
-//   - Tokens must be different
+//   - Tokens must be different after canonicalization/wrapping
 //   - Fee tier must be supported
 //   - Pool must not already exist
-//   - Caller must have 100 GNS for creation fee
+//   - Caller must have the configured creation fee
 //
-// IMPORTANT - Price Initialization Security:
+// Price initialization:
+//   - The initial sqrt price must be in [MIN_SQRT_RATIO, MAX_SQRT_RATIO).
+//   - No oracle or external market-price sanity check is performed.
+//   - If paths are supplied in reverse order, the stored sqrt price is
+//     inverted to match the canonical token0/token1 order.
 //
-//	The sqrtPriceX96 parameter allows arbitrary initial price setting without validation.
-//	Extreme prices can make pools temporarily unusable (griefing attack).
+// Recovery from an economically inappropriate price:
+//  1. Add wide-range liquidity at the current price.
+//  2. Execute a swap to move the price toward the desired market rate.
+//  3. Remove the liquidity.
 //
-// Recovery from Price Griefing:
-//
-//	If a pool is created with an incorrect price, it can be restored via atomic transaction:
-//	1. Add wide-range liquidity at the distorted price
-//	2. Execute swap to move price toward market rate
-//	3. Remove the liquidity
-//	The executor's LP losses offset arbitrage gains (minus fees).
+// The executor's LP losses offset arbitrage gains, minus fees and slippage.
 func (i *poolV1) CreatePool(
 	_ int,
 	rlm realm,
@@ -155,10 +162,16 @@ func (i *poolV1) CreatePool(
 	)
 }
 
-// SetFeeProtocol sets the protocol fee percentage for all pools.
+// SetFeeProtocol sets the protocol fee denominators for all managed pools.
 //
 // Parameters:
-//   - feeProtocol0, feeProtocol1: fee percentages (0-10)
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the pool proxy.
+//   - feeProtocol0: token0 protocol-fee denominator; must be 0 or 4-10.
+//     Zero disables protocol fees; 4 routes one quarter of swap fees and 10
+//     routes one tenth to the protocol.
+//   - feeProtocol1: token1 protocol-fee denominator with the same 0 or 4-10
+//     constraint and fee share semantics as feeProtocol0.
 //
 // Only callable by admin or governance.
 func (i *poolV1) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) {

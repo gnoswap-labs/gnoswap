@@ -15,31 +15,26 @@ import (
 	"gno.land/r/gnoswap/halt/v1"
 )
 
-// CollectReward collects accumulated rewards based on xGNS holdings.
+// CollectReward claims all rewards for the caller.
 //
-// Claims all pending rewards from governance staking.
-// Distributes protocol fees and emission rewards proportionally.
-// Multi-token rewards system based on xGNS share.
+// It settles both reward streams:
+//  1. GNS emission rewards from the emission accumulator.
+//  2. Protocol-fee rewards for every known token path.
 //
-// Reward Types:
-//  1. Emission rewards: GNS from protocol emission
-//  2. Protocol fees: Various tokens from swap/pool fees
-//  3. Withdrawal fees: 1% of liquidity provider rewards
-//  4. Pool creation fees: 100 GNS per pool
+// Protocol-fee rewards are divided by the total stake in force for each
+// accrual epoch and settled across the caller's stake-event segments. They
+// are not calculated from one current xGNS/total-xGNS ratio. Q128 fractional
+// remainders remain in state for later collection.
 //
-// Distribution Formula:
+// The all-token path intentionally grows with the number of known fee tokens.
+// Use the token-specific entry point when bounded work is required.
 //
-//	userReward = (userXGNS / totalXGNS) * accumulatedRewards
+// No business parameters are required; the caller's reward ID is used.
+// Rewards are transferred directly to the caller.
 //
-// Process:
-//  1. Calculates share based on xGNS balance
-//  2. Claims GNS emission rewards
-//  3. Claims protocol fee rewards (all tokens)
-//  4. Transfers all rewards to caller
-//  5. Resets user's reward tracking
-//
-// No parameters required - automatically determines caller's rewards.
-// Transfers rewards directly to caller.
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before settlement and transfers.
 func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -91,6 +86,10 @@ func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 }
 
 // CollectEmissionReward collects accumulated GNS emission rewards only.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before settlement and transfer.
 func (gs *govStakerV1) CollectEmissionReward(_ int, rlm realm) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -121,6 +120,11 @@ func (gs *govStakerV1) CollectEmissionReward(_ int, rlm realm) {
 }
 
 // CollectProtocolFeeReward collects accumulated protocol fee rewards for the provided token path.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before settlement and transfer.
+//   - tokenPath: registered fee-token path whose reward should be collected
 func (gs *govStakerV1) CollectProtocolFeeReward(_ int, rlm realm, tokenPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -157,7 +161,9 @@ func (gs *govStakerV1) CollectProtocolFeeReward(_ int, rlm realm, tokenPath stri
 // CollectRewardFromLaunchPad collects rewards for launchpad project wallets.
 //
 // Parameters:
-//   - to: recipient address for rewards
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad reward settlement.
+//   - to: project wallet address receiving its emission and protocol-fee rewards
 //
 // Only callable by launchpad contract.
 func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
@@ -222,6 +228,11 @@ func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) 
 }
 
 // CollectEmissionRewardFromLaunchPad collects emission rewards only for launchpad project wallets.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad reward settlement.
+//   - to: project wallet address receiving its emission reward
 func (gs *govStakerV1) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to address) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -263,6 +274,12 @@ func (gs *govStakerV1) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to a
 }
 
 // CollectProtocolFeeRewardFromLaunchPad collects one token path of protocol fee rewards for launchpad project wallets.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad reward settlement.
+//   - to: project wallet address receiving the protocol-fee reward
+//   - tokenPath: registered fee-token path whose reward should be collected
 func (gs *govStakerV1) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, to address, tokenPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -307,7 +324,7 @@ func (gs *govStakerV1) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, t
 	}
 }
 
-// SetAmountByProjectWallet sets the amount of reward for the project wallet.
+// SetAmountByProjectWallet sets the amount of reward stake for the project wallet.
 // This function is exclusively callable by the launchpad contract to manage
 // xGNS balances for project wallets that participate in launchpad offerings.
 //
@@ -315,6 +332,14 @@ func (gs *govStakerV1) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, t
 // - When adding: mints xGNS to launchpad address and starts reward accumulation
 // - When removing: burns xGNS from launchpad address and stops reward accumulation
 // Adjusts stake amount for project wallet address.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad authorization and staking changes.
+//   - addr: project wallet address whose launchpad-backed stake should be adjusted
+//   - amount: amount of stake to add or remove
+//   - add: true to add stake and mint xGNS to launchpad, false to remove stake and burn xGNS from launchpad
+//
 // Panics:
 //   - if caller is not the launchpad contract
 //   - if system is halted for withdrawals

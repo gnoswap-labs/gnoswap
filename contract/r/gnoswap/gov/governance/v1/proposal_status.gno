@@ -13,6 +13,13 @@ type ProposalStatusResolver struct {
 	voteStatusResolver   *ProposalVoteStatusResolver
 }
 
+// NewProposalStatusResolver wraps proposal status components for lifecycle and vote queries.
+//
+// Parameters:
+//   - status: proposal status containing schedule, action, and vote state
+//
+// Returns:
+//   - *ProposalStatusResolver: resolver backed by status
 func NewProposalStatusResolver(status *governance.ProposalStatus) *ProposalStatusResolver {
 	return &ProposalStatusResolver{
 		ProposalStatus:       status,
@@ -217,6 +224,7 @@ func (p *ProposalStatusResolver) vote(votedYes bool, weight int64) error {
 //   - maxVotingWeight: maximum voting weight for this proposal
 //   - executable: whether this proposal type can be executed
 //   - createdAt: timestamp when proposal was created
+//   - quorumWeight: total xGNS supply at proposal creation, used as the quorum base
 //
 // Returns:
 //   - *ProposalStatus: new proposal status instance

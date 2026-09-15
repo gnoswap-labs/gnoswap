@@ -29,6 +29,9 @@ func init(cur realm) {
 }
 
 // TotalSupply returns the total supply of xGNS tokens.
+//
+// Returns:
+//   - supply: total xGNS token supply
 func TotalSupply() int64 {
 	return token.TotalSupply()
 }
@@ -38,12 +41,19 @@ func TotalSupply() int64 {
 // Parameters:
 //   - owner: address to check balance for
 //
-// Returns balance amount.
+// Returns:
+//   - balance: token balance amount
 func BalanceOf(owner address) int64 {
 	return token.BalanceOf(owner)
 }
 
 // Render returns a formatted representation of the token state.
+//
+// Parameters:
+//   - path: render path for specific views
+//
+// Returns:
+//   - output: formatted token state representation
 func Render(path string) string {
 	if path == "" {
 		return token.RenderHome()
@@ -62,11 +72,13 @@ func Render(path string) string {
 	}
 }
 
-// Mint mints tokens to address.
+// Mint mints tokens to an address.
 //
 // Parameters:
-//   - to: recipient address
-//   - amount: amount to mint
+//   - cur: current realm context; callers use cross(cur) when crossing into this
+//     realm.
+//   - to: recipient address receiving the newly minted tokens.
+//   - amount: number of xGNS token units to mint.
 //
 // Only callable by governance staker contract.
 func Mint(cur realm, to address, amount int64) {
@@ -78,11 +90,13 @@ func Mint(cur realm, to address, amount int64) {
 	checkErr(ledger.Mint(to, amount))
 }
 
-// Burn burns tokens from address.
+// Burn burns tokens from an address.
 //
 // Parameters:
-//   - from: address to burn from
-//   - amount: amount to burn
+//   - cur: current realm context; callers use cross(cur) when crossing into this
+//     realm.
+//   - from: address whose xGNS balance is burned.
+//   - amount: number of xGNS token units to burn.
 //
 // Only callable by governance staker contract.
 func Burn(cur realm, from address, amount int64) {
@@ -100,7 +114,8 @@ func Burn(cur realm, from address, amount int64) {
 //   - totalIssued: total xGNS tokens issued
 //   - issuedByDelegate: tokens issued through governance delegation
 //   - issuedByDepositGns: tokens issued through launchpad deposit
-//   - error: error if launchpad address not found
+//   - err: nil when the launchpad address is registered; an error when it cannot
+//     be found.
 func SupplyInfo() (totalIssued, issuedByDelegate, issuedByDepositGns int64, err error) {
 	launchpad, ok := access.GetAddress(prbac.ROLE_LAUNCHPAD.String())
 	if !ok {

@@ -11,7 +11,8 @@ GNS is the native governance token of GnoSwap, featuring a deflationary emission
 - **Symbol**: GNS
 - **Decimals**: 6
 - **Max Supply**: 1,000,000,000 GNS
-- **Initial Mint**: 100,000,000 GNS
+- **Initial Mint**: 100,000,000 GNS, pre-minted to the configured `ADMIN`
+  role address during GNS realm initialization
 - **Total Emission**: 900,000,000 GNS over 12 years
 
 ## Emission Schedule
@@ -49,22 +50,21 @@ Only callable by emission contract.
 Mints new tokens per emission schedule. Only callable by emission contract.
 Calculates tokens to mint based on elapsed time and updates halving year state.
 
-### `Burn`
-
-Burns tokens from supply.
-
 ## Usage
+
+These snippets call the GNS realm from a realm function with a current `cur`
+token. Import the package and qualify its function names in integrating code.
 
 ```go
 // Transfer tokens
-Transfer(to, amount)
+Transfer(cross(cur), to, amount)
 
 // Approve and transfer
-Approve(spender, amount)
-TransferFrom(from, to, amount)
+Approve(cross(cur), spender, amount)
+TransferFrom(cross(cur), from, to, amount)
 
 // Mint per emission schedule (called by emission contract)
-MintGns(recipientAddress)
+MintGns(cross(cur), recipientAddress)
 ```
 
 ## Distribution

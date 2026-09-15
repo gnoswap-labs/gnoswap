@@ -13,31 +13,41 @@ type EmissionRewardStateResolver struct {
 	*staker.EmissionRewardState
 }
 
+// NewEmissionRewardStateResolver wraps an on-chain emission reward state for
+// reward calculation and stake/claim updates.
+//
+// Parameters:
+//   - emissionRewardState: persisted reward state to expose through the resolver
+//
+// Returns:
+//   - *EmissionRewardStateResolver: resolver backed by emissionRewardState
 func NewEmissionRewardStateResolver(emissionRewardState *staker.EmissionRewardState) *EmissionRewardStateResolver {
 	return &EmissionRewardStateResolver{emissionRewardState}
 }
 
 // IsClaimable checks if rewards can be claimed at the given timestamp.
-// Rewards are claimable if the current timestamp is greater than the last claimed timestamp.
+// Rewards are claimable only when currentTimestamp is later than the stored
+// claimed timestamp.
 //
 // Parameters:
-//   - currentTimestamp: current timestamp to check against
+//   - currentTimestamp: timestamp at which claimability is evaluated
 //
 // Returns:
-//   - bool: true if rewards can be claimed, false otherwise
+//   - bool: true when currentTimestamp is greater than the last claimed timestamp
 func (self *EmissionRewardStateResolver) IsClaimable(currentTimestamp int64) bool {
 	return self.GetClaimedTimestamp() < currentTimestamp
 }
 
 // GetClaimableRewardAmount calculates the total amount of rewards that can be claimed.
-// This includes both accumulated rewards and newly earned rewards based on current state.
+// It combines newly earned rewards with accumulated rewards not yet claimed.
 //
 // Parameters:
-//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake
-//   - currentTimestamp: current timestamp
+//   - accumulatedRewardX128PerStake: system-wide accumulated reward per stake, scaled by 2^128
+//   - currentTimestamp: timestamp through which newly earned rewards are calculated
 //
 // Returns:
-//   - int64: total claimable reward amount
+//   - int64: total claimable amount, including accumulated-but-unclaimed and newly earned rewards
+//   - error: nil on success; an error propagated from reward calculation otherwise
 func (self *EmissionRewardStateResolver) GetClaimableRewardAmount(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,

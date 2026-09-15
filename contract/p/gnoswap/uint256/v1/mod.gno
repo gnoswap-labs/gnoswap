@@ -4,14 +4,17 @@ import (
 	"math/bits"
 )
 
-// Some utility functions
-
-// Reciprocal computes a 320-bit value representing 1/m
+// Reciprocal computes the 320-bit reciprocal estimate used by Barrett reduction.
 //
-// Notes:
-// - specialized for m[3] != 0, hence limited to 2^192 <= m < 2^256
-// - returns zero if m[3] == 0
-// - starts with a 32-bit division, refines with newton-raphson iterations
+// The implementation is specialized for a four-word modulus with m[3] non-zero
+// (2^192 <= m < 2^256). For a modulus whose most-significant word is zero it
+// returns an all-zero estimate instead of running the refinement steps.
+//
+// Parameters:
+//   - m: Four-word unsigned modulus; its most-significant word selects the supported range.
+//
+// Returns:
+//   - mu: Five little-endian uint64 words containing the reciprocal estimate for m.
 func Reciprocal(m *Uint) (mu [5]uint64) {
 	if m[3] == 0 {
 		return mu

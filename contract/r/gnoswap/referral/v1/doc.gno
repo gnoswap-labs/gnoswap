@@ -7,46 +7,45 @@
 //
 // The referral package is composed of the following components:
 //
-//  1. **errors.gno**: Defines error types for various failure scenarios
-//     such as invalid address, unauthorized caller, self-referral,
-//     rate limit exceeded, and referral not found.
-//  2. **utils.gno**: Contains the isValidCaller function that checks
-//     if the caller has an authorized role (governance, router, position,
-//     staker, or launchpad contracts).
-//  3. **type.gno**: Defines the ReferralKeeper interface and event type
-//     constants for register, update, and remove operations.
-//  4. **keeper.gno**: Implements the ReferralKeeper interface using an
-//     tree for storage. Includes rate limiting (24-hour cooldown)
-//     to prevent abuse of referral operations.
-//  5. **global_keeper.gno**: Exposes the public API functions that
-//     external contracts can use to interact with the referral system.
+//  1. **errors.gno**: Defines error types for invalid addresses,
+//     unauthorized callers, self-referrals, rate limits, and missing referrals.
+//  2. **assert.gno**: Checks whether a caller has an authorized role.
+//  3. **type.gno**: Defines the ReferralKeeper interface and the contract-address
+//     sentinel used to request removal.
+//  4. **keeper.gno**: Implements ReferralKeeper with BPTree storage. Non-removal
+//     registrations and updates have a 24-hour cooldown.
+//  5. **global_keeper.gno**: Exposes the public API and emits referral events.
 //
 // ## Public API
 //
 // The package exposes the following public functions:
 //
 //   - GetReferral(addr string) string: Returns the referrer address for
-//     the given user address. Returns empty string if not found.
+//     the given user. Returns empty string if not found.
 //   - HasReferral(addr string) bool: Returns true if the user has a
 //     registered referrer.
 //   - IsEmpty() bool: Returns true if no referral relationships exist.
 //   - GetLastOpTimestamp(addr string) (int64, error): Returns the last
-//     referral operation timestamp for the given user address.
+//     non-removal registration or update timestamp for the user.
 //   - TryRegister(cur realm, addr address, referral string) string:
-//     Attempts to register a new referral and returns the effective referrer.
-//     Empty input returns the user's stored referral without attempting registration.
+//     Empty input reads the stored referral without authorization. A non-empty
+//     input registers, updates, or removes a relationship and returns the
+//     effective referrer string. Passing ContractAddress() requests removal.
 //
 // ## Workflow
 //
 // Typical usage of this contract follows these steps:
 //
-//  1. An authorized contract (router, staker, etc.) calls TryRegister
-//     to resolve the effective referrer and optionally create a referral relationship.
-//  2. The keeper validates the caller's permissions via isValidCaller.
-//  3. Address validation ensures both addresses are valid and not
-//     self-referencing.
-//  4. Rate limiting checks prevent operations more than once per 24 hours.
-//  5. The referral is stored in the tree and an event is emitted when registration occurs.
+//  1. A caller uses TryRegister to resolve the effective referrer. Empty input
+//     only reads; non-empty input must come from an authorized role.
+//  2. The keeper validates the caller's permissions via assertValidCaller.
+//  3. Address validation ensures the user address is valid, the referral is
+//     valid for registration, and self-referrals are rejected. The contract's
+//     own address is the removal sentinel.
+//  4. The 24-hour rate limit is checked for non-removal registrations and
+//     updates. Removal bypasses this check.
+//  5. Successful non-removal writes store a new timestamp. Successful
+//     non-empty writes emit a RegisterReferral event.
 //
 // ## Authorized Callers
 //
@@ -61,19 +60,25 @@
 //
 // ## Rate Limiting
 //
-// To prevent abuse, the system enforces a 24-hour cooldown period between
-// operations for each address. This means:
+// To prevent abuse, the system enforces a 24-hour cooldown between non-removal
+// registrations or updates for each address. This means:
 //
-//   - A new referral can only be registered once per 24 hours per address
-//   - Updates and removals are also subject to the same rate limit
-//   - Attempting operations within the cooldown period returns ErrTooManyRequests
+//   - A new referral can only be registered once per 24 hours per address.
+//   - Updates are also subject to the same rate limit.
+//   - Removal via the contract-address sentinel bypasses the rate-limit check.
+//   - Removal does not overwrite the previous timestamp, so immediate
+//     re-registration can still be rejected during the prior cooldown.
+//   - Attempts that exceed the cooldown return ErrTooManyRequests.
 //
 // ## Events
 //
 // The package emits the following events:
 //
-//   - RegisterReferral: Emitted when a new referral is created
-//   - ReferralRegistrationFailed: Emitted when non-empty referral registration fails
+//   - RegisterReferral: Emitted for every successful non-empty write, including
+//     creation, update, and removal.
+//   - ReferralRegistrationFailed: Emitted when an authorized non-empty write
+//     fails.
+//   - Empty referral queries do not emit events.
 //
 // ## Error Handling
 //
@@ -130,15 +135,17 @@
 //
 // ## Limitations and Constraints
 //
-//   - A user can have only one referrer at a time
-//   - Self-referral is not allowed
-//   - Operations are rate-limited to once per 24 hours per address
-//   - Only authorized contracts can register/update/remove referrals
-//   - Zero address as referrer triggers removal of the referral
+//   - A user can have only one referrer at a time.
+//   - Self-referral is not allowed.
+//   - Non-removal registrations and updates are rate-limited to once per 24
+//     hours per address.
+//   - Only callers with an authorized role can perform non-empty writes.
+//   - The referral contract's own address is the removal sentinel; the zero
+//     address is invalid.
 //
 // ## Notes
 //
-//   - The contract uses RBAC (Role-Based Access Control) for authorization
-//   - Rate limiting state persists across transactions
-//   - Events are emitted for all state changes for off-chain tracking
+//   - The contract uses RBAC (Role-Based Access Control) for authorization.
+//   - Rate-limit state persists across transactions.
+//   - The referral relationship is stored in a BPTree.
 package referral

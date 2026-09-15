@@ -98,6 +98,15 @@ type CommunityPoolSpendInfo struct {
 	amount    int64   // Amount of tokens to transfer
 }
 
+// NewCommunityPoolSpendInfo creates community-pool spend data.
+//
+// Parameters:
+//   - to: Recipient address that receives the community-pool transfer.
+//   - tokenPath: Registered token path of the asset to transfer.
+//   - amount: Transfer amount in the token's smallest unit.
+//
+// Returns:
+//   - *CommunityPoolSpendInfo: spend data containing the recipient, token path, and amount.
 func NewCommunityPoolSpendInfo(to address, tokenPath string, amount int64) *CommunityPoolSpendInfo {
 	return &CommunityPoolSpendInfo{
 		to:        to,
@@ -107,9 +116,18 @@ func NewCommunityPoolSpendInfo(to address, tokenPath string, amount int64) *Comm
 }
 
 /* Getter methods */
-func (i *CommunityPoolSpendInfo) To() address       { return i.to }
+// Returns:
+//   - address: recipient address configured for the community-pool spend.
+//
+func (i *CommunityPoolSpendInfo) To() address { return i.to }
+
+// Returns:
+//   - string: registered token path configured for the community-pool spend.
 func (i *CommunityPoolSpendInfo) TokenPath() string { return i.tokenPath }
-func (i *CommunityPoolSpendInfo) Amount() int64     { return i.amount }
+
+// Returns:
+//   - int64: transfer amount in the token's smallest unit.
+func (i *CommunityPoolSpendInfo) Amount() int64 { return i.amount }
 
 // ExecutionInfo contains information for parameter change execution.
 // Messages are encoded strings that specify function calls and parameters.
@@ -118,6 +136,14 @@ type ExecutionInfo struct {
 	msgs []string // Execution messages separated by messageSeparator (*GOV*)
 }
 
+// NewExecutionInfo creates execution data for a parameter-change proposal.
+//
+// Parameters:
+//   - num: Number of encoded parameter-change messages to execute.
+//   - msgs: Encoded parameter-change messages, one message per execution.
+//
+// Returns:
+//   - *ExecutionInfo: execution data containing the declared count and messages.
 func NewExecutionInfo(num int64, msgs []string) *ExecutionInfo {
 	return &ExecutionInfo{
 		num:  num,
@@ -126,7 +152,13 @@ func NewExecutionInfo(num int64, msgs []string) *ExecutionInfo {
 }
 
 /* Getter methods */
-func (i *ExecutionInfo) Num() int64     { return i.num }
+// Returns:
+//   - int64: declared number of parameter-change messages.
+//
+func (i *ExecutionInfo) Num() int64 { return i.num }
+
+// Returns:
+//   - []string: encoded parameter-change messages in execution order.
 func (i *ExecutionInfo) Msgs() []string { return i.msgs }
 
 // ParameterChangeInfo represents a single parameter change to be executed.
@@ -136,6 +168,15 @@ type ParameterChangeInfo struct {
 	params   []string // Parameters to pass to the function
 }
 
+// NewParameterChangeInfo creates one encoded parameter-change target description.
+//
+// Parameters:
+//   - pkgPath: Package path containing the parameter-change handler.
+//   - function: Handler function name to invoke.
+//   - params: String arguments passed to the handler in order.
+//
+// Returns:
+//   - ParameterChangeInfo: parameter-change target and its encoded arguments.
 func NewParameterChangeInfo(pkgPath string, function string, params []string) ParameterChangeInfo {
 	return ParameterChangeInfo{
 		pkgPath:  pkgPath,
@@ -145,11 +186,22 @@ func NewParameterChangeInfo(pkgPath string, function string, params []string) Pa
 }
 
 /* Getter methods */
-func (i *ParameterChangeInfo) PkgPath() string  { return i.pkgPath }
+// Returns:
+//   - string: package path of the parameter-change handler.
+//
+func (i *ParameterChangeInfo) PkgPath() string { return i.pkgPath }
+
+// Returns:
+//   - string: function name of the parameter-change handler.
 func (i *ParameterChangeInfo) Function() string { return i.function }
+
+// Returns:
+//   - []string: encoded arguments passed to the parameter-change handler.
 func (i *ParameterChangeInfo) Params() []string { return i.params }
 
 // Clone creates a deep copy of the ProposalMetadata.
+// Returns:
+//   - *ProposalMetadata: independent metadata copy, or nil when the receiver is nil.
 func (p *ProposalMetadata) Clone() *ProposalMetadata {
 	if p == nil {
 		return nil
@@ -162,6 +214,8 @@ func (p *ProposalMetadata) Clone() *ProposalMetadata {
 }
 
 // Clone creates a deep copy of the CommunityPoolSpendInfo.
+// Returns:
+//   - *CommunityPoolSpendInfo: independent spend-data copy, or nil when the receiver is nil.
 func (i *CommunityPoolSpendInfo) Clone() *CommunityPoolSpendInfo {
 	if i == nil {
 		return nil
@@ -175,6 +229,8 @@ func (i *CommunityPoolSpendInfo) Clone() *CommunityPoolSpendInfo {
 }
 
 // Clone creates a deep copy of the ExecutionInfo.
+// Returns:
+//   - *ExecutionInfo: independent execution-data copy including a copied message slice, or nil when the receiver is nil.
 func (i *ExecutionInfo) Clone() *ExecutionInfo {
 	if i == nil {
 		return nil
@@ -190,6 +246,8 @@ func (i *ExecutionInfo) Clone() *ExecutionInfo {
 }
 
 // Clone creates a deep copy of the ProposalData.
+// Returns:
+//   - *ProposalData: independent proposal-data copy with cloned nested values, or nil when the receiver is nil.
 func (p *ProposalData) Clone() *ProposalData {
 	if p == nil {
 		return nil

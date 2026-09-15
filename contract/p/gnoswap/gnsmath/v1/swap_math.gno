@@ -10,19 +10,25 @@ import (
 // For example, feePips=3000 means 3000/1000000 = 0.3% fee.
 const denominator = uint64(1_000_000)
 
-// SwapMathComputeSwapStep computes the next sqrt price, amount in, amount out, and fee amount
-// for a swap step within a single tick range.
+// SwapMathComputeSwapStep computes one swap step within a single tick range.
+// It determines the next square-root price, input amount, output amount, and fee,
+// using exact-input or exact-output semantics from amountRemaining.
 //
 // Parameters:
-//   - sqrtRatioCurrentX96: current sqrt price in Q96 format
-//   - sqrtRatioTargetX96: target sqrt price (tick boundary)
-//   - liquidity: available liquidity in the range
-//   - amountRemaining: amount left to swap (positive=exact in, negative=exact out)
-//   - feePips: fee in hundredths of a bip (3000 = 0.3%)
+//   - sqrtRatioCurrentX96: Current pool square-root price in Q96 fixed-point format.
+//   - sqrtRatioTargetX96: Tick-boundary square-root price that this step may reach.
+//   - liquidity: Non-negative liquidity active between the current and target prices.
+//   - amountRemaining: Signed amount remaining; non-negative selects exact input, negative selects exact output.
+//   - feePips: Fee rate in millionths of the input amount (3,000 represents 0.3%).
 //
-// Returns sqrtRatioNextX96, amountIn, amountOut, feeAmount.
+// Returns:
+//   - sqrtRatioNextX96: Square-root price after applying this step, within the valid pool price bounds.
+//   - amountIn: Amount of the input token consumed by this step, excluding the fee.
+//   - amountOut: Amount of the output token produced by this step.
+//   - feeAmount: Input-token fee charged for this step.
 //
-// Panics if any input parameter is nil or if feePips >= 1000000.
+// Panics if an input pointer is nil, feePips is at least 1,000,000, arithmetic
+// overflows, or the resulting square-root price is outside the valid bounds.
 func SwapMathComputeSwapStep(
 	sqrtRatioCurrentX96 *u256.Uint,
 	sqrtRatioTargetX96 *u256.Uint,

@@ -23,7 +23,20 @@ const (
 )
 
 type RouterOperation interface {
+	// Validate checks operation parameters before processing.
+	//
+	// Returns:
+	//   - err: nil when operation input is valid; validation error otherwise
 	Validate() error
+	// Process executes the operation in the propagated realm context.
+	//
+	// Parameters:
+	//   - _: leading operation discriminator; callers pass 0
+	//   - rlm: propagated current realm context used for pool interaction
+	//
+	// Returns:
+	//   - result: swap amounts and route metadata, or nil when processing fails
+	//   - err: nil on success; execution error otherwise
 	Process(_ int, rlm realm) (*SwapResult, error)
 }
 
@@ -168,11 +181,21 @@ type SwapRouteParams struct {
 	sqrtPriceLimitX96 *u256.Uint // if sqrtPriceLimitX96 is zero string, it will be set to MIN_PRICE or MAX_PRICE
 }
 
+// ExactAmount returns the requested exact input or output amount.
+//
+// Returns:
+//   - amount: exactAmount configured for the route
 func (p *SwapRouteParams) ExactAmount() int64 {
 	return p.exactAmount
 }
 
-// when exact out, calculate amount to fetch from pool including router fee
+// ExpectedExactAmountByFee returns the amount needed by pool execution after router-fee adjustment.
+//
+// Parameters:
+//   - feeBps: router fee in basis points
+//
+// Returns:
+//   - amount: exact input amount for ExactIn, or gross pool amount for ExactOut
 func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) int64 {
 	if p.typ == ExactIn {
 		return p.exactAmount
@@ -181,6 +204,10 @@ func (p *SwapRouteParams) ExpectedExactAmountByFee(feeBps uint64) int64 {
 	return calculateExactOutWithRouterFee(p.exactAmount, feeBps)
 }
 
+// SwapCount counts pool hops across all comma-separated routes.
+//
+// Returns:
+//   - count: total number of pool swaps represented by routeArr
 func (p *SwapRouteParams) SwapCount() int64 {
 	swapCount := int64(0)
 
@@ -203,6 +230,10 @@ func buildRouteEventAttrs(routeArr string) []string {
 	return routeEventAttrs
 }
 
+// IsSetSqrtPriceLimitX96 reports whether a nonzero caller price limit is configured.
+//
+// Returns:
+//   - set: true when sqrtPriceLimitX96 is non-nil and nonzero
 func (p *SwapRouteParams) IsSetSqrtPriceLimitX96() bool {
 	return p.sqrtPriceLimitX96 != nil && !p.sqrtPriceLimitX96.IsZero()
 }

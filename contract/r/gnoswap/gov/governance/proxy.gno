@@ -1,13 +1,16 @@
 package governance
 
-// ProposeText creates a new text proposal for general governance decisions.
+// ProposeText creates a new text proposal with the provided data.
 //
 // Parameters:
-//   - title: proposal title
-//   - description: detailed proposal description
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - title: The title of the proposal.
+//   - description: The description of the proposal.
 //
 // Returns:
-//   - int64: ID of the created proposal
+//   - proposalId: The ID of the proposal.
+//
+// Halt check: reverts while the Governance halt scope is active.
 func ProposeText(
 	cur realm,
 	title string,
@@ -20,17 +23,23 @@ func ProposeText(
 	)
 }
 
-// ProposeCommunityPoolSpend creates a new community pool spending proposal.
+// ProposeCommunityPoolSpend creates a CommunityPoolSpend proposal with the provided data.
+// The transfer is attempted when an approved proposal executes.
 //
 // Parameters:
-//   - title: proposal title
-//   - description: detailed proposal description
-//   - to: recipient address
-//   - tokenPath: token path to transfer
-//   - amount: amount to transfer
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - title: The title of the proposal.
+//   - description: The description of the proposal.
+//   - to: A valid address to receive the spent token.
+//   - tokenPath: A registered token path.
+//   - amount: A strictly positive amount in the token's smallest unit.
+//
+// The community-pool balance is checked at execution, not proposal creation.
 //
 // Returns:
-//   - int64: ID of the created proposal
+//   - proposalId: The ID of the proposal.
+//
+// Halt check: reverts while the Governance halt scope is active.
 func ProposeCommunityPoolSpend(
 	cur realm,
 	title string,
@@ -49,16 +58,19 @@ func ProposeCommunityPoolSpend(
 	)
 }
 
-// ProposeParameterChange creates a new parameter change proposal.
+// ProposeParameterChange creates a ParameterChange proposal with the provided data.
 //
 // Parameters:
-//   - title: proposal title
-//   - description: detailed proposal description
-//   - numToExecute: number of executions to perform
-//   - executions: encoded execution messages
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - title: The title of the proposal.
+//   - description: The description of the proposal.
+//   - numToExecute: The number of changes to execute.
+//   - executions: The list of changes to execute.
 //
 // Returns:
-//   - int64: ID of the created proposal
+//   - proposalId: The ID of the proposal.
+//
+// Halt check: reverts while the Governance halt scope is active, except for halt-recovery proposals that only target the halt realm.
 func ProposeParameterChange(
 	cur realm,
 	title string,
@@ -75,14 +87,20 @@ func ProposeParameterChange(
 	)
 }
 
-// Vote casts a vote on a proposal.
+// Vote allows a user to vote on a given proposal.
+//
+// The proposal's timestamp-based smoothing calculation determines the applied
+// weight. A vote cannot be changed after it is recorded.
 //
 // Parameters:
-//   - proposalId: ID of the proposal to vote on
-//   - yes: true for yes vote, false for no vote
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - proposalId: The ID of the proposal to vote.
+//   - yes: The flag to vote as yes or not.
 //
 // Returns:
-//   - string: voting result information
+//   - voteWeight: The caller's calculated vote weight, formatted as a decimal string.
+//
+// Halt check: reverts while the Governance halt scope is active, except for halt-recovery proposals that only target the halt realm.
 func Vote(
 	cur realm,
 	proposalId int64,
@@ -95,13 +113,16 @@ func Vote(
 	)
 }
 
-// Execute executes a passed proposal that is in the execution window.
+// Execute executes the given proposal.
 //
 // Parameters:
-//   - proposalId: ID of the proposal to execute
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - proposalId: The ID of the proposal to execute.
 //
 // Returns:
-//   - int64: execution result code
+//   - proposalId: The ID of the proposal.
+//
+// Halt check: reverts while the Governance halt scope is active, except for halt-recovery proposals that only target the halt realm.
 func Execute(
 	cur realm,
 	proposalId int64,
@@ -109,14 +130,16 @@ func Execute(
 	return getImplementation().Execute(0, cur, proposalId)
 }
 
-// Cancel cancels a proposal before voting begins.
-// Only callable by the proposer.
+// Cancel cancels the proposal with the given ID.
 //
 // Parameters:
-//   - proposalId: ID of the proposal to cancel
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - proposalId: The ID of the proposal to cancel.
 //
 // Returns:
-//   - int64: cancellation result code
+//   - proposalId: The ID of the proposal.
+//
+// Halt check: reverts while the Governance halt scope is active.
 func Cancel(
 	cur realm,
 	proposalId int64,
@@ -125,7 +148,12 @@ func Cancel(
 }
 
 // RemoveInactiveProposalFromIndex removes an inactive proposal from the
-// snapshot index without deleting its proposal or voting history.
+// timestamp-ordered index without deleting its proposal or voting history.
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - proposalID: Identifier of the inactive proposal to remove from the active index.
+//
+// Halt check: reverts while the Governance halt scope is active.
 func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
 	getImplementation().RemoveInactiveProposalFromIndex(0, cur, proposalID)
 }
@@ -134,6 +162,7 @@ func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
 // Only callable by admin or governance.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - votingStartDelay: delay before voting starts (seconds)
 //   - votingPeriod: voting duration (seconds)
 //   - votingWeightSmoothingDuration: weight smoothing duration (seconds)
@@ -144,6 +173,8 @@ func RemoveInactiveProposalFromIndex(cur realm, proposalID int64) {
 //
 // Returns:
 //   - int64: new configuration version
+//
+// Halt check: reverts while the Governance halt scope is active.
 func Reconfigure(
 	cur realm,
 	votingStartDelay int64,

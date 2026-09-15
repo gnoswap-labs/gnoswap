@@ -18,6 +18,8 @@ import (
 // - Maintain system stability during volatile periods
 //
 // Parameters:
+//   - _: leading realm-call discriminator; callers pass 0 for the forwarded implementation call
+//   - rlm: propagated current realm context validated before administrative state updates
 //   - period: lockup period in seconds (must be non-negative)
 //
 // Panics:
@@ -59,6 +61,8 @@ func (gs *govStakerV1) SetUnDelegationLockupPeriodByAdmin(_ int, rlm realm, peri
 // 4. Updates the delegation history with filtered records
 //
 // Parameters:
+//   - _: leading realm-call discriminator; callers pass 0 for the forwarded implementation call
+//   - rlm: propagated current realm context validated before administrative state updates
 //   - snapshotTime: cutoff timestamp (records older than this will be removed)
 //   - target: the user address whose delegation history should be cleaned
 //

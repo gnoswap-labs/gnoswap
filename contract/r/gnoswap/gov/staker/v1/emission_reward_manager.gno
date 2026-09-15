@@ -13,11 +13,31 @@ type EmissionRewardManagerResolver struct {
 	*staker.EmissionRewardManager
 }
 
+// NewEmissionRewardManagerResolver wraps an emission reward manager with reward
+// calculation and stake-accounting helpers.
+//
+// Parameters:
+//   - emissionRewardManager: manager state to resolve and mutate.
+//
+// Returns:
+//   - *EmissionRewardManagerResolver: resolver backed by emissionRewardManager.
 func NewEmissionRewardManagerResolver(emissionRewardManager *staker.EmissionRewardManager) *EmissionRewardManagerResolver {
 	return &EmissionRewardManagerResolver{emissionRewardManager}
 }
 
 // GetClaimableRewardAmount calculates the claimable reward amount for a specific address.
+//
+// Parameters:
+//   - currentDistributedAmount: total emission amount distributed to the staker
+//     manager at the current observation point.
+//   - address: reward-state identifier whose claimable amount is requested.
+//   - currentTimestamp: Unix timestamp used to settle the address's reward state.
+//
+// Returns:
+//   - int64: emission reward currently claimable by address, or zero when no
+//     reward state exists.
+//   - error: nil on success; an error from accumulated-reward or reward-state
+//     resolution when calculation fails.
 func (self *EmissionRewardManagerResolver) GetClaimableRewardAmount(
 	currentDistributedAmount int64,
 	address string,

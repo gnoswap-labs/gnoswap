@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	uassert "gno.land/p/nt/uassert/v0"
 	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/gov/staker"
 )
@@ -137,49 +137,49 @@ func TestGetter_GetUnDelegationLockupPeriod(cur realm, t *testing.T) {
 // TestGetter_GetDelegations tests paginating the read-only delegation view
 func TestGetter_GetDelegations(cur realm, t *testing.T) {
 	tests := []struct {
-		name              string
-		totalDelegations  int
-		offset            int
-		count             int
-		expectedCount     int
+		name             string
+		totalDelegations int
+		offset           int
+		count            int
+		expectedCount    int
 	}{
 		{
-			name:              "Get first page",
+			name:             "Get first page",
 			totalDelegations: 5,
 			offset:           0,
 			count:            2,
 			expectedCount:    2,
 		},
 		{
-			name:              "Get second page",
+			name:             "Get second page",
 			totalDelegations: 5,
 			offset:           2,
 			count:            2,
 			expectedCount:    2,
 		},
 		{
-			name:              "Get last page with partial results",
+			name:             "Get last page with partial results",
 			totalDelegations: 5,
 			offset:           3,
 			count:            3,
 			expectedCount:    2,
 		},
 		{
-			name:              "Offset beyond total",
+			name:             "Offset beyond total",
 			totalDelegations: 5,
 			offset:           10,
 			count:            2,
 			expectedCount:    0,
 		},
 		{
-			name:              "Get all at once",
+			name:             "Get all at once",
 			totalDelegations: 5,
 			offset:           0,
 			count:            10,
 			expectedCount:    5,
 		},
 		{
-			name:              "Empty store",
+			name:             "Empty store",
 			totalDelegations: 0,
 			offset:           0,
 			count:            5,
@@ -195,7 +195,7 @@ func TestGetter_GetDelegations(cur realm, t *testing.T) {
 			for i := 0; i < tt.totalDelegations; i++ {
 				delegation := NewDelegation(
 					int64(i+1),
-					address(testutils.TestAddress("delegator" + string(rune(i)))),
+					address(testutils.TestAddress("delegator"+string(rune(i)))),
 					address("g1v7n2w36m8q5p9vc6fmpcprgey4ck233jdgw3kl"),
 					int64(1000*(i+1)),
 					100,
@@ -230,10 +230,10 @@ func TestGetter_GetDelegations(cur realm, t *testing.T) {
 // TestGetter_ExistsDelegation tests ExistsDelegation
 func TestGetter_ExistsDelegation(cur realm, t *testing.T) {
 	tests := []struct {
-		name          string
-		delegationID  int64
-		shouldExist   bool
-		setupStore    func(*mockGovStakerStore, int64)
+		name         string
+		delegationID int64
+		shouldExist  bool
+		setupStore   func(*mockGovStakerStore, int64)
 	}{
 		{
 			name:         "Delegation exists",
@@ -335,9 +335,9 @@ func TestGetter_GetDelegationsGet(cur realm, t *testing.T) {
 // TestGetter_GetDelegationWithdrawCount tests GetDelegationWithdrawCount
 func TestGetter_GetDelegationWithdrawCount(cur realm, t *testing.T) {
 	tests := []struct {
-		name               string
-		setupDelegation    func() *staker.Delegation
-		expectedCount      int
+		name            string
+		setupDelegation func() *staker.Delegation
+		expectedCount   int
 	}{
 		{
 			name: "Delegation with no withdraws",
@@ -411,12 +411,12 @@ func TestGetter_GetDelegationWithdrawCount(cur realm, t *testing.T) {
 // TestGetter_GetDelegationWithdraws tests GetDelegationWithdraws pagination
 func TestGetter_GetDelegationWithdraws(cur realm, t *testing.T) {
 	tests := []struct {
-		name                    string
-		setupDelegation         func() *staker.Delegation
-		offset                  int
-		count                   int
-		expectedCount           int
-		expectedFirstWithdraw   int64
+		name                  string
+		setupDelegation       func() *staker.Delegation
+		offset                int
+		count                 int
+		expectedCount         int
+		expectedFirstWithdraw int64
 	}{
 		{
 			name: "Get first withdraw",
@@ -509,9 +509,9 @@ func TestGetter_GetDelegationWithdraws(cur realm, t *testing.T) {
 // TestGetter_GetCollectableWithdrawAmount tests GetCollectableWithdrawAmount
 func TestGetter_GetCollectableWithdrawAmount(cur realm, t *testing.T) {
 	tests := []struct {
-		name               string
-		setupDelegation    func() *staker.Delegation
-		expectedAmount     int64
+		name            string
+		setupDelegation func() *staker.Delegation
+		expectedAmount  int64
 	}{
 		{
 			name: "No collectable amount",
@@ -609,19 +609,19 @@ func TestGetter_GetCollectableWithdrawAmount(cur realm, t *testing.T) {
 // TestGetter_HasDelegationSnapshotsKey tests HasDelegationSnapshotsKey
 func TestGetter_HasDelegationSnapshotsKey(cur realm, t *testing.T) {
 	tests := []struct {
-		name                    string
-		hasTotalDelegationKey   bool
-		expected                bool
+		name                  string
+		hasTotalDelegationKey bool
+		expected              bool
 	}{
 		{
-			name:                    "Store has snapshots key",
-			hasTotalDelegationKey:   true,
-			expected:                true,
+			name:                  "Store has snapshots key",
+			hasTotalDelegationKey: true,
+			expected:              true,
 		},
 		{
-			name:                    "Store without snapshots key",
-			hasTotalDelegationKey:   false,
-			expected:                false,
+			name:                  "Store without snapshots key",
+			hasTotalDelegationKey: false,
+			expected:              false,
 		},
 	}
 

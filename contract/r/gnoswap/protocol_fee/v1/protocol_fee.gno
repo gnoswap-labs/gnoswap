@@ -21,6 +21,10 @@ import (
 //
 // Only callable by admin or gov/staker contract.
 // Note: Default split is 0% devOps, 100% gov/staker.
+//
+// Parameters:
+//   - _: cross-call discriminator; callers pass 0
+//   - rlm: propagated protocol_fee realm context; it must match the current crossing frame
 func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -48,6 +52,11 @@ func (pf *protocolFeeV1) DistributeProtocolFee(_ int, rlm realm) {
 }
 
 // DistributeProtocolFeeByTokenPath distributes collected protocol fees for one token path.
+//
+// Parameters:
+//   - _: cross-call discriminator; callers pass 0
+//   - rlm: propagated protocol_fee realm context; it must match the current crossing frame
+//   - tokenPath: token contract path whose reserved fee is eligible for distribution
 func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, tokenPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -128,6 +137,8 @@ func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *pr
 // SetDevOpsPct sets the devOpsPct.
 //
 // Parameters:
+//   - _: cross-call discriminator; callers pass 0
+//   - rlm: propagated protocol_fee realm context; it must match the current crossing frame
 //   - pct: percentage for devOps (0-10000, where 10000 = 100%)
 //
 // Only callable by admin or governance.
@@ -165,6 +176,8 @@ func (pf *protocolFeeV1) SetDevOpsPct(_ int, rlm realm, pct int64) {
 // SetGovStakerPct sets the stakerPct.
 //
 // Parameters:
+//   - _: cross-call discriminator; callers pass 0
+//   - rlm: propagated protocol_fee realm context; it must match the current crossing frame
 //   - pct: percentage for gov/staker (0-10000, where 10000 = 100%)
 //
 // Only callable by admin or governance.
@@ -202,10 +215,15 @@ func (pf *protocolFeeV1) SetGovStakerPct(_ int, rlm realm, pct int64) {
 // AddToProtocolFee pulls the approved amount into protocol fee accounting.
 //
 // Parameters:
-//   - tokenPath: token contract path
-//   - amount: fee amount to add
+//   - _: cross-call discriminator; callers pass 0
+//   - rlm: propagated protocol_fee realm context; a non-current value returns errSpoofedRealm
+//   - tokenPath: token contract path from which the approved fee is pulled
+//   - amount: non-negative fee amount in token base units; zero returns nil without transferring
 //
-// Only callable by pool, router or staker contracts.
+// Returns:
+//   - err: nil on success; errSpoofedRealm for a spoofed-realm call; errProtocolFeeHalted when protocol-fee collection is halted
+//
+// Only callable by pool, position, router or staker contracts.
 // Caller must approve the protocol fee realm for at least amount before calling.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
 func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
@@ -284,6 +302,13 @@ func (pf *protocolFeeV1) reserveCollectedProtocolFee(_ int, rlm realm, tokenPath
 // distribution, so every fee bucketed from now on is attributed to that distribution.
 // Restricted to gov/staker: an epoch advanced by anyone else would fragment the buckets
 // without a matching stake record on the gov/staker side.
+//
+// Parameters:
+//   - _: cross-call discriminator; callers pass 0
+//   - rlm: propagated protocol_fee realm context; it must be current and be called by GovStaker
+//
+// Returns:
+//   - epoch: newly stored non-negative accrual epoch for fees collected after the stake change
 func (pf *protocolFeeV1) AdvanceAccrualEpoch(_ int, rlm realm) int64 {
 	if !rlm.IsCurrent() {
 		panic(errors.New(errSpoofedRealm))
@@ -308,6 +333,16 @@ func (pf *protocolFeeV1) AdvanceAccrualEpoch(_ int, rlm realm) int64 {
 //
 // Restricted to gov/staker: clearing a bucket without folding it into an accumulator
 // would strand that fee share.
+//
+// Parameters:
+//   - _: cross-call discriminator; callers pass 0
+//   - rlm: propagated protocol_fee realm context; it must be current and be called by GovStaker
+//   - tokenPath: token contract path whose pending accrual buckets are consumed
+//   - limit: maximum number of oldest buckets to consume; zero or negative consumes all pending buckets
+//
+// Returns:
+//   - epochs: consumed accrual epoch numbers in ascending epoch order
+//   - amounts: fee amounts corresponding positionally to epochs, in token base units
 func (pf *protocolFeeV1) ConsumeAccrualBuckets(_ int, rlm realm, tokenPath string, limit int) ([]int64, []int64) {
 	if !rlm.IsCurrent() {
 		panic(errors.New(errSpoofedRealm))

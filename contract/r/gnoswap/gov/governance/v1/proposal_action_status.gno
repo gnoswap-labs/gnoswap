@@ -2,6 +2,7 @@ package governance
 
 import (
 	"errors"
+
 	"gno.land/r/gnoswap/gov/governance"
 )
 
@@ -9,6 +10,14 @@ type ProposalActionStatusResolver struct {
 	*governance.ProposalActionStatus
 }
 
+// NewProposalActionStatusResolver wraps a proposal action status for mutation
+// and execution-state queries.
+//
+// Parameters:
+//   - status: proposal action status to resolve and update.
+//
+// Returns:
+//   - *ProposalActionStatusResolver: resolver backed by status.
 func NewProposalActionStatusResolver(status *governance.ProposalActionStatus) *ProposalActionStatusResolver {
 	return &ProposalActionStatusResolver{status}
 }
@@ -40,16 +49,17 @@ func (p *ProposalActionStatusResolver) cancel(
 	return nil
 }
 
-// execute marks the proposal as executed and records execution details.
+// Execute marks the proposal as executed and records execution details.
 // This method validates that the proposal is eligible for execution.
 //
 // Parameters:
-//   - executedAt: timestamp when execution occurred
-//   - executedHeight: block height when execution occurred
-//   - executedBy: address performing the execution
+//   - executedAt: Unix timestamp when execution occurred.
+//   - executedHeight: block height when execution occurred.
+//   - executedBy: address performing the execution.
 //
 // Returns:
-//   - error: already canceled error if proposal action status is already canceled
+//   - error: nil on success; an error when the proposal is not executable or
+//     has already been canceled.
 func (p *ProposalActionStatusResolver) Execute(
 	executedAt, executedHeight int64,
 	executedBy address,

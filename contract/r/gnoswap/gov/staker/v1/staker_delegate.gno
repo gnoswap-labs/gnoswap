@@ -31,8 +31,15 @@ import (
 // Can delegate to self or any other address.
 //
 // Parameters:
+//
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//
+//   - rlm: Current realm context forwarded unchanged by the governance-staker proxy.
+//
 //   - to: Address to receive voting power (can be self)
+//
 //   - amount: Amount of GNS to stake and delegate
+//
 //   - referrer: Optional referral address for tracking
 //
 // Process:
@@ -47,7 +54,8 @@ import (
 //   - Sufficient GNS balance
 //   - Approval for GNS transfer
 //
-// Returns delegated amount.
+// Returns:
+//   - delegatedAmount: amount of GNS delegated and mirrored as xGNS
 func (gs *govStakerV1) Delegate(
 	_ int,
 	rlm realm,
@@ -119,7 +127,13 @@ func (gs *govStakerV1) Delegate(
 // Prevents governance attacks through time delay.
 //
 // Parameters:
+//
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//
+//   - rlm: Current realm context forwarded unchanged by the governance-staker proxy.
+//
 //   - from: Address currently delegated to
+//
 //   - amount: Amount of xGNS to undelegate
 //
 // Process:
@@ -132,7 +146,9 @@ func (gs *govStakerV1) Delegate(
 //   - Sufficient delegated amount
 //
 // After lockup period ends, use CollectUndelegatedGns() to claim GNS.
-// Returns undelegated amount.
+//
+// Returns:
+//   - undelegatedAmount: amount moved out of active delegation into undelegation lockup
 func (gs *govStakerV1) Undelegate(
 	_ int,
 	rlm realm,
@@ -184,22 +200,29 @@ func (gs *govStakerV1) Undelegate(
 	return unDelegationAmount
 }
 
-// Redelegate redelegates xGNS from existing delegate to another.
+// Redelegate redelegates xGNS from an existing delegate to another.
 //
 // Atomic operation to change delegation target.
 // Maintains voting power continuity without unstaking.
-// Useful for vote delegation services and dao coordination.
+// Useful for vote delegation services and DAO coordination.
 //
 // Parameters:
+//
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//
+//   - rlm: Current realm context forwarded unchanged by the governance-staker proxy.
+//
 //   - delegatee: Current address delegated to
+//
 //   - newDelegatee: New address to delegate to
+//
 //   - amount: Amount of xGNS to redelegate
 //
 // Process:
 //  1. Validates current delegation exists
-//  2. Removes voting power from old delegatee
-//  3. Assigns voting power to new delegatee
-//  4. Updates delegation snapshots
+//  2. Removes voting power from the old delegatee without a lockup
+//  3. Assigns the same amount to the new delegatee
+//  4. Updates delegation history and reward stake events
 //
 // Requirements:
 //   - Must have active delegation to current delegatee
@@ -207,8 +230,11 @@ func (gs *govStakerV1) Undelegate(
 //   - Amount must not exceed current delegation
 //   - Cannot redelegate to same address
 //
-// No lockup period - instant redelegation.
-// Returns redelegated amount.
+// No user-facing lockup period; reward accounting records one removal and one
+// addition across the corresponding accrual epochs.
+//
+// Returns:
+//   - redelegatedAmount: amount moved from the current delegatee to the new delegatee
 func (gs *govStakerV1) Redelegate(
 	_ int,
 	rlm realm,
@@ -277,6 +303,13 @@ func (gs *govStakerV1) Redelegate(
 // CollectUndelegatedGns collects undelegated GNS tokens.
 // Allows users to collect GNS tokens that completed undelegation lockup period.
 // Burns xGNS and returns GNS tokens.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the governance-staker proxy.
+//
+// Returns:
+//   - collectedAmount: amount of undelegated GNS released to the caller after lockup expiry
 func (gs *govStakerV1) CollectUndelegatedGns(_ int, rlm realm) int64 {
 	access.AssertIsRlmCurrent(0, rlm)
 

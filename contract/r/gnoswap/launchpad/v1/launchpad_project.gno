@@ -22,18 +22,22 @@ import (
 // CreateProject creates a new launchpad project with tiered allocations.
 //
 // Parameters:
-//   - name: project name
-//   - tokenPath: reward token contract path
-//   - recipient: project recipient address
-//   - depositAmount: amount of tokens to deposit
-//   - conditionTokens: comma-separated token paths for conditions
-//   - conditionAmounts: comma-separated minimum amounts for conditions
-//   - tier30Ratio: allocation ratio for 30-day tier
-//   - tier90Ratio: allocation ratio for 90-day tier
-//   - tier180Ratio: allocation ratio for 180-day tier
-//   - startTime: unix timestamp for project start
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the launchpad proxy.
+//   - name: project name, limited by the project validation rules.
+//   - tokenPath: reward token contract path whose balance is deposited into the project.
+//   - recipient: project recipient address recorded for authorization and later collection.
+//   - depositAmount: amount of reward tokens to deposit into the project.
+//   - conditionTokens: `*PAD*`-separated token paths for eligibility conditions.
+//   - conditionAmounts: `*PAD*`-separated minimum balances aligned with conditionTokens.
+//   - tier30Ratio: percentage of the allocation assigned to the 30-day tier.
+//   - tier90Ratio: percentage of the allocation assigned to the 90-day tier.
+//   - tier180Ratio: percentage of the allocation assigned to the 180-day tier.
+//   - startTime: project start timestamp in Unix seconds, subject to the minimum delay.
 //
-// Returns project ID.
+// Returns:
+//   - projectID: newly created launchpad project identifier.
+//
 // Only callable by admin or governance.
 func (lp *launchpadV1) CreateProject(
 	_ int,
@@ -246,8 +250,19 @@ func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectPara
 	return project, nil
 }
 
-// TransferLeftFromProjectByAdmin transfers the remaining rewards of a project to a specified recipient.
-// Only admin can call this function. Returns the amount of rewards transferred.
+// TransferLeftFromProjectByAdmin transfers the remaining refundable project-token
+// balance of an ended project to a specified recipient.
+// Only admin can call this function. Amounts reserved for active depositor
+// claims are excluded from the transfer.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the launchpad proxy.
+//   - projectID: ID of the ended project.
+//   - recipient: address that receives the remaining project-token balance.
+//
+// Returns:
+//   - amount: amount of project-token balance transferred to the recipient.
 func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64 {
 	access.AssertIsRlmCurrent(0, rlm)
 

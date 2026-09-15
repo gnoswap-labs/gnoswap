@@ -1,16 +1,15 @@
 // Package router provides swap routing and execution across GnoSwap liquidity pools.
 //
-// The router handles token swaps with multi-hop routing, slippage protection,
-// and automatic GNOT wrapping/unwrapping. It supports both exact input and
-// exact output swap modes with deadline validation.
+// Router domain proxy for single-hop and multi-hop exact-in, exact-out, and
+// dry-route operations.
 //
-// Key features:
-// - Multi-hop routing across up to 3 pools
-// - Quote distribution for optimal execution
-// - Native GNOT handling with automatic wrap/unwrap
-// - Slippage protection via min/max amounts
-// - Router fee (0.15%) on all swaps
-// - Deadline enforcement to prevent stale transactions
+// Live exact-in and exact-out calls validate a deadline and the corresponding
+// amount limit (minimum output or maximum input). DrySwapRoute is a read-only
+// quote path with no deadline or token transfer.
+//
+// The router fee is charged on output tokens. It defaults to 15 bps (0.15%)
+// and is configurable by admin/governance from 0 through 1000 bps (0–10%);
+// the current rate is fixed for each individual execution.
 //
 // The router acts as a proxy to version-specific implementations,
 // currently routing to v1 for all swap operations.

@@ -20,6 +20,9 @@ type UnstakedPositions struct {
 }
 
 // NewUnstakedPositions creates a new UnstakedPositions instance.
+//
+// Returns:
+//   - *UnstakedPositions: Empty exit-checkpoint manager backed by a new B+ tree.
 func NewUnstakedPositions() *UnstakedPositions {
 	return &UnstakedPositions{
 		tree: sr.NewBPTreeN(16), // positionId -> *UnstakedPosition
@@ -27,6 +30,12 @@ func NewUnstakedPositions() *UnstakedPositions {
 }
 
 // Has checks if a position ID has an exit checkpoint.
+//
+// Parameters:
+//   - positionId: Position ID whose exit-checkpoint membership is checked.
+//
+// Returns:
+//   - bool: true when an exit checkpoint exists for positionId; false otherwise.
 func (self *UnstakedPositions) Has(positionId uint64) bool {
 	return self.tree.Has(utils.EncodeUint64(positionId))
 }
@@ -191,12 +200,25 @@ func (s *stakerV1) dropUnstakedPositionIfCollected(_ int, rlm realm, target *col
 	)
 }
 
-// HasUnstakedPosition reports whether a position has uncollected rewards from a past stake.
+// HasUnstakedPosition reports whether a position is staked no longer but still has uncollected rewards.
+//
+// Parameters:
+//   - positionId: Position ID whose exit-checkpoint membership is checked.
+//
+// Returns:
+//   - bool: true when positionId has an exit checkpoint; false otherwise.
 func (s *stakerV1) HasUnstakedPosition(positionId uint64) bool {
 	return s.getUnstakedPositions().Has(positionId)
 }
 
 // GetUnstakedPositionExitTime returns when an unstaked position stopped accruing rewards.
+//
+// Parameters:
+//   - positionId: Position ID whose exit checkpoint is queried.
+//
+// Returns:
+//   - int64: Exit timestamp in Unix seconds.
+//   - error: Non-nil when positionId has no uncollected exit checkpoint; nil on success.
 func (s *stakerV1) GetUnstakedPositionExitTime(positionId uint64) (int64, error) {
 	position := s.getUnstakedPositions().get(positionId)
 	if position == nil {
@@ -208,6 +230,13 @@ func (s *stakerV1) GetUnstakedPositionExitTime(positionId uint64) (int64, error)
 
 // GetUnstakedPositionPendingIncentives returns the incentives an unstaked position has yet to
 // collect.
+//
+// Parameters:
+//   - positionId: Position ID whose pending incentive IDs are queried.
+//
+// Returns:
+//   - []string: External incentive IDs with rewards still pending for the checkpoint.
+//   - error: Non-nil when positionId has no uncollected exit checkpoint; nil on success.
 func (s *stakerV1) GetUnstakedPositionPendingIncentives(positionId uint64) ([]string, error) {
 	position := s.getUnstakedPositions().get(positionId)
 	if position == nil {
@@ -219,6 +248,12 @@ func (s *stakerV1) GetUnstakedPositionPendingIncentives(positionId uint64) ([]st
 
 // GetUncollectedIncentiveCount returns how many unstaked positions still owe a reward from the
 // incentive; EndExternalIncentive is refused while it is non-zero.
+//
+// Parameters:
+//   - incentiveId: External incentive identifier whose outstanding checkpoint count is queried.
+//
+// Returns:
+//   - int64: Number of exit checkpoints still owing incentiveId; zero permits incentive finalization.
 func (s *stakerV1) GetUncollectedIncentiveCount(incentiveId string) int64 {
 	return s.uncollectedIncentiveCountOf(incentiveId)
 }

@@ -23,7 +23,10 @@ import (
 // Applies slippage protection via minimum output amount.
 //
 // Parameters:
-//   - inputToken, outputToken: Token contract paths
+//   - _: leading implementation discriminator; callers pass 0
+//   - rlm: propagated current realm context; this implementation validates and forwards it
+//   - inputToken: Input token contract path
+//   - outputToken: Output token contract path
 //   - amountIn: Exact input amount to swap
 //   - routeArr: Swap route (max 3 hops per path, multiple paths separated by comma)
 //   - quoteArr: Split percentages "70,30" (must sum to 100)
@@ -38,7 +41,7 @@ import (
 //
 // Returns:
 //   - amountIn: Actual input consumed
-//   - amountOut: Actual output received
+//   - amountOut: Actual output received after the router fee
 //
 // Reverts if output < amountOutMin or deadline passed.
 func (r *routerV1) ExactInSwapRoute(
@@ -84,14 +87,17 @@ func (r *routerV1) ExactInSwapRoute(
 
 // ExactInSingleSwapRoute swaps an exact amount of input tokens for output tokens through a single route.
 //
-// Executes single-hop swaps through a single specified route.
+// Executes a single-hop swap through a single specified route.
 // Allows price limit control via sqrtPriceLimitX96 parameter.
 // Applies slippage protection via minimum output amount.
 //
 // Parameters:
-//   - inputToken, outputToken: Token contract paths
+//   - _: leading implementation discriminator; callers pass 0
+//   - rlm: propagated current realm context; this implementation validates and forwards it
+//   - inputToken: Input token contract path
+//   - outputToken: Output token contract path
 //   - amountIn: Exact input amount to swap
-//   - routeArr: Single swap route (just 1 hop)
+//   - routeArr: Single-hop route path
 //   - amountOutMin: Minimum acceptable output (slippage protection)
 //   - sqrtPriceLimitX96: Price limit for swap execution (0 for no limit)
 //   - deadline: Unix timestamp for expiration
@@ -102,10 +108,10 @@ func (r *routerV1) ExactInSwapRoute(
 //
 // Returns:
 //   - amountIn: Actual input consumed
-//   - amountOut: Actual output received
+//   - amountOut: Actual output received after the router fee
 //
-// Reverts the transaction if the output amount is less than amountOutMin,
-// the deadline has passed, or the price limit is exceeded.
+// With a nonzero price limit, the swap may stop at the limit after consuming
+// less than amountIn; amountOutMin and the deadline are still enforced.
 func (r *routerV1) ExactInSingleSwapRoute(
 	_ int,
 	rlm realm,
@@ -209,6 +215,14 @@ type ExactInSwapOperation struct {
 	router *routerV1
 }
 
+// NewExactInSwapOperation creates an exact-input operation for router execution.
+//
+// Parameters:
+//   - r: router implementation used to execute pool swaps
+//   - pp: exact-input amount and route settings
+//
+// Returns:
+//   - operation: initialized ExactInSwapOperation
 func NewExactInSwapOperation(r *routerV1, pp ExactInParams) *ExactInSwapOperation {
 	return &ExactInSwapOperation{
 		router: r,
@@ -219,7 +233,10 @@ func NewExactInSwapOperation(r *routerV1, pp ExactInParams) *ExactInSwapOperatio
 	}
 }
 
-// Validate validates the exact-in swap operation parameters.
+// Validate checks the exact-input amount and parses route/quote allocations.
+//
+// Returns:
+//   - err: nil when amount, routes, and quotes are valid; validation error otherwise
 func (op *ExactInSwapOperation) Validate() error {
 	amountIn := op.params.AmountIn
 
@@ -242,7 +259,15 @@ func (op *ExactInSwapOperation) Validate() error {
 	return nil
 }
 
-// Process executes the exact-in swap operation.
+// Process executes the validated exact-input operation in the propagated realm.
+//
+// Parameters:
+//   - _: leading operation discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool swaps
+//
+// Returns:
+//   - result: aggregate swap amounts and route metadata, or nil on processing error
+//   - err: nil on success; pool or route execution error otherwise
 func (op *ExactInSwapOperation) Process(_ int, rlm realm) (*SwapResult, error) {
 	resultAmountIn, resultAmountOut, err := op.processRoutes(0, rlm, op.router, ExactIn)
 	if err != nil {

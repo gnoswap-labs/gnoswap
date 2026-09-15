@@ -28,11 +28,18 @@ const (
 type HaltLevel string
 
 // String returns the string representation of the halt level.
+//
+// Returns:
+//   - text: exact string value represented by the halt level
 func (h HaltLevel) String() string {
 	return string(h)
 }
 
 // Description returns a human-readable description of the halt level.
+//
+// Returns:
+//   - description: human-readable policy description; "Unknown halt level" for
+//     an unrecognized value
 func (h HaltLevel) Description() string {
 	haltLevelDescriptions := map[HaltLevel]string{
 		HaltLevelNone:      "All operations enabled",
@@ -50,6 +57,9 @@ func (h HaltLevel) Description() string {
 }
 
 // IsValid returns true if the halt level is valid.
+//
+// Returns:
+//   - valid: true for one of the defined halt levels; false otherwise
 func (h HaltLevel) IsValid() bool {
 	switch h {
 	case HaltLevelNone, HaltLevelSafeMode, HaltLevelEmergency, HaltLevelComplete:
@@ -78,17 +88,28 @@ var opTypes = map[OpType]bool{
 }
 
 // String returns the string representation of the operation type.
+//
+// Returns:
+//   - text: exact string value represented by the operation type
 func (o OpType) String() string {
 	return string(o)
 }
 
 // IsValid returns true if the operation type is valid.
+//
+// Returns:
+//   - valid: true when the operation type is defined; false otherwise
 func (o OpType) IsValid() bool {
 	_, ok := opTypes[o]
 
 	return ok
 }
 
+// OpTypes returns all operation types currently supported by the halt
+// configuration.
+//
+// Returns:
+//   - operationTypes: slice containing each defined operation type in map iteration order
 func OpTypes() []OpType {
 	allOpTypes := make([]OpType, 0, len(opTypes))
 

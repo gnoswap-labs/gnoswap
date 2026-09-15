@@ -41,6 +41,10 @@ func deductWithdrawalFee(amount int64, withdrawalFeeBPS uint64) (feeAmount, amou
 }
 
 // GetPendingProtocolFees returns the pending protocol fee amount per token path.
+//
+// Returns:
+//   - map[string]int64: Pending protocol fee amounts keyed by token contract
+//     path, with values in token base units.
 func (i *poolV1) GetPendingProtocolFees() map[string]int64 {
 	return i.store.GetPendingProtocolFees()
 }
@@ -94,6 +98,14 @@ func (i *poolV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount in
 
 // SetPoolCreationFee sets the poolCreationFee.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Propagated realm context validated as current before the fee is
+//     written.
+//   - fee: New non-negative pool creation fee in configured native-token base
+//     units.
 func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -124,6 +136,14 @@ func (i *poolV1) SetPoolCreationFee(_ int, rlm realm, fee int64) {
 
 // SetWithdrawalFee sets the withdrawal fee.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Propagated realm context validated as current before the fee is
+//     written.
+//   - fee: New withdrawal fee in basis points; the setter accepts 0 through
+//     1,000 (10%) inclusive.
 func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 	access.AssertIsRlmCurrent(0, rlm)
 

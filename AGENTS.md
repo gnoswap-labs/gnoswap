@@ -11,7 +11,7 @@ GnoSwap is a concentrated liquidity AMM (Uniswap V3 fork) running on GnoVM. Pool
 - **Language**: Gno (`.gno`) - Go-like, deterministic, runs on GnoVM
 - **AMM**: Uniswap V3 concentrated liquidity (Q64.96 sqrt price, tick-based)
 - **Math**: `uint256`/`int256`, `gnsmath` (AMM calculations)
-- **Storage**: Permission-based KV store, proxy/implementation pattern
+- **Storage**: Write-authorized KV stores, proxy/implementation pattern
 - **Access**: RBAC with 2-step ownership
 - **Tests**: Gno unit/file tests plus Docker-backed integration txtar tests
 
@@ -20,30 +20,32 @@ GnoSwap is a concentrated liquidity AMM (Uniswap V3 fork) running on GnoVM. Pool
 ```
 contract/
 ├── p/gnoswap/
-│   ├── gnsmath/         # AMM math: tick, liquidity, sqrt price, swap
-│   ├── int256/          # 256-bit signed integers
-│   ├── uint256/         # 256-bit unsigned integers + MulDiv
-│   ├── rbac/            # Stateless RBAC infra
-│   ├── store/           # Permission-based KV store
-│   ├── version_manager/ # Upgrade registration/activation
+│   ├── gnsmath/v1/         # AMM math: tick, liquidity, sqrt price, swap
+│   ├── int256/v1/          # 256-bit signed integers
+│   ├── uint256/v1/         # 256-bit unsigned integers + MulDiv
+│   ├── rbac/v1/            # Reusable RBAC data structures and helpers
+│   ├── store/v1/           # Permission-based KV store
+│   ├── version_manager/v1/ # Upgrade registration/activation
 │   ├── fuzz/            # Deterministic fuzz generators
 │   ├── fuzzutils/       # Fuzz runner/result helpers
-│   ├── utils/           # Shared formatting/util helpers
-│   └── consts/          # Protocol-wide constants
+│   ├── utils/v1/        # Shared formatting/util helpers
+│   └── consts/v1/       # Protocol-wide constants
 ├── r/gnoswap/
 │   ├── {pool,position,router,staker,launchpad,protocol_fee}/
 │   │   └── v1/          # Current implementation realms behind proxy layers
-│   ├── gov/{governance,staker}/v1/ # Governance implementation realms
+│   ├── gov/{governance,staker}/ # Governance proxies with v1/ implementations
+│   ├── gov/xgns/        # Governance voting-power token
 │   ├── {pool,position,router,staker,launchpad,protocol_fee}/
 │   │                    # Proxy layers (permanent entry points)
-│   ├── access/          # Role mirror, queried by all realms
-│   ├── rbac/            # Authoritative role source
+│   ├── access/v1/       # Role mirror, queried by all realms
+│   ├── rbac/v1/         # Authoritative role source
 │   ├── emission/        # GNS minting/distribution
 │   ├── gns/             # GNS token contract
 │   ├── gnft/            # GnoSwap NFT helpers/metadata
-│   ├── halt/            # Granular emergency pause
-│   ├── referral/        # Referral tracking
-│   ├── common/          # Realm utilities: GRC20 helpers, native coins
+│   ├── community_pool/v1/ # Treasury transfers: governance, with emergency admin access
+│   ├── halt/v1/         # Granular emergency pause
+│   ├── referral/v1/     # Referral tracking
+│   ├── common/          # Shared token/native-coin helpers, with a v1/ implementation
 │   ├── mock/            # Shared realm mocks for tests
 │   ├── test/            # Fuzz and test harness packages
 │   └── test_token/      # Local test token realms
@@ -57,29 +59,29 @@ tests/
 
 **Proxy pattern**: `User -> Proxy (permanent) -> Implementation v1 -> Storage (KV, shared across versions)`
 
-- Proxy holds write permission. Implementation does NOT.
-- On `ChangeImplementation`: old write access is revoked. Dependent modules must manually re-register write access.
-- `r/rbac/` = authoritative role map. `r/access/` = synchronized mirror.
-- `r/halt/` pauses pool / staker / router / position / withdrawals independently.
+- The proxy/domain owns the initial KV write permission. Version-manager activation does not grant write permission to the implementation realm; cross-domain writer grants are explicit.
+- `ChangeImplementation` reuses the domain store and existing ACLs. It does not revoke/re-register writers automatically. Initializers handle compatible state initialization or migration; update ACLs only when the required writer set changes.
+- `contract/r/gnoswap/rbac/v1/` is the authoritative role map; `contract/r/gnoswap/access/v1/` is its synchronized mirror.
+- `contract/r/gnoswap/halt/v1/` has separate module/operation scopes, including pool, staker, router, position, withdrawals, protocol fees, community pool, and xGNS. Consult its scope definitions rather than assuming one global pause.
 
 ## Commands
 
 ```bash
-# One-time setup / linking into a Gno checkout
-make setup
-python3 setup.py -w <workdir>          # Links modules into <workdir>/gno/examples/gno.land
-python3 setup.py --list-tests          # Lists integration txtar tests
+# Run these commands from the repository/worktree root, not contract/.
+# Prerequisites: Python 3 and a gno binary built from the matching
+# gnoswap-labs/gno checkout. make test clones WORKDIR/gno if absent,
+# but does not build/install the CLI.
+python3 setup.py -w tmp                 # Relink an existing tmp/gno checkout
+python3 setup.py --list-tests           # List integration txtar names
 
-# Format
+# Whole-repository formatting (includes temporary checkouts and fixtures).
+# Do not run this for a documentation-only or otherwise narrowly scoped edit.
 make fmt                               # gofumpt over all .gno files
 
 # Package tests (Makefile runs setup.py, then gno test under <workdir>/gno/examples)
 make test PKG=gno.land/r/gnoswap/pool/v1
 make test PKG=gno.land/r/gnoswap/pool/v1 RUN=TestCreatePool
 make test WORKDIR=tmp PKG=gno.land/p/gnoswap/gnsmath/v1
-
-# Folder/filetest runner used by legacy scripts
-make test-folder FOLDER=contract/r/gnoswap/pool/v1
 
 # Integration tests
 make integration-test
@@ -88,66 +90,71 @@ make integration-test-run TEST=pool_create_pool_and_mint
 make integration-test-build
 ```
 
-- `gno build` does not exist. Use `gno test` for compilation + runtime checks.
-- For direct `gno test`, run `python3 setup.py -w <workdir>` first, then test from `<workdir>/gno/examples`.
-- `RUN=` maps to `gno test -run`; use regexes for subtests.
+- The current `gno` CLI has no `build` subcommand. Use the repository's `make test` wrapper for compilation and runtime checks.
+- `WORKDIR` defaults to `tmp`. Match the installed CLI to that checkout; `make -C tmp/gno install.gno` builds/installs it when needed.
+- `setup.py -w <workdir>` replaces linked module directories under `<workdir>/gno/examples/gno.land` and links integration resources. Always specify the workdir; the script's standalone default is the home directory.
+- `make setup`, `make clone`, and `make test-folder` use the legacy `scripts/test.sh` workflow, not the quick package-test wrapper. That workflow expects `tmp/gnoswap`, clones upstream `gnolang/gno`, patches a legacy stdlib path, and the folder runner temporarily renames test files. Do not use it as routine worktree setup or verification.
+- `RUN=` maps to `gno test -run`; use regexes for subtests. Integration `TEST=` names come from `make integration-test-list`; the integration targets invoke `docker-compose`.
 - Filetests and integration txtar cases are coarse-grained. Do not update golden/bless outputs without reviewing diffs.
-- CI clones `gnoswap-labs/gno`, runs `setup.py`, updates fuzz seeds, and executes package tests via `.github/scripts/run_tests.rb`.
+- Package-test CI clones `gnoswap-labs/gno` master, builds the CLI, runs `setup.py`, updates fuzz seeds, and executes packages via `.github/scripts/run_tests.rb`. The workflow follows a branch, not a fixed toolchain revision.
 
 ## Conventions & Rules
 
 ### Gno Language
 
-- Never use goroutines, channels, `os`, `net`, `unsafe` in contract code.
-- Import paths: `gno.land/p/...` or `gno.land/r/...` only. Never `github.com/...`.
-- Module config: `gnomod.toml`, not `go.mod`.
-- **Realm** (`r/`) = stateful contract. **Package** (`p/`) = stateless library. **Ephemeral** (`e/`) = temporary user code.
-- Public `MsgCall` entry points in `/r/` packages are crossing functions: `func Foo(cur realm, ...)`.
-- `std` package is deprecated in production code:
+- Do not use goroutines, channels, or Go's OS/network/`unsafe` packages in Gno contracts. The Gno-specific `chain/runtime/unsafe` package is distinct and is intentionally used for limited transaction-envelope inspection.
+- Contract imports use Gno stdlib paths (for example `errors`, `math`, and `chain/...`) or deployed `gno.land/p/...` / `gno.land/r/...` paths, not Go module paths such as `github.com/...`.
+- Contract package configuration is `gnomod.toml`; the repository's Go tooling can separately use `go.mod`.
+- **Realm** (`r/`) = stateful contract. **Package** (`p/`) = library with no independent persisted realm; library-created objects can hold data owned by their allocating realm. **Ephemeral** (`e/`) = temporary user execution, not a directory in this contract tree.
+- Public transaction entry points use crossing signatures such as `func Foo(cur realm, ...)`. Exported helpers/getters are not automatically crossing functions.
+- Do not introduce legacy `std` imports. Prefer the threaded realm token for identity:
 
-| Old (`std`) | New | Import |
-|------------|-----|--------|
-| `std.PreviousRealm()` | `runtime.PreviousRealm()` | `chain/runtime` |
-| `std.CurrentRealm()` | `runtime.CurrentRealm()` | `chain/runtime` |
+| Old (`std`) | Preferred current API | Import |
+|------------|-----------------------|--------|
+| `std.PreviousRealm()` | `cur.Previous()` | builtin `realm` |
+| `std.CurrentRealm()` | `cur.Address()` / `cur.PkgPath()` | builtin `realm` |
 | `std.Address` | `address` (builtin) | - |
-| `std.GetOrigSend()` | `banker.OriginSend()` | `chain/banker` |
+| `std.GetOrigSend()` | `unsafe.OriginSend()` for intentional transaction-envelope inspection | `chain/runtime/unsafe` |
 | `std.Coin` / `std.Coins` | `chain.Coin` / `chain.Coins` | `chain` |
 | `std.DerivePkgAddr()` | `chain.PackageAddress()` | `chain` |
 
+Low-level `PreviousRealm()` / `CurrentRealm()` now live in `chain/runtime/unsafe`, not `chain/runtime`. They are not substitutes for a threaded realm token in authorization checks. `chain/runtime` still provides `AssertOriginCall()`.
+
 ### Interrealm (Cross-Realm)
 
-- Interrealm v2 source of truth: <https://docs.gno.land/resources/gno-interrealm-v2/>.
-- Crossing functions: `func Foo(cur realm, ...)` - `cur realm` must be first parameter and only `/r/` packages may declare them.
-- External cross-call: `realm.Foo(cross(cur), ...)` - shifts both realm-context and storage-context to the callee realm and finalizes on boundary return.
-- Same-realm helper call: `Foo(cur, ...)` - no realm-context/storage-context shift, no realm boundary, no finalization.
-- `cur` is an ephemeral capability token. Check `cur.IsCurrent()` before deriving caller identity from `cur`, `cur.Previous()`, or `cur.PkgPath()`.
+- Ground VM behavior in the matching Gno checkout, especially `gnovm/adr/interrealm_v2.md` and `gnovm/adr/pr_cross_explicit.md`. The [published interrealm v2 guide](https://docs.gno.land/resources/gno-interrealm-v2/) is useful background but still contains older bare-`cross` examples.
+- Production realm crossing functions have `realm` as their first parameter, for example `func Foo(cur realm, ...)`. Test functions and ephemeral `main` have VM-specific entrypoint exceptions; do not apply a blanket `/r/`-only rule to them.
+- The current cross-call form is `callee.Foo(cross(cur), ...)` (or `cross(rlm)` in a helper), never bare `cross`. Its argument must be a realm-typed identifier; the VM checks that it is the current frame's token and creates the callee token.
+- A same-realm noncrossing call such as `Foo(cur, ...)` does not introduce a crossing boundary. Implementation helpers commonly use `(_ int, rlm realm, ...)`, called as `(0, cur, ...)`, to receive the current context without declaring a crossing function.
+- `cur` is an ephemeral capability token. Validate a forwarded token with `IsCurrent()` or the module's `AssertIsRlmCurrent` helper before using it for authorization.
 - Never persist `realm` values; store `cur.Address()` or `cur.PkgPath()` instead.
-- `/r/`-declared functions/methods borrow storage-context to their declaring realm. `/p/`/stdlib receiver methods borrow to the receiver's allocating realm. Borrows do NOT change realm-context.
-- External realm field/index access is readonly-tainted. Function returns are NOT tainted.
+- `/r/`-declared functions, methods, and closures borrow storage-context to their declaring realm. `/p/`/stdlib receiver methods borrow to the receiver's allocating realm when an object identity exists; `/p/` closures borrow to their construction realm. These storage borrows do not change realm-context.
+- Direct external realm field/index access is readonly-tainted. Returning a value does not itself add that taint, but object ownership and mutation guards still apply; a returned reference is not unrestricted write authority.
 - `panic()` crossing a realm boundary aborts the transaction; ordinary `recover()` cannot catch it. Use `revive(fn)` in tests only.
-- Save deployer in `init()` via `runtime.PreviousRealm()` - only opportunity.
+- If a module needs the deployment caller, capture `cur.Previous()` during `init(cur realm)`. Do not replace configured authority with an assumed deployer: RBAC, for example, initializes from its configured `ADMIN`.
 
 ### Access Control
 
-- In crossing entry points, validate `cur.IsCurrent()` and use `cur.Previous().Address()` for caller checks. Never use `OriginCaller` for production access control.
-- `runtime.PreviousRealm()` is still valid for init-time deployer capture and low-level parity checks, but prefer threaded `cur realm` values in public APIs.
-- Every public state-changing function must have a role/permission assertion.
-- `SwapCallback` must verify both: `access.AssertIsPool(caller)` + `assertIsRouterV1()`.
-- Never accept arbitrary/variable functions as arguments for cross-calling.
+- Use the current threaded realm token and `cur.Previous().Address()` for caller checks. Explicit crossings validate their source token in the VM; forwarded helper contexts still need their current-context checks. Never use `OriginCaller` as production authorization.
+- Keep intentional `chain/runtime/unsafe` usage narrowly scoped. Reading the transaction's original coin envelope, as native-coin rejection does, is different from authenticating an immediate caller or attributing a payment.
+- Privileged configuration/upgrades require the relevant role assertions. User-facing operations may instead enforce owner, approval, allowance, or other operation-specific checks; public router swaps do not require a user whitelist.
+- Community-pool transfers should normally use governance. While governance is not yet mature, admin authorization is retained for emergency-only use. This is an operational policy, not an on-chain emergency check: `TransferToken` accepts either role while withdrawals are not halted and does not require proposal approval for admin calls.
+- On the router callback path, the pool-origin closure uses `access.AssertIsPool(caller)`, then delegated `SwapCallback` uses `assertIsRouterImplementation(caller)`. There is no `assertIsRouterV1` helper.
+- Typed callback and initializer APIs are intentional. Preserve their fixed signatures, registration checks, caller checks, and settlement invariants rather than imposing a blanket ban on function arguments.
 
 ### Token Handling
 
-- Use `SafeGRC20Transfer` / `SafeGRC20TransferFrom` only. Panic on failure.
-- Pools are GRC-20 only.
-- **WUGNOT `Deposit`/`Withdraw` cannot be called cross-realm** (`runtime.AssertOriginCall()` enforced).
-  - Deposit: user calls `wugnot.Deposit()` directly -> `Approve()` -> contract uses `TransferFrom(cross(cur), ...)`.
-  - Withdraw: contract sends via `wugnot.Transfer(cross(cur), user, amt)` -> user calls `Withdraw()` in separate tx.
-- Unexpected GNOT in non-native path: revert.
-- Transfer cap: `int64` max (`2^63 - 1`). Use `safeConvertToInt64` at all boundaries.
+- Use `SafeGRC20Transfer` / `SafeGRC20TransferFrom` when a transfer failure must abort. The common module also exposes error-returning `Transfer`, `TransferFrom`, and `Approve`; handle those errors explicitly.
+- Pool-pair assets are GRC20 tokens. Router swaps reject native-coin handling and require token contract paths such as WUGNOT.
+- In the matching Gno checkout, WUGNOT `Deposit(cur realm)` and `Withdraw(cur realm, amount int64)` enforce `runtime.AssertOriginCall()`. Do not add wrapping/unwrapping inside ordinary router/realm middleware.
+  - Wrap through WUGNOT's permitted origin-call flow, approve spending separately, then let the router use token transfers.
+  - To unwrap proceeds, return WUGNOT to the user for an origin-call withdrawal; the router does not unwrap it.
+- Reject attached native coins on paths that do not handle them.
+- Nonnegative token-transfer amounts must fit `int64` (`2^63 - 1`). Use checked conversions such as `gnsmath.SafeConvertToInt64` for `uint256` boundaries and `utils.SafeParseInt64` for decimal strings; do not rely on truncating low-word conversions.
 
 ### Math & Precision
 
-- `uint256`/`int256` `Mul` and `lsh` do NOT detect overflow. Add explicit range checks. For `Add`, use `AddOverflow` (or prove and document bounds) whenever an overflowed value would affect price, accounting, state, or a denominator.
+- `uint256`/`int256` `Mul` and `Lsh` discard overflow. Use overflow-reporting arithmetic such as `AddOverflow` / `MulOverflow`, or prove and document bounds; shifts need explicit bounds when discarded bits would affect accounting.
 - Validate `feePips < 1_000_000` - equal causes division by zero.
 - Rounding must favor the pool: `amountIn` rounds up, `amountOut` rounds down.
 - Never mix Q64.96 and Q128.128 formats without explicit conversion.
@@ -155,9 +162,9 @@ make integration-test-build
 
 ### CEI & Reentrancy
 
-- All state updates before token transfers (Checks-Effects-Interactions).
-- Persist reentrancy lock via `SetSlot0(...)` before external calls. Local copy mutation has no effect.
-- `CollectReward` / `DecreaseLiquidity` / `EndExternalIncentive` must follow CEI.
+- Persist affected accounting before exposing callbacks or transfers, and review each operation's actual settlement order. Do not assume every path completes all writes before external calls: swaps use optimistic callback settlement, and minting pulls tokens before its final pool save.
+- The pool-wide reentrancy lock is the KV-store `Unlocked` key, managed by `pool/v1/lock.gno` through `SetUnlocked(0, rlm, false/true)`. Do not confuse it with the separate `Slot0.unlocked` field, which is not the live guard.
+- Preserve the checks/effects/interaction ordering of reward collection, liquidity removal, and incentive finalization. A lock is not a substitute for correct accounting and callback validation.
 
 ## Module Watchpoints
 
@@ -165,15 +172,15 @@ Each module's detailed rules, key files, and pitfalls are documented in `docs/`.
 
 | Module | Doc | Key Rule |
 |--------|-----|----------|
-| pool | [`docs/pool.md`](docs/pool.md) | Persist `SetSlot0(...)` before external calls. Oracle uses pre-swap tick. |
-| position | [`docs/position.md`](docs/position.md) | Slippage on actually-received amounts. `burned = true` blocks increase. |
-| router | [`docs/router.md`](docs/router.md) | SwapCallback: both `AssertIsPool` + `assertIsRouterV1` required. |
+| pool | [`docs/pool.md`](docs/pool.md) | Persist the global `Unlocked` store key before external interactions. Oracle uses the pre-swap tick. |
+| position | [`docs/position.md`](docs/position.md) | Slippage uses actually received amounts. `IncreaseLiquidity` and `Reposition` can clear the `burned` marker. |
+| router | [`docs/router.md`](docs/router.md) | The pool callback closure checks `AssertIsPool`; delegated `SwapCallback` checks `assertIsRouterImplementation`. |
 | staker | [`docs/staker.md`](docs/staker.md) | Hooks execute mid-swap. Warmup final tier = `math.MaxInt64`. |
-| emission | [`docs/emission.md`](docs/emission.md) | Always check `bool` return from `MintAndDistributeGns`. |
-| protocol_fee | [`docs/protocol_fee.md`](docs/protocol_fee.md) | Every fee transfer must call `AddToProtocolFee`. |
-| gov | [`docs/gov.md`](docs/gov.md) | Spend amount strictly positive. Snapshot at proposal creation. Stake changes never fold protocol fees. |
-| launchpad | [`docs/launchpad.md`](docs/launchpad.md) | Vesting overflow check. Claimable must match balance. |
-| KV store | [`docs/kv_store.md`](docs/kv_store.md) | `RemoveAuthorizedCaller` for `None`. Implementation gets no `Write`. |
+| emission | [`docs/emission.md`](docs/emission.md) | Emission-critical callers must handle `(amount, success)` from `MintAndDistributeGns`; optional callers may continue while emission is halted. |
+| protocol_fee | [`docs/protocol_fee.md`](docs/protocol_fee.md) | Approve the protocol-fee realm, then call `AddToProtocolFee`; it reserves accounting and pulls tokens. Do not pre-transfer the same amount. |
+| gov | [`docs/gov.md`](docs/gov.md) | Spend amounts are strictly positive. Voting weight uses timestamp smoothing anchored to proposal creation, not a block snapshot. Stake changes never fold protocol fees. |
+| launchpad | [`docs/launchpad.md`](docs/launchpad.md) | Check vesting time arithmetic and funding assumptions; do not infer an overflow guard or a balance guarantee from a claimable-value calculation. |
+| KV store | [`docs/kv_store.md`](docs/kv_store.md) | Add/Update accept `Write` only; use `RemoveAuthorizedCaller` to revoke. Implementation activation does not grant implementation realms `Write`. |
 
 ## AMM Core (Uniswap V3 Fork)
 
@@ -181,64 +188,64 @@ Each module's detailed rules, key files, and pitfalls are documented in `docs/`.
 |-----------|--------|--------|
 | sqrtPriceX96 | Q64.96 | sqrt(price) * 2^96 |
 | feeGrowthGlobal | Q128.128 | Cumulative fee per unit liquidity |
-| Tick range | int | `[-887272, 887272]` |
-| Fee tiers | fixed | 0.01% / 0.05% / 0.3% / 1% - no new tiers post-deploy |
+| Tick range | int32 | `[-887272, 887272]` |
+| Fee tiers | Fixed in current v1 | 0.01% / 0.05% / 0.3% / 1%; adding another tier requires an implementation change, not a configuration update |
 
 **Swap loop**: find next tick -> `ComputeSwapStep` -> accumulate fees -> cross tick (`liquidityNet`) -> repeat until amount exhausted or price limit hit.
 
-**Swap callback**: Pool sends output -> `SwapCallback` on router -> router sends input to pool. Both `AssertIsPool` + `assertIsRouterV1` required.
+**Swap callback**: The pool sends output, invokes the supplied callback, and verifies payment. On the router path, the callback closure checks `access.AssertIsPool` before forwarding to `SwapCallback`, which checks `assertIsRouterImplementation`.
 
 ## Common Pitfalls
+
+These are regression hazards and constraints, not a claim that every item is a current defect.
 
 | Pitfall | Impact |
 |---------|--------|
 | `OriginCaller` for access control | Intermediate contract impersonates user |
-| Reentrancy lock on local `Slot0` copy | Lock never persists |
-| Transfer before state update | CEI violated; re-entry with stale state |
-| `Mul`/`lsh` without range check, or unchecked critical `Add` | Silent overflow corrupts AMM math |
-| Finite final warmup tier | Panic when block time passes it |
-| Upgrade without permission re-registration | Dependent modules lose write access |
-| Halted emission not tolerated | Halt cascades to unrelated modules |
-| Fee transfer without `AddToProtocolFee` | Fees permanently locked |
+| Treating `Slot0` as the reentrancy lock | Misses the pool-wide `Unlocked` KV-store guard |
+| Assuming every operation has identical settlement ordering | Misses operation-specific callback, lock, and accounting requirements |
+| Unchecked `Mul`/`Lsh` or critical `Add` | Silent overflow corrupts AMM math |
+| Finite final warmup tier | Rejected when configuring the warmup template; the final duration must be `math.MaxInt64` |
+| Assuming an implementation switch resets store ACLs | Proxy and writer permissions persist; update ACLs explicitly when the required writer set changes |
+| Treating halted emission as successful minting | `MintAndDistributeGns` can return `(0, false)`; callers must handle it |
+| Directly transferring centralized fees instead of approval + `AddToProtocolFee` | Bypasses accounting; `AddToProtocolFee` itself pulls the approved amount |
 | Folding protocol fees inside a gov/staker stake change | Undelegate cost grows with the number of fee tokens |
-| Slippage on owed amounts (not received) | User receives less than minimum |
-| `wugnot.Deposit(cross(cur))` in contract | Panics - `AssertOriginCall` enforced |
-| `TryRegister` return ignored | Inconsistent referral state |
-| TWAP rounding truncates toward zero | Off-by-1 from Uniswap reference |
+| Checking slippage against owed rather than collected amounts | Can accept a payout below the user's minimum; preserve current actual-received checks |
+| Wrapping/unwrapping WUGNOT inside ordinary realm middleware | Violates WUGNOT's `AssertOriginCall` restriction |
+| Dropping the effective referrer returned by `TryRegister` | Loses the authoritative referral value; current router/position paths propagate it |
+| Replacing negative TWAP floor with truncation toward zero | Reintroduces mean-tick rounding drift |
 
-## Uniswap V3/V4 Divergences
+## Uniswap V3 Divergences
 
-| Area | Uniswap V3/V4 | GnoSwap |
-|------|--------------|---------|
-| Pool deployment | Factory (isolated) | Singleton realm - bug affects all pools |
-| Transfer amounts | `uint256` | `int64` at boundary - high-supply tokens panic |
-| Flash loans | Supported | Not supported |
-| Position NFTs | Transferable | Non-transferable (except to/from staker) |
-| Swap access | Permissionless | Permissioned - whitelist required |
-| Protocol fee | Per-pool | Global across all pools |
-| Router fee | None | On output tokens (default 0.1%, cap 10%) |
-| Fee tiers | Governance adds new | Fixed 4 tiers post-deploy |
-| Position key | Owner-derived | `positionPackagePath` + tick range (no owner) |
+This comparison is with V3; V4's pool-manager architecture is different.
 
-### Audit Findings (OpenZeppelin 2025)
+| Area | Uniswap V3 | GnoSwap |
+|------|------------|---------|
+| Pool deployment | Factory-deployed pool contracts | Singleton pool realm, shared store, and pool-wide lock |
+| Transfer amounts | `uint256` | `int64` token-transfer boundaries; individual amounts must fit, irrespective of total token supply |
+| Flash operations | Flash-loan entry point and callback-settled swaps | Callback-settled optimistic swaps; no separate flash-loan entry point |
+| Position NFTs | Transferable | Unstaked NFTs use GRC721 ownership/approvals; staked positions move through the staker |
+| Swap access | Permissionless | Public router swaps need no user whitelist; direct pool swaps require a contract caller |
+| Protocol fee | Per-pool configuration | Global denominator configuration, per-pool swap fee balances; router, withdrawal, and staker fees use centralized token-path/epoch accounting |
+| Router fee | No GnoSwap-style router output fee | On output tokens; initial default 15 bps (0.15%), configurable from 0 to 1000 bps (10%) |
+| Fee tiers | Governance can enable additional tiers | Current v1 accepts four constant tiers; an implementation change is needed for more |
+| Position key | Owner and tick range | Tick range within each pool's position tree; no owner or package-path component |
 
-- **Sandwich/MEV** (N-04): Router hardcodes `sqrtPriceLimitX96 = 0`. Only slippage tolerance as protection.
-- **Pool Init Griefing** (N-03): No price-oracle check on `CreatePool`. Recovery: wide-range mint -> corrective swap -> remove.
-- **Staker Hook Reentrancy** (C-02): Hooks execute inside swap loop. Lock prevents re-entering `Swap` but not inconsistent reads.
-- **TWAP Oracle** (H-01, L-08): Pre-swap tick used. Negative rounding fixed. Oracle internals remain unaudited.
-- **String Numbers** (N-05): `strconv.ParseInt` sites are potential panics/truncations. Verify `safeConvertToInt64`.
-- **Protocol Fee Tracking** (M-06): Every `SafeGRC20Transfer` to protocol_fee must pair with `AddToProtocolFee`.
-- **Router Fee Exact-Out** (C-07): User receives `amount - routerFee`. Not V3-compatible for exact-out.
+### Historical Audit Reports
+
+Reports in [`audits/`](audits/) describe the revisions audited at their publication dates. They are not a current list of open findings or proof that later code is covered.
+
+Recheck the present implementation and relevant tests before carrying a report conclusion forward. In particular, current single-hop router APIs accept price limits, exact-out targets are post-router-fee net amounts, and the pool lock is stored separately from `Slot0`. Do not retain historical claims to the contrary or label current modules "unaudited" without a revision-specific comparison.
 
 ## Navigation
 
 | Need | Location |
 |------|----------|
-| AMM math | `contract/p/gnoswap/gnsmath/` |
-| 256-bit arithmetic | `contract/p/gnoswap/uint256/`, `int256/` |
+| AMM math | `contract/p/gnoswap/gnsmath/v1/` |
+| 256-bit arithmetic | `contract/p/gnoswap/uint256/v1/`, `contract/p/gnoswap/int256/v1/` |
 | Fuzz helpers | `contract/p/gnoswap/fuzz/`, `contract/p/gnoswap/fuzzutils/`, `contract/r/gnoswap/test/fuzz/` |
 | Pool swap loop | `contract/r/gnoswap/pool/v1/swap.gno` |
-| Pool state / Slot0 | `contract/r/gnoswap/pool/v1/pool.gno` |
+| Pool state / Slot0 | `contract/r/gnoswap/pool/pool.gno` |
 | Position lifecycle | `contract/r/gnoswap/position/v1/` |
 | Router paths | `contract/r/gnoswap/router/v1/` |
 | Reward calculation | `contract/r/gnoswap/staker/v1/reward_calculation*.gno` |
@@ -248,8 +255,8 @@ Each module's detailed rules, key files, and pitfalls are documented in `docs/`.
 | Emission | `contract/r/gnoswap/emission/` |
 | GNS token | `contract/r/gnoswap/gns/` |
 | GNFT metadata | `contract/r/gnoswap/gnft/` |
-| Access control | `contract/r/gnoswap/rbac/`, `contract/r/gnoswap/access/` |
-| KV store | `contract/p/gnoswap/store/kv_store.gno` |
-| Upgrade | `contract/p/gnoswap/version_manager/`, `*/upgrade.gno` |
-| Emergency pause | `contract/r/gnoswap/halt/` |
+| Access control | `contract/r/gnoswap/rbac/v1/`, `contract/r/gnoswap/access/v1/` |
+| KV store | `contract/p/gnoswap/store/v1/kv_store.gno` |
+| Upgrade | `contract/p/gnoswap/version_manager/v1/`, `*/upgrade.gno` |
+| Emergency pause | `contract/r/gnoswap/halt/v1/` |
 | Scenario/file tests | `contract/r/scenario/`, `tests/integration/testdata/` |

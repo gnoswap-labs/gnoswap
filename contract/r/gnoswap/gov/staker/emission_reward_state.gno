@@ -45,35 +45,86 @@ func NewEmissionRewardState(accumulatedRewardX128PerStake *u256.Uint) *EmissionR
 
 /* Getters */
 
+// GetRewardDebtX128 returns the scaled reward debt used for accrual calculations.
+//
+// Returns:
+//   - *u256.Uint: current reward debt in the protocol's 128-bit fixed-point scale.
 func (e *EmissionRewardState) GetRewardDebtX128() *u256.Uint { return e.rewardDebtX128 }
 
+// GetAccumulatedRewardAmount returns rewards accrued but not yet claimed.
+//
+// Returns:
+//   - int64: accumulated reward amount in the smallest token unit.
 func (e *EmissionRewardState) GetAccumulatedRewardAmount() int64 { return e.accumulatedRewardAmount }
-func (e *EmissionRewardState) GetAccumulatedTimestamp() int64    { return e.accumulatedTimestamp }
-func (e *EmissionRewardState) GetClaimedRewardAmount() int64     { return e.claimedRewardAmount }
-func (e *EmissionRewardState) GetClaimedTimestamp() int64        { return e.claimedTimestamp }
-func (e *EmissionRewardState) GetStakedAmount() int64            { return e.stakedAmount }
+
+// GetAccumulatedTimestamp returns when accumulated rewards were last updated.
+//
+// Returns:
+//   - int64: Unix timestamp in seconds of the last accumulation update.
+func (e *EmissionRewardState) GetAccumulatedTimestamp() int64 { return e.accumulatedTimestamp }
+
+// GetClaimedRewardAmount returns the total rewards already claimed.
+//
+// Returns:
+//   - int64: claimed reward amount in the smallest token unit.
+func (e *EmissionRewardState) GetClaimedRewardAmount() int64 { return e.claimedRewardAmount }
+
+// GetClaimedTimestamp returns when rewards were last claimed.
+//
+// Returns:
+//   - int64: Unix timestamp in seconds of the last claim.
+func (e *EmissionRewardState) GetClaimedTimestamp() int64 { return e.claimedTimestamp }
+
+// GetStakedAmount returns the amount currently staked for this state.
+//
+// Returns:
+//   - int64: staked token amount in the smallest token unit.
+func (e *EmissionRewardState) GetStakedAmount() int64 { return e.stakedAmount }
 
 /* Setters */
+// SetRewardDebtX128 replaces the reward debt with a copied fixed-point value.
+//
+// Parameters:
+//   - rewardDebtX128: reward debt in the protocol's 128-bit fixed-point scale.
 func (e *EmissionRewardState) SetRewardDebtX128(rewardDebtX128 *u256.Uint) {
 	e.rewardDebtX128 = u256.Zero().Set(rewardDebtX128)
 }
 
+// SetAccumulatedRewardAmount replaces the unclaimed accumulated reward amount.
+//
+// Parameters:
+//   - accumulatedRewardAmount: accumulated reward in the smallest token unit.
 func (e *EmissionRewardState) SetAccumulatedRewardAmount(accumulatedRewardAmount int64) {
 	e.accumulatedRewardAmount = accumulatedRewardAmount
 }
 
+// SetAccumulatedTimestamp records the latest reward accumulation timestamp.
+//
+// Parameters:
+//   - accumulatedTimestamp: Unix timestamp in seconds for the accumulation update.
 func (e *EmissionRewardState) SetAccumulatedTimestamp(accumulatedTimestamp int64) {
 	e.accumulatedTimestamp = accumulatedTimestamp
 }
 
+// SetClaimedRewardAmount replaces the total claimed reward amount.
+//
+// Parameters:
+//   - claimedRewardAmount: claimed reward in the smallest token unit.
 func (e *EmissionRewardState) SetClaimedRewardAmount(claimedRewardAmount int64) {
 	e.claimedRewardAmount = claimedRewardAmount
 }
 
+// SetClaimedTimestamp records the latest reward claim timestamp.
+//
+// Parameters:
+//   - claimedTimestamp: Unix timestamp in seconds for the claim.
 func (e *EmissionRewardState) SetClaimedTimestamp(claimedTimestamp int64) {
 	e.claimedTimestamp = claimedTimestamp
 }
 
+// SetStakedAmount replaces the current staked amount.
+// Parameters:
+//   - stakedAmount: staked token amount in the smallest token unit.
 func (e *EmissionRewardState) SetStakedAmount(stakedAmount int64) {
 	e.stakedAmount = stakedAmount
 }

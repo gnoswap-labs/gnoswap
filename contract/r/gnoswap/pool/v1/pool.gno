@@ -27,15 +27,19 @@ import (
 // Updates tick state and transfers tokens atomically.
 //
 // Parameters:
-//   - token0Path, token1Path: Token contract paths
-//   - fee: Fee tier (100, 500, 3000, 10000 = 0.01%, 0.05%, 0.3%, 1%)
-//   - tickLower, tickUpper: Price range boundaries (must be tick-aligned)
-//   - liquidityAmount: Liquidity to add (decimal string)
-//   - positionCaller: Address that provides tokens for the mint operation
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the pool proxy.
+//   - token0Path: Registered token contract path for token0.
+//   - token1Path: Registered token contract path for token1.
+//   - fee: Fee tier; supported tiers are 100, 500, 3000, and 10000 (0.01%, 0.05%, 0.3%, and 1%).
+//   - tickLower: Inclusive lower price-range tick; must be aligned to the pool tick spacing.
+//   - tickUpper: Exclusive upper price-range tick; must be aligned to the pool tick spacing.
+//   - liquidityAmount: Positive decimal string specifying liquidity to add; it is converted to uint256 and then int128.
+//   - positionCaller: Nonzero position-contract address that supplies tokens for this mint.
 //
 // Returns:
-//   - amount0: Token0 amount consumed (decimal string)
-//   - amount1: Token1 amount consumed (decimal string)
+//   - amount0: Token0 amount consumed, returned as a decimal string.
+//   - amount1: Token1 amount consumed, returned as a decimal string.
 //
 // Requirements:
 //   - Pool must exist for token pair and fee
@@ -104,22 +108,27 @@ func (i *poolV1) Mint(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Burn removes liquidity from a position.
+// Burn removes liquidity from a pool position and credits principal as tokens
+// owed to that pool-level position entry.
 //
-// Decreases liquidity and calculates tokens owed to position owner.
-// Updates tick state but doesn't transfer tokens (use Collect).
-// Two-step process prevents reentrancy attacks.
+// The pool operation itself does not transfer tokens; a subsequent Collect call
+// pays the credited principal. Position.DecreaseLiquidity wraps Burn and the
+// fee-free Collect call within one atomic public operation.
 //
 // Parameters:
-//   - token0Path, token1Path: Token contract paths
-//   - fee: Fee tier matching the pool
-//   - tickLower, tickUpper: Position's price range
-//   - liquidityAmount: Liquidity to remove (uint128)
-//   - positionCaller: Position owner for validation
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the pool proxy.
+//   - token0Path: Registered token contract path for token0.
+//   - token1Path: Registered token contract path for token1.
+//   - fee: Fee tier identifying the pool.
+//   - tickLower: Lower tick of the position's price range; must match pool spacing.
+//   - tickUpper: Upper tick of the position's price range; must match pool spacing.
+//   - liquidityAmount: Non-negative decimal liquidity amount, at most 2^127-1 after conversion to int128.
+//   - positionCaller: Nonzero position-contract address associated with the pool position.
 //
 // Returns:
-//   - amount0: Token0 owed to position (decimal string)
-//   - amount1: Token1 owed to position (decimal string)
+//   - amount0: Token0 principal credited to the pool position, as a decimal string.
+//   - amount1: Token1 principal credited to the pool position, as a decimal string.
 //
 // Note: Tokens remain in pool until Collect is called.
 // Only callable by position contract.
@@ -131,7 +140,7 @@ func (i *poolV1) Burn(
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	liquidityAmount string, // uint128
+	liquidityAmount string, // parsed as uint256, then checked against int128
 	positionCaller address,
 ) (string, string) {
 	access.AssertIsRlmCurrent(0, rlm)
@@ -187,15 +196,22 @@ func (i *poolV1) Burn(
 // bearing and must go through Collect.
 //
 // Parameters:
-//   - token0Path, token1Path: Token contract paths
-//   - fee: Fee tier of the pool
-//   - recipient: Address to receive tokens
-//   - tickLower, tickUpper: Position's price range
-//   - amount0Requested, amount1Requested: Max amounts to collect (use MAX_UINT128 for all)
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the pool proxy.
+//   - token0Path: Registered token contract path for token0.
+//   - token1Path: Registered token contract path for token1.
+//   - fee: Fee tier identifying the pool.
+//   - recipient: Nonzero address receiving the post-fee token amounts.
+//   - tickLower: Lower tick of the position's price range.
+//   - tickUpper: Upper tick of the position's price range.
+//   - amount0Requested: Non-negative decimal int64 amount of token0 requested; the int64 maximum requests all owed token0.
+//   - amount1Requested: Non-negative decimal int64 amount of token1 requested; the int64 maximum requests all owed token1.
 //
 // Returns:
-//   - amount0, amount1: Collected amounts, before the withdrawal fee
-//   - fee0, fee1: Withdrawal fee withheld from each amount
+//   - amount0: Token0 amount collected before withdrawal-fee deduction, as a decimal string.
+//   - amount1: Token1 amount collected before withdrawal-fee deduction, as a decimal string.
+//   - fee0: Withdrawal fee withheld from token0, as a decimal string.
+//   - fee1: Withdrawal fee withheld from token1, as a decimal string.
 //
 // Only callable by position contract.
 func (i *poolV1) CollectSwapFee(
@@ -230,14 +246,20 @@ func (i *poolV1) CollectSwapFee(
 // which the protocol does not tax. Accrued swap fees belong on CollectSwapFee.
 //
 // Parameters:
-//   - token0Path, token1Path: Token contract paths
-//   - fee: Fee tier of the pool
-//   - recipient: Address to receive tokens
-//   - tickLower, tickUpper: Position's price range
-//   - amount0Requested, amount1Requested: Max amounts to collect (use MAX_UINT128 for all)
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the pool proxy.
+//   - token0Path: Registered token contract path for token0.
+//   - token1Path: Registered token contract path for token1.
+//   - fee: Fee tier identifying the pool.
+//   - recipient: Nonzero address receiving the owed token amounts.
+//   - tickLower: Lower tick of the position's price range.
+//   - tickUpper: Upper tick of the position's price range.
+//   - amount0Requested: Non-negative decimal int64 amount of token0 requested; the int64 maximum requests all owed token0.
+//   - amount1Requested: Non-negative decimal int64 amount of token1 requested; the int64 maximum requests all owed token1.
 //
 // Returns:
-//   - amount0, amount1: Amounts transferred to recipient
+//   - amount0: Token0 principal transferred to recipient, as a decimal string.
+//   - amount1: Token1 principal transferred to recipient, as a decimal string.
 //
 // Only callable by position contract.
 func (i *poolV1) Collect(
@@ -312,9 +334,8 @@ func (i *poolV1) collect(
 	}
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
-	// Generate position key by combining position contract path with tick range
-	// The key is composed of the position contract's address and the tick boundaries,
-	// allowing the pool to uniquely identify and access position data.
+	// The pool position key encodes only the lower and upper ticks. It is scoped
+	// to this pool, so NFTs sharing a range use the same aggregate pool entry.
 	positionKey := getPositionKey(tickLower, tickUpper)
 	position, err := pool.GetPosition(positionKey)
 	if err != nil {
@@ -383,7 +404,20 @@ func (i *poolV1) collect(
 
 // CollectProtocol collects accumulated protocol fees from swap operations.
 // Only callable by admin or governance.
-// Returns amount0, amount1 representing protocol fees collected.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the pool proxy.
+//   - token0Path: Registered token contract path for token0.
+//   - token1Path: Registered token contract path for token1.
+//   - fee: Fee tier identifying the pool.
+//   - recipient: Nonzero address receiving the collected protocol fees.
+//   - amount0Requested: Non-negative decimal amount of token0 protocol fees requested; capped at the available balance.
+//   - amount1Requested: Non-negative decimal amount of token1 protocol fees requested; capped at the available balance.
+//
+// Returns:
+//   - amount0: Token0 protocol fees transferred to recipient, as a decimal string.
+//   - amount1: Token1 protocol fees transferred to recipient, as a decimal string.
 func (i *poolV1) CollectProtocol(
 	_ int,
 	rlm realm,
@@ -508,6 +542,15 @@ func minRequestedAmount(request, available int64) int64 {
 	return request
 }
 
+// IncreaseObservationCardinalityNext schedules growth of a pool's circular observation buffer.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the pool proxy.
+//   - token0Path: Registered token contract path for token0.
+//   - token1Path: Registered token contract path for token1.
+//   - fee: Fee tier identifying the pool.
+//   - cardinalityNext: Requested observation-buffer capacity; must not exceed the configured maximum.
 func (i *poolV1) IncreaseObservationCardinalityNext(
 	_ int,
 	rlm realm,

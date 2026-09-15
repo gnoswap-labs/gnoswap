@@ -311,20 +311,15 @@ func parsePoolPathsByRoutePathArr(routePathArr string) ([]string, error) {
 	return poolPaths, nil
 }
 
-// BuildSingleHopPath creates a single-hop route path string.
-// Format: "tokenA:tokenB:fee"
+// BuildSingleHopRoutePath formats one route-direction single-hop path.
 //
 // Parameters:
-// - tokenA: input token address
-// - tokenB: output token address
-// - fee: pool fee (e.g., 500, 3000, 10000)
+//   - tokenA: input token contract path
+//   - tokenB: output token contract path
+//   - fee: pool fee tier appended as a decimal value
 //
 // Returns:
-// - string: formatted single-hop route path
-//
-// Example:
-//   - BuildSingleHopPath("gno.land/r/demo/wugnot", "gno.land/r/demo/usdc", 500)
-//     returns "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500"
+//   - routePath: tokenA:tokenB:fee formatted route string; panics for empty or identical tokens
 func BuildSingleHopRoutePath(tokenA, tokenB string, fee uint32) string {
 	if tokenA == "" || tokenB == "" {
 		panic("token addresses cannot be empty")

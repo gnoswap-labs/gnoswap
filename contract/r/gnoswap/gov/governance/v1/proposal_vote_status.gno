@@ -10,6 +10,14 @@ type ProposalVoteStatusResolver struct {
 	*governance.ProposalVoteStatus
 }
 
+// NewProposalVoteStatusResolver wraps persisted vote status for vote tally
+// calculations and mutation.
+//
+// Parameters:
+//   - voteStatus: persisted proposal vote status to resolve
+//
+// Returns:
+//   - *ProposalVoteStatusResolver: resolver backed by voteStatus
 func NewProposalVoteStatusResolver(voteStatus *governance.ProposalVoteStatus) *ProposalVoteStatusResolver {
 	return &ProposalVoteStatusResolver{voteStatus}
 }
@@ -17,13 +25,17 @@ func NewProposalVoteStatusResolver(voteStatus *governance.ProposalVoteStatus) *P
 // TotalVoteWeight returns the total weight of all votes cast (yes + no).
 //
 // Returns:
-//   - int64: combined weight of all votes
+//   - int64: combined "yes" and "no" vote weight
 func (p *ProposalVoteStatusResolver) TotalVoteWeight() int64 {
 	return gnsmath.SafeAddInt64(p.YesWeight(), p.NoWeight())
 }
 
 // IsPassed determines if the proposal has passed the voting requirements.
-// A proposal passes when quorum is reached and "yes" votes strictly exceed "no" votes.
+// A proposal passes when total vote weight reaches quorum and "yes" votes
+// strictly exceed "no" votes.
+//
+// Returns:
+//   - bool: true when quorum is met and yes weight is greater than no weight
 func (p *ProposalVoteStatusResolver) IsPassed() bool {
 	if p.TotalVoteWeight() < p.QuorumAmount() {
 		return false

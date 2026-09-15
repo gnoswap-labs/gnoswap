@@ -13,7 +13,8 @@ const (
 )
 
 // keeper implements ReferralKeeper using BPTree storage.
-// It includes rate limiting to prevent abuse.
+// Non-removal registrations and updates use a 24-hour cooldown; removal via
+// the contract-address sentinel bypasses that check and preserves the timestamp.
 type keeper struct {
 	store   *bptree.BPTree // address(string) -> referral address(string)
 	lastOps *bptree.BPTree // address(string) -> last operation timestamp(int64)
@@ -21,7 +22,11 @@ type keeper struct {
 
 var _ ReferralKeeper = &keeper{}
 
-// NewKeeper creates a new ReferralKeeper instance.
+// NewKeeper creates an empty ReferralKeeper backed by independent referral and
+// last-operation BPTrees.
+//
+// Returns:
+//   - keeper: new referral store with no relationships or operation timestamps
 func NewKeeper() ReferralKeeper {
 	return &keeper{
 		store:   bptree.NewBPTreeN(16),

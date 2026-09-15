@@ -16,6 +16,9 @@ import (
 //
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - initializer: Callback that receives the proxy-authorized realm context, governance store, and staker accessor and returns the versioned implementation.
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, governanceStore IGovernanceStore, stakerAccessor GovStakerAccessor) IGovernance) {
 	// `cur` captured here is the governance crossing frame. The wrapping
 	// closure forwards it to the version initializer so any store writes
@@ -48,6 +51,9 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, governanc
 //
 // Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - targetPackagePath: Registered implementation package path to activate.
 func UpgradeImpl(cur realm, targetPackagePath string) {
 	// Ensure only admin or governance can perform upgrades
 	prev := cur.Previous()
@@ -65,6 +71,9 @@ func UpgradeImpl(cur realm, targetPackagePath string) {
 }
 
 // GetImplementationPackagePath returns the package path of the currently active implementation.
+//
+// Returns:
+//   - packagePath: package path of the active implementation
 func GetImplementationPackagePath() string {
 	return versionManager.GetCurrentPackagePath()
 }

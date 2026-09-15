@@ -13,6 +13,10 @@ import (
 //
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
+//
+// Parameters:
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm.
+//   - initializer: callback that receives the implementation realm context and launchpad store, then returns the version's ILaunchpad implementation; its leading integer discriminator is invoked as 0.
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, launchpadStore ILaunchpadStore) ILaunchpad) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		access.AssertIsRlmCurrent(0, rlm)
@@ -42,6 +46,10 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, launchpad
 //
 // Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.
+//
+// Parameters:
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm.
+//   - packagePath: registered package path of the launchpad implementation to activate.
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
 	caller := cur.Previous().Address()
@@ -59,6 +67,9 @@ func UpgradeImpl(cur realm, packagePath string) {
 }
 
 // GetImplementationPackagePath returns the package path of the currently active implementation.
+//
+// Returns:
+//   - packagePath: package path of the active implementation
 func GetImplementationPackagePath() string {
 	return versionManager.GetCurrentPackagePath()
 }

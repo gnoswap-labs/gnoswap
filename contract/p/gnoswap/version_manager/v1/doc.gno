@@ -41,7 +41,7 @@
 // The package implements two complementary design patterns:
 //
 //   - **Strategy Pattern**: Enables runtime selection of implementation strategies
-//   - **Plugin Architecture**: Supports dynamic loading and registration of versions
+//   - **Plugin Architecture**: Supports explicit registration of version packages
 //
 // ## Workflow
 //
@@ -255,7 +255,8 @@
 //   - Unauthorized caller attempting to register (not in domain path)
 //   - Duplicate registration of the same package path
 //   - Attempting to switch to an unregistered version
-//   - Invalid initializer function type
+//   - A nil initializer in the registered map (an internal invalid state).
+//     The initializer function signature is checked at compile time by the typed API.
 //
 // ## Best Practices
 //
@@ -276,23 +277,27 @@
 //
 // ### Protocol Upgrades
 //
-// Upgrade DeFi protocol logic without disrupting active users:
+// Upgrade DeFi protocol logic without disrupting active users. The target
+// version package must already be deployed/loaded and must have registered its
+// initializer during package initialization:
 //
 //	manager.ChangeImplementation(0, cur, "gno.land/r/gnoswap/protocol_fee/v2")
 //
 // ### A/B Testing
 //
-// Test new implementations before full rollout:
+// Test new implementations before full rollout. Switch only to paths whose
+// version packages have already registered initializers:
 //
-//	// Switch to experimental version
+//	// Switch to a registered experimental version
 //	manager.ChangeImplementation(0, cur, "gno.land/r/gnoswap/protocol_fee/experimental")
 //
-//	// Rollback if issues detected
+//	// Rollback to another registered version
 //	manager.ChangeImplementation(0, cur, "gno.land/r/gnoswap/protocol_fee/v1")
 //
 // ### Emergency Response
 //
-// Quickly switch to a patched version during security incidents:
+// Quickly switch to a patched version during security incidents. Deploy/load
+// the hotfix package and register its initializer before activation:
 //
 //	manager.ChangeImplementation(0, cur, "gno.land/r/gnoswap/protocol_fee/v1_hotfix")
 //

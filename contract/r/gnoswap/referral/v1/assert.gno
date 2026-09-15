@@ -9,7 +9,7 @@ import (
 
 // MUST BE IMMUTABLE, DO NOT MODIFY.
 // validCallerRoles is a list of roles that are authorized to modify referral data.
-// This includes governance contracts, router, position manager, and staker contracts.
+// This includes governance, governance staker, router, position, staker, and launchpad contracts.
 var validCallerRoles = []string{
 	prabc.ROLE_GOVERNANCE.String(),
 	prabc.ROLE_GOV_STAKER.String(),

@@ -12,6 +12,15 @@ type governanceV1 struct {
 	stakerAccessor governance.GovStakerAccessor
 }
 
+// NewGovernanceV1 creates a governance v1 implementation backed by the supplied
+// state store and staker voting-weight accessor.
+//
+// Parameters:
+//   - governanceStore: persistence adapter for configuration, proposals, counters, and voting information
+//   - stakerAccessor: accessor that supplies delegation snapshots and total xGNS supply for governance decisions
+//
+// Returns:
+//   - governance.IGovernance: governance manager and getter implementation using the supplied dependencies
 func NewGovernanceV1(
 	governanceStore governance.IGovernanceStore,
 	stakerAccessor governance.GovStakerAccessor,

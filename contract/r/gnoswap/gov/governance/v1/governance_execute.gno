@@ -21,27 +21,31 @@ import (
 // Execute executes an approved proposal.
 //
 // Processes and implements governance decisions after successful voting.
-// Enforces timelock delays and execution windows for security.
+// Enforces the configured execution delay and execution window.
 // Anyone can trigger execution to ensure decentralization.
 //
 // Parameters:
+//   - _: Internal call discriminator; pass 0.
+//   - rlm: Propagated realm context; must be current for authorized governance state updates and is crossed into execution-dependent calls.
 //   - proposalID: ID of the proposal to execute
 //
 // Requirements:
-//   - Proposal must have passed (majority yes votes)
-//   - Quorum must be reached (50% of xGNS supply)
-//   - Timelock period must have elapsed (1 day default)
-//   - Must be within execution window (30 days default)
+//   - Proposal must have passed (quorum and strict yes-over-no majority)
+//   - Quorum must be reached using the proposal's stored amount, derived from
+//     the total xGNS supply and configured quorum percentage at creation
+//   - Execution delay must have elapsed (1 day by default)
+//   - Must be within the execution window (30 days by default)
 //   - Proposal not already executed or cancelled
 //
 // Effects:
 //   - Executes proposal actions (parameter changes, treasury transfers)
 //   - Marks proposal as executed
 //   - Emits execution event
-//   - Refunds gas costs from treasury
 //
-// Returns executed proposal ID.
-// Callable by anyone once proposal is executable.
+// Returns:
+//   - proposalID: ID of the executed proposal
+//
+// Callable by anyone once the proposal is executable.
 func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -142,6 +146,8 @@ func (gv *governanceV1) executeProposal(
 // Safety mechanism for proposal errors or changed circumstances.
 //
 // Parameters:
+//   - _: Internal call discriminator; pass 0.
+//   - rlm: Propagated realm context; must be current for authorized governance state updates and is crossed into reward-distribution calls.
 //   - proposalID: ID of the proposal to cancel
 //
 // Requirements:
@@ -156,7 +162,9 @@ func (gv *governanceV1) executeProposal(
 //   - Emits cancellation event
 //   - Frees up proposer's proposal slot
 //
-// Returns cancelled proposal ID.
+// Returns:
+//   - proposalID: ID of the cancelled proposal
+//
 // Only callable by original proposer before voting begins.
 func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 	access.AssertIsRlmCurrent(0, rlm)
@@ -196,6 +204,10 @@ func (gv *governanceV1) Cancel(_ int, rlm realm, proposalID int64) int64 {
 
 // RemoveInactiveProposalFromIndex removes one inactive proposal from the
 // snapshot index without deleting its proposal or voting history.
+// Parameters:
+//   - _: Internal call discriminator; pass 0.
+//   - rlm: Propagated realm context used for the authorized snapshot-index update.
+//   - proposalID: Identifier of the inactive proposal to remove from the snapshot index.
 func (gv *governanceV1) RemoveInactiveProposalFromIndex(_ int, rlm realm, proposalID int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 

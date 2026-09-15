@@ -11,6 +11,10 @@ import (
 // The initializer function creates a new instance of the implementation
 // using the provided stakerStore interface.
 //
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - initializer: Factory callback that receives the internal discriminator, current staker realm, and accessor interfaces, then returns the implementation instance.
+//
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, stakerStore IStakerStore, poolAccessor PoolAccessor, emissionAccessor EmissionAccessor, nftAccessor NFTAccessor) IStaker) {
@@ -37,8 +41,12 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, stakerSto
 }
 
 // UpgradeImpl switches the active staker implementation to a different version.
-// This function allows seamless upgrades from one version to another without
-// data migration or downtime.
+// It changes the implementation pointer without transforming persisted state; the
+// selected implementation must understand the existing storage schema.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - packagePath: Registered package path of the implementation to activate.
 //
 // Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.
@@ -59,6 +67,9 @@ func UpgradeImpl(cur realm, packagePath string) {
 }
 
 // GetImplementationPackagePath returns the package path of the currently active implementation.
+//
+// Returns:
+//   - packagePath: package path of the active implementation
 func GetImplementationPackagePath() string {
 	return versionManager.GetCurrentPackagePath()
 }

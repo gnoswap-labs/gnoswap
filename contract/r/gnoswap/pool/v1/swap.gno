@@ -38,6 +38,13 @@ var (
 // Used for reward calculation when positions enter/exit range.
 //
 // Only callable by staker contract.
+// Parameters:
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Propagated realm context validated as current before the hook is
+//     stored.
+//   - hook: Callback invoked after an initialized tick is crossed with the
+//     current pool realm, pool path, tick index, swap direction, and timestamp.
 func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64)) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -61,6 +68,14 @@ func (i *poolV1) SetTickCrossHook(_ int, rlm realm, hook func(cur realm, poolPat
 // Captures timestamp for time-weighted calculations.
 //
 // Only callable by staker contract.
+//
+// Parameters:
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Propagated realm context validated as current before the hook is
+//     stored.
+//   - hook: Callback invoked before swap computation with the current pool
+//     realm, pool path, and block timestamp.
 func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPath string, timestamp int64)) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -84,6 +99,14 @@ func (i *poolV1) SetSwapStartHook(_ int, rlm realm, hook func(cur realm, poolPat
 // Allows error propagation to revert invalid swaps.
 //
 // Only callable by staker contract.
+//
+// Parameters:
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Propagated realm context validated as current before the hook is
+//     stored.
+//   - hook: Callback invoked after swap settlement with the current pool realm
+//     and pool path; a non-nil error aborts the surrounding swap.
 func (i *poolV1) SetSwapEndHook(_ int, rlm realm, hook func(cur realm, poolPath string) error) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -135,16 +158,31 @@ type SwapComputation struct {
 // 4. Pool validates its balance increased correctly
 //
 // Parameters:
-//   - token0Path: Path of token0 in the pool
-//   - token1Path: Path of token1 in the pool
-//   - fee: Pool fee tier
-//   - recipient: Address to receive output tokens
-//   - zeroForOne: Direction of swap (true = token0 to token1)
-//   - amountSpecified: Exact input (positive) or exact output (negative)
-//   - sqrtPriceLimitX96: Price limit for the swap
-//   - swapCallback: Callback function to handle token transfers
+//   - _: Leading integer discriminator for the forwarded realm call; callers
+//     pass 0.
+//   - rlm: Current propagated realm context; it is validated as current and
+//     used for token transfers and callbacks.
+//   - token0Path: Registered path of token0; it must be the first token in the
+//     pool's canonical token ordering.
+//   - token1Path: Registered path of token1; it must be the second token in
+//     the pool's canonical token ordering.
+//   - fee: Fee tier identifying the registered pool to swap against.
+//   - recipient: Address that receives the output token transfer.
+//   - zeroForOne: Swap direction; true sells token0 for token1, false sells
+//     token1 for token0.
+//   - amountSpecified: Signed decimal amount; positive values request exact
+//     input, negative values request exact output, and zero is invalid.
+//   - sqrtPriceLimitX96: Decimal Q96 square-root-price limit that bounds the
+//     swap in its direction; an invalid bound causes the call to panic.
+//   - swapCallback: Callback that must settle the input delta after output is
+//     sent; it receives signed int64 token deltas and a callback marker, and a
+//     non-nil error aborts the swap.
 //
-// Returns amount0 and amount1 deltas as strings.
+// Returns:
+//   - string: Signed decimal token0 delta from the pool's perspective; a
+//     positive value is owed to the pool and a negative value is sent out.
+//   - string: Signed decimal token1 delta from the pool's perspective; a
+//     positive value is owed to the pool and a negative value is sent out.
 func (i *poolV1) Swap(
 	_ int,
 	rlm realm,
@@ -317,8 +355,30 @@ func (i *poolV1) Swap(
 	return token0Amount, token1Amount
 }
 
-// DrySwap simulates a swap without modifying pool state.
-// Returns amount0, amount1 and an error.
+// DrySwap simulates a swap against an isolated pool and observation snapshot;
+// it never writes stored pool or oracle state.
+//
+// Parameters:
+//   - token0Path: Registered path of token0; it must be the first token in the
+//     pool's canonical token ordering.
+//   - token1Path: Registered path of token1; it must be the second token in
+//     the pool's canonical token ordering.
+//   - fee: Fee tier identifying the registered pool to simulate.
+//   - zeroForOne: Swap direction; true sells token0 for token1, false sells
+//     token1 for token0.
+//   - amountSpecified: Signed decimal amount; positive values request exact
+//     input, negative values request exact output, and zero is invalid.
+//   - sqrtPriceLimitX96: Decimal Q96 square-root-price limit that bounds the
+//     simulation in its direction.
+//
+// Returns:
+//   - amount0: Signed decimal token0 delta from the pool's perspective, or
+//     "0" when simulation fails.
+//   - amount1: Signed decimal token1 delta from the pool's perspective, or
+//     "0" when simulation fails.
+//   - err: Nil when the simulation succeeds; non-nil for invalid inputs,
+//     missing pool state, invalid limits, computation failures, or insufficient
+//     pool output balance.
 func (i *poolV1) DrySwap(
 	token0Path string,
 	token1Path string,

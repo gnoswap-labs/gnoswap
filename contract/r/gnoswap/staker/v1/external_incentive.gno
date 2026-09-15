@@ -21,12 +21,16 @@ import (
 // CreateExternalIncentive creates an external incentive program for a pool.
 //
 // Parameters:
-//   - targetPoolPath: pool to incentivize
-//   - rewardToken: reward token path
-//   - rewardAmount: total reward amount
-//   - startTimestamp, endTimestamp: incentive period
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - targetPoolPath: Pool path to incentivize.
+//   - rewardToken: Registered reward-token path.
+//   - rewardAmount: Total reward amount deposited, in reward-token units.
+//   - startTimestamp: Incentive start time as Unix seconds.
+//   - endTimestamp: Incentive end time as Unix seconds; it must follow startTimestamp by a valid duration.
 //
-// Any caller with the required reward tokens and GNS deposit may create an incentive.
+// Any caller may create an incentive after satisfying token, duration, start-time, reward-minimum,
+// and GNS-deposit checks.
 func (s *stakerV1) CreateExternalIncentive(
 	_ int,
 	rlm realm,
@@ -117,24 +121,28 @@ func (s *stakerV1) CreateExternalIncentive(
 	)
 }
 
-// EndExternalIncentive ends an external incentive and refunds remaining rewards.
+// EndExternalIncentive ends an external incentive after its end timestamp and finalizes the
+// refundable unclaimable/remainder amount.
 //
-// Finalizes incentive program after end timestamp.
-// Returns unallocated rewards and GNS deposit.
-// Calculates unclaimable rewards for refund.
+// The reward-token refund and GNS deposit are sent to the caller-supplied refundAddress. Rewards
+// still owed by live positions remain claimable, and the incentive record is retained for that
+// accounting. Accumulated warmup penalties are collected separately with
+// CollectExternalIncentivePenalty after this function succeeds.
 //
 // Parameters:
-//   - targetPoolPath: Pool with the incentive
-//   - incentiveId: Unique incentive identifier
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - targetPoolPath: Pool containing the incentive to end.
+//   - incentiveId: Unique identifier of the incentive to finalize.
+//   - refundAddress: Address receiving the refundable reward amount and GNS deposit.
 //
 // Process:
-//  1. Validates incentive end time reached
-//  2. Calculates remaining and unclaimable rewards
-//  3. Refunds rewards to original creator
-//  4. Returns the deposited GNS amount
-//  5. Removes incentive from active list
+//  1. Validates that the incentive end time has been reached and no exit checkpoint still owes it.
+//  2. Calculates unclaimable/remainder rewards.
+//  3. Marks the incentive refunded and retains its record.
+//  4. Transfers the refundable rewards and deposited GNS to refundAddress.
 //
-// Only callable by Creator or Admin.
+// Only callable by the incentive creator or admin.
 func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incentiveId string, refundAddress address) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -252,15 +260,11 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 		)
 	}
 
-	// refund = unclaimableReward + remainder + accumulatedPenaltyAmount
+	// refund = unclaimableReward + remainder. Accumulated warmup penalties are tracked separately
+	// and collected through CollectExternalIncentivePenalty after the incentive is ended.
 	incentivesResolver := resolver.IncentivesResolver()
 	unclaimableReward := incentivesResolver.calculateUnclaimableReward(incentiveResolver.IncentiveId())
-
 	duration := gnsmath.SafeSubInt64(incentiveResolver.EndTimestamp(), incentiveResolver.StartTimestamp())
-	// distributable = floor((rewardPerSecondX128 * duration) / 2^128).
-	// With Q128 scaling the truncation per second collapses to at most 1 wei
-	// across the entire duration, so `remainder` is effectively zero and the
-	// refund accounts only for unclaimable periods.
 	distributableU256 := u256.MulDiv(
 		incentiveResolver.RewardPerSecondX128(),
 		u256.NewUintFromInt64(duration),
@@ -300,13 +304,15 @@ func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolve
 // instead of being marked refunded.
 //
 // Parameters:
-//   - targetPoolPath: pool the incentive was created for
-//   - incentiveId: unique incentive identifier
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - targetPoolPath: Pool path for which the incentive was created.
+//   - incentiveId: Unique identifier of the incentive to cancel.
 //
 // Process:
-//  1. Validates the incentive exists and has not started
-//  2. Removes it from the incentive tree and the start-time index
-//  3. Refunds the full reward amount and the GNS deposit to the creator
+//  1. Validates the incentive exists and has not started.
+//  2. Removes it from the incentive tree and the start-time index.
+//  3. Refunds the available reward-token balance (capped by the staker balance) and the GNS deposit to the creator.
 //
 // Only callable by admin, governance, or the incentive creator. The permission
 // check runs after the incentive is resolved because the creator identity comes
@@ -409,11 +415,20 @@ func (s *stakerV1) CancelExternalIncentive(_ int, rlm realm, targetPoolPath, inc
 	)
 }
 
-// CollectExternalIncentivePenalty collects accumulated warmup penalties
-// for a specific ended external incentive.
+// CollectExternalIncentivePenalty collects accumulated warmup penalties for a specific ended
+// external incentive. The incentive must first be finalized with EndExternalIncentive.
 // Penalties are accumulated during CollectReward and stored in the incentive.
 // This function transfers the accumulated penalty to the specified refund address.
-// Returns the penalty amount collected.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - targetPoolPath: Pool containing the ended incentive.
+//   - incentiveId: Unique identifier of the ended incentive whose penalty is collected.
+//   - refundAddress: Address receiving the transferred penalty amount.
+//
+// Returns:
+//   - penaltyAmount: Accumulated warmup penalty transferred, capped by the staker's available reward-token balance.
 //
 // Only callable by the incentive creator or admin.
 func (s *stakerV1) CollectExternalIncentivePenalty(

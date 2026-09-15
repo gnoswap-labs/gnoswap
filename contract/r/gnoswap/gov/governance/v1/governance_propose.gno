@@ -24,21 +24,28 @@ import (
 // No on-chain execution, serves as formal governance record.
 //
 // Parameters:
-//   - title: Short, descriptive proposal title (max 100 chars recommended)
+//
+//   - _: Internal call discriminator; pass 0.
+//
+//   - rlm: Propagated realm context; validated as current before proposal state writes.
+//
+//   - title: Short, descriptive proposal title (up to 255 characters; 100 is a UX recommendation)
+//
 //   - description: Full proposal content with rationale and context
 //
 // Requirements:
-//   - Caller must hold at least ProposalCreationThreshold amount in xGNS
+//   - Caller must hold at least the configured ProposalCreationThreshold amount in xGNS
 //   - No other active proposal from same address
 //   - Title and description must be non-empty
 //
 // Process:
-//   - 1 day delay before voting starts
-//   - 7 days voting period
-//   - Simple majority decides outcome
+//   - Configured delay before voting starts (1 day by default)
+//   - Configured voting period (7 days by default)
+//   - Quorum and a strict yes-over-no majority determine the outcome
 //   - No execution phase (signal only)
 //
-// Returns new proposal ID.
+// Returns:
+//   - newProposalId: ID of the newly created text proposal
 func (gv *governanceV1) ProposeText(
 	_ int, rlm realm,
 	title string,
@@ -71,7 +78,7 @@ func (gv *governanceV1) ProposeText(
 		panic(errors.New(errAlreadyActiveProposal))
 	}
 
-	// Get snapshot time and total voting weight for proposal creation
+	// Get timestamp anchor and total voting weight for proposal creation
 	maxVotingWeight, snapshotTime, err := gv.getVotingWeightSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
@@ -126,27 +133,37 @@ func (gv *governanceV1) ProposeText(
 //
 // Allocates community pool funds for approved purposes.
 // Supports grants, development funding, and protocol incentives.
-// Automatic transfer on execution if approved.
+// The transfer is attempted when the approved proposal executes.
 //
 // Parameters:
+//
+//   - _: Internal call discriminator; pass 0.
+//
+//   - rlm: Propagated realm context; validated as current before proposal state writes.
+//
 //   - title: Proposal title describing purpose
+//
 //   - description: Detailed justification and budget breakdown
+//
 //   - to: Recipient address for funds
-//   - tokenPath: Token contract path (e.g., "gno.land/r/gnoswap/gns")
-//   - amount: Amount to transfer (in smallest unit)
+//
+//   - tokenPath: Registered token contract path (e.g., "gno.land/r/gnoswap/gns")
+//
+//   - amount: Strictly positive amount to transfer (in smallest unit)
 //
 // Requirements:
-//   - Caller must hold at least ProposalCreationThreshold amount in xGNS
-//   - Sufficient balance in community pool
+//   - Caller must hold at least the configured ProposalCreationThreshold amount in xGNS
 //   - Valid recipient address
-//   - Supported token type
+//   - Registered token path
+//   - Community-pool balance is checked at execution, not proposal creation
 //
 // Security:
 //   - Enforces timelock after approval
 //   - Single transfer per proposal
 //   - Tracks all disbursements on-chain
 //
-// Returns new proposal ID.
+// Returns:
+//   - newProposalId: ID of the newly created community-pool-spend proposal
 func (gv *governanceV1) ProposeCommunityPoolSpend(
 	_ int, rlm realm,
 	title string,
@@ -184,7 +201,7 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 		panic(errors.New(errAlreadyActiveProposal))
 	}
 
-	// Get snapshot time and total voting weight for proposal creation
+	// Get timestamp anchor and total voting weight for proposal creation
 	maxVotingWeight, snapshotTime, err := gv.getVotingWeightSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
@@ -245,24 +262,32 @@ func (gv *governanceV1) ProposeCommunityPoolSpend(
 // Changes apply atomically on execution.
 //
 // Parameters:
+//
+//   - _: Internal call discriminator; pass 0.
+//
+//   - rlm: Propagated realm context; validated as current before proposal state writes.
+//
 //   - title: Clear description of changes
+//
 //   - description: Rationale and impact analysis
+//
 //   - numToExecute: Number of parameter changes
+//
 //   - executions: Raw execution string encoded as messages separated by *GOV*.
 //     Each message is formatted as <pkgPath>*EXE*<function>*EXE*<params>.
 //
-// Example executions format:
+// Example execution format (one registered handler; all seven arguments are required):
 //
-//	gno.land/r/gnoswap/gov/governance*EXE*SetVotingPeriod*EXE*604800*GOV*
-//	gno.land/r/gnoswap/gov/governance*EXE*SetExecutionDelay*EXE*86400
+//	gno.land/r/gnoswap/gov/governance*EXE*Reconfigure*EXE*86400,604800,86400,50,1000000000,86400,2592000
 //
 // Requirements:
-//   - Caller must hold at least ProposalCreationThreshold amount in xGNS
+//   - Caller must hold at least the configured ProposalCreationThreshold amount in xGNS
 //   - Encoded execution messages must match numToExecute
 //   - Target handlers must exist in the parameter registry
 //   - Parameters must match registered function signatures
 //
-// Returns new proposal ID.
+// Returns:
+//   - newProposalId: ID of the newly created parameter-change proposal
 func (gv *governanceV1) ProposeParameterChange(
 	_ int, rlm realm,
 	title string,
@@ -298,7 +323,7 @@ func (gv *governanceV1) ProposeParameterChange(
 		panic(errors.New(errAlreadyActiveProposal))
 	}
 
-	// Get snapshot time and total voting weight for proposal creation
+	// Get timestamp anchor and total voting weight for proposal creation
 	maxVotingWeight, snapshotTime, err := gv.getVotingWeightSnapshot(
 		createdAt,
 		config.VotingWeightSmoothingDuration,
@@ -400,7 +425,7 @@ func (gv *governanceV1) createProposal(
 	// Get current configuration version for tracking
 	configVersion := gv.getCurrentConfigVersion()
 
-	// Create the proposal object with snapshotTime for lazy voting weight lookup
+	// Create the proposal object with a timestamp anchor for lazy voting-weight lookup
 	proposal := governance.NewProposal(
 		proposalID,
 		proposalStatus,
@@ -427,13 +452,13 @@ func (gv *governanceV1) getVotingWeightSnapshot(
 	current,
 	smoothingPeriod int64,
 ) (int64, int64, error) {
-	// Calculate snapshot time by going back by smoothing period
+	// Calculate the earlier timestamp by subtracting the smoothing duration
 	snapshotTime := current - smoothingPeriod
 	if snapshotTime < 0 {
 		snapshotTime = 0
 	}
 
-	// Get total delegation amount at snapshot time from staker contract via accessor
+	// Get total delegation at the earlier timestamp from staker history
 	totalAtSnapshot, ok := gv.stakerAccessor.GetTotalDelegationAmountAtSnapshot(snapshotTime)
 	if !ok {
 		totalAtSnapshot = 0

@@ -10,10 +10,12 @@ import (
 // This function is called by each version (v1, v2, etc.) during initialization
 // to register their implementation with the proxy system.
 //
-// The initializer function creates a new instance of the implementation
-// using the provided poolStore interface.
-//
-// The stateInitializer function creates the initial state for this version.
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this
+//     realm.
+//   - initializer: Version factory receiving the forwarded discriminator, current
+//     realm, and shared IPoolStore; it returns the implementation instance to
+//     register and later activate.
 //
 // Security: Only contracts within the domain path can register initializers.
 // Each package path can only register once to prevent duplicate registrations.
@@ -43,6 +45,12 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, poolStore
 // UpgradeImpl switches the active pool implementation to a different version.
 // This function allows seamless upgrades from one version to another without
 // data migration or downtime.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this
+//     realm.
+//   - packagePath: Full package path of a version previously registered for this
+//     pool domain.
 //
 // Security: Only admin or governance can perform upgrades.
 // The new implementation must have been previously registered via RegisterInitializer.
@@ -78,6 +86,10 @@ func assertPoolUnlocked() {
 }
 
 // GetImplementationPackagePath returns the package path of the currently active implementation.
+//
+// Returns:
+//   - packagePath: Full package path of the active implementation; empty before
+//     any version has been registered.
 func GetImplementationPackagePath() string {
 	return versionManager.GetCurrentPackagePath()
 }

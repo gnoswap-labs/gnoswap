@@ -358,7 +358,6 @@ func TestIsInternallyIncentivizedPool(cur realm, t *testing.T) {
 	}
 }
 
-
 // Test CurrentReward for different tiers
 func TestCurrentReward(cur realm, t *testing.T) {
 	tests := []struct {

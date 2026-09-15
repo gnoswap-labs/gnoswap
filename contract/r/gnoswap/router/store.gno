@@ -11,6 +11,10 @@ const errSpoofedRealm = "rlm does not match the current crossing frame"
 
 type StoreKey string
 
+// String converts the typed store key to the string key used by KVStore.
+//
+// Returns:
+//   - key: underlying string representation of the store key
 func (s StoreKey) String() string {
 	return string(s)
 }
@@ -24,12 +28,18 @@ type routerStore struct {
 	kvStore store.KVStore
 }
 
+// HasSwapFeeKey reports whether persistent storage contains the router swap-fee key.
+//
+// Returns:
+//   - exists: true when the swap-fee key is present, otherwise false
 func (s *routerStore) HasSwapFeeKey() bool {
 	return s.kvStore.Has(StoreKeySwapFee.String())
 }
 
-// GetSwapFee retrieves the current swap fee.
-// If not set, returns the default swap fee.
+// GetSwapFee retrieves the current swap fee from persistent storage.
+//
+// Returns:
+//   - fee: configured router fee in basis points; panics if the key is missing or has the wrong type
 func (s *routerStore) GetSwapFee() uint64 {
 	result, err := s.kvStore.Get(StoreKeySwapFee.String())
 	if err != nil {
@@ -44,7 +54,15 @@ func (s *routerStore) GetSwapFee() uint64 {
 	return swapFee
 }
 
-// SetSwapFee stores the swap fee.
+// SetSwapFee stores the router fee in persistent storage.
+//
+// Parameters:
+//   - _: leading call discriminator; callers pass 0
+//   - rlm: current realm context; must be the current crossing frame
+//   - fee: router fee rate in basis points
+//
+// Returns:
+//   - err: nil when storage succeeds; an error when rlm is not current or KVStore rejects the write
 func (s *routerStore) SetSwapFee(_ int, rlm realm, fee uint64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(errSpoofedRealm)
@@ -53,10 +71,18 @@ func (s *routerStore) SetSwapFee(_ int, rlm realm, fee uint64) error {
 	return s.kvStore.Set(0, rlm, StoreKeySwapFee.String(), fee)
 }
 
+// HasPendingProtocolFeesKey reports whether persistent storage contains the pending-fees map.
+//
+// Returns:
+//   - exists: true when the pending protocol-fees key is present, otherwise false
 func (s *routerStore) HasPendingProtocolFeesKey() bool {
 	return s.kvStore.Has(StoreKeyPendingProtocolFees.String())
 }
 
+// GetPendingProtocolFees retrieves the token-path keyed pending protocol-fees map.
+//
+// Returns:
+//   - fees: stored token-path to pending amount map; panics if storage is missing or has the wrong type
 func (s *routerStore) GetPendingProtocolFees() map[string]int64 {
 	result, err := s.kvStore.Get(StoreKeyPendingProtocolFees.String())
 	if err != nil {
@@ -71,6 +97,15 @@ func (s *routerStore) GetPendingProtocolFees() map[string]int64 {
 	return pendingProtocolFees
 }
 
+// SetPendingProtocolFees replaces the pending protocol-fees map in persistent storage.
+//
+// Parameters:
+//   - _: leading call discriminator; callers pass 0
+//   - rlm: current realm context; must be the current crossing frame
+//   - fees: token-path keyed pending fee amounts to store; entries are copied into realm-owned storage
+//
+// Returns:
+//   - err: nil when storage succeeds; an error when rlm is not current or KVStore rejects the write
 func (s *routerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(errSpoofedRealm)
@@ -85,10 +120,27 @@ func (s *routerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]i
 	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), owned)
 }
 
+// GetPendingProtocolFee returns the pending amount recorded for one token path.
+//
+// Parameters:
+//   - tokenPath: token contract path whose pending protocol fee is queried
+//
+// Returns:
+//   - amount: pending fee amount for tokenPath, or zero when no entry exists
 func (s *routerStore) GetPendingProtocolFee(tokenPath string) int64 {
 	return s.GetPendingProtocolFees()[tokenPath]
 }
 
+// SetPendingProtocolFee updates one token path's pending protocol-fee amount.
+//
+// Parameters:
+//   - _: leading call discriminator; callers pass 0
+//   - rlm: current realm context; must be current and authorized to write storage
+//   - tokenPath: token contract path whose pending amount is updated
+//   - amount: pending protocol-fee amount to record
+//
+// Returns:
+//   - err: nil when updated; an error when the realm is spoofed or lacks KVStore write permission
 func (s *routerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(errSpoofedRealm)
@@ -103,6 +155,15 @@ func (s *routerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, 
 	return nil
 }
 
+// RemovePendingProtocolFee deletes one token path's pending protocol-fee entry.
+//
+// Parameters:
+//   - _: leading call discriminator; callers pass 0
+//   - rlm: current realm context; must be current and authorized to write storage
+//   - tokenPath: token contract path whose pending amount is removed
+//
+// Returns:
+//   - err: nil when removed; an error when the realm is spoofed or lacks KVStore write permission
 func (s *routerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(errSpoofedRealm)
@@ -117,8 +178,13 @@ func (s *routerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath strin
 	return nil
 }
 
-// NewRouterStore creates a new router store instance with the provided KV store.
-// This function is used by the upgrade system to create storage instances for each implementation.
+// NewRouterStore creates a router store backed by the provided KV store.
+//
+// Parameters:
+//   - kvStore: persistent key-value store used for router fee and pending-fee data
+//
+// Returns:
+//   - routerStore: router storage implementation using kvStore
 func NewRouterStore(kvStore store.KVStore) IRouterStore {
 	rs := &routerStore{
 		kvStore: kvStore,

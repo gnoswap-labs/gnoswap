@@ -4,10 +4,6 @@ import (
 	"gno.land/r/gnoswap/gov/staker"
 )
 
-// The functions below are makeEntrySafeFn transformations handed to
-// rotree.Wrap. They run on every read through a read-only view, so each one
-// returns a value the caller may hold without reaching realm-owned state.
-
 // cloneDelegationEntry is the transformation for the delegation tree.
 // Delegation is mutable and its setters are declared in /r/gnoswap/gov/staker,
 // so an external holder of the stored pointer could write realm state through

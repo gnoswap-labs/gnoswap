@@ -115,16 +115,17 @@ func (d *DelegationWithdraw) SetCollectedAmount(amount int64) {
 }
 
 // NewDelegationWithdraw creates a new delegation withdrawal with lockup period.
-// The withdrawal will be collectable after the lockup period expires.
+// The withdrawal becomes collectable after the lockup period expires.
 //
 // Parameters:
-//   - delegationID: unique identifier of the associated delegation
-//   - unDelegateAmount: amount being withdrawn
-//   - createdAt: timestamp when the withdrawal was created
-//   - unDelegationLockupPeriod: duration of the lockup period in seconds
+//   - delegationID: Unique identifier of the associated delegation.
+//   - unDelegateAmount: Amount being withdrawn.
+//   - createdHeight: Block height at which the undelegation was created.
+//   - createdAt: Unix timestamp at which the withdrawal was created.
+//   - unDelegationLockupPeriod: Lockup duration in seconds.
 //
 // Returns:
-//   - *DelegationWithdraw: new withdrawal instance with lockup
+//   - DelegationWithdraw: new withdrawal instance with its collectable time set after the lockup.
 func NewDelegationWithdraw(
 	delegationID,
 	unDelegateAmount,
@@ -144,16 +145,17 @@ func NewDelegationWithdraw(
 	}
 }
 
-// NewDelegationWithdrawWithoutLockup creates a new delegation withdrawal that is immediately collectable.
-// This is used for special cases like redelegation where no lockup period is required.
+// NewDelegationWithdrawWithoutLockup creates a withdrawal that is immediately collectable.
+// This is used for special cases such as redelegation where no lockup is required.
 //
 // Parameters:
-//   - delegationID: unique identifier of the associated delegation
-//   - unDelegateAmount: amount being withdrawn
-//   - createdAt: timestamp when the withdrawal was created
+//   - delegationID: Unique identifier of the associated delegation.
+//   - unDelegateAmount: Amount being withdrawn.
+//   - createdHeight: Block height at which the undelegation was created.
+//   - createdAt: Unix timestamp at which the withdrawal was created.
 //
 // Returns:
-//   - *DelegationWithdraw: new withdrawal instance that is immediately collected
+//   - DelegationWithdraw: new withdrawal instance marked collected with collectable time equal to createdAt.
 func NewDelegationWithdrawWithoutLockup(
 	delegationID,
 	unDelegateAmount,
@@ -173,6 +175,9 @@ func NewDelegationWithdrawWithoutLockup(
 }
 
 // Clone creates a deep copy of the delegation withdraw.
+//
+// Returns:
+//   - DelegationWithdraw: independent copy of the withdrawal state.
 func (d *DelegationWithdraw) Clone() DelegationWithdraw {
 	return DelegationWithdraw{
 		delegationID:      d.delegationID,

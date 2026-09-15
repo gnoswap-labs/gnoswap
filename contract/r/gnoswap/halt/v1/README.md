@@ -4,14 +4,14 @@ Emergency pause mechanism for protocol safety.
 
 ## Overview
 
-Halt system provides granular control over protocol operations for emergency response and beta safety mode.
+Halt system provides granular control over protocol operations for emergency response and beta safety mode. The initial halt level is `NONE`; an authorized caller must explicitly select another level.
 
 ## Configuration
 
 ### Halt Levels
 
 - **NONE**: All operations enabled (normal operation)
-- **SAFE_MODE**: All operations enabled except withdrawals (beta mainnet default)
+- **SAFE_MODE**: All operations enabled except withdrawals (must be explicitly configured)
 - **EMERGENCY**: Only governance and withdrawal operations enabled (crisis response)
 - **COMPLETE**: All operations disabled (full system halt)
 
@@ -44,7 +44,7 @@ Checks if operation is halted.
 ## Usage
 
 ```go
-// Set system to safe mode (beta mainnet)
+// Set system to safe mode explicitly when needed
 SetHaltLevel(cross(cur), HaltLevelSafeMode)
 
 // Enable emergency mode
@@ -72,9 +72,9 @@ if halted {
 - All contracts fully operational
 - No restrictions applied
 
-### SAFE_MODE (Beta Mainnet)
+### SAFE_MODE (Explicitly Configured)
 - All operations enabled except withdrawals
-- Used during initial mainnet launch
+- Used when explicitly selected during initial mainnet launch or another controlled window
 - Allows trading but prevents fund extraction
 
 ### EMERGENCY (Crisis Response)
@@ -91,7 +91,7 @@ if halted {
 ## Security
 
 - Admin/governance control only
-- Beta mainnet starts in SAFE_MODE
+- The system initializes at `NONE`; SAFE_MODE is not enabled by default
 - Granular operation control
 - Event emission for transparency
 - Emergency response capability

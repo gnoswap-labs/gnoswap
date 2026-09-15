@@ -84,6 +84,16 @@ func (s *stakerV1) getDepositResolver(lpTokenId uint64) (*DepositResolver, error
 	return NewDepositResolver(deposit), nil
 }
 
+// NewStakerV1 constructs a version 1 staker implementation backed by the supplied accessors.
+//
+// Parameters:
+//   - stakerStore: Persistent storage accessor for pools, deposits, incentives, tier state, and reward bookkeeping.
+//   - poolAccessor: Accessor for pool state used while updating and resolving staked positions.
+//   - emissionAccessor: Accessor for GNS emission data used to calculate rewards.
+//   - nftAccessor: Accessor for the position NFT ownership and token operations.
+//
+// Returns:
+//   - staker: New stakerV1 implementation wired to the supplied store and accessors.
 func NewStakerV1(stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) *stakerV1 {
 	return &stakerV1{
 		store:            stakerStore,

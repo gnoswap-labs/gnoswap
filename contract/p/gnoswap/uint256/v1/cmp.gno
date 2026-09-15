@@ -7,6 +7,12 @@ package uint256
 import "math/bits"
 
 // Cmp compares z and x and returns -1 if z < x, 0 if z == x, or +1 if z > x.
+//
+// Parameters:
+//   - x: the Uint value compared with z
+//
+// Returns:
+//   - r: -1 when z<x, 0 when z==x, or +1 when z>x
 func (z *Uint) Cmp(x *Uint) (r int) {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
 	d0, carry := bits.Sub64(z[0], x[0], 0)
@@ -23,12 +29,18 @@ func (z *Uint) Cmp(x *Uint) (r int) {
 }
 
 // IsZero returns true if z equals 0.
+//
+// Returns:
+//   - isZero: true when all four words of z are zero
 func (z *Uint) IsZero() bool {
 	return (z[0] | z[1] | z[2] | z[3]) == 0
 }
 
 // Sign returns the sign of z interpreted as a two's complement signed number.
 // It returns -1 if z < 0, 0 if z == 0, or +1 if z > 0.
+//
+// Returns:
+//   - sign: -1, 0, or +1 according to z interpreted as a two's-complement signed value
 func (z *Uint) Sign() int {
 	if z.IsZero() {
 		return 0
@@ -40,6 +52,12 @@ func (z *Uint) Sign() int {
 }
 
 // Lt returns true if z is less than x.
+//
+// Parameters:
+//   - x: the comparison operand
+//
+// Returns:
+//   - less: true when z<x
 func (z *Uint) Lt(x *Uint) bool {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
 	_, carry := bits.Sub64(z[0], x[0], 0)
@@ -51,26 +69,56 @@ func (z *Uint) Lt(x *Uint) bool {
 }
 
 // Gt returns true if z is greater than x.
+//
+// Parameters:
+//   - x: the comparison operand
+//
+// Returns:
+//   - greater: true when z>x
 func (z *Uint) Gt(x *Uint) bool {
 	return x.Lt(z)
 }
 
 // Lte returns true if z is less than or equal to x.
+//
+// Parameters:
+//   - x: the comparison operand
+//
+// Returns:
+//   - lessOrEqual: true when z<=x
 func (z *Uint) Lte(x *Uint) bool {
 	return !x.Lt(z)
 }
 
 // Gte returns true if z is greater than or equal to x.
+//
+// Parameters:
+//   - x: the comparison operand
+//
+// Returns:
+//   - greaterOrEqual: true when z>=x
 func (z *Uint) Gte(x *Uint) bool {
 	return !z.Lt(x)
 }
 
 // Eq returns true if z equals x.
+//
+// Parameters:
+//   - x: the comparison operand
+//
+// Returns:
+//   - equal: true when z and x have identical 256-bit values
 func (z *Uint) Eq(x *Uint) bool {
 	return (z[0] == x[0]) && (z[1] == x[1]) && (z[2] == x[2]) && (z[3] == x[3])
 }
 
 // Neq returns true if z does not equal x.
+//
+// Parameters:
+//   - x: the comparison operand
+//
+// Returns:
+//   - notEqual: true when z and x differ
 func (z *Uint) Neq(x *Uint) bool {
 	return !z.Eq(x)
 }

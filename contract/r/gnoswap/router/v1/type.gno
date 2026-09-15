@@ -40,7 +40,10 @@ func trySwapTypeFromStr(swapType string) (SwapType, error) {
 	}
 }
 
-// String returns the string representation of SwapType.
+// String returns the wire-format string for a SwapType.
+//
+// Returns:
+//   - swapType: EXACT_IN or EXACT_OUT for known values, or an empty string for Unknown
 func (s SwapType) String() string {
 	switch s {
 	case ExactIn:
@@ -67,17 +70,29 @@ type SingleSwapParams struct {
 	sqrtPriceLimitX96 *u256.Uint // sqrtPriceLimitX96 for the swap, empty string or zero string means no limit
 }
 
-// TokenIn returns the input token address.
+// TokenIn returns the input token contract path.
+//
+// Returns:
+//   - tokenIn: token spent by this single-pool swap
 func (p SingleSwapParams) TokenIn() string { return p.tokenIn }
 
-// TokenOut returns the output token address.
+// TokenOut returns the output token contract path.
+//
+// Returns:
+//   - tokenOut: token received by this single-pool swap
 func (p SingleSwapParams) TokenOut() string { return p.tokenOut }
 
 // Fee returns the pool fee tier.
+//
+// Returns:
+//   - fee: fee tier encoded as the pool's uint32 fee value
 func (p SingleSwapParams) Fee() uint32 { return p.fee }
 
-// SqrtPriceLimitX96 returns the sqrtPriceLimitX96 for the swap.
-// If sqrtPriceLimitX96 is empty string, it will return zero.
+// SqrtPriceLimitX96 returns the optional Q64.96 square-root price limit.
+// A nil stored limit is normalized to the zero value, which callers interpret as no explicit limit.
+//
+// Returns:
+//   - limit: configured Q64.96 price limit, or a zero uint when no limit was supplied
 func (p SingleSwapParams) SqrtPriceLimitX96() *u256.Uint {
 	if p.sqrtPriceLimitX96 == nil {
 		return u256.Zero()
@@ -92,16 +107,28 @@ type SwapParams struct {
 	recipient address // address to receive the token
 }
 
-// TokenIn returns the input token address.
+// TokenIn returns the input token contract path.
+//
+// Returns:
+//   - tokenIn: token spent by this multi-hop swap parameters object
 func (p SwapParams) TokenIn() string { return p.tokenIn }
 
-// TokenOut returns the output token address.
+// TokenOut returns the output token contract path.
+//
+// Returns:
+//   - tokenOut: token received by this multi-hop swap parameters object
 func (p SwapParams) TokenOut() string { return p.tokenOut }
 
 // Fee returns the pool fee tier.
+//
+// Returns:
+//   - fee: fee tier encoded as the pool's uint32 fee value
 func (p SwapParams) Fee() uint32 { return p.fee }
 
-// Recipient returns the recipient address.
+// Recipient returns the address that receives swap output.
+//
+// Returns:
+//   - recipient: configured output recipient address
 func (p SwapParams) Recipient() address { return p.recipient }
 
 // newSwapParams creates a new SwapParams instance with the provided parameters.
@@ -128,8 +155,20 @@ type SwapResult struct {
 
 // SwapParamsI defines the common interface for swap parameters.
 type SwapParamsI interface {
+	// TokenIn returns the input token path required by swap processing.
+	//
+	// Returns:
+	//   - tokenIn: token spent by the swap
 	TokenIn() string
+	// TokenOut returns the output token path required by swap processing.
+	//
+	// Returns:
+	//   - tokenOut: token received by the swap
 	TokenOut() string
+	// Fee returns the pool fee tier required by swap processing.
+	//
+	// Returns:
+	//   - fee: pool fee tier
 	Fee() uint32
 }
 
@@ -172,7 +211,15 @@ type ExactInParams struct {
 	AmountOutMin int64
 }
 
-// NewExactInParams creates a new ExactInParams instance.
+// NewExactInParams creates parameters for an exact-input swap.
+//
+// Parameters:
+//   - baseParams: shared token, route, quote, price-limit, and deadline settings
+//   - amountIn: exact input amount in token units; must be positive before execution
+//   - amountOutMin: minimum acceptable output amount in token units
+//
+// Returns:
+//   - params: exact-input parameters combining baseParams and amount limits
 func NewExactInParams(
 	baseParams BaseSwapParams,
 	amountIn int64,
@@ -192,7 +239,15 @@ type ExactOutParams struct {
 	AmountInMax int64
 }
 
-// NewExactOutParams creates a new ExactOutParams instance.
+// NewExactOutParams creates parameters for an exact-output swap.
+//
+// Parameters:
+//   - baseParams: shared token, route, quote, price-limit, and deadline settings
+//   - amountOut: requested output amount in token units; must be positive before execution
+//   - amountInMax: maximum acceptable input amount in token units
+//
+// Returns:
+//   - params: exact-output parameters combining baseParams and amount limits
 func NewExactOutParams(
 	baseParams BaseSwapParams,
 	amountOut int64,

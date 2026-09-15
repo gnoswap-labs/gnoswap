@@ -5,6 +5,12 @@ type HaltConfig map[OpType]bool
 
 // IsHalted returns true if the specified operation is halted, false otherwise.
 // Returns false if operation type is not found in configuration.
+//
+// Parameters:
+//   - op: operation type whose halt flag is queried.
+//
+// Returns:
+//   - halted: configured halt flag; false when op is absent from the configuration.
 func (c HaltConfig) IsHalted(op OpType) bool {
 	halted, exists := c[op]
 	if !exists {
@@ -15,6 +21,9 @@ func (c HaltConfig) IsHalted(op OpType) bool {
 }
 
 // Clone creates a deep copy of the halt configuration and returns it.
+//
+// Returns:
+//   - clone: independent map containing the same operation halt flags as the receiver.
 func (c HaltConfig) Clone() HaltConfig {
 	clone := make(HaltConfig)
 

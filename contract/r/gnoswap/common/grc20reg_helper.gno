@@ -1,19 +1,20 @@
 package common
 
-// IsRegistered checks if a token is registered, returning nil if registered or error if not.
+// IsRegistered checks whether a token key is registered.
 //
 // Parameters:
-//   - tokenKey: token registry key
+//   - tokenKey: registry key identifying the GRC20 token to inspect.
 //
-// Returns nil if the token is registered, or an error describing the issue.
+// Returns:
+//   - error: nil when tokenKey is valid and registered; non-nil when the key is invalid or unregistered.
 func IsRegistered(tokenKey string) error {
 	return getImplementation().IsRegistered(tokenKey)
 }
 
-// MustRegistered checks if all provided tokens are registered, panicking if any is not registered.
+// MustRegistered checks whether all provided tokens are registered and panics if any is not registered.
 //
 // Parameters:
-//   - tokenKeys: variable number of token registry keys to check
+//   - tokenKeys: token registry keys to check; an empty list performs no checks.
 //
 // Panics if any of the provided tokens is not registered.
 func MustRegistered(tokenKeys ...string) {
@@ -22,14 +23,15 @@ func MustRegistered(tokenKeys ...string) {
 	}
 }
 
-// ValidateRegistered checks if all provided tokens are registered, returning an
+// ValidateRegistered checks whether all provided tokens are registered, returning an
 // error instead of panicking when a token is not registered.
 //
 // Parameters:
-//   - tokenKeys: variable number of token registry keys to check
+//   - tokenKeys: token registry keys to check; an empty list is valid.
 //
-// Returns nil when every token is registered, otherwise the first
-// registration failure as an error.
+// Returns:
+//   - error: nil when every token is registered; otherwise the first
+//     registration failure.
 func ValidateRegistered(tokenKeys ...string) error {
 	return getImplementation().ValidateRegistered(tokenKeys...)
 }
@@ -37,9 +39,10 @@ func ValidateRegistered(tokenKeys ...string) error {
 // TotalSupply returns the total supply of the specified token.
 //
 // Parameters:
-//   - tokenKey: GRC20 registry key
+//   - tokenKey: registry key identifying the GRC20 token.
 //
-// Returns the total supply of the token as int64.
+// Returns:
+//   - totalSupply: current token supply for tokenKey, in the token's base units; panics if tokenKey is invalid or unregistered.
 func TotalSupply(tokenKey string) int64 {
 	return getImplementation().TotalSupply(tokenKey)
 }
@@ -47,10 +50,11 @@ func TotalSupply(tokenKey string) int64 {
 // BalanceOf returns the token balance for the specified address.
 //
 // Parameters:
-//   - tokenKey: GRC20 registry key
-//   - addr: address to query the balance for
+//   - tokenKey: registry key identifying the GRC20 token.
+//   - addr: address whose token balance is queried.
 //
-// Returns the token balance as int64.
+// Returns:
+//   - balance: token balance held by addr, in the token's base units; panics if tokenKey is invalid or unregistered.
 func BalanceOf(tokenKey string, addr address) int64 {
 	return getImplementation().BalanceOf(tokenKey, addr)
 }
@@ -58,51 +62,61 @@ func BalanceOf(tokenKey string, addr address) int64 {
 // Allowance returns the token allowance from owner to spender.
 //
 // Parameters:
-//   - tokenKey: GRC20 registry key
-//   - owner: address of the token owner
-//   - spender: address of the spender
+//   - tokenKey: registry key identifying the GRC20 token.
+//   - owner: address that owns the tokens.
+//   - spender: address authorized to spend owner's tokens.
 //
-// Returns the allowance amount as int64.
+// Returns:
+//   - allowance: amount owner has approved spender to use, in the token's base units; panics if tokenKey is invalid or unregistered.
 func Allowance(tokenKey string, owner, spender address) int64 {
 	return getImplementation().Allowance(tokenKey, owner, spender)
 }
 
-// Transfer forwards to a teller bound to the current realm.
+// Transfer forwards a token transfer to the implementation bound to the current realm.
 //
 // Parameters:
-//   - rlm: current realm
-//   - tokenKey: GRC20 registry key
-//   - to: recipient address
-//   - amount: amount of tokens to transfer
+//   - _: leading integer discriminator for the realm-crossing ABI; pass 0.
+//   - rlm: propagated realm context used to resolve and invoke the registered token implementation.
+//   - tokenKey: registry key identifying the GRC20 token to transfer.
+//   - to: recipient address.
+//   - amount: number of token base units to transfer.
 //
-// Returns an error if the transfer fails, nil otherwise.
+// Returns:
+//   - error: nil when the implementation completes the transfer; otherwise a token
+//     validation or transfer-rule error.
 func Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) error {
 	return getImplementation().Transfer(0, rlm, tokenKey, to, amount)
 }
 
-// TransferFrom forwards to a teller bound to the current realm.
+// TransferFrom forwards an allowance-backed token transfer to the implementation bound to the current realm.
 //
 // Parameters:
-//   - rlm: current realm
-//   - tokenKey: GRC20 registry key
-//   - from: sender address
-//   - to: recipient address
-//   - amount: amount of tokens to transfer
+//   - _: leading integer discriminator for the realm-crossing ABI; pass 0.
+//   - rlm: propagated realm context used to resolve and invoke the registered token implementation.
+//   - tokenKey: registry key identifying the GRC20 token to transfer.
+//   - from: address whose allowance and balance are debited.
+//   - to: recipient address.
+//   - amount: number of token base units to transfer.
 //
-// Returns an error if the transfer fails, nil otherwise.
+// Returns:
+//   - error: nil when the implementation completes the transfer; otherwise a token
+//     validation, allowance, or balance-rule error.
 func TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount int64) error {
 	return getImplementation().TransferFrom(0, rlm, tokenKey, from, to, amount)
 }
 
-// Approve forwards to a teller bound to the current realm.
+// Approve forwards an allowance update to the implementation bound to the current realm.
 //
 // Parameters:
-//   - rlm: current realm
-//   - tokenKey: GRC20 registry key
-//   - spender: address allowed to spend the tokens
-//   - amount: amount of tokens to approve
+//   - _: leading integer discriminator for the realm-crossing ABI; pass 0.
+//   - rlm: propagated realm context used to resolve and invoke the registered token implementation.
+//   - tokenKey: registry key identifying the GRC20 token.
+//   - spender: address authorized to spend the caller's tokens.
+//   - amount: number of token base units to authorize.
 //
-// Returns an error if the approval fails, nil otherwise.
+// Returns:
+//   - error: nil when the implementation records the allowance; otherwise a token
+//     validation or approval-rule error.
 func Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) error {
 	return getImplementation().Approve(0, rlm, tokenKey, spender, amount)
 }
@@ -110,12 +124,13 @@ func Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) e
 // SafeGRC20Transfer transfers tokens as the current realm and panics if it fails.
 //
 // Parameters:
-//   - rlm: current realm
-//   - tokenKey: GRC20 registry key
-//   - to: recipient address
-//   - amount: amount of tokens to transfer
+//   - _: leading integer discriminator for the realm-crossing ABI; pass 0.
+//   - rlm: propagated realm context used to resolve and invoke the registered token implementation.
+//   - tokenKey: registry key identifying the GRC20 token to transfer.
+//   - to: recipient address.
+//   - amount: number of token base units to transfer.
 //
-// Panics if the transfer fails.
+// Panics if the underlying transfer returns an error.
 func SafeGRC20Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) {
 	if err := Transfer(0, rlm, tokenKey, to, amount); err != nil {
 		panic(err)
@@ -125,13 +140,14 @@ func SafeGRC20Transfer(_ int, rlm realm, tokenKey string, to address, amount int
 // SafeGRC20TransferFrom transfers tokens as the current realm and panics if it fails.
 //
 // Parameters:
-//   - rlm: current realm
-//   - tokenKey: GRC20 registry key
-//   - from: sender address
-//   - to: recipient address
-//   - amount: amount of tokens to transfer
+//   - _: leading integer discriminator for the realm-crossing ABI; pass 0.
+//   - rlm: propagated realm context used to resolve and invoke the registered token implementation.
+//   - tokenKey: registry key identifying the GRC20 token to transfer.
+//   - from: address whose allowance and balance are debited.
+//   - to: recipient address.
+//   - amount: number of token base units to transfer.
 //
-// Panics if the transfer fails.
+// Panics if the underlying transfer returns an error.
 func SafeGRC20TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount int64) {
 	if err := TransferFrom(0, rlm, tokenKey, from, to, amount); err != nil {
 		panic(err)
@@ -141,12 +157,13 @@ func SafeGRC20TransferFrom(_ int, rlm realm, tokenKey string, from, to address, 
 // SafeGRC20Approve approves tokens as the current realm and panics if it fails.
 //
 // Parameters:
-//   - rlm: current realm
-//   - tokenKey: GRC20 registry key
-//   - spender: address allowed to spend the tokens
-//   - amount: amount of tokens to approve
+//   - _: leading integer discriminator for the realm-crossing ABI; pass 0.
+//   - rlm: propagated realm context used to resolve and invoke the registered token implementation.
+//   - tokenKey: registry key identifying the GRC20 token.
+//   - spender: address authorized to spend the caller's tokens.
+//   - amount: number of token base units to authorize.
 //
-// Panics if the approval fails.
+// Panics if the underlying approval returns an error.
 func SafeGRC20Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) {
 	if err := Approve(0, rlm, tokenKey, spender, amount); err != nil {
 		panic(err)

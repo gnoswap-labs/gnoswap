@@ -7,5 +7,5 @@
 // Key components:
 // - GRC20 Registry Helpers: convenient wrappers for GRC20 token operations
 // - Coin Utilities: native coin handling and validation
-// - Assertion Utilities: input validation and authorization checks
+// - Assertion Utilities: input validation for supported operations, including native-coin rejection
 package common

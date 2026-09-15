@@ -19,6 +19,13 @@ type ProtocolFeeRewardManagerResolver struct {
 	*staker.ProtocolFeeRewardManager
 }
 
+// NewProtocolFeeRewardManagerResolver wraps the shared protocol-fee reward manager.
+//
+// Parameters:
+//   - manager: Protocol-fee reward state to resolve and mutate.
+//
+// Returns:
+//   - *ProtocolFeeRewardManagerResolver: resolver operating on manager's accounting state.
 func NewProtocolFeeRewardManagerResolver(manager *staker.ProtocolFeeRewardManager) *ProtocolFeeRewardManagerResolver {
 	return &ProtocolFeeRewardManagerResolver{
 		ProtocolFeeRewardManager: manager,
@@ -281,6 +288,15 @@ func (self *ProtocolFeeRewardManagerResolver) claimRewards(rewardID string, curr
 
 // GetClaimableRewardAmount returns what collecting tokenPath for rewardID would pay,
 // with the given pending buckets projected on top of the accumulator.
+// Parameters:
+//   - rewardID: Identifier of the staker whose claimable reward is quoted.
+//   - tokenPath: Token path whose claimable protocol-fee reward is quoted.
+//   - pendingEpochs: Pending bucket epochs projected on the accumulator.
+//   - pendingAmounts: Pending fee amounts parallel to pendingEpochs.
+//
+// Returns:
+//   - int64: protocol-fee amount that collecting tokenPath would pay in token base units.
+//   - error: nil on success; non-nil when reward-state lookup or projection fails.
 func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmount(rewardID string, tokenPath string, pendingEpochs []int64, pendingAmounts []int64) (int64, error) {
 	rewardState, ok, err := self.GetRewardState(rewardID)
 	if err != nil {

@@ -14,12 +14,24 @@ const ErrBig256Range = "decimal number > 256 bits"
 type Uint [4]uint64
 
 // NewUint returns a new Uint initialized with the given uint64 value.
+//
+// Parameters:
+//   - val: the initial uint64 value
+//
+// Returns:
+//   - result: a new Uint initialized to val
 func NewUint(val uint64) *Uint {
 	return &Uint{val, 0, 0, 0}
 }
 
 // NewUintFromInt64 returns a new Uint initialized with the given int64 value.
 // Panics if val is negative.
+//
+// Parameters:
+//   - val: the initial non-negative int64 value; a negative value panics
+//
+// Returns:
+//   - result: a new Uint initialized to val
 func NewUintFromInt64(val int64) *Uint {
 	if val < 0 {
 		panic("val is negative")
@@ -28,32 +40,54 @@ func NewUintFromInt64(val int64) *Uint {
 }
 
 // Zero returns a new Uint with value 0.
+//
+// Returns:
+//   - result: a new zero-valued Uint
 func Zero() *Uint {
 	return &Uint{0, 0, 0, 0}
 }
 
 // One returns a new Uint with value 1.
+//
+// Returns:
+//   - result: a new Uint containing one
 func One() *Uint {
 	return &Uint{1, 0, 0, 0}
 }
 
+// MaxUint256 returns the maximum 256-bit unsigned integer (2^256-1).
+//
+// Returns:
+//   - result: a new Uint containing 2^256-1
 func MaxUint256() *Uint {
 	return &Uint{18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615}
 }
 
 // SetAllOne sets z to the maximum 256-bit value (all bits set to 1) and returns z.
+//
+// Returns:
+//   - result: z after setting every bit to one
 func (z *Uint) SetAllOne() *Uint {
 	z[3], z[2], z[1], z[0] = 18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615
 	return z
 }
 
 // Set sets z to x and returns z.
+//
+// Parameters:
+//   - x: the Uint value copied into z
+//
+// Returns:
+//   - result: z after copying x
 func (z *Uint) Set(x *Uint) *Uint {
 	*z = *x
 	return z
 }
 
 // SetOne sets z to 1 and returns z.
+//
+// Returns:
+//   - result: z after setting it to one
 func (z *Uint) SetOne() *Uint {
 	z[3], z[2], z[1], z[0] = 0, 0, 0, 1
 	return z
@@ -62,6 +96,12 @@ func (z *Uint) SetOne() *Uint {
 // SetFromDecimal sets z from a decimal string and returns an error if invalid.
 // Accepts an optional leading "+" sign but rejects underscores and negative values.
 // Returns ErrBig256Range if the number exceeds 256 bits.
+//
+// Parameters:
+//   - s: the decimal text to parse; a leading + is accepted, while negatives and underscores are rejected
+//
+// Returns:
+//   - err: nil on success; otherwise the parse or range error
 func (z *Uint) SetFromDecimal(s string) (err error) {
 	sLen := len(s)
 	// Remove max one leading +
@@ -100,6 +140,13 @@ func (z *Uint) SetFromDecimal(s string) (err error) {
 
 // FromDecimal creates a new Uint from a decimal string.
 // Returns an error if the number exceeds 256 bits or is invalid.
+//
+// Parameters:
+//   - decimal: the decimal text representing a non-negative value within 256 bits
+//
+// Returns:
+//   - value: a new parsed Uint, or nil on error
+//   - err: nil on success; otherwise an invalid-format or 256-bit-range error
 func FromDecimal(decimal string) (*Uint, error) {
 	var z Uint
 	if err := z.SetFromDecimal(decimal); err != nil {
@@ -110,6 +157,12 @@ func FromDecimal(decimal string) (*Uint, error) {
 
 // MustFromDecimal creates a new Uint from a decimal string.
 // Panics if the string is invalid or the number exceeds 256 bits.
+//
+// Parameters:
+//   - decimal: the decimal text representing a non-negative value within 256 bits
+//
+// Returns:
+//   - result: a new parsed Uint; invalid or out-of-range input panics
 func MustFromDecimal(decimal string) *Uint {
 	var z Uint
 	if err := z.SetFromDecimal(decimal); err != nil {
@@ -187,8 +240,14 @@ func (z *Uint) fromDecimal(bs string) error {
 }
 
 // Byte returns the value of the byte at position n as a Uint.
-// Position n is counted from the right (0 = least significant byte).
+// Position n is counted from the left (0 = most significant byte).
 // Returns 0 if n >= 32.
+//
+// Parameters:
+//   - n: the zero-based byte position counted from the most-significant byte; positions 32 and above yield zero
+//
+// Returns:
+//   - result: z containing the selected byte as a Uint, or zero when n is outside the 32-byte value
 func (z *Uint) Byte(n *Uint) *Uint {
 	// in z, z[0] is the least significant
 	if number, overflow := n.Uint64WithOverflow(); !overflow {
@@ -206,6 +265,9 @@ func (z *Uint) Byte(n *Uint) *Uint {
 
 // BitLen returns the number of bits required to represent z.
 // BitLen(0) returns 0.
+//
+// Returns:
+//   - bits: the number of significant bits in z, with zero represented by 0
 func (z *Uint) BitLen() int {
 	switch {
 	case z[3] != 0:
@@ -221,17 +283,26 @@ func (z *Uint) BitLen() int {
 
 // ByteLen returns the number of bytes required to represent z.
 // ByteLen(0) returns 0.
+//
+// Returns:
+//   - bytes: the number of bytes needed to represent z, with zero represented by 0
 func (z *Uint) ByteLen() int {
 	return (z.BitLen() + 7) / 8
 }
 
 // Clear sets z to 0 and returns z.
+//
+// Returns:
+//   - result: z after setting it to zero
 func (z *Uint) Clear() *Uint {
 	z[3], z[2], z[1], z[0] = 0, 0, 0, 0
 	return z
 }
 
 // Clone returns a new Uint with the same value as z.
+//
+// Returns:
+//   - result: a newly allocated Uint with the same value as z
 func (z *Uint) Clone() *Uint {
 	var x Uint
 	x[0] = z[0]

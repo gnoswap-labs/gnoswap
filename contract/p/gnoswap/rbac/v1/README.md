@@ -17,8 +17,7 @@ RBAC system enabling dynamic role management with address-based authorization an
 ## Core API
 
 ```go
-// Create RBAC manager
-func New() *RBAC
+// Create RBAC manager with an explicit owner address.
 func NewRBACWithAddress(addr address) *RBAC
 
 // Role management
@@ -67,7 +66,9 @@ addr, err := manager.GetRoleAddress("editor")
 
 ## System Roles
 
-Predefined system roles that cannot be removed:
+Reserved system-role names cannot be removed after they are registered. A new
+RBAC manager starts with no role entries; register each system role explicitly
+with its address.
 
 - `admin`, `governance`, `devops`
 - `pool`, `position`, `router`, `staker`
@@ -81,8 +82,8 @@ Predefined system roles that cannot be removed:
 | `ErrInvalidRoleName` | Role name is empty or whitespace-only |
 | `ErrRoleAlreadyExists` | Role already registered |
 | `ErrRoleDoesNotExist` | Role not found |
-| `ErrCannotRemoveSystemRole` | Cannot remove system role |
-| `ErrInvalidAddress` | Invalid address format |
+| `ErrCannotRemoveSystemRole` | Cannot remove a registered system role |
+| `ErrInvalidAddress` | Invalid address for `UpdateRoleAddress` or ownership transfer; `RegisterRole` stores its supplied address without validation |
 | `ErrUnauthorized` | Caller is not owner |
 | `ErrNoPendingOwner` | No pending owner |
 | `ErrPendingUnauthorized` | Caller is not pending owner |

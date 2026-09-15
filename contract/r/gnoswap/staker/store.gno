@@ -10,6 +10,10 @@ import (
 
 type StoreKey string
 
+// StoreKey.String returns the textual key used by the KV store.
+//
+// Returns:
+//   - string: Underlying storage-key text.
 func (s StoreKey) String() string {
 	return string(s)
 }
@@ -45,10 +49,18 @@ type stakerStore struct {
 }
 
 // DepositGnsAmount
+// HasDepositGnsAmountStoreKey reports whether the GNS reserve amount key exists.
+//
+// Returns:
+//   - bool: True when a deposit GNS amount has been initialized in storage.
 func (s *stakerStore) HasDepositGnsAmountStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDepositGnsAmount.String())
 }
 
+// GetDepositGnsAmount retrieves the GNS reserve amount deposited for the staker.
+//
+// Returns:
+//   - int64: Stored GNS reserve amount; panics on read or type failure.
 func (s *stakerStore) GetDepositGnsAmount() int64 {
 	result, err := s.kvStore.Get(StoreKeyDepositGnsAmount.String())
 	if err != nil {
@@ -63,6 +75,15 @@ func (s *stakerStore) GetDepositGnsAmount() int64 {
 	return amount
 }
 
+// SetDepositGnsAmount stores the GNS amount deposited as the staker reserve.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - amount: GNS reserve amount used for staker initialization and accounting.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetDepositGnsAmount(_ int, rlm realm, amount int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -72,10 +93,18 @@ func (s *stakerStore) SetDepositGnsAmount(_ int, rlm realm, amount int64) error 
 }
 
 // MinimumRewardAmount
+// HasMinimumRewardAmountStoreKey reports whether the default minimum-reward key exists.
+//
+// Returns:
+//   - bool: True when the default minimum reward amount has been initialized in storage.
 func (s *stakerStore) HasMinimumRewardAmountStoreKey() bool {
 	return s.kvStore.Has(StoreKeyMinimumRewardAmount.String())
 }
 
+// GetMinimumRewardAmount retrieves the default minimum external reward amount.
+//
+// Returns:
+//   - int64: Stored default minimum reward amount; panics on read or type failure.
 func (s *stakerStore) GetMinimumRewardAmount() int64 {
 	result, err := s.kvStore.Get(StoreKeyMinimumRewardAmount.String())
 	if err != nil {
@@ -90,6 +119,15 @@ func (s *stakerStore) GetMinimumRewardAmount() int64 {
 	return amount
 }
 
+// SetMinimumRewardAmount stores the default minimum external reward amount.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - amount: Default minimum reward amount applied when no token-specific override exists.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetMinimumRewardAmount(_ int, rlm realm, amount int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -99,10 +137,18 @@ func (s *stakerStore) SetMinimumRewardAmount(_ int, rlm realm, amount int64) err
 }
 
 // Deposits
+// HasDepositsStoreKey reports whether the active-deposits key exists.
+//
+// Returns:
+//   - bool: True when active deposits have been initialized in storage.
 func (s *stakerStore) HasDepositsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDeposits.String())
 }
 
+// GetDeposits retrieves the active deposit tree.
+//
+// Returns:
+//   - *bptree.BPTree: Stored position-to-deposit records; panics on read or type failure.
 func (s *stakerStore) GetDeposits() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyDeposits.String())
 	if err != nil {
@@ -117,6 +163,15 @@ func (s *stakerStore) GetDeposits() *bptree.BPTree {
 	return deposits
 }
 
+// SetDeposits stores the deposit tree keyed by position identifier.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - deposits: B+ tree containing active staking deposits.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -126,10 +181,18 @@ func (s *stakerStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) err
 }
 
 // ExternalIncentives
+// HasExternalIncentivesStoreKey reports whether the external-incentives key exists.
+//
+// Returns:
+//   - bool: True when external incentives have been initialized in storage.
 func (s *stakerStore) HasExternalIncentivesStoreKey() bool {
 	return s.kvStore.Has(StoreKeyExternalIncentives.String())
 }
 
+// GetExternalIncentives retrieves the external incentive tree.
+//
+// Returns:
+//   - *bptree.BPTree: Stored external incentive records; panics on read or type failure.
 func (s *stakerStore) GetExternalIncentives() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyExternalIncentives.String())
 	if err != nil {
@@ -144,6 +207,15 @@ func (s *stakerStore) GetExternalIncentives() *bptree.BPTree {
 	return incentives
 }
 
+// SetExternalIncentives stores the external incentive tree.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - incentives: B+ tree mapping external incentive identifiers to incentive records.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetExternalIncentives(_ int, rlm realm, incentives *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -153,10 +225,18 @@ func (s *stakerStore) SetExternalIncentives(_ int, rlm realm, incentives *bptree
 }
 
 // TotalEmissionSent
+// HasTotalEmissionSentStoreKey reports whether the total-emission-sent key exists.
+//
+// Returns:
+//   - bool: True when cumulative sent emission has been initialized in storage.
 func (s *stakerStore) HasTotalEmissionSentStoreKey() bool {
 	return s.kvStore.Has(StoreKeyTotalEmissionSent.String())
 }
 
+// GetTotalEmissionSent retrieves the cumulative emission amount sent.
+//
+// Returns:
+//   - int64: Stored cumulative emission amount; panics on read or type failure.
 func (s *stakerStore) GetTotalEmissionSent() int64 {
 	result, err := s.kvStore.Get(StoreKeyTotalEmissionSent.String())
 	if err != nil {
@@ -171,6 +251,15 @@ func (s *stakerStore) GetTotalEmissionSent() int64 {
 	return amount
 }
 
+// SetTotalEmissionSent stores the cumulative emission amount sent to staker pools.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - amount: Cumulative emission amount already sent.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetTotalEmissionSent(_ int, rlm realm, amount int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -180,10 +269,18 @@ func (s *stakerStore) SetTotalEmissionSent(_ int, rlm realm, amount int64) error
 }
 
 // AllowedTokens
+// HasAllowedTokensStoreKey reports whether the allowed-token key exists.
+//
+// Returns:
+//   - bool: True when the allowed external-reward token list has been initialized in storage.
 func (s *stakerStore) HasAllowedTokensStoreKey() bool {
 	return s.kvStore.Has(StoreKeyAllowedTokens.String())
 }
 
+// GetAllowedTokens retrieves a clone of the allowed external-reward token list.
+//
+// Returns:
+//   - []string: Allowed token paths copied for the caller; panics on read or type failure.
 func (s *stakerStore) GetAllowedTokens() []string {
 	result, err := s.kvStore.Get(StoreKeyAllowedTokens.String())
 	if err != nil {
@@ -198,6 +295,15 @@ func (s *stakerStore) GetAllowedTokens() []string {
 	return cloneStringSlice(tokens)
 }
 
+// SetAllowedTokens replaces the allowed external-reward token list.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - tokens: Registered token paths permitted as external reward tokens.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetAllowedTokens(_ int, rlm realm, tokens []string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -208,6 +314,14 @@ func (s *stakerStore) SetAllowedTokens(_ int, rlm realm, tokens []string) error 
 
 // AddAllowedToken appends tokenPath to the allowed-tokens list when absent.
 // The store-owned slice is cloned before mutation to avoid readonly-taint panics.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - tokenPath: Registered token path to add to the allowed-token list.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) AddAllowedToken(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -223,6 +337,14 @@ func (s *stakerStore) AddAllowedToken(_ int, rlm realm, tokenPath string) error 
 
 // RemoveAllowedToken removes tokenPath from the allowed-tokens list when present.
 // The store-owned slice is cloned before mutation to avoid readonly-taint panics.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - tokenPath: Registered token path to remove from the allowed-token list.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) RemoveAllowedToken(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -247,10 +369,18 @@ func (s *stakerStore) RemoveAllowedToken(_ int, rlm realm, tokenPath string) err
 // no lever to stop NEW incentives in a pair token whose issuer turned hostile.
 // A missing store key means an empty list, so no initializer seeding and no
 // upgrade migration are needed.
+// HasDeniedRewardTokensStoreKey reports whether the denied-reward-token key exists.
+//
+// Returns:
+//   - bool: True when a denied-reward list has been initialized in storage.
 func (s *stakerStore) HasDeniedRewardTokensStoreKey() bool {
 	return s.kvStore.Has(StoreKeyDeniedRewardTokens.String())
 }
 
+// GetDeniedRewardTokens retrieves the denied-reward list, treating a missing key as empty.
+//
+// Returns:
+//   - []string: Clone of denied reward-token paths; empty when the key is absent, and panics on read or type failure.
 func (s *stakerStore) GetDeniedRewardTokens() []string {
 	if !s.kvStore.Has(StoreKeyDeniedRewardTokens.String()) {
 		return []string{}
@@ -271,6 +401,14 @@ func (s *stakerStore) GetDeniedRewardTokens() []string {
 
 // AddDeniedRewardToken appends tokenPath to the denied-reward-tokens list when absent.
 // The store-owned slice is cloned before mutation to avoid readonly-taint panics.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - tokenPath: Reward-token path to block for new external incentives.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) AddDeniedRewardToken(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -286,6 +424,14 @@ func (s *stakerStore) AddDeniedRewardToken(_ int, rlm realm, tokenPath string) e
 
 // RemoveDeniedRewardToken removes tokenPath from the denied-reward-tokens list when present.
 // The store-owned slice is cloned before mutation to avoid readonly-taint panics.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - tokenPath: Reward-token path to remove from the deny list.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) RemoveDeniedRewardToken(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -303,10 +449,18 @@ func (s *stakerStore) RemoveDeniedRewardToken(_ int, rlm realm, tokenPath string
 }
 
 // IncentiveCounter
+// HasIncentiveCounterStoreKey reports whether the incentive-counter key exists.
+//
+// Returns:
+//   - bool: True when an incentive counter has been initialized in storage.
 func (s *stakerStore) HasIncentiveCounterStoreKey() bool {
 	return s.kvStore.Has(StoreKeyIncentiveCounter.String())
 }
 
+// GetIncentiveCounter retrieves the persistent incentive identifier counter.
+//
+// Returns:
+//   - *Counter: Stored counter state; panics on read or type failure.
 func (s *stakerStore) GetIncentiveCounter() *Counter {
 	result, err := s.kvStore.Get(StoreKeyIncentiveCounter.String())
 	if err != nil {
@@ -321,6 +475,15 @@ func (s *stakerStore) GetIncentiveCounter() *Counter {
 	return counter
 }
 
+// SetIncentiveCounter stores the counter used to allocate incentive identifiers.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - counter: Counter state whose next value is used by NextIncentiveID.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetIncentiveCounter(_ int, rlm realm, counter *Counter) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -329,16 +492,32 @@ func (s *stakerStore) SetIncentiveCounter(_ int, rlm realm, counter *Counter) er
 	return s.kvStore.Set(0, rlm, StoreKeyIncentiveCounter.String(), counter)
 }
 
+// NextIncentiveID advances the stored counter and builds a unique incentive identifier.
+//
+// Parameters:
+//   - creator: Address that created the incentive.
+//   - timestamp: Incentive start or creation timestamp included in the identifier.
+//
+// Returns:
+//   - string: Identifier combining creator, timestamp, and the next counter index.
 func (s *stakerStore) NextIncentiveID(creator address, timestamp int64) string {
 	counter := s.GetIncentiveCounter()
 	return makeIncentiveID(creator, timestamp, counter.Next())
 }
 
 // TokenSpecificMinimumRewards
+// HasTokenSpecificMinimumRewardsStoreKey reports whether the token-specific minimum-rewards key exists.
+//
+// Returns:
+//   - bool: True when token-specific minimum rewards have been initialized in storage.
 func (s *stakerStore) HasTokenSpecificMinimumRewardsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyTokenSpecificMinimumRewards.String())
 }
 
+// GetTokenSpecificMinimumRewards retrieves per-token minimum reward amounts.
+//
+// Returns:
+//   - map[string]int64: Stored minimum reward overrides keyed by token path; panics on read or type failure.
 func (s *stakerStore) GetTokenSpecificMinimumRewards() map[string]int64 {
 	result, err := s.kvStore.Get(StoreKeyTokenSpecificMinimumRewards.String())
 	if err != nil {
@@ -353,6 +532,15 @@ func (s *stakerStore) GetTokenSpecificMinimumRewards() map[string]int64 {
 	return rewards
 }
 
+// SetTokenSpecificMinimumRewards replaces the token-specific minimum reward map.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - rewards: Minimum reward amounts keyed by token path.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetTokenSpecificMinimumRewards(_ int, rlm realm, rewards map[string]int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -362,6 +550,15 @@ func (s *stakerStore) SetTokenSpecificMinimumRewards(_ int, rlm realm, rewards m
 }
 
 // SetTokenSpecificMinimumRewardItem sets a single token's minimum reward amount.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - tokenPath: Token path receiving the minimum reward override.
+//   - amount: Minimum reward amount required for tokenPath.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string, amount int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -380,6 +577,14 @@ func (s *stakerStore) SetTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenP
 }
 
 // RemoveTokenSpecificMinimumRewardItem removes a single token's minimum reward entry.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - tokenPath: Token path whose override is removed.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) RemoveTokenSpecificMinimumRewardItem(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -400,10 +605,18 @@ func (s *stakerStore) RemoveTokenSpecificMinimumRewardItem(_ int, rlm realm, tok
 }
 
 // UnstakingFee
+// HasUnstakingFeeStoreKey reports whether the unstaking-fee key exists.
+//
+// Returns:
+//   - bool: True when an unstaking fee has been initialized in storage.
 func (s *stakerStore) HasUnstakingFeeStoreKey() bool {
 	return s.kvStore.Has(StoreKeyUnstakingFee.String())
 }
 
+// GetUnstakingFee retrieves the configured unstaking fee rate.
+//
+// Returns:
+//   - uint64: Stored unstaking fee rate in basis points; panics on read or type failure.
 func (s *stakerStore) GetUnstakingFee() uint64 {
 	result, err := s.kvStore.Get(StoreKeyUnstakingFee.String())
 	if err != nil {
@@ -418,6 +631,15 @@ func (s *stakerStore) GetUnstakingFee() uint64 {
 	return fee
 }
 
+// SetUnstakingFee stores the fee charged when a position is unstaked.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - fee: Unstaking fee rate in basis points.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetUnstakingFee(_ int, rlm realm, fee uint64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -426,10 +648,18 @@ func (s *stakerStore) SetUnstakingFee(_ int, rlm realm, fee uint64) error {
 	return s.kvStore.Set(0, rlm, StoreKeyUnstakingFee.String(), fee)
 }
 
+// HasPendingProtocolFeesStoreKey reports whether the pending protocol-fees key exists.
+//
+// Returns:
+//   - bool: True when pending protocol fees have been initialized in storage.
 func (s *stakerStore) HasPendingProtocolFeesStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPendingProtocolFees.String())
 }
 
+// GetPendingProtocolFees retrieves pending protocol fee amounts keyed by token path.
+//
+// Returns:
+//   - map[string]int64: Stored token-to-fee map; panics on read or type failure.
 func (s *stakerStore) GetPendingProtocolFees() map[string]int64 {
 	result, err := s.kvStore.Get(StoreKeyPendingProtocolFees.String())
 	if err != nil {
@@ -444,6 +674,15 @@ func (s *stakerStore) GetPendingProtocolFees() map[string]int64 {
 	return fees
 }
 
+// SetPendingProtocolFees replaces the pending protocol-fee map with a store-owned copy.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - fees: Pending protocol fee amounts keyed by token path.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -458,10 +697,27 @@ func (s *stakerStore) SetPendingProtocolFees(_ int, rlm realm, fees map[string]i
 	return s.kvStore.Set(0, rlm, StoreKeyPendingProtocolFees.String(), owned)
 }
 
+// GetPendingProtocolFee returns one token's pending protocol fee amount.
+//
+// Parameters:
+//   - tokenPath: Token path whose pending fee is read.
+//
+// Returns:
+//   - int64: Stored pending fee amount, or zero when tokenPath has no map entry.
 func (s *stakerStore) GetPendingProtocolFee(tokenPath string) int64 {
 	return s.GetPendingProtocolFees()[tokenPath]
 }
 
+// SetPendingProtocolFee updates one token's pending protocol fee in the stored fee map.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context and write-authorizing realm.
+//   - tokenPath: Token path whose pending fee amount is updated.
+//   - amount: Pending protocol fee amount for tokenPath.
+//
+// Returns:
+//   - error: ErrSpoofedRealm or write-permission error when the realm cannot mutate this store; nil on success.
 func (s *stakerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -476,6 +732,15 @@ func (s *stakerStore) SetPendingProtocolFee(_ int, rlm realm, tokenPath string, 
 	return nil
 }
 
+// RemovePendingProtocolFee removes one token's pending protocol fee entry.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context and write-authorizing realm.
+//   - tokenPath: Token path whose pending fee entry is deleted.
+//
+// Returns:
+//   - error: ErrSpoofedRealm or write-permission error when the realm cannot mutate this store; nil on success.
 func (s *stakerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -491,10 +756,18 @@ func (s *stakerStore) RemovePendingProtocolFee(_ int, rlm realm, tokenPath strin
 }
 
 // UnstakedPositions
+// HasUnstakedPositionsStoreKey reports whether the unstaked-positions key exists.
+//
+// Returns:
+//   - bool: True when unstaked positions have been initialized in storage.
 func (s *stakerStore) HasUnstakedPositionsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyUnstakedPositions.String())
 }
 
+// GetUnstakedPositions retrieves the unstaked-position tree.
+//
+// Returns:
+//   - *bptree.BPTree: Stored unstaked-position records; panics on read or type failure.
 func (s *stakerStore) GetUnstakedPositions() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyUnstakedPositions.String())
 	if err != nil {
@@ -509,6 +782,15 @@ func (s *stakerStore) GetUnstakedPositions() *bptree.BPTree {
 	return positions
 }
 
+// SetUnstakedPositions stores positions that have been unstaked but retain reward checkpoints.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - positions: B+ tree of unstaked position records and their exit checkpoints.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetUnstakedPositions(_ int, rlm realm, positions *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -518,10 +800,18 @@ func (s *stakerStore) SetUnstakedPositions(_ int, rlm realm, positions *bptree.B
 }
 
 // UncollectedIncentiveCounts
+// HasUncollectedIncentiveCountsStoreKey reports whether the uncollected-counts key exists.
+//
+// Returns:
+//   - bool: True when uncollected incentive counts have been initialized in storage.
 func (s *stakerStore) HasUncollectedIncentiveCountsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyUncollectedIncentiveCounts.String())
 }
 
+// GetUncollectedIncentiveCounts retrieves outstanding-position counts by incentive.
+//
+// Returns:
+//   - *bptree.BPTree: Stored incentive-to-count tree; panics on read or type failure.
 func (s *stakerStore) GetUncollectedIncentiveCounts() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyUncollectedIncentiveCounts.String())
 	if err != nil {
@@ -536,6 +826,15 @@ func (s *stakerStore) GetUncollectedIncentiveCounts() *bptree.BPTree {
 	return counts
 }
 
+// SetUncollectedIncentiveCounts stores counts of unstaked positions owing each incentive.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - counts: B+ tree mapping incentive identifiers to outstanding position counts.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -545,10 +844,18 @@ func (s *stakerStore) SetUncollectedIncentiveCounts(_ int, rlm realm, counts *bp
 }
 
 // Pools
+// HasPoolsStoreKey reports whether the pools key exists.
+//
+// Returns:
+//   - bool: True when the pool collection has been initialized in storage.
 func (s *stakerStore) HasPoolsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPools.String())
 }
 
+// GetPools retrieves the staker's pool collection.
+//
+// Returns:
+//   - *bptree.BPTree: Stored pool tree; panics on read or type failure.
 func (s *stakerStore) GetPools() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyPools.String())
 	if err != nil {
@@ -563,6 +870,15 @@ func (s *stakerStore) GetPools() *bptree.BPTree {
 	return pools
 }
 
+// SetPools stores the pool collection used by the staker.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - pools: Pool tree containing registered pools and their reward state.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -572,10 +888,18 @@ func (s *stakerStore) SetPools(_ int, rlm realm, pools *bptree.BPTree) error {
 }
 
 // PoolTierMemberships
+// HasPoolTierMembershipsStoreKey reports whether the pool-tier membership key exists.
+//
+// Returns:
+//   - bool: True when pool-tier memberships have been initialized in storage.
 func (s *stakerStore) HasPoolTierMembershipsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierMemberships.String())
 }
 
+// GetPoolTierMemberships retrieves the pool-to-tier membership tree.
+//
+// Returns:
+//   - *bptree.BPTree: Stored mapping from pool paths to tier numbers; panics on read or type failure.
 func (s *stakerStore) GetPoolTierMemberships() *bptree.BPTree {
 	result, err := s.kvStore.Get(StoreKeyPoolTierMemberships.String())
 	if err != nil {
@@ -590,6 +914,15 @@ func (s *stakerStore) GetPoolTierMemberships() *bptree.BPTree {
 	return memberships
 }
 
+// SetPoolTierMemberships stores the pool-to-tier membership tree.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - memberships: Mapping from pool paths to their assigned tier numbers.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetPoolTierMemberships(_ int, rlm realm, memberships *bptree.BPTree) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -599,10 +932,18 @@ func (s *stakerStore) SetPoolTierMemberships(_ int, rlm realm, memberships *bptr
 }
 
 // PoolTierRatio
+// HasPoolTierRatioStoreKey reports whether the pool-tier ratio key exists.
+//
+// Returns:
+//   - bool: True when a pool-tier ratio has been initialized in storage.
 func (s *stakerStore) HasPoolTierRatioStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierRatio.String())
 }
 
+// GetPoolTierRatio retrieves the configured pool-tier reward-share ratio.
+//
+// Returns:
+//   - TierRatio: Stored ratio distribution across tiers; panics on read or type failure.
 func (s *stakerStore) GetPoolTierRatio() TierRatio {
 	result, err := s.kvStore.Get(StoreKeyPoolTierRatio.String())
 	if err != nil {
@@ -617,6 +958,15 @@ func (s *stakerStore) GetPoolTierRatio() TierRatio {
 	return ratio
 }
 
+// SetPoolTierRatio stores the reward-share ratio for each pool tier.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - ratio: Tier reward-share ratio used to divide current emission.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetPoolTierRatio(_ int, rlm realm, ratio TierRatio) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -626,10 +976,18 @@ func (s *stakerStore) SetPoolTierRatio(_ int, rlm realm, ratio TierRatio) error 
 }
 
 // PoolTierCounts
+// HasPoolTierCountsStoreKey reports whether the pool-tier counts key exists.
+//
+// Returns:
+//   - bool: True when pool counts have been initialized in storage.
 func (s *stakerStore) HasPoolTierCountsStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierCounts.String())
 }
 
+// GetPoolTierCounts retrieves the pool count for every tier index.
+//
+// Returns:
+//   - [AllTierCount]uint64: Stored pool counts indexed by tier; panics on read or type failure.
 func (s *stakerStore) GetPoolTierCounts() [AllTierCount]uint64 {
 	result, err := s.kvStore.Get(StoreKeyPoolTierCounts.String())
 	if err != nil {
@@ -644,6 +1002,15 @@ func (s *stakerStore) GetPoolTierCounts() [AllTierCount]uint64 {
 	return counts
 }
 
+// SetPoolTierCounts stores the number of pools assigned to each tier index.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - counts: Pool counts indexed by tier, including the reserved zero tier.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetPoolTierCounts(_ int, rlm realm, counts [AllTierCount]uint64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -653,10 +1020,18 @@ func (s *stakerStore) SetPoolTierCounts(_ int, rlm realm, counts [AllTierCount]u
 }
 
 // PoolTierLastRewardCacheTimestamp
+// HasPoolTierLastRewardCacheTimestampStoreKey reports whether the tier reward-cache timestamp key exists.
+//
+// Returns:
+//   - bool: True when a tier reward-cache timestamp has been initialized in storage.
 func (s *stakerStore) HasPoolTierLastRewardCacheTimestampStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierLastRewardCacheTimestamp.String())
 }
 
+// GetPoolTierLastRewardCacheTimestamp retrieves the tier reward-cache timestamp.
+//
+// Returns:
+//   - int64: Stored Unix timestamp through which tier rewards are materialized; panics on read or type failure.
 func (s *stakerStore) GetPoolTierLastRewardCacheTimestamp() int64 {
 	result, err := s.kvStore.Get(StoreKeyPoolTierLastRewardCacheTimestamp.String())
 	if err != nil {
@@ -671,6 +1046,15 @@ func (s *stakerStore) GetPoolTierLastRewardCacheTimestamp() int64 {
 	return timestamp
 }
 
+// SetPoolTierLastRewardCacheTimestamp stores the timestamp through which tier rewards are cached.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - timestamp: Unix timestamp through which pool-tier reward caches are materialized.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetPoolTierLastRewardCacheTimestamp(_ int, rlm realm, timestamp int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -680,10 +1064,18 @@ func (s *stakerStore) SetPoolTierLastRewardCacheTimestamp(_ int, rlm realm, time
 }
 
 // PoolTierCurrentEmission
+// HasPoolTierCurrentEmissionStoreKey reports whether the current pool-tier emission key exists.
+//
+// Returns:
+//   - bool: True when the current pool-tier emission has been initialized in storage.
 func (s *stakerStore) HasPoolTierCurrentEmissionStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierCurrentEmission.String())
 }
 
+// GetPoolTierCurrentEmission retrieves the current pool-tier emission amount.
+//
+// Returns:
+//   - int64: Stored emission amount used for tier reward accrual; panics on read or type failure.
 func (s *stakerStore) GetPoolTierCurrentEmission() int64 {
 	result, err := s.kvStore.Get(StoreKeyPoolTierCurrentEmission.String())
 	if err != nil {
@@ -698,6 +1090,15 @@ func (s *stakerStore) GetPoolTierCurrentEmission() int64 {
 	return emission
 }
 
+// SetPoolTierCurrentEmission stores the current pool-tier emission amount.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - emission: Current emission amount used for tier reward accrual.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetPoolTierCurrentEmission(_ int, rlm realm, emission int64) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -707,10 +1108,18 @@ func (s *stakerStore) SetPoolTierCurrentEmission(_ int, rlm realm, emission int6
 }
 
 // PoolTierGetEmission
+// HasPoolTierGetEmissionStoreKey reports whether the pool-tier emission callback key exists.
+//
+// Returns:
+//   - bool: True when the current-emission callback has been initialized in storage.
 func (s *stakerStore) HasPoolTierGetEmissionStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierGetEmission.String())
 }
 
+// GetPoolTierGetEmission retrieves the current-emission callback.
+//
+// Returns:
+//   - func() (int64, error): Callback returning the current emission amount per second and an error; panics on read or type failure.
 func (s *stakerStore) GetPoolTierGetEmission() func() (int64, error) {
 	result, err := s.kvStore.Get(StoreKeyPoolTierGetEmission.String())
 	if err != nil {
@@ -725,6 +1134,15 @@ func (s *stakerStore) GetPoolTierGetEmission() func() (int64, error) {
 	return fn
 }
 
+// SetPoolTierGetEmission stores the callback used to read current staker emission.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - fn: Callback returning the current emission amount per second and an error.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() (int64, error)) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -734,10 +1152,18 @@ func (s *stakerStore) SetPoolTierGetEmission(_ int, rlm realm, fn func() (int64,
 }
 
 // PoolTierGetHalvingBlocksInRange
+// HasPoolTierGetHalvingBlocksInRangeStoreKey reports whether the pool-tier halving callback key exists.
+//
+// Returns:
+//   - bool: True when the halving-range callback has been initialized in storage.
 func (s *stakerStore) HasPoolTierGetHalvingBlocksInRangeStoreKey() bool {
 	return s.kvStore.Has(StoreKeyPoolTierGetHalvingBlocksInRange.String())
 }
 
+// GetPoolTierGetHalvingBlocksInRange retrieves the stored halving-range callback.
+//
+// Returns:
+//   - func(start, end int64) ([]int64, []int64, error): Callback returning halving timestamps and matching emissions for [start, end); panics on read or type failure.
 func (s *stakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64) ([]int64, []int64, error) {
 	result, err := s.kvStore.Get(StoreKeyPoolTierGetHalvingBlocksInRange.String())
 	if err != nil {
@@ -752,6 +1178,15 @@ func (s *stakerStore) GetPoolTierGetHalvingBlocksInRange() func(start, end int64
 	return fn
 }
 
+// SetPoolTierGetHalvingBlocksInRange stores the halving-range callback used by pool-tier reward caching.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - fn: Callback accepting [start, end) timestamps and returning halving timestamps, emissions, and an error.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn func(start, end int64) ([]int64, []int64, error)) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -760,10 +1195,18 @@ func (s *stakerStore) SetPoolTierGetHalvingBlocksInRange(_ int, rlm realm, fn fu
 	return s.kvStore.Set(0, rlm, StoreKeyPoolTierGetHalvingBlocksInRange.String(), fn)
 }
 
+// HasWarmupTemplateStoreKey reports whether the warmup-template key exists.
+//
+// Returns:
+//   - bool: True when a warmup schedule has been initialized in storage.
 func (s *stakerStore) HasWarmupTemplateStoreKey() bool {
 	return s.kvStore.Has(StoreKeyWarmupTemplate.String())
 }
 
+// GetWarmupTemplate retrieves a clone of the stored warmup schedule.
+//
+// Returns:
+//   - []Warmup: Warmup entries copied into the caller's realm; panics on read or type failure.
 func (s *stakerStore) GetWarmupTemplate() []Warmup {
 	result, err := s.kvStore.Get(StoreKeyWarmupTemplate.String())
 	if err != nil {
@@ -778,6 +1221,15 @@ func (s *stakerStore) GetWarmupTemplate() []Warmup {
 	return cloneWarmups(warmups)
 }
 
+// SetWarmupTemplate stores the warmup schedule used for external incentives.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - warmups: Warmup schedule entries to persist.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetWarmupTemplate(_ int, rlm realm, warmups []Warmup) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -787,10 +1239,18 @@ func (s *stakerStore) SetWarmupTemplate(_ int, rlm realm, warmups []Warmup) erro
 }
 
 // CurrentSwapBatch
+// HasCurrentSwapBatchStoreKey reports whether the current-swap-batch key exists.
+//
+// Returns:
+//   - bool: True when the current swap batch has been initialized in storage.
 func (s *stakerStore) HasCurrentSwapBatchStoreKey() bool {
 	return s.kvStore.Has(StoreKeyCurrentSwapBatch.String())
 }
 
+// GetCurrentSwapBatch retrieves the processor for the currently active swap.
+//
+// Returns:
+//   - *SwapBatchProcessor: Stored swap batch, or nil when initialization has recorded no active batch; panics on read or type failure.
 func (s *stakerStore) GetCurrentSwapBatch() *SwapBatchProcessor {
 	result, err := s.kvStore.Get(StoreKeyCurrentSwapBatch.String())
 	if err != nil {
@@ -805,6 +1265,15 @@ func (s *stakerStore) GetCurrentSwapBatch() *SwapBatchProcessor {
 	return batch
 }
 
+// SetCurrentSwapBatch persists the processor for the currently active swap.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator for the forwarded store call; callers pass 0.
+//   - rlm: Current staker realm context; it must be current before storage is written.
+//   - batch: Swap-batch processor to persist, or nil when the swap has ended.
+//
+// Returns:
+//   - error: ErrSpoofedRealm when rlm is not current, or the underlying KV-store write error; nil on success.
 func (s *stakerStore) SetCurrentSwapBatch(_ int, rlm realm, batch *SwapBatchProcessor) error {
 	if !rlm.IsCurrent() {
 		return errors.New(ErrSpoofedRealm)
@@ -815,6 +1284,12 @@ func (s *stakerStore) SetCurrentSwapBatch(_ int, rlm realm, batch *SwapBatchProc
 
 // NewStakerStore creates a new staker store instance with the provided KV store.
 // This function is used by the upgrade system to create storage instances for each implementation.
+//
+// Parameters:
+//   - kvStore: Key-value store used for all staker state.
+//
+// Returns:
+//   - IStakerStore: Store interface backed by the supplied KV store.
 func NewStakerStore(kvStore store.KVStore) IStakerStore {
 	return &stakerStore{
 		kvStore: kvStore,

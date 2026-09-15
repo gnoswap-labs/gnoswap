@@ -5,14 +5,11 @@ import (
 )
 
 // RegisterInitializer registers a new router implementation version.
-// This function is called by each version (v1, v2, etc.) during initialization
-// to register their implementation with the proxy system.
+// Each implementation package calls it during initialization before it can be selected.
 //
-// The initializer function creates a new instance of the implementation
-// using the provided routerStore interface.
-//
-// Security: Only contracts within the domain path can register initializers.
-// Each package path can only register once to prevent duplicate registrations.
+// Parameters:
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - initializer: callback that receives the propagated realm context and router store, then constructs the IRouter implementation
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, routerStore IRouterStore) IRouter) {
 	initializerFunc := func(_ int, rlm realm, domainStore any) any {
 		access.AssertIsRlmCurrent(0, rlm)
@@ -36,12 +33,11 @@ func RegisterInitializer(cur realm, initializer func(_ int, rlm realm, routerSto
 	}
 }
 
-// UpgradeImpl switches the active router implementation to a different version.
-// This function allows seamless upgrades from one version to another without
-// data migration or downtime.
+// UpgradeImpl switches the active router implementation to a different registered version.
 //
-// Security: Only admin or governance can perform upgrades.
-// The new implementation must have been previously registered via RegisterInitializer.
+// Parameters:
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - packagePath: package path of the previously registered implementation to activate
 func UpgradeImpl(cur realm, packagePath string) {
 	// Ensure only admin or governance can perform upgrades
 	caller := cur.Previous().Address()
@@ -59,6 +55,9 @@ func UpgradeImpl(cur realm, packagePath string) {
 }
 
 // GetImplementationPackagePath returns the package path of the currently active implementation.
+//
+// Returns:
+//   - packagePath: package path of the active implementation
 func GetImplementationPackagePath() string {
 	return versionManager.GetCurrentPackagePath()
 }

@@ -12,17 +12,39 @@ type IncentivesResolver struct {
 	*sr.Incentives
 }
 
+// NewIncentivesResolver wraps the persisted external-incentive state for lookup and mutation.
+//
+// Parameters:
+//   - incentives: External incentive state containing the incentive tree and unclaimable periods.
+//
+// Returns:
+//   - resolver: Resolver backed by incentives.
 func NewIncentivesResolver(incentives *sr.Incentives) *IncentivesResolver {
 	return &IncentivesResolver{
 		Incentives: incentives,
 	}
 }
 
-// Get incentive by incentiveId
+// Get resolves an external incentive by its identifier.
+//
+// Parameters:
+//   - incentiveId: External incentive identifier used as the tree key.
+//
+// Returns:
+//   - incentive: Stored external incentive pointer when the ID exists; nil when it is absent.
+//   - found: True when incentiveId is present in the tree; false otherwise.
 func (self *IncentivesResolver) Get(incentiveId string) (*sr.ExternalIncentive, bool) {
 	return retrieveIncentive(self.IncentiveTrees(), incentiveId)
 }
 
+// GetIncentiveResolver resolves an incentive ID to its field accessor.
+//
+// Parameters:
+//   - incentiveId: External incentive identifier to resolve.
+//
+// Returns:
+//   - resolver: Resolver for the stored incentive when found; nil when incentiveId is absent.
+//   - found: True when incentiveId resolves to a stored incentive; false otherwise.
 func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*ExternalIncentiveResolver, bool) {
 	if incentive, ok := self.Get(incentiveId); ok {
 		return NewExternalIncentiveResolver(incentive), true

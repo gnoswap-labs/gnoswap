@@ -16,7 +16,7 @@ Rendering is read-only and does not enumerate registry entries. Unsupported path
 
 1. **GRC20 Registry Helpers**: Convenient wrappers for GRC20 token operations
 2. **Coin Utilities**: Native coin (GNOT) handling and validation
-3. **Assertion Utilities**: Input validation and authorization checks
+3. **Assertion Utilities**: Input validation for supported operations (not authorization checks)
 
 ## API Reference
 
@@ -24,8 +24,8 @@ Rendering is read-only and does not enumerate registry entries. Unsupported path
 
 The write helpers are called without crossing, for example
 `common.Transfer(0, cur, ...)` and `common.SafeGRC20Transfer(0, cur, ...)`.
-The token actor is bound to that current realm via `RealmTeller` before the operation is forwarded. 
-Token lookup goes through the registered implementation (`common/v1` resolves `gno.land/r/nt/grc20reg/v0`), 
+The token actor is bound to that current realm via `RealmTeller` before the operation is forwarded.
+Token lookup goes through the registered implementation (`common/v1` resolves `gno.land/r/nt/grc20reg/v0`),
 which is swapped with `UpgradeImpl` like the other proxy realms.
 
 **Token Operations:**
@@ -44,5 +44,4 @@ which is swapped with `UpgradeImpl` like the other proxy realms.
 ### Coin Utilities
 
 **Coin Validation:**
-- **ExistsUserSendCoins**: Checks if user sent any coins
-- **AssertIsNotHandleNativeCoin**: Ensures no native coins in transaction
+- **AssertIsNotHandleNativeCoin**: Rejects native coins for GRC20-only functions and panics with `[GNOSWAP-COMMON-002] handle native coin is not allowed` when `unsafe.OriginSend()` is non-empty

@@ -32,9 +32,16 @@ func newOwnable2StepWithAddress(addr address) *Ownable2Step {
 // TransferOwnershipBy initiates ownership transfer by setting newOwner as pending owner.
 // The newOwner must call AcceptOwnershipBy to complete the transfer.
 //
+// Parameters:
+//   - newOwner: Non-zero, syntactically valid address to record as the pending owner.
+//   - caller: Address authorized to initiate the transfer; it must equal the current owner.
+//
 // Errors:
 //   - ErrUnauthorized: caller is not the current owner
 //   - ErrInvalidAddress: newOwner is empty or has an invalid format
+//
+// Returns:
+//   - error: nil when the pending owner is set; otherwise ErrUnauthorized or ErrInvalidAddress.
 func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller address) error {
 	if !o.IsOwner(caller) {
 		return errors.New(ErrUnauthorized)
@@ -58,9 +65,15 @@ func (o *Ownable2Step) TransferOwnershipBy(newOwner, caller address) error {
 // AcceptOwnershipBy completes the ownership transfer.
 // Must be called by the pending owner.
 //
+// Parameters:
+//   - caller: Address attempting to accept ownership; it must equal the recorded pending owner.
+//
 // Errors:
 //   - ErrNoPendingOwner: no ownership transfer is pending
 //   - ErrPendingUnauthorized: caller is not the pending owner
+//
+// Returns:
+//   - error: nil when ownership is transferred to caller; otherwise ErrNoPendingOwner or ErrPendingUnauthorized.
 func (o *Ownable2Step) AcceptOwnershipBy(caller address) error {
 	if o.pendingOwner == zeroAddress {
 		return errors.New(ErrNoPendingOwner)
@@ -86,8 +99,14 @@ func (o *Ownable2Step) AcceptOwnershipBy(caller address) error {
 // DropOwnershipBy removes the owner, disabling all owner-only actions.
 // This is irreversible - when ownership is dropped, no future owner-only operations can be performed.
 //
+// Parameters:
+//   - caller: Address requesting the drop; it must equal the current owner.
+//
 // Errors:
 //   - ErrUnauthorized: caller is not the current owner
+//
+// Returns:
+//   - error: nil when owner and pending owner are cleared; otherwise ErrUnauthorized.
 func (o *Ownable2Step) DropOwnershipBy(caller address) error {
 	if !o.IsOwner(caller) {
 		return errors.New(ErrUnauthorized)
@@ -107,21 +126,39 @@ func (o *Ownable2Step) DropOwnershipBy(caller address) error {
 }
 
 // Owner returns the current owner address. Returns empty address if ownership has been dropped.
+//
+// Returns:
+//   - address: Current owner address, or the empty address after ownership is dropped.
 func (o *Ownable2Step) Owner() address {
 	return o.owner
 }
 
 // PendingOwner returns the pending owner address during ownership transfer. Returns empty address if no transfer is pending.
+//
+// Returns:
+//   - address: Pending owner address, or the empty address when no transfer is pending.
 func (o *Ownable2Step) PendingOwner() address {
 	return o.pendingOwner
 }
 
-// IsOwner returns true if the origin caller is the current owner.
+// IsOwner returns true if the provided caller address is the current owner.
+//
+// Parameters:
+//   - caller: Address to compare with the stored current owner address.
+//
+// Returns:
+//   - bool: true when caller exactly equals the current owner address; false otherwise.
 func (o *Ownable2Step) IsOwner(caller address) bool {
 	return o.owner == caller
 }
 
-// IsPendingOwner returns true if the origin caller is the pending owner.
+// IsPendingOwner returns true if the provided caller address is the pending owner.
+//
+// Parameters:
+//   - caller: Address to compare with the stored pending owner address.
+//
+// Returns:
+//   - bool: true when caller exactly equals the pending owner address; false otherwise.
 func (o *Ownable2Step) IsPendingOwner(caller address) bool {
 	return o.pendingOwner == caller
 }

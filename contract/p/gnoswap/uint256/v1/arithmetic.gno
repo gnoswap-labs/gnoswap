@@ -9,6 +9,13 @@ import (
 )
 
 // Add sets z to the sum x+y and returns z.
+//
+// Parameters:
+//   - x: the first addend; its 256-bit value is added modulo 2^256
+//   - y: the second addend; its 256-bit value is added modulo 2^256
+//
+// Returns:
+//   - result: z containing x+y modulo 2^256; any carry beyond bit 255 is discarded
 func (z *Uint) Add(x, y *Uint) *Uint {
 	var carry uint64
 	z[0], carry = bits.Add64(x[0], y[0], 0)
@@ -19,6 +26,14 @@ func (z *Uint) Add(x, y *Uint) *Uint {
 }
 
 // AddOverflow sets z to the sum x+y and returns z and true if overflow occurred.
+//
+// Parameters:
+//   - x: the first addend
+//   - y: the second addend
+//
+// Returns:
+//   - result: z containing x+y modulo 2^256
+//   - overflow: true when x+y exceeds the 256-bit range
 func (z *Uint) AddOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
 	z[0], carry = bits.Add64(x[0], y[0], 0)
@@ -29,6 +44,13 @@ func (z *Uint) AddOverflow(x, y *Uint) (*Uint, bool) {
 }
 
 // Sub sets z to the difference x-y and returns z.
+//
+// Parameters:
+//   - x: the minuend
+//   - y: the subtrahend
+//
+// Returns:
+//   - result: z containing x-y modulo 2^256; underflow wraps in the unsigned representation
 func (z *Uint) Sub(x, y *Uint) *Uint {
 	var carry uint64
 	z[0], carry = bits.Sub64(x[0], y[0], 0)
@@ -39,6 +61,14 @@ func (z *Uint) Sub(x, y *Uint) *Uint {
 }
 
 // SubOverflow sets z to the difference x-y and returns z and true if underflow occurred.
+//
+// Parameters:
+//   - x: the minuend
+//   - y: the subtrahend
+//
+// Returns:
+//   - result: z containing x-y modulo 2^256
+//   - underflow: true when x is less than y
 func (z *Uint) SubOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
 	z[0], carry = bits.Sub64(x[0], y[0], 0)
@@ -49,11 +79,24 @@ func (z *Uint) SubOverflow(x, y *Uint) (*Uint, bool) {
 }
 
 // Neg returns -x mod 2^256.
+//
+// Parameters:
+//   - x: the value whose additive inverse modulo 2^256 is computed
+//
+// Returns:
+//   - result: z containing -x modulo 2^256
 func (z *Uint) Neg(x *Uint) *Uint {
 	return z.Sub(Zero(), x)
 }
 
 // Mul sets z to the product x*y and returns z.
+//
+// Parameters:
+//   - x: the first multiplicand
+//   - y: the second multiplicand
+//
+// Returns:
+//   - result: z containing the low 256 bits of x*y
 func (z *Uint) Mul(x, y *Uint) *Uint {
 	var (
 		res              Uint
@@ -79,6 +122,14 @@ func (z *Uint) Mul(x, y *Uint) *Uint {
 }
 
 // MulOverflow sets z to the product x*y and returns z and true if overflow occurred.
+//
+// Parameters:
+//   - x: the first multiplicand
+//   - y: the second multiplicand
+//
+// Returns:
+//   - result: z containing the low 256 bits of x*y
+//   - overflow: true when the full product needs more than 256 bits
 func (z *Uint) MulOverflow(x, y *Uint) (*Uint, bool) {
 	p := umul(x, y)
 	copy(z[:], p[:4])
@@ -87,6 +138,13 @@ func (z *Uint) MulOverflow(x, y *Uint) (*Uint, bool) {
 
 // Div sets z to the quotient x/y and returns z.
 // It panics if y == 0.
+//
+// Parameters:
+//   - x: the dividend
+//   - y: the non-zero divisor; zero causes a division-by-zero panic
+//
+// Returns:
+//   - result: z containing the unsigned quotient x/y
 func (z *Uint) Div(x, y *Uint) *Uint {
 	if y.IsZero() {
 		panic("division by zero")
@@ -112,6 +170,13 @@ func (z *Uint) Div(x, y *Uint) *Uint {
 
 // Mod sets z to the modulus x%y and returns z.
 // It panics if y == 0.
+//
+// Parameters:
+//   - x: the dividend
+//   - y: the non-zero divisor; zero causes a modulo-by-zero panic
+//
+// Returns:
+//   - result: z containing the unsigned remainder x%y
 func (z *Uint) Mod(x, y *Uint) *Uint {
 	if y.IsZero() {
 		panic("modulo by zero")
@@ -146,6 +211,14 @@ func (z *Uint) Mod(x, y *Uint) *Uint {
 
 // MulMod sets z to (x * y) mod m and returns z.
 // It panics if m == 0.
+//
+// Parameters:
+//   - x: the first multiplicand
+//   - y: the second multiplicand
+//   - m: the non-zero modulus; zero causes a modulo-by-zero panic
+//
+// Returns:
+//   - result: z containing (x*y) modulo m
 func (z *Uint) MulMod(x, y, m *Uint) *Uint {
 	if m.IsZero() {
 		panic("modulo by zero")
@@ -181,6 +254,15 @@ func (z *Uint) MulMod(x, y, m *Uint) *Uint {
 
 // DivMod sets z to the quotient x/y and m to the modulus x%y, returning the pair (z, m).
 // It panics if y == 0.
+//
+// Parameters:
+//   - x: the dividend
+//   - y: the non-zero divisor; zero causes a division-by-zero panic
+//   - m: the destination overwritten with x modulo y
+//
+// Returns:
+//   - quotient: z containing x/y
+//   - remainder: m containing x%y
 func (z *Uint) DivMod(x, y, m *Uint) (*Uint, *Uint) {
 	if y.IsZero() {
 		panic("division by zero")
@@ -392,6 +474,10 @@ func (z *Uint) isBitSet(n uint) bool {
 	return (z[n/64] & (1 << (n % 64))) != 0
 }
 
+// IsOverflow reports whether the highest bit of z is set.
+//
+// Returns:
+//   - overflow: true when z has bit 255 set
 func (z *Uint) IsOverflow() bool {
 	return z.isBitSet(255)
 }

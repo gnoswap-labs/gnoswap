@@ -191,7 +191,7 @@ func TestPermissionUpdateVsRemove(cur realm, t *testing.T) {
 	err = store.UpdateAuthorizedCaller(0, cur, caller1, zeroPermission)
 	uassert.ErrorContains(t, err, ErrInvalidPermission)
 
-	// Test removing caller completely
+	// Test removing caller completely, rather than downgrading to another permission level.
 	err = store.RemoveAuthorizedCaller(0, cur, caller1)
 	uassert.NoError(t, err)
 

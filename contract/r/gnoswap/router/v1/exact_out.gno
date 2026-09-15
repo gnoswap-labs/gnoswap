@@ -16,16 +16,19 @@ import (
 	"gno.land/r/gnoswap/referral/v1"
 )
 
-// ExactOutSwapRoute swaps tokens for an exact output amount.
+// ExactOutSwapRoute swaps tokens for a requested post-router-fee output target.
 //
-// Executes swap to receive exact output tokens.
-// Calculates required input working backwards through route.
-// Useful for buying specific amounts regardless of price.
+// Executes a swap to receive the requested net output tokens.
+// Calculates the required gross pool output and input working backwards
+// through the route.
 //
 // Parameters:
-//   - inputToken, outputToken: Token contract paths
-//   - amountOut: Exact output amount desired
-//   - routeArr: Swap route "TOKEN0:TOKEN1:FEE,TOKEN1:TOKEN2:FEE" (max 7 hops)
+//   - _: leading implementation discriminator; callers pass 0
+//   - rlm: propagated current realm context; this implementation validates and forwards it
+//   - inputToken: Input token contract path
+//   - outputToken: Output token contract path
+//   - amountOut: Requested net output target
+//   - routeArr: Swap routes separated by comma; each route may contain up to 3 hops joined by *POOL*
 //   - quoteArr: Split percentages "70,30" (must sum to 100)
 //   - amountInMax: Maximum input to spend (slippage protection)
 //   - deadline: Unix timestamp for expiration
@@ -38,7 +41,7 @@ import (
 //
 // Returns:
 //   - amountIn: Actual input consumed
-//   - amountOut: Exact output received
+//   - amountOut: Net output delivered after the router fee
 //
 // Reverts if input > amountInMax or deadline passed.
 func (r *routerV1) ExactOutSwapRoute(
@@ -82,16 +85,20 @@ func (r *routerV1) ExactOutSwapRoute(
 	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount)
 }
 
-// ExactOutSingleSwapRoute swaps tokens for an exact output amount through a single route.
+// ExactOutSingleSwapRoute swaps tokens for a requested post-router-fee output
+// target through a single route.
 //
-// Executes single-hop swaps through a single specified route.
-// Allows price limit control via sqrtPriceLimitX96 parameter.
+// Executes a single-hop swap through a single specified route.
+// Allows price limit control via sqrtPriceLimitX96.
 // Applies slippage protection via maximum input amount.
 //
 // Parameters:
-//   - inputToken, outputToken: Token contract paths
-//   - amountOut: Exact output amount desired
-//   - routeArr: Single swap route (max 3 hops)
+//   - _: leading implementation discriminator; callers pass 0
+//   - rlm: propagated current realm context; this implementation validates and forwards it
+//   - inputToken: Input token contract path
+//   - outputToken: Output token contract path
+//   - amountOut: Requested net output target
+//   - routeArr: Single-hop route path
 //   - amountInMax: Maximum input to spend (slippage protection)
 //   - sqrtPriceLimitX96: Price limit for swap execution (0 for no limit)
 //   - deadline: Unix timestamp for expiration
@@ -102,10 +109,10 @@ func (r *routerV1) ExactOutSwapRoute(
 //
 // Returns:
 //   - amountIn: Actual input consumed
-//   - amountOut: Exact output received
+//   - amountOut: Net output delivered after the router fee
 //
-// Reverts the transaction if the input amount is greater than `amountInMax`,
-// the deadline has passed, or the price limit is exceeded.
+// With a nonzero price limit, the swap may stop at the limit and deliver less
+// than amountOut; amountInMax and the deadline are still enforced.
 func (r *routerV1) ExactOutSingleSwapRoute(
 	_ int,
 	rlm realm,
@@ -210,7 +217,14 @@ type ExactOutSwapOperation struct {
 	params ExactOutParams
 }
 
-// NewExactOutSwapOperation creates a new exact-out swap operation.
+// NewExactOutSwapOperation creates an exact-output operation for router execution.
+//
+// Parameters:
+//   - r: router implementation used to execute pool swaps
+//   - pp: exact-output amount and route settings
+//
+// Returns:
+//   - operation: initialized ExactOutSwapOperation
 func NewExactOutSwapOperation(r *routerV1, pp ExactOutParams) *ExactOutSwapOperation {
 	return &ExactOutSwapOperation{
 		router: r,
@@ -221,7 +235,10 @@ func NewExactOutSwapOperation(r *routerV1, pp ExactOutParams) *ExactOutSwapOpera
 	}
 }
 
-// Validate ensures the exact-out swap parameters are valid.
+// Validate checks the exact-output amount and parses route/quote allocations.
+//
+// Returns:
+//   - err: nil when amount, routes, and quotes are valid; validation error otherwise
 func (op *ExactOutSwapOperation) Validate() error {
 	amountOut := op.params.AmountOut
 	if amountOut <= 0 {
@@ -243,7 +260,15 @@ func (op *ExactOutSwapOperation) Validate() error {
 	return nil
 }
 
-// Process executes the exact-out swap operation.
+// Process executes the validated exact-output operation in the propagated realm.
+//
+// Parameters:
+//   - _: leading operation discriminator; callers pass 0
+//   - rlm: propagated current realm context used for pool swaps
+//
+// Returns:
+//   - result: aggregate swap amounts and route metadata, or nil on processing error
+//   - err: nil on success; pool or route execution error otherwise
 func (op *ExactOutSwapOperation) Process(_ int, rlm realm) (*SwapResult, error) {
 	resultAmountIn, resultAmountOut, err := op.processRoutes(0, rlm, op.router, ExactOut)
 	if err != nil {

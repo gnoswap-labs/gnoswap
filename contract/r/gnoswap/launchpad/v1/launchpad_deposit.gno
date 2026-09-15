@@ -23,11 +23,14 @@ import (
 // DepositGns deposits GNS tokens to a launchpad project tier.
 //
 // Parameters:
-//   - targetProjectTierID: format "{projectId}:{tierType}"
-//   - depositAmount: amount of GNS to deposit
-//   - referrer: referral address (optional)
+//   - _: leading integer discriminator for the forwarded realm call; callers pass 0.
+//   - rlm: propagated realm context; the implementation validates it is the current realm.
+//   - targetProjectTierID: project-tier identifier in `{projectID}:{tierDuration}` form.
+//   - depositAmount: amount of GNS to deposit into the tier.
+//   - referrer: optional referral address associated with the deposit.
 //
-// Returns deposit ID.
+// Returns:
+//   - depositID: identifier assigned to the newly created deposit.
 func (lp *launchpadV1) DepositGns(_ int, rlm realm, targetProjectTierID string, depositAmount int64, referrer string) string {
 	access.AssertIsRlmCurrent(0, rlm)
 

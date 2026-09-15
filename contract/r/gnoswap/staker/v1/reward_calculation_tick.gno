@@ -16,6 +16,11 @@ type TickResolver struct {
 }
 
 // CurrentOutsideAccumulation returns the latest outside accumulation for the tick
+// Parameters:
+//   - timestamp: Timestamp through which the tick's outside-accumulation history is queried.
+//
+// Returns:
+//   - *u256.Uint: Most recent decoded outside accumulation at or before timestamp, or zero when none exists.
 func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint {
 	var acc *u256.Uint
 	self.OutsideAccumulation().ReverseIterate(0, timestamp, func(key int64, value any) bool {
@@ -66,6 +71,13 @@ func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc 
 	return newOutsideAccumulation
 }
 
+// NewTickResolver wraps a staker tick to expose reward-accumulation updates.
+//
+// Parameters:
+//   - tick: Staker tick whose state is resolved.
+//
+// Returns:
+//   - *TickResolver: Resolver backed by tick.
 func NewTickResolver(tick *sr.Tick) *TickResolver {
 	return &TickResolver{
 		Tick: tick,

@@ -14,12 +14,12 @@ GNS amounts use six-decimal base units; external rewards use their token's base 
 
 ## Configuration
 
-- **Deposit GNS Amount**: 100,000 GNS for external incentives (default)
-- **Minimum Reward Amount**: 1,000 tokens (default)
-- **Unstaking Fee**: 1% (default)
-- **Pool Tiers**: 1, 2, or 3 (assigned per pool)
-- **Warmup Schedule**: 30% for 5 days, 50% for 10 days, 70% for 30 days, then 100% (defaults)
-- **External Token Whitelist**: Approved reward tokens
+- **Deposit GNS Amount**: 100,000 GNS per external incentive (default; governance-adjustable)
+- **Minimum Reward Amount**: 1,000 token units (default for external incentive creation)
+- **Unstaking Fee**: 1% default (100 basis points; configurable from 0 to 10%)
+- **Internal Pool Tiers**: 1, 2, or 3 (assigned per pool); external-only pools can also be stakeable
+- **Warmup Schedule**: 30/50/70/100% over default cumulative windows of 0-5, 5-15, 15-45, and 45+ days
+- **External Token Policy**: Approved reward tokens; pool-pair tokens are also accepted for their own pool unless explicitly denied
 
 ## Core Features
 
@@ -33,18 +33,23 @@ GNS amounts use six-decimal base units; external rewards use their token's base 
 ### External Rewards (User Incentives)
 
 - Created for specific pools
-- Constant reward per block
+- Constant reward per second over the incentive window; the stored rate is Q128-scaled as `(rewardAmount << 128) / duration`
 - Proportional to staked liquidity
-- Unclaimed rewards returned to creator
+- `EndExternalIncentive` returns only the unclaimable/remainder portion and GNS deposit to its explicit refund address; rewards still owed by live positions remain claimable
 
 ### Warmup Periods
 
-Every staked position progresses through warmup periods:
+Every staked position progresses through warmup periods. The default finite durations are 5, 10,
+and 30 days, followed by a final `math.MaxInt64` tier:
 
-- 0-30 days: 30% rewards (70% to community/creator)
-- 30-60 days: 50% rewards (50% to community/creator)
-- 60-90 days: 70% rewards (30% to community/creator)
-- 90+ days: 100% rewards
+- 0-5 days: 30% of the calculated reward
+- 5-15 days: 50% of the calculated reward
+- 15-45 days: 70% of the calculated reward
+- 45+ days: 100% of the calculated reward
+
+Governance may change the finite durations. Warmup ratios are applied before the staking-reward fee:
+internal GNS penalties go to the community pool, while external penalties accumulate on the
+incentive and are collected separately to an explicit address after `EndExternalIncentive`.
 
 ## Key Functions
 
@@ -65,15 +70,20 @@ is permissionless, since it can only ever pay that position's owner.
 
 ### `CreateExternalIncentive`
 
-Creates external reward program for specific pool.
+Creates an external reward program for a specific pool. Any caller may create one after satisfying
+the reward-token allowlist/denial, duration, start-time, reward-minimum, and GNS-deposit checks.
 
 ### `EndExternalIncentive`
 
-Ends incentive program and returns unused rewards.
+Ends an incentive after its end timestamp and finalizes its refundable unclaimable/remainder
+amount. The reward tokens and GNS deposit are sent to the caller-supplied `refundAddress`; only
+the creator or admin may call it, and an outstanding exit checkpoint for that incentive blocks ending.
 
 ### `CancelExternalIncentive`
 
-Removes a not-yet-started incentive and refunds the rewards and GNS deposit to the creator. Callable by admin, governance, or the creator.
+Removes an incentive that has not started and refunds its reward tokens and GNS deposit to the
+creator. Callable by admin, governance, or the creator; the reward-token refund is capped by the
+balance held by the staker.
 
 ## Reward Calculation Logic
 
@@ -92,33 +102,38 @@ Mathematical representation:
 
 ```math
 TierRatio(t) =
-  [1, 0, 0]        if Count(2) = 0 ∧ Count(3) = 0
-  [0.8, 0, 0.2]    if Count(2) = 0
-  [0.7, 0.3, 0]    if Count(3) = 0
-  [0.5, 0.3, 0.2]  otherwise
+  [100, 0, 0]  if Count(2) = 0 ∧ Count(3) = 0
+  [80, 0, 20]  if Count(2) = 0
+  [70, 30, 0]  if Count(3) = 0
+  [50, 30, 20] otherwise
 ```
 
 ### Pool Reward Formula
 
 ```math
-poolReward(pool) = (emission × TierRatio[tier(pool)]) / Count(tier(pool))
+poolReward(pool) = (emission × TierRatio[tier(pool)] / 100) / Count(tier(pool))
 ```
 
-Where emission is calculated as:
+Here `emission` is the already-allocated per-second GNS amount returned by the emission module
+for liquidity stakers. It is split by the tier percentage and then divided among pools in that
+tier:
 
 ```math
-emission = GNSEmissionPerSecond × (avgMsPerBlock/1000) × StakerEmissionRatio
+emission = GetStakerEmissionAmountPerSecond()
 ```
 
 ### Position Reward Calculation
 
 The reward for each position is calculated through:
 
-1. **Cache pool rewards** up to current block
-2. **Retrieve position state** from deposit records
-3. **Calculate internal rewards** if pool is tiered
-4. **Calculate external rewards** for active incentives
-5. **Apply warmup penalties** based on stake duration
+1. **Resolve the persisted/halving per-second reward schedule** (read-only)
+2. **Retrieve position state** from deposit records or an exit checkpoint
+3. **Calculate internal rewards** if the pool has an internal tier
+4. **Calculate external rewards** for the incentive IDs
+5. **Apply warmup ratios and penalties** based on stake duration
+
+Collection may separately advance reward caches and persist newly discovered incentive IDs; the
+read-only calculation itself does not write those caches.
 
 Mathematical formula for total reward ratio:
 
@@ -176,30 +191,58 @@ The system maintains:
 - **Tick accumulation**: Tracks rewards "outside" each tick
 - **Position state**: Individual reward calculation parameters
 
-## Usage
+## Approval Requirements
+
+- `StakeToken` moves the position NFT to the staker realm through
+  `gnft.TransferFrom`, so the caller must approve the staker on that NFT first
+  with `gnft.Approve(cross(cur), stakerAddress, positionId)`, or grant
+  `gnft.SetApprovalForAll(cross(cur), stakerAddress, true)`.
+- `CreateExternalIncentive` pulls two amounts into the staker realm: the reward
+  token amount and the GNS deposit. Approve the staker realm for both token
+  contracts before calling.
+- `UnStakeToken`, the reward-collection functions, `EndExternalIncentive`, and
+  `CancelExternalIncentive` pay out to the caller or to a supplied address and
+  require no approval.
 
 ```go
-// Stake existing position
-StakeToken(123, "g1referrer...")
+// Approve the staker on the position NFT, then stake
+stakerAddress := access.MustGetAddress(prabc.ROLE_STAKER.String())
+gnft.Approve(cross(cur), stakerAddress, grc721.TokenID("123"))
+StakeToken(cross(cur), 123, "")
 
-// Create external incentive
+// Approve both the reward token and the GNS deposit before creating an incentive
+reward.Approve(cross(cur), stakerAddress, 1_000_000_000)
+gns.Approve(cross(cur), stakerAddress, GetDepositGnsAmount())
+```
+
+## Usage
+
+The proxy functions receive a realm argument. From a caller realm with `cur realm`, pass
+`cross(cur)` as that first argument:
+
+```go
+// Stake an existing position
+StakeToken(cross(cur), 123, "g1referrer...")
+
+// Create an external incentive (rewardAmount is an int64 token-unit amount)
 CreateExternalIncentive(
+    cross(cur),
     "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",
     "gno.land/r/demo/reward",
-    "1000000000",  // 1000 tokens
+    1_000_000_000,
     startTime,
     endTime,
 )
 
-// Collect rewards without unstaking
-CollectReward(123)
+// Collect while the position is staked
+CollectReward(cross(cur), 123)
 
-// Unstake; rewards are checkpointed, not calculated or paid
-UnStakeToken(123)
+// Unstake: this returns the NFT and creates an exit checkpoint; it does not collect
+UnStakeToken(cross(cur), 123)
 
-// Collect works on the checkpoint too, per source or all at once
-CollectEmissionReward(123)
-CollectExternalIncentiveReward(123, incentiveId)
+// Collect the checkpoint, either per source or all at once
+CollectEmissionReward(cross(cur), 123)
+CollectExternalIncentiveReward(cross(cur), 123, incentiveId)
 ```
 
 ## Security

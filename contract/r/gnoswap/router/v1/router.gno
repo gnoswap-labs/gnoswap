@@ -99,12 +99,24 @@ func (v *SwapValidator) amount(amount int64) (int64, error) {
 // RouteParser handles parsing and validation of routes and quotes
 type RouteParser struct{}
 
-// NewRouteParser creates a new route parser instance.
+// NewRouteParser creates a parser for comma-separated route and quote strings.
+//
+// Returns:
+//   - parser: new RouteParser instance
 func NewRouteParser() *RouteParser {
 	return &RouteParser{}
 }
 
-// ParseRoutes parses route and quote strings into slices and validates them.
+// ParseRoutes splits route and quote strings and validates their pairing.
+//
+// Parameters:
+//   - routes: comma-separated route paths
+//   - quotes: comma-separated route allocation percentages
+//
+// Returns:
+//   - routePaths: parsed route path strings
+//   - quoteValues: parsed quote strings corresponding one-to-one with routePaths
+//   - err: nil when routes, counts, and quote sum are valid; validation error otherwise
 func (p *RouteParser) ParseRoutes(routes, quotes string) ([]string, []string, error) {
 	// Check for empty routes
 	if routes == "" || quotes == "" {
@@ -121,7 +133,14 @@ func (p *RouteParser) ParseRoutes(routes, quotes string) ([]string, []string, er
 	return routesArr, quotesArr, nil
 }
 
-// ValidateRoutesAndQuotes ensures routes and quotes meet required criteria.
+// ValidateRoutesAndQuotes checks route count, route/quote cardinality, and quote sum.
+//
+// Parameters:
+//   - routes: parsed route path strings
+//   - quotes: parsed quote percentage strings
+//
+// Returns:
+//   - err: nil when one to seven routes match quote count and quotes sum to 100; validation error otherwise
 func (p *RouteParser) ValidateRoutesAndQuotes(routes, quotes []string) error {
 	rr := len(routes)
 	qq := len(quotes)
@@ -137,7 +156,13 @@ func (p *RouteParser) ValidateRoutesAndQuotes(routes, quotes []string) error {
 	return p.ValidateQuoteSum(quotes)
 }
 
-// ValidateQuoteSum ensures all quotes add up to 100%.
+// ValidateQuoteSum verifies that each quote is positive, at most 100, and totals 100.
+//
+// Parameters:
+//   - quotes: route allocation percentage strings
+//
+// Returns:
+//   - err: nil when all quotes parse and total 100; invalid value or sum error otherwise
 func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
 	const (
 		maxQuote int8 = 100
@@ -194,8 +219,9 @@ func (r *routerV1) finalizeSwap(
 	// Handle swap fee
 	resultAmountOutWithoutFee := r.handleSwapFee(0, rlm, outputToken, resultAmountOut)
 
-	// Validate exact out amount if applicable
-	// If sqrtPriceLimitX96 is set, slippage check is not needed
+	// Validate the exact-out target when no caller price limit is set. A
+	// nonzero single-hop limit permits partial output, so only the max-input
+	// slippage check below remains applicable.
 	if swapType == ExactOut && !isSetSqrtPriceLimitX96 {
 		if err := validator.exactOutAmount(resultAmountOutWithoutFee, amountSpecified, swapCount); err != nil {
 			panic(addDetailToError(errSlippage, err.Error()))

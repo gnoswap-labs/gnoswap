@@ -17,13 +17,24 @@ import (
 // Reposition adjusts the price range and liquidity of an existing position.
 //
 // Parameters:
+//   - _: leading integer discriminator; callers pass 0
+//   - rlm: current realm context forwarded from the public wrapper; the implementation validates it as current
 //   - positionId: NFT token ID to reposition
-//   - tickLower, tickUpper: new price range boundaries
-//   - amount0DesiredStr, amount1DesiredStr: desired token amounts for new position
-//   - amount0MinStr, amount1MinStr: minimum acceptable amounts (slippage protection)
+//   - tickLower: new lower tick boundary of the position's price range
+//   - tickUpper: new upper tick boundary of the position's price range
+//   - amount0DesiredStr: desired token0 amount for the new position, represented as a decimal string
+//   - amount1DesiredStr: desired token1 amount for the new position, represented as a decimal string
+//   - amount0MinStr: minimum acceptable token0 amount for slippage protection
+//   - amount1MinStr: minimum acceptable token1 amount for slippage protection
 //   - deadline: transaction expiration timestamp
 //
-// Returns positionId, liquidity, tickLower, tickUpper, amount0, amount1.
+// Returns:
+//   - positionId: NFT token ID that was repositioned
+//   - liquidity: new liquidity amount, represented as a decimal string
+//   - tickLower: lower tick boundary applied to the position
+//   - tickUpper: upper tick boundary applied to the position
+//   - amount0: actual token0 amount added to the new range, represented as a decimal string
+//   - amount1: actual token1 amount added to the new range, represented as a decimal string
 func (p *positionV1) Reposition(
 	_ int,
 	rlm realm,
@@ -47,7 +58,8 @@ func (p *positionV1) Reposition(
 
 	emission.MintAndDistributeGns(cross(rlm))
 
-	// position should be burned to reposition
+	// The position must be clear (zero liquidity and zero tokens owed) before
+	// it can be repositioned.
 	position := p.mustGetPosition(positionId)
 
 	token0, token1, _ := splitOf(position.PoolKey())
@@ -104,9 +116,8 @@ func (p *positionV1) Reposition(
 
 	position.SetLiquidity(liquidity.ToString())
 
-	// OBS: do not reset feeGrowthInside1LastX128 and feeGrowthInside1LastX128 to zero
-	// if so, ( decrease 100% -> reposition )
-	// > at this point, that position will have unclaimedFee which isn't intended
+	// Do not reset the fee-growth checkpoints: a full decrease followed by
+	// repositioning must not create an unintended unclaimed-fee balance.
 	position.SetTokensOwed0(0)
 	position.SetTokensOwed1(0)
 	position.SetBurned(false)

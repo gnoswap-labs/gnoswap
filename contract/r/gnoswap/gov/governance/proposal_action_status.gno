@@ -17,82 +17,153 @@ type ProposalActionStatus struct {
 }
 
 /* Getter methods */
-func (p *ProposalActionStatus) Canceled() bool        { return p.canceled }
-func (p *ProposalActionStatus) CanceledAt() int64     { return p.canceledAt }
+// Canceled reports whether this proposal has been marked canceled.
+//
+// Returns:
+//   - bool: true when cancellation has been recorded
+func (p *ProposalActionStatus) Canceled() bool { return p.canceled }
+
+// CanceledAt returns the timestamp recorded when the proposal was canceled.
+//
+// Returns:
+//   - int64: cancellation timestamp, or zero when none has been recorded
+func (p *ProposalActionStatus) CanceledAt() int64 { return p.canceledAt }
+
+// CanceledHeight returns the block height recorded when the proposal was canceled.
+//
+// Returns:
+//   - int64: cancellation block height, or zero when none has been recorded
 func (p *ProposalActionStatus) CanceledHeight() int64 { return p.canceledHeight }
-func (p *ProposalActionStatus) Executed() bool        { return p.executed }
-func (p *ProposalActionStatus) ExecutedAt() int64     { return p.executedAt }
+
+// Executed reports whether this proposal has been marked executed.
+//
+// Returns:
+//   - bool: true when execution has been recorded
+func (p *ProposalActionStatus) Executed() bool { return p.executed }
+
+// ExecutedAt returns the timestamp recorded when the proposal was executed.
+//
+// Returns:
+//   - int64: execution timestamp, or zero when none has been recorded
+func (p *ProposalActionStatus) ExecutedAt() int64 { return p.executedAt }
+
+// ExecutedHeight returns the block height recorded when the proposal was executed.
+//
+// Returns:
+//   - int64: execution block height, or zero when none has been recorded
 func (p *ProposalActionStatus) ExecutedHeight() int64 { return p.executedHeight }
-func (p *ProposalActionStatus) Executable() bool      { return p.executable }
+
+// Executable reports whether this proposal type supports execution.
+//
+// Returns:
+//   - bool: true when the proposal's action can be executed
+func (p *ProposalActionStatus) Executable() bool { return p.executable }
 
 /* Setter methods */
+// SetCanceled records whether the proposal is canceled.
+//
+// Parameters:
+//   - canceled: cancellation state to store
 func (p *ProposalActionStatus) SetCanceled(canceled bool) {
 	p.canceled = canceled
 }
 
+// SetCanceledAt records the timestamp associated with proposal cancellation.
+//
+// Parameters:
+//   - canceledAt: cancellation timestamp to store
 func (p *ProposalActionStatus) SetCanceledAt(canceledAt int64) {
 	p.canceledAt = canceledAt
 }
 
+// SetCanceledHeight records the block height associated with proposal cancellation.
+//
+// Parameters:
+//   - canceledHeight: cancellation block height to store
 func (p *ProposalActionStatus) SetCanceledHeight(canceledHeight int64) {
 	p.canceledHeight = canceledHeight
 }
 
+// SetCanceledBy records the address that canceled the proposal.
+//
+// Parameters:
+//   - canceledBy: address of the actor that canceled the proposal
 func (p *ProposalActionStatus) SetCanceledBy(canceledBy address) {
 	p.canceledBy = canceledBy
 }
 
+// SetExecuted records whether the proposal is executed.
+//
+// Parameters:
+//   - executed: execution state to store
 func (p *ProposalActionStatus) SetExecuted(executed bool) {
 	p.executed = executed
 }
 
+// SetExecutedAt records the timestamp associated with proposal execution.
+//
+// Parameters:
+//   - executedAt: execution timestamp to store
 func (p *ProposalActionStatus) SetExecutedAt(executedAt int64) {
 	p.executedAt = executedAt
 }
 
+// SetExecutedHeight records the block height associated with proposal execution.
+//
+// Parameters:
+//   - executedHeight: execution block height to store
 func (p *ProposalActionStatus) SetExecutedHeight(executedHeight int64) {
 	p.executedHeight = executedHeight
 }
 
+// SetExecutedBy records the address that executed the proposal.
+//
+// Parameters:
+//   - executedBy: address of the actor that executed the proposal
 func (p *ProposalActionStatus) SetExecutedBy(executedBy address) {
 	p.executedBy = executedBy
 }
 
+// SetExecutable records whether this proposal type supports execution.
+//
+// Parameters:
+//   - executable: execution capability to store for the proposal type
 func (p *ProposalActionStatus) SetExecutable(executable bool) {
 	p.executable = executable
 }
 
-// CanceledBy returns the address that canceled the proposal.
-// Only meaningful if IsCanceled() returns true.
+// CanceledBy returns the address recorded as having canceled the proposal.
+// The value is meaningful when Canceled() is true; before then it is the
+// zero address unless a caller has explicitly stored another value.
 //
 // Returns:
-//   - std.Address: address of the canceller
+//   - address: address recorded for the cancellation actor
 func (p *ProposalActionStatus) CanceledBy() address {
 	return p.canceledBy
 }
 
-// IsExecuted returns whether the proposal has been executed.
+// IsExecuted reports whether execution has been recorded for the proposal.
 //
 // Returns:
-//   - bool: true if proposal has been executed
+//   - bool: true when the proposal has been marked executed
 func (p *ProposalActionStatus) IsExecuted() bool {
 	return p.executed
 }
 
-// ExecutedBy returns the address that executed the proposal.
-// Only meaningful if IsExecuted() returns true.
+// ExecutedBy returns the address recorded as having executed the proposal.
+// The value is meaningful when IsExecuted() is true; before then it is the
+// zero address unless a caller has explicitly stored another value.
 //
 // Returns:
-//   - std.Address: address of the executor
+//   - address: address recorded for the execution actor
 func (p *ProposalActionStatus) ExecutedBy() address {
 	return p.executedBy
 }
 
-// IsExecutable returns whether this proposal type can be executed.
-// Text proposals return false, while other types return true.
+// IsExecutable reports whether this proposal type can be executed.
 //
 // Returns:
-//   - bool: true if proposal type supports execution
+//   - bool: true when execution is supported for the proposal type
 func (p *ProposalActionStatus) IsExecutable() bool {
 	return p.executable
 }
@@ -113,7 +184,11 @@ func NewProposalActionStatus(executable bool) *ProposalActionStatus {
 	}
 }
 
-// Clone creates a deep copy of the ProposalActionStatus.
+// Clone creates a deep copy of the ProposalActionStatus, or nil when the
+// receiver is nil.
+//
+// Returns:
+//   - *ProposalActionStatus: independent copy of the status, or nil for a nil receiver
 func (p *ProposalActionStatus) Clone() *ProposalActionStatus {
 	if p == nil {
 		return nil

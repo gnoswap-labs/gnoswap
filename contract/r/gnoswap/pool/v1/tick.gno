@@ -10,6 +10,9 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
+// MAX_LIQUIDITY_PER_TICK_* values are spacing-specific limits returned by
+// calculateMaxLiquidityPerTick; they are not a universal uint128 maximum.
+
 const (
 	MAX_LIQUIDITY_PER_TICK_SPACING_1         = "191757530477355301479181766273477"
 	MAX_LIQUIDITY_PER_TICK_SPACING_10        = "1917569901783203986719870431555990"

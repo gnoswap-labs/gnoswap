@@ -1,6 +1,7 @@
-// Package gnft implements GRC721-compliant NFTs for GnoSwap LP positions.
+// Package gnft implements the position-NFT surface used by GnoSwap.
 //
-// Each LP position in GnoSwap is represented as a unique NFT with dynamically
-// generated SVG artwork. The contract manages ownership, transfers, and visual
-// representation of positions while minimizing storage costs.
+// It provides GRC721-compatible ownership, transfer, approval, and metadata
+// operations for LP positions. Generated parameter-format URIs become SVG data
+// URIs on read; custom non-empty URIs are returned unchanged. Enumeration and
+// safeTransferFrom are not exposed by this package.
 package gnft

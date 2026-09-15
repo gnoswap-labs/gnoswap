@@ -3,24 +3,27 @@ package position
 // Mint creates a new liquidity position NFT.
 //
 // Parameters:
-//   - token0: path of the first token
-//   - token1: path of the second token
-//   - fee: pool fee tier
-//   - tickLower: lower tick boundary
-//   - tickUpper: upper tick boundary
-//   - amount0Desired: desired amount of token0
-//   - amount1Desired: desired amount of token1
-//   - amount0Min: minimum amount of token0
-//   - amount1Min: minimum amount of token1
-//   - deadline: transaction deadline
-//   - mintTo: recipient of the position NFT
-//   - referrer: referrer address for reward tracking
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - token0: path of the first token in the pool
+//   - token1: path of the second token in the pool
+//   - fee: pool fee tier used to identify the pool
+//   - tickLower: lower tick boundary of the position's price range
+//   - tickUpper: upper tick boundary of the position's price range
+//   - amount0Desired: desired amount of token0 to provide
+//   - amount1Desired: desired amount of token1 to provide
+//   - amount0Min: minimum acceptable amount of token0 after price/slippage calculation
+//   - amount1Min: minimum acceptable amount of token1 after price/slippage calculation
+//   - deadline: transaction expiration timestamp
+//   - mintTo: recipient address of the position NFT
+//   - referrer: referrer identifier used for reward tracking
 //
 // Returns:
-//   - uint64: position ID
-//   - string: liquidity amount
-//   - string: amount of token0 added
-//   - string: amount of token1 added
+//   - positionId: newly minted position NFT token ID
+//   - liquidity: liquidity minted into the position, represented as a decimal string
+//   - amount0: actual amount of token0 added to the position, represented as a decimal string
+//   - amount1: actual amount of token1 added to the position, represented as a decimal string
+//
+// Halt check: reverts while the Position halt scope is active.
 func Mint(
 	cur realm,
 	token0 string,
@@ -42,19 +45,22 @@ func Mint(
 // IncreaseLiquidity adds liquidity to an existing position.
 //
 // Parameters:
-//   - positionId: ID of the position
-//   - amount0DesiredStr: desired amount of token0
-//   - amount1DesiredStr: desired amount of token1
-//   - amount0MinStr: minimum amount of token0
-//   - amount1MinStr: minimum amount of token1
-//   - deadline: transaction deadline
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - positionId: position NFT token ID to increase
+//   - amount0DesiredStr: desired token0 amount, represented as a decimal string
+//   - amount1DesiredStr: desired token1 amount, represented as a decimal string
+//   - amount0MinStr: minimum acceptable token0 amount for slippage protection
+//   - amount1MinStr: minimum acceptable token1 amount for slippage protection
+//   - deadline: transaction expiration timestamp
 //
 // Returns:
-//   - uint64: position ID
-//   - string: new liquidity amount
-//   - string: amount of token0 added
-//   - string: amount of token1 added
-//   - string: pool path
+//   - positionId: position NFT token ID that received the liquidity
+//   - liquidity: liquidity amount added to the position (the delta), represented as a decimal string
+//   - amount0: actual token0 amount added, represented as a decimal string
+//   - amount1: actual token1 amount added, represented as a decimal string
+//   - poolKey: canonical pool key for the position
+//
+// Halt check: reverts while the Position halt scope is active.
 func IncreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -70,23 +76,26 @@ func IncreaseLiquidity(
 // DecreaseLiquidity removes liquidity from a position.
 //
 // Parameters:
-//   - positionId: ID of the position
-//   - liquidityStr: amount of liquidity to remove
-//   - amount0MinStr: minimum amount of token0
-//   - amount1MinStr: minimum amount of token1
-//   - deadline: transaction deadline
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - positionId: position NFT token ID to decrease
+//   - liquidityStr: liquidity amount to remove, represented as a decimal string
+//   - amount0MinStr: minimum acceptable token0 amount for slippage protection
+//   - amount1MinStr: minimum acceptable token1 amount for slippage protection
+//   - deadline: transaction expiration timestamp
 //
 // The accrued swap fees are collected first, so the returned fee amounts are
 // net of the withdrawal fee while the returned principal is not subject to it.
 //
 // Returns:
-//   - uint64: position ID
-//   - string: removed liquidity amount
-//   - string: token0 fees collected, net of the withdrawal fee
-//   - string: token1 fees collected, net of the withdrawal fee
-//   - string: principal amount of token0 returned to the caller
-//   - string: principal amount of token1 returned to the caller
-//   - string: pool path
+//   - positionId: position NFT token ID that had liquidity removed
+//   - liquidity: removed liquidity amount, represented as a decimal string
+//   - fee0: token0 fees collected, net of the withdrawal fee
+//   - fee1: token1 fees collected, net of the withdrawal fee
+//   - amount0: principal amount of token0 returned to the caller
+//   - amount1: principal amount of token1 returned to the caller
+//   - poolKey: canonical pool key for the position
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func DecreaseLiquidity(
 	cur realm,
 	positionId uint64,
@@ -101,22 +110,25 @@ func DecreaseLiquidity(
 // Reposition changes the tick range of a position.
 //
 // Parameters:
-//   - positionId: ID of the position
-//   - tickLower: new lower tick boundary
-//   - tickUpper: new upper tick boundary
-//   - amount0DesiredStr: desired amount of token0
-//   - amount1DesiredStr: desired amount of token1
-//   - amount0MinStr: minimum amount of token0
-//   - amount1MinStr: minimum amount of token1
-//   - deadline: transaction deadline
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - positionId: position NFT token ID to reposition
+//   - tickLower: new lower tick boundary of the position's price range
+//   - tickUpper: new upper tick boundary of the position's price range
+//   - amount0DesiredStr: desired token0 amount for the new range, represented as a decimal string
+//   - amount1DesiredStr: desired token1 amount for the new range, represented as a decimal string
+//   - amount0MinStr: minimum acceptable token0 amount for slippage protection
+//   - amount1MinStr: minimum acceptable token1 amount for slippage protection
+//   - deadline: transaction expiration timestamp
 //
 // Returns:
-//   - uint64: position ID
-//   - string: new liquidity amount
-//   - int32: new lower tick
-//   - int32: new upper tick
-//   - string: amount of token0 used
-//   - string: amount of token1 used
+//   - positionId: position NFT token ID that was repositioned
+//   - liquidity: new liquidity amount, represented as a decimal string
+//   - tickLower: new lower tick boundary
+//   - tickUpper: new upper tick boundary
+//   - amount0: actual token0 amount added to the new range, represented as a decimal string
+//   - amount1: actual token1 amount added to the new range, represented as a decimal string
+//
+// Halt check: reverts while the Position halt scope is active.
 func Reposition(
 	cur realm,
 	positionId uint64,
@@ -134,15 +146,18 @@ func Reposition(
 // CollectFee collects accumulated fees from a position.
 //
 // Parameters:
-//   - positionId: ID of the position
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - positionId: position NFT token ID whose fees are collected
 //
 // Returns:
-//   - uint64: position ID
-//   - string: token0 fees paid out, net of the withdrawal fee
-//   - string: token1 fees paid out, net of the withdrawal fee
-//   - string: pool path
-//   - string: token0 fees collected, before the withdrawal fee
-//   - string: token1 fees collected, before the withdrawal fee
+//   - positionId: position NFT token ID whose fees were collected
+//   - tokensCollected0: token0 fees paid out to the caller, net of the withdrawal fee
+//   - tokensCollected1: token1 fees paid out to the caller, net of the withdrawal fee
+//   - poolKey: canonical pool key for the position
+//   - totalAmount0: token0 fees collected before the withdrawal fee
+//   - totalAmount1: token1 fees collected before the withdrawal fee
+//
+// Halt check: reverts while the Withdraw halt scope is active.
 func CollectFee(
 	cur realm,
 	positionId uint64,
@@ -153,8 +168,9 @@ func CollectFee(
 // SetPositionOperator sets an operator for a position.
 //
 // Parameters:
-//   - positionId: ID of the position
-//   - operator: address of the operator
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - positionId: position NFT token ID whose operator is changed
+//   - operator: operator address to approve; the zero address removes the operator
 func SetPositionOperator(
 	cur realm,
 	positionId uint64,

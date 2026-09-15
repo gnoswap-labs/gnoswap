@@ -14,10 +14,12 @@ import (
 // Only admin or governance can add a token.
 //
 // Parameters:
-//   - tokenPath (string): The registered token key to add
+//   - _: Leading realm-call discriminator; callers pass 0.
+//   - rlm: Current staker realm context, validated before storage is changed.
+//   - tokenPath: Registered token path to add to the allowed-token list.
 //
 // Panics:
-//   - If the caller is not admin or governance, or the token key is not registered
+//   - If the caller is not admin or governance, or the token key is not registered.
 func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -46,15 +48,17 @@ func (s *stakerV1) AddToken(_ int, rlm realm, tokenPath string) {
 }
 
 // RemoveToken removes a token path from the list of allowed tokens.
-// Only the admin  can remove a token.
+// Only the admin can remove a token.
 //
 // Default tokens cannot be removed.
 //
 // Parameters:
-//   - tokenPath (string): The path of the token to remove
+//   - _: Leading realm-call discriminator; callers pass 0.
+//   - rlm: Current staker realm context, validated before storage is changed.
+//   - tokenPath: Token path to remove from the allowed-token list.
 //
 // Panics:
-//   - If the caller is not the admin
+//   - If the caller is not admin or governance, or the token path is a protected default token.
 func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -110,6 +114,12 @@ func checkCannotRemoveDefaultToken(tokenPath string) error {
 // Default protocol tokens (GNS, WUGNOT) cannot be denied.
 //
 // Only the admin or governance can set the flag.
+//
+// Parameters:
+//   - _: Leading realm-call discriminator; callers pass 0.
+//   - rlm: Current staker realm context, validated before the deny list is changed.
+//   - tokenPath: Reward-token path whose denied status is being changed.
+//   - denied: True to add tokenPath to the deny list, false to remove it.
 func (s *stakerV1) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, denied bool) {
 	access.AssertIsRlmCurrent(0, rlm)
 

@@ -6,9 +6,10 @@
 // for Uniswap V3's tick math and liquidity calculations. It enables precise
 // calculations of (a * b / denominator) with full 512-bit intermediate precision.
 //
-// NOTE: Unlike other arithmetic functions in the uint256 package that return errors,
-// functions in this file panic on invalid inputs to maintain behavioral compatibility
-// with the original Solidity implementation which uses require() statements.
+// NOTE: Unlike the base arithmetic methods in the uint256 package, which return
+// low-256-bit values (or values plus overflow flags in their `*Overflow`
+// variants), functions in this file panic on invalid inputs to maintain
+// behavioral compatibility with the original Solidity implementation.
 //
 // This design choice is intentional because:
 // 1. These functions are typically used in hot paths where error handling would add overhead
@@ -18,8 +19,17 @@
 // If you need error-returning versions, wrap these functions with appropriate error handling.
 package uint256
 
-// MulDiv calculates (a * b) / denominator with full 512-bit intermediate precision.
-// Panics if denominator is zero or if the result overflows 256 bits.
+// MulDiv computes floor((a * b) / denominator) with a full 512-bit intermediate product.
+//
+// Parameters:
+//   - a: First non-negative 256-bit multiplicand.
+//   - b: Second non-negative 256-bit multiplicand.
+//   - denominator: Non-zero 256-bit divisor.
+//
+// Returns:
+//   - quotient: The exact floor quotient when it fits in 256 bits.
+//
+// Panics if denominator is zero or the quotient is at least 2^256.
 func MulDiv(a, b, denominator *Uint) *Uint {
 	if denominator.IsZero() {
 		panic("denominator must be greater than 0")
@@ -60,8 +70,18 @@ func MulDiv(a, b, denominator *Uint) *Uint {
 	return &z
 }
 
-// MulDivRoundingUp calculates ceil((a * b) / denominator) with full 512-bit intermediate precision.
-// Panics if denominator is zero or if the result overflows 256 bits.
+// MulDivRoundingUp computes ceil((a * b) / denominator) with a full 512-bit intermediate product.
+//
+// Parameters:
+//   - a: First non-negative 256-bit multiplicand.
+//   - b: Second non-negative 256-bit multiplicand.
+//   - denominator: Non-zero 256-bit divisor.
+//
+// Returns:
+//   - quotient: The ceiling quotient; it is one greater than the floor quotient
+//     exactly when the product has a non-zero remainder.
+//
+// Panics if denominator is zero or rounding the result exceeds 256 bits.
 func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 	result := MulDiv(a, b, denominator)
 
@@ -81,7 +101,15 @@ func MulDivRoundingUp(a, b, denominator *Uint) *Uint {
 	return result.Add(result, &Uint{1, 0, 0, 0})
 }
 
-// DivRoundingUp calculates ceil(x / y) and returns the result.
+// DivRoundingUp computes ceil(x / y) for unsigned 256-bit operands.
+//
+// Parameters:
+//   - x: Non-negative 256-bit dividend.
+//   - y: Non-zero 256-bit divisor.
+//
+// Returns:
+//   - quotient: The quotient rounded toward positive infinity.
+//
 // Panics if y is zero.
 func DivRoundingUp(x, y *Uint) *Uint {
 	div, mod := new(Uint).DivMod(x, y, new(Uint))

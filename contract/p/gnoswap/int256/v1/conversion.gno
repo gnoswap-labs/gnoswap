@@ -23,6 +23,14 @@ var _multipliers = [5]*Int{
 	{0, 0x7775a5f171951000, 0x764b4abe8652979, 0x161bcca7119915b5},
 }
 
+// FromDecimal parses a signed decimal string into a 256-bit integer.
+//
+// Parameters:
+//   - decimal: the signed decimal text, optionally prefixed with + or -
+//
+// Returns:
+//   - value: a parsed signed Int, or nil when parsing fails
+//   - err: nil on success; otherwise an invalid-format or signed-256-bit-range error
 func FromDecimal(decimal string) (*Int, error) {
 	z, err := new(Int).SetString(decimal)
 	if err != nil {
@@ -32,6 +40,13 @@ func FromDecimal(decimal string) (*Int, error) {
 	return z, nil
 }
 
+// MustFromDecimal parses a signed decimal string and panics on invalid input.
+//
+// Parameters:
+//   - decimal: the signed decimal text, optionally prefixed with + or -
+//
+// Returns:
+//   - result: a parsed signed Int; invalid or out-of-range input panics
 func MustFromDecimal(decimal string) *Int {
 	z, err := FromDecimal(decimal)
 	if err != nil {
@@ -40,6 +55,10 @@ func MustFromDecimal(decimal string) *Int {
 	return z
 }
 
+// ToString returns the signed decimal representation of z.
+//
+// Returns:
+//   - decimal: the signed base-10 representation of z
 func (z *Int) ToString() string {
 	s := z.Sign()
 	if s == 0 {
@@ -81,6 +100,14 @@ func (z *Int) ToString() string {
 	return res
 }
 
+// SetString parses a signed decimal string into an Int.
+//
+// Parameters:
+//   - s: the signed decimal text to parse, with at most one leading sign
+//
+// Returns:
+//   - value: the parsed signed Int, or nil when parsing fails
+//   - err: nil on success; otherwise the parse or signed-256-bit-range error
 func (z *Int) SetString(s string) (*Int, error) {
 	if len(s) == 0 {
 		return nil, errors.New("int256: empty string")
@@ -211,6 +238,12 @@ func (z *Int) fromDecimal(bs string) error {
 
 // FromUint256 converts a uint256 to int256.
 // Panics if the uint256 value is greater than MaxInt256 (2^255 - 1).
+//
+// Parameters:
+//   - x: the unsigned value to convert; values above MaxInt256 cause a panic
+//
+// Returns:
+//   - result: a signed Int with the same value as x
 func FromUint256(x *u256.Uint) *Int {
 	// Check overflow: if MSB of x[3] is set, value > MaxInt256
 	if x[3] > 0x7fffffffffffffff {

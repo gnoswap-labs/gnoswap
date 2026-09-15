@@ -27,23 +27,39 @@ func init(cur realm) {
 }
 
 // Name returns the NFT collection name.
+//
+// Returns:
+//   - name: collection name
 func Name() string {
 	return token.GetName()
 }
 
-// Symbol returns the NFT symbol.
+// Symbol returns the NFT collection symbol.
+//
+// Returns:
+//   - symbol: collection symbol
 func Symbol() string {
 	return token.GetSymbol()
 }
 
 // TotalSupply returns the total number of NFTs minted.
+//
+// Returns:
+//   - supply: number of NFTs minted by the collection
 func TotalSupply() int64 {
 	return token.TotalSupply()
 }
 
 // TokenURI returns the metadata URI for the specified token ID.
-// If stored value is in parameter format (x1,y1,x2,y2,color1,color2),
-// it converts to full base64-encoded SVG image URI on read.
+// Parameter-format values (x1,y1,x2,y2,color1,color2) are rendered as a
+// base64-encoded SVG data URI; other non-empty stored URIs are returned unchanged.
+//
+// Parameters:
+//   - tid: token ID whose metadata URI is requested
+//
+// Returns:
+//   - uri: stored URI, or a generated SVG data URI for parameter-format metadata
+//   - error: metadata lookup error when tid has no retrievable metadata
 func TokenURI(tid grc721.TokenID) (string, error) {
 	stored, err := meta.TokenURI(tid)
 	if err != nil {
@@ -59,18 +75,39 @@ func TokenURI(tid grc721.TokenID) (string, error) {
 }
 
 // BalanceOf returns the number of NFTs owned by the specified address.
+//
+// Parameters:
+//   - owner: address whose NFT balance is queried
+//
+// Returns:
+//   - balance: number of NFTs owned by owner
+//   - error: token-ledger balance lookup error; an invalid owner address
+//     panics before the lookup
 func BalanceOf(owner address) (int64, error) {
 	assertIsValidAddress(owner)
 	return token.BalanceOf(owner)
 }
 
 // OwnerOf returns the owner address for the specified token ID.
+//
+// Parameters:
+//   - tid: token ID whose owner is requested
+//
+// Returns:
+//   - owner: current owner address
+//   - error: token-ledger error when tid does not exist or cannot be read
 func OwnerOf(tid grc721.TokenID) (address, error) {
 	return token.OwnerOf(tid)
 }
 
 // MustOwnerOf returns the owner address for the specified token ID.
 // It panics if the token ID is invalid.
+//
+// Parameters:
+//   - tid: token ID whose owner is requested
+//
+// Returns:
+//   - owner: current owner address; panics when tid is invalid or absent
 func MustOwnerOf(tid grc721.TokenID) address {
 	ownerAddr, err := token.OwnerOf(tid)
 	checkErr(err)
@@ -80,8 +117,14 @@ func MustOwnerOf(tid grc721.TokenID) address {
 // SetTokenURI sets the metadata URI for the specified token.
 //
 // Parameters:
-//   - tid: token ID
-//   - tURI: token URI
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - tid: token ID whose metadata URI is replaced
+//   - tURI: non-empty metadata URI or parameter-format image description
+//
+// Returns:
+//   - updated: true after the URI is stored and re-read successfully
+//   - error: nil on success; validation and storage failures panic before a
+//     non-nil error can be returned
 //
 // Only callable by position contract.
 func SetTokenURI(cur realm, tid grc721.TokenID, tURI string) (bool, error) {
@@ -99,11 +142,14 @@ func SetTokenURI(cur realm, tid grc721.TokenID, tURI string) (bool, error) {
 // TransferFrom transfers a token from one address to another.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - from: current owner address
 //   - to: recipient address
-//   - tid: token ID
+//   - tid: token ID to transfer
 //
-// Returns error if transfer fails.
+// Returns:
+//   - error: nil after a successful transfer; invalid addresses, authorization,
+//     ownership, or ledger failures panic through checkTransferErr
 //
 // Permission model:
 //   - Tokens held by the staker contract (i.e. currently staked) can only be
@@ -125,10 +171,13 @@ func TransferFrom(cur realm, from, to address, tid grc721.TokenID) error {
 // Approve grants permission to transfer a specific token ID to another address.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - approved: address to approve
 //   - tid: token ID to approve for transfer
 //
-// Returns error if approval fails.
+// Returns:
+//   - error: nil after approval is stored; invalid addresses, ownership, or
+//     ledger failures panic through checkApproveErr
 func Approve(cur realm, approved address, tid grc721.TokenID) error {
 	assertIsValidAddress(approved)
 
@@ -141,10 +190,13 @@ func Approve(cur realm, approved address, tid grc721.TokenID) error {
 // SetApprovalForAll enables/disables operator approval for all tokens.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - operator: address to set approval for
 //   - approved: true to approve, false to revoke
 //
-// Returns error if operation fails.
+// Returns:
+//   - error: nil after the operator approval is stored; ledger failures panic
+//     before a non-nil error can be returned
 func SetApprovalForAll(cur realm, operator address, approved bool) error {
 	assertIsValidAddress(operator)
 
@@ -155,9 +207,11 @@ func SetApprovalForAll(cur realm, operator address, approved bool) error {
 // GetApproved returns approved address for token ID.
 //
 // Parameters:
-//   - tid: token ID to check
+//   - tid: token ID whose per-token approval is requested
 //
-// Returns approved address and error if token doesn't exist.
+// Returns:
+//   - approved: address approved for tid
+//   - error: token-ledger error if tid does not exist or approval cannot be read
 func GetApproved(tid grc721.TokenID) (address, error) {
 	return token.GetApproved(tid)
 }
@@ -168,18 +222,22 @@ func GetApproved(tid grc721.TokenID) (address, error) {
 //   - owner: token owner address
 //   - operator: operator address to check
 //
-// Returns true if operator is approved for all owner's tokens.
+// Returns:
+//   - approved: true when operator is approved for every token owned by owner
 func IsApprovedForAll(owner, operator address) bool {
 	return token.IsApprovedForAll(owner, operator)
 }
 
-// Mint creates new NFT and transfers to address.
+// Mint creates new NFT and transfers it to to.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - to: recipient address
-//   - tid: token ID
+//   - tid: token ID to mint
 //
-// Returns minted token ID.
+// Returns:
+//   - tokenID: minted token ID
+//
 // Only callable by position contract.
 func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 	caller := cur.Previous().Address()
@@ -199,6 +257,12 @@ func Mint(cur realm, to address, tid grc721.TokenID) grc721.TokenID {
 }
 
 // Exists checks if token ID exists.
+//
+// Parameters:
+//   - tid: token ID to check
+//
+// Returns:
+//   - exists: true when the ledger can resolve an owner for tid; false otherwise
 func Exists(tid grc721.TokenID) bool {
 	_, err := token.OwnerOf(tid)
 	return err == nil
@@ -207,6 +271,7 @@ func Exists(tid grc721.TokenID) bool {
 // Burn removes a specific token ID.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - tid: token ID to burn
 //
 // Only callable by position.
@@ -218,6 +283,12 @@ func Burn(cur realm, tid grc721.TokenID) {
 }
 
 // Render returns the HTML representation of the NFT.
+//
+// Parameters:
+//   - path: render path; the empty path selects the collection home page
+//
+// Returns:
+//   - html: collection HTML for the home path, or "404\n" for unsupported paths
 func Render(path string) string {
 	if path == "" {
 		return token.RenderHome()

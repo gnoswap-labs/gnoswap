@@ -40,6 +40,20 @@ func makeConfig(
 // Reconfigure updates governance configuration.
 // Only admin or governance contract can call this function.
 // Updates all governance parameters and emits a "Reconfigure" event.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the governance proxy; validated before external calls.
+//   - votingStartDelay: delay in seconds from proposal creation until voting starts
+//   - votingPeriod: duration in seconds for which voting remains open
+//   - votingWeightSmoothingDuration: duration in seconds used to smooth voting weight snapshots
+//   - quorum: quorum percentage applied to the proposal's quorum-weight base
+//   - proposalCreationThreshold: minimum voting weight required to create a proposal
+//   - executionDelay: delay in seconds from voting end until execution becomes available
+//   - executionWindow: duration in seconds during which an executable proposal may run
+//
+// Returns:
+//   - int64: newly stored governance configuration version
 func (gv *governanceV1) Reconfigure(
 	_ int, rlm realm,
 	votingStartDelay int64,

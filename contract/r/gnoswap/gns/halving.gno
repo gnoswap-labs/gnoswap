@@ -161,6 +161,10 @@ func (h *HalvingData) setAmountPerSecond(year, amount int64) error {
 	return nil
 }
 
+// Clone creates a deep copy of all halving schedule slices.
+//
+// Returns:
+//   - halvingData: independent copy of timestamps, allocations, minted amounts, remaining amounts, and rates
 func (h *HalvingData) Clone() *HalvingData {
 	startTimestamps := make([]int64, len(h.startTimestamps))
 	endTimestamps := make([]int64, len(h.endTimestamps))
@@ -186,8 +190,15 @@ func (h *HalvingData) Clone() *HalvingData {
 	}
 }
 
-// NewHalvingData creates a new HalvingData instance with emission schedule.
-// Initializes 12 years of halving periods with timestamps, amounts, and rates based on startTimestamp.
+// NewHalvingData creates a 12-year HalvingData emission schedule starting at
+// startTimestamp. Each year receives configured timestamps, allocation, zero
+// minted amount, remaining allocation, and an integer-truncated per-second rate.
+//
+// Parameters:
+//   - startTimestamp: Unix timestamp at which halving year 1 begins
+//
+// Returns:
+//   - halvingData: initialized schedule with years [1, 12] and their derived values
 func NewHalvingData(startTimestamp int64) *HalvingData {
 	halvingData := &HalvingData{
 		startTimestamps: make([]int64, HALVING_END_YEAR),

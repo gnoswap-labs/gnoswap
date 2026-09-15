@@ -54,10 +54,18 @@ const (
 // Each handler is responsible for executing specific parameter changes in the system.
 type ParameterHandler interface {
 	// Execute processes the parameters and applies the changes to the system.
-	// The `_ int, cur realm` discriminator pair forwards the governance proxy's
+	// The `_ int, rlm realm` discriminator pair forwards the governance proxy's
 	// realm value into the handler so any cross-realm calls inside the closure
 	// run under the proxy's identity (the only address with caller-allowlist
 	// permission against the targeted /r/ realms).
+	//
+	// Parameters:
+	//   - _: integer discriminator required by the crossing entrypoint; callers use 0
+	//   - rlm: current governance proxy realm context forwarded to the handler
+	//   - params: serialized parameter values to validate and apply in handler order
+	//
+	// Returns:
+	//   - error: nil when the parameter change succeeds, or an execution/validation error
 	Execute(_ int, rlm realm, params []string) error
 }
 
@@ -95,7 +103,7 @@ type compositeValidator func([]string) error
 //   - pkgPath: package path of the target contract
 //   - function: function name to be called
 //   - paramCount: expected number of parameters
-//   - handlerFunc: function that executes the parameter change
+//   - handlerFunc: callback receiving the discriminator, propagated realm, and serialized parameters to execute the change
 //   - paramValidators: optional validators for each parameter (must match paramCount if provided)
 //
 // Returns:
@@ -135,12 +143,12 @@ func (h *ParameterHandlerOptions) HandlerKey() string {
 // This method ensures the correct number of parameters are provided before execution.
 //
 // Parameters:
-//   - cur: governance proxy realm threaded in by the caller; forwarded to the
-//     wrapped closure so its cross-realm calls run under the proxy.
-//   - params: slice of string parameters to pass to the handler
+//   - _: integer discriminator required by the crossing entrypoint; callers use 0
+//   - rlm: governance proxy realm threaded into the wrapped handler
+//   - params: serialized parameter values to pass to the handler
 //
 // Returns:
-//   - error: execution error if parameter count mismatch or handler execution fails
+//   - error: parameter-count error or the error returned by the wrapped handler
 func (h *ParameterHandlerOptions) Execute(_ int, rlm realm, params []string) error {
 	if len(params) != h.paramCount {
 		return ufmt.Errorf("expected %d parameters, got %d", h.paramCount, len(params))
@@ -149,7 +157,13 @@ func (h *ParameterHandlerOptions) Execute(_ int, rlm realm, params []string) err
 	return h.handlerFunc(0, rlm, params)
 }
 
-// ValidateParams runs parameter count and per-parameter validation without executing the handler.
+// ValidateParams checks the parameter count and runs configured individual and composite validators without executing the handler.
+//
+// Parameters:
+//   - params: serialized parameter values to validate in handler order
+//
+// Returns:
+//   - error: nil when all configured checks pass, or the first count/type/business-rule validation error
 func (h *ParameterHandlerOptions) ValidateParams(params []string) error {
 	if len(params) != h.paramCount {
 		return ufmt.Errorf(
@@ -192,7 +206,7 @@ type ParameterRegistry struct {
 	handlers map[string]ParameterHandlerOptions // Map storing handler configurations keyed by package:function
 }
 
-// register adds a new parameter handler to the registry.
+// Register adds a new parameter handler to the registry.
 // Each handler is identified by a unique combination of package path and function name.
 //
 // Parameters:
@@ -201,16 +215,15 @@ func (r *ParameterRegistry) Register(handler ParameterHandlerOptions) {
 	r.handlers[handler.HandlerKey()] = handler
 }
 
-// handler retrieves a parameter handler by package path and function name.
+// Handler retrieves a parameter handler by its package:function key.
 // This method is used during proposal execution to find the appropriate handler.
 //
 // Parameters:
-//   - pkgPath: package path of the target contract
-//   - function: function name to be called
+//   - key: handler key returned by HandlerKey, in "pkgPath:function" format
 //
 // Returns:
 //   - ParameterHandler: the matching parameter handler
-//   - error: error if handler not found or casting fails
+//   - error: error if the key has no registered handler
 func (r *ParameterRegistry) Handler(key string) (ParameterHandler, error) {
 	// Retrieve handler from registry
 	handler, exists := r.handlers[key]
@@ -241,7 +254,7 @@ func makeHandlerKey(pkgPath, function string) string {
 	return pkgPath + ":" + function
 }
 
-// createParameterHandlers initializes and configures all supported parameter handlers.
+// CreateParameterHandlers initializes and configures all supported parameter handlers.
 // This function defines all the parameter changes that can be executed through governance proposals.
 // It covers configuration changes for various system components including pools, staking, fees, etc.
 //

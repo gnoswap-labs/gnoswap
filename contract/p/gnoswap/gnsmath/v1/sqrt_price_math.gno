@@ -6,13 +6,19 @@ import (
 	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
-// MIN_SQRT_RATIO returns the minimum valid sqrt price ratio (4295128739).
-// It is a constructor (not a package-level var) so each caller receives a fresh
-// instance rather than sharing a mutable singleton.
+// MIN_SQRT_RATIO returns the minimum valid Q64.96 square-root price ratio.
+//
+// Returns:
+//   - minSqrtRatio: A fresh *u256.Uint containing 4,295,128,739, the lower
+//     boundary accepted by the pool's square-root price math.
 func MIN_SQRT_RATIO() *u256.Uint { return consts.MinSqrtRatio() }
 
-// MAX_SQRT_RATIO returns the maximum valid sqrt price ratio
-// (1461446703485210103287273052203988822378723970342). See MIN_SQRT_RATIO.
+// MAX_SQRT_RATIO returns the upper boundary used by Q64.96 square-root price math.
+//
+// Returns:
+//   - maxSqrtRatio: A fresh *u256.Uint containing
+//     1461446703485210103287273052203988822378723970342. Inverse tick conversion
+//     treats this boundary as exclusive.
 func MAX_SQRT_RATIO() *u256.Uint { return consts.MaxSqrtRatio() }
 
 // getNextPriceAmount0Add calculates the next sqrt price when adding token0 liquidity,
@@ -252,18 +258,19 @@ func getAmount1DeltaHelper(
 	return u256.MulDiv(liquidity, difference, consts.Q96())
 }
 
-// GetAmount0Delta calculates the token0 amount difference within a price range, returning
-// a signed int256 value that is negative when liquidity is negative. Rounds down for
-// negative liquidity and up for positive liquidity.
+// GetAmount0Delta computes the signed token0 amount represented between two prices.
+// Positive liquidity rounds the amount up; negative liquidity returns a negative amount
+// rounded down after applying the magnitude.
 //
 // Parameters:
-//   - sqrtRatioAX96: first sqrt price in Q96 format
-//   - sqrtRatioBX96: second sqrt price in Q96 format
-//   - liquidity: signed liquidity value
+//   - sqrtRatioAX96: First price endpoint in Q64.96 square-root format.
+//   - sqrtRatioBX96: Second price endpoint in Q64.96 square-root format.
+//   - liquidity: Signed liquidity value; its sign determines the result sign and rounding.
 //
-// Returns the token0 amount difference as a signed int256 value.
+// Returns:
+//   - amount0Delta: Signed int256 token0 amount represented by the range.
 //
-// Panics if any input is nil or if the result overflows int256.
+// Panics if an input is nil or the computed magnitude cannot be represented by int256.
 func GetAmount0Delta(
 	sqrtRatioAX96, sqrtRatioBX96 *u256.Uint,
 	liquidity *i256.Int,
@@ -292,18 +299,19 @@ func GetAmount0Delta(
 	return i256.FromUint256(u)
 }
 
-// GetAmount1Delta calculates the token1 amount difference within a price range, returning
-// a signed int256 value that is negative when liquidity is negative. Rounds down for
-// negative liquidity and up for positive liquidity.
+// GetAmount1Delta computes the signed token1 amount represented between two prices.
+// Positive liquidity rounds the amount up; negative liquidity returns a negative amount
+// rounded down after applying the magnitude.
 //
 // Parameters:
-//   - sqrtRatioAX96: first sqrt price in Q96 format
-//   - sqrtRatioBX96: second sqrt price in Q96 format
-//   - liquidity: signed liquidity value
+//   - sqrtRatioAX96: First price endpoint in Q64.96 square-root format.
+//   - sqrtRatioBX96: Second price endpoint in Q64.96 square-root format.
+//   - liquidity: Signed liquidity value; its sign determines the result sign and rounding.
 //
-// Returns the token1 amount difference as a signed int256 value.
+// Returns:
+//   - amount1Delta: Signed int256 token1 amount represented by the range.
 //
-// Panics if any input is nil or if the result overflows int256.
+// Panics if an input is nil or the computed magnitude cannot be represented by int256.
 func GetAmount1Delta(
 	sqrtRatioAX96, sqrtRatioBX96 *u256.Uint,
 	liquidity *i256.Int,

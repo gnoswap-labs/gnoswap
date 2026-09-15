@@ -51,11 +51,26 @@ func newPoolParams(
 	}
 }
 
+// Returns:
+//   - sqrtPriceX96: configured initial square-root price as a mutable u256
+//     integer in Q64.96 representation.
 func (p *poolCreateConfig) SqrtPriceX96() *u256.Uint { return p.sqrtPriceX96 }
-func (p *poolCreateConfig) TickSpacing() int32       { return p.tickSpacing }
-func (p *poolCreateConfig) Token0Path() string       { return p.token0Path }
-func (p *poolCreateConfig) Token1Path() string       { return p.token1Path }
-func (p *poolCreateConfig) Fee() uint32              { return p.fee }
+
+// Returns:
+//   - tickSpacing: configured spacing between usable initialized ticks.
+func (p *poolCreateConfig) TickSpacing() int32 { return p.tickSpacing }
+
+// Returns:
+//   - token0Path: configured token0 contract path.
+func (p *poolCreateConfig) Token0Path() string { return p.token0Path }
+
+// Returns:
+//   - token1Path: configured token1 contract path.
+func (p *poolCreateConfig) Token1Path() string { return p.token1Path }
+
+// Returns:
+//   - fee: configured pool fee tier as a uint32 fee-unit value.
+func (p *poolCreateConfig) Fee() uint32 { return p.fee }
 
 func (p *poolCreateConfig) update() error {
 	token0Path := p.token0Path

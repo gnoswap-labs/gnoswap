@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	// slot0FeeProtocol represents the protocol fee percentage (0-10).
+	// slot0FeeProtocol is the protocol-fee denominator (0 or 4-10).
+	// Zero disables protocol fees; 4 routes 1/4 of swap fees to the protocol.
 	// This parameter can be modified through governance.
 	defaultSlot0FeeProtocol = uint8(0)
 

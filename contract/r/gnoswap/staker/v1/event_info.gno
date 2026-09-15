@@ -13,11 +13,14 @@ type tickCrossEventInfo struct {
 	outsideAccumulation  *u256.Uint
 }
 
-// Collect tick info for event
+// ToString serializes tick-cross information as a compact JSON object for event emission.
 // - t: Tick ID
 // - slg: Staked Liquidity Gross
 // - sld: Staked Liquidity Delta
 // - oa: Outside Accumulation
+//
+// Returns:
+//   - json: JSON object string containing the tick ID and the three encoded liquidity/accumulation values.
 func (t *tickCrossEventInfo) ToString() string {
 	return "{\"t\":" + utils.FormatInt(t.tickID) +
 		",\"slg\":\"" + t.stakedLiquidityGross.ToString() + "\"" +
@@ -25,6 +28,16 @@ func (t *tickCrossEventInfo) ToString() string {
 		",\"oa\":\"" + t.outsideAccumulation.ToString() + "\"}"
 }
 
+// NewTickCrossEventInfo captures the values emitted when a swap crosses a tick.
+//
+// Parameters:
+//   - tickID: Tick index crossed during the swap.
+//   - stakedLiquidityGross: Total staked liquidity at the crossed tick.
+//   - stakedLiquidityDelta: Net staked liquidity change applied at the crossed tick.
+//   - outsideAccumulation: Reward-ratio accumulation outside the crossed tick.
+//
+// Returns:
+//   - info: Event payload containing the supplied tick-cross values.
 func NewTickCrossEventInfo(tickID int32, stakedLiquidityGross *u256.Uint, stakedLiquidityDelta *i256.Int, outsideAccumulation *u256.Uint) *tickCrossEventInfo {
 	return &tickCrossEventInfo{
 		tickID:               tickID,

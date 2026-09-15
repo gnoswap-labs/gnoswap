@@ -13,6 +13,13 @@ type ProposalMetadataResolver struct {
 	*governance.ProposalMetadata
 }
 
+// NewProposalMetadataResolver wraps proposal metadata for validation.
+//
+// Parameters:
+//   - metadata: proposal title and description to validate.
+//
+// Returns:
+//   - *ProposalMetadataResolver: resolver backed by metadata.
 func NewProposalMetadataResolver(metadata *governance.ProposalMetadata) *ProposalMetadataResolver {
 	return &ProposalMetadataResolver{
 		ProposalMetadata: metadata,
@@ -94,6 +101,14 @@ type ProposalDataResolver struct {
 	*governance.ProposalData
 }
 
+// NewProposalDataResolver wraps proposal data for type-specific validation and
+// execution-message parsing.
+//
+// Parameters:
+//   - proposalData: proposal data to resolve and validate.
+//
+// Returns:
+//   - *ProposalDataResolver: resolver backed by proposalData.
 func NewProposalDataResolver(proposalData *governance.ProposalData) *ProposalDataResolver {
 	return &ProposalDataResolver{
 		ProposalData: proposalData,

@@ -10,6 +10,13 @@ type LaunchpadProjectDepositsResolver struct {
 	*staker.LaunchpadProjectDeposits
 }
 
+// NewLaunchpadProjectDepositsResolver wraps launchpad project deposit state.
+//
+// Parameters:
+//   - launchpadProjectDeposits: project deposit state to resolve and mutate
+//
+// Returns:
+//   - *LaunchpadProjectDepositsResolver: resolver retaining the supplied deposit state pointer
 func NewLaunchpadProjectDepositsResolver(launchpadProjectDeposits *staker.LaunchpadProjectDeposits) *LaunchpadProjectDepositsResolver {
 	return &LaunchpadProjectDepositsResolver{launchpadProjectDeposits}
 }

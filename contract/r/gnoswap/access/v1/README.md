@@ -6,14 +6,15 @@ Centralized role-based access control system for GnoSwap protocol contracts.
 
 The Access package provides a unified permission management system for all GnoSwap protocol contracts. It manages role-to-address mappings and provides convenient assertion functions for authorization checks throughout the protocol.
 
-This package acts as a centralized registry where each protocol component (pool, router, staker, etc.) registers its address under a specific role. Other contracts can then query this registry to verify permissions before executing privileged operations.
+This package acts as a centralized registry where protocol components and user-controlled accounts can be assigned role addresses. Other contracts can then query this registry to verify permissions before executing privileged operations.
 Admin role ownership is managed by the RBAC realm and is updated on ownership transfer; this package only stores the latest role address.
+The `admin` and `devops` roles are initialized with user-controlled addresses. Most other system roles use deterministic package addresses, while custom roles may use any valid address.
 
 ## Architecture
 
 The access control system consists of:
 
-1. **Role Registry**: Maps role names (strings) to contract addresses
+1. **Role Registry**: Maps role names (strings) to role addresses (contracts or accounts)
 2. **Role Management**: Functions to set/remove roles (RBAC-only)
 3. **Authorization Checks**: Functions to verify if an address has a specific role
 4. **Assert Helpers**: Convenience functions that panic on authorization failure
@@ -31,6 +32,7 @@ The following roles are used across the GnoSwap protocol:
 - **staker**: Liquidity staking contract
 - **emission**: GNS token emission controller
 - **protocol_fee**: Protocol fee collection and distribution
+- **community_pool**: Community treasury management
 - **launchpad**: Token launchpad for new projects
 - **gov_staker**: Governance staking contract
 - **xgns**: xGNS token contract for governance
@@ -46,7 +48,7 @@ The `admin` role is updated by RBAC ownership transfers and should not be manage
 
 ```go
 // Only callable by RBAC contract
-access.SetRoleAddress(cur, "router", routerAddress)
+access.SetRoleAddress(cross(cur), "router", routerAddress)
 ```
 
 #### `RemoveRole`
@@ -55,7 +57,7 @@ Removes a role from the system.
 
 ```go
 // Only callable by RBAC contract
-access.RemoveRole(cur, "old_role")
+access.RemoveRole(cross(cur), "old_role")
 ```
 
 ### Role Query Functions
@@ -180,8 +182,8 @@ package pool
 
 import "gno.land/r/gnoswap/access/v1"
 
-func SetPoolFeeRate(rate uint64) {
-    caller := std.PrevRealm().Addr()
+func SetPoolFeeRate(cur realm, rate uint64) {
+    caller := cur.Previous().Address()
     access.AssertIsAdminOrGovernance(caller)
 
     // Admin/governance authorized, proceed
@@ -196,8 +198,8 @@ package staker
 
 import "gno.land/r/gnoswap/access/v1"
 
-func DistributeRewards(amount uint64) {
-    caller := std.PrevRealm().Addr()
+func DistributeRewards(cur realm, amount uint64) {
+    caller := cur.Previous().Address()
     access.AssertIsEmission(caller)
 
     // Only emission contract can distribute
@@ -212,8 +214,8 @@ package common
 
 import "gno.land/r/gnoswap/access/v1"
 
-func EmergencyPause() {
-    caller := std.PrevRealm().Addr()
+func EmergencyPause(cur realm) {
+    caller := cur.Previous().Address()
     access.AssertHasAnyRole(caller, "admin", "devops", "governance")
 
     // Any of the authorized roles can pause
@@ -280,7 +282,8 @@ Role updates flow: `RBAC.UpdateRoleAddress()` → `Access.SetRoleAddress()`
 Authorization failures result in panics with descriptive error messages:
 
 - `"unauthorized: caller X is not Y"` - Caller doesn't have required role
-- `"role X does not exist"` - Role hasn't been registered
+- `"role X not found"` - Role lookup failed because the role has not been registered
+- `"role X does not exist"` - `RemoveRole` was asked to remove an unknown role
 - `"invalid address: X"` - Address validation failed
 
 ## Limitations

@@ -50,32 +50,64 @@ func init(cur realm) {
 }
 
 // Name returns the name of the GNS token.
+//
+// Returns:
+//   - name: token name
 func Name() string { return token.GetName() }
 
 // Symbol returns the symbol of the GNS token.
+//
+// Returns:
+//   - symbol: token symbol
 func Symbol() string { return token.GetSymbol() }
 
 // Decimals returns the number of decimal places for GNS token.
+//
+// Returns:
+//   - decimals: number of decimal places
 func Decimals() int { return token.GetDecimals() }
 
 // TotalSupply returns the total supply of GNS tokens in circulation.
+//
+// Returns:
+//   - supply: total token supply
 func TotalSupply() int64 { return token.TotalSupply() }
 
 // KnownAccounts returns the number of addresses that have held GNS.
+//
+// Returns:
+//   - count: number of known accounts
 func KnownAccounts() int { return token.KnownAccounts() }
 
 // BalanceOf returns the GNS balance of a specific address.
+//
+// Parameters:
+//   - owner: address to check balance for
+//
+// Returns:
+//   - balance: token balance
 func BalanceOf(owner address) int64 { return token.BalanceOf(owner) }
 
 // Allowance returns the amount of GNS that a spender is allowed to transfer from an owner.
+//
+// Parameters:
+//   - owner: token owner address
+//   - spender: spender address
+//
+// Returns:
+//   - allowance: approved amount
 func Allowance(owner, spender address) int64 { return token.Allowance(owner, spender) }
 
 // MintGns mints new GNS tokens according to the emission schedule.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - address: recipient address for minted tokens
 //
-// Returns amount minted.
+// Returns:
+//   - amount: GNS minted for the current timestamp; zero when emission is
+//     already processed for that timestamp or the schedule has ended
+//
 // Only callable by emission contract.
 //
 // Note: Halt check is performed by the caller (emission.MintAndDistributeGns)
@@ -129,8 +161,9 @@ func MintGns(cur realm, address address) int64 {
 // Transfer transfers GNS tokens from caller to recipient.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - to: recipient address
-//   - amount: amount to transfer
+//   - amount: number of GNS base units to transfer
 func Transfer(cur realm, to address, amount int64) {
 	checkErr(userTeller.Transfer(0, cur, to, amount))
 }
@@ -138,8 +171,9 @@ func Transfer(cur realm, to address, amount int64) {
 // Approve allows spender to transfer GNS tokens from caller's account.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - spender: address authorized to spend
-//   - amount: maximum amount spender can transfer
+//   - amount: maximum number of GNS base units spender can transfer
 func Approve(cur realm, spender address, amount int64) {
 	checkErr(userTeller.Approve(0, cur, spender, amount))
 }
@@ -147,14 +181,21 @@ func Approve(cur realm, spender address, amount int64) {
 // TransferFrom transfers GNS tokens on behalf of owner.
 //
 // Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
 //   - from: token owner address
 //   - to: recipient address
-//   - amount: amount to transfer
+//   - amount: number of GNS base units to transfer
 func TransferFrom(cur realm, from, to address, amount int64) {
 	checkErr(userTeller.TransferFrom(0, cur, from, to, amount))
 }
 
 // Render returns token information for web interface.
+//
+// Parameters:
+//   - path: render path for specific views
+//
+// Returns:
+//   - output: formatted token information
 func Render(path string) string {
 	parts := strings.Split(path, "/")
 	c := len(parts)
@@ -250,13 +291,22 @@ func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int6
 }
 
 // LastMintedTimestamp returns the timestamp of the last GNS emission mint.
+//
+// Returns:
+//   - timestamp: last minted timestamp
 func LastMintedTimestamp() int64 { return lastMintedTimestamp }
 
 // LeftEmissionAmount returns the remaining GNS tokens available for emission.
+//
+// Returns:
+//   - amount: remaining emission amount
 func LeftEmissionAmount() int64 { return leftEmissionAmount }
 
 // MintedEmissionAmount returns the total GNS tokens minted through emission,
 // excluding the initial mint amount.
+//
+// Returns:
+//   - amount: total minted emission amount
 func MintedEmissionAmount() int64 { return mintedEmissionAmount }
 
 // setLastMintedTimestamp sets the timestamp of the last emission mint.

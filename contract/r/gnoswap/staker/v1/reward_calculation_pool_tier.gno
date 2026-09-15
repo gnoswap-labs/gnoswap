@@ -105,6 +105,19 @@ func NewPoolTier(pools *Pools, currentTime int64, initialPoolPath string, getEmi
 	return result
 }
 
+// NewPoolTierBy reconstructs a PoolTier from persisted membership, ratios, counts, and callbacks.
+//
+// Parameters:
+//   - membership: Persisted pool-path-to-tier mapping.
+//   - tierRatio: Persisted reward-share ratio for each tier.
+//   - counts: Persisted number of pools in each tier index.
+//   - lastRewardCacheTimestamp: Timestamp through which reward caches have been materialized.
+//   - currentEmission: Emission rate currently used for reward accrual.
+//   - getEmission: Callback returning the current staker emission rate or an error.
+//   - getHalvingBlocksInRange: Callback returning halving timestamps and corresponding emissions in [start, end).
+//
+// Returns:
+//   - *PoolTier: Reconstructed tier manager using the supplied persisted state and callbacks.
 func NewPoolTierBy(
 	membership *bptree.BPTree,
 	tierRatio sr.TierRatio,
@@ -126,6 +139,12 @@ func NewPoolTierBy(
 }
 
 // CurrentReward returns the current per-pool reward for the given tier.
+// Parameters:
+//   - tier: Tier number whose current emission reward is requested.
+//
+// Returns:
+//   - int64: Current per-pool reward for the tier, or zero when the calculation cannot produce a reward.
+//   - error: Error from emission lookup, invalid-tier lookup, or reward calculation; nil when the reward calculation succeeds.
 func (self *PoolTier) CurrentReward(tier uint64) (int64, error) {
 	currentEmission, err := self.getEmission()
 	if err != nil {
@@ -143,6 +162,11 @@ func (self *PoolTier) CurrentReward(tier uint64) (int64, error) {
 }
 
 // CurrentCount returns the current count of pools in the given tier.
+// Parameters:
+//   - tier: Tier index whose pool count is requested; out-of-range indexes return zero.
+//
+// Returns:
+//   - int: Number of pools currently assigned to tier.
 func (self *PoolTier) CurrentCount(tier uint64) int {
 	if tier >= AllTierCount {
 		return 0
@@ -151,6 +175,8 @@ func (self *PoolTier) CurrentCount(tier uint64) int {
 }
 
 // CurrentAllTierCounts returns the current count of pools in each tier.
+// Returns:
+//   - []uint64: Snapshot of pool counts for tier indexes 0 through AllTierCount-1.
 func (self *PoolTier) CurrentAllTierCounts() []uint64 {
 	out := make([]uint64, AllTierCount)
 	copy(out, self.counts[:])
@@ -158,6 +184,11 @@ func (self *PoolTier) CurrentAllTierCounts() []uint64 {
 }
 
 // CurrentTier returns the tier of the given pool.
+// Parameters:
+//   - poolPath: Pool path whose current tier membership is requested.
+//
+// Returns:
+//   - tier: Current tier number, or zero when the pool is not in the membership tree.
 func (self *PoolTier) CurrentTier(poolPath string) (tier uint64) {
 	if tierI := self.membership.Get(poolPath); tierI == nil {
 		return 0
@@ -404,6 +435,11 @@ func (self *PoolTier) applyCacheToAllPools(pools *Pools, currentTimestamp, emiss
 }
 
 // IsInternallyIncentivizedPool returns true if the pool is in a tier.
+// Parameters:
+//   - poolPath: Pool path whose membership is checked.
+//
+// Returns:
+//   - bool: True when poolPath belongs to a nonzero internal-incentive tier; false otherwise.
 func (self *PoolTier) IsInternallyIncentivizedPool(poolPath string) bool {
 	return self.CurrentTier(poolPath) > 0
 }

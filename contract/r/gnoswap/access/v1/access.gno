@@ -14,14 +14,15 @@ func init() {
 }
 
 // SetRoleAddress sets or updates a role's address.
-// Creates the role if it doesn't exist, updates it if it does.
+// It trims surrounding whitespace from roleName, creates missing roles, and
+// replaces the address for an existing role.
 //
 // Parameters:
-//   - cur: current realm
-//   - roleName: name of the role
-//   - roleAddress: address for the role
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - roleName: role identifier; surrounding whitespace is ignored and an empty name panics
+//   - roleAddress: non-empty, valid address to associate with roleName
 //
-// Only callable by RBAC contract.
+// Only callable by the RBAC contract.
 func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 	prev := cur.Previous()
 	assertIsRBAC(prev.Address())
@@ -59,12 +60,13 @@ func setRoleAddress(roleName string, roleAddress address) error {
 	return nil
 }
 
-// RemoveRole removes a role from the system.
+// RemoveRole removes a role from the system after trimming its name.
 //
 // Parameters:
-//   - roleName: name of the role to remove
+//   - cur: current realm context; callers use cross(cur) when crossing into this realm
+//   - roleName: role identifier to trim and remove; an empty or unknown name panics
 //
-// Only callable by RBAC contract.
+// Only callable by the RBAC contract.
 func RemoveRole(cur realm, roleName string) {
 	prev := cur.Previous()
 	assertIsRBAC(prev.Address())
@@ -88,13 +90,14 @@ func RemoveRole(cur realm, roleName string) {
 	)
 }
 
-// IsAuthorized checks if caller has the specified role.
+// IsAuthorized reports whether caller is the address currently mapped to role.
 //
 // Parameters:
-//   - role: role name to check
-//   - caller: address to verify
+//   - role: role name to trim and look up
+//   - caller: address to compare with the mapped role address
 //
-// Returns true if authorized, false otherwise.
+// Returns:
+//   - authorized: true when role exists and caller matches its address; false when the role is absent or does not match
 func IsAuthorized(role string, caller address) bool {
 	addr, ok := GetAddress(role)
 	if !ok {
@@ -104,14 +107,24 @@ func IsAuthorized(role string, caller address) bool {
 	return caller == addr
 }
 
-// GetAddress returns the address for a role and whether it exists.
+// GetAddress returns the address mapped to a role and whether that mapping exists.
+//
+// Parameters:
+//   - role: role name to trim before lookup
+//
+// Returns:
+//   - addr: mapped address, or the zero address when role is not present
+//   - exists: true when role has a stored address; false otherwise
 func GetAddress(role string) (address, bool) {
 	role = strings.TrimSpace(role)
 	addr, ok := roleAddresses[role]
 	return addr, ok
 }
 
-// GetRoleAddresses returns a copy of all role addresses.
+// GetRoleAddresses returns an independent map copy of all stored role addresses.
+//
+// Returns:
+//   - roleAddresses: map from normalized role names to their configured addresses
 func GetRoleAddresses() map[string]address {
 	addresses := make(map[string]address)
 
@@ -122,8 +135,14 @@ func GetRoleAddresses() map[string]address {
 	return addresses
 }
 
-// MustGetAddress returns the address for a role or panics if it doesn't exist.
-// Use this when the role is expected to exist and failure is critical.
+// MustGetAddress returns the address mapped to a role or panics if it is absent.
+// Surrounding whitespace is ignored; an empty or unknown role is considered absent.
+//
+// Parameters:
+//   - role: role name to trim and require in the role mapping
+//
+// Returns:
+//   - addr: configured address for role
 func MustGetAddress(role string) address {
 	role = strings.TrimSpace(role)
 	addr, ok := GetAddress(role)

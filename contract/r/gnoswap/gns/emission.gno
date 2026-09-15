@@ -9,9 +9,15 @@ import (
 	"gno.land/r/gnoswap/access/v1"
 )
 
-// InitEmissionState initializes emission schedule with start timestamp.
-// Only callable by emission contract. Sets up 12-year emission schedule
-// with halving every 2 years. Panics if caller is not emission contract.
+// InitEmissionState initializes the emission schedule.
+// It creates the 12-year schedule with two-year halving periods.
+//
+// Parameters:
+//   - cur: Current realm context; callers use cross(cur) when crossing into this realm.
+//   - createdHeight: block height when the schedule is initialized
+//   - startTimestamp: Unix timestamp when emission begins
+//
+// Only callable by the emission contract.
 func InitEmissionState(cur realm, createdHeight int64, startTimestamp int64) {
 	previousRealm := cur.Previous()
 	caller := previousRealm.Address()

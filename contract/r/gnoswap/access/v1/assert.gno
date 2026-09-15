@@ -12,14 +12,20 @@ import (
 const rbacPackagePath = "gno.land/r/gnoswap/rbac/v1"
 
 // AssertIsRlmCurrent panics if the realm token is not the current crossing frame.
+//
+// Parameters:
+//   - _: leading realm-call discriminator; callers pass 0
+//   - rlm: realm context token that must represent the current crossing frame
 func AssertIsRlmCurrent(_ int, rlm realm) {
 	if !rlm.IsCurrent() {
 		panic(errSpoofedRealm)
 	}
 }
 
-// AssertIsAdminOrGovernance panics if the caller is not admin or governance.
-// Used for functions that require elevated privileges.
+// AssertIsAdminOrGovernance panics unless caller is the configured admin or governance address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the admin and governance roles
 func AssertIsAdminOrGovernance(caller address) {
 	if IsAuthorized(prbac.ROLE_ADMIN.String(), caller) || IsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller) {
 		return
@@ -28,74 +34,99 @@ func AssertIsAdminOrGovernance(caller address) {
 	panic(ufmt.Errorf(errUnauthorizedAdminOrGov, caller))
 }
 
-// AssertIsAdmin panics if the caller is not admin.
-// Used for admin-only functions.
+// AssertIsAdmin panics unless caller is the configured admin address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the admin role
 func AssertIsAdmin(caller address) {
 	AssertIsAuthorized(prbac.ROLE_ADMIN.String(), caller)
 }
 
-// AssertIsGovernance panics if the caller is not governance.
-// Used for governance-only functions.
+// AssertIsGovernance panics unless caller is the configured governance address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the governance role
 func AssertIsGovernance(caller address) {
 	AssertIsAuthorized(prbac.ROLE_GOVERNANCE.String(), caller)
 }
 
-// AssertIsGovStaker panics if the caller is not governance staker.
-// Used for governance staking functions.
+// AssertIsGovStaker panics unless caller is the configured governance-staker address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the governance-staker role
 func AssertIsGovStaker(caller address) {
 	AssertIsAuthorized(prbac.ROLE_GOV_STAKER.String(), caller)
 }
 
-// AssertIsRouter panics if the caller is not router.
-// Used for router-only functions.
+// AssertIsRouter panics unless caller is the configured router address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the router role
 func AssertIsRouter(caller address) {
 	AssertIsAuthorized(prbac.ROLE_ROUTER.String(), caller)
 }
 
-// AssertIsPool panics if the caller is not pool.
-// Used for pool-only functions.
+// AssertIsPool panics unless caller is the configured pool address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the pool role
 func AssertIsPool(caller address) {
 	AssertIsAuthorized(prbac.ROLE_POOL.String(), caller)
 }
 
-// AssertIsPosition panics if the caller is not position.
-// Used for position-only functions.
+// AssertIsPosition panics unless caller is the configured position address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the position role
 func AssertIsPosition(caller address) {
 	AssertIsAuthorized(prbac.ROLE_POSITION.String(), caller)
 }
 
-// AssertIsStaker panics if the caller is not staker.
-// Used for staker-only functions.
+// AssertIsStaker panics unless caller is the configured staker address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the staker role
 func AssertIsStaker(caller address) {
 	AssertIsAuthorized(prbac.ROLE_STAKER.String(), caller)
 }
 
-// AssertIsLaunchpad panics if the caller is not launchpad.
-// Used for launchpad-only functions.
+// AssertIsLaunchpad panics unless caller is the configured launchpad address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the launchpad role
 func AssertIsLaunchpad(caller address) {
 	AssertIsAuthorized(prbac.ROLE_LAUNCHPAD.String(), caller)
 }
 
-// AssertIsEmission panics if the caller is not emission.
-// Used for emission-only functions.
+// AssertIsEmission panics unless caller is the configured emission address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the emission role
 func AssertIsEmission(caller address) {
 	AssertIsAuthorized(prbac.ROLE_EMISSION.String(), caller)
 }
 
-// AssertIsProtocolFee panics if the caller is not protocol fee.
-// Used for protocol fee management functions.
+// AssertIsProtocolFee panics unless caller is the configured protocol-fee address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the protocol-fee role
 func AssertIsProtocolFee(caller address) {
 	AssertIsAuthorized(prbac.ROLE_PROTOCOL_FEE.String(), caller)
 }
 
-// AssertIsGovXGNS panics if the caller is not xGNS governance.
-// Used for xGNS governance functions.
+// AssertIsGovXGNS panics unless caller is the configured xGNS governance address.
+//
+// Parameters:
+//   - caller: address whose authorization is checked against the xGNS governance role
 func AssertIsGovXGNS(caller address) {
 	AssertIsAuthorized(prbac.ROLE_XGNS.String(), caller)
 }
 
-// AssertIsAuthorized panics if the caller does not have the specified role.
-// Also panics if the role does not exist.
+// AssertIsAuthorized panics if caller does not have the specified role or if the role is absent.
+//
+// Parameters:
+//   - roleName: role identifier whose configured address is required
+//   - caller: address that must match the configured address for roleName
 func AssertIsAuthorized(roleName string, caller address) {
 	addr, ok := GetAddress(roleName)
 	if !ok {
@@ -107,8 +138,12 @@ func AssertIsAuthorized(roleName string, caller address) {
 	}
 }
 
-// AssertHasAnyRole panics if the caller does not have any of the specified roles.
-// Also panics if any of the roles do not exist.
+// AssertHasAnyRole checks roleNames in order and panics unless caller matches one.
+// It panics immediately if a checked role is absent, even if a later role might match.
+//
+// Parameters:
+//   - caller: address compared against each configured role address
+//   - roleNames: ordered role identifiers to check; each missing role causes a panic
 func AssertHasAnyRole(caller address, roleNames ...string) {
 	for _, roleName := range roleNames {
 		addr, ok := GetAddress(roleName)
@@ -124,7 +159,10 @@ func AssertHasAnyRole(caller address, roleNames ...string) {
 	panic(ufmt.Errorf(errUnauthorizedAnyRole, caller, roleNames))
 }
 
-// AssertIsValidAddress panics if the provided address is invalid.
+// AssertIsValidAddress panics if addr is not a valid address.
+//
+// Parameters:
+//   - addr: address value to validate
 func AssertIsValidAddress(addr address) {
 	if !addr.IsValid() {
 		panic(ufmt.Errorf(errInvalidAddressShort, addr))

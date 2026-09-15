@@ -15,6 +15,9 @@ import (
 )
 
 // GetUnstakingFee returns the current unstaking fee rate in basis points.
+//
+// Returns:
+//   - uint64: Current fee rate in basis points; 100 basis points equals 1%.
 func (s *stakerV1) GetUnstakingFee() uint64 { return s.store.GetUnstakingFee() }
 
 // handleStakingRewardFee calculates and applies the unstaking fee.
@@ -51,7 +54,10 @@ func (s *stakerV1) handleStakingRewardFee(
 	return gnsmath.SafeSubInt64(amount, feeAmount), feeAmount, nil
 }
 
-// GetPendingProtocolFees returns the pending protocol fee amount per token path.
+// GetPendingProtocolFees returns pending protocol fee amounts keyed by reward-token path.
+//
+// Returns:
+//   - map[string]int64: Pending fee amount per token path awaiting a later settlement.
 func (s *stakerV1) GetPendingProtocolFees() map[string]int64 {
 	return s.store.GetPendingProtocolFees()
 }
@@ -105,6 +111,11 @@ func (s *stakerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount 
 
 // SetUnStakingFee sets the unstaking fee rate in basis points.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Internal call discriminator; callers pass 0.
+//   - rlm: Propagated realm context; it must be current before changing the stored fee.
+//   - fee: New unstaking fee rate in basis points, validated against the configured maximum.
 func (s *stakerV1) SetUnStakingFee(_ int, rlm realm, fee uint64) {
 	access.AssertIsRlmCurrent(0, rlm)
 

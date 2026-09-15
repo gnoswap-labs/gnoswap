@@ -66,6 +66,10 @@ func cloneStringInt64Map(src map[string]int64) map[string]int64 {
 	return cloned
 }
 
+// NewDefaultPositionInfo returns the zero-accounting position state used for a new pool position.
+//
+// Returns:
+//   - info: Position info with zero liquidity, zero fee-growth checkpoints, and no tokens owed.
 func NewDefaultPositionInfo() PositionInfo {
 	return PositionInfo{
 		liquidity:                "0",

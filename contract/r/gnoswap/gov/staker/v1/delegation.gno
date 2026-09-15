@@ -14,27 +14,56 @@ type DelegationResolver struct {
 	delegation *staker.Delegation
 }
 
+// NewDelegationResolver wraps a delegation in a resolver for derived amounts and withdrawals.
+//
+// Parameters:
+//   - delegation: delegation state to resolve
+//
+// Returns:
+//   - *DelegationResolver: resolver backed by delegation
 func NewDelegationResolver(delegation *staker.Delegation) *DelegationResolver {
 	return &DelegationResolver{delegation}
 }
 
+// Get returns the underlying delegation state.
+//
+// Returns:
+//   - *staker.Delegation: wrapped delegation instance
 func (r *DelegationResolver) Get() *staker.Delegation {
 	return r.delegation
 }
 
+// DelegatedAmount returns total delegated amount minus amount already undelegated.
+//
+// Returns:
+//   - int64: amount still delegated
 func (r *DelegationResolver) DelegatedAmount() int64 {
 	return gnsmath.SafeSubInt64(r.delegation.TotalDelegatedAmount(), r.delegation.UnDelegatedAmount())
 }
 
+// LockedAmount returns total delegated amount minus amount already collected.
+//
+// Returns:
+//   - int64: amount still locked in the delegation
 func (r *DelegationResolver) LockedAmount() int64 {
 	return gnsmath.SafeSubInt64(r.delegation.TotalDelegatedAmount(), r.delegation.CollectedAmount())
 }
 
+// IsEmpty reports whether no locked delegation amount remains.
+//
+// Returns:
+//   - bool: true when LockedAmount is zero, otherwise false
 func (r *DelegationResolver) IsEmpty() bool {
 	return r.LockedAmount() == 0
 }
 
-// CollectableAmount calculates the total amount that can be collected at the given time
+// CollectableAmount calculates the total amount that can be collected at the given time.
+//
+// Parameters:
+//   - currentTime: current Unix timestamp used to evaluate each withdrawal's lockup
+//
+// Returns:
+//   - total: sum of all withdrawal amounts currently available for collection
 func (r *DelegationResolver) CollectableAmount(currentTime int64) (total int64) {
 	for _, withdraw := range r.delegation.Withdraws() {
 		total = gnsmath.SafeAddInt64(total, NewDelegationWithdrawResolver(&withdraw).CollectableAmount(currentTime))
@@ -43,7 +72,13 @@ func (r *DelegationResolver) CollectableAmount(currentTime int64) (total int64) 
 	return total
 }
 
-// UnDelegate processes an undelegation with lockup period
+// UnDelegate processes an undelegation with a time-based lockup period.
+//
+// Parameters:
+//   - amount: amount to undelegate and place into a withdrawal
+//   - currentHeight: block height at which the undelegation is recorded
+//   - currentTimestamp: Unix timestamp at which the undelegation is recorded
+//   - unDelegationLockupPeriod: lockup duration in seconds before the withdrawal is collectible
 func (r *DelegationResolver) UnDelegate(
 	amount, currentHeight, currentTimestamp, unDelegationLockupPeriod int64,
 ) {
@@ -59,7 +94,12 @@ func (r *DelegationResolver) UnDelegate(
 	r.delegation.AddWithdraw(withdraw)
 }
 
-// UnDelegateWithoutLockup processes an immediate undelegation without lockup
+// UnDelegateWithoutLockup processes an immediate undelegation without lockup.
+//
+// Parameters:
+//   - amount: amount to undelegate and mark as collected immediately
+//   - currentHeight: current block height context; retained for API symmetry and unused by this immediate path
+//   - currentTime: current Unix timestamp context; retained for API symmetry and unused by this immediate path
 func (r *DelegationResolver) UnDelegateWithoutLockup(
 	amount, currentHeight, currentTime int64,
 ) {

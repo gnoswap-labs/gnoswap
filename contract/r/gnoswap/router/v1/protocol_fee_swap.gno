@@ -18,7 +18,10 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 )
 
-// GetSwapFee returns the current swap fee rate in basis points.
+// GetSwapFee returns the current router fee rate in basis points.
+//
+// Returns:
+//   - fee: configured router fee in basis points
 func (r *routerV1) GetSwapFee() uint64 {
 	return r.store.GetSwapFee()
 }
@@ -29,7 +32,9 @@ func (r *routerV1) GetSwapFee() uint64 {
 // Only callable by admin or governance.
 //
 // Parameters:
-//   - fee: Fee rate in basis points (0-1000 = 0%-10%)
+//   - _: leading call discriminator; callers pass 0
+//   - rlm: propagated current realm context; it must be current for the authorized storage write
+//   - fee: new protocol fee rate in basis points, bounded to 0 through 1000
 //
 // Access:
 //   - Requires: Admin or Governance role
@@ -104,7 +109,10 @@ func (r *routerV1) handleSwapFee(
 	return gnsmath.SafeSubInt64(amount, feeAmountInt64)
 }
 
-// GetPendingProtocolFees returns the pending protocol fee amount per token path.
+// GetPendingProtocolFees returns pending protocol fee amounts keyed by token path.
+//
+// Returns:
+//   - fees: token-path to pending amount map held by the router
 func (r *routerV1) GetPendingProtocolFees() map[string]int64 {
 	return r.store.GetPendingProtocolFees()
 }

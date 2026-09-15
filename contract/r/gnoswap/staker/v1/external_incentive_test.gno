@@ -535,7 +535,7 @@ func TestEndExternalIncentive(cur realm, t *testing.T) {
 			uassert.True(t, exists)
 			uassert.True(t, updatedIncentive.Refunded())
 			uassert.Equal(t, creator, updatedIncentive.Creator())
-			// EndExternalIncentive refunds GNS deposit and time-based reward token refund.
+			// EndExternalIncentive refunds the GNS deposit and Q128 time-based reward-token remainder.
 			uassert.Equal(t, creatorGnsBalanceAfter-creatorGnsBalanceBefore, depositGnsAmount)
 		})
 	}
@@ -1201,15 +1201,15 @@ func TestRefundCalculationWithPartialCollections(cur realm, t *testing.T) {
 		t.Errorf("After unstakes, DistributedRewardAmount should still be 500, got %d", incentiveResolver.DistributedRewardAmount())
 	}
 
-	// End incentive with simple time-based refund calculation
+	// End incentive with Q128 time-based refund calculation.
+	// End computes refund as unclaimable reward plus the fixed-point remainder,
+	// then caps it by the incentive's current remaining RewardAmount.
+	// The Q128 rate is floor((totalRewardAmount << 128) / duration), and
+	// distributable = floor(rateX128 * duration / 2^128).
+	// Any fixed-point residue is therefore small; this test only requires the
+	// resulting refund to remain non-negative.
 	_, refund, err := s.endExternalIncentive(poolResolver, incentiveResolver, creator, endTime+100)
 	uassert.NoError(t, err)
-
-	// refund = totalRewardAmount - (rewardPerSecond × duration) - distributedRewardAmount
-	// duration = endTime - startTime = 86400*9 = 777600
-	// rewardPerSecond = totalRewardAmount / duration = 1000000000 / 777600 = 1285 (truncated)
-	// totalDistributable = 1285 * 777600 = 999273600 (due to integer truncation, less than totalRewardAmount)
-	// refund = 1000000000 - 999273600 - 500 = 726400 - 500 = 725900
 	if refund < 0 {
 		t.Errorf("Refund should never be negative! Got %d", refund)
 	}

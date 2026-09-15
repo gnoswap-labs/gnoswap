@@ -18,6 +18,12 @@ const (
 
 // SetPoolTier assigns a tier level to a pool for internal GNS emission rewards.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - poolPath: Existing pool path whose internal GNS emission tier is being assigned.
+//   - tier: Emission tier to assign; valid values are below AllTierCount, including 0 for no emission target.
 func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -54,6 +60,12 @@ func (s *stakerV1) SetPoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 
 // ChangePoolTier modifies the tier level of an existing pool.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - poolPath: Existing pool path whose emission tier is being changed.
+//   - tier: Replacement emission tier; values at or above AllTierCount are rejected.
 func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -98,6 +110,11 @@ func (s *stakerV1) ChangePoolTier(_ int, rlm realm, poolPath string, tier uint64
 
 // RemovePoolTier removes a pool from internal GNS emission rewards.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - poolPath: Existing pool path to remove from the emission-tier accounting.
 func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 	access.AssertIsRlmCurrent(0, rlm)
 
@@ -137,8 +154,15 @@ func (s *stakerV1) RemovePoolTier(_ int, rlm realm, poolPath string) {
 	)
 }
 
-// SetWarmUp configures the warm-up percentage and duration for rewards.
+// SetWarmUp configures the duration for the warm-up tier selected by its fixed ratio.
+// Finite tiers are capped at 365 days; the final 100% tier must remain math.MaxInt64.
 // Only admin or governance can call this function.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the staker proxy.
+//   - pct: Warm-up tier percentage selecting one of the configured 30%, 50%, 70%, or 100% templates.
+//   - timeDuration: Warm-up duration in seconds; finite tiers are capped at 365 days while the 100% tier uses the maximum int64 duration.
 func (s *stakerV1) SetWarmUp(_ int, rlm realm, pct, timeDuration int64) {
 	access.AssertIsRlmCurrent(0, rlm)
 

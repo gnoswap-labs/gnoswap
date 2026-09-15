@@ -39,17 +39,34 @@ func (p *positionV1) mustGetPosition(positionId uint64) *position.Position {
 
 // GetPositions returns a read-only view of every position, keyed by the decimal
 // string form of the position ID.
+//
+// Returns:
+//   - positions: read-only tree exposing the position store without mutation methods
 func (p *positionV1) GetPositions() *rotree.ReadOnlyTree {
 	// makeEntrySafeFn is a function that makes an entry safe to read.
 	// But Position is immutable, so we can just return the entry as is.
 	return rotree.Wrap(p.store.GetPositions(), nil)
 }
 
-// ExistPosition checks if a position exists for a given position ID
+// ExistPosition reports whether a position exists for a given position ID.
+//
+// Parameters:
+//   - positionId: numeric ID to test in the position store
+//
+// Returns:
+//   - exists: true when the position store contains positionId
 func (p *positionV1) ExistPosition(positionId uint64) bool {
 	return p.store.HasPosition(positionId)
 }
 
+// IsBurned reports the empty-position marker stored for a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose burned marker is requested
+//
+// Returns:
+//   - burned: true when the position is marked empty; the NFT record itself may still exist
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) IsBurned(positionId uint64) (bool, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -59,6 +76,14 @@ func (p *positionV1) IsBurned(positionId uint64) (bool, error) {
 	return position.Burned(), nil
 }
 
+// IsInRange reports whether the pool's current tick is inside a position's range.
+//
+// Parameters:
+//   - positionId: numeric ID whose tick range and pool are inspected
+//
+// Returns:
+//   - inRange: true when tickLower <= current pool tick < tickUpper
+//   - err: nil on success; an error when the position or its pool tick cannot be read
 func (p *positionV1) IsInRange(positionId uint64) (bool, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -74,6 +99,14 @@ func (p *positionV1) IsInRange(positionId uint64) (bool, error) {
 	return position.TickLower() <= poolCurrentTick && poolCurrentTick < position.TickUpper(), nil
 }
 
+// GetPositionOperator returns the address approved to operate on a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose operator is requested
+//
+// Returns:
+//   - operator: approved operator address, or the empty address when none is set
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionOperator(positionId uint64) (address, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -83,6 +116,14 @@ func (p *positionV1) GetPositionOperator(positionId uint64) (address, error) {
 	return position.Operator(), nil
 }
 
+// GetPositionPoolKey returns the pool identifier stored on a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose pool key is requested
+//
+// Returns:
+//   - poolKey: pool key encoding the position's token pair and fee tier
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionPoolKey(positionId uint64) (string, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -92,6 +133,14 @@ func (p *positionV1) GetPositionPoolKey(positionId uint64) (string, error) {
 	return position.PoolKey(), nil
 }
 
+// GetPositionTickLower returns the lower tick boundary stored on a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose lower tick is requested
+//
+// Returns:
+//   - tickLower: lower tick boundary, inclusive in range checks
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionTickLower(positionId uint64) (int32, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -101,6 +150,14 @@ func (p *positionV1) GetPositionTickLower(positionId uint64) (int32, error) {
 	return position.TickLower(), nil
 }
 
+// GetPositionTickUpper returns the upper tick boundary stored on a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose upper tick is requested
+//
+// Returns:
+//   - tickUpper: upper tick boundary, exclusive in range checks
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionTickUpper(positionId uint64) (int32, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -110,6 +167,14 @@ func (p *positionV1) GetPositionTickUpper(positionId uint64) (int32, error) {
 	return position.TickUpper(), nil
 }
 
+// GetPositionLiquidity returns the decimal-encoded liquidity stored on a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose liquidity is requested
+//
+// Returns:
+//   - liquidity: decimal string representing the position's current liquidity
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionLiquidity(positionId uint64) (string, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -119,6 +184,16 @@ func (p *positionV1) GetPositionLiquidity(positionId uint64) (string, error) {
 	return position.Liquidity(), nil
 }
 
+// GetPositionTokenBalances returns balances derived from current pool price,
+// position range, and liquidity; token balances are not stored snapshots.
+//
+// Parameters:
+//   - positionId: numeric ID whose current token balances are calculated
+//
+// Returns:
+//   - token0Balance: current token0 amount represented by the position's liquidity and range
+//   - token1Balance: current token1 amount represented by the position's liquidity and range
+//   - err: nil when the position exists; errPositionDoesNotExist when it is absent (pool price lookup failures panic during calculation)
 func (p *positionV1) GetPositionTokenBalances(positionId uint64) (int64, int64, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -129,6 +204,15 @@ func (p *positionV1) GetPositionTokenBalances(positionId uint64) (int64, int64, 
 	return balance0, balance1, nil
 }
 
+// GetPositionFeeGrowthInside0LastX128 returns the token0 fee-growth checkpoint
+// stored on a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose token0 fee-growth checkpoint is requested
+//
+// Returns:
+//   - feeGrowthInside0LastX128: decimal-encoded Q128 token0 fee growth inside the position's range at its last update
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) (string, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -138,6 +222,15 @@ func (p *positionV1) GetPositionFeeGrowthInside0LastX128(positionId uint64) (str
 	return position.FeeGrowthInside0LastX128(), nil
 }
 
+// GetPositionFeeGrowthInside1LastX128 returns the token1 fee-growth checkpoint
+// stored on a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose token1 fee-growth checkpoint is requested
+//
+// Returns:
+//   - feeGrowthInside1LastX128: decimal-encoded Q128 token1 fee growth inside the position's range at its last update
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) (string, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -147,6 +240,16 @@ func (p *positionV1) GetPositionFeeGrowthInside1LastX128(positionId uint64) (str
 	return position.FeeGrowthInside1LastX128(), nil
 }
 
+// GetPositionFeeGrowthInsideLastX128 returns both fee-growth checkpoints stored
+// on a position, in token0 then token1 order.
+//
+// Parameters:
+//   - positionId: numeric ID whose fee-growth checkpoints are requested
+//
+// Returns:
+//   - feeGrowthInside0LastX128: decimal-encoded Q128 token0 fee growth checkpoint
+//   - feeGrowthInside1LastX128: decimal-encoded Q128 token1 fee growth checkpoint
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionFeeGrowthInsideLastX128(positionId uint64) (string, string, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -156,6 +259,15 @@ func (p *positionV1) GetPositionFeeGrowthInsideLastX128(positionId uint64) (stri
 	return position.FeeGrowthInside0LastX128(), position.FeeGrowthInside1LastX128(), nil
 }
 
+// GetPositionTicks returns both tick boundaries stored on a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose tick boundaries are requested
+//
+// Returns:
+//   - tickLower: lower tick boundary, inclusive in range checks
+//   - tickUpper: upper tick boundary, exclusive in range checks
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionTicks(positionId uint64) (int32, int32, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -165,6 +277,14 @@ func (p *positionV1) GetPositionTicks(positionId uint64) (int32, int32, error) {
 	return position.TickLower(), position.TickUpper(), nil
 }
 
+// GetPositionTokensOwed0 returns the stored token0 amount owed to a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose token0 owed amount is requested
+//
+// Returns:
+//   - tokensOwed0: accrued token0 amount awaiting collection, in token units
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionTokensOwed0(positionId uint64) (int64, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -174,6 +294,14 @@ func (p *positionV1) GetPositionTokensOwed0(positionId uint64) (int64, error) {
 	return position.TokensOwed0(), nil
 }
 
+// GetPositionTokensOwed1 returns the stored token1 amount owed to a position.
+//
+// Parameters:
+//   - positionId: numeric ID whose token1 owed amount is requested
+//
+// Returns:
+//   - tokensOwed1: accrued token1 amount awaiting collection, in token units
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionTokensOwed1(positionId uint64) (int64, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -183,6 +311,16 @@ func (p *positionV1) GetPositionTokensOwed1(positionId uint64) (int64, error) {
 	return position.TokensOwed1(), nil
 }
 
+// GetPositionTokensOwed returns both stored token amounts owed to a position,
+// in token0 then token1 order.
+//
+// Parameters:
+//   - positionId: numeric ID whose owed amounts are requested
+//
+// Returns:
+//   - tokensOwed0: accrued token0 amount awaiting collection, in token units
+//   - tokensOwed1: accrued token1 amount awaiting collection, in token units
+//   - err: nil on lookup success; errPositionDoesNotExist when the position is absent
 func (p *positionV1) GetPositionTokensOwed(positionId uint64) (int64, int64, error) {
 	position, err := p.getPosition(positionId)
 	if err != nil {
@@ -192,6 +330,14 @@ func (p *positionV1) GetPositionTokensOwed(positionId uint64) (int64, int64, err
 	return position.TokensOwed0(), position.TokensOwed1(), nil
 }
 
+// GetPositionOwner returns the address that owns the position NFT.
+//
+// Parameters:
+//   - positionId: numeric ID whose NFT ownership is requested
+//
+// Returns:
+//   - owner: current owner address reported by the NFT accessor
+//   - err: nil when the NFT accessor finds the token; otherwise its ownership lookup error
 func (p *positionV1) GetPositionOwner(positionId uint64) (address, error) {
 	owner, err := p.nftAccessor.OwnerOf(positionIdFrom(positionId))
 	if err != nil {
@@ -201,6 +347,16 @@ func (p *positionV1) GetPositionOwner(positionId uint64) (address, error) {
 	return owner, nil
 }
 
+// GetUnclaimedFee calculates unclaimed token fees from current in-range
+// fee growth, the position's checkpoints, and its liquidity.
+//
+// Parameters:
+//   - positionId: numeric ID whose unclaimed token fees are calculated
+//
+// Returns:
+//   - unclaimedFee0: token0 fees accrued since the stored checkpoint, scaled by position liquidity
+//   - unclaimedFee1: token1 fees accrued since the stored checkpoint, scaled by position liquidity
+//   - err: nil on success; nil fee pointers and the underlying lookup error when position or pool data is unavailable
 func (p *positionV1) GetUnclaimedFee(positionId uint64) (*u256.Uint, *u256.Uint, error) {
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
 	position, err := p.getPosition(positionId)

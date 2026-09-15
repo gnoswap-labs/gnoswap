@@ -21,9 +21,9 @@
 //   - **Dynamic Role Management**: Roles can be registered, updated, and removed at runtime
 //     without requiring contract redeployment.
 //   - **Address-Based Authorization**: Each role is associated with a single address,
-//     and authorization is verified by address matching.
-//   - **System Roles**: Predefined system roles (admin, devops, pool, etc.) that cannot
-//     be removed to ensure system integrity.
+//   - **System Roles**: Reserved system-role names (admin, devops, pool, etc.)
+//     cannot be removed once registered. The constructor does not pre-populate
+//     these role entries; callers register their addresses explicitly.
 //   - **Two-Step Ownership Transfer**: Built-in secure ownership transfer mechanism
 //     requiring explicit acceptance by the new owner.
 //   - **Encapsulation**: Internal state (roles registry) is encapsulated within the RBAC
@@ -33,7 +33,8 @@
 //
 // Typical usage of the RBAC package includes the following steps:
 //
-//  1. **Initialization**: Create a new RBAC manager using `New()` or `NewRBACWithAddress(addr)`.
+//  1. **Initialization**: Create a new RBAC manager with
+//     `NewRBACWithAddress(addr)`, passing the intended owner explicitly.
 //  2. **Role Registration**: Register roles using `RegisterRole(roleName, address)`.
 //  3. **Authorization Check**: Verify if an address is authorized for a role using
 //     `IsAuthorized(roleName, address)`.
@@ -54,8 +55,10 @@
 // )
 //
 //	func main() {
-//	    // Create a new RBAC manager (origin caller becomes owner)
-//	    manager := rbac.New()
+//	    // The owner is supplied explicitly; no constructor derives it from
+//	    // an implicit origin caller.
+//	    ownerAddr := address("g1...")
+//	    manager := rbac.NewRBACWithAddress(ownerAddr)
 //
 //	    // Define example addresses
 //	    adminAddr := address("g1...")
@@ -98,7 +101,9 @@
 //
 // ## System Roles
 //
-// The package defines several system roles that cannot be removed:
+// The package reserves the following system-role names. A new RBAC manager
+// starts with no role entries, so callers must register each role and address
+// explicitly. Once registered, a system role cannot be removed:
 //
 //   - admin: System administrator role
 //   - devops: DevOps operations role
@@ -118,13 +123,15 @@
 //
 // The package defines several error types:
 //
-// - ErrRoleAlreadyExists: Attempting to register a role that already exists.
-// - ErrRoleDoesNotExist: Attempting to access or modify a non-existent role.
-// - ErrCannotRemoveSystemRole: Attempting to remove a system role.
-// - ErrInvalidAddress: Providing an invalid or empty address.
-// - ErrUnauthorized: Caller is not the owner when owner permission is required.
-// - ErrNoPendingOwner: Attempting to accept ownership when no transfer is pending.
-// - ErrPendingUnauthorized: Caller is not the pending owner when accepting ownership.
+//   - ErrRoleAlreadyExists: Attempting to register a role that already exists.
+//   - ErrRoleDoesNotExist: Attempting to access or modify a non-existent role.
+//   - ErrCannotRemoveSystemRole: Attempting to remove a registered system role.
+//   - ErrInvalidAddress: Providing an invalid address to UpdateRoleAddress or
+//     an ownership-transfer method. RegisterRole stores its supplied address
+//     without validating it.
+//   - ErrUnauthorized: Caller is not the owner when owner permission is required.
+//   - ErrNoPendingOwner: Attempting to accept ownership when no transfer is pending.
+//   - ErrPendingUnauthorized: Caller is not the pending owner when accepting ownership.
 //
 // ## Ownership Management
 //
@@ -139,7 +146,8 @@
 //   - Each role can only have one assigned address. For multi-address authorization,
 //     consider creating multiple roles or implementing a wrapper.
 //   - System roles are protected and cannot be removed to ensure system stability.
-//   - Address validation checks for empty strings and calls IsValid() method.
+//   - `RegisterRole` does not validate the supplied address. Address validation
+//     is performed by `UpdateRoleAddress` and ownership-transfer methods.
 //
 // Package rbac is intended for use in Gno smart contracts requiring simple,
 // address-based access control with role management capabilities.
