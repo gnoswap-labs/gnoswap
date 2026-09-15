@@ -5,9 +5,9 @@ import (
 
 	"gno.land/r/gnoswap/launchpad"
 
-	"gno.land/p/gnoswap/consts"
-	gnsmath "gno.land/p/gnoswap/gnsmath"
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/consts/v1"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 func getTierCurrentDepositCount(t *launchpad.ProjectTier) int64 {

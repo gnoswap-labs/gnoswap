@@ -9,18 +9,18 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/p/gnoswap/consts"
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/consts/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
+	"gno.land/p/gnoswap/utils/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/launchpad"
 	"gno.land/r/onbloc/obl"
 
 	_ "gno.land/r/onbloc/bar"
 	_ "gno.land/r/onbloc/foo"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 )
 
 func TestLaunchpadProject_CreateProjectShouldFail(cur realm, t *testing.T) {

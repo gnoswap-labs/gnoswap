@@ -3,13 +3,13 @@ package staker
 import (
 	"errors"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/rbac" // initialize readable contract role(s)
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	_ "gno.land/r/gnoswap/rbac/v1" // initialize readable contract role(s)
 
-	"gno.land/p/gnoswap/store"
-	"gno.land/p/gnoswap/version_manager"
+	"gno.land/p/gnoswap/store/v1"
+	"gno.land/p/gnoswap/version_manager/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 const ErrSpoofedRealm = "rlm does not match the current crossing frame"

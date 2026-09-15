@@ -15,12 +15,12 @@ import (
 	"testing"
 	"time"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	govStaker "gno.land/r/gnoswap/gov/staker"
 
@@ -29,7 +29,7 @@ import (
 	_ "gno.land/r/gnoswap/gov/staker/v2_invalid"
 	_ "gno.land/r/gnoswap/gov/staker/v3_valid"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 )
 
 var t *testing.T

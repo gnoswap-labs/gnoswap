@@ -3,10 +3,10 @@ package position
 import (
 	"errors"
 
-	"gno.land/p/gnoswap/consts"
-	"gno.land/p/gnoswap/gnsmath"
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/consts/v1"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
+	"gno.land/p/gnoswap/utils/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	pl "gno.land/r/gnoswap/pool"

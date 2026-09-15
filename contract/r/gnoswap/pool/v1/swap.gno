@@ -8,14 +8,14 @@ import (
 
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/access/v1"
+	"gno.land/r/gnoswap/halt/v1"
 
-	"gno.land/p/gnoswap/consts"
-	"gno.land/p/gnoswap/gnsmath"
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/consts/v1"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	i256 "gno.land/p/gnoswap/int256/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
+	"gno.land/p/gnoswap/utils/v1"
 
 	pl "gno.land/r/gnoswap/pool"
 )

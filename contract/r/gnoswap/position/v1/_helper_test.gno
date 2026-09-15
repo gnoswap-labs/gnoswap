@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/p/gnoswap/gnsmath"
-	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/mock"

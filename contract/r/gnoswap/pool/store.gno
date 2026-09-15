@@ -3,7 +3,7 @@ package pool
 import (
 	"errors"
 
-	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/store/v1"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )

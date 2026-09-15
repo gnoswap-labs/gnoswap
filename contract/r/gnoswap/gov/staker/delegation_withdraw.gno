@@ -1,7 +1,7 @@
 package staker
 
 import (
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 )
 
 // DelegationWithdraw represents a pending withdrawal from a delegation.

@@ -4,7 +4,7 @@ import (
 	"chain"
 	"chain/runtime"
 
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 )
 
 func emitSetPoolTier(

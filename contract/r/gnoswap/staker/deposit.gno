@@ -3,7 +3,7 @@ package staker
 import (
 	"math"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 type Deposit struct {

@@ -13,14 +13,14 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 )
@@ -146,7 +146,7 @@ func changeDistributionTarget(cur realm) {
 // [EXPECTED] staker address should be changed g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3 to g1dejhw5m5v94k2ujpv3j8yh6lta047h6ly4ras8
 // [EXPECTED] gov staker address should be changed g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9 to g1dejhw3m0wefhgcttv4eyzerywf047h6ldvhvcq
 // [EXPECTED] dev ops address should be changed g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9 to g1dejhw3r9we8hqu6pv3j8yh6lta047h6lguneqv
-// [EXPECTED] community pool address should be changed g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7 to g1dejhwsm0d4kh2mnfw3u4qmm0d3qkgerj7zt4z6
+// [EXPECTED] community pool address should be changed g1uv80ae4csts8k6w78prvy8kp7aqe3rtl66k2dq to g1dejhwsm0d4kh2mnfw3u4qmm0d3qkgerj7zt4z6
 //
 // [SCENARIO] 4. Mint to distribution target (after upgrade)
 // [INFO] current block height 125

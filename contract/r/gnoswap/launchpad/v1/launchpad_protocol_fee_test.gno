@@ -10,7 +10,7 @@ import (
 
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/launchpad"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 	"gno.land/r/onbloc/obl"
 )
 

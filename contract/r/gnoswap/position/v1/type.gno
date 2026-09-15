@@ -1,7 +1,7 @@
 package position
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // Previously, we used a different zero address ("g1000000..."),

@@ -17,19 +17,19 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/r/gnoland/wugnot"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/halt"
-	_ "gno.land/r/gnoswap/rbac"
+	"gno.land/r/gnoswap/halt/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 	"gno.land/r/gnoswap/staker"
 
 	_ "gno.land/r/gnoswap/common/v1"
@@ -38,7 +38,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"

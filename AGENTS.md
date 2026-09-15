@@ -76,7 +76,7 @@ make fmt                               # gofumpt over all .gno files
 # Package tests (Makefile runs setup.py, then gno test under <workdir>/gno/examples)
 make test PKG=gno.land/r/gnoswap/pool/v1
 make test PKG=gno.land/r/gnoswap/pool/v1 RUN=TestCreatePool
-make test WORKDIR=tmp PKG=gno.land/p/gnoswap/gnsmath
+make test WORKDIR=tmp PKG=gno.land/p/gnoswap/gnsmath/v1
 
 # Folder/filetest runner used by legacy scripts
 make test-folder FOLDER=contract/r/gnoswap/pool/v1
