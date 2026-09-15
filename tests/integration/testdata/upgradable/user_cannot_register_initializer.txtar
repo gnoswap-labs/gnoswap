@@ -1,4 +1,4 @@
-loadpkg gno.land/p/gnoswap/store
+loadpkg gno.land/p/gnoswap/store/v1
 loadpkg gno.land/p/gnoswap/version_manager
 loadpkg gno.land/p/gnoswap/utils/v1
 
@@ -19,7 +19,7 @@ gno = "0.9"
 package parent
 
 import (
-	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/store/v1"
 	"gno.land/p/gnoswap/version_manager"
 )
 

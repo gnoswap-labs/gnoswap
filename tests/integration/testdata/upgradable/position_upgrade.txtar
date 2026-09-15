@@ -22,7 +22,7 @@ loadpkg gno.land/p/gnoswap/uint256/v1
 loadpkg gno.land/p/gnoswap/int256/v1
 loadpkg gno.land/p/gnoswap/consts/v1
 loadpkg gno.land/p/gnoswap/gnsmath/v1
-loadpkg gno.land/p/gnoswap/store
+loadpkg gno.land/p/gnoswap/store/v1
 loadpkg gno.land/p/gnoswap/version_manager
 loadpkg gno.land/p/gnoswap/utils/v1
 

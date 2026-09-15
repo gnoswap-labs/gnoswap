@@ -7,7 +7,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	"gno.land/p/gnoswap/gnsmath/v1"
-	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/store/v1"
 	"gno.land/p/gnoswap/utils/v1"
 )
 

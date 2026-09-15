@@ -15,7 +15,7 @@ import (
 	"errors"
 	"strings"
 
-	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/store/v1"
 )
 
 // ErrSpoofedRealm is returned when the supplied realm token does not match the

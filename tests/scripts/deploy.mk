@@ -61,7 +61,7 @@ deploy-uint256:
 
 deploy-store:
 	$(info ************ deploy store ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/store -pkgpath gno.land/p/gnoswap/store -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 14645ugnot -gas-wanted 14645000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/p/gnoswap/store/v1 -pkgpath gno.land/p/gnoswap/store/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 14645ugnot -gas-wanted 14645000 -memo "" gnoswap_admin
 	@echo
 
 deploy-version_manager:

@@ -79,7 +79,7 @@
 // import (
 //
 //	"gno.land/p/gnoswap/version_manager"
-//	"gno.land/p/gnoswap/store"
+//	"gno.land/p/gnoswap/store/v1"
 //
 // )
 //
@@ -311,7 +311,7 @@
 //
 // ## Related Packages
 //
-//   - gno.land/p/gnoswap/store: Provides KVStore with permission-based access control
+//   - gno.land/p/gnoswap/store/v1: Provides KVStore with permission-based access control
 //
 // Package version_manager is intended for use in Gno smart contracts requiring
 // dynamic, upgradeable implementations with zero-downtime version switching.

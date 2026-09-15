@@ -29,7 +29,7 @@ GnoSwap is built on a **proxy pattern architecture** that enables **seamless upg
 │  STORAGE LAYER: Centralized Data Management                 │
 │  - store.gno: Domain-specific storage access                │
 │  - state.gno: Global state management                       │
-│  - p/gnoswap/store: Core KV storage infrastructure          │
+│  - p/gnoswap/store/v1: Core KV storage infrastructure       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -130,7 +130,7 @@ Provides centralized data storage with domain-specific access patterns.
 | Component           | Role                           | Key Features                        |
 | ------------------- | ------------------------------ | ----------------------------------- |
 | **store.gno**       | Domain storage access          | Pool-specific storage operations    |
-| **p/gnoswap/store** | Core KV storage infrastructure | Type-agnostic key-value storage     |
+| **p/gnoswap/store/v1** | Core KV storage infrastructure | Type-agnostic key-value storage     |
 | **access**          | Access control                 | Role-based authorization            |
 | **rbac**            | Role management                | Role registration and updates       |
 | **halt**            | Emergency halt                 | Per-domain emergency stop mechanism |
@@ -216,7 +216,7 @@ r/gnoswap/staker/v1/             # Staker v1 implementation
 
 These contracts form the core infrastructure and are never upgraded after deployment:
 
-- **`p/gnoswap/store`**: Core storage infrastructure providing type-agnostic key-value storage
+- **`p/gnoswap/store/v1`**: Core storage infrastructure providing type-agnostic key-value storage
 - **`r/gnoswap/access`**: Access control system managing role-based permissions
 - **`r/gnoswap/rbac`**: Role-based access control for managing role addresses
 - **`r/gnoswap/halt`**: Emergency halt system for protocol safety

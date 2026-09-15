@@ -37,7 +37,7 @@ type ProtocolFee interface {
 package protocol_fee
 
 import "gno.land/p/gnoswap/version_manager"
-import "gno.land/p/gnoswap/store"
+import "gno.land/p/gnoswap/store/v1"
 
 var manager version_manager.VersionManager
 
@@ -268,4 +268,4 @@ protocol_fee.UpgradeImpl(cross(cur), "gno.land/r/gnoswap/protocol_fee/v1_hotfix"
 
 ## Related Packages
 
-- `gno.land/p/gnoswap/store`: KVStore with permission-based access control
+- `gno.land/p/gnoswap/store/v1`: KVStore with permission-based access control

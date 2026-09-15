@@ -3,7 +3,7 @@ package version_manager
 import (
 	"testing"
 
-	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/store/v1"
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
