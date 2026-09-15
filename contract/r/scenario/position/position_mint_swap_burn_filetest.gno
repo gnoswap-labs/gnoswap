@@ -146,7 +146,7 @@ func mintPosition(cur realm) {
 
 func checkInitialState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Initial liquidity should be %s\n", pos.Liquidity())
 	balance0, _ := position.GetPositionToken0Balance(1)
@@ -234,7 +234,7 @@ func burnPosition(cur realm) {
 
 func verifyFinalState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Position should be burned\n")
 	ufmt.Printf("[EXPECTED] Final liquidity should be %s\n", pos.Liquidity())

@@ -5,9 +5,8 @@
 package main
 
 import (
+	"strconv"
 	"testing"
-
-	"gno.land/p/gnoswap/utils"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -122,7 +121,7 @@ func verifyDaoOwnedDelegationAfterDelegate(cur realm) {
 		panic("dao delegation not found")
 	}
 
-	daoDelegation, ok := staker.GetDelegations().Get(utils.EncodeInt64(daoDelegationIDs[0])).(*staker.Delegation)
+	daoDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(daoDelegationIDs[0], 10)).(*staker.Delegation)
 	if !ok {
 		panic("delegation not found")
 	}
@@ -153,7 +152,7 @@ func daoRedelegateToValidator2(cur realm) {
 		panic("dao redelegation ids missing")
 	}
 
-	newDelegation, ok := staker.GetDelegations().Get(utils.EncodeInt64(newDelegationIDs[0])).(*staker.Delegation)
+	newDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(newDelegationIDs[0], 10)).(*staker.Delegation)
 	if !ok {
 		panic("delegation not found")
 	}
@@ -185,7 +184,7 @@ func daoUndelegatePartial(cur realm) {
 		panic("dao delegation missing after undelegate")
 	}
 
-	daoDelegation, ok := staker.GetDelegations().Get(utils.EncodeInt64(daoDelegationIDs[0])).(*staker.Delegation)
+	daoDelegation, ok := staker.GetDelegations().Get(strconv.FormatInt(daoDelegationIDs[0], 10)).(*staker.Delegation)
 	if !ok {
 		panic("delegation not found")
 	}

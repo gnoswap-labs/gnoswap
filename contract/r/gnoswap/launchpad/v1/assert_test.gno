@@ -6,7 +6,6 @@ import (
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
-	launchpadRealm "gno.land/r/gnoswap/launchpad"
 )
 
 func TestAssert_assertIsValidAmount(cur realm, t *testing.T) {
@@ -88,7 +87,7 @@ func TestAssert_assertIsDepositOwner(cur realm, t *testing.T) {
 			name: "valid - caller is deposit owner",
 			setupDeposit: func(lp *launchpadV1) string {
 				// Create a test deposit
-				depositID := "1"
+				depositID := "test_deposit_1"
 				deposit := newDeposit(
 					depositID,
 					"test_project:100",
@@ -100,7 +99,7 @@ func TestAssert_assertIsDepositOwner(cur realm, t *testing.T) {
 					time.Now().Unix()+1000,
 				)
 				deposits := lp.store.GetDeposits()
-				deposits.Set(launchpadRealm.MustEncodeDepositID(depositID), *deposit)
+				deposits.Set(depositID, *deposit)
 				return depositID
 			},
 			caller:        ownerAddr,
@@ -109,9 +108,9 @@ func TestAssert_assertIsDepositOwner(cur realm, t *testing.T) {
 		{
 			name: "panic when deposit not found",
 			setupDeposit: func(lp *launchpadV1) string {
-				return "999"
+				return "non_existent_deposit"
 			},
-			depositID:     "999",
+			depositID:     "non_existent_deposit",
 			caller:        ownerAddr,
 			expectedPanic: true,
 			expectedError: "GNOSWAP-LAUNCHPAD-012",
@@ -119,7 +118,7 @@ func TestAssert_assertIsDepositOwner(cur realm, t *testing.T) {
 		{
 			name: "panic when caller is not owner",
 			setupDeposit: func(lp *launchpadV1) string {
-				depositID := "2"
+				depositID := "test_deposit_2"
 				deposit := newDeposit(
 					depositID,
 					"test_project:100",
@@ -131,7 +130,7 @@ func TestAssert_assertIsDepositOwner(cur realm, t *testing.T) {
 					time.Now().Unix()+1000,
 				)
 				deposits := lp.store.GetDeposits()
-				deposits.Set(launchpadRealm.MustEncodeDepositID(depositID), *deposit)
+				deposits.Set(depositID, *deposit)
 				return depositID
 			},
 			caller:        otherAddr,

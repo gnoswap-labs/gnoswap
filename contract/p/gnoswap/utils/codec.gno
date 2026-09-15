@@ -45,17 +45,6 @@ func DecodeInt32(key string) int32 {
 	return int32(ordered ^ (uint32(1) << 31))
 }
 
-// EncodeInt64 converts an int64 into a fixed-width 8-byte big-endian string
-// whose lexicographic order matches the signed numeric order.
-func EncodeInt64(value int64) string {
-	return EncodeUint64(uint64(value) ^ (uint64(1) << 63))
-}
-
-// DecodeInt64 converts an order-preserving 8-byte big-endian string into an int64.
-func DecodeInt64(key string) int64 {
-	return int64(DecodeUint64(key) ^ (uint64(1) << 63))
-}
-
 // EncodeUint64 converts a uint64 into a fixed-width 8-byte big-endian string.
 func EncodeUint64(value uint64) string {
 	var buf [8]byte

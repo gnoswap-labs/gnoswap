@@ -744,7 +744,7 @@ func TestGetDeposit(cur realm, t *testing.T) {
 					tier:          30,
 				})
 			} else {
-				depositID = "999"
+				depositID = "nonexistent-deposit-id"
 			}
 
 			// Execute
@@ -1073,7 +1073,7 @@ func TestGetRewardState(cur realm, t *testing.T) {
 				projectTierID = projectID + ":" + utils.FormatInt(30)
 			} else {
 				projectTierID = "nonexistent-project-tier-id"
-				depositID = "999"
+				depositID = "nonexistent-deposit-id"
 			}
 
 			// Execute

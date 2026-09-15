@@ -37,8 +37,8 @@ func (p *positionV1) mustGetPosition(positionId uint64) *position.Position {
 	return &position
 }
 
-// GetPositions returns a read-only view of every position, keyed by the
-// fixed-width encoding produced by utils.EncodeUint64.
+// GetPositions returns a read-only view of every position, keyed by the decimal
+// string form of the position ID.
 func (p *positionV1) GetPositions() *rotree.ReadOnlyTree {
 	// makeEntrySafeFn is a function that makes an entry safe to read.
 	// But Position is immutable, so we can just return the entry as is.

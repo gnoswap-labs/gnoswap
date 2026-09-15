@@ -181,7 +181,7 @@ func mintAlicePosition(cur realm) {
 
 func checkInitialEmissionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Initial position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Initial emission rewards should be 0\n")

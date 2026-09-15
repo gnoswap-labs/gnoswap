@@ -241,8 +241,8 @@ func getPositions(cur realm) {
 	ufmt.Printf("[EXPECTED] position IDs count: %d\n", positions.Size())
 
 	index := 0
-	positions.IterateByOffset(0, 10, func(key string, _ any) bool {
-		ufmt.Printf("[EXPECTED] position ID[%d]: %d\n", index, utils.DecodeUint64(key))
+	positions.IterateByOffset(0, 10, func(id string, _ any) bool {
+		ufmt.Printf("[EXPECTED] position ID[%d]: %s\n", index, id)
 		index++
 		return false
 	})
@@ -252,7 +252,7 @@ func getPosition(cur realm) {
 	println("[INFO] Check GetPositions entry")
 	testing.SetRealm(adminRealm)
 
-	position, ok := pn.GetPositions().Get(utils.EncodeUint64(positionId)).(pn.Position)
+	position, ok := pn.GetPositions().Get(utils.Uint64ToString(positionId)).(pn.Position)
 	if !ok {
 		ufmt.Printf("[EXPECTED] position %d not found\n", positionId)
 	} else {

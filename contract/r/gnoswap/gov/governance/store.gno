@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
-	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -174,7 +173,7 @@ func (s *governanceStore) SetProposals(_ int, rlm realm, proposals *bptree.BPTre
 
 func (s *governanceStore) GetProposal(proposalID int64) (*Proposal, bool) {
 	proposals := s.GetProposals()
-	result := proposals.Get(utils.EncodeInt64(proposalID))
+	result := proposals.Get(formatInt64Key(proposalID))
 	if result == nil {
 		return nil, false
 	}
@@ -200,7 +199,7 @@ func (s *governanceStore) SetProposal(_ int, rlm realm, proposalID int64, propos
 	}
 
 	proposals := s.GetProposals()
-	proposals.Set(utils.EncodeInt64(proposalID), proposal)
+	proposals.Set(formatInt64Key(proposalID), proposal)
 
 	return s.kvStore.Set(0, rlm, StoreKeyProposals.String(), proposals)
 }

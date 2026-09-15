@@ -4,9 +4,9 @@ import (
 	rotree "gno.land/p/nt/bptree/rotree/v0"
 )
 
-// GetPositions returns a read-only view of every position, keyed by the
-// fixed-width encoding produced by utils.EncodeUint64. Callers paginate it
-// through IterateByOffset and decode keys with utils.DecodeUint64.
+// GetPositions returns a read-only view of every position, keyed by the decimal
+// string form of the position ID. Callers paginate it themselves through
+// IterateByOffset.
 func GetPositions() *rotree.ReadOnlyTree {
 	return getImplementation().GetPositions()
 }

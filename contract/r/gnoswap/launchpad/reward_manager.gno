@@ -51,11 +51,11 @@ func (rm *RewardManager) SetRewards(rewards *bptree.BPTree) {
 }
 
 func (rm *RewardManager) SetReward(depositID string, rewardState *RewardState) {
-	rm.rewards.Set(MustEncodeDepositID(depositID), rewardState)
+	rm.rewards.Set(depositID, rewardState)
 }
 
 func (rm *RewardManager) RemoveReward(depositID string) {
-	rm.rewards.Remove(MustEncodeDepositID(depositID))
+	rm.rewards.Remove(depositID)
 }
 
 // DistributeAmountPerSecondX128 returns the distribute amount per second (Q128) of the reward manager.

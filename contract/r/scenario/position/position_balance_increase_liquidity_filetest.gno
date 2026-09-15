@@ -103,7 +103,7 @@ func testIncreaseLiquidityAndBalance(cur realm) {
 
 	barBalanceBefore := bar.BalanceOf(adminAddr)
 	fooBalanceBefore := foo.BalanceOf(adminAddr)
-	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	liquidityBefore := pos.Liquidity()
 
 	ufmt.Printf("[EXPECTED] User BAR balance before increase should be %d\n", barBalanceBefore)
@@ -130,7 +130,7 @@ func testIncreaseLiquidityAndBalance(cur realm) {
 
 	barBalanceAfter := bar.BalanceOf(adminAddr)
 	fooBalanceAfter := foo.BalanceOf(adminAddr)
-	pos, _ = position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
+	pos, _ = position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 	liquidityAfter := pos.Liquidity()
 
 	ufmt.Printf("[EXPECTED] User BAR balance after increase should be %d\n", barBalanceAfter)

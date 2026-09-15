@@ -20,7 +20,7 @@ func (p *positionCollectFeeParams) IsValid() bool {
 		return false
 	}
 
-	_, ok := position.GetPositions().Get(utils.EncodeUint64(p.positionId)).(position.Position)
+	_, ok := position.GetPositions().Get(utils.Uint64ToString(p.positionId)).(position.Position)
 	if !ok {
 		return false
 	}

@@ -79,13 +79,13 @@ func (s *positionStore) SetPositionNextID(_ int, rlm realm, nextID uint64) error
 func (s *positionStore) HasPosition(positionId uint64) bool {
 	positions := s.GetPositions()
 
-	return positions.Has(utils.EncodeUint64(positionId))
+	return positions.Has(utils.Uint64ToString(positionId))
 }
 
 func (s *positionStore) GetPosition(positionId uint64) (Position, bool) {
 	positions := s.GetPositions()
 
-	result := positions.Get(utils.EncodeUint64(positionId))
+	result := positions.Get(utils.Uint64ToString(positionId))
 	if result == nil {
 		return Position{}, false
 	}
@@ -109,7 +109,7 @@ func (s *positionStore) SetPosition(_ int, rlm realm, positionId uint64, positio
 
 	positions := s.GetPositions()
 
-	positions.Set(utils.EncodeUint64(positionId), position)
+	positions.Set(utils.Uint64ToString(positionId), position)
 
 	return s.kvStore.Set(0, rlm, StoreKeyPositions.String(), positions)
 }
@@ -125,7 +125,7 @@ func (s *positionStore) RemovePosition(_ int, rlm realm, positionId uint64) erro
 
 	positions := s.GetPositions()
 
-	positions.Remove(utils.EncodeUint64(positionId))
+	positions.Remove(utils.Uint64ToString(positionId))
 
 	return s.kvStore.Set(0, rlm, StoreKeyPositions.String(), positions)
 }

@@ -5,9 +5,8 @@
 package main
 
 import (
+	"strconv"
 	"testing"
-
-	"gno.land/p/gnoswap/utils"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
@@ -73,7 +72,11 @@ func setupTestData(cur realm) int64 {
 	testing.SetRealm(stakerRealm)
 	delegationId := int64(-1)
 	staker.GetDelegations().IterateByOffset(0, 1, func(key string, _ any) bool {
-		delegationId = utils.DecodeInt64(key)
+		id, err := strconv.ParseInt(key, 10, 64)
+		if err != nil {
+			return true
+		}
+		delegationId = id
 		return true
 	})
 	if delegationId < 0 {
@@ -114,9 +117,9 @@ func testGovStakerGetters(cur realm, delegationId1 int64) {
 	println("[EXPECTED] Delegation IDs (offset=0, limit=10):", delegations.Size(), "delegations")
 
 	delegationIndex := 0
-	delegations.IterateByOffset(0, 10, func(key string, _ any) bool {
+	delegations.IterateByOffset(0, 10, func(id string, _ any) bool {
 		delegationIndex++
-		ufmt.Printf("[EXPECTED] - Delegation %d: %d\n", delegationIndex, utils.DecodeInt64(key))
+		ufmt.Printf("[EXPECTED] - Delegation %d: %s\n", delegationIndex, id)
 		return false
 	})
 
@@ -127,7 +130,7 @@ func testGovStakerGetters(cur realm, delegationId1 int64) {
 	println("[EXPECTED] Delegation", delegationId1, "exists:", exists)
 
 	// GetDelegations entry
-	delegation, ok := staker.GetDelegations().Get(utils.EncodeInt64(delegationId1)).(*staker.Delegation)
+	delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationId1, 10)).(*staker.Delegation)
 	if !ok {
 		panic("delegation not found")
 	}

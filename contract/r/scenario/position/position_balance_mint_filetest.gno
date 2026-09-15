@@ -112,7 +112,7 @@ func testMintAndBalance(cur realm) {
 	ufmt.Printf("[EXPECTED] BAR balance decreased by %d\n", barChange)
 	ufmt.Printf("[EXPECTED] FOO balance decreased by %d\n", fooChange)
 
-	pos, _ := position.GetPositions().Get(utils.EncodeUint64(positionId)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(positionId)).(position.Position)
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	balance0, _ := position.GetPositionToken0Balance(positionId)
 	balance1, _ := position.GetPositionToken1Balance(positionId)

@@ -149,7 +149,7 @@ func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit launchpad.Depos
 
 	// Persist the updated value; the caller's deposit value is unchanged.
 	deposits := lp.store.GetDeposits()
-	deposits.Set(launchpad.MustEncodeDepositID(deposit.ID()), deposit)
+	deposits.Set(deposit.ID(), deposit)
 
 	// Save the modified state back
 	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {

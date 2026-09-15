@@ -66,7 +66,6 @@ import (
 
 	"gno.land/p/gnoswap/gnsmath"
 	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/p/gnoswap/utils"
 	"gno.land/p/nt/grc721/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -2089,7 +2088,13 @@ func finalInvariants(cur realm) {
 func collectDelegationIDs(offset, count int) []int64 {
 	ids := []int64{}
 	govStaker.GetDelegations().IterateByOffset(offset, count, func(key string, _ any) bool {
-		ids = append(ids, utils.DecodeInt64(key))
+		id, err := strconv.ParseInt(key, 10, 64)
+		if err != nil {
+			return false
+		}
+
+		ids = append(ids, id)
+
 		return false
 	})
 
@@ -2101,7 +2106,13 @@ func collectDelegationIDs(offset, count int) []int64 {
 func collectProposalIDs(offset, count int) []int64 {
 	ids := []int64{}
 	govGovernance.GetProposals().IterateByOffset(offset, count, func(key string, _ any) bool {
-		ids = append(ids, utils.DecodeInt64(key))
+		id, err := strconv.ParseInt(key, 10, 64)
+		if err != nil {
+			return false
+		}
+
+		ids = append(ids, id)
+
 		return false
 	})
 

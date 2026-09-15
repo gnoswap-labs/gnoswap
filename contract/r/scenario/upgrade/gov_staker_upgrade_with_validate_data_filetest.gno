@@ -11,10 +11,9 @@
 package main
 
 import (
+	"strconv"
 	"testing"
 	"time"
-
-	"gno.land/p/gnoswap/utils"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -363,7 +362,13 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 func collectDelegationIDs(offset, count int) []int64 {
 	ids := []int64{}
 	govStaker.GetDelegations().IterateByOffset(offset, count, func(key string, _ any) bool {
-		ids = append(ids, utils.DecodeInt64(key))
+		id, err := strconv.ParseInt(key, 10, 64)
+		if err != nil {
+			return false
+		}
+
+		ids = append(ids, id)
+
 		return false
 	})
 
@@ -372,7 +377,7 @@ func collectDelegationIDs(offset, count int) []int64 {
 
 // delegationByID reads one delegation through the read-only view.
 func delegationByID(delegationID int64) (*govStaker.Delegation, error) {
-	delegation, ok := govStaker.GetDelegations().Get(utils.EncodeInt64(delegationID)).(*govStaker.Delegation)
+	delegation, ok := govStaker.GetDelegations().Get(strconv.FormatInt(delegationID, 10)).(*govStaker.Delegation)
 	if !ok {
 		return nil, ufmt.Errorf("delegation %d not found", delegationID)
 	}

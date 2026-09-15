@@ -130,7 +130,7 @@ func mintInitialPosition(cur realm) {
 
 func checkInitialPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be %d\n", pos.TickLower())
@@ -210,7 +210,7 @@ func repositionToNewRange(cur realm) {
 
 func checkRepositionedState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be %d\n", pos.TickLower())
@@ -249,7 +249,7 @@ func executeSwapInNewRange(cur realm) {
 
 func checkFinalPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Final position tickLower should be %d\n", pos.TickLower())

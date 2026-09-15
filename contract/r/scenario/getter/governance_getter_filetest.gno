@@ -6,9 +6,8 @@ package main
 
 import (
 	"chain/runtime"
+	"strconv"
 	"testing"
-
-	"gno.land/p/gnoswap/utils"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
@@ -170,9 +169,9 @@ func testProposalGetters(cur realm, proposalId int64) {
 	println("[EXPECTED] Proposal IDs (offset=0, limit=10):", proposals.Size(), "proposals")
 
 	proposalIndex := 0
-	proposals.IterateByOffset(0, 10, func(key string, _ any) bool {
+	proposals.IterateByOffset(0, 10, func(id string, _ any) bool {
 		proposalIndex++
-		ufmt.Printf("[EXPECTED] - Proposal %d: %d\n", proposalIndex, utils.DecodeInt64(key))
+		ufmt.Printf("[EXPECTED] - Proposal %d: %s\n", proposalIndex, id)
 		return false
 	})
 
@@ -184,7 +183,7 @@ func testProposalGetters(cur realm, proposalId int64) {
 	println("[EXPECTED] Proposal 999 exists:", exists999)
 
 	// GetProposals entry
-	proposal, ok := governance.GetProposals().Get(utils.EncodeInt64(proposalId)).(*governance.Proposal)
+	proposal, ok := governance.GetProposals().Get(strconv.FormatInt(proposalId, 10)).(*governance.Proposal)
 	if !ok {
 		panic("proposal not found")
 	}

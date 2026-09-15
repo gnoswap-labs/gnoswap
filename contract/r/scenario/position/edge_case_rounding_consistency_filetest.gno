@@ -273,7 +273,7 @@ func testRoundingConsistency(cur realm) {
 
 	// Now burn all positions
 	for _, posId := range positions {
-		pos, _ := pn.GetPositions().Get(utils.EncodeUint64(posId)).(pn.Position)
+		pos, _ := pn.GetPositions().Get(utils.Uint64ToString(posId)).(pn.Position)
 
 		_, _, _, _, amt0, amt1, _ := pn.DecreaseLiquidity(
 			cross(cur),

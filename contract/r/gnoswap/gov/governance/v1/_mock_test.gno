@@ -88,7 +88,7 @@ func (m *mockGovernanceStore) GetProposal(proposalID int64) (*governance.Proposa
 	if m.proposals == nil {
 		return nil, false
 	}
-	proposal := m.proposals.Get(utils.EncodeInt64(proposalID))
+	proposal := m.proposals.Get(utils.FormatInt(proposalID))
 	if proposal == nil {
 		return nil, false
 	}
@@ -99,7 +99,7 @@ func (m *mockGovernanceStore) SetProposal(_ int, rlm realm, proposalID int64, pr
 	if m.proposals == nil {
 		m.proposals = governance.NewProposalTree()
 	}
-	m.proposals.Set(utils.EncodeInt64(proposalID), proposal)
+	m.proposals.Set(utils.FormatInt(proposalID), proposal)
 	return nil
 }
 

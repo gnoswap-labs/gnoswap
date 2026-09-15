@@ -19,7 +19,7 @@ func TestDeposit_ID(cur realm, t *testing.T) {
 		{
 			name: "get deposit id successfully",
 			deposit: newDeposit(
-				"1",
+				"test_deposit_id",
 				"test_project",
 				30,
 				testutils.TestAddress("test"),
@@ -28,7 +28,7 @@ func TestDeposit_ID(cur realm, t *testing.T) {
 				time.Now().Unix(),
 				time.Now().Add(time.Hour*24*30).Unix(),
 			),
-			expected: "1",
+			expected: "test_deposit_id",
 		},
 		{
 			name: "get empty deposit id successfully",
@@ -62,7 +62,7 @@ func TestDeposit_ProjectID(cur realm, t *testing.T) {
 		{
 			name: "get project id successfully",
 			deposit: newDeposit(
-				"1",
+				"test_deposit_id",
 				"test_project_id",
 				30,
 				testutils.TestAddress("test"),
@@ -76,7 +76,7 @@ func TestDeposit_ProjectID(cur realm, t *testing.T) {
 		{
 			name: "get empty project id successfully",
 			deposit: newDeposit(
-				"1",
+				"test_deposit_id",
 				"",
 				30,
 				testutils.TestAddress("test"),
@@ -105,7 +105,7 @@ func TestDeposit_ProjectTierID(cur realm, t *testing.T) {
 		{
 			name: "get project tier id successfully",
 			deposit: newDeposit(
-				"1",
+				"test_deposit_id",
 				"test_project",
 				30,
 				testutils.TestAddress("test"),
@@ -119,7 +119,7 @@ func TestDeposit_ProjectTierID(cur realm, t *testing.T) {
 		{
 			name: "get project tier id with empty project id",
 			deposit: newDeposit(
-				"1",
+				"test_deposit_id",
 				"",
 				30,
 				testutils.TestAddress("test"),
@@ -152,7 +152,7 @@ func TestDeposit_IsOwner(cur realm, t *testing.T) {
 		{
 			name: "check owner successfully - true case",
 			deposit: newDeposit(
-				"1",
+				"test_deposit_id",
 				"test_project",
 				30,
 				testAddr,
@@ -167,7 +167,7 @@ func TestDeposit_IsOwner(cur realm, t *testing.T) {
 		{
 			name: "check owner successfully - false case",
 			deposit: newDeposit(
-				"1",
+				"test_deposit_id",
 				"test_project",
 				30,
 				testAddr,
@@ -199,7 +199,7 @@ func TestDeposit_IsEnded(cur realm, t *testing.T) {
 		{
 			name: "check is ended successfully - true case",
 			deposit: newDeposit(
-				"1",
+				"test_deposit_id",
 				"test_project",
 				30,
 				testAddr,
@@ -214,7 +214,7 @@ func TestDeposit_IsEnded(cur realm, t *testing.T) {
 		{
 			name: "check is ended successfully - false case",
 			deposit: newDeposit(
-				"1",
+				"test_deposit_id",
 				"test_project",
 				30,
 				testAddr,
@@ -229,7 +229,7 @@ func TestDeposit_IsEnded(cur realm, t *testing.T) {
 		{
 			name: "check is ended successfully - equal height case",
 			deposit: newDeposit(
-				"1",
+				"test_deposit_id",
 				"test_project",
 				30,
 				testAddr,
@@ -286,7 +286,7 @@ func TestDeposit_IsWithdrawn(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			deposit := newDeposit(
-				"1",
+				"test_deposit_id",
 				"test_project",
 				30,
 				testutils.TestAddress("test"),
@@ -327,7 +327,7 @@ func TestDeposit_WithdrawnHeight(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			deposit := newDeposit(
-				"1",
+				"test_deposit_id",
 				"test_project",
 				30,
 				testutils.TestAddress("test"),
@@ -381,7 +381,7 @@ func TestDeposit_Withdraw(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			deposit := newDeposit(
-				"1",
+				"test_deposit",
 				"test_project",
 				30,
 				testAddr,

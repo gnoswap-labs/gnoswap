@@ -48,8 +48,8 @@ func (gv *governanceV1) GetConfig(configVersion int64) (governance.Config, error
 	return config, nil
 }
 
-// GetProposals returns a read-only view of every proposal, keyed by the
-// fixed-width encoding produced by utils.EncodeInt64.
+// GetProposals returns a read-only view of every proposal, keyed by the decimal
+// string form of the proposal ID.
 func (gv *governanceV1) GetProposals() *rotree.ReadOnlyTree {
 	return rotree.Wrap(gv.store.GetProposals(), cloneProposalEntry)
 }
