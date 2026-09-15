@@ -1,13 +1,9 @@
 package staker
 
 import (
-	"chain"
-	"chain/runtime"
-	"strings"
 	"time"
 
 	"gno.land/p/gnoswap/gnsmath/v1"
-	"gno.land/p/gnoswap/utils/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	sr "gno.land/r/gnoswap/staker"
@@ -365,8 +361,8 @@ func (s *stakerV1) updateInternalRewardCache(param *calculatePositionRewardParam
 	param.PoolTier.cacheRewardForPool(time.Now().Unix(), param.Pools, updateParams.poolPath)
 }
 
-// applyExternalIncentiveIndex persists and emits the deposit incentive-index updates discovered during calculation.
-func (s *stakerV1) applyExternalIncentiveIndex(cur realm, param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
+// applyExternalIncentiveIndex persists the deposit incentive-index updates discovered during calculation.
+func (s *stakerV1) applyExternalIncentiveIndex(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
 	if len(updateParams.newExternalIncentiveIds) == 0 && !updateParams.advanceExternalIncentiveCursor {
 		return
 	}
@@ -378,27 +374,14 @@ func (s *stakerV1) applyExternalIncentiveIndex(cur realm, param *calculatePositi
 	if updateParams.advanceExternalIncentiveCursor {
 		deposit.SetLastExternalIncentiveUpdatedAt(param.CurrentTime)
 	}
-
-	previousRealm := cur.Previous()
-	chain.Emit(
-		"UpdateExternalIncentiveIndex",
-		"prevAddr", previousRealm.Address().String(),
-		"prevRealm", previousRealm.PkgPath(),
-		"positionId", utils.FormatUint(param.PositionId),
-		"newIncentiveIds", strings.Join(updateParams.newExternalIncentiveIds, ","),
-		"cursorAdvanced", utils.FormatBool(updateParams.advanceExternalIncentiveCursor),
-		"lastExternalIncentiveUpdatedAt", utils.FormatInt(NewDepositResolver(deposit).LastExternalIncentiveUpdatedAt()),
-		"currentTime", utils.FormatInt(time.Now().Unix()),
-		"currentHeight", utils.FormatInt(runtime.ChainHeight()),
-	)
 }
 
 // updatePositionReward applies the persisted-state changes produced by calculatePositionReward.
 // It is called ONLY by the collect path; the Collectable* view getters discard the update.
-func (s *stakerV1) updatePositionReward(cur realm, param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
+func (s *stakerV1) updatePositionReward(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
 	s.persistLazyPool(param, updateParams)
 	s.updateInternalRewardCache(param, updateParams)
-	s.applyExternalIncentiveIndex(cur, param, updateParams)
+	s.applyExternalIncentiveIndex(param, updateParams)
 }
 
 // updateInternalPositionReward applies the state changes belonging to the emission collect path only.
@@ -408,9 +391,9 @@ func (s *stakerV1) updateInternalPositionReward(param *calculatePositionRewardPa
 }
 
 // updateExternalPositionReward applies the state changes belonging to the external collect path only.
-func (s *stakerV1) updateExternalPositionReward(cur realm, param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
+func (s *stakerV1) updateExternalPositionReward(param *calculatePositionRewardParam, updateParams positionRewardUpdate) {
 	s.persistLazyPool(param, updateParams)
-	s.applyExternalIncentiveIndex(cur, param, updateParams)
+	s.applyExternalIncentiveIndex(param, updateParams)
 }
 
 // internalRewardSegment is a [start, end) span over which the per-second emission reward rate is constant.

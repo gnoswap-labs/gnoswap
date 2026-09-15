@@ -746,7 +746,7 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 	rewardParam := s.newRewardCollectParam(target, currentTime, blockHeight)
 	rewards, rewardUpdate := s.calculateExternalPositionReward(rewardParam, incentiveId)
 	reward := aggregateRewards(rewards)
-	s.updateExternalPositionReward(cross(rlm), rewardParam, rewardUpdate)
+	s.updateExternalPositionReward(rewardParam, rewardUpdate)
 
 	ctx := s.newCollectContext(0, rlm, target, currentTime, blockHeight)
 
@@ -803,10 +803,10 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		if err != nil {
 			panic(err)
 		}
-		s.updatePositionReward(cross(rlm), rewardParam, rewardUpdate)
+		s.updatePositionReward(rewardParam, rewardUpdate)
 	} else {
 		rewards, rewardUpdate = s.calculateExternalPositionRewards(rewardParam)
-		s.updateExternalPositionReward(cross(rlm), rewardParam, rewardUpdate)
+		s.updateExternalPositionReward(rewardParam, rewardUpdate)
 	}
 
 	// A checkpoint with no internal reward has no emission debt to defer. Marking it now
