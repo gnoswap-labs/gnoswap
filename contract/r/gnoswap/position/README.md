@@ -6,6 +6,12 @@ NFT-based liquidity position management for concentrated liquidity.
 
 Each liquidity position is a unique GRC721 NFT containing pool identifier, price range, liquidity amount, accumulated fees, and token balances.
 
+## Gnoweb
+
+The root `Render("")` delegates to the active implementation and shows realm identity, halt flags, stored position count, and the next position ID. Stored records include burned positions, so the count does not represent active liquidity positions.
+
+Rendering is read-only and does not traverse positions. Unsupported paths return `404`.
+
 ## Configuration
 
 - **Withdrawal Fee**: 1% on collected fees
