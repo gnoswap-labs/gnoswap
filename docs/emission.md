@@ -4,7 +4,7 @@ GNS minting and distribution schedule.
 
 ## Rules
 
-- `MintAndDistributeGns` returns `(int64, bool)`. The `bool` is `false` only when emission is halted; in that case the function returns `(0, false)` without panicking or automatically halting the caller. A caller that requires emission must explicitly handle the result.
+- `MintAndDistributeGns` returns `(int64, bool)`. The `bool` is `false` only when emission is halted; in that case the function returns `(0, false)` without panicking or automatically halting the caller. Callers that calculate or transfer internal GNS rewards must check the result so halted emission cannot consume existing module reserves.
 - Minting authority: only `emission` calls `gns.MintGns`. Any other realm gaining mint access is a critical vulnerability.
 - Distribution percentage changes invoke the staker cache-invalidation callback only when one is registered. `SetOnDistributionPctChangeCallback` accepts `nil` to clear it, so keeping the callback registered is a deployment invariant when staker cache invalidation is required.
 - Allocation percentages (liquidity staker / devops / community pool / governance staker) must sum to 10000 basis points after any change.

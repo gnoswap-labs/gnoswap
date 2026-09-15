@@ -47,6 +47,12 @@ supported external migration) before adopting this schema.
 - A checkpoint delivery refuses when its cursor already reached the window's close. Collect computes amounts once and then transfers per source, and checkpoint collects are permissionless, so a re-entering call between transfers must not get a precomputed amount replayed.
 - **Invariant the deferred collect depends on**: every path that changes the tier layout must materialize the reward cache of all tiered pools first, at the current time (`changeTier` does this via `cacheReward`). A tier change that skips it would let `resolveInternalRewardSegments` re-rate a checkpoint's closed window with the new layout.
 
+### Emission Halt
+- `MintAndDistributeGns` returning `active = false` defers internal reward calculation, cache updates, internal checkpoint settlement, and GNS transfers.
+- Internal reward cursors remain unchanged during the halt, so the accrued interval is payable after emission resumes.
+- `CollectReward` continues discovering, paying, and checkpointing external incentives while internal settlement is deferred.
+- A tiered position unstaked during an emission halt cannot be staked again until emission resumes and a collect clears its internal checkpoint source. A checkpoint whose internal reward and penalty are both zero is settled during the halted collect and does not block re-staking.
+
 ### External Incentives
 - Public `IsIncentiveActive` includes the end timestamp for an unrefunded incentive: `startTimestamp <= now <= endTimestamp`. Stake eligibility uses the same inclusive end boundary; reward accounting uses the `endTimestamp - startTimestamp` duration (the elapsed interval `[startTimestamp, endTimestamp)`).
 - Stake eligibility short-circuits on a valid internal tier. Otherwise, query the existing start-time index from `max(0, now - 365 days)` through future starts, rather than scanning lifetime incentive records. This relies on the enforced 365-day maximum duration.

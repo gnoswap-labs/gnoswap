@@ -729,7 +729,8 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 		"upper tick liquidity should be reduced")
 }
 
-func TestUnStakeToken_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
+func setupUnstakeHaltPosition(cur realm, t *testing.T, tier uint64) (uint64, string) {
+	t.Helper()
 	initStakerTest(cur, t)
 
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
@@ -738,13 +739,25 @@ func TestUnStakeToken_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
 	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(cross(cur), poolPath, 1)
+	mockInstanceSetPoolTier(cross(cur), poolPath, tier)
 	mockInstanceAddToken(cross(cur), barPath)
+
+	if tier == 0 {
+		startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
+		CreateExternalIncentiveAsAdmin(
+			cur, t,
+			poolPath,
+			barPath,
+			rewardMinimumAmount,
+			startTimestamp,
+			startTimestamp+incentiveDuration,
+		)
+		testing.SkipHeights((startTimestamp - time.Now().Unix()) / 5)
+	}
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	TokenFaucet(cur, t, barPath, addr01)
 	TokenFaucet(cur, t, bazPath, addr01)
-	TokenFaucet(cur, t, gnsPath, addr01)
 	TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
 	TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
 
@@ -770,84 +783,134 @@ func TestUnStakeToken_EmergencyHaltAllowsRecovery(cur realm, t *testing.T) {
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	sr.StakeToken(cross(cur), positionId, "")
 
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
-	gnsApprove(cur, t, addr01, stakerAddr, 1000000000)
-	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
-	CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
+	if tier > 0 {
+		pool := getMockInstance().getPools().GetPoolOrNil(poolPath)
+		uassert.NotNil(t, pool)
+		NewPoolResolver(pool).cacheReward(time.Now().Unix(), 1_000_000)
+	}
 	testing.SkipHeights(100)
 
-	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
-
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	uassert.NotPanics(t, cur, func() {
-		resultPoolPath := sr.UnStakeToken(cross(cur), positionId)
-		uassert.Equal(t, poolPath, resultPoolPath)
-	})
-
-	testing.SetRealm(adminRealm)
-	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+	return positionId, poolPath
 }
 
-func TestCollectReward_EmergencyHaltAllowsRecoveryClaim(cur realm, t *testing.T) {
-	initStakerTest(cur, t)
+func TestUnStakeToken_EmergencyHaltDefersEmissionReward(cur realm, t *testing.T) {
+	positionId, poolPath := setupUnstakeHaltPosition(cur, t, 1)
 
-	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
-	testing.SetRealm(adminRealm)
-	pl.SetPoolCreationFee(cross(cur), 0)
-	createDefaultInitialPoolForStakerTest(cur, t)
-	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
-	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(cross(cur), poolPath, 1)
-	mockInstanceAddToken(cross(cur), barPath)
-
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	TokenFaucet(cur, t, barPath, addr01)
-	TokenFaucet(cur, t, bazPath, addr01)
-	TokenFaucet(cur, t, gnsPath, addr01)
-	TokenApprove(cur, t, barPath, addr01, poolAddr, maxApprove)
-	TokenApprove(cur, t, bazPath, addr01, poolAddr, maxApprove)
-
-	positionId, _, _, _ := MintPosition(
-		cur,
-		t,
-		barPath,
-		bazPath,
-		fee3000,
-		-18000,
-		18000,
-		"10000000",
-		"10000000",
-		"0",
-		"0",
-		max_timeout,
-		addr01,
-		addr01,
-	)
-
-	mockNFTMint(cur, addr01, positionId)
-	mockNFTApprove(cur, stakerAddr, positionId)
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	sr.StakeToken(cross(cur), positionId, "")
-
-	testing.SetRealm(testing.NewUserRealm(addr01))
-	barApprove(cur, t, addr01, stakerAddr, rewardMinimumAmount)
-	gnsApprove(cur, t, addr01, stakerAddr, 1000000000)
-	startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
-	CreateExternalIncentiveAsAdmin(cur, t, poolPath, barPath, rewardMinimumAmount, startTimestamp, startTimestamp+incentiveDuration)
-	testing.SkipHeights(100)
+	collectableBeforeHalt, err := sr.CollectableEmissionReward(positionId)
+	uassert.NoError(t, err)
+	uassert.True(t, collectableBeforeHalt > 0)
+	ownerGnsBefore := gns.BalanceOf(addr01)
 
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
+	defer func() {
+		func(cur realm) {
+			testing.SetOriginCaller(adminAddr)
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+		}(cross(cur))
+	}()
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
-	uassert.NotPanics(t, cur, func() {
-		sr.CollectReward(cross(cur), positionId)
-	})
+	resultPoolPath := sr.UnStakeToken(cross(cur), positionId)
+	uassert.Equal(t, poolPath, resultPoolPath)
+	uassert.False(t, getMockInstance().getDeposits().Has(positionId))
+	uassert.True(t, sr.HasUnstakedPosition(positionId))
+
+	rewardDuringHalt, penaltyDuringHalt := sr.CollectEmissionReward(cross(cur), positionId)
+	uassert.Equal(t, int64(0), rewardDuringHalt)
+	uassert.Equal(t, int64(0), penaltyDuringHalt)
+	uassert.Equal(t, ownerGnsBefore, gns.BalanceOf(addr01))
+	uassert.True(t, sr.HasUnstakedPosition(positionId))
 
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	rewardAfterResume, penaltyAfterResume := sr.CollectEmissionReward(cross(cur), positionId)
+	uassert.True(t, rewardAfterResume >= collectableBeforeHalt)
+	uassert.True(t, penaltyAfterResume >= 0)
+	uassert.Equal(t, ownerGnsBefore+rewardAfterResume, gns.BalanceOf(addr01))
+	uassert.False(t, sr.HasUnstakedPosition(positionId))
+}
+
+func TestUnStakeToken_EmissionHaltAllowsZeroEmissionRestake(cur realm, t *testing.T) {
+	positionId, poolPath := setupUnstakeHaltPosition(cur, t, 0)
+
+	collectable, err := sr.CollectableEmissionReward(positionId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), collectable)
+
+	testing.SetRealm(adminRealm)
+	halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, true)
+	defer func() {
+		func(cur realm) {
+			testing.SetOriginCaller(adminAddr)
+			testing.SetRealm(adminRealm)
+			halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, false)
+		}(cross(cur))
+	}()
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	resultPoolPath := sr.UnStakeToken(cross(cur), positionId)
+	uassert.Equal(t, poolPath, resultPoolPath)
+	uassert.True(t, sr.HasUnstakedPosition(positionId))
+
+	internalReward, internalPenalty, externalRewards, _ := sr.CollectReward(cross(cur), positionId)
+	uassert.Equal(t, "0", internalReward)
+	uassert.Equal(t, "0", internalPenalty)
+	uassert.True(t, externalRewards[barPath] > 0)
+	uassert.False(t, sr.HasUnstakedPosition(positionId))
+
+	mockNFTApprove(cur, stakerAddr, positionId)
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	sr.StakeToken(cross(cur), positionId, "")
+	uassert.True(t, getMockInstance().getDeposits().Has(positionId))
+}
+
+// A zero-emission checkpoint is settled by the emission-only entry point as well while emission is
+// halted: CollectEmissionReward marks the emission source, the external collect clears the rest, and
+// the position can re-stake without waiting for emission to resume.
+func TestUnStakeToken_EmissionHaltCollectEmissionRewardSettlesZeroEmissionCheckpoint(cur realm, t *testing.T) {
+	positionId, poolPath := setupUnstakeHaltPosition(cur, t, 0)
+	ownerGnsBefore := gns.BalanceOf(addr01)
+
+	testing.SetRealm(adminRealm)
+	halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, true)
+	defer func() {
+		func(cur realm) {
+			testing.SetOriginCaller(adminAddr)
+			testing.SetRealm(adminRealm)
+			halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, false)
+		}(cross(cur))
+	}()
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	resultPoolPath := sr.UnStakeToken(cross(cur), positionId)
+	uassert.Equal(t, poolPath, resultPoolPath)
+	uassert.True(t, sr.HasUnstakedPosition(positionId))
+
+	pendingIncentiveIds, err := sr.GetUnstakedPositionPendingIncentives(positionId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 1, len(pendingIncentiveIds))
+
+	// Emission source: nothing owed, so it is marked collected even though emission is halted. The
+	// checkpoint stays because the external incentive is still pending.
+	rewardDuringHalt, penaltyDuringHalt := sr.CollectEmissionReward(cross(cur), positionId)
+	uassert.Equal(t, int64(0), rewardDuringHalt)
+	uassert.Equal(t, int64(0), penaltyDuringHalt)
+	uassert.Equal(t, ownerGnsBefore, gns.BalanceOf(addr01))
+	uassert.True(t, sr.HasUnstakedPosition(positionId))
+
+	// External source: paid as usual, which fully settles the checkpoint.
+	externalReward, _ := sr.CollectExternalIncentiveReward(cross(cur), positionId, pendingIncentiveIds[0])
+	uassert.True(t, externalReward > 0)
+	uassert.False(t, sr.HasUnstakedPosition(positionId))
+
+	mockNFTApprove(cur, stakerAddr, positionId)
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	sr.StakeToken(cross(cur), positionId, "")
+	uassert.True(t, getMockInstance().getDeposits().Has(positionId))
 }
 
 // TestStakeToken_EmptyIncentiveList tests that after staking,

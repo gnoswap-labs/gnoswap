@@ -86,6 +86,7 @@ if halted {
 - All operations disabled
 - Complete system freeze
 - Recovery requires admin/governance action
+- Governance can still propose, vote on, and execute proposals that only target the halt realm, so it can recover on its own
 
 ## Security
 

@@ -7,6 +7,7 @@ Governance manages proposals, timestamp-based voting, execution, xGNS delegation
 - Community-pool spend validation: the proposal amount must be **strictly positive** (`> 0`), the recipient must be valid, and the token path must be registered. The community-pool balance is not checked when the proposal is created; the transfer is attempted when an approved proposal executes and can fail if the pool is underfunded.
 - Voting power is not captured at a block height. Proposal creation stores timestamp anchors: the configured smoothing duration before creation and the proposal creation time. Vote lookups use those timestamp histories; `createdHeight` is retained as proposal metadata only.
 - Execution of passed executable proposals is delayed by the configured execution delay and must occur before the configured execution window expires.
+- While governance is halted, proposal creation, voting, and execution remain available for nonempty `ParameterChange` proposals whose every action targets `gno.land/r/gnoswap/halt/v1`. Normal proposal validation, voting, and execution timing still apply; mixed-target proposals do not qualify for this self-recovery exception.
 - Any proposal that touches treasury, fee params, or emission rates is high-risk — validate all downstream effects.
 
 ## Active Proposal Maintenance

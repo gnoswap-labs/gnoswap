@@ -88,7 +88,7 @@ func assertHasNoExitCheckpoint(s *stakerV1, positionId uint64) {
 	if s.HasUnstakedPosition(positionId) {
 		panic(makeErrorWithDetails(
 			errUncollectedPosition,
-			ufmt.Sprintf("positionId(%d) still owes rewards from its previous stake; collect it first", positionId),
+			ufmt.Sprintf("positionId(%d) cannot be staked while its exit checkpoint owes rewards; collect after emission resumes if emission is halted", positionId),
 		))
 	}
 }
