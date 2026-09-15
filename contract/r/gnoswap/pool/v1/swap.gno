@@ -6,16 +6,15 @@ import (
 	"strconv"
 	"time"
 
-	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/access/v1"
+	"gno.land/r/gnoswap/halt/v1"
 
-	"gno.land/p/gnoswap/consts"
-	"gno.land/p/gnoswap/gnsmath"
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/consts/v1"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	i256 "gno.land/p/gnoswap/int256/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
+	"gno.land/p/gnoswap/utils/v1"
 
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -340,6 +339,8 @@ func (i *poolV1) DrySwap(
 		}
 	}()
 
+	i.assertPoolUnlocked()
+
 	amounts := i256.MustFromDecimal(amountSpecified)
 	if amounts.IsZero() {
 		return "0", "0", errors.New(errInvalidSwapAmount)
@@ -347,15 +348,15 @@ func (i *poolV1) DrySwap(
 
 	pool := i.mustGetPoolBy(token0Path, token1Path, fee)
 	blockTimestamp := time.Now().Unix()
-	poolSnapshot, observationsSnapshot := newDrySwapSnapshot(pool, blockTimestamp)
 
-	slot0Start := poolSnapshot.Slot0()
+	slot0Start := pool.Slot0()
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 	validatePriceLimits(slot0Start, zeroForOne, sqrtPriceLimit)
 
-	feeGrowthGlobalX128 := getFeeGrowthGlobal(poolSnapshot, zeroForOne)
+	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, poolSnapshot.Liquidity().Clone(), blockTimestamp, slot0Start)
+	cache := newSwapCache(feeProtocol, pool.Liquidity().Clone(), blockTimestamp, slot0Start)
+	cache.readOnly = true
 	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, slot0Start)
 
 	comp := SwapComputation{
@@ -367,17 +368,17 @@ func (i *poolV1) DrySwap(
 		Cache:             cache,
 	}
 
-	result, err := i.computeSwap(poolSnapshot, observationsSnapshot, comp, nil)
+	result, err := i.computeSwap(pool, nil, comp, nil)
 	if err != nil {
 		return "0", "0", err
 	}
 
 	if zeroForOne {
-		if poolSnapshot.BalanceToken1() < gnsmath.SafeConvertToInt64(result.Amount1.Abs()) {
+		if pool.BalanceToken1() < gnsmath.SafeConvertToInt64(result.Amount1.Abs()) {
 			return "0", "0", errors.New(errInsufficientPoolBalance)
 		}
 	} else {
-		if poolSnapshot.BalanceToken0() < gnsmath.SafeConvertToInt64(result.Amount0.Abs()) {
+		if pool.BalanceToken0() < gnsmath.SafeConvertToInt64(result.Amount0.Abs()) {
 			return "0", "0", errors.New(errInsufficientPoolBalance)
 		}
 	}
@@ -389,7 +390,7 @@ func (i *poolV1) DrySwap(
 // for externally visible side effects; DrySwap passes nil.
 type tickCrossHookFn func(pool *pl.Pool, tickId int32, zeroForOne bool, timestamp int64)
 
-// computeSwap performs the core swap computation without modifying pool state.
+// computeSwap calculates swap amounts; tick accounting is written unless Cache.readOnly is set.
 // The computation continues until either:
 // - The entire amount is consumed (amountSpecifiedRemaining = 0)
 // - The price limit is reached (sqrtPriceX96 = sqrtPriceLimitX96)
@@ -401,52 +402,6 @@ type tickCrossHookFn func(pool *pl.Pool, tickId int32, zeroForOne bool, timestam
 // The optional `onTickCross` callback is invoked when an initialized tick is
 // crossed; Swap supplies a hook that performs a cross-realm call into the
 // configured tick-cross hook, while DrySwap passes nil.
-// newDrySwapSnapshot builds the pool DrySwap simulates against.
-//
-// The swap loop writes through the pool it is given -- tickCross rewrites each
-// tick it crosses -- so the simulation must not run against stored state.
-// Pool.Clone copies the pool's own fields and leaves its collections nil, so
-// assemble the two the loop reads: the tick tree (crossed and rewritten) and
-// the tick bitmaps (scanned for the next initialized tick). The oracle state is
-// a fresh one, because the simulation must not extend the stored observations.
-func newDrySwapSnapshot(pool *pl.Pool, blockTimestamp int64) (*pl.Pool, *pl.ObservationTree) {
-	snapshot := pool.Clone()
-	snapshot.SetTicks(copyPoolTicks(pool.Ticks()))
-	snapshot.SetTickBitmaps(copyPoolTickBitmaps(pool.TickBitmaps()))
-	slot0 := snapshot.Slot0()
-	slot0.SetObservationIndex(0)
-	slot0.SetObservationCardinality(1)
-	slot0.SetObservationCardinalityNext(1)
-	snapshot.SetSlot0(slot0)
-
-	return snapshot, pl.NewPoolObservationsTree(blockTimestamp)
-}
-
-// copyPoolTicks copies a tick tree slot by slot. TickInfo is a value type, so
-// the snapshot's writes replace its own slots and leave the source untouched.
-func copyPoolTicks(src *bptree.BPTree) *bptree.BPTree {
-	copied := pl.NewPoolTicksTree()
-	if src == nil {
-		return copied
-	}
-
-	src.Iterate("", "", func(key string, value any) bool {
-		copied.Set(key, value)
-		return false
-	})
-
-	return copied
-}
-
-func copyPoolTickBitmaps(src map[int16]string) map[int16]string {
-	copied := make(map[int16]string, len(src))
-	for wordPos, bitmap := range src {
-		copied[wordPos] = bitmap
-	}
-
-	return copied
-}
-
 func (i *poolV1) computeSwap(pool *pl.Pool, observations *pl.ObservationTree, comp SwapComputation, onTickCross tickCrossHookFn) (*SwapResult, error) {
 	state := comp.InitialState
 	var err error
@@ -773,45 +728,52 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 	newState := state
 
 	if step.initialized {
-		// Compute oracle values on first initialized tick cross
-		if !cache.computedLatestObservation {
-			tickCumulative, secondsPerLiquidityStr, err := observeSingle(
-				observations,
-				cache.blockTimestamp,
-				0,
-				cache.slot0Start.Tick(),
-				cache.slot0Start.ObservationIndex(),
-				cache.liquidityStart,
-				cache.slot0Start.ObservationCardinality(),
-			)
-			if err != nil {
-				return newState, err
+		var liquidityNet *i256.Int
+		if cache.readOnly {
+			// Quotes need only the liquidity delta. Outside fee/oracle accumulators
+			// do not affect pricing, and the monotonic path never revisits a tick.
+			tick := getTick(pool, step.tickNext)
+			liquidityNet = i256.MustFromDecimal(tick.LiquidityNet())
+		} else {
+			// Compute oracle values on first initialized tick cross.
+			if !cache.computedLatestObservation {
+				tickCumulative, secondsPerLiquidityStr, err := observeSingle(
+					observations,
+					cache.blockTimestamp,
+					0,
+					cache.slot0Start.Tick(),
+					cache.slot0Start.ObservationIndex(),
+					cache.liquidityStart,
+					cache.slot0Start.ObservationCardinality(),
+				)
+				if err != nil {
+					return newState, err
+				}
+
+				cache.tickCumulative = tickCumulative
+				cache.secondsPerLiquidityCumulativeX128 = u256.MustFromDecimal(secondsPerLiquidityStr)
+				cache.computedLatestObservation = true
 			}
 
-			cache.tickCumulative = tickCumulative
-			cache.secondsPerLiquidityCumulativeX128 = u256.MustFromDecimal(secondsPerLiquidityStr)
-			cache.computedLatestObservation = true
+			fee0, fee1 := u256.Zero(), u256.Zero()
+			if zeroForOne {
+				fee0 = state.feeGrowthGlobalX128
+				fee1 = pool.FeeGrowthGlobal1X128()
+			} else {
+				fee0 = pool.FeeGrowthGlobal0X128()
+				fee1 = state.feeGrowthGlobalX128
+			}
+
+			liquidityNet = tickCross(
+				pool,
+				step.tickNext,
+				fee0,
+				fee1,
+				cache.secondsPerLiquidityCumulativeX128,
+				cache.tickCumulative,
+				cache.blockTimestamp,
+			)
 		}
-
-		fee0, fee1 := u256.Zero(), u256.Zero()
-
-		if zeroForOne {
-			fee0 = state.feeGrowthGlobalX128
-			fee1 = pool.FeeGrowthGlobal1X128()
-		} else {
-			fee0 = pool.FeeGrowthGlobal0X128()
-			fee1 = state.feeGrowthGlobalX128
-		}
-
-		liquidityNet := tickCross(
-			pool,
-			step.tickNext,
-			fee0,
-			fee1,
-			cache.secondsPerLiquidityCumulativeX128,
-			cache.tickCumulative,
-			cache.blockTimestamp,
-		)
 
 		if zeroForOne {
 			liquidityNet = i256.Zero().Neg(liquidityNet)
@@ -819,7 +781,7 @@ func (i *poolV1) tickTransition(step StepComputations, zeroForOne bool, state Sw
 
 		newState.liquidity = gnsmath.LiquidityMathAddDelta(state.liquidity, liquidityNet)
 
-		if onTickCross != nil {
+		if !cache.readOnly && onTickCross != nil {
 			onTickCross(pool, step.tickNext, zeroForOne, cache.blockTimestamp)
 		}
 	}

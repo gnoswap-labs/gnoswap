@@ -1,9 +1,9 @@
 package pool
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	i256 "gno.land/p/gnoswap/int256/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 
 	pl "gno.land/r/gnoswap/pool"
 )
@@ -67,6 +67,7 @@ type SwapCache struct {
 	secondsPerLiquidityCumulativeX128 *u256.Uint // current seconds per liquidity accumulator
 	computedLatestObservation         bool       // whether we've computed the above accumulators
 	slot0Start                        pl.Slot0   // immutable Slot0 snapshot captured at swap start
+	readOnly                          bool       // quote without tick accounting or hooks
 }
 
 func newSwapCache(

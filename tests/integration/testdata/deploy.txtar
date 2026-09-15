@@ -65,49 +65,49 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/onbloc/obl -pkgpath gn
 ## deploy packages
 
 ### deploy uint256 (expected gas fee: 18106ugnot, gas wanted: 18106000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/uint256 -pkgpath gno.land/p/gnoswap/uint256 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/uint256/v1 -pkgpath gno.land/p/gnoswap/uint256/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   (1|2)[0-9]{7}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{5} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{7}ugnot'
 
 ## deploy int256 (expected gas fee: 16866ugnot, gas wanted: 16866000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/int256 -pkgpath gno.land/p/gnoswap/int256 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/int256/v1 -pkgpath gno.land/p/gnoswap/int256/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   16[0-9]{6}'
 # stdout 'STORAGE DELTA:  (5|6)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (5|6)[0-9]{6}ugnot'
 
 ## deploy consts
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/consts -pkgpath gno.land/p/gnoswap/consts -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/consts/v1 -pkgpath gno.land/p/gnoswap/consts/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   [0-9]+'
 # stdout 'STORAGE DELTA:  [0-9]+ bytes'
 # stdout 'STORAGE FEE:    [0-9]+ugnot'
 
 ## deploy gnsmath (expected gas fee: 14574ugnot, gas wanted: 14574000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/gnsmath -pkgpath gno.land/p/gnoswap/gnsmath -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/gnsmath/v1 -pkgpath gno.land/p/gnoswap/gnsmath/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   18[0-9]{6}'
 # stdout 'STORAGE DELTA:  (7|8)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (7|8)[0-9]{6}ugnot'
 
 ## deploy rbac (expected gas fee: 11065ugnot, gas wanted: 11065000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/rbac -pkgpath gno.land/p/gnoswap/rbac -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/rbac/v1 -pkgpath gno.land/p/gnoswap/rbac/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   11[0-9]{6}'
 # stdout 'STORAGE DELTA:  (4|5)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (4|5)[0-9]{6}ugnot'
 
 ## deploy store (expected gas fee: 12241ugnot, gas wanted: 12241000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/store -pkgpath gno.land/p/gnoswap/store -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/store/v1 -pkgpath gno.land/p/gnoswap/store/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   12[0-9]{6}'
 # stdout 'STORAGE DELTA:  (3|4)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (3|4)[0-9]{6}ugnot'
 
 ## deploy version manager (expected gas fee: 13957ugnot, gas wanted: 13957000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/version_manager -pkgpath gno.land/p/gnoswap/version_manager -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/version_manager/v1 -pkgpath gno.land/p/gnoswap/version_manager/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   13[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'
 
 ## deploy utils
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/utils -pkgpath gno.land/p/gnoswap/utils -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/utils/v1 -pkgpath gno.land/p/gnoswap/utils/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   [0-9]+'
 # stdout 'STORAGE DELTA:  [0-9]+ bytes'
 # stdout 'STORAGE FEE:    [0-9]+ugnot'
@@ -115,19 +115,19 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/p/gnoswap/utils -pkgpath
 ## deploy realm
 
 ### deploy acccess (expected gas fee: 11302ugnot, gas wanted: 11302000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/access -pkgpath gno.land/r/gnoswap/access -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/access/v1 -pkgpath gno.land/r/gnoswap/access/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   11[0-9]{6}'
 # stdout 'STORAGE DELTA:  (2|3)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (2|3)[0-9]{6}ugnot'
 
 ### deploy rbac realm (expected gas fee: 13302ugnot, gas wanted: 13302000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/rbac -pkgpath gno.land/r/gnoswap/rbac -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/rbac/v1 -pkgpath gno.land/r/gnoswap/rbac/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   13[0-9]{6}'
 # stdout 'STORAGE DELTA:  (5|6)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (5|6)[0-9]{6}ugnot'
 
 ### deploy halt realm (expected gas fee: 18899ugnot, gas wanted: 18899000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/halt -pkgpath gno.land/r/gnoswap/halt -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/halt/v1 -pkgpath gno.land/r/gnoswap/halt/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   18[0-9]{6}'
 # stdout 'STORAGE DELTA:  (5|6)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (5|6)[0-9]{6}ugnot'
@@ -196,7 +196,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/staker -pkgpat
 # stdout 'STORAGE FEE:    2[0-9]{7}ugnot'
 
 ### deploy community_pool (expected gas fee: 18322ugnot, gas wanted: 18322000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/community_pool -pkgpath gno.land/r/gnoswap/community_pool -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/community_pool/v1 -pkgpath gno.land/r/gnoswap/community_pool/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   20[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'
@@ -220,7 +220,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/launchpad -pkg
 # stdout 'STORAGE FEE:    (1|2)[0-9]{7}ugnot'
 
 ### deploy referral (expected gas fee: 17046ugnot, gas wanted: 17046000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/referral -pkgpath gno.land/r/gnoswap/referral -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/referral/v1 -pkgpath gno.land/r/gnoswap/referral/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   17[0-9]{6}'
 # stdout 'STORAGE DELTA:  (3|4)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (3|4)[0-9]{6}ugnot'

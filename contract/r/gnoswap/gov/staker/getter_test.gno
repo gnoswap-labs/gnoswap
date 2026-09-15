@@ -3,9 +3,9 @@ package staker
 import (
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
-	bptree "gno.land/p/nt/bptree/v0"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 
@@ -30,8 +30,8 @@ func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 		assertRaw func(t *testing.T, m *MockGovStaker)
 	}{
 		{
-			name: "GetUserDelegationIDs",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetUserDelegationIDs", []int64{3, 4}) },
+			name:   "GetUserDelegationIDs",
+			setup:  func(m *MockGovStaker) { m.Response.Set("GetUserDelegationIDs", []int64{3, 4}) },
 			getter: func(cur realm, t *testing.T) any { return GetUserDelegationIDs(adminAddr, adminAddr) },
 			mutate: func(result any) {
 				values := result.([]int64)
@@ -46,7 +46,9 @@ func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 		},
 		{
 			name: "GetClaimableRewardByAddress",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetClaimableRewardByAddress", int64(10), map[string]int64{"foo": 1}) },
+			setup: func(m *MockGovStaker) {
+				m.Response.Set("GetClaimableRewardByAddress", int64(10), map[string]int64{"foo": 1})
+			},
 			getter: func(cur realm, t *testing.T) any {
 				_, rewards, err := GetClaimableRewardByAddress(adminAddr)
 				uassert.NoError(t, err)
@@ -66,7 +68,9 @@ func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 		},
 		{
 			name: "GetClaimableRewardByLaunchpad",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetClaimableRewardByLaunchpad", int64(10), map[string]int64{"foo": 1}) },
+			setup: func(m *MockGovStaker) {
+				m.Response.Set("GetClaimableRewardByLaunchpad", int64(10), map[string]int64{"foo": 1})
+			},
 			getter: func(cur realm, t *testing.T) any {
 				_, rewards, err := GetClaimableRewardByLaunchpad(adminAddr)
 				uassert.NoError(t, err)
@@ -86,7 +90,9 @@ func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 		},
 		{
 			name: "GetClaimableRewardByRewardID",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetClaimableRewardByRewardID", int64(10), map[string]int64{"foo": 1}) },
+			setup: func(m *MockGovStaker) {
+				m.Response.Set("GetClaimableRewardByRewardID", int64(10), map[string]int64{"foo": 1})
+			},
 			getter: func(cur realm, t *testing.T) any {
 				_, rewards, err := GetClaimableRewardByRewardID("reward-1")
 				uassert.NoError(t, err)
@@ -106,7 +112,9 @@ func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 		},
 		{
 			name: "GetProtocolFeeAccumulatedX128PerStake",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetProtocolFeeAccumulatedX128PerStake", u256.MustFromDecimal("1000")) },
+			setup: func(m *MockGovStaker) {
+				m.Response.Set("GetProtocolFeeAccumulatedX128PerStake", u256.MustFromDecimal("1000"))
+			},
 			getter: func(cur realm, t *testing.T) any { return GetProtocolFeeAccumulatedX128PerStake("token") },
 			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("2000")) },
 			assertRaw: func(t *testing.T, m *MockGovStaker) {
@@ -116,7 +124,9 @@ func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 		},
 		{
 			name: "GetEmissionAccumulatedX128PerStake",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetEmissionAccumulatedX128PerStake", u256.MustFromDecimal("3000")) },
+			setup: func(m *MockGovStaker) {
+				m.Response.Set("GetEmissionAccumulatedX128PerStake", u256.MustFromDecimal("3000"))
+			},
 			getter: func(cur realm, t *testing.T) any { return GetEmissionAccumulatedX128PerStake() },
 			mutate: func(result any) { result.(*u256.Uint).Set(u256.MustFromDecimal("4000")) },
 			assertRaw: func(t *testing.T, m *MockGovStaker) {
@@ -126,7 +136,9 @@ func TestMutableGovStakerGetterIsolation(cur realm, t *testing.T) {
 		},
 		{
 			name: "GetDelegationWithdraws",
-			setup: func(m *MockGovStaker) { m.Response.Set("GetDelegationWithdraws", []DelegationWithdraw{newDelegationWithdraw()}, nil) },
+			setup: func(m *MockGovStaker) {
+				m.Response.Set("GetDelegationWithdraws", []DelegationWithdraw{newDelegationWithdraw()}, nil)
+			},
 			getter: func(cur realm, t *testing.T) any {
 				withdraws, err := GetDelegationWithdraws(1, 0, 10)
 				uassert.NoError(t, err)

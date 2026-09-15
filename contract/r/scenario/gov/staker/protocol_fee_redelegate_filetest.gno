@@ -4,21 +4,22 @@
 //
 // Redelegate is a remove followed by an add, so it opens two epochs with the same
 // final stake. Hand check (alice alone with 2_000_000 throughout):
-//   fee 2_000_000 -> +1 per stake -> 2_000_000
-//   redelegate alice -> bob (epochs 2 and 3, total back to 2_000_000)
-//   fee 4_000_000 -> +2 per stake -> 4_000_000
-//   alice collects 6_000_000.
+//
+//	fee 2_000_000 -> +1 per stake -> 2_000_000
+//	redelegate alice -> bob (epochs 2 and 3, total back to 2_000_000)
+//	fee 4_000_000 -> +2 per stake -> 4_000_000
+//	alice collects 6_000_000.
 package main
 
 import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

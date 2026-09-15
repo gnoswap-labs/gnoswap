@@ -4,7 +4,7 @@ loadpkg gno.land/r/gnoswap/common/v1
 loadpkg gno.land/r/gnoswap/gov/governance/v1
 loadpkg gno.land/r/gnoswap/gov/staker/v1
 loadpkg gno.land/r/gnoswap/protocol_fee/v1
-loadpkg gno.land/r/gnoswap/rbac
+loadpkg gno.land/r/gnoswap/rbac/v1
 
 gnoland start
 
@@ -51,8 +51,8 @@ import (
     "gno.land/r/gnoswap/gns"
     "gno.land/r/gnoswap/gov/governance"
     gs "gno.land/r/gnoswap/gov/staker"
-    "gno.land/r/gnoswap/access"
-    prbac "gno.land/p/gnoswap/rbac"
+    "gno.land/r/gnoswap/access/v1"
+    prbac "gno.land/p/gnoswap/rbac/v1"
 )
 func main(cur realm) {
     admin := access.MustGetAddress(prbac.ROLE_ADMIN.String())

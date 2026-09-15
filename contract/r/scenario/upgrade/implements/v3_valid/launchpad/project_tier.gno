@@ -3,7 +3,7 @@ package v3_valid
 import (
 	"gno.land/r/gnoswap/launchpad"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 func getTierCurrentDepositCount(t *launchpad.ProjectTier) int64 {

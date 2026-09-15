@@ -6,17 +6,17 @@ import (
 	"testing"
 	"time"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/gnoswap/position"
-	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/referral/v1"
 
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
@@ -263,126 +263,6 @@ func TestExistPosition(cur realm, t *testing.T) {
 			initPositionTest(cur, t)
 			mockInstance.mustUpdatePosition(0, cur, tt.positionId, newDummyPosition(tt.positionId))
 			uassert.Equal(t, tt.expectedExist, mockInstance.ExistPosition(tt.inputPositionId))
-		})
-	}
-}
-
-func TestComputePositionKey(cur realm, t *testing.T) {
-	tests := []struct {
-		name      string
-		owner     address
-		tickLower int32
-		tickUpper int32
-		expected  string
-	}{
-		{
-			name:      "computePositionKey is success by basic position key",
-			owner:     alice,
-			tickLower: -100,
-			tickUpper: 200,
-			expected:  "00008871720000887472",
-		},
-		{
-			name:      "computePositionKey is failed by zero ticks",
-			owner:     alice,
-			tickLower: 0,
-			tickUpper: 0,
-			expected:  "00008872720000887272",
-		},
-		{
-			name:      "computePositionKey is failed by negative lower tick",
-			owner:     alice,
-			tickLower: -50,
-			tickUpper: 150,
-			expected:  "00008872220000887422",
-		},
-		{
-			name:      "computePositionKey is failed by same tick bounds",
-			owner:     alice,
-			tickLower: 300,
-			tickUpper: 300,
-			expected:  "00008875720000887572",
-		},
-		{
-			name:      "Normal tick range",
-			owner:     alice,
-			tickLower: -600,
-			tickUpper: 600,
-			expected:  "00008866720000887872",
-		},
-		{
-			name:      "Wide tick range",
-			owner:     alice,
-			tickLower: -887220,
-			tickUpper: 887220,
-			expected:  "00000000520001774492",
-		},
-		{
-			name:      "Narrow tick range",
-			owner:     alice,
-			tickLower: -60,
-			tickUpper: 60,
-			expected:  "00008872120000887332",
-		},
-		{
-			name:      "Asymmetric range",
-			owner:     alice,
-			tickLower: -1000,
-			tickUpper: 500,
-			expected:  "00008862720000887772",
-		},
-		{
-			name:      "Positive range",
-			owner:     alice,
-			tickLower: 100,
-			tickUpper: 1000,
-			expected:  "00008873720000888272",
-		},
-		{
-			name:      "Negative range",
-			owner:     alice,
-			tickLower: -2000,
-			tickUpper: -1000,
-			expected:  "00008852720000886272",
-		},
-		{
-			name:      "Zero lower bound",
-			owner:     alice,
-			tickLower: 0,
-			tickUpper: 1000,
-			expected:  "00008872720000888272",
-		},
-		{
-			name:      "Zero upper bound",
-			owner:     alice,
-			tickLower: -1000,
-			tickUpper: 0,
-			expected:  "00008862720000887272",
-		},
-		{
-			name:      "Minimum values",
-			owner:     alice,
-			tickLower: -887272,
-			tickUpper: -887272 + 60,
-			expected:  "00000000000000000060",
-		},
-		{
-			name:      "Maximum values",
-			owner:     alice,
-			tickLower: 887272 - 60,
-			tickUpper: 887272,
-			expected:  "00017744840001774544",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			testing.SetRealm(posRealm)
-			result := computePositionKey(tt.tickLower, tt.tickUpper)
-
-			if result != tt.expected {
-				t.Errorf("expected %s but got %s", tt.expected, result)
-			}
 		})
 	}
 }

@@ -3,22 +3,23 @@
 // collecting one token leaves the others untouched
 //
 // Hand check (alice and bob 1_000_000 each, total 2_000_000):
-//   fee BAR 2_000_000 -> +1 per stake -> 1_000_000 each
-//   fee QUX 4_000_000 -> +2 per stake -> 2_000_000 each
-//   alice collects BAR only: BAR 1_000_000, QUX untouched (query still 2_000_000).
-//   fee BAR 2_000_000 -> +1 per stake -> 1_000_000 each more
-//   alice CollectReward: BAR 2_000_000, QUX 2_000_000; bob CollectReward: BAR 2_000_000, QUX 2_000_000.
+//
+//	fee BAR 2_000_000 -> +1 per stake -> 1_000_000 each
+//	fee QUX 4_000_000 -> +2 per stake -> 2_000_000 each
+//	alice collects BAR only: BAR 1_000_000, QUX untouched (query still 2_000_000).
+//	fee BAR 2_000_000 -> +1 per stake -> 1_000_000 each more
+//	alice CollectReward: BAR 2_000_000, QUX 2_000_000; bob CollectReward: BAR 2_000_000, QUX 2_000_000.
 package main
 
 import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

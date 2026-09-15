@@ -10,7 +10,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
-	_ "gno.land/r/gnoswap/halt"
+	_ "gno.land/r/gnoswap/halt/v1"
 
 	"gno.land/r/gnoswap/gov/governance"
 )
@@ -973,8 +973,8 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 				"gno.land/r/gnoswap/staker*EXE*SetMinimumRewardAmount*EXE*600*GOV*" +
 				"gno.land/r/gnoswap/staker*EXE*SetUnStakingFee*EXE*700*GOV*" +
 				"gno.land/r/gnoswap/emission*EXE*SetDistributionStartTime*EXE*800*GOV*" +
-				"gno.land/r/gnoswap/halt*EXE*SetHaltLevel*EXE*NONE*GOV*" +
-				"gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*new_role," + testutils.TestAddress("role").String(),
+				"gno.land/r/gnoswap/halt/v1*EXE*SetHaltLevel*EXE*NONE*GOV*" +
+				"gno.land/r/gnoswap/rbac/v1*EXE*RegisterRole*EXE*new_role," + testutils.TestAddress("role").String(),
 			shouldFail: false,
 		},
 		{
@@ -1050,7 +1050,7 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 		{
 			name:          "fail - community_pool TransferToken empty recipient",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
+			executions:    "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
 			expectedError: "invalid address",
 			shouldFail:    true,
 		},
@@ -1078,35 +1078,35 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 		{
 			name:          "fail - rbac RegisterRole empty role address",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*new_role,",
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*RegisterRole*EXE*new_role,",
 			expectedError: "invalid address",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - rbac RegisterRole empty role name",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*RegisterRole*EXE*   ," + testutils.TestAddress("role").String(),
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*RegisterRole*EXE*   ," + testutils.TestAddress("role").String(),
 			expectedError: "role name is empty",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - rbac UpdateRoleAddress empty role address",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*router,",
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*UpdateRoleAddress*EXE*router,",
 			expectedError: "invalid address",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - rbac UpdateRoleAddress admin role",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String(),
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*UpdateRoleAddress*EXE*admin," + testutils.TestAddress("role").String(),
 			expectedError: "admin role cannot be updated",
 			shouldFail:    true,
 		},
 		{
 			name:          "fail - rbac RemoveRole system role",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/rbac*EXE*RemoveRole*EXE*admin",
+			executions:    "gno.land/r/gnoswap/rbac/v1*EXE*RemoveRole*EXE*admin",
 			expectedError: "system role cannot be removed",
 			shouldFail:    true,
 		},

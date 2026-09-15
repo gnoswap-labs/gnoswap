@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/consts"
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/consts/v1"
+	i256 "gno.land/p/gnoswap/int256/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/staker"
@@ -970,7 +970,8 @@ func TestHistoricalTickDensity_DoesNotChangeRewardCalculation(cur realm, t *test
 			makePoolWithHistory := func(poolPath string, history []struct {
 				at   int64
 				tick int32
-			}) *PoolResolver {
+			},
+			) *PoolResolver {
 				pool := sr.NewPool(poolPath, tt.startTime)
 				resolver := NewPoolResolver(pool)
 

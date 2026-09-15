@@ -4,25 +4,26 @@
 //
 // Hand check (alice alone, per-stake growth = fee / total). An undelegate that spans
 // two delegation records opens one epoch per record, hence the epoch jumps.
-//   e1 +1_000_000 (1_000_000)  fee 1_000_000 -> +1 -> 1_000_000
-//   e2 +2_000_000 (3_000_000)  fee 3_000_000 -> +1 -> 3_000_000
-//   e4 -2_000_000 (1_000_000)  fee 2_000_000 -> +2 -> 2_000_000
-//   e5 +1_000_000 (2_000_000)  fee 2_000_000 -> +1 -> 2_000_000
-//   e7 -2_000_000 (0)          fee 5_000_000 -> dropped
-//   e8 +1_000_000 (1_000_000)  fee 1_000_000 -> +1 -> 1_000_000
-//   alice 9_000_000 of 14_000_000 collected; residue 5_000_000.
-//   The single-token collect settles the same six events and pays the same.
+//
+//	e1 +1_000_000 (1_000_000)  fee 1_000_000 -> +1 -> 1_000_000
+//	e2 +2_000_000 (3_000_000)  fee 3_000_000 -> +1 -> 3_000_000
+//	e4 -2_000_000 (1_000_000)  fee 2_000_000 -> +2 -> 2_000_000
+//	e5 +1_000_000 (2_000_000)  fee 2_000_000 -> +1 -> 2_000_000
+//	e7 -2_000_000 (0)          fee 5_000_000 -> dropped
+//	e8 +1_000_000 (1_000_000)  fee 1_000_000 -> +1 -> 1_000_000
+//	alice 9_000_000 of 14_000_000 collected; residue 5_000_000.
+//	The single-token collect settles the same six events and pays the same.
 package main
 
 import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

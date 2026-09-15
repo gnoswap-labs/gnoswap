@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	uassert "gno.land/p/nt/uassert/v0"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 )
 
 func TestRenderReflectsSwapFeeAndHalt(cur realm, t *testing.T) {

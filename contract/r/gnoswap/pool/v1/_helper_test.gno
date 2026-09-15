@@ -18,15 +18,15 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	prabc "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
+	prabc "gno.land/p/gnoswap/rbac/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 
 	uassert "gno.land/p/nt/uassert/v0"
 
-	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
+	_ "gno.land/r/gnoswap/rbac/v1" // initialize rbac package
 )
 
 const (

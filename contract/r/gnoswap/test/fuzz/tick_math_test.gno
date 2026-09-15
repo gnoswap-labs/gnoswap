@@ -5,8 +5,8 @@ import (
 
 	"gno.land/p/gnoswap/fuzz"
 	"gno.land/p/gnoswap/fuzzutils"
-	"gno.land/p/gnoswap/gnsmath"
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // TestFuzzTickMathGetSqrtRatioAtTick_ValidParams_Stateless tests TickMathGetSqrtRatioAtTick with valid parameters

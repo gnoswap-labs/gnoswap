@@ -8,7 +8,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/staker"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/onbloc/bar"
 )
 

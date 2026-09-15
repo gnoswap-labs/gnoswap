@@ -4,10 +4,10 @@ import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 func TestRegisterInitializer(cur realm, t *testing.T) {

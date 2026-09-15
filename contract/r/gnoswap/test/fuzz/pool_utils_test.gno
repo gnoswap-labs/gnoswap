@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"gno.land/p/gnoswap/fuzz"
-	"gno.land/p/gnoswap/gnsmath"
-	prabc "gno.land/p/gnoswap/rbac"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/pool"
 	"gno.land/r/gnoswap/position"
@@ -25,7 +25,7 @@ func generateTokenPair(f *fuzz.T) (string, string) {
 	token0Path := generateTokenPath(f)
 
 	currentTokenPaths := make(map[string]bool)
-	for tokenPath, _ := range defaultTokenPaths {
+	for tokenPath := range defaultTokenPaths {
 		if tokenPath != token0Path {
 			currentTokenPaths[tokenPath] = true
 		}
@@ -41,7 +41,7 @@ func generateTokenPathByList(f *fuzz.T, tokenPaths map[string]bool) string {
 	tokenPathIndex := fuzz.IntRange(0, len(tokenPaths)-1).Draw(f, "tokenPath").(int)
 
 	currentIndex := 0
-	for tokenPath, _ := range tokenPaths {
+	for tokenPath := range tokenPaths {
 		if currentIndex == tokenPathIndex {
 			return tokenPath
 		}

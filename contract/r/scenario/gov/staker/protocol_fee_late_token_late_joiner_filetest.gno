@@ -3,20 +3,21 @@
 // a token that first collects after a staker joined, and a staker who joins after a token collected
 //
 // Hand check:
-//   epoch 1: alice 1_000_000, fee BAR 1_000_000 -> alice BAR 1_000_000
-//   epoch 2: bob 1_000_000 (total 2_000_000), fee QUX 4_000_000 -> QUX 2_000_000 each
-//   bob has no BAR share (joined after), alice has both.
+//
+//	epoch 1: alice 1_000_000, fee BAR 1_000_000 -> alice BAR 1_000_000
+//	epoch 2: bob 1_000_000 (total 2_000_000), fee QUX 4_000_000 -> QUX 2_000_000 each
+//	bob has no BAR share (joined after), alice has both.
 package main
 
 import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

@@ -5,10 +5,10 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/access/v1"
+	"gno.land/r/gnoswap/halt/v1"
 	sr "gno.land/r/gnoswap/staker"
 )
 

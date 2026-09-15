@@ -2,8 +2,8 @@
 package v3_valid
 
 import (
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/gov/staker"
 	v1 "gno.land/r/gnoswap/gov/staker/v1"
 )

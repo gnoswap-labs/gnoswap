@@ -9,8 +9,8 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 var t *testing.T

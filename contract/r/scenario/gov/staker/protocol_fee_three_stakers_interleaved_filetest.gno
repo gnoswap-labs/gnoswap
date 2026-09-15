@@ -3,24 +3,25 @@
 // three stakers, interleaved joins and exits, one collect each at different times
 //
 // Hand check (per-stake growth = fee / total, whole numbers):
-//   e1 alice 1_000_000 (1_000_000)          fee 1_000_000 -> +1 -> a 1_000_000
-//   e2 bob   2_000_000 (3_000_000)          fee 6_000_000 -> +2 -> a 2_000_000, b 4_000_000
-//   bob collects here: 4_000_000 (alice keeps accruing)
-//   e3 carol 3_000_000 (6_000_000)          fee 6_000_000 -> +1 -> a 1_000_000, b 2_000_000, c 3_000_000
-//   e4 alice leaves    (5_000_000)          fee 5_000_000 -> +1 -> b 2_000_000, c 3_000_000
-//   alice collects: 4_000_000; bob: 4_000_000 more (8_000_000 total); carol: 6_000_000.
-//   sum 18_000_000 = fees, residue 0.
+//
+//	e1 alice 1_000_000 (1_000_000)          fee 1_000_000 -> +1 -> a 1_000_000
+//	e2 bob   2_000_000 (3_000_000)          fee 6_000_000 -> +2 -> a 2_000_000, b 4_000_000
+//	bob collects here: 4_000_000 (alice keeps accruing)
+//	e3 carol 3_000_000 (6_000_000)          fee 6_000_000 -> +1 -> a 1_000_000, b 2_000_000, c 3_000_000
+//	e4 alice leaves    (5_000_000)          fee 5_000_000 -> +1 -> b 2_000_000, c 3_000_000
+//	alice collects: 4_000_000; bob: 4_000_000 more (8_000_000 total); carol: 6_000_000.
+//	sum 18_000_000 = fees, residue 0.
 package main
 
 import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

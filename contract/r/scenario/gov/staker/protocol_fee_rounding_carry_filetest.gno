@@ -4,21 +4,22 @@
 //
 // alice 1_000_000, bob 2_000_000 (total 3_000_000), fee 1_000_000 twice.
 // Per-stake growth is 1/3, floored in X128. Hand check:
-//   after fee 1: alice 333_333.33.. -> 333_333, bob 666_666.66.. -> 666_666 (sum 999_999)
-//   after fee 2 (cumulative): alice 666_666.66.. -> 666_666 (+333_333),
-//                             bob 1_333_333.33.. -> 1_333_333 (+666_667)
-//   paid 1_999_999 of 2_000_000; the last unit stays in gov/staker as carried fractions.
+//
+//	after fee 1: alice 333_333.33.. -> 333_333, bob 666_666.66.. -> 666_666 (sum 999_999)
+//	after fee 2 (cumulative): alice 666_666.66.. -> 666_666 (+333_333),
+//	                          bob 1_333_333.33.. -> 1_333_333 (+666_667)
+//	paid 1_999_999 of 2_000_000; the last unit stays in gov/staker as carried fractions.
 package main
 
 import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

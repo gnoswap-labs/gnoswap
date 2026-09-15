@@ -3,11 +3,11 @@ package protocol_fee
 import (
 	"chain"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/access/v1"
+	"gno.land/r/gnoswap/halt/v1"
 	"gno.land/r/gnoswap/protocol_fee"
 )
 

@@ -5,7 +5,7 @@ import (
 
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/gov/governance"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 )
 
 // Test for Reconfigure function.

@@ -7,21 +7,22 @@
 // attributed to the distribution in force when it arrived.
 //
 // Hand check (per-stake growth = fee / totalStaked, chosen to be whole numbers):
-//   epoch 1: alice 1_000_000            fee 1_000_000 -> +1 per stake -> alice 1_000_000
-//   epoch 2: + bob 3_000_000 (4_000_000) fee 8_000_000 -> +2 per stake -> alice 2_000_000, bob 6_000_000
-//   epoch 3: - alice        (3_000_000) fee 3_000_000 -> +1 per stake -> bob 3_000_000
-//   alice total 3_000_000, bob total 9_000_000, sum 12_000_000 = fees, residue 0.
+//
+//	epoch 1: alice 1_000_000            fee 1_000_000 -> +1 per stake -> alice 1_000_000
+//	epoch 2: + bob 3_000_000 (4_000_000) fee 8_000_000 -> +2 per stake -> alice 2_000_000, bob 6_000_000
+//	epoch 3: - alice        (3_000_000) fee 3_000_000 -> +1 per stake -> bob 3_000_000
+//	alice total 3_000_000, bob total 9_000_000, sum 12_000_000 = fees, residue 0.
 package main
 
 import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

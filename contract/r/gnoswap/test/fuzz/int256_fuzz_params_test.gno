@@ -2,7 +2,7 @@ package fuzz
 
 import (
 	"gno.land/p/gnoswap/fuzz"
-	i256 "gno.land/p/gnoswap/int256"
+	i256 "gno.land/p/gnoswap/int256/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
@@ -72,7 +72,8 @@ func (p *int256AddOverflowParams) IsValid() bool {
 		maxInt := i256.MaxInt256()
 		remain := new(i256.Int).Sub(maxInt, y)
 		return x.Lte(remain)
-	} else if x.Sign() < 0 && y.Sign() < 0 {
+	}
+	if x.Sign() < 0 && y.Sign() < 0 {
 		// Both negative: check if x + y < MinInt256
 		minInt := i256.MinInt256()
 		remain := new(i256.Int).Sub(minInt, y)
@@ -169,7 +170,8 @@ func (p *int256SubOverflowParams) IsValid() bool {
 		negY := new(i256.Int).Neg(y)
 		remain := new(i256.Int).Sub(maxInt, negY)
 		return x.Lte(remain)
-	} else if x.Sign() < 0 && y.Sign() > 0 {
+	}
+	if x.Sign() < 0 && y.Sign() > 0 {
 		// x - y where x < 0, y > 0, check if < MinInt256
 		minInt := i256.MinInt256()
 		remain := new(i256.Int).Add(minInt, y)

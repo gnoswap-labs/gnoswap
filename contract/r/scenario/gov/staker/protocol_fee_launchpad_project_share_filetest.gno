@@ -3,23 +3,24 @@
 // a launchpad project wallet shares fees with delegators through the same epochs
 //
 // Hand check:
-//   epoch 1: alice 1_000_000
-//   epoch 2: project wallet 1_000_000 via launchpad (total 2_000_000)
-//   fee 2_000_000 -> +1 per stake -> 1_000_000 each
-//   epoch 3: launchpad removes the project stake (total 1_000_000)
-//   fee 3_000_000 -> +3 per stake -> alice 3_000_000
-//   launchpad collects for the project: 1_000_000; alice: 4_000_000.
+//
+//	epoch 1: alice 1_000_000
+//	epoch 2: project wallet 1_000_000 via launchpad (total 2_000_000)
+//	fee 2_000_000 -> +1 per stake -> 1_000_000 each
+//	epoch 3: launchpad removes the project stake (total 1_000_000)
+//	fee 3_000_000 -> +3 per stake -> alice 3_000_000
+//	launchpad collects for the project: 1_000_000; alice: 4_000_000.
 package main
 
 import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

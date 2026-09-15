@@ -4,13 +4,10 @@ import (
 	"strconv"
 	"strings"
 
-	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/gnoswap/utils/v1"
 )
 
-const (
-	MAX_TICK            int32 = 887272
-	ENCODED_TICK_OFFSET int32 = MAX_TICK
-)
+const MAX_TICK int32 = 887272
 
 // GetPoolPath generates a unique pool path string based on the token paths and fee tier.
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
@@ -22,39 +19,18 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	return token0Path + ":" + token1Path + ":" + strconv.FormatUint(uint64(fee), 10)
 }
 
-// EncodeTickKey encodes a tick to a string key for the tick tree.
+// EncodeTickKey encodes a tick as a fixed-width 4-byte key whose
+// lexicographic order matches the signed numeric order.
 func EncodeTickKey(tick int32) string {
-	var buf [10]byte
-	encodeTickKeyToBuffer(buf[:], tick)
-	return string(buf[:])
+	return utils.EncodeInt32(tick)
 }
 
-// EncodePositionKey encodes a position range into a fixed-width 20-byte string.
+// EncodePositionKey encodes a position range as two ordered tick keys.
 func EncodePositionKey(tickLower, tickUpper int32) string {
-	var buf [20]byte
-	encodeTickKeyToBuffer(buf[:10], tickLower)
-	encodeTickKeyToBuffer(buf[10:], tickUpper)
-	return string(buf[:])
+	return utils.EncodeInt32(tickLower) + utils.EncodeInt32(tickUpper)
 }
 
-func encodeTickKeyToBuffer(dst []byte, tick int32) {
-	adjustTick := tick + ENCODED_TICK_OFFSET
-	if adjustTick < 0 {
-		panic(ufmt.Sprintf("tick(%d) + ENCODED_TICK_OFFSET(%d) < 0", tick, ENCODED_TICK_OFFSET))
-	}
-
-	for i := len(dst) - 1; i >= 0; i-- {
-		dst[i] = byte('0' + adjustTick%10)
-		adjustTick /= 10
-	}
-}
-
-// DecodeTickKey decodes a string key to a tick.
-func DecodeTickKey(s string) int32 {
-	adjustTick, err := strconv.ParseInt(s, 10, 32)
-	if err != nil {
-		panic(ufmt.Sprintf("invalid tick key: %s", s))
-	}
-
-	return int32(adjustTick) - ENCODED_TICK_OFFSET
+// DecodeTickKey decodes a fixed-width ordered tick key.
+func DecodeTickKey(key string) int32 {
+	return utils.DecodeInt32(key)
 }

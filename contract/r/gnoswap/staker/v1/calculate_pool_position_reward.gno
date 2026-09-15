@@ -3,7 +3,7 @@ package staker
 import (
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	sr "gno.land/r/gnoswap/staker"

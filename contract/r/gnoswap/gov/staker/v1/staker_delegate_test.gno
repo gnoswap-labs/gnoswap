@@ -11,11 +11,11 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
-	_ "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/rbac"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	_ "gno.land/p/gnoswap/rbac/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
-	_ "gno.land/r/gnoswap/access"
+	_ "gno.land/r/gnoswap/access/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"
@@ -26,7 +26,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 )
 
 // Test Delegate function

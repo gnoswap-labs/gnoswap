@@ -8,13 +8,12 @@ import (
 	"gno.land/p/nt/grc20/v0"
 	"gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/nt/grc20reg/v0"
-	"gno.land/r/gnoswap/access"
 
-	"gno.land/p/gnoswap/gnsmath"
-	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/p/gnoswap/utils"
-	_ "gno.land/r/gnoswap/rbac"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 )
 
 const (
@@ -38,12 +37,6 @@ func init(cur realm) {
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6, tokenID, cur)
 	userTeller = privateLedger.CallerTeller()
 
-	adminAddr := access.MustGetAddress(prabc.ROLE_ADMIN.String())
-	err := privateLedger.Mint(adminAddr, INITIAL_MINT_AMOUNT)
-	if err != nil {
-		panic(err.Error())
-	}
-
 	grc20reg.Register(cross(cur), token, "")
 
 	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
@@ -51,6 +44,9 @@ func init(cur realm) {
 	setLeftEmissionAmount(MAX_EMISSION_AMOUNT)
 	setMintedEmissionAmount(0)
 	setLastMintedTimestamp(0)
+
+	// Pre-mint the initial GNS supply.
+	setupPreMint(cur)
 }
 
 // Name returns the name of the GNS token.

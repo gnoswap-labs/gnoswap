@@ -6,9 +6,9 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	"gno.land/p/onbloc/json/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gov/staker"
 )
 
@@ -92,4 +92,3 @@ func callStakerCollectUndelegatedGns(cur realm) int64 {
 func callStakerCollectReward(cur realm) {
 	staker.CollectReward(cross(cur))
 }
-

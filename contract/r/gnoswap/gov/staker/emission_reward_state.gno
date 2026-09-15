@@ -1,7 +1,7 @@
 package staker
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // EmissionRewardState tracks emission reward information for an individual staker.
@@ -45,7 +45,8 @@ func NewEmissionRewardState(accumulatedRewardX128PerStake *u256.Uint) *EmissionR
 
 /* Getters */
 
-func (e *EmissionRewardState) GetRewardDebtX128() *u256.Uint     { return e.rewardDebtX128 }
+func (e *EmissionRewardState) GetRewardDebtX128() *u256.Uint { return e.rewardDebtX128 }
+
 func (e *EmissionRewardState) GetAccumulatedRewardAmount() int64 { return e.accumulatedRewardAmount }
 func (e *EmissionRewardState) GetAccumulatedTimestamp() int64    { return e.accumulatedTimestamp }
 func (e *EmissionRewardState) GetClaimedRewardAmount() int64     { return e.claimedRewardAmount }

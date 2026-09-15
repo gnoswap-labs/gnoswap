@@ -17,6 +17,7 @@ Core AMM. All pools live in a single singleton realm.
 - **Slot0**: holds `sqrtPriceX96`, `tick`, `unlocked`, and the oracle's `observationIndex`, `observationCardinality`, and `observationCardinalityNext`. `ObservationState` stores only the observation buffer. Persist changes via `SetSlot0(...)` — local copy mutation has no effect.
 - **Oracle**: write with **pre-swap** tick and liquidity. Post-swap values produce wrong TWAP.
 - **feeGrowthOutside** on ticks: invert correctly at every `tickCross`.
+- **DrySwap**: reject quotes while the global pool lock is held. Use the shared swap math with `SwapCache.readOnly`: read only the traversed bitmap words and crossed ticks' `liquidityNet`; never copy whole collections or write tick/oracle accounting or dispatch hooks.
 - **Protocol fee**: capped at 25% of swap fees per token. Validate upper bound on any change.
 - **Transfer**: use `SafeGRC20Transfer` in `transfer.gno`. Never add direct `tokenTeller` calls without panic-on-failure.
 - **Tick range**: `[-887272, 887272]`. `MIN_SQRT_RATIO` / `MAX_SQRT_RATIO` are hard bounds.

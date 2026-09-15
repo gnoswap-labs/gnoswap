@@ -1,5 +1,5 @@
-loadpkg gno.land/p/gnoswap/uint256
-loadpkg gno.land/p/gnoswap/int256
+loadpkg gno.land/p/gnoswap/uint256/v1
+loadpkg gno.land/p/gnoswap/int256/v1
 
 ## start a new node
 gnoland start 
@@ -108,8 +108,8 @@ gno = "0.9"
 -- main.gno --
 package basic
 
-import u256 "gno.land/p/gnoswap/uint256"
-import i256 "gno.land/p/gnoswap/int256"
+import u256 "gno.land/p/gnoswap/uint256/v1"
+import i256 "gno.land/p/gnoswap/int256/v1"
 
 func LshInt(cur realm) {
     result := int(1)

@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/router"
 
-	prabc "gno.land/p/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
@@ -528,10 +528,8 @@ func getPoolPositions(cur realm) {
 	positions := pl.GetPoolPositions(poolPath)
 	ufmt.Printf("[EXPECTED] position keys count: %d\n", positions.Size())
 
-	index := 0
 	positions.IterateByOffset(0, 10, func(key string, _ any) bool {
-		ufmt.Printf("[EXPECTED] position key[%d]: %s\n", index, key)
-		index++
+		println("[EXPECTED] position key matches:", key == positionKey)
 		return false
 	})
 }
@@ -952,7 +950,7 @@ func observe(cur realm) {
 // [SCENARIO] 2.23. GetPoolPositions
 // [INFO] Check GetPoolPositions method
 // [EXPECTED] position keys count: 1
-// [EXPECTED] position key[0]: 00000000520001774492
+// [EXPECTED] position key matches: true
 //
 // [SCENARIO] 2.24. GetPositionLiquidity
 // [INFO] Check GetPositionLiquidity method

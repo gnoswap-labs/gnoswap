@@ -7,7 +7,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/protocol_fee"
-	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
+	_ "gno.land/r/gnoswap/rbac/v1" // Initialize contract roles
 )
 
 // Test helper functions

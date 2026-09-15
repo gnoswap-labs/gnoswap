@@ -5,7 +5,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	poolRoot "gno.land/r/gnoswap/pool"
 )
 

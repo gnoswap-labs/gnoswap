@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
-	"gno.land/p/nt/grc721/v0"
 	bptree "gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/grc721/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/pool"

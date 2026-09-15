@@ -1,14 +1,11 @@
 package staker
 
 import (
-	"strconv"
-	"strings"
-
-	bptree "gno.land/p/nt/bptree/v0"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
-	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
 )
 
 // UintTree is a wrapper around a B+ tree for storing block timestamps as strings.
@@ -125,34 +122,4 @@ func encodeInt64(num int64) string {
 
 func decodeInt64(s string) int64 {
 	return gnsmath.SafeUint64ToInt64(utils.DecodeUint64(s))
-}
-
-// EncodeInt takes an int32 and returns a zero-padded decimal string
-// with up to 10 digits for the absolute value.
-// If the number is negative, the '-' sign comes first, followed by zeros, then digits.
-func EncodeInt(num int32) string {
-	// Convert the absolute value to a decimal string.
-	absValue := int64(num)
-	isNegative := false
-	if num < 0 {
-		isNegative = true
-		absValue = -absValue // Safely negate into int64 to avoid overflow.
-	}
-
-	s := strconv.FormatInt(absValue, 10)
-
-	// Zero-pad to a total of 10 digits for the absolute value.
-	// (The '-' sign will be added later if needed.)
-	zerosNeeded := 10 - len(s)
-	if zerosNeeded < 0 {
-		zerosNeeded = 0
-	}
-
-	padded := strings.Repeat("0", zerosNeeded) + s
-
-	// If the original number was negative, prepend '-'.
-	if isNegative {
-		return "-" + padded
-	}
-	return padded
 }

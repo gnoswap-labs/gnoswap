@@ -3,22 +3,23 @@
 // undelegate never folds fees; the share earned before leaving is paid on a later collect
 //
 // Hand check:
-//   epoch 1: alice 1_000_000            fee 2_000_000 -> +2 per stake -> alice 2_000_000
-//   epoch 2: alice leaves (0 staked)     fee 5_000_000 -> nobody to credit, dropped
-//   epoch 3: bob 2_000_000               fee 4_000_000 -> +2 per stake -> bob 4_000_000
-//   bob collects first and folds every bucket; alice then collects 2_000_000.
-//   residue = the dropped 5_000_000.
+//
+//	epoch 1: alice 1_000_000            fee 2_000_000 -> +2 per stake -> alice 2_000_000
+//	epoch 2: alice leaves (0 staked)     fee 5_000_000 -> nobody to credit, dropped
+//	epoch 3: bob 2_000_000               fee 4_000_000 -> +2 per stake -> bob 4_000_000
+//	bob collects first and folds every bucket; alice then collects 2_000_000.
+//	residue = the dropped 5_000_000.
 package main
 
 import (
 	"chain/runtime"
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"

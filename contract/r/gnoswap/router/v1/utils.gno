@@ -1,18 +1,18 @@
 package router
 
 import (
-	"errors"
 	"bytes"
+	"errors"
 	"strconv"
 	"strings"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/pool"
 
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // calculateSwapAmountByQuote calculates swap amount based on quote percentage.
