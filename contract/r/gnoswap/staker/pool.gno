@@ -2,7 +2,6 @@ package staker
 
 import (
 	"errors"
-	"strconv"
 	"time"
 
 	"gno.land/p/gnoswap/consts"
@@ -686,7 +685,7 @@ func (t *Ticks) SetTree(tree *bptree.BPTree) {
 
 // Get returns the tick for the given tickId, or nil if it does not exist.
 func (t *Ticks) Get(tickId int32) *Tick {
-	v := t.tree.Get(EncodeInt(tickId))
+	v := t.tree.Get(utils.EncodeInt32(tickId))
 	if v == nil {
 		return nil
 	}
@@ -699,17 +698,17 @@ func (t *Ticks) Get(tickId int32) *Tick {
 }
 
 func (self *Ticks) Has(tickId int32) bool {
-	return self.tree.Has(EncodeInt(tickId))
+	return self.tree.Has(utils.EncodeInt32(tickId))
 }
 
 // SetTick sets a tick by ID
 func (t *Ticks) SetTick(tickId int32, tick *Tick) {
 	if tick.stakedLiquidityGross.IsZero() {
-		t.tree.Remove(EncodeInt(tickId))
+		t.tree.Remove(utils.EncodeInt32(tickId))
 		return
 	}
 
-	t.tree.Set(EncodeInt(tickId), tick)
+	t.tree.Set(utils.EncodeInt32(tickId), tick)
 }
 
 // IterateTicks iterates over all ticks
@@ -720,13 +719,7 @@ func (t *Ticks) IterateTicks(fn func(tickId int32, tick *Tick) bool) {
 			return false
 		}
 
-		// Convert string key back to int32
-		tickId, err := strconv.Atoi(key)
-		if err != nil {
-			return false // skip invalid keys
-		}
-
-		return fn(int32(tickId), tick)
+		return fn(utils.DecodeInt32(key), tick)
 	})
 }
 
