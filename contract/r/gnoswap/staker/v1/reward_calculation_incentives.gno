@@ -52,15 +52,6 @@ func (self *IncentivesResolver) GetIncentiveResolver(incentiveId string) (*Exter
 	return nil, false
 }
 
-// retrieveIncentive looks up an external incentive in a B+ tree.
-//
-// Parameters:
-//   - tree: Incentive tree keyed by incentive ID.
-//   - id: Incentive identifier to retrieve.
-//
-// Returns:
-//   - incentive: Stored external incentive pointer when id exists; nil when absent.
-//   - found: True when id resolves to an external incentive; false when the tree has no such key.
 func retrieveIncentive(tree *bptree.BPTree, id string) (*sr.ExternalIncentive, bool) {
 	value := tree.Get(id)
 	if value == nil {

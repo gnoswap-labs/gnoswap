@@ -27,7 +27,6 @@ import (
 // This provides consistent validation at proposal creation time and execution time.
 var globalParameterRegistry *ParameterRegistry
 
-// init creates the process-wide registry of supported governance parameter handlers.
 func init() {
 	globalParameterRegistry = CreateParameterHandlers()
 }
@@ -1015,13 +1014,6 @@ var (
 	}
 )
 
-// numberValidator creates a validator that parses each string using the requested numeric kind.
-//
-// Parameters:
-//   - kind: numeric representation to parse, such as int, int64, or uint64
-//
-// Returns:
-//   - paramValidator: validator returning an error when the string is empty, malformed, or out of range
 func numberValidator(kind numberKind) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1030,13 +1022,6 @@ func numberValidator(kind numberKind) paramValidator {
 	}
 }
 
-// uint8RangeValidator creates a validator for an integer constrained to the uint8 range.
-//
-// Parameters:
-//   - name: field label included in out-of-range validation errors
-//
-// Returns:
-//   - paramValidator: validator accepting values from 0 through 255 inclusive
 func uint8RangeValidator(name string) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1048,13 +1033,6 @@ func uint8RangeValidator(name string) paramValidator {
 	}
 }
 
-// roleNameValidator validates that a role name is non-empty after trimming whitespace.
-//
-// Parameters:
-//   - s: role name text to validate
-//
-// Returns:
-//   - error: nil for a non-empty role name, or an error describing the empty value
 func roleNameValidator(s string) error {
 	return runValidator(func() {
 		roleName := strings.TrimSpace(s)
@@ -1064,13 +1042,6 @@ func roleNameValidator(s string) error {
 	})
 }
 
-// updatableRoleNameValidator validates a role name that may be updated.
-//
-// Parameters:
-//   - s: role name text; the admin system role is not updateable
-//
-// Returns:
-//   - error: nil for a non-empty non-admin role, or an error when the role is invalid
 func updatableRoleNameValidator(s string) error {
 	return runValidator(func() {
 		roleName := strings.TrimSpace(s)
@@ -1084,13 +1055,6 @@ func updatableRoleNameValidator(s string) error {
 	})
 }
 
-// removableRoleNameValidator validates a role name that may be removed.
-//
-// Parameters:
-//   - s: role name text; system roles cannot be removed
-//
-// Returns:
-//   - error: nil for a non-empty removable role, or an error when the role is invalid
 func removableRoleNameValidator(s string) error {
 	return runValidator(func() {
 		roleName := strings.TrimSpace(s)
@@ -1104,13 +1068,6 @@ func removableRoleNameValidator(s string) error {
 	})
 }
 
-// nonNegativeInt64Validator creates a validator for an int64 value that cannot be negative.
-//
-// Parameters:
-//   - name: field label included in validation errors
-//
-// Returns:
-//   - paramValidator: validator accepting parsed values greater than or equal to zero
 func nonNegativeInt64Validator(name string) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1122,13 +1079,6 @@ func nonNegativeInt64Validator(name string) paramValidator {
 	}
 }
 
-// positiveInt64Validator creates a validator for an int64 value greater than zero.
-//
-// Parameters:
-//   - name: field label included in validation errors
-//
-// Returns:
-//   - paramValidator: validator accepting parsed values strictly greater than zero
 func positiveInt64Validator(name string) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1140,15 +1090,6 @@ func positiveInt64Validator(name string) paramValidator {
 	}
 }
 
-// int64RangeValidator creates a validator for an inclusive int64 range.
-//
-// Parameters:
-//   - name: field label included in validation errors
-//   - min: inclusive lower bound for the accepted value
-//   - max: inclusive upper bound for the accepted value
-//
-// Returns:
-//   - paramValidator: validator accepting values from min through max inclusive
 func int64RangeValidator(name string, min, max int64) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1160,14 +1101,6 @@ func int64RangeValidator(name string, min, max int64) paramValidator {
 	}
 }
 
-// uint64RangeValidator creates a validator for an unsigned integer upper-bounded by max.
-//
-// Parameters:
-//   - name: field label included in validation errors
-//   - max: inclusive maximum accepted uint64 value
-//
-// Returns:
-//   - paramValidator: validator accepting values from zero through max inclusive
 func uint64RangeValidator(name string, max uint64) paramValidator {
 	return func(s string) error {
 		return runValidator(func() {
@@ -1179,13 +1112,6 @@ func uint64RangeValidator(name string, max uint64) paramValidator {
 	}
 }
 
-// haltLevelValidator validates a textual halt level against the halt package's allowed values.
-//
-// Parameters:
-//   - s: halt level string to validate
-//
-// Returns:
-//   - error: nil for a recognized halt level, or an error for an invalid level
 func haltLevelValidator(s string) error {
 	return runValidator(func() {
 		if !halt.HaltLevel(s).IsValid() {
@@ -1194,13 +1120,6 @@ func haltLevelValidator(s string) error {
 	})
 }
 
-// haltOperationTypeValidator validates a textual operation type against the halt package.
-//
-// Parameters:
-//   - s: operation type string to validate
-//
-// Returns:
-//   - error: nil for a recognized operation type, or an error for an invalid type
 func haltOperationTypeValidator(s string) error {
 	return runValidator(func() {
 		if !halt.OpType(s).IsValid() {
@@ -1209,13 +1128,6 @@ func haltOperationTypeValidator(s string) error {
 	})
 }
 
-// tokenMinimumRewardAmountValidator validates a tokenPath:amount setting.
-//
-// Parameters:
-//   - s: token path and non-negative minimum amount separated by a colon
-//
-// Returns:
-//   - error: nil for a valid tokenPath:amount string, or an error for malformed or negative input
 func tokenMinimumRewardAmountValidator(s string) error {
 	return runValidator(func() {
 		parts := strings.SplitN(s, ":", 2)
@@ -1229,13 +1141,6 @@ func tokenMinimumRewardAmountValidator(s string) error {
 	})
 }
 
-// distributionPctCompositeValidator validates a complete distribution percentage set.
-//
-// Parameters:
-//   - params: percentage strings; each must be in 0..10000 and the values must sum to 10000
-//
-// Returns:
-//   - error: nil when all percentages are valid and sum to 10000, or the first validation error
 func distributionPctCompositeValidator(params []string) error {
 	return runValidator(func() {
 		sum := int64(0)
@@ -1252,13 +1157,6 @@ func distributionPctCompositeValidator(params []string) error {
 	})
 }
 
-// splitExecutionsRaw splits a delimiter-joined execution string into individual messages.
-//
-// Parameters:
-//   - executions: execution messages joined with the governance message separator
-//
-// Returns:
-//   - []string: individual execution messages, or an empty slice when executions is empty
 func splitExecutionsRaw(executions string) []string {
 	if executions == "" {
 		return []string{}
@@ -1267,16 +1165,6 @@ func splitExecutionsRaw(executions string) []string {
 	return strings.Split(executions, messageSeparator)
 }
 
-// parseExecutionMessage parses one execution message into its package, function, and parameters.
-//
-// Parameters:
-//   - msg: execution text separated into package, function, and parameter parts
-//
-// Returns:
-//   - pkgPath: target package path, or an empty string when the format is not three parts
-//   - function: target function name, or an empty string when the format is not three parts
-//   - params: comma-separated handler parameters, or nil for malformed input and an empty slice for no parameters
-//   - partCount: number of separator-delimited parts found in msg
 func parseExecutionMessage(msg string) (pkgPath string, function string, params []string, partCount int) {
 	parts := strings.Split(msg, parameterSeparator)
 	partCount = len(parts)

@@ -75,13 +75,6 @@ func (s *stakerV1) GetPendingProtocolFees() map[string]int64 {
 	return s.store.GetPendingProtocolFees()
 }
 
-// addPendingProtocolFee adds a positive amount to the pending protocol fee for tokenPath.
-//
-// Parameters:
-//   - _: Internal call discriminator; callers pass 0.
-//   - rlm: Propagated realm context used to persist the updated pending amount.
-//   - tokenPath: Reward-token path whose pending fee entry is updated.
-//   - amount: Fee amount to add; zero or a negative amount is ignored.
 func (s *stakerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if amount <= 0 {
 		return

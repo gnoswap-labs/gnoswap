@@ -50,14 +50,6 @@ func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) []s
 	return warmupTemplate
 }
 
-// instantiateWarmup creates a position-specific warmup schedule from a template.
-//
-// Parameters:
-//   - warmupTemplate: Template tiers whose durations and ratios define the schedule.
-//   - currentTime: Position start time in Unix seconds from which tier end times are calculated.
-//
-// Returns:
-//   - warmups: New warmup slice with cumulative NextWarmupTime values derived from currentTime.
 func instantiateWarmup(warmupTemplate []sr.Warmup, currentTime int64) []sr.Warmup {
 	warmups := make([]sr.Warmup, 0, len(warmupTemplate))
 	for i, warmup := range warmupTemplate {
@@ -73,17 +65,6 @@ func instantiateWarmup(warmupTemplate []sr.Warmup, currentTime int64) []sr.Warmu
 	return warmups
 }
 
-// applyWarmup splits a position's proportional pool reward into credited reward and warmup penalty.
-//
-// Parameters:
-//   - warmup: Warmup tier whose ratio determines the reward/penalty split.
-//   - poolReward: Reward amount available for the pool interval in token smallest units.
-//   - positionLiquidity: Position liquidity used to determine its share of poolReward.
-//   - stakedLiquidity: Total in-range staked liquidity used as the allocation denominator; zero yields two zero results.
-//
-// Returns:
-//   - reward: Position reward after applying warmup.WarmupRatio percent.
-//   - penalty: Portion withheld by the warmup, equal to the complementary percentage.
 func applyWarmup(warmup sr.Warmup, poolReward int64, positionLiquidity, stakedLiquidity *u256.Uint) (int64, int64) {
 	if stakedLiquidity.IsZero() {
 		return 0, 0

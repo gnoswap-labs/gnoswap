@@ -10,7 +10,6 @@ var gReferralKeeper ReferralKeeper
 // Successful non-empty writes emit the RegisterReferral event.
 const EventRegisterFailed = "ReferralRegistrationFailed"
 
-// init initializes the package's referral keeper when no keeper has been installed.
 func init() {
 	if gReferralKeeper == nil {
 		gReferralKeeper = NewKeeper()

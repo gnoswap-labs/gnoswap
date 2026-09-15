@@ -57,13 +57,6 @@ func (g *sliceGen) String() string {
 	return ufmt.Sprintf("SliceOfN(%v, minLen=%v, maxLen=%v)", g.elem, g.minLen, g.maxLen)
 }
 
-// value generates one slice by repeatedly sampling the element generator.
-//
-// Parameters:
-//   - t: Fuzzing context whose bit stream supplies the element values and repetition count.
-//
-// Returns:
-//   - value: Generated slice containing values sampled from elem.
 func (g *sliceGen) value(t *T) any {
 	repeat := newRepeat(g.minLen, g.maxLen, -1, g.elem.String())
 
@@ -129,13 +122,6 @@ func (g *mapGen) String() string {
 	return ufmt.Sprintf("MapOfN(%v, %v, minLen=%v, maxLen=%v)", g.key, g.val, g.minLen, g.maxLen)
 }
 
-// value generates one map by sampling key/value pairs until the repetition count is met; duplicate keys are rejected.
-//
-// Parameters:
-//   - t: Fuzzing context whose bit stream supplies keys, values, and repetition decisions.
-//
-// Returns:
-//   - value: Generated map containing unique keys and their sampled values.
 func (g *mapGen) value(t *T) any {
 	label := g.key.String() + "," + g.val.String()
 	repeat := newRepeat(g.minLen, g.maxLen, -1, label)
@@ -155,13 +141,6 @@ func (g *mapGen) value(t *T) any {
 	return m
 }
 
-// assertValidRange verifies that a constrained range is ordered.
-//
-// Parameters:
-//   - min: Requested lower bound; negative values represent an unconstrained lower bound.
-//   - max: Requested upper bound; negative values represent an unconstrained upper bound.
-//
-// The function panics when max is constrained and min is greater than max.
 func assertValidRange(min int, max int) {
 	if max >= 0 && min > max {
 		panic(ufmt.Sprintf("invalid range [%d, %d]", min, max))

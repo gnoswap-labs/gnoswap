@@ -274,13 +274,6 @@ func (p *SwapRouteParams) SwapCount() int64 {
 	return swapCount
 }
 
-// buildRouteEventAttrs expands comma-separated routes into event key/value attributes.
-//
-// Parameters:
-//   - routeArr: comma-separated route paths
-//
-// Returns:
-//   - attrs: alternating routes[index] keys and route values for event emission
 func buildRouteEventAttrs(routeArr string) []string {
 	routes := strings.Split(routeArr, ",")
 	routeEventAttrs := make([]string, 0, len(routes)*2)

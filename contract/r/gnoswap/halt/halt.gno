@@ -9,7 +9,6 @@ import (
 
 var haltStates HaltStateManager
 
-// init initializes all operation halt states to the no-halt configuration.
 func init() {
 	haltStates = newHaltStateManagerByConfig(newNoneConfig())
 }

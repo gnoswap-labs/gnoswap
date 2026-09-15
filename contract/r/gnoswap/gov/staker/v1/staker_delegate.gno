@@ -595,15 +595,6 @@ func (gs *govStakerV1) unDelegateWithoutLockup(
 	return amount, nil
 }
 
-// increaseTotalDelegatedAmount adds an amount to the persisted active-delegation total.
-//
-// Parameters:
-//   - _: leading realm-call discriminator for the internal helper; callers pass 0.
-//   - rlm: forwarded realm context for the total-delegation store update; the store validates the current context.
-//   - amount: delegation amount to add, in the smallest token unit.
-//
-// Returns:
-//   - error: nil when the total is stored; otherwise the underlying store update error.
 func (gs *govStakerV1) increaseTotalDelegatedAmount(_ int, rlm realm, amount int64) error {
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
@@ -614,15 +605,6 @@ func (gs *govStakerV1) increaseTotalDelegatedAmount(_ int, rlm realm, amount int
 	return nil
 }
 
-// decreaseTotalDelegatedAmount subtracts an amount and clamps the stored total at zero.
-//
-// Parameters:
-//   - _: leading realm-call discriminator for the internal helper; callers pass 0.
-//   - rlm: forwarded realm context for the total-delegation store update; the store validates the current context.
-//   - amount: delegation amount to subtract, in the smallest token unit.
-//
-// Returns:
-//   - error: nil when the clamped total is stored; otherwise the underlying store update error.
 func (gs *govStakerV1) decreaseTotalDelegatedAmount(_ int, rlm realm, amount int64) error {
 	currentDelegated := gs.store.GetTotalDelegatedAmount()
 
@@ -637,15 +619,6 @@ func (gs *govStakerV1) decreaseTotalDelegatedAmount(_ int, rlm realm, amount int
 	return nil
 }
 
-// increaseTotalLockedAmount adds an amount to the persisted locked-total value.
-//
-// Parameters:
-//   - _: leading realm-call discriminator for the internal helper; callers pass 0.
-//   - rlm: forwarded realm context for the total-locked store update; the store validates the current context.
-//   - amount: locked amount to add, in the smallest token unit.
-//
-// Returns:
-//   - error: nil when the total is stored; otherwise the underlying store update error.
 func (gs *govStakerV1) increaseTotalLockedAmount(_ int, rlm realm, amount int64) error {
 	currentLocked := gs.store.GetTotalLockedAmount()
 
@@ -656,15 +629,6 @@ func (gs *govStakerV1) increaseTotalLockedAmount(_ int, rlm realm, amount int64)
 	return nil
 }
 
-// decreaseTotalLockedAmount subtracts an amount and clamps the stored total at zero.
-//
-// Parameters:
-//   - _: leading realm-call discriminator for the internal helper; callers pass 0.
-//   - rlm: forwarded realm context for the total-locked store update; the store validates the current context.
-//   - amount: locked amount to subtract, in the smallest token unit.
-//
-// Returns:
-//   - error: nil when the clamped total is stored; otherwise the underlying store update error.
 func (gs *govStakerV1) decreaseTotalLockedAmount(_ int, rlm realm, amount int64) error {
 	currentLocked := gs.store.GetTotalLockedAmount()
 

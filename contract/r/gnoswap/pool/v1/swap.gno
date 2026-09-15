@@ -511,16 +511,6 @@ func copyPoolTicks(src *bptree.BPTree) *bptree.BPTree {
 	return copied
 }
 
-// copyPoolTickBitmaps returns an independent copy of the pool's initialized
-// tick bitmap map.
-//
-// Parameters:
-//   - src: Source bitmap keyed by signed 16-bit word position; nil yields an
-//     empty map.
-//
-// Returns:
-//   - map[int16]string: Fresh bitmap map containing each source word position
-//     and its encoded bitmap.
 func copyPoolTickBitmaps(src map[int16]string) map[int16]string {
 	copied := make(map[int16]string, len(src))
 	for wordPos, bitmap := range src {
@@ -530,27 +520,6 @@ func copyPoolTickBitmaps(src map[int16]string) map[int16]string {
 	return copied
 }
 
-// computeSwap performs the core swap computation on the supplied working pool.
-// The loop runs until the specified amount is consumed or the directional
-// square-root-price limit is reached. Crossing an initialized tick updates the
-// supplied pool's tick records and can invoke `onTickCross`; DrySwap supplies a
-// fully isolated pool and nil callback.
-//
-// Parameters:
-//   - pool: Working pool supplying liquidity, ticks, fee growth, and protocol
-//     fee state; crossed tick records may be updated in place.
-//   - observations: Observation tree used to obtain oracle data for tick
-//     crossings; it must correspond to pool.
-//   - comp: Initial amount, price limit, direction, exact-input mode, swap
-//     state, and cache for this computation.
-//   - onTickCross: Optional callback invoked after each initialized tick is
-//     crossed with the updated pool, tick index, direction, and timestamp.
-//
-// Returns:
-//   - *SwapResult: Computed signed token deltas, terminal price/tick/liquidity,
-//     protocol fees, and global fee-growth accumulators; nil on error.
-//   - error: Nil on success; non-nil when a swap step, arithmetic operation, or
-//     oracle observation fails.
 func (i *poolV1) computeSwap(pool *pl.Pool, observations *pl.ObservationTree, comp SwapComputation, onTickCross tickCrossHookFn) (*SwapResult, error) {
 	state := comp.InitialState
 	var err error

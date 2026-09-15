@@ -9,7 +9,6 @@ import (
 
 var roleAddresses map[string]address
 
-// init initializes the in-memory mapping from role names to role addresses.
 func init() {
 	roleAddresses = make(map[string]address)
 }

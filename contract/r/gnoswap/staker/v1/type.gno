@@ -127,19 +127,10 @@ func (self *DepositResolver) CollectedExternalReward(incentiveID string) int64 {
 	return collectedExternalReward
 }
 
-// addCollectedInternalReward adds an internal reward amount to the deposit's cumulative total.
-//
-// Parameters:
-//   - reward: Internal reward amount in the reward token's smallest units to add to the cumulative total.
 func (self *DepositResolver) addCollectedInternalReward(reward int64) {
 	self.SetCollectedInternalReward(gnsmath.SafeAddInt64(self.CollectedInternalReward(), reward))
 }
 
-// addCollectedExternalReward adds an external reward amount to one incentive's cumulative total.
-//
-// Parameters:
-//   - incentiveID: External incentive ID whose cumulative amount should be increased.
-//   - reward: External reward amount in the incentive token's smallest units to add.
 func (self *DepositResolver) addCollectedExternalReward(incentiveID string, reward int64) {
 	collectedExternalReward := gnsmath.SafeAddInt64(self.CollectedExternalReward(incentiveID), reward)
 	self.SetCollectedExternalReward(incentiveID, collectedExternalReward)

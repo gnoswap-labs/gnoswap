@@ -80,12 +80,6 @@ func RunFuzzTest(t fuzz.TestingT, iterations int, fn func(*fuzz.T, *Result, int)
 	printResultLog(t, iterations, result)
 }
 
-// printResultLog writes the accumulated fuzz report and reports whether unexpected outcomes occurred.
-//
-// Parameters:
-//   - t: Test logger receiving the aggregate and per-iteration report.
-//   - iterations: Number of valid iterations requested, used in the success summary.
-//   - result: Accumulator containing parameters, errors, and unexpected-result markers.
 func printResultLog(t fuzz.TestingT, iterations int, result *Result) {
 	result.PrintLog(t)
 
@@ -96,14 +90,6 @@ func printResultLog(t fuzz.TestingT, iterations int, result *Result) {
 	}
 }
 
-// handlePanic invokes fn and converts a recovered panic into a message and status.
-//
-// Parameters:
-//   - fn: Callback whose panic, if any, should be recovered.
-//
-// Returns:
-//   - msg: Panic text when the recovered value is an error or string, "unsupported panic type" for other values, or empty when fn returns normally.
-//   - panicked: True when fn panicked and recovery handled it; false when fn returned normally.
 func handlePanic(fn func()) (msg string, panicked bool) {
 	defer func() {
 		r := recover()
@@ -130,14 +116,6 @@ func handlePanic(fn func()) (msg string, panicked bool) {
 	return
 }
 
-// handleCrossPanic invokes fn through Gno's cross-call panic recovery mechanism.
-//
-// Parameters:
-//   - fn: Callback whose cross-call panic, if any, should be recovered.
-//
-// Returns:
-//   - msg: Panic text when the recovered value is an error or string, "unsupported panic type" for other values, or empty when fn returns normally.
-//   - panicked: True when revive reports a panic value; false when fn returns normally.
 func handleCrossPanic(fn func()) (string, bool) {
 	r := revive(fn)
 	if r == nil {

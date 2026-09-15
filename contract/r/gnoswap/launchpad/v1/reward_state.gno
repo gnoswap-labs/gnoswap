@@ -11,14 +11,6 @@ import (
 
 // Helper functions for RewardState
 
-// isRewardStateClaimable reports whether the reward state's claimable time has arrived.
-//
-// Parameters:
-//   - r: reward state whose claimable timestamp is checked.
-//   - currentTime: current Unix timestamp in seconds.
-//
-// Returns:
-//   - claimable: true when currentTime is at or after the state's claimable time.
 func isRewardStateClaimable(r *launchpad.RewardState, currentTime int64) bool {
 	return currentTime >= r.ClaimableTime()
 }

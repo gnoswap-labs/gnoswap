@@ -10,7 +10,6 @@ import (
 
 var emissionState *EmissionState
 
-// init initializes the package emission state with an unstarted schedule.
 func init() {
 	emissionState = NewEmissionState(0, 0)
 }

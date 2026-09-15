@@ -184,16 +184,6 @@ func (p *positionV1) calculateFees(position *position.Position, currentFeeGrowth
 	return gnsmath.SafeAddInt64(position.TokensOwed0(), gnsmath.SafeConvertToInt64(fee0)), gnsmath.SafeAddInt64(position.TokensOwed1(), gnsmath.SafeConvertToInt64(fee1))
 }
 
-// calculateTokensOwed converts fee-growth delta into fees for a position by
-// multiplying by liquidity and dividing by the Q128 fixed-point scale.
-//
-// Parameters:
-//   - feeGrowthInsideLastX128: current fee growth inside the position's range, in Q128 fixed-point units
-//   - positionFeeGrowthInsideLastX128: fee-growth checkpoint stored on the position, in Q128 fixed-point units
-//   - positionLiquidity: position liquidity used to scale the fee-growth delta
-//
-// Returns:
-//   - tokensOwed: fees represented by the growth delta and position liquidity, as a uint256 value
 func calculateTokensOwed(
 	feeGrowthInsideLastX128 *u256.Uint,
 	positionFeeGrowthInsideLastX128 *u256.Uint,

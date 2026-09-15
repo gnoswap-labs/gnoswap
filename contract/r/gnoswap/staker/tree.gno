@@ -184,13 +184,6 @@ func (self *UintTree) Clone() *UintTree {
 	return cloned
 }
 
-// encodeInt64 converts a nonnegative int64 to the fixed-width ordered key encoding.
-//
-// Parameters:
-//   - num: Nonnegative integer to encode; negative values panic because the tree key space is nonnegative.
-//
-// Returns:
-//   - encoded: Fixed-width big-endian string whose lexicographic order matches num order.
 func encodeInt64(num int64) string {
 	if num < 0 {
 		panic(ufmt.Sprintf("negative value not supported: %d", num))
@@ -198,13 +191,6 @@ func encodeInt64(num int64) string {
 	return utils.EncodeUint64(uint64(num))
 }
 
-// decodeInt64 converts a fixed-width encoded unsigned key back to int64.
-//
-// Parameters:
-//   - s: Fixed-width big-endian string produced by encodeInt64 or the corresponding unsigned encoder.
-//
-// Returns:
-//   - num: Decoded signed integer value.
 func decodeInt64(s string) int64 {
 	return gnsmath.SafeUint64ToInt64(utils.DecodeUint64(s))
 }

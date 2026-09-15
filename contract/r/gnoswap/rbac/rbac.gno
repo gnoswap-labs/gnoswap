@@ -11,10 +11,6 @@ import (
 
 var manager *prbac.RBAC
 
-// init initializes the RBAC manager and default role mappings during realm initialization.
-//
-// Parameters:
-//   - cur: realm context supplied by the runtime during package initialization.
 func init(cur realm) {
 	initRbac(cur)
 }

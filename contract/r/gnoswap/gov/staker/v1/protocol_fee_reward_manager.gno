@@ -115,11 +115,6 @@ func (self *ProtocolFeeRewardManagerResolver) removeStake(rewardID string, amoun
 	return nil
 }
 
-// recordTotalStakedAmount records the aggregate stake for an accrual epoch.
-//
-// Parameters:
-//   - epoch: Epoch at which the aggregate stake becomes effective.
-//   - totalStakedAmount: Aggregate stake amount effective from epoch.
 func (self *ProtocolFeeRewardManagerResolver) recordTotalStakedAmount(epoch int64, totalStakedAmount int64) {
 	self.SetCurrentEpoch(epoch)
 	self.SetTotalStakedAmount(totalStakedAmount)
@@ -362,14 +357,6 @@ func (self *ProtocolFeeRewardManagerResolver) GetClaimableRewardAmount(rewardID 
 	return resolvedState.getClaimableReward(tokenPath, self.accumulatorView(tokenPath, pendingEpochs, pendingAmounts, true)), nil
 }
 
-// maxInt64 returns the greater of two signed 64-bit values.
-//
-// Parameters:
-//   - a: First signed 64-bit value.
-//   - b: Second signed 64-bit value.
-//
-// Returns:
-//   - int64: a when a is greater; otherwise b.
 func maxInt64(a, b int64) int64 {
 	if a > b {
 		return a
@@ -377,14 +364,6 @@ func maxInt64(a, b int64) int64 {
 	return b
 }
 
-// minInt64 returns the lesser of two signed 64-bit values.
-//
-// Parameters:
-//   - a: First signed 64-bit value.
-//   - b: Second signed 64-bit value.
-//
-// Returns:
-//   - int64: a when a is less; otherwise b.
 func minInt64(a, b int64) int64 {
 	if a < b {
 		return a

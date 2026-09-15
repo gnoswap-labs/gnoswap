@@ -58,7 +58,6 @@ func assertIsValidPercent(pct int64) {
 	}
 }
 
-// assertNotImplementYet always panics to mark an operation that has not been implemented.
 func assertNotImplementYet() {
 	panic("NotImplementYet")
 }

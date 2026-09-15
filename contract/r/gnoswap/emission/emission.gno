@@ -47,10 +47,6 @@ var (
 	defaultInitialPoolChecker func(poolPath string) bool
 )
 
-// init records the emission realm address used as the GNS mint recipient.
-//
-// Parameters:
-//   - cur: realm context supplied by the runtime during package initialization.
 func init(cur realm) {
 	emissionAddr = cur.Address()
 }

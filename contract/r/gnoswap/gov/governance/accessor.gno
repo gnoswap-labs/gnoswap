@@ -39,10 +39,6 @@ func (g *govStakerAccessor) GetTotalxGnsSupply() int64 {
 	return staker.GetTotalxGnsSupply()
 }
 
-// newGovStakerAccessor creates the governance-facing staker accessor used by implementations.
-//
-// Returns:
-//   - GovStakerAccessor: accessor that forwards governance snapshot and supply queries.
 func newGovStakerAccessor() GovStakerAccessor {
 	return &govStakerAccessor{}
 }

@@ -257,37 +257,18 @@ func (self *EmissionRewardManagerResolver) claimRewards(address string, currentT
 	return claimedRewardAmount, nil
 }
 
-// setRewardStates persists the reward state for an address in the manager.
-//
-// Parameters:
-//   - address: reward-state identifier to update.
-//   - rewardState: updated emission reward state to store.
 func (self *EmissionRewardManagerResolver) setRewardStates(address string, rewardState *staker.EmissionRewardState) {
 	self.SetRewardState(address, rewardState)
 }
 
-// setAccumulatedRewardX128PerStake updates the manager's accumulated emission
-// reward per stake value.
-//
-// Parameters:
-//   - accumulatedRewardX128PerStake: new Q128-scaled accumulated reward per
-//     stake.
 func (self *EmissionRewardManagerResolver) setAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake *u256.Uint) {
 	self.SetAccumulatedRewardX128PerStake(accumulatedRewardX128PerStake)
 }
 
-// setDistributedAmount updates the manager's total distributed emission cursor.
-//
-// Parameters:
-//   - distributedAmount: total emission amount recorded as distributed.
 func (self *EmissionRewardManagerResolver) setDistributedAmount(distributedAmount int64) {
 	self.SetDistributedAmount(distributedAmount)
 }
 
-// setAccumulatedTimestamp updates the manager's timestamp cursor.
-//
-// Parameters:
-//   - accumulatedTimestamp: Unix timestamp represented by the accumulated state.
 func (self *EmissionRewardManagerResolver) setAccumulatedTimestamp(accumulatedTimestamp int64) {
 	self.SetAccumulatedTimestamp(accumulatedTimestamp)
 }

@@ -35,29 +35,14 @@ func maxLiquidityPerTickSpacing1FromDec() *u256.Uint {
 	return &u256.Uint{3639524637645646277, 10395196556700, 0, 0} // 191757530477355301479181766273477
 }
 
-// maxLiquidityPerTickSpacing10FromDec returns a fresh precomputed maximum
-// liquidity value for tick spacing 10.
-// Returns:
-//   - *u256.Uint: Fresh 256-bit maximum gross liquidity permitted for a tick
-//     when the spacing-10 precomputed limit is selected.
 func maxLiquidityPerTickSpacing10FromDec() *u256.Uint {
 	return &u256.Uint{4727306266354938262, 103951672670308, 0, 0} // 1917569901783203986719870431555990
 }
 
-// maxLiquidityPerTickSpacing60FromDec returns a fresh precomputed maximum
-// liquidity value for tick spacing 60.
-// Returns:
-//   - *u256.Uint: Fresh 256-bit maximum gross liquidity permitted for a tick
-//     when the spacing-60 precomputed limit is selected.
 func maxLiquidityPerTickSpacing60FromDec() *u256.Uint {
 	return &u256.Uint{1428959955126579298, 623727610269131, 0, 0} // 11505743598341114571880798222544994
 }
 
-// maxLiquidityPerTickSpacing200FromDec returns a fresh precomputed maximum
-// liquidity value for tick spacing 200.
-// Returns:
-//   - *u256.Uint: Fresh 256-bit maximum gross liquidity permitted for a tick
-//     when the spacing-200 precomputed limit is selected.
 func maxLiquidityPerTickSpacing200FromDec() *u256.Uint {
 	return &u256.Uint{6592429331424883148, 2078974875882965, 0, 0} // 38350317471085141830651933667504588
 }

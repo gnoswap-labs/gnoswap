@@ -68,16 +68,8 @@ func ratioConstants() []*u256.Uint {
 //   - result: a fresh signed fixed-point multiplier used to convert log2 to the tick scale
 func log2Multiplier() *i256.Int { return &i256.Int{11745905768312294533, 13863, 0, 0} } // 255738958999603826347141
 
-// tickLowOffset returns a fresh fixed-point lower-bound offset for tick calculation.
-//
-// Returns:
-//   - result: a fresh signed fixed-point lower-bound offset for tick selection
 func tickLowOffset() *i256.Int { return &i256.Int{6552757943157144234, 184476617836266586, 0, 0} } // 3402992956809132418596140100660247210
 
-// tickHiOffset returns a fresh fixed-point upper-bound offset for tick calculation.
-//
-// Returns:
-//   - result: a fresh signed fixed-point upper-bound offset for tick selection
 func tickHiOffset() *i256.Int { return &i256.Int{4998474450511881007, 15793544031827761793, 0, 0} } // 291339464771989622907027621153398088495
 
 // oneLsh32 returns 1 << 32.

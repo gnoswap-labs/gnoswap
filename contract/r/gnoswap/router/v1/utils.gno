@@ -240,13 +240,6 @@ func validateRoutePath(routePath, inputToken, outputToken string) error {
 	return nil
 }
 
-// validatePoolPathHopContinuity checks that each hop's output token equals the next hop's input token.
-//
-// Parameters:
-//   - routePoolPaths: ordered single-hop pool paths composing a route
-//
-// Returns:
-//   - err: nil for fewer than two hops or continuous hops; parse or disconnection error otherwise
 func validatePoolPathHopContinuity(routePoolPaths []string) error {
 	if len(routePoolPaths) < 2 {
 		return nil

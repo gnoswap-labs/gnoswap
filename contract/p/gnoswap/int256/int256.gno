@@ -437,14 +437,6 @@ func (z *Int) MulOverflow(x, y *Int) (*Int, bool) {
 	return z, overflow
 }
 
-// umul computes the full unsigned 512-bit product of the four limbs of x and y.
-//
-// Parameters:
-//   - x: First four-limb operand, interpreted as an unsigned bit pattern.
-//   - y: Second four-limb operand, interpreted as an unsigned bit pattern.
-//
-// Returns:
-//   - product: Eight little-endian uint64 limbs containing x * y.
 func umul(x, y *Int) [8]uint64 {
 	var (
 		res                           [8]uint64
@@ -475,17 +467,6 @@ func umul(x, y *Int) [8]uint64 {
 	return res
 }
 
-// umulStep adds z and carry to the product of two uint64 words.
-//
-// Parameters:
-//   - z: Existing low-word addend.
-//   - x: First uint64 multiplicand.
-//   - y: Second uint64 multiplicand.
-//   - carry: Incoming carry word added to the product.
-//
-// Returns:
-//   - hi: High uint64 word of x*y + z + carry.
-//   - lo: Low uint64 word of x*y + z + carry.
 func umulStep(z, x, y, carry uint64) (hi, lo uint64) {
 	hi, lo = bits.Mul64(x, y)
 	lo, carry = bits.Add64(lo, carry, 0)
@@ -495,16 +476,6 @@ func umulStep(z, x, y, carry uint64) (hi, lo uint64) {
 	return hi, lo
 }
 
-// umulHop adds z to the product of two uint64 words.
-//
-// Parameters:
-//   - z: Existing low-word addend.
-//   - x: First uint64 multiplicand.
-//   - y: Second uint64 multiplicand.
-//
-// Returns:
-//   - hi: High uint64 word of x*y + z.
-//   - lo: Low uint64 word of x*y + z.
 func umulHop(z, x, y uint64) (hi, lo uint64) {
 	hi, lo = bits.Mul64(x, y)
 	lo, carry := bits.Add64(lo, z, 0)
@@ -564,17 +535,6 @@ func (z *Int) Div(x, y *Int) *Int {
 	return z.Neg(z)
 }
 
-// uquo computes the unsigned quotient of x by y from their raw 256-bit limbs.
-// It is the magnitude-division helper used by signed Div.
-//
-// Parameters:
-//   - x: Unsigned dividend represented by an Int's four limbs.
-//   - y: Non-zero unsigned divisor represented by an Int's four limbs.
-//
-// Returns:
-//   - z: The receiver containing floor(x / y) as a 256-bit limb pattern.
-//
-// Panics if y is zero.
 func (z *Int) uquo(x, y *Int) *Int {
 	if y.IsZero() {
 		panic("zero division")
@@ -618,16 +578,6 @@ func (z *Int) Rem(x, y *Int) *Int {
 	return z.Neg(z)
 }
 
-// urem computes the unsigned remainder of x divided by y from their raw limbs.
-//
-// Parameters:
-//   - x: Unsigned dividend represented by an Int's four limbs.
-//   - y: Non-zero unsigned divisor represented by an Int's four limbs.
-//
-// Returns:
-//   - z: The receiver containing x % y, with magnitude less than y.
-//
-// Panics if y is zero.
 func (z *Int) urem(x, y *Int) *Int {
 	if y.IsZero() {
 		panic("zero division")
@@ -859,14 +809,6 @@ func (z *Int) Rsh(x *Int, n uint) *Int {
 	return z.rsh(x, n)
 }
 
-// rsh performs a logical right shift of x without sign extension.
-//
-// Parameters:
-//   - x: 256-bit bit pattern to shift.
-//   - n: Number of bit positions to shift right; n >= 256 yields zero.
-//
-// Returns:
-//   - z: The receiver containing x >> n with zero-fill.
 func (z *Int) rsh(x *Int, n uint) *Int {
 	if n >= 256 {
 		return z.Clear()
@@ -909,14 +851,6 @@ func (z *Int) rsh(x *Int, n uint) *Int {
 	return z
 }
 
-// negRsh performs an arithmetic right shift of a negative x with sign extension.
-//
-// Parameters:
-//   - x: Negative 256-bit two's-complement value to shift.
-//   - n: Number of bit positions to shift right; n >= 256 yields all ones.
-//
-// Returns:
-//   - z: The receiver containing x >> n with one-fill above its sign bit.
 func (z *Int) negRsh(x *Int, n uint) *Int {
 	if n >= 256 {
 		return z.SetAllBitsOne()

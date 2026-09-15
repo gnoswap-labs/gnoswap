@@ -43,14 +43,6 @@ func (h HaltStateManager) getOperationHalted(op OpType) (bool, error) {
 	return halted, nil
 }
 
-// setOperationHalted updates one operation's halt flag.
-//
-// Parameters:
-//   - op: operation type whose halt status is changed.
-//   - halted: true to block the operation, false to allow it.
-//
-// Returns:
-//   - error: nil when op is valid and updated; otherwise an invalid-operation error.
 func (h HaltStateManager) setOperationHalted(op OpType, halted bool) error {
 	if !op.IsValid() {
 		return makeErrorWithDetails(errInvalidOpType, op.String())
@@ -61,13 +53,6 @@ func (h HaltStateManager) setOperationHalted(op OpType, halted bool) error {
 	return nil
 }
 
-// updateOperationHaltsByConfig applies every entry in a halt configuration to the manager.
-//
-// Parameters:
-//   - config: operation-to-halt-flag map whose entries overwrite the manager's values.
-//
-// Returns:
-//   - error: nil when every configured operation is valid; otherwise the first update error.
 func (h HaltStateManager) updateOperationHaltsByConfig(config HaltConfig) error {
 	for op, halted := range config {
 		if err := h.setOperationHalted(op, halted); err != nil {
@@ -78,14 +63,6 @@ func (h HaltStateManager) updateOperationHaltsByConfig(config HaltConfig) error 
 	return nil
 }
 
-// newHaltStateManagerByConfig creates a manager covering every supported operation.
-// Operations absent from config default to halted.
-//
-// Parameters:
-//   - config: initial operation-to-halt-flag map; missing supported operations default to true.
-//
-// Returns:
-//   - manager: new halt-state map containing every operation returned by OpTypes().
 func newHaltStateManagerByConfig(config HaltConfig) HaltStateManager {
 	haltState := make(HaltStateManager)
 

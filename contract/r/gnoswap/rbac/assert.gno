@@ -62,10 +62,6 @@ func assertIsValidRoleName(roleName string) {
 	}
 }
 
-// assertIsValidAddress panics if addr is not a valid address.
-//
-// Parameters:
-//   - addr: address to validate
 func assertIsValidAddress(addr address) {
 	if !addr.IsValid() {
 		panic(makeErrorWithDetails(
@@ -75,10 +71,6 @@ func assertIsValidAddress(addr address) {
 	}
 }
 
-// assertNotAdminRole panics when roleName names the protected admin role.
-//
-// Parameters:
-//   - roleName: role name being checked after surrounding whitespace is trimmed
 func assertNotAdminRole(roleName string) {
 	if strings.TrimSpace(roleName) == prbac.ROLE_ADMIN.String() {
 		panic(makeErrorWithDetails(
@@ -88,11 +80,6 @@ func assertNotAdminRole(roleName string) {
 	}
 }
 
-// assertIsAdminOrGovernance panics if addr is authorized for neither the admin
-// nor governance role.
-//
-// Parameters:
-//   - addr: address that must have admin or governance authorization
 func assertIsAdminOrGovernance(addr address) {
 	if manager.IsAuthorized(prbac.ROLE_ADMIN.String(), addr) || manager.IsAuthorized(prbac.ROLE_GOVERNANCE.String(), addr) {
 		return

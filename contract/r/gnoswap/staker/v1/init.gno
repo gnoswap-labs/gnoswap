@@ -19,18 +19,10 @@ const (
 	defaultUnstakingFee = uint64(100) // 1%
 )
 
-// init registers the staker v1 initializer with the supplied realm context.
-//
-// Parameters:
-//   - cur: Realm context supplied by the runtime for this package initialization.
 func init(cur realm) {
 	registerStakerV1(cur)
 }
 
-// registerStakerV1 installs the staker v1 initializer that seeds storage and hooks.
-//
-// Parameters:
-//   - cur: Current package realm context used to register a callback with cross(cur).
 func registerStakerV1(cur realm) {
 	sr.RegisterInitializer(cross(cur), func(_ int, rlm realm, stakerStore sr.IStakerStore, poolAccessor sr.PoolAccessor, emissionAccessor sr.EmissionAccessor, nftAccessor sr.NFTAccessor) sr.IStaker {
 		access.AssertIsRlmCurrent(0, rlm)
@@ -48,16 +40,6 @@ func registerStakerV1(cur realm) {
 	})
 }
 
-// initStoreData initializes missing staker storage keys and seeds pool-tier state.
-//
-// Parameters:
-//   - _: Leading realm-call discriminator for the forwarded callback; callers pass 0.
-//   - rlm: Propagated current staker realm context; storage setters validate it before writes.
-//   - stakerStore: Persistent staker storage interface to inspect and initialize.
-//   - emissionAccessor: Emission interface used to obtain initial emission and halving callbacks.
-//
-// Returns:
-//   - error: The first storage initialization error; nil after all required keys and tier state are initialized.
 func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccessor sr.EmissionAccessor) error {
 	if !stakerStore.HasDepositGnsAmountStoreKey() {
 		err := stakerStore.SetDepositGnsAmount(0, rlm, defaultDepositGnsAmount)

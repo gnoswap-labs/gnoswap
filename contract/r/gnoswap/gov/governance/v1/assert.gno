@@ -24,11 +24,6 @@ func assertCallerIsProposer(gv *governanceV1, proposalID int64, caller address) 
 	}
 }
 
-// assertIsValidSmoothingPeriod panics unless smoothingPeriod is within the
-// inclusive range from zero through maxSmoothingPeriod.
-//
-// Parameters:
-//   - smoothingPeriod: smoothing interval, in the governance configuration's time units
 func assertIsValidSmoothingPeriod(smoothingPeriod int64) {
 	if smoothingPeriod < 0 {
 		panic(errors.New(errInvalidSmoothingPeriod))
@@ -39,10 +34,6 @@ func assertIsValidSmoothingPeriod(smoothingPeriod int64) {
 	}
 }
 
-// assertIsValidToken panics unless tokenPath is non-empty and names a registered token.
-//
-// Parameters:
-//   - tokenPath: token package path to validate and resolve through the common registry
 func assertIsValidToken(tokenPath string) {
 	if tokenPath == "" {
 		panic(makeErrorWithDetails(

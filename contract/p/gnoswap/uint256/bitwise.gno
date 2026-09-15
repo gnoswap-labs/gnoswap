@@ -294,109 +294,46 @@ sh192:
 	return z
 }
 
-// lsh64 shifts x left by exactly 64 bits, discarding bits above bit 255.
-//
-// Parameters:
-//   - x: 256-bit operand to shift.
-//
-// Returns:
-//   - z: x << 64 modulo 2^256, stored in the receiver.
 func (z *Uint) lsh64(x *Uint) *Uint {
 	z[3], z[2], z[1], z[0] = x[2], x[1], x[0], 0
 	return z
 }
 
-// lsh128 shifts x left by exactly 128 bits, discarding bits above bit 255.
-//
-// Parameters:
-//   - x: 256-bit operand to shift.
-//
-// Returns:
-//   - z: x << 128 modulo 2^256, stored in the receiver.
 func (z *Uint) lsh128(x *Uint) *Uint {
 	z[3], z[2], z[1], z[0] = x[1], x[0], 0, 0
 	return z
 }
 
-// lsh192 shifts x left by exactly 192 bits, discarding bits above bit 255.
-//
-// Parameters:
-//   - x: 256-bit operand to shift.
-//
-// Returns:
-//   - z: x << 192 modulo 2^256, stored in the receiver.
 func (z *Uint) lsh192(x *Uint) *Uint {
 	z[3], z[2], z[1], z[0] = x[0], 0, 0, 0
 	return z
 }
 
-// rsh64 shifts x logically right by exactly 64 bits.
-//
-// Parameters:
-//   - x: 256-bit operand to shift.
-//
-// Returns:
-//   - z: x >> 64 with zero-fill, stored in the receiver.
 func (z *Uint) rsh64(x *Uint) *Uint {
 	z[3], z[2], z[1], z[0] = 0, x[3], x[2], x[1]
 	return z
 }
 
-// rsh128 shifts x logically right by exactly 128 bits.
-//
-// Parameters:
-//   - x: 256-bit operand to shift.
-//
-// Returns:
-//   - z: x >> 128 with zero-fill, stored in the receiver.
 func (z *Uint) rsh128(x *Uint) *Uint {
 	z[3], z[2], z[1], z[0] = 0, 0, x[3], x[2]
 	return z
 }
 
-// rsh192 shifts x logically right by exactly 192 bits.
-//
-// Parameters:
-//   - x: 256-bit operand to shift.
-//
-// Returns:
-//   - z: x >> 192 with zero-fill, stored in the receiver.
 func (z *Uint) rsh192(x *Uint) *Uint {
 	z[3], z[2], z[1], z[0] = 0, 0, 0, x[3]
 	return z
 }
 
-// srsh64 shifts the signed two's-complement bit pattern x right by exactly 64 bits.
-//
-// Parameters:
-//   - x: 256-bit signed bit pattern to shift.
-//
-// Returns:
-//   - z: x >> 64 with sign extension, stored in the receiver.
 func (z *Uint) srsh64(x *Uint) *Uint {
 	z[3], z[2], z[1], z[0] = 18446744073709551615, x[3], x[2], x[1]
 	return z
 }
 
-// srsh128 shifts the signed two's-complement bit pattern x right by exactly 128 bits.
-//
-// Parameters:
-//   - x: 256-bit signed bit pattern to shift.
-//
-// Returns:
-//   - z: x >> 128 with sign extension, stored in the receiver.
 func (z *Uint) srsh128(x *Uint) *Uint {
 	z[3], z[2], z[1], z[0] = 18446744073709551615, 18446744073709551615, x[3], x[2]
 	return z
 }
 
-// srsh192 shifts the signed two's-complement bit pattern x right by exactly 192 bits.
-//
-// Parameters:
-//   - x: 256-bit signed bit pattern to shift.
-//
-// Returns:
-//   - z: x >> 192 with sign extension, stored in the receiver.
 func (z *Uint) srsh192(x *Uint) *Uint {
 	z[3], z[2], z[1], z[0] = 18446744073709551615, 18446744073709551615, 18446744073709551615, x[3]
 	return z

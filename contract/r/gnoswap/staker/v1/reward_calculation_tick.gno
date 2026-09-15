@@ -349,11 +349,6 @@ func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
 	return nil
 }
 
-// setupSwapHooks installs the staker callbacks used to batch swap tick crosses.
-//
-// Parameters:
-//   - _: Leading realm-call discriminator for hook registration; callers pass 0.
-//   - rlm: Propagated current staker realm context used by the pool accessor.
 func (s *stakerV1) setupSwapHooks(_ int, rlm realm) {
 	// Set tick cross hook for pool contract
 	s.poolAccessor.SetTickCrossHook(0, rlm, s.tickCrossHook)

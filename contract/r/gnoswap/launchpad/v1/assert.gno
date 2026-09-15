@@ -55,7 +55,6 @@ func (lp *launchpadV1) assertHasProject(caller address) {
 	}
 }
 
-// assertNotImplementYet unconditionally panics to mark an operation that has no implementation.
 func assertNotImplementYet() {
 	panic("NotImplementYet")
 }

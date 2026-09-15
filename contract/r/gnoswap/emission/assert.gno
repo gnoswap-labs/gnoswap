@@ -4,9 +4,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// assertDefaultInitialPoolExists verifies that the default initial pool checker
-// is registered and reports that the configured default pool exists; it panics
-// when either prerequisite is missing.
 func assertDefaultInitialPoolExists() {
 	if defaultInitialPoolChecker == nil {
 		panic(makeErrorWithDetails(errInvalidEmissionStart, "default initial pool checker is not registered"))

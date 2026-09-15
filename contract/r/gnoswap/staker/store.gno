@@ -1296,27 +1296,10 @@ func NewStakerStore(kvStore store.KVStore) IStakerStore {
 	}
 }
 
-// makeIncentiveID builds the persistent identifier used for an incentive counter entry.
-//
-// Parameters:
-//   - creator: Address that created the incentive.
-//   - timestamp: Incentive timestamp included in the identifier.
-//   - index: Monotonic counter value included in the identifier.
-//
-// Returns:
-//   - string: Identifier formatted as creator:timestamp:index.
 func makeIncentiveID(creator address, timestamp int64, index int64) string {
 	return ufmt.Sprintf("%s:%d:%d", creator.String(), timestamp, index)
 }
 
-// contains reports whether item is present in the string slice.
-//
-// Parameters:
-//   - items: String values to search.
-//   - item: Exact string value to find.
-//
-// Returns:
-//   - bool: True when item matches an element of items; false otherwise.
 func contains(items []string, item string) bool {
 	for _, i := range items {
 		if i == item {

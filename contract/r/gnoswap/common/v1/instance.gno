@@ -155,14 +155,6 @@ func (c *commonV1) Approve(_ int, rlm realm, tokenKey string, spender address, a
 	return c.getTokenTeller(0, rlm, tokenKey).Approve(0, rlm, spender, amount)
 }
 
-// mustGetToken resolves a token registry key or panics if the key is invalid or
-// no token is registered under it.
-//
-// Parameters:
-//   - tokenKey: registry key of the token to resolve
-//
-// Returns:
-//   - token: registered GRC20 token pointer
 func (c *commonV1) mustGetToken(tokenKey string) *grc20.Token {
 	if err := validateTokenKey(tokenKey); err != nil {
 		panic(err.Error())

@@ -302,12 +302,6 @@ func (self *PoolTier) tierContextOf(poolPath string) (uint64, uint64, uint64, er
 	return tier, ratio, self.counts[tier], nil
 }
 
-// cacheReward MUST be called before calculating any position reward.
-// It updates each pool's reward cache for elapsed halving intervals between the last cached timestamp and currentTimestamp.
-// Block height is used only for event tracking purposes.
-// Parameters:
-//   - currentTimestamp: Exclusive end timestamp for the reward interval to cache.
-//   - pools: Pool collection whose tiered pools receive cached rewards.
 func (self *PoolTier) cacheReward(currentTimestamp int64, pools *Pools) {
 	lastTimestamp := self.lastRewardCacheTimestamp
 

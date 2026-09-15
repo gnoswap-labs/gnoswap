@@ -22,10 +22,6 @@ var (
 	implementation IGovStaker
 )
 
-// init initializes the gov/staker realm's address, persistent store, and version manager.
-//
-// Parameters:
-//   - cur: realm context supplied by the runtime during package initialization; it identifies this realm.
 func init(cur realm) {
 	currentAddress = cur.Address()
 
@@ -37,15 +33,6 @@ func init(cur realm) {
 	implementation = nil
 }
 
-// initializeDomainStore creates the domain store used by the version manager.
-//
-// Parameters:
-//   - _: leading version-manager call discriminator; callers pass 0.
-//   - rlm: forwarded realm context from the version manager; this initializer does not inspect it.
-//   - kvStore: key-value store owned by the gov/staker realm.
-//
-// Returns:
-//   - any: newly initialized gov/staker store value.
 func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return NewGovStakerStore(kvStore)
 }
@@ -62,10 +49,6 @@ func getImplementation() IGovStaker {
 	return implementation
 }
 
-// updateImplementation loads and type-checks the version manager's current implementation.
-//
-// Returns:
-//   - error: nil when an IGovStaker implementation is installed; otherwise an initialization or type error.
 func updateImplementation() error {
 	result := versionManager.GetCurrentImplementation()
 	if result == nil {

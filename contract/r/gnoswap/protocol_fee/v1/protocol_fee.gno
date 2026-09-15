@@ -272,14 +272,6 @@ func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, am
 	return nil
 }
 
-// reserveCollectedProtocolFee allocates a collected fee between DevOps and GovStaker,
-// records both allocation accumulators, and marks the token for later distribution.
-//
-// Parameters:
-//   - _: cross-call discriminator; callers pass 0
-//   - rlm: propagated protocol_fee realm context used for authorized store writes
-//   - tokenPath: token contract path whose collected fee is being reserved
-//   - amount: non-negative collected fee amount in token base units to split and record
 func (pf *protocolFeeV1) reserveCollectedProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	pfs := pf.getProtocolFeeState()
 

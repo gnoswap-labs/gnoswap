@@ -21,10 +21,6 @@ var (
 	metaLedger *metadata.Ledger
 )
 
-// init creates the GNFT collection, ledger, and metadata store.
-//
-// Parameters:
-//   - cur: initialization realm supplied by the Gno runtime
 func init(cur realm) {
 	token, ledger = grc721.NewToken("GNOSWAP NFT", "GNFT", seqid.ID(0), cur)
 	meta, metaLedger = metadata.NewMetadata(ledger)

@@ -31,12 +31,6 @@ func assertIsValidDelegateAmount(amount int64) {
 	}
 }
 
-// assertIsValidSnapshotTime validates that a history lookup timestamp is old
-// enough for the configured smoothing window.
-//
-// Parameters:
-//   - snapshotTime: Unix timestamp to validate; it must be non-negative and no
-//     later than the current time minus maxSmoothingPeriod.
 func assertIsValidSnapshotTime(snapshotTime int64) {
 	if snapshotTime < 0 {
 		panic(makeErrorWithDetails(
@@ -84,19 +78,12 @@ func assertIsAvailableCleanupSnapshotTime(cleanupSnapshotTime int64) {
 	}
 }
 
-// assertNoSameDelegatee rejects a delegation change that keeps the same delegatee.
-//
-// Parameters:
-//   - delegatee: existing delegatee address.
-//   - newDelegatee: replacement delegatee address; it must differ from delegatee.
 func assertNoSameDelegatee(delegatee, newDelegatee address) {
 	if delegatee == newDelegatee {
 		panic(errors.New(errSameDelegatee))
 	}
 }
 
-// assertNotImplementYet unconditionally panics because the requested operation
-// has not been implemented.
 func assertNotImplementYet() {
 	panic("NotImplementYet")
 }

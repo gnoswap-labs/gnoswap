@@ -84,13 +84,6 @@ func (s *stakerV1) RemoveToken(_ int, rlm realm, tokenPath string) {
 	)
 }
 
-// checkCannotAddDefaultToken rejects attempts to add a token already supplied by protocol defaults.
-//
-// Parameters:
-//   - tokenPath: Token path to compare with the default allowed-token set.
-//
-// Returns:
-//   - error: An explanatory error when tokenPath is already a default; nil when it may be added.
 func checkCannotAddDefaultToken(tokenPath string) error {
 	if contains(sr.DefaultAllowedTokens(), tokenPath) {
 		return ufmt.Errorf("%v: cannot add existing token(%s)", errAddExistingToken, tokenPath)
@@ -99,13 +92,6 @@ func checkCannotAddDefaultToken(tokenPath string) error {
 	return nil
 }
 
-// checkCannotRemoveDefaultToken rejects attempts to remove a protocol default token.
-//
-// Parameters:
-//   - tokenPath: Token path to compare with the default allowed-token set.
-//
-// Returns:
-//   - error: An explanatory error when tokenPath is protected; nil when it may be removed.
 func checkCannotRemoveDefaultToken(tokenPath string) error {
 	if contains(sr.DefaultAllowedTokens(), tokenPath) {
 		return ufmt.Errorf("%v: cannot remove default token(%s)", errDefaultExternalToken, tokenPath)
@@ -171,13 +157,6 @@ func (s *stakerV1) SetDeniedRewardToken(_ int, rlm realm, tokenPath string, deni
 	)
 }
 
-// checkCannotDenyDefaultToken rejects attempts to deny a protocol default reward token.
-//
-// Parameters:
-//   - tokenPath: Token path to compare with the default allowed-token set.
-//
-// Returns:
-//   - error: An explanatory error when tokenPath is a protected default; nil otherwise.
 func checkCannotDenyDefaultToken(tokenPath string) error {
 	if contains(sr.DefaultAllowedTokens(), tokenPath) {
 		return ufmt.Errorf("%v: cannot deny default token(%s)", errCannotDenyDefaultToken, tokenPath)

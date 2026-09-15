@@ -69,15 +69,6 @@ type SwapCache struct {
 	slot0Start                        pl.Slot0   // immutable Slot0 snapshot captured at swap start
 }
 
-// Parameters:
-//   - feeProtocol: packed protocol-fee denominator configuration captured at
-//     swap start.
-//   - liquidityStart: active liquidity at the beginning of the swap.
-//   - blockTimestamp: block timestamp at which the swap starts, in Unix seconds.
-//   - slot0Start: slot0 snapshot captured at swap start; the snapshot is cloned.
-//
-// Returns:
-//   - cache: swap cache initialized with zeroed lazy oracle accumulators.
 func newSwapCache(
 	feeProtocol uint8,
 	liquidityStart *u256.Uint,
@@ -108,17 +99,6 @@ type SwapState struct {
 	liquidity                *u256.Uint // current liquidity in range
 }
 
-// Parameters:
-//   - amountSpecifiedRemaining: signed input/output amount still required by
-//     the swap.
-//   - feeGrowthGlobalX128: global fee-growth accumulator for the input token,
-//     scaled by 2^128.
-//   - liquidity: active liquidity in the current price range.
-//   - slot0: current pool slot0 state used to initialize price and tick.
-//
-// Returns:
-//   - state: swap state initialized from the supplied amount, fee growth,
-//     liquidity, and slot0 values.
 func newSwapState(
 	amountSpecifiedRemaining *i256.Int,
 	feeGrowthGlobalX128 *u256.Uint,
@@ -136,27 +116,18 @@ func newSwapState(
 	}
 }
 
-// Parameters:
-//   - sqrtPriceX96: next current square-root price in Q64.96 form; it is cloned
-//     before being stored.
 func (s *SwapState) setSqrtPriceX96(sqrtPriceX96 *u256.Uint) {
 	s.sqrtPriceX96 = sqrtPriceX96.Clone()
 }
 
-// Parameters:
-//   - tick: current signed tick corresponding to the swap state's price.
 func (s *SwapState) setTick(tick int32) {
 	s.tick = tick
 }
 
-// Parameters:
-//   - feeGrowthGlobalX128: input-token fee-growth accumulator scaled by 2^128.
 func (s *SwapState) setFeeGrowthGlobalX128(feeGrowthGlobalX128 *u256.Uint) {
 	s.feeGrowthGlobalX128 = feeGrowthGlobalX128
 }
 
-// Parameters:
-//   - fee: protocol-fee amount accumulated for the current swap step.
 func (s *SwapState) setProtocolFee(fee *u256.Uint) {
 	s.protocolFee = fee
 }
@@ -209,13 +180,6 @@ func (step *StepComputations) clampTickNext() {
 	}
 }
 
-// Parameters:
-//   - poolInfo: validated pool-creation configuration used to initialize pool
-//     fields and derive the starting tick.
-//
-// Returns:
-//   - pool: newly constructed pool with the configuration's canonical paths,
-//     price, fee, tick spacing, starting tick, and protocol-fee setting.
 func newPool(poolInfo *poolCreateConfig) *pl.Pool {
 	tick := gnsmath.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
 

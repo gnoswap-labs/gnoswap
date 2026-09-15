@@ -14,10 +14,6 @@ import (
 
 const MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
-// mustGetStakerAddress returns the address configured for the staker role.
-//
-// Returns:
-//   - stakerAddress: address registered for the staker role; panics if the role is missing
 func mustGetStakerAddress() address {
 	return access.MustGetAddress(prabc.ROLE_STAKER.String())
 }
@@ -158,17 +154,6 @@ func splitOf(poolKey string) (string, string, uint32) {
 	return pToken0, pToken1, uint32(pFee)
 }
 
-// isSlippageExceeded reports whether either collected amount is below its
-// corresponding minimum.
-//
-// Parameters:
-//   - amount0: actual token0 amount
-//   - amount1: actual token1 amount
-//   - amount0Min: minimum acceptable token0 amount
-//   - amount1Min: minimum acceptable token1 amount
-//
-// Returns:
-//   - exceeded: true when amount0 < amount0Min or amount1 < amount1Min
 func isSlippageExceeded(amount0, amount1, amount0Min, amount1Min *u256.Uint) bool {
 	return !(amount0.Gte(amount0Min) && amount1.Gte(amount1Min))
 }

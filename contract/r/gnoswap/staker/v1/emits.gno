@@ -7,16 +7,6 @@ import (
 	"gno.land/p/gnoswap/utils"
 )
 
-// emitSetPoolTier emits the pool-tier assignment, per-tier reward rates, counts, and timestamp.
-// Parameters:
-//   - prevAddr: Address of the realm that initiated the pool-tier change.
-//   - prevRealm: Package path of the initiating realm.
-//   - poolPath: Pool whose tier assignment and reward allocation changed.
-//   - tier: New tier number assigned to the pool.
-//   - rewardPerSecond: Per-pool reward rate for the assigned tier.
-//   - tierRewards: Per-pool reward rate keyed by tier, emitted for tiers 1 through 3.
-//   - counts: Number of pools currently in each tier index.
-//   - currentTime: Unix timestamp at which the tier state was calculated.
 func emitSetPoolTier(
 	prevAddr string,
 	prevRealm string,

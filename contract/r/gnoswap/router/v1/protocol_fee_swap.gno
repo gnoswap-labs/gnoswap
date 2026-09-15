@@ -126,13 +126,6 @@ func (r *routerV1) GetPendingProtocolFees() map[string]int64 {
 	return r.store.GetPendingProtocolFees()
 }
 
-// addPendingProtocolFee accumulates a positive amount for one token path.
-//
-// Parameters:
-//   - _: leading call discriminator; callers pass 0
-//   - rlm: propagated current realm context used for authorized storage writes
-//   - tokenPath: token contract path whose pending amount is updated
-//   - amount: fee amount to add; non-positive amounts are ignored
 func (r *routerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if amount <= 0 {
 		return
@@ -180,14 +173,6 @@ func (r *routerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount 
 	}
 }
 
-// calculateRouterFee computes floor(amount * swapFee / 10000) in token units.
-//
-// Parameters:
-//   - amount: gross output amount in token units
-//   - swapFee: router fee rate in basis points
-//
-// Returns:
-//   - feeAmount: fee amount deducted from amount; zero when swapFee is zero
 func calculateRouterFee(amount int64, swapFee uint64) int64 {
 	if swapFee <= 0 {
 		return 0

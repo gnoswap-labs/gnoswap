@@ -5,13 +5,6 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-// assertIsNotUserCall rejects calls whose immediately preceding realm is an
-// externally owned account.
-//
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0.
-//   - rlm: propagated current realm context, used to inspect the previous
-//     caller realm.
 func assertIsNotUserCall(_ int, rlm realm) {
 	previousRealm := rlm.Previous()
 	if previousRealm.IsUserCall() {
@@ -68,11 +61,6 @@ func assertIsNotExistsPoolPath(instance *poolV1, token0Path, token1Path string, 
 	}
 }
 
-// assertIsValidTokenOrder rejects non-canonical token ordering.
-//
-// Parameters:
-//   - token0Path: token contract path that must sort before token1Path.
-//   - token1Path: token contract path that must sort after token0Path.
 func assertIsValidTokenOrder(token0Path, token1Path string) {
 	if token0Path >= token1Path {
 		panic(newErrorWithDetail(

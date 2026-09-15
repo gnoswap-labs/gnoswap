@@ -144,10 +144,6 @@ func (p *poolAccessor) SetSwapEndHook(_ int, rlm realm, hook func(_ int, rlm rea
 	})
 }
 
-// newPoolAccessor constructs the pool accessor used by staker implementations.
-//
-// Returns:
-//   - PoolAccessor: Accessor that queries pool state and registers swap or tick hooks.
 func newPoolAccessor() PoolAccessor {
 	return &poolAccessor{}
 }
@@ -253,10 +249,6 @@ func (e *emissionAccessor) SetOnDistributionPctChangeCallback(_ int, rlm realm, 
 	})
 }
 
-// newEmissionAccessor constructs the emission accessor used by staker implementations.
-//
-// Returns:
-//   - EmissionAccessor: Accessor that forwards GNS minting and staker emission queries.
 func newEmissionAccessor() EmissionAccessor {
 	return &emissionAccessor{}
 }
@@ -455,10 +447,6 @@ func (n *gnftAccessor) OwnerOf(tid grc721.TokenID) (address, error) {
 	return gnft.OwnerOf(tid)
 }
 
-// newNFTAccessor constructs the NFT accessor used by staker implementations.
-//
-// Returns:
-//   - NFTAccessor: Accessor that forwards NFT ownership and transfer operations.
 func newNFTAccessor() NFTAccessor {
 	return &gnftAccessor{}
 }

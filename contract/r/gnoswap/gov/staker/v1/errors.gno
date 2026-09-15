@@ -28,14 +28,6 @@ const (
 	errInvalidAccrualBuckets          = "[GNOSWAP-GOV_STAKER-021] invalid accrual buckets"
 )
 
-// makeErrorWithDetails formats a coded error message with its contextual detail.
-//
-// Parameters:
-//   - message: base error code and message
-//   - detail: operation-specific explanation appended to message
-//
-// Returns:
-//   - error: formatted error containing message and detail separated by " || "
 func makeErrorWithDetails(message string, detail string) error {
 	return ufmt.Errorf("%s || %s", message, detail)
 }

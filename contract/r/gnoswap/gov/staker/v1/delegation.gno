@@ -160,15 +160,6 @@ func (r *DelegationResolver) processCollection(currentTime int64) (int64, error)
 	return collectedAmount, nil
 }
 
-// addToCollectedAmount validates and adds an amount to an existing collected total.
-//
-// Parameters:
-//   - collectedAmount: amount already recorded as collected
-//   - amount: additional amount to record; must be non-negative
-//
-// Returns:
-//   - int64: updated collected amount
-//   - error: error when amount is negative; nil when it is added successfully
 func addToCollectedAmount(collectedAmount, amount int64) (int64, error) {
 	if amount < 0 {
 		return 0, errors.New(errAmountMustBeNonNegative)

@@ -46,13 +46,6 @@ func rewardCacheEntry(value any) any {
 	return reward
 }
 
-// accumulationEntry converts a tree value to the immutable string form used by read-only accumulation views.
-//
-// Parameters:
-//   - value: Tree value expected to be a string-encoded global reward-ratio accumulation.
-//
-// Returns:
-//   - any: The accumulation string unchanged, or nil when value has another type.
 func accumulationEntry(value any) any {
 	accumulation, ok := value.(string)
 	if !ok {
@@ -62,13 +55,6 @@ func accumulationEntry(value any) any {
 	return accumulation
 }
 
-// historicalTickEntry converts a tree value to the immutable int32 form used by read-only historical-tick views.
-//
-// Parameters:
-//   - value: Tree value expected to be an int32 historical tick.
-//
-// Returns:
-//   - any: The historical tick unchanged, or nil when value has another type.
 func historicalTickEntry(value any) any {
 	tick, ok := value.(int32)
 	if !ok {

@@ -13,14 +13,6 @@ const (
 	ErrInvalidTime     = "invalid time format"
 )
 
-// makeErrorWithDetails combines a referral error message with contextual detail.
-//
-// Parameters:
-//   - message: base referral error text identifying the failure category
-//   - detail: contextual text appended after the separator
-//
-// Returns:
-//   - error: newly formatted error containing message and detail
 func makeErrorWithDetails(message string, detail string) error {
 	return ufmt.Errorf("%s: %s", message, detail)
 }

@@ -27,15 +27,6 @@ func isTokenKeyChar(c rune) bool {
 	return false
 }
 
-// validateTokenKey validates that tokenKey is non-empty and contains only
-// characters accepted by isTokenKeyChar.
-//
-// Parameters:
-//   - tokenKey: non-empty token registry key whose characters are checked
-//
-// Returns:
-//   - error: nil for a valid key; an invalid-token-key error identifying the
-//     empty key or disallowed character otherwise
 func validateTokenKey(tokenKey string) error {
 	if tokenKey == "" {
 		return errors.New(newErrorWithDetail(errInvalidTokenKey, "empty token key"))

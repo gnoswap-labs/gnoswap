@@ -163,10 +163,6 @@ func (n *gnftAccessor) OwnerOf(tid grc721.TokenID) (address, error) {
 	return gnft.OwnerOf(tid)
 }
 
-// newGNFTAccessor returns an NFT accessor backed by the GNFT realm.
-//
-// Returns:
-//   - accessor: GNFT-backed implementation of the NFTAccessor interface
 func newGNFTAccessor() NFTAccessor {
 	return &gnftAccessor{}
 }

@@ -472,10 +472,6 @@ type createProjectParams struct {
 	minimumStartDelayTime int64
 }
 
-// validate runs every validation rule for project creation parameters.
-//
-// Returns:
-//   - err: nil when all name, token, recipient, amount, ratio, start-time, and condition checks pass; otherwise the first validation error.
 func (p *createProjectParams) validate() error {
 	if err := p.validateName(); err != nil {
 		return err
@@ -609,10 +605,6 @@ func (p *createProjectParams) validateStartTime(now int64, minimumStartDelayTime
 	return nil
 }
 
-// validateConditions validates the optional token eligibility conditions for project creation.
-//
-// Returns:
-//   - err: nil when both lists are empty or contain matching, registered, unique token paths and positive int64 amounts within the maximum count; non-nil otherwise.
 func (p *createProjectParams) validateConditions() error {
 	if p.conditionTokens == "" && p.conditionAmounts == "" {
 		return nil
@@ -657,13 +649,6 @@ func (p *createProjectParams) validateConditions() error {
 	return nil
 }
 
-// isGovernanceToken reports whether a token path is the configured governance-token path.
-//
-// Parameters:
-//   - tokenPath: token contract path to compare with GOV_XGNS_PATH.
-//
-// Returns:
-//   - governance: true only when tokenPath exactly equals GOV_XGNS_PATH; false otherwise.
 func isGovernanceToken(tokenPath string) bool {
 	return tokenPath == GOV_XGNS_PATH
 }

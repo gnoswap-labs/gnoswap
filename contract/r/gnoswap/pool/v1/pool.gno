@@ -567,14 +567,6 @@ func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 int64) (int64,
 	return amount0, amount1
 }
 
-// minRequestedAmount returns the lesser of a requested amount and the available amount.
-//
-// Parameters:
-//   - request: Non-negative amount requested by the caller.
-//   - available: Amount currently available to pay.
-//
-// Returns:
-//   - amount: request when it does not exceed available, otherwise available.
 func minRequestedAmount(request, available int64) int64 {
 	if request > available {
 		return available

@@ -34,11 +34,6 @@ var (
 	lastMintedTimestamp  int64 // last block time that gns was minted for emission
 )
 
-// init creates the GNS token, registers it, mints the initial administrative
-// supply, and initializes emission counters.
-//
-// Parameters:
-//   - cur: initialization realm supplied by the Gno runtime
 func init(cur realm) {
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6, tokenID, cur)
 	userTeller = privateLedger.CallerTeller()

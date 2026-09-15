@@ -49,13 +49,6 @@ func (g *floatGen) String() string {
 	return ufmt.Sprintf("%s()", g.kind)
 }
 
-// value generates a floating-point value with the configured precision and bounds.
-//
-// Parameters:
-//   - t: Test state providing the bit stream used to choose the sign, exponent, and significand.
-//
-// Returns:
-//   - any: A float32 when this generator is configured for 32-bit values, otherwise a float64, within the configured range.
 func (g *floatGen) value(t *T) any {
 	if g.is32 {
 		sign, e, si, sf := genFloatRange(t.s, g.min, g.max, float32SignifBits)
@@ -171,14 +164,6 @@ func Float64Range(min float64, max float64) *Generator {
 	})
 }
 
-// ufloatFracBits computes how many low significand bits are fractional at exponent e.
-//
-// Parameters:
-//   - e: Unbiased exponent of the nonnegative floating-point magnitude.
-//   - signifBits: Number of significand fraction bits in the target format.
-//
-// Returns:
-//   - uint: Number of significand bits retained as the fractional portion; it is signifBits for nonpositive e and zero once e reaches signifBits.
 func ufloatFracBits(e int32, signifBits uint) uint {
 	if e <= 0 {
 		return signifBits
@@ -188,15 +173,6 @@ func ufloatFracBits(e int32, signifBits uint) uint {
 	return 0
 }
 
-// ufloat32Parts decomposes a nonnegative float32 magnitude into its exponent and significand components.
-//
-// Parameters:
-//   - f: Float32 magnitude to decompose; the sign bit is discarded.
-//
-// Returns:
-//   - e: Unbiased exponent component.
-//   - si: Integer portion of the significand after shifting away fractional bits.
-//   - sf: Low fractional significand bits, masked to the precision required by e.
 func ufloat32Parts(f float32) (int32, uint64, uint64) {
 	u := math.Float32bits(f) & math.MaxInt32
 
@@ -207,15 +183,6 @@ func ufloat32Parts(f float32) (int32, uint64, uint64) {
 	return e, s >> n, s & bitmask64(n)
 }
 
-// ufloat64Parts decomposes a nonnegative float64 magnitude into its exponent and significand components.
-//
-// Parameters:
-//   - f: Float64 magnitude to decompose; the sign bit is discarded.
-//
-// Returns:
-//   - e: Unbiased exponent component.
-//   - si: Integer portion of the significand after shifting away fractional bits.
-//   - sf: Low fractional significand bits, masked to the precision required by e.
 func ufloat64Parts(f float64) (int32, uint64, uint64) {
 	u := math.Float64bits(f) & math.MaxInt64
 
@@ -226,15 +193,6 @@ func ufloat64Parts(f float64) (int32, uint64, uint64) {
 	return e, s >> n, s & bitmask64(n)
 }
 
-// ufloat32FromParts reconstructs a nonnegative float32 magnitude from its components.
-//
-// Parameters:
-//   - e: Unbiased exponent component.
-//   - si: Integer significand component.
-//   - sf: Fractional significand bits for the exponent's remaining precision.
-//
-// Returns:
-//   - float32: The reconstructed nonnegative float32 magnitude.
 func ufloat32FromParts(e int32, si uint64, sf uint64) float32 {
 	e_ := (uint32(e) + uint32(bitmask64(float32ExpBits-1))) << float32SignifBits
 	s_ := (uint32(si) << ufloatFracBits(e, float32SignifBits)) | uint32(sf)
@@ -242,15 +200,6 @@ func ufloat32FromParts(e int32, si uint64, sf uint64) float32 {
 	return math.Float32frombits(e_ | s_)
 }
 
-// ufloat64FromParts reconstructs a nonnegative float64 magnitude from its components.
-//
-// Parameters:
-//   - e: Unbiased exponent component.
-//   - si: Integer significand component.
-//   - sf: Fractional significand bits for the exponent's remaining precision.
-//
-// Returns:
-//   - float64: The reconstructed nonnegative float64 magnitude.
 func ufloat64FromParts(e int32, si uint64, sf uint64) float64 {
 	e_ := (uint64(e) + bitmask64(float64ExpBits-1)) << float64SignifBits
 	s_ := (si << ufloatFracBits(e, float64SignifBits)) | sf
@@ -258,16 +207,6 @@ func ufloat64FromParts(e int32, si uint64, sf uint64) float64 {
 	return math.Float64frombits(e_ | s_)
 }
 
-// float32FromParts reconstructs a float32 value and applies its sign.
-//
-// Parameters:
-//   - sign: True to negate the reconstructed magnitude; false to leave it nonnegative.
-//   - e: Unbiased exponent component.
-//   - si: Integer significand component.
-//   - sf: Fractional significand bits for the exponent's remaining precision.
-//
-// Returns:
-//   - float32: The float32 value represented by the supplied sign, exponent, and significand components.
 func float32FromParts(sign bool, e int32, si uint64, sf uint64) float32 {
 	f := ufloat32FromParts(e, si, sf)
 	if sign {
@@ -276,16 +215,6 @@ func float32FromParts(sign bool, e int32, si uint64, sf uint64) float32 {
 	return f
 }
 
-// float64FromParts reconstructs a float64 value and applies its sign.
-//
-// Parameters:
-//   - sign: True to negate the reconstructed magnitude; false to leave it nonnegative.
-//   - e: Unbiased exponent component.
-//   - si: Integer significand component.
-//   - sf: Fractional significand bits for the exponent's remaining precision.
-//
-// Returns:
-//   - float64: The float64 value represented by the supplied sign, exponent, and significand components.
 func float64FromParts(sign bool, e int32, si uint64, sf uint64) float64 {
 	f := ufloat64FromParts(e, si, sf)
 	if sign {
@@ -294,18 +223,6 @@ func float64FromParts(sign bool, e int32, si uint64, sf uint64) float64 {
 	return f
 }
 
-// genUfloatRange generates nonnegative floating-point components within an inclusive magnitude range.
-//
-// Parameters:
-//   - s: Bit stream supplying the random choices for exponent and significand.
-//   - min: Nonnegative inclusive lower bound for the magnitude.
-//   - max: Inclusive upper bound for the magnitude; it must be at least min.
-//   - signifBits: Significand precision selector: 23 uses float32 decomposition, while other values use float64 decomposition.
-//
-// Returns:
-//   - e: Unbiased exponent of the generated magnitude.
-//   - si: Integer significand component of the generated magnitude.
-//   - sf: Fractional significand bits of the generated magnitude.
 func genUfloatRange(s bitStream, min float64, max float64, signifBits uint) (int32, uint64, uint64) {
 	assert(min >= 0 && min <= max)
 
@@ -375,19 +292,6 @@ func genUfloatRange(s bitStream, min float64, max float64, signifBits uint) (int
 	return int32(e), si, sf
 }
 
-// genFloatRange generates signed floating-point components within an inclusive range.
-//
-// Parameters:
-//   - s: Bit stream supplying the random sign, exponent, and significand choices.
-//   - min: Inclusive lower bound for the generated value.
-//   - max: Inclusive upper bound for the generated value.
-//   - signifBits: Significand precision selector: 23 generates float32 components, while other values generate float64 components.
-//
-// Returns:
-//   - sign: True when the generated value is negative, false when it is nonnegative.
-//   - e: Unbiased exponent of the generated magnitude.
-//   - si: Integer significand component of the generated magnitude.
-//   - sf: Fractional significand bits of the generated magnitude.
 func genFloatRange(s bitStream, min float64, max float64, signifBits uint) (bool, int32, uint64, uint64) {
 	var posMin, negMin, pNeg float64
 	if min >= 0 {

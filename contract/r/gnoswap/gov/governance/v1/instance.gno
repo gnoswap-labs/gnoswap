@@ -101,26 +101,10 @@ func (g *governanceV1) getConfig(version int64) (governance.Config, bool) {
 	return g.store.GetConfig(version)
 }
 
-// setConfig persists a governance configuration under a version key.
-//
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0 for the forwarded store write
-//   - rlm: propagated current realm context validated before the configuration store write
-//   - version: version key under which the configuration is stored
-//   - config: governance configuration value to persist
-//
-// Returns:
-//   - error: nil when persisted; otherwise the store error, including an invalid realm context
 func (g *governanceV1) setConfig(_ int, rlm realm, version int64, config governance.Config) error {
 	return g.store.SetConfig(0, rlm, version, config)
 }
 
-// getCurrentConfig retrieves the configuration referenced by the current
-// configuration counter.
-//
-// Returns:
-//   - governance.Config: current persisted configuration, or the zero value when the counter's version is absent
-//   - bool: true when the current version has a stored configuration; false otherwise
 func (g *governanceV1) getCurrentConfig() (governance.Config, bool) {
 	return g.getConfig(g.getCurrentConfigVersion())
 }
@@ -143,27 +127,10 @@ func (g *governanceV1) getProposal(id int64) (*governance.Proposal, bool) {
 	return proposal, true
 }
 
-// activeProposalSnapshotKey builds the sortable index key for an active proposal.
-// The key orders first by the proposal's snapshot timestamp and then by ID.
-//
-// Parameters:
-//   - proposal: proposal whose snapshot timestamp and ID form the index key
-//
-// Returns:
-//   - string: encoded snapshot-time-and-proposal-ID key used by the active proposal index
 func activeProposalSnapshotKey(proposal *governance.Proposal) string {
 	return utils.EncodeUint64(uint64(proposal.SnapshotTime())) + utils.EncodeUint64(uint64(proposal.ID()))
 }
 
-// addProposal stores a proposal and indexes it by active snapshot and proposer.
-//
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0 for the forwarded store writes
-//   - rlm: propagated current realm context validated by each store write
-//   - proposal: proposal to store and add to the active and per-user indexes
-//
-// Returns:
-//   - bool: true when all proposal and index writes succeed; false when any store write fails
 func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Proposal) bool {
 	// Set the proposal (ID already set in proposal)
 	err := g.store.SetProposal(0, rlm, proposal.ID(), proposal)
@@ -296,16 +263,6 @@ func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (*bptree.BPT
 	return g.store.GetProposalVotingInfos(proposalID)
 }
 
-// updateProposalUserVotes persists the per-user voting-info tree for a proposal.
-//
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0 for the forwarded store write
-//   - rlm: propagated current realm context validated before persisting voting information
-//   - proposal: proposal whose ID identifies the voting-info tree
-//   - userVotingInfos: address-keyed voting information tree to persist
-//
-// Returns:
-//   - error: nil when voting information is persisted; otherwise the store write error
 func (g *governanceV1) updateProposalUserVotes(_ int, rlm realm, proposal *governance.Proposal, userVotingInfos *bptree.BPTree) error {
 	return g.store.SetProposalVotingInfos(0, rlm, proposal.ID(), userVotingInfos)
 }
@@ -327,16 +284,6 @@ func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 	return proposal
 }
 
-// getProposalUserVotingInfo retrieves one user's voting information for a
-// proposal.
-//
-// Parameters:
-//   - proposalID: proposal identifier whose voting-info tree is searched
-//   - addr: address whose voting record is requested
-//
-// Returns:
-//   - governance.VotingInfo: stored voting record, or the default unvoted value when absent or incorrectly typed
-//   - bool: true when a stored value exists with the expected VotingInfo type; false when the tree or record is absent or invalid
 func (g *governanceV1) getProposalUserVotingInfo(proposalID int64, addr address) (governance.VotingInfo, bool) {
 	votingInfosTree, exists := g.getProposalUserVotingInfos(proposalID)
 	if !exists {

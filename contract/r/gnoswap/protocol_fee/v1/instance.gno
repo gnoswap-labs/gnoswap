@@ -8,10 +8,6 @@ type protocolFeeV1 struct {
 	store protocol_fee.IProtocolFeeStore
 }
 
-// getProtocolFeeState creates a state view backed by this implementation's protocol-fee store.
-//
-// Returns:
-//   - state: A protocolFeeState wrapper that reads and writes through pf.store.
 func (pf *protocolFeeV1) getProtocolFeeState() *protocolFeeState {
 	return NewProtocolFeeStateBy(pf.store)
 }

@@ -251,13 +251,6 @@ func (params ImageParams) generateSVG(tid grc721.TokenID) string {
 		clipID + svgTemplate[10]
 }
 
-// svgIDSuffix returns the token-specific suffix used in generated SVG IDs.
-//
-// Parameters:
-//   - tid: token identifier incorporated into the suffix
-//
-// Returns:
-//   - suffix: "gnft_" followed by the string form of tid
 func svgIDSuffix(tid grc721.TokenID) string {
 	return "gnft_" + string(tid)
 }

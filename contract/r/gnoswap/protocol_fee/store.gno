@@ -511,10 +511,6 @@ func (s *protocolFeeStore) InitializeReservedTokens(_ int, rlm realm) error {
 	return s.kvStore.Set(0, rlm, StoreKeyReservedTokens.String(), NewBPTreeN(16))
 }
 
-// getReservedTokenTree reads the reserved-token index tree.
-//
-// Returns:
-//   - tree: The BP-tree containing token paths collected for later distribution; the method panics if the store value is absent or has the wrong type.
 func (s *protocolFeeStore) getReservedTokenTree() *bptree.BPTree {
 	reservedTokens, err := s.kvStore.GetBPTree(StoreKeyReservedTokens.String())
 	if err != nil {
@@ -675,10 +671,6 @@ func (s *protocolFeeStore) InitializeAccrualBuckets(_ int, rlm realm) error {
 	return s.kvStore.Set(0, rlm, StoreKeyAccrualBuckets.String(), NewBPTreeN(16))
 }
 
-// getAccrualBucketTree reads the top-level token-to-epoch bucket tree.
-//
-// Returns:
-//   - tree: The BP-tree containing per-token accrual bucket trees; the method panics if the store value is absent or has the wrong type.
 func (s *protocolFeeStore) getAccrualBucketTree() *bptree.BPTree {
 	accrualBuckets, err := s.kvStore.GetBPTree(StoreKeyAccrualBuckets.String())
 	if err != nil {
@@ -688,14 +680,6 @@ func (s *protocolFeeStore) getAccrualBucketTree() *bptree.BPTree {
 	return accrualBuckets
 }
 
-// getTokenAccrualBucketTree gets the epoch bucket tree for one token.
-//
-// Parameters:
-//   - accrualBuckets: Top-level tree mapping token paths to their epoch bucket trees.
-//   - tokenPath: Token path whose epoch bucket tree should be retrieved.
-//
-// Returns:
-//   - tree: The token's epoch-to-amount BP-tree, or nil when tokenPath has no buckets; the method panics when the stored value has the wrong type.
 func (s *protocolFeeStore) getTokenAccrualBucketTree(accrualBuckets *bptree.BPTree, tokenPath string) *bptree.BPTree {
 	result := accrualBuckets.Get(tokenPath)
 	if result == nil {
@@ -846,10 +830,6 @@ func (s *protocolFeeStore) InitializeAccrualPendingTokens(_ int, rlm realm) erro
 	return s.kvStore.Set(0, rlm, StoreKeyAccrualPendingTokens.String(), NewBPTreeN(16))
 }
 
-// getAccrualPendingTokenTree reads the pending-token index tree.
-//
-// Returns:
-//   - tree: The BP-tree containing token paths with at least one pending bucket; the method panics if the store value is absent or has the wrong type.
 func (s *protocolFeeStore) getAccrualPendingTokenTree() *bptree.BPTree {
 	accrualPendingTokens, err := s.kvStore.GetBPTree(StoreKeyAccrualPendingTokens.String())
 	if err != nil {
@@ -914,13 +894,6 @@ func (s *protocolFeeStore) RemoveAccrualPendingToken(_ int, rlm realm, tokenPath
 	return s.kvStore.Set(0, rlm, StoreKeyAccrualPendingTokens.String(), accrualPendingTokens)
 }
 
-// collectTreeKeys returns every key in a BP-tree.
-//
-// Parameters:
-//   - tree: BP-tree whose keys should be collected.
-//
-// Returns:
-//   - keys: All keys visited in BP-tree iteration order.
 func collectTreeKeys(tree *bptree.BPTree) []string {
 	keys := make([]string, 0, tree.Size())
 	tree.Iterate("", "", func(key string, _ any) bool {
@@ -931,13 +904,6 @@ func collectTreeKeys(tree *bptree.BPTree) []string {
 	return keys
 }
 
-// encodeEpochKey converts a non-negative accrual epoch to the ordered tree-key encoding.
-//
-// Parameters:
-//   - epoch: Non-negative epoch number to encode; a negative value causes a panic.
-//
-// Returns:
-//   - key: Uint64 encoding of epoch suitable for lexicographic BP-tree iteration.
 func encodeEpochKey(epoch int64) string {
 	if epoch < 0 {
 		panic(ufmt.Sprintf("negative epoch not supported: %d", epoch))
@@ -946,13 +912,6 @@ func encodeEpochKey(epoch int64) string {
 	return utils.EncodeUint64(uint64(epoch))
 }
 
-// decodeEpochKey converts an encoded accrual epoch tree key back to int64.
-//
-// Parameters:
-//   - key: Uint64-encoded epoch key produced by encodeEpochKey.
-//
-// Returns:
-//   - epoch: Decoded accrual epoch number.
 func decodeEpochKey(key string) int64 {
 	return gnsmath.SafeUint64ToInt64(utils.DecodeUint64(key))
 }

@@ -41,22 +41,12 @@ type TestingT interface {
 	Logf(format string, args ...any)
 }
 
-// assert panics with an assertion failure when ok is false.
-//
-// Parameters:
-//   - ok: Condition that must be true for execution to continue.
 func assert(ok bool) {
 	if !ok {
 		panic("assertion failed")
 	}
 }
 
-// assertf panics with a formatted assertion failure when ok is false.
-//
-// Parameters:
-//   - ok: Condition that must be true for execution to continue.
-//   - format: Format string for the assertion failure message.
-//   - args: Values substituted into format when the assertion fails.
 func assertf(ok bool, format string, args ...any) {
 	if !ok {
 		panic(ufmt.Sprintf(format, args...))
@@ -76,14 +66,6 @@ type T struct {
 	failed   stopTest
 }
 
-// newT creates a property-test state around the supplied bit stream.
-//
-// Parameters:
-//   - s: Bit stream used to generate values for this test state.
-//   - refDraws: Optional reference values retained for draw bookkeeping; the current Gno implementation does not compare them.
-//
-// Returns:
-//   - *T: A test state initialized with s, refDraws, and no draws or failure.
 func newT(s bitStream, refDraws ...any) *T {
 	return &T{
 		s:        s,
@@ -202,19 +184,10 @@ func (t *T) Failed() bool {
 	return t.failed != ""
 }
 
-// skip marks the current test case as invalid by panicking with invalidData.
-//
-// Parameters:
-//   - msg: Explanation attached to the invalid-data panic.
 func (t *T) skip(msg string) {
 	panic(invalidData(msg))
 }
 
-// fail records msg as a test failure and optionally stops execution.
-//
-// Parameters:
-//   - now: Whether to panic immediately after recording the failure; false leaves execution running.
-//   - msg: Failure message recorded on the test state and, when now is true, propagated by the panic.
 func (t *T) fail(now bool, msg string) {
 	t.failed = stopTest(msg)
 	if now {
@@ -222,7 +195,6 @@ func (t *T) fail(now bool, msg string) {
 	}
 }
 
-// failOnError panics with the recorded failure when t has been marked failed.
 func (t *T) failOnError() {
 	if t.failed != "" {
 		panic(t.failed)

@@ -28,25 +28,10 @@ func (g *customGen) String() string {
 	return "Custom"
 }
 
-// value invokes the custom callback, retrying attempts that report invalid data.
-//
-// Parameters:
-//   - t: Test state whose bit stream is passed to the custom callback.
-//
-// Returns:
-//   - any: The first value produced by a successful callback attempt; panics with invalidData if all retry attempts fail.
 func (g *customGen) value(t *T) any {
 	return find(g.maybeValue, t, small)
 }
 
-// maybeValue runs one custom generator attempt and converts invalidData panics into a failed attempt.
-//
-// Parameters:
-//   - t: Test state providing the bit stream used by the callback.
-//
-// Returns:
-//   - any: The callback-produced value when the attempt completes successfully; zero when the callback reports invalid data.
-//   - bool: True when the callback completes, or false when an invalidData panic is recovered and the attempt should be retried.
 func (g *customGen) maybeValue(t *T) (any, bool) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -110,13 +95,6 @@ func (g *deferredGen) String() string {
 	return "Deferred"
 }
 
-// value initializes the deferred generator on first use and delegates value generation to it.
-//
-// Parameters:
-//   - t: Test state whose bit stream is consumed by the lazily created generator.
-//
-// Returns:
-//   - any: The value produced by the generator returned by the deferred callback.
 func (g *deferredGen) value(t *T) any {
 	if g.g == nil {
 		g.g = g.fn()
@@ -151,13 +129,6 @@ func (g *mappedGen) String() string {
 	return ufmt.Sprintf("Map(%v, ...)", g.g)
 }
 
-// value draws one source value and applies the mapping callback to it.
-//
-// Parameters:
-//   - t: Test state used when drawing the source generator's value.
-//
-// Returns:
-//   - any: The value returned by the mapping callback for the source value.
 func (g *mappedGen) value(t *T) any {
 	return g.fn(g.g.value(t))
 }
@@ -204,13 +175,6 @@ func (g *sampledGen) String() string {
 	return ufmt.Sprintf("SampledFrom(%v items)", len(g.slice))
 }
 
-// value selects one candidate from the sampled slice using the test state's bit stream.
-//
-// Parameters:
-//   - t: Test state providing randomness for selecting a candidate.
-//
-// Returns:
-//   - any: The selected element of the generator's non-empty candidate slice.
 func (g *sampledGen) value(t *T) any {
 	i := genIndex(t.s, len(g.slice), true)
 	return g.slice[i]
@@ -244,13 +208,6 @@ func (g *permGen) String() string {
 	return ufmt.Sprintf("Permutation(%v items)", len(g.slice))
 }
 
-// value returns a shuffled copy of the configured slice.
-//
-// Parameters:
-//   - t: Test state whose bit stream determines the permutation.
-//
-// Returns:
-//   - any: A new []any containing the same elements as the source slice in a generated permutation; the source slice is not modified.
 func (g *permGen) value(t *T) any {
 	result := make([]any, len(g.slice))
 	copy(result, g.slice)
@@ -301,13 +258,6 @@ func (g *oneOfGen) String() string {
 	return ufmt.Sprintf("OneOf(%v)", strings.Join(strs, ", "))
 }
 
-// value selects one configured generator and delegates the draw to it.
-//
-// Parameters:
-//   - t: Test state providing randomness and bookkeeping for the selected generator.
-//
-// Returns:
-//   - any: The value produced by the selected generator.
 func (g *oneOfGen) value(t *T) any {
 	i := genIndex(t.s, len(g.gens), true)
 	return g.gens[i].value(t)

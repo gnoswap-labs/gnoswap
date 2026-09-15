@@ -27,18 +27,10 @@ const (
 	defaultUnlocked = true
 )
 
-// init registers the pool v1 initializer with the runtime-supplied realm context.
-//
-// Parameters:
-//   - cur: realm context supplied by the runtime; it is crossed into pool registration.
 func init(cur realm) {
 	registerPoolV1(cur)
 }
 
-// registerPoolV1 registers the pool v1 store initializer using the supplied realm context.
-//
-// Parameters:
-//   - cur: current realm context used to cross into the pool store initializer.
 func registerPoolV1(cur realm) {
 	pool.RegisterInitializer(cross(cur), func(_ int, rlm realm, poolStore pool.IPoolStore) pool.IPool {
 		access.AssertIsRlmCurrent(0, rlm)
@@ -56,15 +48,6 @@ func registerPoolV1(cur realm) {
 	})
 }
 
-// initStoreData initializes missing pool storage and default configuration.
-//
-// Parameters:
-//   - _: interrealm call discriminator; callers pass 0.
-//   - rlm: forwarded realm context used for store writes.
-//   - poolStore: pool storage interface receiving trees, fees, balances, hooks, and defaults.
-//
-// Returns:
-//   - error: nil when all required state is initialized or already valid; non-nil when a store write or observation validation fails.
 func initStoreData(_ int, rlm realm, poolStore pool.IPoolStore) error {
 	if !poolStore.HasPools() {
 		err := poolStore.SetPools(0, rlm, pool.NewPoolsTree())

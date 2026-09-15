@@ -193,13 +193,6 @@ func (p *Position) IsClear() bool {
 	return isZeroStr(p.liquidity) && p.tokensOwed0 == 0 && p.tokensOwed1 == 0
 }
 
-// isZeroStr reports whether a stored decimal string uses either supported zero representation.
-//
-// Parameters:
-//   - s: decimal string to compare with the empty and canonical zero representations
-//
-// Returns:
-//   - isZero: true only when s is empty or exactly "0"
 func isZeroStr(s string) bool {
 	return s == "" || s == "0"
 }

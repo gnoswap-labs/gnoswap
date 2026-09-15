@@ -5,10 +5,6 @@ const zeroAddress = address("")
 // selfAddress is cached at package initialization to ensure consistent comparison.
 var selfAddress address
 
-// init caches the referral realm's own address for removal-sentinel checks.
-//
-// Parameters:
-//   - cur: initialization realm supplied by the Gno runtime
 func init(cur realm) {
 	selfAddress = cur.Address()
 }

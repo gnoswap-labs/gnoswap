@@ -303,14 +303,6 @@ func (self *PoolResolver) CurrentReward(currentTime int64) (reward int64) {
 	return reward
 }
 
-// isChangedTick reports whether the supplied tick differs from the latest recorded historical tick.
-//
-// Parameters:
-//   - currentTime: Unix timestamp used to find the latest historical tick.
-//   - currentTick: Tick value to compare with the stored historical value.
-//
-// Returns:
-//   - changed: True when no historical tick exists or the latest tick differs from currentTick.
 func (self *PoolResolver) isChangedTick(currentTime int64, currentTick int32) bool {
 	if self.HistoricalTick().Size() == 0 {
 		return true
@@ -350,14 +342,6 @@ func (self *PoolResolver) cacheReward(currentTime int64, currentTierReward int64
 	}
 }
 
-// calculateGlobalRewardRatioAccumulation derives the pool's global reward-ratio accumulation at a time and liquidity value.
-//
-// Parameters:
-//   - currentTime: Unix timestamp at which elapsed reward ratio is evaluated; times before the latest checkpoint panic.
-//   - currentStakedLiquidity: Staked liquidity denominator for elapsed accrual; zero liquidity preserves the prior accumulation.
-//
-// Returns:
-//   - accumulation: Q128-scaled global reward-ratio accumulation including elapsed time when liquidity is positive.
 func (self *PoolResolver) calculateGlobalRewardRatioAccumulation(currentTime int64, currentStakedLiquidity *u256.Uint) *u256.Uint {
 	oldAccTime, oldAccStr := self.CurrentGlobalRewardRatioAccumulation(currentTime)
 	timeDiff := gnsmath.SafeSubInt64(currentTime, oldAccTime)

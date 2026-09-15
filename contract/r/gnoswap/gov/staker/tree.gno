@@ -114,14 +114,6 @@ func (self *UintTree) Size() int {
 	return self.tree.Size()
 }
 
-// encodeInt64 converts a non-negative int64 key to the ordered uint64-compatible
-// string representation used by UintTree.
-//
-// Parameters:
-//   - num: non-negative int64 key to encode; a negative value panics
-//
-// Returns:
-//   - string: ordered string encoding of num
 func encodeInt64(num int64) string {
 	if num < 0 {
 		panic(ufmt.Sprintf("negative value not supported: %d", num))
@@ -129,13 +121,6 @@ func encodeInt64(num int64) string {
 	return utils.EncodeUint64(uint64(num))
 }
 
-// decodeInt64 converts an encoded uint64-compatible tree key back to int64.
-//
-// Parameters:
-//   - s: ordered string representation produced by encodeInt64
-//
-// Returns:
-//   - int64: decoded tree key
 func decodeInt64(s string) int64 {
 	return gnsmath.SafeUint64ToInt64(utils.DecodeUint64(s))
 }

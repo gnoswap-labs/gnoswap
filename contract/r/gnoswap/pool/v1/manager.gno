@@ -209,13 +209,6 @@ func (i *poolV1) setFeeAmountTickSpacing(_ int, rlm realm, fee uint32, tickSpaci
 	return i.store.SetFeeAmountTickSpacing(0, rlm, feeAmountTickSpacing)
 }
 
-// Parameters:
-//   - poolPath: canonical pool identifier to retrieve.
-//
-// Returns:
-//   - pool: stored pool instance when poolPath exists and has the expected type.
-//   - err: descriptive error when the pool is absent or cannot be cast to
-//     *pl.Pool.
 func (i *poolV1) getPool(poolPath string) (*pl.Pool, error) {
 	pools := i.store.GetPools()
 
@@ -247,25 +240,11 @@ func (i *poolV1) mustGetPool(poolPath string) (pool *pl.Pool) {
 	return p
 }
 
-// Parameters:
-//   - token0Path: first token contract path used to derive a canonical pool path.
-//   - token1Path: second token contract path used to derive a canonical pool path.
-//   - fee: fee tier included in the derived pool path.
-//
-// Returns:
-//   - pool: stored pool for the derived path; panics with errDataNotFound when it
-//     does not exist.
 func (i *poolV1) mustGetPoolBy(token0Path, token1Path string, fee uint32) *pl.Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	return i.mustGetPool(poolPath)
 }
 
-// Parameters:
-//   - poolPath: canonical pool identifier whose observation tree is retrieved.
-//
-// Returns:
-//   - observations: stored observation tree for poolPath.
-//   - err: descriptive error when the tree is absent or has the wrong type.
 func (i *poolV1) getObservations(poolPath string) (*pl.ObservationTree, error) {
 	observations := i.store.GetObservations()
 	value := observations.Get(poolPath)
@@ -281,12 +260,6 @@ func (i *poolV1) getObservations(poolPath string) (*pl.ObservationTree, error) {
 	return tree, nil
 }
 
-// Parameters:
-//   - poolPath: canonical pool identifier whose observation tree is retrieved.
-//
-// Returns:
-//   - observations: stored observation tree; panics with errDataNotFound when
-//     lookup fails.
 func (i *poolV1) mustGetObservations(poolPath string) *pl.ObservationTree {
 	tree, err := i.getObservations(poolPath)
 	if err != nil {

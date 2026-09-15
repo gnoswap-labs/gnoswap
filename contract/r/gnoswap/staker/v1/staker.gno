@@ -1430,13 +1430,6 @@ func (s *stakerV1) UnStakeToken(_ int, rlm realm, positionId uint64) string { //
 	return poolPath
 }
 
-// applyUnStake removes a position's liquidity from pool reward tracking and deletes its deposit record.
-//
-// Parameters:
-//   - positionId: LP position NFT ID whose staked liquidity and deposit record should be removed.
-//
-// Returns:
-//   - err: Non-nil when the deposit's pool is absent or the position-range lookup fails; nil after tracking and storage are updated.
 func (s *stakerV1) applyUnStake(positionId uint64) error {
 	deposit := s.getDeposits().get(positionId)
 	depositResolver := NewDepositResolver(deposit)
@@ -1514,13 +1507,6 @@ func tokenHasLiquidity(positionId uint64) error {
 	return nil
 }
 
-// getLiquidity loads the liquidity amount of an LP position.
-//
-// Parameters:
-//   - positionId: LP position NFT ID whose liquidity should be loaded.
-//
-// Returns:
-//   - liquidity: Position liquidity as a uint256 value; position lookup or decimal conversion failures panic.
 func getLiquidity(positionId uint64) *u256.Uint {
 	liquidity, err := pn.GetPositionLiquidity(positionId)
 	if err != nil {
@@ -1530,14 +1516,6 @@ func getLiquidity(positionId uint64) *u256.Uint {
 	return u256.MustFromDecimal(liquidity)
 }
 
-// getTickOf loads and validates the signed tick range of an LP position.
-//
-// Parameters:
-//   - positionId: LP position NFT ID whose lower and upper ticks should be loaded.
-//
-// Returns:
-//   - tickLower: Lower signed tick boundary of the position's range.
-//   - tickUpper: Upper signed tick boundary of the position's range.
 func getTickOf(positionId uint64) (int32, int32) {
 	tickLower, err := pn.GetPositionTickLower(positionId)
 	if err != nil {

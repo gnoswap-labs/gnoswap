@@ -57,13 +57,6 @@ func (g *runeGen) String() string {
 	return ufmt.Sprintf("Rune(%v runes, %v tables)", len(g.runes), len(g.tables))
 }
 
-// value samples one rune from the configured explicit rune list or expanded Unicode tables.
-//
-// Parameters:
-//   - t: Fuzzing context whose bit stream selects a source and rune index.
-//
-// Returns:
-//   - value: A rune selected from the configured rune sources.
 func (g *runeGen) value(t *T) any {
 	n := g.die.roll(t.s)
 
@@ -97,15 +90,6 @@ func RuneFrom(runes []rune, tables ...*unicode.RangeTable) *Generator {
 	return runesFrom(false, runes, tables...)
 }
 
-// runesFrom validates the rune sources, expands Unicode tables, and builds the weighted rune generator.
-//
-// Parameters:
-//   - default_: Whether String should identify this generator as the package default Rune generator.
-//   - runes: Explicit rune values used as one weighted source; may be empty when tables are supplied.
-//   - tables: Unicode range tables expanded into candidate rune lists; may be empty when runes are supplied.
-//
-// Returns:
-//   - generator: Generator configured with the validated and expanded rune sources.
 func runesFrom(default_ bool, runes []rune, tables ...*unicode.RangeTable) *Generator {
 	if len(tables) == 0 {
 		assertf(len(runes) > 0, "at least one rune should be specified")
@@ -155,13 +139,6 @@ func (g *stringGen) String() string {
 	return ufmt.Sprintf("StringN(minRunes=%v, maxRunes=%v, maxLen=%v)", g.minRunes, g.maxRunes, g.maxLen)
 }
 
-// value generates a UTF-8 string by repeatedly sampling the configured rune generator.
-//
-// Parameters:
-//   - t: Fuzzing context whose bit stream supplies runes and repetition decisions.
-//
-// Returns:
-//   - value: UTF-8 string satisfying the configured rune-count and maximum byte-length constraints.
 func (g *stringGen) value(t *T) any {
 	repeat := newRepeat(g.minRunes, g.maxRunes, -1, "rune")
 
@@ -241,13 +218,6 @@ func StringOfN(elem *Generator, minRunes int, maxRunes int, maxLen int) *Generat
 	})
 }
 
-// expandRangeTable enumerates every rune represented by a Unicode range table.
-//
-// Parameters:
-//   - t: Unicode range table whose R16 and R32 ranges are expanded.
-//
-// Returns:
-//   - runes: All runes from t in range order, including each range's stride.
 func expandRangeTable(t *unicode.RangeTable) []rune {
 	n := 0
 	for _, r := range t.R16 {

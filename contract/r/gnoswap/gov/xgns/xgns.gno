@@ -24,10 +24,6 @@ var (
 	ledger *grc20.PrivateLedger
 )
 
-// init creates the xGNS token and private ledger for the runtime realm.
-//
-// Parameters:
-//   - cur: runtime-supplied realm context used to initialize the token ledger.
 func init(cur realm) {
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6, tokenID, cur)
 }
@@ -133,10 +129,6 @@ func SupplyInfo() (totalIssued, issuedByDelegate, issuedByDepositGns int64, err 
 	return totalIssued, issuedByDelegate, issuedByDepositGns, nil
 }
 
-// checkErr panics when err is non-nil.
-//
-// Parameters:
-//   - err: token-ledger operation error to check; nil indicates success.
 func checkErr(err error) {
 	if err != nil {
 		panic(err)

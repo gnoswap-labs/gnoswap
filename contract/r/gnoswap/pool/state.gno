@@ -53,19 +53,6 @@ func init(cur realm) {
 	implementation = nil
 }
 
-// initializeDomainStore wraps the shared key-value store in the pool-specific
-// storage interface used by each pool implementation.
-//
-// Parameters:
-//   - _: Leading integer discriminator for the forwarded realm call; callers
-//     pass 0.
-//   - rlm: Propagated realm context supplied to the implementation initializer;
-//     a later cross-realm call must use this current context.
-//   - kvStore: Shared key-value store containing state for all pool versions.
-//
-// Returns:
-//   - any: A *PoolStore wrapper around kvStore, returned through the generic
-//     version-manager factory interface.
 func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return NewPoolStore(kvStore)
 }
@@ -85,12 +72,6 @@ func getImplementation() IPool {
 	return implementation
 }
 
-// updateImplementation refreshes the proxy pointer from the version manager's
-// active implementation.
-//
-// Returns:
-//   - error: Nil after the active value is type-asserted to IPool and stored;
-//     non-nil when no implementation exists or the active value has another type.
 func updateImplementation() error {
 	result := versionManager.GetCurrentImplementation()
 	if result == nil {

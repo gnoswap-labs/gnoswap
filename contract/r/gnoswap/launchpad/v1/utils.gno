@@ -13,16 +13,6 @@ const (
 	MIN_INT64 = math.MinInt64
 )
 
-// buildConditionEventAttrs converts the aligned condition lists into event attributes.
-//
-// Parameters:
-//   - conditionTokens: `*PAD*`-separated condition token paths; empty produces no attributes.
-//   - conditionAmounts: `*PAD*`-separated minimum amounts aligned one-for-one with conditionTokens.
-//
-// The lists must have matching lengths; a missing amount causes an indexing panic.
-//
-// Returns:
-//   - attrs: alternating event-attribute keys and values for each condition; the value combines its token path and amount.
 func buildConditionEventAttrs(conditionTokens string, conditionAmounts string) []string {
 	if conditionTokens == "" {
 		return []string{}

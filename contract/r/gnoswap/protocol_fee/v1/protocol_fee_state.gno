@@ -328,14 +328,6 @@ func NewProtocolFeeStateBy(protocolFeeStore protocol_fee.IProtocolFeeStore) *pro
 	}
 }
 
-// retrieveAmount reads one int64 value from a BP-tree.
-//
-// Parameters:
-//   - tree: BP-tree containing token-keyed amount entries.
-//   - key: Tree key whose amount should be retrieved.
-//
-// Returns:
-//   - amount: Stored int64 amount for key, or zero when key is absent; the helper panics when the entry is not int64.
 func retrieveAmount(tree *bptree.BPTree, key string) int64 {
 	amountI := tree.Get(key)
 	if amountI == nil {

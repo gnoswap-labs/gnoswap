@@ -57,17 +57,6 @@ func (i *poolV1) GetPendingProtocolFees() map[string]int64 {
 	return i.store.GetPendingProtocolFees()
 }
 
-// addPendingProtocolFee adds a positive amount to the pending balance for one
-// token path when immediate settlement cannot occur.
-//
-// Parameters:
-//   - _: Leading integer discriminator for the forwarded realm call; callers
-//     pass 0.
-//   - rlm: Propagated realm context used for the pending-balance store write;
-//     the store validates that it is current.
-//   - tokenPath: Token contract path whose pending protocol fee is increased.
-//   - amount: Fee amount to add in token base units; non-positive values are
-//     ignored.
 func (i *poolV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if amount <= 0 {
 		return

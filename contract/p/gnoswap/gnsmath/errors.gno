@@ -25,14 +25,6 @@ const (
 	errSafeMathOverflow         = "safe_math: overflow"
 )
 
-// newErrorWithDetail formats an error message with contextual detail.
-//
-// Parameters:
-//   - errMsg: the base error message
-//   - detail: the contextual detail appended after the separator
-//
-// Returns:
-//   - message: the formatted string combining errMsg and detail with " || "
 func newErrorWithDetail(errMsg string, detail string) string {
 	return ufmt.Errorf("%s || %s", errMsg, detail).Error()
 }

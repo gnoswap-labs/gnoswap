@@ -29,13 +29,6 @@ func (g *boolGen) String() string {
 	return "Bool()"
 }
 
-// value draws one boolean from the active fuzzing state.
-//
-// Parameters:
-//   - t: active fuzzing state whose bit stream supplies one entropy bit.
-//
-// Returns:
-//   - value: the generated bool value, boxed as any.
 func (g *boolGen) value(t *T) any {
 	return t.s.drawBits(1) == 1
 }
@@ -85,13 +78,6 @@ func (g *integerGen) String() string {
 	return ufmt.Sprintf("%s()", g.kind)
 }
 
-// value samples an integer from the configured signed or unsigned bounds and converts it to the requested width.
-//
-// Parameters:
-//   - t: Fuzzing context whose bit stream supplies the integer sample.
-//
-// Returns:
-//   - value: Generated integer boxed as any, with the concrete type selected by signedness and bitSize.
 func (g *integerGen) value(t *T) any {
 	if g.signed {
 		i, _, _ := genIntRange(t.s, g.smin, g.smax, true)

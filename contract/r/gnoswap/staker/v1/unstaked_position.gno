@@ -120,12 +120,6 @@ func (s *stakerV1) addUncollectedIncentiveCount(incentiveId string, delta int64)
 	addUncollectedIncentiveCountTo(s.store.GetUncollectedIncentiveCounts(), incentiveId, delta)
 }
 
-// addUncollectedIncentiveCountTo applies a signed checkpoint-count change directly to counts.
-//
-// Parameters:
-//   - counts: B+ tree mapping external incentive IDs to outstanding checkpoint counts.
-//   - incentiveId: External incentive identifier whose count is changed.
-//   - delta: Signed count change; the resulting count must not be negative.
 func addUncollectedIncentiveCountTo(counts *bptree.BPTree, incentiveId string, delta int64) {
 	count := int64(0)
 	if value := counts.Get(incentiveId); value != nil {

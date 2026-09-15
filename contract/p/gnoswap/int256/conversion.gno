@@ -198,13 +198,6 @@ func (z *Int) SetString(s string) (*Int, error) {
 	return z, nil
 }
 
-// fromDecimal parses non-negative decimal digits into z.
-//
-// Parameters:
-//   - bs: the non-negative decimal digits to parse into z
-//
-// Returns:
-//   - err: nil when bs is parsed into z; otherwise the empty-input or digit-parsing error
 func (z *Int) fromDecimal(bs string) error {
 	z.Clear()
 	var (

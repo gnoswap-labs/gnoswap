@@ -143,15 +143,6 @@ func changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, gov
 	setDistributionBpsPct(GOV_STAKER, govStakerPct)
 }
 
-// calculateDistributableAmounts splits an amount across the configured distribution targets
-// and calculates the undistributed remainder after integer division.
-//
-// Parameters:
-//   - amount: total nonnegative GNS amount available for distribution, in token base units.
-//
-// Returns:
-//   - distributable: nonzero token amounts keyed by distribution target constant.
-//   - leftAmount: amount not assigned after applying each target's basis-point share.
 func calculateDistributableAmounts(amount int64) (map[int]int64, int64) {
 	distributable := make(map[int]int64, 0)
 	totalSent := int64(0)
@@ -197,15 +188,6 @@ func calculateAmount(amount, bptPct int64) int64 {
 	return amount * bptPct / 10000
 }
 
-// applyDistribution maps each distribution target to its configured recipient address and
-// updates the pending and historical totals for the target amounts.
-//
-// Parameters:
-//   - targets: token amounts keyed by distribution target constant.
-//
-// Returns:
-//   - amountByAddress: token amounts keyed by recipient address, aggregating amounts for a shared address.
-//   - error: nil when every target is recognized; otherwise an invalid-target error.
 func applyDistribution(targets map[int]int64) (map[address]int64, error) {
 	amountByAddress := make(map[address]int64, 0)
 
@@ -246,15 +228,6 @@ func applyDistribution(targets map[int]int64) (map[address]int64, error) {
 	return amountByAddress, nil
 }
 
-// transferToTarget forwards each recipient amount to the GNS token contract.
-//
-// Parameters:
-//   - _: leading integer discriminator for the realm-crossing ABI; pass 0.
-//   - rlm: propagated realm context used for the GNS transfer crossings.
-//   - targets: recipient addresses mapped to GNS amounts in token base units.
-//
-// Returns:
-//   - error: nil after all target transfers are invoked; this helper does not return per-transfer status.
 func transferToTarget(_ int, rlm realm, targets map[address]int64) error {
 	for address, amount := range targets {
 		gns.Transfer(cross(rlm), address, amount)

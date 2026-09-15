@@ -212,15 +212,6 @@ func (r *routerV1) executeCollectedSwaps(_ int, rlm realm, swapInfo []SingleSwap
 	return firstAmountIn, 0
 }
 
-// executeCollectedDrySwaps simulates collected exact-output hops in forward order.
-//
-// Parameters:
-//   - swapInfo: ordered hop parameters collected by collectBackwardDrySwapInfo
-//
-// Returns:
-//   - amountIn: input amount the first hop would consume
-//   - amountOut: output amount the final hop would produce
-//   - err: nil on successful simulation; full-consumption validation error otherwise (pool query failures panic)
 func (r *routerV1) executeCollectedDrySwaps(swapInfo []SingleSwapParams) (int64, int64, error) {
 	firstAmountIn := int64(0)
 

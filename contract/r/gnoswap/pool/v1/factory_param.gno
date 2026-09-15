@@ -84,9 +84,6 @@ func (p *poolCreateConfig) Token1Path() string { return p.token1Path }
 //   - fee: configured pool fee tier as a uint32 fee-unit value.
 func (p *poolCreateConfig) Fee() uint32 { return p.fee }
 
-// Returns:
-//   - err: nil after validating the price and canonicalizing token order; an
-//     error when the original or reciprocal square-root price is out of range.
 func (p *poolCreateConfig) update() error {
 	token0Path := p.token0Path
 	token1Path := p.token1Path
@@ -127,9 +124,6 @@ func (p *poolCreateConfig) isInOrder() bool {
 	return false
 }
 
-// Returns:
-//   - poolPath: pool identifier derived from the configuration's token paths and
-//     fee tier.
 func (p *poolCreateConfig) poolPath() string {
 	return pool.GetPoolPath(p.token0Path, p.token1Path, p.fee)
 }
@@ -152,11 +146,6 @@ func validateSqrtPriceX96(sqrtPriceX96 *u256.Uint) error {
 	return nil
 }
 
-// Parameters:
-//   - feeTier: fee tier to check against the four supported FeeTier constants.
-//
-// Returns:
-//   - valid: true only for FeeTier100, FeeTier500, FeeTier3000, or FeeTier10000.
 func isValidFeeTier(feeTier uint32) bool {
 	switch feeTier {
 	case FeeTier100, FeeTier500, FeeTier3000, FeeTier10000:
