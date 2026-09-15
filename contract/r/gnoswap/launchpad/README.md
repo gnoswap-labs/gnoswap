@@ -6,11 +6,17 @@ Token distribution platform for early-stage projects.
 
 Launchpad enables new projects to distribute tokens to GNS stakers with tiered lock periods and pro-rata reward distribution. For more details about the concept, check out [docs](https://docs.gnoswap.io/core-concepts/launchpad).
 
+## Gnoweb
+
+The root `Render("")` delegates to the active implementation and shows realm identity, halt flags, project-creation roles, stored record counts, the deposit ID counter, total staked GNS, and timing and deposit requirements. Deposit records include withdrawn deposits.
+
+GNS amounts use six-decimal base units; project rewards use their token's base units. Rendering reads stored counts and fixed configuration without traversing projects or deposits. Unsupported paths return `404`.
+
 ## Configuration
 
 - **Pool Tiers**: 30, 90, 180 days
 - **Minimum Start Delay**: 3 days
-- **Minimum Deposit Amount**: 1,000,000 GNS (must be a multiple of 1,000,000)
+- **Minimum Deposit Amount**: 1 GNS (1,000,000 base units; deposits must be a multiple of 1 GNS)
 - **Auto-delegation**: Staked GNS converts to xGNS
 - **Tier Allocation**: Customizable per project
 
