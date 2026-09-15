@@ -401,7 +401,8 @@ func TestStoreSetAndGetReservedTokens(cur realm, t *testing.T) {
 			name: "set and get reserved tokens successfully",
 			setupFn: func(cur realm, ps IProtocolFeeStore) {
 				ps.InitializeReservedTokens(0, cur)
-				ps.SetReservedTokens(0, cur, []string{"gno.land/r/demo/token1", "gno.land/r/demo/token2"})
+				ps.AddReservedToken(0, cur, "gno.land/r/demo/token1")
+				ps.AddReservedToken(0, cur, "gno.land/r/demo/token2")
 			},
 			testFn: func(cur realm, t *testing.T, ps IProtocolFeeStore) {
 				uassert.True(t, ps.HasReservedTokensStoreKey(), "should have reserved tokens after initializing")
@@ -427,10 +428,19 @@ func TestStoreSetAndGetReservedTokens(cur realm, t *testing.T) {
 			panicMessage: "should panic when getting uninitialized reserved tokens",
 		},
 		{
-			name: "error when setting nil reserved tokens",
+			name: "remove reserved token keeps the others",
+			setupFn: func(cur realm, ps IProtocolFeeStore) {
+				ps.InitializeReservedTokens(0, cur)
+				ps.AddReservedToken(0, cur, "gno.land/r/demo/token1")
+				ps.AddReservedToken(0, cur, "gno.land/r/demo/token2")
+			},
 			testFn: func(cur realm, t *testing.T, ps IProtocolFeeStore) {
-				err := ps.SetReservedTokens(0, cur, nil)
-				uassert.ErrorContains(t, err, "reservedTokens is nil")
+				uassert.NoError(t, ps.RemoveReservedToken(0, cur, "gno.land/r/demo/token1"))
+				uassert.False(t, ps.HasReservedToken("gno.land/r/demo/token1"))
+				uassert.True(t, ps.HasReservedToken("gno.land/r/demo/token2"))
+				retrieved := ps.GetReservedTokens()
+				uassert.Equal(t, 1, len(retrieved))
+				uassert.Equal(t, "gno.land/r/demo/token2", retrieved[0])
 			},
 		},
 	}

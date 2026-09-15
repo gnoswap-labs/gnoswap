@@ -1,157 +1,197 @@
 package staker
 
 import (
+	bptree "gno.land/p/nt/bptree/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
+
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// ProtocolFeeRewardState tracks protocol fee reward information for an individual staker across multiple tokens.
-// Unlike emission rewards which are single-token, protocol fees can come from various trading pairs,
-// requiring separate tracking and calculation for each token type.
+// ProtocolFeeRewardState tracks the protocol fee rewards of one staker.
+//
+// A stake change appends one ProtocolFeeStakeEvent and nothing else. Each token is
+// settled on its own from those events, so the state keeps a per-token cursor into
+// the event history rather than a reward debt for every token at once.
 type ProtocolFeeRewardState struct {
-	// rewardDebtX128 maps token path to reward debt with 128-bit precision scaling
-	// Used to calculate rewards earned since the last update for each token
-	rewardDebtX128 map[string]*u256.Uint
-	// accumulatedRewards maps token path to total rewards accumulated but not yet claimed
-	accumulatedRewards map[string]int64
-	// claimedRewards maps token path to total amount of rewards that have been claimed
-	claimedRewards map[string]int64
-	// accumulatedTimestamp is the last timestamp when rewards were accumulated
-	accumulatedTimestamp int64
-	// claimedTimestamp is the last timestamp when rewards were claimed
+	// stakedAmount is the current amount staked
+	stakedAmount int64
+	// stakeEvents records the staked amount in force from each stake change, by index
+	stakeEvents *UintTree // index -> *ProtocolFeeStakeEvent
+	// stakeEventCount is the number of recorded stake events
+	stakeEventCount int64
+	// tokenStates maps a token path to the settlement state of that token
+	tokenStates *bptree.BPTree // tokenPath -> *ProtocolFeeTokenRewardState
+	// claimedTimestamp is the last timestamp at which every token was collected
 	claimedTimestamp int64
-	// stakedAmount is the current amount of tokens staked by this address
+}
+
+// ProtocolFeeStakeEvent is one stake change: from epoch on, stakedAmount was staked.
+type ProtocolFeeStakeEvent struct {
+	epoch        int64
 	stakedAmount int64
 }
 
-func (p *ProtocolFeeRewardState) GetRewardDebtX128() map[string]*u256.Uint {
-	return p.rewardDebtX128
+func (e *ProtocolFeeStakeEvent) GetEpoch() int64        { return e.epoch }
+func (e *ProtocolFeeStakeEvent) GetStakedAmount() int64 { return e.stakedAmount }
+
+// ProtocolFeeTokenRewardState is the settlement state of one token for one staker.
+//
+// Stake events up to eventCursor are folded into earnedX128. The open segment starts
+// where the last folded event left the accumulator (segmentStartX128) with
+// segmentStakedAmount staked.
+type ProtocolFeeTokenRewardState struct {
+	// eventCursor is the number of stake events already folded in
+	eventCursor int64
+	// segmentStakedAmount is the amount staked during the open segment
+	segmentStakedAmount int64
+	// segmentStartX128 is the accumulated fee per stake at the start of the open segment
+	segmentStartX128 *u256.Uint
+	// earnedX128 is the reward earned by closed segments and not yet collected, scaled by 2^128
+	earnedX128 *u256.Uint
+	// claimedReward is the total reward collected so far
+	claimedReward int64
 }
 
-func (p *ProtocolFeeRewardState) GetAccumulatedRewards() map[string]int64 {
-	return p.accumulatedRewards
+// NewProtocolFeeRewardState creates an empty state for a staker with no stake.
+func NewProtocolFeeRewardState() *ProtocolFeeRewardState {
+	return &ProtocolFeeRewardState{
+		stakedAmount:     0,
+		stakeEvents:      NewUintTree(),
+		stakeEventCount:  0,
+		tokenStates:      bptree.NewBPTreeN(16),
+		claimedTimestamp: 0,
+	}
 }
 
-func (p *ProtocolFeeRewardState) GetClaimedRewards() map[string]int64 {
-	return p.claimedRewards
+// NewProtocolFeeTokenRewardState creates the settlement state of a token whose open
+// segment starts at the given cursor, stake and accumulator value.
+func NewProtocolFeeTokenRewardState(eventCursor int64, segmentStakedAmount int64, segmentStartX128 *u256.Uint) *ProtocolFeeTokenRewardState {
+	return &ProtocolFeeTokenRewardState{
+		eventCursor:         eventCursor,
+		segmentStakedAmount: segmentStakedAmount,
+		segmentStartX128:    u256.Zero().Set(segmentStartX128),
+		earnedX128:          u256.Zero(),
+		claimedReward:       0,
+	}
 }
 
-func (p *ProtocolFeeRewardState) GetAccumulatedTimestamp() int64 {
-	return p.accumulatedTimestamp
+/* ProtocolFeeRewardState getters */
+
+func (p *ProtocolFeeRewardState) GetStakedAmount() int64 {
+	return p.stakedAmount
+}
+
+func (p *ProtocolFeeRewardState) GetStakeEventCount() int64 {
+	return p.stakeEventCount
+}
+
+// GetStakeEvent returns the index-th stake event.
+func (p *ProtocolFeeRewardState) GetStakeEvent(index int64) (*ProtocolFeeStakeEvent, bool) {
+	ei, ok := p.stakeEvents.Get(index)
+	if !ok {
+		return nil, false
+	}
+	event, castOk := ei.(*ProtocolFeeStakeEvent)
+	if !castOk {
+		panic(ufmt.Sprintf("failed to cast stake event: %T", ei))
+	}
+	return event, true
+}
+
+// GetTokenState returns the settlement state of tokenPath, or false when the token was
+// never settled for this staker.
+func (p *ProtocolFeeRewardState) GetTokenState(tokenPath string) (*ProtocolFeeTokenRewardState, bool) {
+	ti := p.tokenStates.Get(tokenPath)
+	if ti == nil {
+		return nil, false
+	}
+	tokenState, castOk := ti.(*ProtocolFeeTokenRewardState)
+	if !castOk {
+		panic(ufmt.Sprintf("failed to cast token reward state: %T", ti))
+	}
+	return tokenState, true
+}
+
+// GetTokenPaths returns every token path settled for this staker, in key order.
+func (p *ProtocolFeeRewardState) GetTokenPaths() []string {
+	tokenPaths := make([]string, 0, p.tokenStates.Size())
+	p.tokenStates.Iterate("", "", func(key string, _ any) bool {
+		tokenPaths = append(tokenPaths, key)
+		return false
+	})
+	return tokenPaths
+}
+
+// GetClaimedReward returns the total reward of tokenPath collected so far.
+func (p *ProtocolFeeRewardState) GetClaimedReward(tokenPath string) int64 {
+	tokenState, ok := p.GetTokenState(tokenPath)
+	if !ok {
+		return 0
+	}
+	return tokenState.GetClaimedReward()
 }
 
 func (p *ProtocolFeeRewardState) GetClaimedTimestamp() int64 {
 	return p.claimedTimestamp
 }
 
-func (p *ProtocolFeeRewardState) GetStakedAmount() int64 {
-	return p.stakedAmount
+/* ProtocolFeeRewardState setters */
+
+func (p *ProtocolFeeRewardState) SetStakedAmount(stakedAmount int64) {
+	p.stakedAmount = stakedAmount
 }
 
-/* Setters */
-
-// SetRewardDebtX128 stores a copy of the given map. Copying into a map
-// allocated by this domain method keeps the stored map owned by
-// /r/gnoswap/gov/staker, so later per-token writes (SetRewardDebtX128ForToken)
-// from any realm clear the cross-realm write guard. Storing the caller's map
-// directly would leave the map stamped with the caller's realm.
-func (p *ProtocolFeeRewardState) SetRewardDebtX128(rewardDebtX128 map[string]*u256.Uint) {
-	copied := make(map[string]*u256.Uint, len(rewardDebtX128))
-	for token, value := range rewardDebtX128 {
-		copied[token] = u256.Zero().Set(value)
-	}
-	p.rewardDebtX128 = copied
+// AppendStakeEvent records that stakedAmount is staked from epoch on.
+func (p *ProtocolFeeRewardState) AppendStakeEvent(epoch int64, stakedAmount int64) {
+	p.stakeEvents.Set(p.stakeEventCount, &ProtocolFeeStakeEvent{
+		epoch:        epoch,
+		stakedAmount: stakedAmount,
+	})
+	p.stakeEventCount++
 }
 
-func (p *ProtocolFeeRewardState) SetAccumulatedRewards(accumulatedRewards map[string]int64) {
-	copied := make(map[string]int64, len(accumulatedRewards))
-	for token, value := range accumulatedRewards {
-		copied[token] = value
-	}
-	p.accumulatedRewards = copied
-}
-
-func (p *ProtocolFeeRewardState) SetClaimedRewards(claimedRewards map[string]int64) {
-	copied := make(map[string]int64, len(claimedRewards))
-	for token, value := range claimedRewards {
-		copied[token] = value
-	}
-	p.claimedRewards = copied
-}
-
-func (p *ProtocolFeeRewardState) SetAccumulatedTimestamp(accumulatedTimestamp int64) {
-	p.accumulatedTimestamp = accumulatedTimestamp
+func (p *ProtocolFeeRewardState) SetTokenState(tokenPath string, tokenState *ProtocolFeeTokenRewardState) {
+	p.tokenStates.Set(tokenPath, tokenState)
 }
 
 func (p *ProtocolFeeRewardState) SetClaimedTimestamp(claimedTimestamp int64) {
 	p.claimedTimestamp = claimedTimestamp
 }
 
-func (p *ProtocolFeeRewardState) SetStakedAmount(stakedAmount int64) {
-	p.stakedAmount = stakedAmount
+/* ProtocolFeeTokenRewardState getters and setters */
+
+func (t *ProtocolFeeTokenRewardState) GetEventCursor() int64 {
+	return t.eventCursor
 }
 
-// Additional getters for individual token rewards
-
-func (p *ProtocolFeeRewardState) GetRewardDebtX128ForToken(token string) *u256.Uint {
-	if p.rewardDebtX128 == nil {
-		return nil
-	}
-	return p.rewardDebtX128[token]
+func (t *ProtocolFeeTokenRewardState) GetSegmentStakedAmount() int64 {
+	return t.segmentStakedAmount
 }
 
-func (p *ProtocolFeeRewardState) GetAccumulatedRewardForToken(token string) int64 {
-	if p.accumulatedRewards == nil {
-		return 0
-	}
-	return p.accumulatedRewards[token]
+func (t *ProtocolFeeTokenRewardState) GetSegmentStartX128() *u256.Uint {
+	return t.segmentStartX128
 }
 
-func (p *ProtocolFeeRewardState) GetClaimedRewardForToken(token string) int64 {
-	if p.claimedRewards == nil {
-		return 0
-	}
-	return p.claimedRewards[token]
+func (t *ProtocolFeeTokenRewardState) GetEarnedX128() *u256.Uint {
+	return t.earnedX128
 }
 
-// Additional setters for individual token rewards
-
-func (p *ProtocolFeeRewardState) SetRewardDebtX128ForToken(token string, value *u256.Uint) {
-	if p.rewardDebtX128 == nil {
-		p.rewardDebtX128 = make(map[string]*u256.Uint)
-	}
-	p.rewardDebtX128[token] = u256.Zero().Set(value)
+func (t *ProtocolFeeTokenRewardState) GetClaimedReward() int64 {
+	return t.claimedReward
 }
 
-func (p *ProtocolFeeRewardState) SetAccumulatedRewardForToken(token string, value int64) {
-	if p.accumulatedRewards == nil {
-		p.accumulatedRewards = make(map[string]int64)
-	}
-	p.accumulatedRewards[token] = value
+// SetSegment moves the open segment: events up to eventCursor are folded, and the
+// segment starts at segmentStartX128 with segmentStakedAmount staked.
+func (t *ProtocolFeeTokenRewardState) SetSegment(eventCursor int64, segmentStakedAmount int64, segmentStartX128 *u256.Uint) {
+	t.eventCursor = eventCursor
+	t.segmentStakedAmount = segmentStakedAmount
+	t.segmentStartX128 = u256.Zero().Set(segmentStartX128)
 }
 
-func (p *ProtocolFeeRewardState) SetClaimedRewardForToken(token string, value int64) {
-	if p.claimedRewards == nil {
-		p.claimedRewards = make(map[string]int64)
-	}
-	p.claimedRewards[token] = value
+func (t *ProtocolFeeTokenRewardState) SetEarnedX128(earnedX128 *u256.Uint) {
+	t.earnedX128 = u256.Zero().Set(earnedX128)
 }
 
-// NewProtocolFeeRewardState creates a new protocol fee reward state for a staker.
-// This factory function initializes the state with the current system reward debt for all tokens.
-func NewProtocolFeeRewardState(accumulatedProtocolFeeX128PerStake map[string]*u256.Uint) *ProtocolFeeRewardState {
-	rewardDebtX128 := make(map[string]*u256.Uint)
-
-	// Clone reward debt for each token to avoid reference issues
-	for token, accumulatedFee := range accumulatedProtocolFeeX128PerStake {
-		rewardDebtX128[token] = accumulatedFee.Clone()
-	}
-
-	return &ProtocolFeeRewardState{
-		rewardDebtX128:       rewardDebtX128,
-		claimedRewards:       make(map[string]int64),
-		accumulatedRewards:   make(map[string]int64),
-		stakedAmount:         0,
-		accumulatedTimestamp: 0,
-		claimedTimestamp:     0,
-	}
+func (t *ProtocolFeeTokenRewardState) SetClaimedReward(claimedReward int64) {
+	t.claimedReward = claimedReward
 }

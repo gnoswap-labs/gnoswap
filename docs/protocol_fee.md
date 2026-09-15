@@ -8,6 +8,8 @@ Collects and distributes protocol fees from swaps, staking rewards, and withdraw
 - `DistributeProtocolFee` only distributes what is registered in `tokenListWithAmount`. Direct transfers to the protocol fee address without registration are unrecoverable.
 - Fee collection addresses must be validated — sending to `""` or an invalid address loses funds.
 - All distribution functions must handle token transfer failures without corrupting the registered balance.
+- The gov/staker share of every fee is bucketed under the accrual epoch in force (`accrualBuckets[tokenPath][epoch]`). Only gov/staker may call `AdvanceAccrualEpoch` (on every stake change) and `ConsumeAccrualBuckets` (on collect, oldest epoch first). Clearing a bucket anywhere else strands that share.
+- `reservedTokens` and `accrualPendingTokens` are tree-backed sets: settle one token without rewriting the whole set.
 
 ## Audit Finding (M-06)
 
@@ -17,3 +19,4 @@ Collects and distributes protocol fees from swaps, staking rewards, and withdraw
 
 - Fee transfer without `AddToProtocolFee` → fees permanently locked.
 - Direct transfer to protocol_fee realm without registration → excess is unrecoverable.
+- Advancing the accrual epoch without a matching gov/staker stake record → buckets attributed to a stake distribution that was never recorded.
