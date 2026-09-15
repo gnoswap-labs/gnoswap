@@ -529,6 +529,27 @@ func (s *stakerV1) markEmissionCollected(_ int, rlm realm, target *collectTarget
 	s.dropUnstakedPositionIfCollected(0, rlm, target)
 }
 
+// settleHaltedEmission handles the emission source of a collect that ran while emission is halted.
+func (s *stakerV1) settleHaltedEmission(_ int, rlm realm, target *collectTarget, rewardParam *calculatePositionRewardParam) {
+	if !target.isCheckpoint() || target.checkpoint.EmissionCollected() {
+		return
+	}
+
+	internalRewards, _, err := s.calculateInternalPositionReward(rewardParam)
+	if err != nil {
+		panic(err)
+	}
+
+	internalReward := aggregateRewards(internalRewards)
+	if internalReward.Internal != 0 || internalReward.InternalPenalty != 0 {
+		return
+	}
+
+	// Mark the emission collect as collected.
+	// This is a no-op for checkpoint targets.
+	s.markEmissionCollected(0, rlm, target)
+}
+
 // markIncentiveCollected records the incentive collect on the checkpoint from the delivery's
 // reported outcome. A paid, empty or already-delivered source is done. A deferred one stays
 // pending. An unpayable one is forfeited: keeping it pending forever would lock both this
@@ -678,17 +699,22 @@ func (s *stakerV1) CollectEmissionReward(_ int, rlm realm, positionId uint64) (i
 	target := s.resolveCollectTarget(positionId, rlm.Previous().Address())
 
 	_, emissionActive := en.MintAndDistributeGns(cross(rlm))
-	if !emissionActive {
-		return 0, 0
-	}
 
 	currentTime := target.currentTime
 	blockHeight := runtime.ChainHeight()
+	rewardParam := s.newRewardCollectParam(target, currentTime, blockHeight)
+
+	if !emissionActive {
+		// Deferred: the accrued reward stays on the cursor until emission resumes. A checkpoint that
+		// owes no emission is still settled so the halt does not block re-staking.
+		s.settleHaltedEmission(0, rlm, target, rewardParam)
+
+		return 0, 0
+	}
 
 	// Calculation is read-only; the resulting state updates (reward-cache update, lazy pool persistence)
 	// are applied via updateInternalPositionReward, which is the collect-only counterpart to the
 	// calculation shared with the Collectable* view getters.
-	rewardParam := s.newRewardCollectParam(target, currentTime, blockHeight)
 	rewards, rewardUpdate, err := s.calculateInternalPositionReward(rewardParam)
 	if err != nil {
 		panic(err)
@@ -797,8 +823,10 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		rewards      []Reward
 		rewardUpdate positionRewardUpdate
 	)
+
 	if emissionActive {
 		var err error
+
 		rewards, rewardUpdate, err = s.calculatePositionReward(rewardParam)
 		if err != nil {
 			panic(err)
@@ -809,18 +837,6 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		s.updateExternalPositionReward(rewardParam, rewardUpdate)
 	}
 
-	// A checkpoint with no internal reward has no emission debt to defer. Marking it now
-	// prevents emission-only halts from locking zero-emission positions out of re-staking.
-	if !emissionActive && target.isCheckpoint() {
-		internalRewards, _, err := s.calculateInternalPositionReward(rewardParam)
-		if err != nil {
-			panic(err)
-		}
-		internalReward := aggregateRewards(internalRewards)
-		if internalReward.Internal == 0 && internalReward.InternalPenalty == 0 {
-			s.markEmissionCollected(0, rlm, target)
-		}
-	}
 	reward := aggregateRewards(rewards)
 
 	ctx := s.newCollectContext(0, rlm, target, currentTime, blockHeight)
@@ -845,17 +861,19 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		toUserExternalPenalty[rewardToken] = gnsmath.SafeAddInt64(toUserExternalPenalty[rewardToken], rewardPenalty)
 	}
 
-	// The halted path does not reach deliverEmissionReward, so persist live-deposit index and
-	// cursor updates after external delivery. For checkpoint targets this is intentionally a no-op.
-	if !emissionActive {
-		ctx.persistDeposit(s)
-	}
-
 	internalRewardToUser := int64(0)
 	internalRewardPenalty := int64(0)
+
 	if emissionActive {
 		internalRewardToUser, internalRewardPenalty = s.deliverEmissionReward(0, rlm, ctx, reward)
 		s.markEmissionCollected(0, rlm, target)
+	} else {
+		s.settleHaltedEmission(0, rlm, target, rewardParam)
+
+		// The halted path does not reach deliverEmissionReward, which is where the live deposit's
+		// incentive-index and cursor updates were written back. A checkpoint is not in the tree, so
+		// this is a no-op for it.
+		ctx.persistDeposit(s)
 	}
 
 	return utils.FormatInt(internalRewardToUser), utils.FormatInt(internalRewardPenalty), toUserExternalReward, toUserExternalPenalty

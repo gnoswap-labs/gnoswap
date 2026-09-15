@@ -868,6 +868,51 @@ func TestUnStakeToken_EmissionHaltAllowsZeroEmissionRestake(cur realm, t *testin
 	uassert.True(t, getMockInstance().getDeposits().Has(positionId))
 }
 
+// A zero-emission checkpoint is settled by the emission-only entry point as well while emission is
+// halted: CollectEmissionReward marks the emission source, the external collect clears the rest, and
+// the position can re-stake without waiting for emission to resume.
+func TestUnStakeToken_EmissionHaltCollectEmissionRewardSettlesZeroEmissionCheckpoint(cur realm, t *testing.T) {
+	positionId, poolPath := setupUnstakeHaltPosition(cur, t, 0)
+	ownerGnsBefore := gns.BalanceOf(addr01)
+
+	testing.SetRealm(adminRealm)
+	halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, true)
+	defer func() {
+		func(cur realm) {
+			testing.SetOriginCaller(adminAddr)
+			testing.SetRealm(adminRealm)
+			halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, false)
+		}(cross(cur))
+	}()
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	resultPoolPath := sr.UnStakeToken(cross(cur), positionId)
+	uassert.Equal(t, poolPath, resultPoolPath)
+	uassert.True(t, sr.HasUnstakedPosition(positionId))
+
+	pendingIncentiveIds, err := sr.GetUnstakedPositionPendingIncentives(positionId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, 1, len(pendingIncentiveIds))
+
+	// Emission source: nothing owed, so it is marked collected even though emission is halted. The
+	// checkpoint stays because the external incentive is still pending.
+	rewardDuringHalt, penaltyDuringHalt := sr.CollectEmissionReward(cross(cur), positionId)
+	uassert.Equal(t, int64(0), rewardDuringHalt)
+	uassert.Equal(t, int64(0), penaltyDuringHalt)
+	uassert.Equal(t, ownerGnsBefore, gns.BalanceOf(addr01))
+	uassert.True(t, sr.HasUnstakedPosition(positionId))
+
+	// External source: paid as usual, which fully settles the checkpoint.
+	externalReward, _ := sr.CollectExternalIncentiveReward(cross(cur), positionId, pendingIncentiveIds[0])
+	uassert.True(t, externalReward > 0)
+	uassert.False(t, sr.HasUnstakedPosition(positionId))
+
+	mockNFTApprove(cur, stakerAddr, positionId)
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	sr.StakeToken(cross(cur), positionId, "")
+	uassert.True(t, getMockInstance().getDeposits().Has(positionId))
+}
+
 // TestStakeToken_EmptyIncentiveList tests that after staking,
 // the deposit's external incentive list is empty (lazy sync optimization).
 func TestStakeToken_EmptyIncentiveList(cur realm, t *testing.T) {
