@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 ### Fixed
-- Defer internal staker rewards during emission halts without blocking external incentive claims.
+-
 
 ### Security
 -
