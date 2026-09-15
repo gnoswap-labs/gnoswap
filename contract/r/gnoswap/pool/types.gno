@@ -1,8 +1,8 @@
 package pool
 
 import (
-	bptree "gno.land/p/nt/bptree/v0"
 	rotree "gno.land/p/nt/bptree/rotree/v0"
+	bptree "gno.land/p/nt/bptree/v0"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -20,6 +20,7 @@ type IPool interface {
 	IPoolSwap
 	IPoolOracle
 	IPoolGetter
+	Render(path string) string
 }
 
 // IPoolManager interface defines pool management operations.
