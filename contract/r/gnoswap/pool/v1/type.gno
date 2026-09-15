@@ -67,6 +67,7 @@ type SwapCache struct {
 	secondsPerLiquidityCumulativeX128 *u256.Uint // current seconds per liquidity accumulator
 	computedLatestObservation         bool       // whether we've computed the above accumulators
 	slot0Start                        pl.Slot0   // immutable Slot0 snapshot captured at swap start
+	readOnly                          bool       // quote without tick accounting or hooks
 }
 
 func newSwapCache(
