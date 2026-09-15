@@ -33,7 +33,7 @@ func ProposeText(
 //   - amount: A strictly positive amount in the token's smallest unit.
 //
 // The community-pool balance is checked at execution, not proposal creation.
-
+//
 // Returns:
 //   - proposalId: The ID of the proposal.
 func ProposeCommunityPoolSpend(

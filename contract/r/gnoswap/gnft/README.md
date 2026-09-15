@@ -155,7 +155,7 @@ requires the caller to satisfy the ownership/approval rules described above.
 
 ```go
 import (
-    grc721 "gno.land/p/nt/grc721/v0"
+    "gno.land/p/nt/grc721/v0"
     "gno.land/r/gnoswap/gnft"
 )
 
