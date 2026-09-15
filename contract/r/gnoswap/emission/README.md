@@ -9,7 +9,8 @@ The emission system controls creation and distribution of new GNS tokens with a 
 ## Token Economics
 
 - **Total Supply Cap**: 1,000,000,000 GNS
-- **Initial Minted**: 100,000,000 GNS
+- **Initial Minted**: 100,000,000 GNS, pre-minted to the configured `ADMIN`
+  role address during GNS realm initialization
 - **To Be Minted**: 900,000,000 GNS over 12 years
 - **Halving Period**: Every 2 years (63,072,000 seconds)
 - **Halving Reduction**: 50% decrease in emission rate

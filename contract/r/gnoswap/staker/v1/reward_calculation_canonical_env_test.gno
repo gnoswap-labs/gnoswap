@@ -12,8 +12,8 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 	sr "gno.land/r/gnoswap/staker"
 
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 type canonicalPool struct {

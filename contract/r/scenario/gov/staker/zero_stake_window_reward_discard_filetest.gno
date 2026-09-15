@@ -14,11 +14,11 @@ import (
 	"testing"
 	"time"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	_ "gno.land/r/gnoswap/common/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"

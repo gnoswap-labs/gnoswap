@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/gnoswap/gnsmath"
+	"gno.land/p/gnoswap/gnsmath/v1"
 	"gno.land/r/gnoswap/scenarioutils"
 
 	"gno.land/p/nt/grc721/v0"
@@ -17,7 +17,7 @@ import (
 
 	"gno.land/r/gnoswap/emission"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
@@ -26,8 +26,8 @@ import (
 	pn "gno.land/r/gnoswap/position"
 	sr "gno.land/r/gnoswap/staker"
 
-	prabc "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/rbac"
+	prabc "gno.land/p/gnoswap/rbac/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"

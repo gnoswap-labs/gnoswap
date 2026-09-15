@@ -4,15 +4,15 @@ import (
 	"chain"
 	"errors"
 
-	"gno.land/p/gnoswap/gnsmath"
-	prabc "gno.land/p/gnoswap/rbac"
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	prabc "gno.land/p/gnoswap/rbac/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
+	"gno.land/p/gnoswap/utils/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	pf "gno.land/r/gnoswap/protocol_fee"
 )
 

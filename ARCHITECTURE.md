@@ -29,7 +29,7 @@ GnoSwap uses permanent proxy realms, registered implementation versions, and pro
 │  STORAGE LAYER: Centralized Data Management                 │
 │  - store.gno: Domain-specific storage access                │
 │  - state.gno: Global state management                       │
-│  - p/gnoswap/store: Core KV storage infrastructure          │
+│  - p/gnoswap/store/v1: Core KV storage infrastructure       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -131,7 +131,7 @@ Provides centralized data storage with domain-specific access patterns.
 | Component           | Role                           | Key Features                        |
 | ------------------- | ------------------------------ | ----------------------------------- |
 | **store.gno**       | Domain storage access          | Pool-specific storage operations    |
-| **p/gnoswap/store** | Core KV storage infrastructure | Type-agnostic key-value storage     |
+| **p/gnoswap/store/v1** | Core KV storage infrastructure | Type-agnostic key-value storage     |
 | **access**          | Access control                 | Role-based authorization            |
 | **rbac**            | Role management                | Role registration and updates       |
 | **halt**            | Emergency halt                 | Per-domain emergency stop mechanism |
@@ -147,21 +147,21 @@ Provides centralized data storage with domain-specific access patterns.
 
 ```
 # IMMUTABLE CONTRACTS (Never upgraded)
-p/gnoswap/store/                 # Core Storage Infrastructure
+p/gnoswap/store/v1/              # Core Storage Infrastructure
 ├── kv_store.gno                 # Generic key-value store
 └── types.gno                    # Storage types
 
-r/gnoswap/access/                # Access Control System
+r/gnoswap/access/v1/             # Access Control System
 ├── access.gno                   # Role registry mirror
 ├── assert.gno                   # Access validation
 └── errors.gno                   # Access errors
 
-r/gnoswap/rbac/                  # Role-Based Access Control
+r/gnoswap/rbac/v1/               # Role-Based Access Control
 ├── rbac.gno                     # Role management
 ├── role.gno                     # Role definitions
 └── consts.gno                   # Initial role addresses
 
-r/gnoswap/halt/                  # Emergency Halt System
+r/gnoswap/halt/v1/               # Emergency Halt System
 ├── halt.gno                     # Halt management
 ├── config.gno                   # Halt configuration
 └── types.gno                    # Halt types
@@ -217,10 +217,10 @@ r/gnoswap/staker/v1/             # Staker v1 implementation
 
 These contracts form the core infrastructure and are never upgraded after deployment:
 
-- **`p/gnoswap/store`**: Core storage infrastructure providing type-agnostic key-value storage
-- **`r/gnoswap/access`**: Access control system managing role-based permissions
-- **`r/gnoswap/rbac`**: Role-based access control for managing role addresses
-- **`r/gnoswap/halt`**: Emergency halt system for protocol safety
+- **`p/gnoswap/store/v1`**: Core storage infrastructure providing type-agnostic key-value storage
+- **`r/gnoswap/access/v1`**: Access control system managing role-based permissions
+- **`r/gnoswap/rbac/v1`**: Role-based access control for managing role addresses
+- **`r/gnoswap/halt/v1`**: Emergency halt system for protocol safety
 
 **Characteristics:**
 
@@ -298,7 +298,7 @@ User Request
                  │
                  ▼
 ┌─────────────────────────────────────────┐
-│ CORE STORAGE: p/gnoswap/store/kv_store.gno │
+│ CORE STORAGE: p/gnoswap/store/v1/kv_store.gno │
 │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
 │ 1. Domain authorization check            │
 │ 2. map[key]value storage                 │

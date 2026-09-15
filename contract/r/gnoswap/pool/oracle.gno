@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 	"gno.land/p/nt/bptree/v0"
 )
 

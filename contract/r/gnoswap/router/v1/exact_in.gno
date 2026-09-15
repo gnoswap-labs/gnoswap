@@ -3,17 +3,17 @@ package router
 import (
 	"chain"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/gnoswap/utils"
+	u256 "gno.land/p/gnoswap/uint256/v1"
+	"gno.land/p/gnoswap/utils/v1"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/halt/v1"
+	"gno.land/r/gnoswap/referral/v1"
 )
 
 // ExactInSwapRoute swaps an exact amount of input tokens for output tokens.

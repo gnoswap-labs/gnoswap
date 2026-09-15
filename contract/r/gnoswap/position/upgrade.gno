@@ -1,7 +1,7 @@
 package position
 
 import (
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 // RegisterInitializer registers a new position implementation version.

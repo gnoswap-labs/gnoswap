@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"time"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 

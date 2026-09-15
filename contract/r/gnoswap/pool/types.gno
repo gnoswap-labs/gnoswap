@@ -4,7 +4,7 @@ import (
 	rotree "gno.land/p/nt/bptree/rotree/v0"
 	bptree "gno.land/p/nt/bptree/v0"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // IPool interface defines all public methods that must be implemented by pool contract versions.

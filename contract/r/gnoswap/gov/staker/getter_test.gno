@@ -3,9 +3,9 @@ package staker
 import (
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
-	rotree "gno.land/p/nt/bptree/rotree/v0"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	bptree "gno.land/p/nt/bptree/v0"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 )
 

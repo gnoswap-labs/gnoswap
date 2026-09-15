@@ -3,13 +3,13 @@ package governance
 import (
 	"strings"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	cm "gno.land/r/gnoswap/common"
-	cp "gno.land/r/gnoswap/community_pool"
+	cp "gno.land/r/gnoswap/community_pool/v1"
 	en "gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/rbac"
+	"gno.land/r/gnoswap/rbac/v1"
 
 	"gno.land/r/gnoswap/gov/governance"
 	gs "gno.land/r/gnoswap/gov/staker"
@@ -20,7 +20,7 @@ import (
 	rr "gno.land/r/gnoswap/router"
 	sr "gno.land/r/gnoswap/staker"
 
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 )
 
 // globalParameterRegistry is initialized once and reused for all validation and execution.
@@ -34,9 +34,9 @@ func init() {
 // Package paths
 const (
 	GNS_TOKEN_KEY       = "gno.land/r/gnoswap/gns.GNS"
-	HALT_PATH           = "gno.land/r/gnoswap/halt"
-	RBAC_PATH           = "gno.land/r/gnoswap/rbac"
-	ACCESS_PATH         = "gno.land/r/gnoswap/access"
+	HALT_PATH           = "gno.land/r/gnoswap/halt/v1"
+	RBAC_PATH           = "gno.land/r/gnoswap/rbac/v1"
+	ACCESS_PATH         = "gno.land/r/gnoswap/access/v1"
 	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
 	COMMON_PATH         = "gno.land/r/gnoswap/common"
 	POOL_PATH           = "gno.land/r/gnoswap/pool"
@@ -45,7 +45,7 @@ const (
 	STAKER_PATH         = "gno.land/r/gnoswap/staker"
 	LAUNCHPAD_PATH      = "gno.land/r/gnoswap/launchpad"
 	PROTOCOL_FEE_PATH   = "gno.land/r/gnoswap/protocol_fee"
-	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/community_pool"
+	COMMUNITY_POOL_PATH = "gno.land/r/gnoswap/community_pool/v1"
 	GOV_GOVERNANCE_PATH = "gno.land/r/gnoswap/gov/governance"
 	GOV_STAKER_PATH     = "gno.land/r/gnoswap/gov/staker"
 )

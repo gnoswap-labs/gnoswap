@@ -1,4 +1,4 @@
-# KV Store (`p/store/`) & Version Manager (`p/version_manager/`)
+# KV Store (`p/gnoswap/store/v1/`) & Version Manager (`p/gnoswap/version_manager/v1/`)
 
 ## KV Store
 

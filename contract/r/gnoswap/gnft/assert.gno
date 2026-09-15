@@ -1,10 +1,10 @@
 package gnft
 
 import (
-	prabc "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/grc721/v0"
+	prabc "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/p/nt/ufmt/v0"
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 // assertIsValidTokenURI panics if the token already has a URI set.

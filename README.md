@@ -15,11 +15,11 @@ gnoswap/
 ├── contract/                       # Smart contracts
 │   ├── p/                          # Packages (libraries)
 │   │   └── gnoswap/
-│   │       ├── gnsmath/            # AMM math utilities
-│   │       ├── int256/             # 256-bit signed integers
-│   │       ├── uint256/            # 256-bit unsigned integers
-│   │       ├── rbac/               # Role-based access control
-│   │       └── consts/             # Protocol constants
+│   │       ├── gnsmath/v1/         # AMM math utilities
+│   │       ├── int256/v1/          # 256-bit signed integers
+│   │       ├── uint256/v1/         # 256-bit unsigned integers
+│   │       ├── rbac/v1/            # Role-based access control
+│   │       └── consts/v1/          # Protocol constants
 │   │
 │   └── r/                          # Realms (contracts)
 │       ├── gnoswap/
@@ -30,14 +30,14 @@ gnoswap/
 │       │   ├── gov/                # Governance/staker proxies and v1/; xGNS
 │       │   ├── launchpad/          # Launchpad proxy, storage, and v1/
 │       │   ├── protocol_fee/       # Fee proxy, storage, and v1/
-│       │   ├── community_pool/     # Treasury transfers
-│       │   ├── access/             # Access control
+│       │   ├── community_pool/v1/  # Treasury transfers
+│       │   ├── access/v1/          # Access control
 │       │   ├── emission/           # GNS emission distribution
 │       │   ├── gns/                # GNS token
 │       │   ├── gnft/               # Position NFT and metadata
-│       │   ├── halt/               # Emergency pause
-│       │   ├── rbac/               # RBAC realm
-│       │   ├── referral/           # Referral system
+│       │   ├── halt/v1/            # Emergency pause
+│       │   ├── rbac/v1/            # RBAC realm
+│       │   ├── referral/v1/        # Referral system
 │       │   └── test_token/         # Test tokens
 │       └── scenario/              # Scenario/filetest packages
 │
@@ -65,7 +65,7 @@ defaults to `tmp`; if its `gno` directory is absent, the wrapper clones the
 GnoSwap Gno fork there. To use an existing toolchain checkout:
 
 ```bash
-make test WORKDIR=/path/to/toolchain-parent PKG=gno.land/p/gnoswap/gnsmath
+make test WORKDIR=/path/to/toolchain-parent PKG=gno.land/p/gnoswap/gnsmath/v1
 ```
 
 ### Run Scenario Tests

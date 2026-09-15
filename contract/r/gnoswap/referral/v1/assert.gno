@@ -1,0 +1,35 @@
+package referral
+
+import (
+	prabc "gno.land/p/gnoswap/rbac/v1"
+
+	"gno.land/r/gnoswap/access/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
+)
+
+// MUST BE IMMUTABLE, DO NOT MODIFY.
+// validCallerRoles is a list of roles that are authorized to modify referral data.
+// This includes governance, governance staker, router, position, staker, and launchpad contracts.
+var validCallerRoles = []string{
+	prabc.ROLE_GOVERNANCE.String(),
+	prabc.ROLE_GOV_STAKER.String(),
+	prabc.ROLE_ROUTER.String(),
+	prabc.ROLE_POSITION.String(),
+	prabc.ROLE_STAKER.String(),
+	prabc.ROLE_LAUNCHPAD.String(),
+}
+
+// assertValidCaller checks if the caller address has permission to modify referral data.
+// Only addresses with specific roles defined in validCallerRoles are authorized.
+//
+// Errors:
+//   - ErrUnauthorized: the caller is not authorized to modify referral data
+func assertValidCaller(caller address) {
+	for _, role := range validCallerRoles {
+		if access.IsAuthorized(role, caller) {
+			return
+		}
+	}
+
+	panic(makeErrorWithDetails(ErrUnauthorized, caller.String()))
+}

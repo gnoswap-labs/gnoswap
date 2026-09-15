@@ -5,7 +5,7 @@ require 'fileutils'
 require 'open3'
 
 class TestRunner
-  # Same flow as Makefile test: run from gno/examples with package path (e.g. gno.land/r/gnoswap/access)
+  # Same flow as Makefile test: run from gno/examples with package path (e.g. gno.land/r/gnoswap/access/v1)
   def initialize(pkg, root_dir = nil)
     @pkg = pkg
     @root_dir = (root_dir || "/home/runner/work/gnoswap/gnoswap/gno").to_s
@@ -49,7 +49,7 @@ if __FILE__ == $0
   OptionParser.new do |opts|
     opts.banner = "Usage: run_tests.rb [options]"
 
-    opts.on("-p", "--pkg PKG", "Package path (e.g. gno.land/r/gnoswap/access)") do |p|
+    opts.on("-p", "--pkg PKG", "Package path (e.g. gno.land/r/gnoswap/access/v1)") do |p|
       options[:pkg] = p
     end
 

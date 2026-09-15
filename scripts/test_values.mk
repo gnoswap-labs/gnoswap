@@ -17,9 +17,9 @@ TEST_KEYS:=p/uint256 \
 	r/gov/governance \
 	r/launchpad
 
-TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256 \
-	   gno/examples/gno.land/p/gnoswap/int256 \
-	   gno/examples/gno.land/p/gnoswap/gnsmath \
+TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256/v1 \
+	   gno/examples/gno.land/p/gnoswap/int256/v1 \
+	   gno/examples/gno.land/p/gnoswap/gnsmath/v1 \
 	   gno/examples/gno.land/r/gnoswap/common \
 	   gno/examples/gno.land/r/gnoswap/gns \
 	   gno/examples/gno.land/r/gnoswap/gnft \
@@ -30,7 +30,7 @@ TEST_VALUES:=gno/examples/gno.land/p/gnoswap/uint256 \
 	   gno/examples/gno.land/r/gnoswap/position \
 	   gno/examples/gno.land/r/gnoswap/router \
 	   gno/examples/gno.land/r/gnoswap/staker \
-	   gno/examples/gno.land/r/gnoswap/community_pool \
+	   gno/examples/gno.land/r/gnoswap/community_pool/v1 \
 	   gno/examples/gno.land/r/gnoswap/gov/staker \
 	   gno/examples/gno.land/r/gnoswap/gov/governance \
 	   gno/examples/gno.land/r/gnoswap/launchpad

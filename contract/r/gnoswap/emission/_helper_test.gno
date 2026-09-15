@@ -3,9 +3,9 @@ package emission
 import (
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
-	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/r/gnoswap/access/v1"
+	_ "gno.land/r/gnoswap/rbac/v1" // initialize rbac package
 )
 
 var (

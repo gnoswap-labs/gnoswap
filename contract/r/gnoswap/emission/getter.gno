@@ -1,7 +1,7 @@
 package emission
 
 import (
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 )
 
 // GetLeftGNSAmount returns the amount of undistributed GNS tokens from previous distributions.

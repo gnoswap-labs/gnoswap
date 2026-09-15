@@ -13,10 +13,10 @@ package main
 import (
 	"testing"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 	uassert "gno.land/p/nt/uassert/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	protocolFee "gno.land/r/gnoswap/protocol_fee"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -25,7 +25,7 @@ import (
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v2_invalid"
 	_ "gno.land/r/gnoswap/protocol_fee/v3_valid"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 )
 
 var t *testing.T

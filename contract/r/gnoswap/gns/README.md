@@ -11,7 +11,8 @@ GNS is the native governance token of GnoSwap, featuring a deflationary emission
 - **Symbol**: GNS
 - **Decimals**: 6
 - **Max Supply**: 1,000,000,000 GNS
-- **Initial Mint**: 100,000,000 GNS
+- **Initial Mint**: 100,000,000 GNS, pre-minted to the configured `ADMIN`
+  role address during GNS realm initialization
 - **Total Emission**: 900,000,000 GNS over 12 years
 
 ## Emission Schedule

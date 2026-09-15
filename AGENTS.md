@@ -20,16 +20,16 @@ GnoSwap is a concentrated liquidity AMM (Uniswap V3 fork) running on GnoVM. Pool
 ```
 contract/
 ├── p/gnoswap/
-│   ├── gnsmath/         # AMM math: tick, liquidity, sqrt price, swap
-│   ├── int256/          # 256-bit signed integers
-│   ├── uint256/         # 256-bit unsigned integers + MulDiv
-│   ├── rbac/            # Reusable RBAC data structures and helpers
-│   ├── store/           # Permission-based KV store
-│   ├── version_manager/ # Upgrade registration/activation
+│   ├── gnsmath/v1/         # AMM math: tick, liquidity, sqrt price, swap
+│   ├── int256/v1/          # 256-bit signed integers
+│   ├── uint256/v1/         # 256-bit unsigned integers + MulDiv
+│   ├── rbac/v1/            # Reusable RBAC data structures and helpers
+│   ├── store/v1/           # Permission-based KV store
+│   ├── version_manager/v1/ # Upgrade registration/activation
 │   ├── fuzz/            # Deterministic fuzz generators
 │   ├── fuzzutils/       # Fuzz runner/result helpers
-│   ├── utils/           # Shared formatting/util helpers
-│   └── consts/          # Protocol-wide constants
+│   ├── utils/v1/        # Shared formatting/util helpers
+│   └── consts/v1/       # Protocol-wide constants
 ├── r/gnoswap/
 │   ├── {pool,position,router,staker,launchpad,protocol_fee}/
 │   │   └── v1/          # Current implementation realms behind proxy layers
@@ -37,14 +37,14 @@ contract/
 │   ├── gov/xgns/        # Governance voting-power token
 │   ├── {pool,position,router,staker,launchpad,protocol_fee}/
 │   │                    # Proxy layers (permanent entry points)
-│   ├── access/          # Role mirror, queried by all realms
-│   ├── rbac/            # Authoritative role source
+│   ├── access/v1/       # Role mirror, queried by all realms
+│   ├── rbac/v1/         # Authoritative role source
 │   ├── emission/        # GNS minting/distribution
 │   ├── gns/             # GNS token contract
 │   ├── gnft/            # GnoSwap NFT helpers/metadata
-│   ├── community_pool/  # Treasury transfers: governance, with emergency admin access
-│   ├── halt/            # Granular emergency pause
-│   ├── referral/        # Referral tracking
+│   ├── community_pool/v1/ # Treasury transfers: governance, with emergency admin access
+│   ├── halt/v1/         # Granular emergency pause
+│   ├── referral/v1/     # Referral tracking
 │   ├── common/          # Shared token/native-coin helpers, with a v1/ implementation
 │   ├── mock/            # Shared realm mocks for tests
 │   ├── test/            # Fuzz and test harness packages
@@ -61,8 +61,8 @@ tests/
 
 - The proxy/domain owns the initial KV write permission. Version-manager activation does not grant write permission to the implementation realm; cross-domain writer grants are explicit.
 - `ChangeImplementation` reuses the domain store and existing ACLs. It does not revoke/re-register writers automatically. Initializers handle compatible state initialization or migration; update ACLs only when the required writer set changes.
-- `contract/r/gnoswap/rbac/` is the authoritative role map; `contract/r/gnoswap/access/` is its synchronized mirror.
-- `contract/r/gnoswap/halt/` has separate module/operation scopes, including pool, staker, router, position, withdrawals, protocol fees, community pool, and xGNS. Consult its scope definitions rather than assuming one global pause.
+- `contract/r/gnoswap/rbac/v1/` is the authoritative role map; `contract/r/gnoswap/access/v1/` is its synchronized mirror.
+- `contract/r/gnoswap/halt/v1/` has separate module/operation scopes, including pool, staker, router, position, withdrawals, protocol fees, community pool, and xGNS. Consult its scope definitions rather than assuming one global pause.
 
 ## Commands
 
@@ -81,7 +81,7 @@ make fmt                               # gofumpt over all .gno files
 # Package tests (Makefile runs setup.py, then gno test under <workdir>/gno/examples)
 make test PKG=gno.land/r/gnoswap/pool/v1
 make test PKG=gno.land/r/gnoswap/pool/v1 RUN=TestCreatePool
-make test WORKDIR=tmp PKG=gno.land/p/gnoswap/gnsmath
+make test WORKDIR=tmp PKG=gno.land/p/gnoswap/gnsmath/v1
 
 # Integration tests
 make integration-test
@@ -241,8 +241,8 @@ Recheck the present implementation and relevant tests before carrying a report c
 
 | Need | Location |
 |------|----------|
-| AMM math | `contract/p/gnoswap/gnsmath/` |
-| 256-bit arithmetic | `contract/p/gnoswap/uint256/`, `int256/` |
+| AMM math | `contract/p/gnoswap/gnsmath/v1/` |
+| 256-bit arithmetic | `contract/p/gnoswap/uint256/v1/`, `contract/p/gnoswap/int256/v1/` |
 | Fuzz helpers | `contract/p/gnoswap/fuzz/`, `contract/p/gnoswap/fuzzutils/`, `contract/r/gnoswap/test/fuzz/` |
 | Pool swap loop | `contract/r/gnoswap/pool/v1/swap.gno` |
 | Pool state / Slot0 | `contract/r/gnoswap/pool/pool.gno` |
@@ -255,8 +255,8 @@ Recheck the present implementation and relevant tests before carrying a report c
 | Emission | `contract/r/gnoswap/emission/` |
 | GNS token | `contract/r/gnoswap/gns/` |
 | GNFT metadata | `contract/r/gnoswap/gnft/` |
-| Access control | `contract/r/gnoswap/rbac/`, `contract/r/gnoswap/access/` |
-| KV store | `contract/p/gnoswap/store/kv_store.gno` |
-| Upgrade | `contract/p/gnoswap/version_manager/`, `*/upgrade.gno` |
-| Emergency pause | `contract/r/gnoswap/halt/` |
+| Access control | `contract/r/gnoswap/rbac/v1/`, `contract/r/gnoswap/access/v1/` |
+| KV store | `contract/p/gnoswap/store/v1/kv_store.gno` |
+| Upgrade | `contract/p/gnoswap/version_manager/v1/`, `*/upgrade.gno` |
+| Emergency pause | `contract/r/gnoswap/halt/v1/` |
 | Scenario/file tests | `contract/r/scenario/`, `tests/integration/testdata/` |

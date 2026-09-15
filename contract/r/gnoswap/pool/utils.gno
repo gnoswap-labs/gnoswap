@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/gnoswap/utils"
+	"gno.land/p/gnoswap/utils/v1"
 )
 
 const MAX_TICK int32 = 887272

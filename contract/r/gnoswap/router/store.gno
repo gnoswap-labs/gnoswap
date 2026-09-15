@@ -3,7 +3,7 @@ package router
 import (
 	"errors"
 
-	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/store/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 

@@ -7,11 +7,11 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
-	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/r/gnoswap/access"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	prabc "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 )
 
 // DistributeProtocolFee distributes collected protocol fees.

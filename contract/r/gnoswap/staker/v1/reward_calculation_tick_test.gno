@@ -3,8 +3,8 @@ package staker
 import (
 	"testing"
 
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"

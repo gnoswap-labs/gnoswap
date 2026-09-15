@@ -1,7 +1,7 @@
 package gns
 
 import (
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 )
 
 // HalvingData stores emission data for each halving period.

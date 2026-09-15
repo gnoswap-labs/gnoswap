@@ -2,7 +2,7 @@
 //
 // The package contains helpers that must keep a realm boundary, including GRC20
 // token operations and native coin validation. AMM math lives in
-// gno.land/p/gnoswap/gnsmath.
+// gno.land/p/gnoswap/gnsmath/v1.
 //
 // Key components:
 // - GRC20 Registry Helpers: convenient wrappers for GRC20 token operations

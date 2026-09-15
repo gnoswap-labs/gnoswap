@@ -1,7 +1,7 @@
 package staker
 
 import (
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // EmissionRewardState tracks emission reward information for an individual staker.

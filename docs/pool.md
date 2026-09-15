@@ -18,16 +18,23 @@ observations, protocol-fee accounting, and callback settlement.
 
 ## Rules
 
+- **Slot0**: holds `sqrtPriceX96`, `tick`, `unlocked`, and the oracle's `observationIndex`, `observationCardinality`, and `observationCardinalityNext`. `ObservationState` stores only the observation buffer. Persist changes via `SetSlot0(...)` — local copy mutation has no effect.
 - `GetSlot0Unlocked` returns whether the pool is currently unlocked, not a
   lock-status value with the opposite polarity.
+- **Oracle**: write with **pre-swap** tick and liquidity. Post-swap values produce wrong TWAP.
+- **feeGrowthOutside** on ticks: invert correctly at every `tickCross`.
+- **DrySwap**: reject quotes while the global pool lock is held. Use the shared swap math with `SwapCache.readOnly`: read only the traversed bitmap words and crossed ticks' `liquidityNet`; never copy whole collections or write tick/oracle accounting or dispatch hooks.
 - Protocol fee values are denominators: `0` disables the fee, and `4` through
   `10` route one quarter through one tenth of swap fees to the protocol. The
   setting is managed globally for the pools; it is not a per-pool percentage.
+- **Protocol fee**: capped at 25% of swap fees per token. Validate upper bound on any change.
 - The withdrawal fee is separate from the swap protocol fee. It defaults to
   1% (100 bps) and is configurable up to 10% (1000 bps) for fee-bearing
   collection.
+- **Transfer**: use `SafeGRC20Transfer` in `transfer.gno`. Never add direct `tokenTeller` calls without panic-on-failure.
 - Maximum liquidity per tick is dependent on the pool's tick spacing; it is
   not the `2^128 - 1` maximum.
+- **Tick range**: `[-887272, 887272]`. `MIN_SQRT_RATIO` / `MAX_SQRT_RATIO` are hard bounds.
 
 ## CreatePool
 

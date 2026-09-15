@@ -3,7 +3,7 @@ package gns
 import (
 	"time"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 )
 
 // GetMaxEmissionAmount returns the configured lifetime GNS emission cap in base units.

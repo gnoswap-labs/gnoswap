@@ -3,7 +3,7 @@ package launchpad
 import (
 	bptree "gno.land/p/nt/bptree/v0"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // RewardManager manages the distribution of rewards for a project tier.

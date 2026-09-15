@@ -3,7 +3,7 @@ package launchpad
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // ProjectTier represents a tier within a project.

@@ -191,7 +191,8 @@ func burnExample(cur realm, tokenID grc721.TokenID) {
 
 - `gno.land/p/nt/grc721/v0`: GRC721 token and ledger implementation
 - `gno.land/p/nt/grc721/metadata/v0`: Metadata storage
-- `gno.land/r/gnoswap/access`: Position-role authorization
+- `gno.land/r/gnoswap/rbac/v1`: Access control
+- `gno.land/r/gnoswap/access/v1`: Position-role authorization and role mirror
 
 ### State Variables
 

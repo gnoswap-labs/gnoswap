@@ -3,7 +3,7 @@ package staker
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // ProtocolFeeTokenAccumulator tracks the accumulated protocol fee per stake of one token.

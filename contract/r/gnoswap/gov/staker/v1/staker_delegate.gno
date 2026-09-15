@@ -6,16 +6,16 @@ import (
 	"errors"
 	"time"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
-	"gno.land/r/gnoswap/access"
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/gov/xgns"
-	"gno.land/r/gnoswap/halt"
-	"gno.land/r/gnoswap/referral"
+	"gno.land/r/gnoswap/halt/v1"
+	"gno.land/r/gnoswap/referral/v1"
 )
 
 // Spoofed-realm guards on entry points reject any caller that fabricates a

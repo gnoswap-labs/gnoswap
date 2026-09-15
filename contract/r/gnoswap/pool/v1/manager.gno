@@ -5,14 +5,14 @@ import (
 	"errors"
 	"time"
 
-	prabc "gno.land/p/gnoswap/rbac"
-	"gno.land/p/gnoswap/utils"
+	prabc "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/p/gnoswap/utils/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	gns "gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	pl "gno.land/r/gnoswap/pool"
 
 	en "gno.land/r/gnoswap/emission"

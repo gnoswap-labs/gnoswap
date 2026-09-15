@@ -19,7 +19,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 
 	"gno.land/r/gnoswap/gov/governance"
 	"gno.land/r/gnoswap/gov/xgns"
@@ -32,13 +32,13 @@ import (
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 	_ "gno.land/r/gnoswap/router/v1"
 	"gno.land/r/onbloc/bar"
 
 	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	"gno.land/r/gnoswap/gov/staker"
 

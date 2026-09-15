@@ -3,8 +3,8 @@ package pool
 import (
 	"strings"
 
-	"gno.land/p/gnoswap/consts"
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/consts/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 	"gno.land/r/gnoswap/pool"
 )

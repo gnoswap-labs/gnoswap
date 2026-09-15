@@ -3,7 +3,7 @@ package staker
 import (
 	"testing"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	bptree "gno.land/p/nt/bptree/v0"
 	"gno.land/p/nt/grc721/v0"

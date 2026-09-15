@@ -1,10 +1,10 @@
 package staker
 
 import (
-	"gno.land/p/gnoswap/gnsmath"
-	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
 )
 
 // UintTree is a wrapper around a BPTree for storing non-negative int64 keys as

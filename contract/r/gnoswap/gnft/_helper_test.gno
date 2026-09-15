@@ -3,9 +3,9 @@ package gnft
 import (
 	"strconv"
 
-	prbac "gno.land/p/gnoswap/rbac"
 	"gno.land/p/nt/grc721/v0"
-	"gno.land/r/gnoswap/access"
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 var positionAddr = access.MustGetAddress(prbac.ROLE_POSITION.String())
