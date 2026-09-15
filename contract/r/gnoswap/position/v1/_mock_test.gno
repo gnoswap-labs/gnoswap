@@ -1,10 +1,10 @@
 package position
 
 import (
-	"strconv"
+	"gno.land/p/gnoswap/utils"
 
-	"gno.land/p/nt/grc721/v0"
 	bptree "gno.land/p/nt/bptree/v0"
+	"gno.land/p/nt/grc721/v0"
 	"gno.land/r/gnoswap/position"
 )
 
@@ -41,11 +41,11 @@ func (s *mockPositionStore) SetPositionNextID(_ int, rlm realm, nextID uint64) e
 }
 
 func (s *mockPositionStore) HasPosition(positionId uint64) bool {
-	return s.positions.Has(strconv.FormatUint(positionId, 10))
+	return s.positions.Has(utils.EncodeUint64(positionId))
 }
 
 func (s *mockPositionStore) GetPosition(positionId uint64) (position.Position, bool) {
-	value := s.positions.Get(strconv.FormatUint(positionId, 10))
+	value := s.positions.Get(utils.EncodeUint64(positionId))
 	if value == nil {
 		return *position.NewPosition("", 0, 0, "", "", "", 0, 0, false, ""), false
 	}
@@ -53,12 +53,12 @@ func (s *mockPositionStore) GetPosition(positionId uint64) (position.Position, b
 }
 
 func (s *mockPositionStore) SetPosition(_ int, rlm realm, positionId uint64, position position.Position) error {
-	s.positions.Set(strconv.FormatUint(positionId, 10), position)
+	s.positions.Set(utils.EncodeUint64(positionId), position)
 	return nil
 }
 
 func (s *mockPositionStore) RemovePosition(_ int, rlm realm, positionId uint64) error {
-	s.positions.Remove(strconv.FormatUint(positionId, 10))
+	s.positions.Remove(utils.EncodeUint64(positionId))
 	return nil
 }
 

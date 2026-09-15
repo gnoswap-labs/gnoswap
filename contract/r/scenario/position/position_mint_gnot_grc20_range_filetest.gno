@@ -171,7 +171,7 @@ func mintInRangePosition(cur realm) {
 
 func checkInRangePosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position should be in range\n")
@@ -211,7 +211,7 @@ func mintOutRangePosition(cur realm) {
 
 func checkOutRangePosition(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.Uint64ToString(2)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.EncodeUint64(2)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position should be out of range\n")

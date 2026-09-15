@@ -376,7 +376,7 @@ func checkPositionData(cur realm, positionId uint64) {
 	println("[INFO] Check position data")
 	testing.SetRealm(adminRealm)
 
-	positionData, _ := position.GetPositions().Get(utils.Uint64ToString(positionId)).(position.Position)
+	positionData, _ := position.GetPositions().Get(utils.EncodeUint64(positionId)).(position.Position)
 	println("[EXPECTED] Position ID:", positionId)
 	println("[EXPECTED] Position key:", positionData.PoolKey())
 	println("[EXPECTED] Liquidity:", positionData.Liquidity())

@@ -155,7 +155,7 @@ func (lp *launchpadV1) depositGns(
 
 	// Store a value in the deposits tree and persist later updates explicitly.
 	deposits := lp.store.GetDeposits()
-	deposits.Set(depositID, deposit)
+	deposits.Set(launchpad.MustEncodeDepositID(depositID), deposit)
 
 	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
 	if err != nil {

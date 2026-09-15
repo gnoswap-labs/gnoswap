@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/gnoswap/consts"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/gnoswap/utils"
 	uassert "gno.land/p/nt/uassert/v0"
 	"gno.land/r/gnoswap/position"
 )
@@ -763,6 +764,18 @@ func TestGetPositionsOrder(cur realm, t *testing.T) {
 			count:    2,
 			expected: []string{"2", "3"},
 		},
+		{
+			name: "preserves numeric order across decimal width",
+			setup: func(cur realm, t *testing.T) {
+				setupMultiplePositions(cur, t)
+				positionOne, exists := mockInstance.store.GetPosition(1)
+				uassert.True(t, exists)
+				uassert.NoError(t, mockInstance.store.SetPosition(0, cur, 10, positionOne))
+			},
+			offset:   0,
+			count:    10,
+			expected: []string{"1", "2", "3", "10"},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -773,7 +786,7 @@ func TestGetPositionsOrder(cur realm, t *testing.T) {
 			mockInstance.GetPositions().IterateByOffset(tc.offset, tc.count, func(key string, value any) bool {
 				_, ok := value.(position.Position)
 				uassert.True(t, ok)
-				keys = append(keys, key)
+				keys = append(keys, utils.Uint64ToString(utils.DecodeUint64(key)))
 				return false
 			})
 

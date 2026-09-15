@@ -289,7 +289,7 @@ func verifyOwnership(cur realm) {
 
 	// Verify position can still be interacted with normally
 	testing.SetRealm(adminRealm)
-	position, ok := pn.GetPositions().Get(utils.Uint64ToString(1)).(pn.Position)
+	position, ok := pn.GetPositions().Get(utils.EncodeUint64(1)).(pn.Position)
 	if !ok {
 		panic("position should still exist")
 	}

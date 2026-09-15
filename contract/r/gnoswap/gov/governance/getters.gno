@@ -41,10 +41,10 @@ func GetConfig(configVersion int64) (Config, error) {
 // Proposal Getters
 // ==================================
 
-// GetProposals returns a read-only view of every proposal, keyed by the decimal
-// string form of the proposal ID. Callers paginate it themselves through
-// IterateByOffset. Reading an entry yields a clone, so the view cannot mutate
-// realm state.
+// GetProposals returns a read-only view of every proposal, keyed by the
+// fixed-width encoding produced by utils.EncodeInt64. Callers paginate it
+// through IterateByOffset and decode keys with utils.DecodeInt64. Reading an
+// entry yields a clone, so the view cannot mutate realm state.
 func GetProposals() *rotree.ReadOnlyTree {
 	return getImplementation().GetProposals()
 }

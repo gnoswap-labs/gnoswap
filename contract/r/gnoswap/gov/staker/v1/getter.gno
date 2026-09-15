@@ -34,7 +34,7 @@ func (gs *govStakerV1) GetUnDelegationLockupPeriod() int64 {
 }
 
 // GetDelegations returns a read-only view of every delegation, keyed by the
-// decimal string form of the delegation ID.
+// fixed-width encoding produced by utils.EncodeInt64.
 func (gs *govStakerV1) GetDelegations() *rotree.ReadOnlyTree {
 	return rotree.Wrap(gs.store.GetAllDelegations(), cloneDelegationEntry)
 }

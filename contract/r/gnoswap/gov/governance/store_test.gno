@@ -4,6 +4,7 @@ import (
 	"chain/runtime"
 	"testing"
 
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
@@ -464,6 +465,27 @@ func TestStoreSetAndGetProposal(cur realm, t *testing.T) {
 	}
 }
 
+func TestProposalKeysPreserveNumericOrder(cur realm, t *testing.T) {
+	resetTestState(t)
+	gs := NewGovernanceStore(kvStore)
+	uassert.NoError(t, gs.SetProposals(0, cur, bptree.NewBPTreeN(16)))
+
+	for _, id := range []int64{10, 2, 1} {
+		uassert.NoError(t, gs.SetProposal(0, cur, id, &Proposal{id: id}))
+	}
+
+	got := make([]int64, 0, 3)
+	gs.GetProposals().Iterate("", "", func(key string, _ any) bool {
+		got = append(got, utils.DecodeInt64(key))
+		return false
+	})
+
+	want := []int64{1, 2, 10}
+	for i := range want {
+		uassert.Equal(t, want[i], got[i])
+	}
+}
+
 func TestStoreSetAndGetProposalUserVotingInfos(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
@@ -640,7 +662,7 @@ func TestStoreSetAndGetUserProposals(cur realm, t *testing.T) {
 func TestStoreGetUserProposalIDs(cur realm, t *testing.T) {
 	tests := []struct {
 		name     string
-		setupFn      func(cur realm, gs IGovernanceStore)
+		setupFn  func(cur realm, gs IGovernanceStore)
 		verifyFn func(cur realm, t *testing.T, gs IGovernanceStore)
 	}{
 		{

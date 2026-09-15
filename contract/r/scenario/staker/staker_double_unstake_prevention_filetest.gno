@@ -223,7 +223,7 @@ func verifyPositionIntegrity(cur realm) {
 	testing.SetRealm(adminRealm)
 
 	// Verify position still exists and is accessible
-	position, ok := pn.GetPositions().Get(utils.Uint64ToString(1)).(pn.Position)
+	position, ok := pn.GetPositions().Get(utils.EncodeUint64(1)).(pn.Position)
 	if !ok {
 		panic("position should still exist")
 	}

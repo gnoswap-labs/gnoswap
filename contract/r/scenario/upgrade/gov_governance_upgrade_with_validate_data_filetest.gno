@@ -11,8 +11,9 @@
 package main
 
 import (
-	"strconv"
 	"testing"
+
+	"gno.land/p/gnoswap/utils"
 
 	prbac "gno.land/p/gnoswap/rbac"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -443,13 +444,7 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 func collectProposalIDs(offset, count int) []int64 {
 	ids := []int64{}
 	govGovernance.GetProposals().IterateByOffset(offset, count, func(key string, _ any) bool {
-		id, err := strconv.ParseInt(key, 10, 64)
-		if err != nil {
-			return false
-		}
-
-		ids = append(ids, id)
-
+		ids = append(ids, utils.DecodeInt64(key))
 		return false
 	})
 

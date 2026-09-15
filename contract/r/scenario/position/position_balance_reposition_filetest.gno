@@ -144,7 +144,7 @@ func executeSwapForFees(cur realm) {
 func testRepositionAndBalance(cur realm) {
 	testing.SetRealm(adminRealm)
 
-	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
 	currentLiquidity := pos.Liquidity()
 	currentTickLower := pos.TickLower()
 	currentTickUpper := pos.TickUpper()
@@ -179,7 +179,7 @@ func testRepositionAndBalance(cur realm) {
 	ufmt.Printf("[EXPECTED] Amount0 withdrawn should be %s\n", decreaseAmount0)
 	ufmt.Printf("[EXPECTED] Amount1 withdrawn should be %s\n", decreaseAmount1)
 
-	pos, _ = position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
+	pos, _ = position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
 	ufmt.Printf("[EXPECTED] Position liquidity after decrease should be %s\n", pos.Liquidity())
 
 	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/router"))
@@ -234,7 +234,7 @@ func testRepositionAndBalance(cur realm) {
 	ufmt.Printf("[EXPECTED] User BAR balance after reposition should be %d\n", barBalanceFinal)
 	ufmt.Printf("[EXPECTED] User FOO balance after reposition should be %d\n", fooBalanceFinal)
 
-	pos, _ = position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
+	pos, _ = position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
 	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Final position tick range should be [%d, %d]\n", pos.TickLower(), pos.TickUpper())
 	balance0, _ := position.GetPositionToken0Balance(1)

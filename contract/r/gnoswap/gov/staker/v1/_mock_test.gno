@@ -102,12 +102,12 @@ func (m *mockGovStakerStore) SetDelegations(_ int, rlm realm, delegations *bptre
 }
 
 func (m *mockGovStakerStore) HasDelegation(id int64) bool {
-	exists := m.delegations.Get(utils.Uint64ToString(uint64(id))) != nil
+	exists := m.delegations.Get(utils.EncodeInt64(id)) != nil
 	return exists
 }
 
 func (m *mockGovStakerStore) GetDelegation(id int64) (*staker.Delegation, bool) {
-	value := m.delegations.Get(utils.Uint64ToString(uint64(id)))
+	value := m.delegations.Get(utils.EncodeInt64(id))
 	if value == nil {
 		return nil, false
 	}
@@ -115,13 +115,13 @@ func (m *mockGovStakerStore) GetDelegation(id int64) (*staker.Delegation, bool) 
 }
 
 func (m *mockGovStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *staker.Delegation) error {
-	m.delegations.Remove(utils.Uint64ToString(uint64(id)))
-	m.delegations.Set(utils.Uint64ToString(uint64(id)), delegation)
+	m.delegations.Remove(utils.EncodeInt64(id))
+	m.delegations.Set(utils.EncodeInt64(id), delegation)
 	return nil
 }
 
 func (m *mockGovStakerStore) RemoveDelegation(_ int, rlm realm, id int64) error {
-	_, _ = m.delegations.Remove(utils.Uint64ToString(uint64(id)))
+	_, _ = m.delegations.Remove(utils.EncodeInt64(id))
 	return nil
 }
 

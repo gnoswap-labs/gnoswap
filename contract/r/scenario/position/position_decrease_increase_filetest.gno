@@ -121,7 +121,7 @@ func mintInitialPosition(cur realm) {
 
 func checkInitialPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Initial position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Initial position tickLower should be %d\n", pos.TickLower())
@@ -155,7 +155,7 @@ func increasePositionLiquidity(cur realm) {
 
 func checkDecreasedPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Decreased position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())
@@ -219,7 +219,7 @@ func decreasePositionLiquidity(cur realm) {
 
 func checkFinalPositionState(cur realm) {
 	testing.SetRealm(adminRealm)
-	pos, _ := position.GetPositions().Get(utils.Uint64ToString(1)).(position.Position)
+	pos, _ := position.GetPositions().Get(utils.EncodeUint64(1)).(position.Position)
 
 	ufmt.Printf("[EXPECTED] Final position liquidity should be %s\n", pos.Liquidity())
 	ufmt.Printf("[EXPECTED] Position tickLower should be unchanged at %d\n", pos.TickLower())

@@ -310,11 +310,11 @@ func verifyPositionsRecovered(cur realm) {
 
 	// Verify positions can still be interacted with normally
 	testing.SetRealm(adminRealm)
-	position1, ok1 := pn.GetPositions().Get(utils.Uint64ToString(1)).(pn.Position)
+	position1, ok1 := pn.GetPositions().Get(utils.EncodeUint64(1)).(pn.Position)
 	if !ok1 {
 		panic("position 1 should still exist")
 	}
-	position2, ok2 := pn.GetPositions().Get(utils.Uint64ToString(2)).(pn.Position)
+	position2, ok2 := pn.GetPositions().Get(utils.EncodeUint64(2)).(pn.Position)
 	if !ok2 {
 		panic("position 2 should still exist")
 	}

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"gno.land/p/gnoswap/store"
+	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
@@ -158,6 +159,29 @@ func (s *launchpadStore) NextDepositID() string {
 	counter := s.GetDepositCounter()
 
 	return strconv.FormatInt(counter.Next(), 10)
+}
+
+// EncodeDepositID converts a decimal deposit ID into an order-preserving tree key.
+func EncodeDepositID(depositID string) (string, bool) {
+	id, err := strconv.ParseUint(depositID, 10, 64)
+	if err != nil {
+		return "", false
+	}
+	return utils.EncodeUint64(id), true
+}
+
+// MustEncodeDepositID converts a valid decimal deposit ID into its tree key.
+func MustEncodeDepositID(depositID string) string {
+	key, ok := EncodeDepositID(depositID)
+	if !ok {
+		panic(ufmt.Sprintf("invalid deposit ID: %s", depositID))
+	}
+	return key
+}
+
+// DecodeDepositID converts an encoded tree key into its decimal deposit ID.
+func DecodeDepositID(key string) string {
+	return strconv.FormatUint(utils.DecodeUint64(key), 10)
 }
 
 // SetDepositCounter stores the deposit counter.

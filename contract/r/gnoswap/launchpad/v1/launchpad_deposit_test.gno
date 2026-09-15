@@ -17,7 +17,7 @@ import (
 	"gno.land/r/gnoswap/gov/xgns"
 
 	_ "gno.land/r/gnoswap/common/v1"
-	_ "gno.land/r/gnoswap/launchpad"
+	launchpadRealm "gno.land/r/gnoswap/launchpad"
 	_ "gno.land/r/gnoswap/protocol_fee"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 
@@ -156,7 +156,7 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 
 				// Verify deposit exists in deposits tree
 				deposits := lp.store.GetDeposits()
-				exists := deposits.Get(depositID) != nil
+				exists := deposits.Get(launchpadRealm.MustEncodeDepositID(depositID)) != nil
 				uassert.True(t, exists)
 			},
 		},

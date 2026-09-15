@@ -71,6 +71,26 @@ func TestInt32Codec(cur realm, t *testing.T) {
 	}
 }
 
+func TestInt64Codec(cur realm, t *testing.T) {
+	values := []int64{math.MinInt64, -256, -1, 0, 1, 256, math.MaxInt64}
+	previous := ""
+	for _, value := range values {
+		encoded := EncodeInt64(value)
+		uassert.Equal(t, 8, len(encoded))
+		uassert.Equal(t, value, DecodeInt64(encoded))
+		if previous != "" && !(previous < encoded) {
+			t.Errorf("encoded keys are not lexicographically ordered: %d", value)
+		}
+		previous = encoded
+	}
+
+	for _, length := range []int{0, 7, 9} {
+		uassert.PanicsContains(t, cur, "invalid uint64 key length:", func() {
+			DecodeInt64(string(make([]byte, length)))
+		})
+	}
+}
+
 func TestEncodeUint64(t *testing.T) {
 	tests := []struct {
 		name  string

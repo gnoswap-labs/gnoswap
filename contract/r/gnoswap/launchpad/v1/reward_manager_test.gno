@@ -28,7 +28,7 @@ func TestRewardManager_IsInitialized(cur realm, t *testing.T) {
 		{
 			name: "is initialized return true when rewards exist",
 			rewardStates: map[string]*launchpad.RewardState{
-				"test": launchpad.NewRewardState(u256.Zero(), 1000, 100, 200, 0),
+				"1": launchpad.NewRewardState(u256.Zero(), 1000, 100, 200, 0),
 			},
 			expectedResult:   true,
 			expectedHasError: false,
@@ -40,7 +40,7 @@ func TestRewardManager_IsInitialized(cur realm, t *testing.T) {
 			// Setup
 			tree := launchpad.NewBPTreeN(16)
 			for k, v := range tt.rewardStates {
-				tree.Set(k, v)
+				tree.Set(launchpad.MustEncodeDepositID(k), v)
 			}
 			manager := newRewardManager(1000000, 100, 200, 0)
 			manager.SetRewards(tree)
@@ -898,7 +898,7 @@ func TestRewardManager_ClaimableTimeOverflow(cur realm, t *testing.T) {
 			manager.SetRewardClaimableDuration(tt.claimableDuration)
 
 			deposit := newDeposit(
-				"test_deposit",
+				"1",
 				"test_project:100",
 				30,
 				testutils.TestAddress("depositor"),
@@ -963,7 +963,7 @@ func TestRewardManager_ClaimedAmountOverflow(cur realm, t *testing.T) {
 			manager.SetRewardClaimableDuration(100)
 
 			deposit := newDeposit(
-				"test_deposit",
+				"1",
 				"test_project:100",
 				30,
 				testutils.TestAddress("depositor"),
@@ -1054,7 +1054,7 @@ func TestRewardManager_TotalClaimedAmountOverflow(cur realm, t *testing.T) {
 			manager.SetTotalClaimedAmount(tt.initialTotal)
 
 			deposit := newDeposit(
-				"test_deposit",
+				"1",
 				"test_project:100",
 				30,
 				testutils.TestAddress("depositor"),
@@ -1910,17 +1910,17 @@ func TestRewardManager_addRewardState(cur realm, t *testing.T) {
 	}{
 		{
 			name:         "add first reward state",
-			depositId:    "deposit1",
+			depositId:    "1",
 			rewardAmount: 1000,
 		},
 		{
 			name:         "add second reward state",
-			depositId:    "deposit2",
+			depositId:    "2",
 			rewardAmount: 2000,
 		},
 		{
 			name:         "add reward state with zero amount",
-			depositId:    "deposit3",
+			depositId:    "3",
 			rewardAmount: 0,
 		},
 	}
@@ -1961,7 +1961,7 @@ func TestRewardManager_addRewardState(cur realm, t *testing.T) {
 			uassert.NotNil(t, result)
 
 			// Verify it was stored in the tree
-			stored := manager.Rewards().Get(tt.depositId)
+			stored := manager.Rewards().Get(launchpad.MustEncodeDepositID(tt.depositId))
 			uassert.NotNil(t, stored, "reward state should not be nil")
 
 			// Verify the stored state has correct deposit amount
@@ -1982,6 +1982,24 @@ func TestRewardManager_addRewardState(cur realm, t *testing.T) {
 			uassert.Equal(t, int64(0), manager.ActiveDepositAmount())
 			uassert.Equal(t, "0", manager.ActivePriceDebtX128().ToString())
 		})
+	}
+}
+
+func TestRewardManagerOrdersNumericDepositIDs(t *testing.T) {
+	manager := newRewardManager(1000, 900, 2000, 0)
+	for _, depositID := range []string{"10", "2", "1"} {
+		manager.SetReward(depositID, launchpad.NewRewardState(u256.Zero(), 1, 0, 0, 0))
+	}
+
+	got := make([]string, 0, 3)
+	manager.Rewards().Iterate("", "", func(key string, _ any) bool {
+		got = append(got, launchpad.DecodeDepositID(key))
+		return false
+	})
+
+	want := []string{"1", "2", "10"}
+	for i := range want {
+		uassert.Equal(t, want[i], got[i])
 	}
 }
 

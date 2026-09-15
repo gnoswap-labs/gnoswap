@@ -2,6 +2,7 @@ package staker
 
 import (
 	"errors"
+
 	"gno.land/p/gnoswap/store"
 	"gno.land/p/gnoswap/utils"
 	bptree "gno.land/p/nt/bptree/v0"
@@ -138,13 +139,13 @@ func (s *govStakerStore) SetDelegations(_ int, rlm realm, delegations *bptree.BP
 
 func (s *govStakerStore) HasDelegation(id int64) bool {
 	delegations := s.GetAllDelegations()
-	return delegations.Get(utils.Int64ToString(id)) != nil
+	return delegations.Get(utils.EncodeInt64(id)) != nil
 }
 
 func (s *govStakerStore) GetDelegation(id int64) (*Delegation, bool) {
 	delegations := s.GetAllDelegations()
 
-	result := delegations.Get(utils.Int64ToString(id))
+	result := delegations.Get(utils.EncodeInt64(id))
 	if result == nil {
 		return nil, false
 	}
@@ -164,7 +165,7 @@ func (s *govStakerStore) SetDelegation(_ int, rlm realm, id int64, delegation *D
 
 	delegations := s.GetAllDelegations()
 
-	delegations.Set(utils.Int64ToString(id), delegation)
+	delegations.Set(utils.EncodeInt64(id), delegation)
 	return s.kvStore.Set(0, rlm, StoreKeyDelegations, delegations)
 }
 
@@ -175,7 +176,7 @@ func (s *govStakerStore) RemoveDelegation(_ int, rlm realm, id int64) error {
 
 	delegations := s.GetAllDelegations()
 
-	delegations.Remove(utils.Int64ToString(id))
+	delegations.Remove(utils.EncodeInt64(id))
 	return s.kvStore.Set(0, rlm, StoreKeyDelegations, delegations)
 }
 

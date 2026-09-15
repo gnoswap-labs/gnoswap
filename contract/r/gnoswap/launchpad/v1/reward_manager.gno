@@ -16,10 +16,14 @@ func isRewardManagerInitialized(r *launchpad.RewardManager) bool {
 	return r.Rewards().Size() > 0
 }
 
-func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launchpad.RewardState, error) {
-	rewardStateI := r.Rewards().Get(depositId)
+func getDepositRewardState(r *launchpad.RewardManager, depositID string) (*launchpad.RewardState, error) {
+	key, ok := launchpad.EncodeDepositID(depositID)
+	if !ok {
+		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
+	}
+	rewardStateI := r.Rewards().Get(key)
 	if rewardStateI == nil {
-		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositId))
+		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositID))
 	}
 
 	rewardState, ok := rewardStateI.(*launchpad.RewardState)
@@ -266,7 +270,7 @@ func collectReward(r *launchpad.RewardManager, depositId string, currentTime int
 
 	rewardState.SetClaimedAmount(rewardState.ClaimedAmount() + claimableReward)
 	rewards := r.Rewards()
-	rewards.Set(depositId, rewardState)
+	rewards.Set(launchpad.MustEncodeDepositID(depositId), rewardState)
 	r.SetRewards(rewards)
 	r.SetTotalClaimedAmount(r.TotalClaimedAmount() + claimableReward)
 	r.SetActiveClaimedAmount(gnsmath.SafeAddInt64(r.ActiveClaimedAmount(), claimableReward))

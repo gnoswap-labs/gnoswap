@@ -596,7 +596,7 @@ func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, curren
 			return false
 		}
 		for _, id := range delegationIDs {
-			delegationRaw := allDelegations.Get(utils.FormatInt(id))
+			delegationRaw := allDelegations.Get(utils.EncodeInt64(id))
 			if delegationRaw == nil {
 				continue
 			}

@@ -3,9 +3,10 @@ package staker
 import (
 	"chain/runtime"
 	"math"
-	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/utils"
 
 	bptree "gno.land/p/nt/bptree/v0"
 	testutils "gno.land/p/nt/testutils/v0"
@@ -123,7 +124,7 @@ func TestStakerDelegate_Delegate_AllowsContractCaller(cur realm, t *testing.T) {
 	delegationIDs := staker.GetUserDelegationIDs(contractCaller, validator)
 	uassert.Equal(t, len(delegationIDs), 1)
 
-	delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationIDs[0], 10)).(*staker.Delegation)
+	delegation, ok := staker.GetDelegations().Get(utils.EncodeInt64(delegationIDs[0])).(*staker.Delegation)
 	uassert.True(t, ok)
 	uassert.Equal(t, delegation.DelegateFrom(), contractCaller)
 	uassert.Equal(t, delegation.DelegateTo(), validator)
@@ -296,7 +297,7 @@ func TestStakerDelegate_UndelegateMultipleDelegations(cur realm, t *testing.T) {
 				totalUndelegated := int64(0)
 
 				for _, delegationID := range delegationIDs {
-					delegation, ok := staker.GetDelegations().Get(strconv.FormatInt(delegationID, 10)).(*staker.Delegation)
+					delegation, ok := staker.GetDelegations().Get(utils.EncodeInt64(delegationID)).(*staker.Delegation)
 					if ok && delegation != nil {
 						totalWithdraws += staker.GetDelegationWithdrawCount(delegationID)
 						totalUndelegated += delegation.UnDelegatedAmount()

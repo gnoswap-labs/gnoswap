@@ -2,9 +2,10 @@ package governance
 
 import (
 	"chain/runtime"
-	"strconv"
 	"testing"
 	"time"
+
+	"gno.land/p/gnoswap/utils"
 
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -275,9 +276,9 @@ func TestGetProposals_EntriesAreCloned(cur realm, t *testing.T) {
 	gv := setupGetterTestWithProposal(cur, t)
 	proposals := gv.GetProposals()
 
-	first, ok := proposals.Get("1").(*governance.Proposal)
+	first, ok := proposals.Get(utils.EncodeInt64(1)).(*governance.Proposal)
 	uassert.True(t, ok)
-	second, ok := proposals.Get("1").(*governance.Proposal)
+	second, ok := proposals.Get(utils.EncodeInt64(1)).(*governance.Proposal)
 	uassert.True(t, ok)
 
 	// Each read hands out a distinct clone, so a reader cannot reach the stored
@@ -1003,7 +1004,7 @@ func TestGetCurrentVotingWeightSnapshot(cur realm, t *testing.T) {
 
 // formatProposalKey mirrors the storage key encoding for proposal IDs.
 func formatProposalKey(proposalID int64) string {
-	return strconv.FormatInt(proposalID, 10)
+	return utils.EncodeInt64(proposalID)
 }
 
 // votingInfoCount reports how many voters a proposal has through the read-only view.

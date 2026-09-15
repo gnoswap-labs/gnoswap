@@ -954,7 +954,7 @@ func TestLaunchpadProject_applyTierRewardGrowthWithRewards(cur realm, t *testing
 			100_000, 1000, 2000, 1100,
 		)
 		addActiveRewardState(rm, rewardState)
-		rm.SetReward("deposit1", rewardState)
+		rm.SetReward("1", rewardState)
 		projectTierRewardManagers.Set(tierID, rm)
 		lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers)
 
@@ -1082,7 +1082,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithPendingWithdrawals(cur real
 			priceDebt := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(tt.priceDebtRatio)))
 			rewardState := launchpad.NewRewardState(priceDebt, tt.depositAmount, 1000, 2000, 1100)
 			addActiveRewardState(rm, rewardState)
-			rm.SetReward("deposit1", rewardState)
+			rm.SetReward("1", rewardState)
 
 			projectTierRewardManagers.Set(tierID, rm)
 			lp.store.SetProjectTierRewardManagers(0, cur, projectTierRewardManagers)
@@ -1201,7 +1201,7 @@ func TestLaunchpadProject_TransferLeftFromProjectWithMultiplePendingDeposits(cur
 				priceDebt := u256.Zero().Div(consts.Q128(), u256.NewUint(uint64(dep.priceDebtRatio)))
 				rewardState := launchpad.NewRewardState(priceDebt, dep.amount, 1000, 2000, 1100)
 				addActiveRewardState(rm, rewardState)
-				rm.SetReward("deposit"+utils.FormatInt(int64(i)), rewardState)
+				rm.SetReward(utils.FormatInt(int64(i+1)), rewardState)
 			}
 
 			projectTierRewardManagers.Set(tierID, rm)

@@ -26,9 +26,9 @@ func GetUnDelegationLockupPeriod() int64 {
 }
 
 // GetDelegations returns a read-only view of every delegation, keyed by the
-// decimal string form of the delegation ID. Callers paginate it themselves
-// through IterateByOffset. Reading an entry yields a clone, so the view cannot
-// mutate realm state.
+// fixed-width encoding produced by utils.EncodeInt64. Callers paginate it
+// through IterateByOffset and decode keys with utils.DecodeInt64. Reading an
+// entry yields a clone, so the view cannot mutate realm state.
 func GetDelegations() *rotree.ReadOnlyTree {
 	return getImplementation().GetDelegations()
 }

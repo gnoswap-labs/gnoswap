@@ -238,8 +238,8 @@ func (lp *launchpadV1) GetCurrentDepositId() int64 {
 }
 
 // GetProjectTierRewards returns a read-only view of a project tier's reward
-// states, keyed by deposit ID. nil is returned when the project tier does not
-// exist.
+// states, keyed by the fixed-width encoding produced by launchpad.EncodeDepositID.
+// Decode keys with launchpad.DecodeDepositID.
 func (lp *launchpadV1) GetProjectTierRewards(projectId string, tier int64) *rotree.ReadOnlyTree {
 	projectTierID := launchpad.MakeProjectTierID(projectId, tier)
 
@@ -477,8 +477,12 @@ func (lp *launchpadV1) GetRewardState(projectTierId string, depositId string) (*
 		return nil, errors.New("invalid reward manager type")
 	}
 
+	key, valid := launchpad.EncodeDepositID(depositId)
+	if !valid {
+		return nil, makeErrorWithDetails(errDataNotFound, "reward state not found")
+	}
 	rewards := manager.Rewards()
-	rewardValue := rewards.Get(depositId)
+	rewardValue := rewards.Get(key)
 	if rewardValue == nil {
 		return nil, makeErrorWithDetails(errDataNotFound, "reward state not found")
 	}
