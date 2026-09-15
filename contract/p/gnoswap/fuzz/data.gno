@@ -35,12 +35,6 @@ func (s *randomBitStream) init(seed uint64) {
 
 // drawBits generates n random bits (0 <= n <= 64).
 // For n > 64, returns MaxUint64.
-//
-// Parameters:
-//   - n: Number of random low-order bits to request; must be non-negative.
-//
-// Returns:
-//   - bits: Random bits masked to n bits, or math.MaxUint64 when n exceeds 64.
 func (s *randomBitStream) drawBits(n int) uint64 {
 	assert(n >= 0)
 

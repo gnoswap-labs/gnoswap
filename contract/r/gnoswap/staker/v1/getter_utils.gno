@@ -12,12 +12,6 @@ import (
 // tree. ExternalIncentive is mutable and its setters are declared in
 // /r/gnoswap/staker, so an external holder of the stored pointer could write
 // realm state through it.
-//
-// Parameters:
-//   - value: Tree value expected to be an *sr.ExternalIncentive.
-//
-// Returns:
-//   - any: A deep clone of the incentive when value has the expected type; nil for another type.
 func cloneExternalIncentiveEntry(value any) any {
 	incentive, ok := value.(*sr.ExternalIncentive)
 	if !ok {
@@ -31,12 +25,6 @@ func cloneExternalIncentiveEntry(value any) any {
 // transformations for the UintTree-backed views. Their values are immutable
 // scalars, so nothing needs copying; they type-check instead, which keeps the
 // filtering the replaced slice getters did when an entry failed its cast.
-//
-// Parameters:
-//   - value: Tree value expected to be an int64 reward amount.
-//
-// Returns:
-//   - any: The int64 reward amount unchanged, or nil when value has another type.
 func rewardCacheEntry(value any) any {
 	reward, ok := value.(int64)
 	if !ok {

@@ -28,10 +28,6 @@ type uint256Gen struct {
 	span *uint256.Uint
 }
 
-// String returns the uint256 generator's inclusive bounds in decimal form.
-//
-// Returns:
-//   - text: Text containing the generator name and its minimum and maximum uint256 values.
 func (g *uint256Gen) String() string {
 	var b strings.Builder
 	b.WriteString("Uint256(")
@@ -57,9 +53,6 @@ func (g *uint256Gen) value(t *T) any {
 // Example:
 //
 //	Uint256() generates values from 0 to max uint256
-//
-// Returns:
-//   - generator: Generator producing uint256 values from zero through the maximum representable uint256, inclusive.
 func Uint256() *Generator {
 	return Uint256RangeFrom(uint256.NewUint(0), maxUint256Value)
 }
@@ -70,12 +63,6 @@ func Uint256() *Generator {
 // Example:
 //
 //	Uint256Max("1000000") generates values from 0 to 1000000
-//
-// Parameters:
-//   - max: Decimal uint256 upper bound, inclusive; invalid text falls back to 1,000,000.
-//
-// Returns:
-//   - generator: Generator producing uint256 values from zero through the parsed or fallback max, inclusive.
 func Uint256Max(max string) *Generator {
 	maxVal, err := uint256.FromDecimal(max)
 	if err != nil {
@@ -90,13 +77,6 @@ func Uint256Max(max string) *Generator {
 // Example:
 //
 //	Uint256Range("1000", "999999") generates values between 1000 and 999999
-//
-// Parameters:
-//   - minStr: Decimal uint256 lower bound, inclusive; invalid text falls back to zero.
-//   - maxStr: Decimal uint256 upper bound, inclusive; invalid text falls back to 1,000,000.
-//
-// Returns:
-//   - generator: Generator producing uint256 values within the parsed inclusive bounds.
 func Uint256Range(minStr, maxStr string) *Generator {
 	min, err := uint256.FromDecimal(minStr)
 	if err != nil {
@@ -117,12 +97,6 @@ func Uint256Range(minStr, maxStr string) *Generator {
 // Example:
 //
 //	Uint256Min("1000") generates values from 1000 to max uint256
-//
-// Parameters:
-//   - min: Decimal uint256 lower bound, inclusive; invalid text falls back to zero.
-//
-// Returns:
-//   - generator: Generator producing uint256 values from the parsed or fallback min through max uint256, inclusive.
 func Uint256Min(min string) *Generator {
 	minVal, err := uint256.FromDecimal(min)
 	if err != nil {
@@ -132,13 +106,6 @@ func Uint256Min(min string) *Generator {
 }
 
 // Uint256RangeFrom builds a uint256 generator from already parsed bounds.
-//
-// Parameters:
-//   - minVal: Parsed uint256 lower bound, inclusive; must be non-nil and no greater than maxVal.
-//   - maxVal: Parsed uint256 upper bound, inclusive; must be non-nil and no less than minVal.
-//
-// Returns:
-//   - generator: Generator retaining cloned bounds and producing uint256 values in their inclusive range.
 func Uint256RangeFrom(minVal *uint256.Uint, maxVal *uint256.Uint) *Generator {
 	assertf(minVal != nil && maxVal != nil, "Uint256RangeFrom: nil bounds")
 	return newGenerator(newUint256Gen(minVal, maxVal))
@@ -152,10 +119,6 @@ type int256Gen struct {
 	span *int256.Int
 }
 
-// String returns the int256 generator's inclusive bounds in decimal form.
-//
-// Returns:
-//   - text: Text containing the generator name and its minimum and maximum signed-int256 values.
 func (g *int256Gen) String() string {
 	var b strings.Builder
 	b.WriteString("Int256(")
@@ -178,29 +141,21 @@ func (g *int256Gen) value(t *T) any {
 	return result
 }
 
-// Int256 generates values using the configured full signed-int256 bounds.
-// For a span wider than the signed-positive range, the current implementation
-// caps the span at MaxInt256; because offsets are non-negative, Int256() then
-// samples MinInt256 through -1 rather than the complete signed range.
+// Int256 generates random int256 values across the full int256 range [-2^255, 2^255-1]
 //
-// Returns:
-//   - generator: Generator using the configured signed-int256 bounds; the implementation caps spans wider than MaxInt256 as described above.
+// Example:
+//
+//	Int256() generates values from min int256 to max int256
 func Int256() *Generator {
 	return Int256RangeFrom(minInt256Value, maxInt256Value)
 }
 
-// Int256Max generates values from min int256 to the specified max.
+// Int256Max generates int256 values from min int256 to the specified max
 // max: maximum value as decimal string
 //
-// If max - MinInt256 exceeds MaxInt256, the current capped-span
-// implementation samples the negative half (MinInt256 through -1) instead of
-// reaching the supplied positive max.
+// Example:
 //
-// Parameters:
-//   - max: Decimal signed-int256 upper bound, inclusive; invalid text falls back to 1,000,000.
-//
-// Returns:
-//   - generator: Generator spanning min int256 through the parsed or fallback max, subject to the documented capped-span behavior.
+//	Int256Max("1000000") generates values from min int256 to 1000000
 func Int256Max(max string) *Generator {
 	maxVal, err := int256.FromDecimal(max)
 	if err != nil {
@@ -209,19 +164,12 @@ func Int256Max(max string) *Generator {
 	return Int256RangeFrom(minInt256Value, maxVal)
 }
 
-// Int256Range generates int256 values within a specified range [min, max].
-// min and max are decimal strings.
+// Int256Range generates int256 values within a specified range [min, max]
+// min and max are decimal strings
 //
-// If max-min exceeds MaxInt256, the implementation caps the span at
-// MaxInt256; generated offsets remain non-negative and may not reach max.
-// Int256RangeFrom also panics when the bounds are nil or min > max.
+// Example:
 //
-// Parameters:
-//   - minStr: Decimal signed-int256 lower bound, inclusive; invalid text falls back to zero.
-//   - maxStr: Decimal signed-int256 upper bound, inclusive; invalid text falls back to 1,000,000.
-//
-// Returns:
-//   - generator: Generator configured with the parsed inclusive bounds; invalid ordering panics in Int256RangeFrom.
+//	Int256Range("-1000", "999999") generates values between -1000 and 999999
 func Int256Range(minStr, maxStr string) *Generator {
 	min, err := int256.FromDecimal(minStr)
 	if err != nil {
@@ -236,18 +184,12 @@ func Int256Range(minStr, maxStr string) *Generator {
 	return Int256RangeFrom(min, max)
 }
 
-// Int256Min generates int256 values from the specified min to max int256.
+// Int256Min generates int256 values from the specified min to max int256
 // min: minimum value as decimal string
 //
-// When maxInt256-min exceeds MaxInt256, the capped-span implementation may
-// not reach maxInt256; it samples min plus a non-negative offset up to
-// MaxInt256.
+// Example:
 //
-// Parameters:
-//   - min: Decimal signed-int256 lower bound, inclusive; invalid text falls back to zero.
-//
-// Returns:
-//   - generator: Generator spanning the parsed or fallback min through max int256, subject to the documented capped-span behavior.
+//	Int256Min("-1000") generates values from -1000 to max int256
 func Int256Min(min string) *Generator {
 	minVal, err := int256.FromDecimal(min)
 	if err != nil {
@@ -257,13 +199,6 @@ func Int256Min(min string) *Generator {
 }
 
 // Int256RangeFrom builds an int256 generator from already parsed bounds.
-//
-// Parameters:
-//   - minVal: Parsed signed-int256 lower bound, inclusive; must be non-nil and no greater than maxVal.
-//   - maxVal: Parsed signed-int256 upper bound, inclusive; must be non-nil and no less than minVal.
-//
-// Returns:
-//   - generator: Generator retaining cloned bounds and producing signed-int256 values in their inclusive range.
 func Int256RangeFrom(minVal *int256.Int, maxVal *int256.Int) *Generator {
 	assertf(minVal != nil && maxVal != nil, "Int256RangeFrom: nil bounds")
 	return newGenerator(newInt256Gen(minVal, maxVal))

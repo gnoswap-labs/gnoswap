@@ -26,27 +26,13 @@ const (
 	errInsufficientLiquidity  = "[GNOSWAP-ROUTER-020] insufficient liquidity for swap"
 )
 
-// addDetailToError appends structured detail to a base error message.
-//
-// Parameters:
-//   - message: base error text or code
-//   - detail: contextual detail to append after the separator
-//
-// Returns:
-//   - messageWithDetail: rendered error string containing message and detail
+// addDetailToError adds detail to an error message.
 func addDetailToError(message string, detail string) string {
 	finalErr := ufmt.Errorf("%s || %s", message, detail)
 	return finalErr.Error()
 }
 
-// makeErrorWithDetails creates an error containing a base message and context.
-//
-// Parameters:
-//   - message: base error text or code
-//   - detail: contextual detail to append after the separator
-//
-// Returns:
-//   - err: error whose message contains message and detail
+// makeErrorWithDetails creates an error with additional context.
 func makeErrorWithDetails(message string, detail string) error {
 	return ufmt.Errorf("%s || %s", message, detail)
 }

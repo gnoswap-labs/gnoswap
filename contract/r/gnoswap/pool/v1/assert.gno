@@ -16,10 +16,6 @@ func assertIsNotUserCall(_ int, rlm realm) {
 }
 
 // assertIsNotEqualsTokens asserts that the token0Path and token1Path are not equal.
-// Parameters:
-//   - token0Path: first token contract path to compare.
-//   - token1Path: second token contract path to compare; must differ from
-//     token0Path.
 func assertIsNotEqualsTokens(token0Path, token1Path string) {
 	if token0Path == token1Path {
 		panic(newErrorWithDetail(
@@ -30,8 +26,6 @@ func assertIsNotEqualsTokens(token0Path, token1Path string) {
 }
 
 // assertIsSupportedFeeTier asserts that the fee is a supported fee tier.
-// Parameters:
-//   - fee: pool fee tier, which must be one of the supported fee constants.
 func assertIsSupportedFeeTier(fee uint32) {
 	if !isValidFeeTier(fee) {
 		panic(newErrorWithDetail(
@@ -42,13 +36,6 @@ func assertIsSupportedFeeTier(fee uint32) {
 }
 
 // assertIsNotExistsPoolPath asserts that the pool path does not exist.
-// Parameters:
-//   - instance: pool implementation whose stored pool tree is checked.
-//   - token0Path: first token contract path used to derive the candidate pool
-//     path.
-//   - token1Path: second token contract path used to derive the candidate pool
-//     path.
-//   - fee: fee tier included in the candidate pool path.
 func assertIsNotExistsPoolPath(instance *poolV1, token0Path, token1Path string, fee uint32) {
 	poolPath := pl.GetPoolPath(token0Path, token1Path, fee)
 

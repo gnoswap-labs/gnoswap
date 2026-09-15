@@ -12,13 +12,6 @@ const (
 )
 
 // makeErrorWithDetail creates an error with additional context.
-//
-// Parameters:
-//   - message: base protocol-fee error code and message
-//   - detail: operation-specific context appended after the base message
-//
-// Returns:
-//   - err: formatted error containing message, a separator, and detail
 func makeErrorWithDetail(message string, detail string) error {
 	return ufmt.Errorf("%s || %s", message, detail)
 }

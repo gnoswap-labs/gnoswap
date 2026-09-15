@@ -387,49 +387,25 @@ func (k *kvStore) RemoveAuthorizedCaller(_ int, rlm realm, caller address) error
 	return nil
 }
 
-// isRegisteredAuthorizedCaller checks if a caller is registered.
-//
-// Parameters:
-//   - caller: Address to look up in the authorized-caller map.
-//
-// Returns:
-//   - bool: true when caller has an ACL entry, regardless of its permission value; false otherwise.
+// isRegisteredAuthorizedCaller checks if a caller is registered
 func (k *kvStore) isRegisteredAuthorizedCaller(caller address) bool {
 	_, exists := k.authorizedCallers[caller]
 
 	return exists
 }
 
-// isUpdatableAuthorizedCaller checks if the current realm is the same as the domain address.
-//
-// Parameters:
-//   - currentRealmAddress: Address of the realm requesting an ACL update.
-//
-// Returns:
-//   - bool: true when currentRealmAddress equals the store's domain address; false otherwise.
+// isUpdatableAuthorizedCaller checks if the current realm is the same as the domain address
 func (k *kvStore) isUpdatableAuthorizedCaller(currentRealmAddress address) bool {
 	return currentRealmAddress == k.domainAddress
 }
 
-// makeKey creates a prefixed key with the domain address to ensure isolation.
-//
-// Parameters:
-//   - key: Logical key supplied by a caller.
-//
-// Returns:
-//   - string: Namespaced key formed by concatenating the domain address, a colon, and key.
+// makeKey creates a prefixed key with the domain address to ensure isolation
 func (k *kvStore) makeKey(key string) string {
 	return string(k.domainAddress) + ":" + key
 }
 
 // isValidPermission ensures only Write is assignable via registration APIs.
 // The zero value is rejected so callers must spell out an explicit permission.
-//
-// Parameters:
-//   - permission: Permission value proposed for an authorized caller.
-//
-// Returns:
-//   - bool: true only for Write; false for the zero value or any other permission.
 func isValidPermission(permission Permission) bool {
 	return permission == Write
 }

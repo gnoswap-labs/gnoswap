@@ -14,10 +14,7 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-// assertIsNotExpired rejects a transaction whose deadline is earlier than the current Unix time.
-//
-// Parameters:
-//   - deadline: transaction expiration as a Unix timestamp
+// assertIsNotExpired ensures the transaction deadline has not passed.
 func assertIsNotExpired(deadline int64) {
 	now := time.Now().Unix()
 
@@ -111,12 +108,7 @@ func assertIsRouterImplementation(caller address) {
 	}
 }
 
-// assertHopFullyConsumed rejects an exact-input hop that consumed less than requested.
-//
-// Parameters:
-//   - hopIndex: zero-based route hop index used in error detail
-//   - specifiedAmount: amount requested for the hop
-//   - consumedAmount: amount actually consumed by the pool
+// assertHopFullyConsumed reverts when an exact-in hop consumed less input than specified.
 func assertHopFullyConsumed(hopIndex int, specifiedAmount, consumedAmount int64) {
 	err := validateHopFullyConsumed(hopIndex, specifiedAmount, consumedAmount)
 	if err != nil {

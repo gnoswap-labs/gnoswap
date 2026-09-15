@@ -55,13 +55,6 @@ type protocolFeeAccumulatorView struct {
 
 // at returns the accumulated value after the fees of the latest known epoch at or
 // before epoch.
-//
-// Parameters:
-//   - epoch: accrual epoch at which the projected accumulator value is requested.
-//
-// Returns:
-//   - *u256.Uint: accumulated fee per stake after the latest known epoch no later
-//     than epoch, or zero when no accumulator exists.
 func (v *protocolFeeAccumulatorView) at(epoch int64) *u256.Uint {
 	for i := len(v.extraEpochs) - 1; i >= 0; i-- {
 		if v.extraEpochs[i] <= epoch {
@@ -95,13 +88,6 @@ type protocolFeeTokenSettlement struct {
 // bucket still pending from a closed epoch could later credit one of those events,
 // so until then they are settled one by one through settleEvents, which is gated by
 // foldedEpoch and yields nothing while the accumulator stays at zero.
-//
-// Parameters:
-//   - tokenPath: token identifier whose settlement state is loaded.
-//   - view: accumulator view, including any in-memory pending-bucket projection.
-//
-// Returns:
-//   - *protocolFeeTokenSettlement: mutable in-memory settlement copy for tokenPath.
 func (p *ProtocolFeeRewardStateResolver) loadTokenSettlement(tokenPath string, view *protocolFeeAccumulatorView) *protocolFeeTokenSettlement {
 	if tokenState, ok := p.GetTokenState(tokenPath); ok {
 		return &protocolFeeTokenSettlement{
@@ -161,16 +147,6 @@ func (p *ProtocolFeeRewardStateResolver) loadTokenSettlement(tokenPath string, v
 // event can only be folded once the epoch before it is fully folded on the
 // accumulator, because the segment it closes ends at that epoch's value. A maxEvents
 // of zero or less folds every event it can. Returns true when no event is left pending.
-//
-// Parameters:
-//   - settlement: in-memory token settlement to advance.
-//   - view: accumulator view used to resolve each segment's ending value.
-//   - maxEvents: positive maximum number of events to fold; zero or negative means
-//     fold every currently eligible event.
-//
-// Returns:
-//   - bool: true when all currently recorded events were settled; false when work
-//     remains pending or an event cannot yet be folded.
 func (p *ProtocolFeeRewardStateResolver) settleEvents(settlement *protocolFeeTokenSettlement, view *protocolFeeAccumulatorView, maxEvents int64) bool {
 	eventCount := p.GetStakeEventCount()
 	processed := int64(0)
@@ -205,10 +181,6 @@ func (p *ProtocolFeeRewardStateResolver) settleEvents(settlement *protocolFeeTok
 // closeOpenSegment folds the open segment up to the accumulator's latest value. It may
 // only be called once every stake event is settled, so that the open segment really
 // ends at the present.
-//
-// Parameters:
-//   - settlement: in-memory token settlement whose open segment is closed.
-//   - view: accumulator view providing the latest projected value.
 func closeOpenSegment(settlement *protocolFeeTokenSettlement, view *protocolFeeAccumulatorView) {
 	settlement.earnedX128 = u256.Zero().Add(
 		settlement.earnedX128,
@@ -219,13 +191,6 @@ func closeOpenSegment(settlement *protocolFeeTokenSettlement, view *protocolFeeA
 
 // takeReward removes the whole-unit part of the earned reward from the settlement and
 // returns it. The sub-unit remainder stays earned so that no fee share is lost.
-//
-// Parameters:
-//   - settlement: in-memory token settlement whose earned Q128 reward is consumed.
-//
-// Returns:
-//   - int64: whole-token reward removed from settlement; its fractional remainder
-//     remains stored in earnedX128.
 func takeReward(settlement *protocolFeeTokenSettlement) int64 {
 	rewardX128 := u256.Zero().Rsh(settlement.earnedX128, 128)
 	reward := gnsmath.SafeConvertToInt64(rewardX128)
@@ -235,15 +200,6 @@ func takeReward(settlement *protocolFeeTokenSettlement) int64 {
 }
 
 // segmentRewardX128 returns stakedAmount times the accumulator growth across a segment.
-//
-// Parameters:
-//   - stakedAmount: stake held during the segment.
-//   - startX128: Q128 accumulator value at the segment start.
-//   - endX128: Q128 accumulator value at the segment end.
-//
-// Returns:
-//   - *u256.Uint: Q128-scaled reward product, or zero when stake is non-positive
-//     or the accumulator did not increase.
 func segmentRewardX128(stakedAmount int64, startX128, endX128 *u256.Uint) *u256.Uint {
 	if stakedAmount <= 0 || !endX128.Gt(startX128) {
 		return u256.Zero()
@@ -255,10 +211,6 @@ func segmentRewardX128(stakedAmount int64, startX128, endX128 *u256.Uint) *u256.
 }
 
 // storeTokenSettlement writes the settlement back to the staker's state.
-//
-// Parameters:
-//   - tokenPath: token identifier whose settlement state is stored.
-//   - settlement: updated in-memory settlement to persist.
 func (p *ProtocolFeeRewardStateResolver) storeTokenSettlement(tokenPath string, settlement *protocolFeeTokenSettlement) {
 	tokenState, ok := p.GetTokenState(tokenPath)
 	if !ok {
@@ -277,16 +229,6 @@ func (p *ProtocolFeeRewardStateResolver) storeTokenSettlement(tokenPath string, 
 // Up to maxEvents stake events are folded; whatever is settled by then is paid, and
 // the rest stays pending for a later collect. A maxEvents of zero or less folds
 // everything.
-//
-// Parameters:
-//   - tokenPath: token identifier whose reward is collected.
-//   - view: accumulator view used for settlement, including pending projections.
-//   - maxEvents: positive cap on stake events settled; zero or negative settles all
-//     eligible events.
-//
-// Returns:
-//   - int64: whole-token protocol fee reward paid by this collection.
-//   - error: nil; the current settlement implementation has no explicit error path.
 func (p *ProtocolFeeRewardStateResolver) claimTokenReward(tokenPath string, view *protocolFeeAccumulatorView, maxEvents int64) (int64, error) {
 	// A token that never collected a fee has nothing to settle; skipping it keeps the
 	// staker's state free of an entry per token merely queried.
@@ -314,13 +256,6 @@ func (p *ProtocolFeeRewardStateResolver) claimTokenReward(tokenPath string, view
 
 // getClaimableReward returns what a collect of tokenPath would pay right now, without
 // changing any state.
-//
-// Parameters:
-//   - tokenPath: token identifier whose currently claimable reward is queried.
-//   - view: accumulator view used to project pending fee accrual.
-//
-// Returns:
-//   - int64: whole-token protocol fee reward that a collect would pay.
 func (p *ProtocolFeeRewardStateResolver) getClaimableReward(tokenPath string, view *protocolFeeAccumulatorView) int64 {
 	settlement := p.loadTokenSettlement(tokenPath, view)
 
@@ -332,13 +267,6 @@ func (p *ProtocolFeeRewardStateResolver) getClaimableReward(tokenPath string, vi
 }
 
 // addStake increases the staked amount and records the change from epoch on.
-//
-// Parameters:
-//   - amount: positive stake amount to add.
-//   - epoch: accrual epoch from which the new stake applies.
-//
-// Returns:
-//   - error: nil on success; an error when amount is not positive.
 func (p *ProtocolFeeRewardStateResolver) addStake(amount int64, epoch int64) error {
 	if amount <= 0 {
 		return errors.New(errAmountMustBePositive)
@@ -352,14 +280,6 @@ func (p *ProtocolFeeRewardStateResolver) addStake(amount int64, epoch int64) err
 }
 
 // removeStake decreases the staked amount and records the change from epoch on.
-//
-// Parameters:
-//   - amount: non-negative stake amount to remove.
-//   - epoch: accrual epoch from which the reduced stake applies.
-//
-// Returns:
-//   - error: nil on success; an error when amount is negative or exceeds the
-//     current staked amount.
 func (p *ProtocolFeeRewardStateResolver) removeStake(amount int64, epoch int64) error {
 	if amount < 0 {
 		return errors.New(errAmountMustBeNonNegative)

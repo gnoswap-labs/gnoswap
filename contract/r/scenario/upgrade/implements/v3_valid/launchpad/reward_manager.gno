@@ -127,7 +127,7 @@ func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u
 //
 // Parameters:
 // - totalDepositAmount (int64): Current total deposit amount
-// - currentTime (int64): Current Unix timestamp
+// - time (int64): Current timestamp
 //
 // Returns:
 // - error: If the update fails
@@ -184,7 +184,7 @@ func updateDistributeAmountPerSecondX128(r *launchpad.RewardManager, totalDistri
 //
 // Parameters:
 // - depositId (string): The ID of the deposit
-// - currentTime (int64): Current Unix timestamp
+// - currentHeight (int64): Current blockchain height
 //
 // Returns:
 // - int64: The amount of reward collected

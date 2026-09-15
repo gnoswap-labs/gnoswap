@@ -170,15 +170,6 @@ func (c *commonV1) mustGetToken(tokenKey string) *grc20.Token {
 
 // getTokenTeller binds the token actor to rlm. This is a same-realm borrow,
 // so rlm stays current and the actor is the calling realm.
-//
-// Parameters:
-//   - _: realm-call discriminator; callers pass 0
-//   - rlm: propagated realm context bound to the returned teller
-//   - tokenKey: registry key of the token whose teller is requested
-//
-// Returns:
-//   - teller: token teller bound to rlm; panics when tokenKey is invalid or
-//     unregistered
 func (c *commonV1) getTokenTeller(_ int, rlm realm, tokenKey string) grc20.Teller {
 	return c.mustGetToken(tokenKey).RealmTeller(0, rlm)
 }

@@ -376,24 +376,6 @@ func (gv *governanceV1) ProposeParameterChange(
 
 // createProposal handles proposal creation logic.
 // Validates input data, checks proposer eligibility, and creates proposal object.
-// Parameters:
-//   - _: Internal call discriminator; pass 0.
-//   - rlm: Propagated realm context used for the authorized proposal-state write.
-//   - proposalType: Proposal kind controlling validation and whether execution is allowed.
-//   - config: Governance configuration snapshot applied to this proposal.
-//   - maxVotingWeight: Maximum smoothed voting weight recorded at creation.
-//   - quorumWeight: Total xGNS supply used to derive the proposal's quorum requirement.
-//   - snapshotTime: Unix timestamp anchor for historical voting-weight lookups.
-//   - proposalMetadata: Validated title and description for the proposal.
-//   - proposalData: Type-specific spend or execution data for the proposal.
-//   - proposerAddress: Address creating the proposal.
-//   - proposerXGnsBalance: Proposer's xGNS balance checked against the creation threshold.
-//   - createdAt: Unix timestamp at which the proposal is created.
-//   - createdHeight: Chain height at which the proposal is created.
-//
-// Returns:
-//   - *governance.Proposal: newly created proposal, or nil when validation/storage fails.
-//   - error: nil on success; non-nil when metadata/data, eligibility, or state insertion fails.
 func (gv *governanceV1) createProposal(
 	_ int, rlm realm,
 	proposalType governance.ProposalType,
@@ -463,16 +445,8 @@ func (gv *governanceV1) createProposal(
 	return proposal, nil
 }
 
-// getVotingWeightSnapshot retrieves averaged total delegation at proposal
-// creation using Unix timestamp history, not a block-height snapshot.
-// Parameters:
-//   - current: Current Unix timestamp used as the right endpoint of the smoothing window.
-//   - smoothingPeriod: Smoothing duration in seconds subtracted from current, clamped at timestamp zero.
-//
-// Returns:
-//   - int64: averaged total delegation used as the proposal's maximum voting weight.
-//   - int64: effective snapshot Unix timestamp used for the historical lookup.
-//   - error: nil on success; non-nil when the averaged voting weight is not positive.
+// getVotingWeightSnapshot retrieves the averaged total voting weight for proposal creation.
+// It uses two snapshots (current and current - smoothingPeriod) and averages them.
 func (gv *governanceV1) getVotingWeightSnapshot(
 	current,
 	smoothingPeriod int64,

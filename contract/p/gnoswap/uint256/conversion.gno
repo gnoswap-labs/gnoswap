@@ -733,12 +733,6 @@ func (z *Uint) SetBytes32(in []byte) *Uint {
 // Utility methods that are "missing" among the bigEndian.UintXX methods.
 
 // bigEndianUint40 returns the uint64 value represented by the 5 bytes in big-endian order.
-//
-// Parameters:
-//   - b: the byte sequence containing at least 5 bytes to decode in big-endian order
-//
-// Returns:
-//   - value: the uint64 represented by the first five bytes of b
 func bigEndianUint40(b []byte) uint64 {
 	_ = b[4] // bounds check hint to compiler; see golang.org/issue/14808
 	return uint64(b[4]) | uint64(b[3])<<8 | uint64(b[2])<<16 | uint64(b[1])<<24 |
@@ -746,12 +740,6 @@ func bigEndianUint40(b []byte) uint64 {
 }
 
 // bigEndianUint56 returns the uint64 value represented by the 7 bytes in big-endian order.
-//
-// Parameters:
-//   - b: the byte sequence containing at least 7 bytes to decode in big-endian order
-//
-// Returns:
-//   - value: the uint64 represented by the first seven bytes of b
 func bigEndianUint56(b []byte) uint64 {
 	_ = b[6] // bounds check hint to compiler; see golang.org/issue/14808
 	return uint64(b[6]) | uint64(b[5])<<8 | uint64(b[4])<<16 | uint64(b[3])<<24 |
@@ -759,12 +747,6 @@ func bigEndianUint56(b []byte) uint64 {
 }
 
 // bigEndianUint48 returns the uint64 value represented by the 6 bytes in big-endian order.
-//
-// Parameters:
-//   - b: the byte sequence containing at least 6 bytes to decode in big-endian order
-//
-// Returns:
-//   - value: the uint64 represented by the first six bytes of b
 func bigEndianUint48(b []byte) uint64 {
 	_ = b[5] // bounds check hint to compiler; see golang.org/issue/14808
 	return uint64(b[5]) | uint64(b[4])<<8 | uint64(b[3])<<16 | uint64(b[2])<<24 |

@@ -2188,8 +2188,8 @@ func TestCollectExternalIncentivePenalty_HaltSemantics(cur realm, t *testing.T) 
 	})
 }
 
-// TestEndExternalIncentiveRefundWithPenalty verifies that EndExternalIncentive
-// keeps accumulated penalties separate from its creator/refundAddress refund.
+// TestEndExternalIncentiveRefundWithPenalty tests that endExternalIncentive
+// includes accumulatedPenaltyAmount in the refund calculation.
 func TestEndExternalIncentiveRefundWithPenalty(cur realm, t *testing.T) {
 	tests := []struct {
 		name        string

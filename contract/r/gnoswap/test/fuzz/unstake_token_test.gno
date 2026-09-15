@@ -52,7 +52,7 @@ func TestFuzzUnStakeToken_ExternalIncentive_Stateless(cur realm, t *testing.T) {
 	})
 }
 
-// runTestUnStakeToken runs the UnStakeToken scenario.
+// runTestStakeToken runs the test swap route.
 func runTestUnStakeToken(cur realm, ft *fuzz.T, params *unStakeTokenParams) {
 	testing.SetRealm(testing.NewUserRealm(adminAddr))
 	staker.UnStakeToken(

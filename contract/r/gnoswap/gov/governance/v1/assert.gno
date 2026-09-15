@@ -8,11 +8,6 @@ import (
 )
 
 // assertCallerIsProposer panics if the caller is not the proposer of the given proposal.
-//
-// Parameters:
-//   - gv: governance implementation used to look up the proposal
-//   - proposalID: identifier of the proposal whose proposer is checked
-//   - caller: address that must match the proposal's proposer
 func assertCallerIsProposer(gv *governanceV1, proposalID int64, caller address) {
 	proposal, exists := gv.getProposal(proposalID)
 	if !exists {

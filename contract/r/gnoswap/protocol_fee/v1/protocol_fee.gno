@@ -84,13 +84,6 @@ func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, toke
 }
 
 // distributeProtocolFeeForToken validates and distributes one reserved token's pending fees.
-//
-// Parameters:
-//   - _: cross-call discriminator; callers pass 0
-//   - rlm: propagated protocol_fee realm context used for store writes and token transfers
-//   - pfs: protocol fee state wrapper providing allocation and distribution history for the token
-//   - protocolFeeAddr: protocol fee holding address whose token balance is checked before transfer
-//   - tokenPath: token contract path whose pending DevOps and GovStaker fees are distributed
 func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *protocolFeeState, protocolFeeAddr address, tokenPath string) {
 	toDevOpsAmount := gnsmath.SafeSubInt64(
 		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),

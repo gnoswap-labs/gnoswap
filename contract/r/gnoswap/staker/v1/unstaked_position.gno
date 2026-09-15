@@ -41,12 +41,6 @@ func (self *UnstakedPositions) Has(positionId uint64) bool {
 }
 
 // get retrieves an exit checkpoint by position ID, or nil when there is none.
-//
-// Parameters:
-//   - positionId: Position ID whose exit checkpoint is retrieved.
-//
-// Returns:
-//   - *sr.UnstakedPosition: Stored exit checkpoint, or nil when positionId has none.
 func (self *UnstakedPositions) get(positionId uint64) *sr.UnstakedPosition {
 	value := self.tree.Get(utils.EncodeUint64(positionId))
 	if value == nil {
@@ -62,26 +56,16 @@ func (self *UnstakedPositions) get(positionId uint64) *sr.UnstakedPosition {
 }
 
 // set stores an exit checkpoint for a position ID.
-//
-// Parameters:
-//   - positionId: Position ID used as the checkpoint key.
-//   - position: Exit-checkpoint state to store for positionId.
 func (self *UnstakedPositions) set(positionId uint64, position *sr.UnstakedPosition) {
 	self.tree.Set(utils.EncodeUint64(positionId), position)
 }
 
 // remove deletes an exit checkpoint by position ID.
-//
-// Parameters:
-//   - positionId: Position ID whose exit checkpoint is deleted.
 func (self *UnstakedPositions) remove(positionId uint64) {
 	self.tree.Remove(utils.EncodeUint64(positionId))
 }
 
 // getUnstakedPositions returns the exit checkpoints backed by the store.
-//
-// Returns:
-//   - *UnstakedPositions: Manager wrapping the staker store's exit-checkpoint tree.
 func (s *stakerV1) getUnstakedPositions() *UnstakedPositions {
 	return &UnstakedPositions{tree: s.store.GetUnstakedPositions()}
 }
@@ -90,12 +74,6 @@ func (s *stakerV1) getUnstakedPositions() *UnstakedPositions {
 //
 // The count is per incentive, not per pool: one checkpoint that can never be funded would
 // otherwise lock the refunds of every other incentive in the same pool.
-//
-// Parameters:
-//   - incentiveId: External incentive identifier whose outstanding checkpoint count is queried.
-//
-// Returns:
-//   - int64: Number of exit checkpoints that still owe incentiveId, or zero when none are recorded.
 func (s *stakerV1) uncollectedIncentiveCountOf(incentiveId string) int64 {
 	value := s.store.GetUncollectedIncentiveCounts().Get(incentiveId)
 	if value == nil {
@@ -110,12 +88,7 @@ func (s *stakerV1) uncollectedIncentiveCountOf(incentiveId string) int64 {
 	return count
 }
 
-// addUncollectedIncentiveCount moves the incentive's outstanding-checkpoint count by delta,
-// removing the entry when the resulting count reaches zero.
-//
-// Parameters:
-//   - incentiveId: External incentive identifier whose count is changed.
-//   - delta: Signed change to the outstanding-checkpoint count.
+// addUncollectedIncentiveCount moves the incentive's count by delta, dropping the entry at zero.
 func (s *stakerV1) addUncollectedIncentiveCount(incentiveId string, delta int64) {
 	addUncollectedIncentiveCountTo(s.store.GetUncollectedIncentiveCounts(), incentiveId, delta)
 }
@@ -149,16 +122,6 @@ func addUncollectedIncentiveCountTo(counts *bptree.BPTree, incentiveId string, d
 // recordUnstakedPosition writes the exit checkpoint before the teardown touches the pool.
 // The deposit's incentive index is brought up to date first, so the checkpoint owes exactly
 // the incentives the position accrued from.
-//
-// Parameters:
-//   - _: Internal call discriminator; callers pass 0.
-//   - rlm: Propagated realm context associated with the unstake transition; retained for the internal call convention while checkpoint data is written from the supplied deposit.
-//   - positionId: LP position NFT token ID whose stake is ending.
-//   - deposit: Live deposit state being converted into an exit checkpoint.
-//   - exitTime: Unix timestamp at which the position stopped accruing rewards.
-//
-// Returns:
-//   - *sr.UnstakedPosition: Newly stored checkpoint containing the position's reward-accounting snapshot.
 func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, deposit *sr.Deposit, exitTime int64) *sr.UnstakedPosition {
 	poolPath := deposit.TargetPoolPath()
 
@@ -217,11 +180,6 @@ func (s *stakerV1) recordUnstakedPosition(_ int, rlm realm, positionId uint64, d
 }
 
 // dropUnstakedPositionIfCollected removes the checkpoint once every reward source is collected.
-//
-// Parameters:
-//   - _: Internal call discriminator; callers pass 0.
-//   - rlm: Propagated realm context used for checkpoint removal and event emission.
-//   - target: Collection target containing the checkpoint, position ID, and deposit metadata.
 func (s *stakerV1) dropUnstakedPositionIfCollected(_ int, rlm realm, target *collectTarget) {
 	if !target.checkpoint.FullyCollected() {
 		return

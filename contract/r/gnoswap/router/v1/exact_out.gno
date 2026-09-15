@@ -163,8 +163,6 @@ func (r *routerV1) ExactOutSingleSwapRoute(
 // - Event emission for swap completion
 //
 // Parameters:
-//   - _: leading implementation discriminator; callers pass 0
-//   - rlm: propagated current realm context used for pool swaps and transfers
 //   - params: SwapRouteParams containing all swap configuration
 //   - referrer: Referral address for registration
 //

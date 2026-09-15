@@ -26,14 +26,10 @@ func (h HaltStateManager) ToConfig() HaltConfig {
 	return config
 }
 
-// getOperationHalted retrieves the halt state for the specified operation type.
+// getOperationHalted retrieves halt state for the specified operation type.
 //
-// Parameters:
-//   - op: operation type whose configured halt flag is queried.
-//
-// Returns:
-//   - halted: configured halt flag for op.
-//   - error: nil when op exists; otherwise errOpTypeNotFound.
+// Errors:
+//   - errOpTypeNotFound: the specified operation type does not exist in the manager
 func (h HaltStateManager) getOperationHalted(op OpType) (bool, error) {
 	halted, exists := h[op]
 	if !exists {

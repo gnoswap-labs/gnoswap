@@ -73,9 +73,9 @@ func (dm *DelegationManagerResolver) GetUserDelegationIDs(delegator address) []i
 // and ensures no duplicate delegation IDs are stored.
 //
 // Parameters:
-//   - delegator: address that supplied the delegation.
-//   - delegatee: address that received the delegation.
-//   - delegationID: unique delegation record identifier to add.
+//   - delegator: address of the user who made the delegation
+//   - delegatee: address of the user who received the delegation
+//   - delegationID: unique identifier for the delegation
 func (dm *DelegationManagerResolver) addDelegation(delegator, delegatee address, delegationID int64) {
 	// Delegate the read-modify-write to the domain method so the nested BPTree
 	// mutation stays within the owning realm; splitting the get and set across

@@ -390,20 +390,6 @@ func (p *positionV1) CollectFee(_ int, rlm realm, positionId uint64) (uint64, st
 }
 
 // collectFee performs fee collection and withdrawal fee calculation.
-//
-// Parameters:
-//   - _: leading realm-call discriminator forwarded to nested pool and position operations; callers pass 0
-//   - rlm: propagated realm context used by nested calls, which cross with cross(rlm)
-//   - positionId: position NFT ID whose accrued swap fees are collected
-//   - caller: address that receives the collected fees and is recorded in pool calls
-//
-// Returns:
-//   - positionId: same position NFT ID
-//   - tokensCollected0: token0 amount sent to caller after the withdrawal fee
-//   - tokensCollected1: token1 amount sent to caller after the withdrawal fee
-//   - poolPath: pool identifier stored on the position
-//   - totalAmount0: raw token0 amount collected before the withdrawal fee
-//   - totalAmount1: raw token1 amount collected before the withdrawal fee
 func (p *positionV1) collectFee(_ int, rlm realm, positionId uint64, caller address) (uint64, string, string, string, string, string) {
 	// verify position
 	position := p.mustGetPosition(positionId)
@@ -526,14 +512,6 @@ func (p *positionV1) SetPositionOperator(_ int, rlm realm, id uint64, operator a
 }
 
 // getCurrentFeeGrowth retrieves current fee growth values for a position.
-//
-// Parameters:
-//   - position: position whose pool and tick range identify the aggregate fee-growth entry
-//   - owner: position owner address supplied by the collection flow; retained for call-site context and not used in the lookup
-//
-// Returns:
-//   - feeGrowthInside: current token0 and token1 fee-growth values inside the position's range
-//   - err: nil when the pool entry is read; otherwise the pool fee-growth lookup error
 func (p *positionV1) getCurrentFeeGrowth(position *pos.Position, owner address) (FeeGrowthInside, error) {
 	positionKey := computePositionKey(position.TickLower(), position.TickUpper())
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128, err := pl.GetPositionFeeGrowthInsideLastX128(position.PoolKey(), positionKey)
@@ -549,29 +527,13 @@ func (p *positionV1) getCurrentFeeGrowth(position *pos.Position, owner address) 
 	return feeGrowthInside, nil
 }
 
-// computePositionKey generates a compact deterministic key for a pool's
-// aggregate liquidity accounting entry. It encodes only the lower/upper ticks;
-// the pool path supplies the scope.
-//
-// Parameters:
-//   - tickLower: lower tick boundary encoded into the aggregate key
-//   - tickUpper: upper tick boundary encoded into the aggregate key
-//
-// Returns:
-//   - positionKey: deterministic key encoding tickLower and tickUpper
+// computePositionKey generates a compact deterministic key for a liquidity position.
 func computePositionKey(tickLower, tickUpper int32) string {
 	return pl.EncodePositionKey(tickLower, tickUpper)
 }
 
-// calculatePositionBalances derives current token balances from the position's
-// liquidity and range together with the current pool price.
-//
-// Parameters:
-//   - position: position whose pool, tick range, and liquidity determine the balances
-//
-// Returns:
-//   - token0Balance: current token0 amount represented by the position's liquidity at the pool price
-//   - token1Balance: current token1 amount represented by the position's liquidity at the pool price
+// calculatePositionBalances computes token balances for a position at current price.
+// Returns calculated token0 and token1 balances based on position liquidity and price range.
 func calculatePositionBalances(position *pos.Position) (int64, int64) {
 	liquidity := u256.MustFromDecimal(position.Liquidity())
 	if liquidity.IsZero() {

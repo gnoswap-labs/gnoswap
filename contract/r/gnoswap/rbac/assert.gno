@@ -9,9 +9,6 @@ import (
 )
 
 // assertIsOwner panics if address is not the current owner.
-//
-// Parameters:
-//   - addr: address that must equal the configured owner
 func assertIsOwner(addr address) {
 	if manager.Owner() != addr {
 		panic(makeErrorWithDetails(
@@ -22,9 +19,6 @@ func assertIsOwner(addr address) {
 }
 
 // assertIsPendingOwner panics if address is not the pending owner.
-//
-// Parameters:
-//   - addr: address that must equal the configured pending owner
 func assertIsPendingOwner(addr address) {
 	if manager.PendingOwner() != addr {
 		panic(makeErrorWithDetails(
@@ -35,9 +29,6 @@ func assertIsPendingOwner(addr address) {
 }
 
 // assertIsAdmin panics if address is not authorized for admin role.
-//
-// Parameters:
-//   - addr: address that must be authorized for the admin role
 func assertIsAdmin(addr address) {
 	if !manager.IsAuthorized(prbac.ROLE_ADMIN.String(), addr) {
 		panic(
@@ -50,9 +41,6 @@ func assertIsAdmin(addr address) {
 }
 
 // assertIsValidRoleName panics if roleName is invalid (empty or whitespace-only).
-//
-// Parameters:
-//   - roleName: role name that must contain non-whitespace text
 func assertIsValidRoleName(roleName string) {
 	if strings.TrimSpace(roleName) == "" {
 		panic(makeErrorWithDetails(

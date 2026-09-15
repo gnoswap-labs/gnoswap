@@ -278,14 +278,6 @@ func NewProposalExecutionData(numToExecute int64, executions string) *governance
 
 // makeExecuteMessage creates a message to execute a function.
 // Message format: <pkgPath>*EXE*<function>*EXE*<params>.
-//
-// Parameters:
-//   - pkgPath: package path containing the function to call.
-//   - function: function name to execute.
-//   - params: argument strings joined into the encoded message parameter field.
-//
-// Returns:
-//   - string: encoded execution message using parameterSeparator.
 func makeExecuteMessage(pkgPath, function string, params []string) string {
 	messageParams := []string{
 		pkgPath,

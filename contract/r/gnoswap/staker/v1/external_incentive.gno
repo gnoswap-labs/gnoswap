@@ -239,18 +239,7 @@ func (s *stakerV1) EndExternalIncentive(_ int, rlm realm, targetPoolPath, incent
 	)
 }
 
-// endExternalIncentive validates and calculates the refundable amount for an ended incentive.
-//
-// Parameters:
-//   - resolver: Pool resolver providing the pool's incentive state.
-//   - incentiveResolver: Resolver for the specific incentive being ended.
-//   - caller: Address requesting the end operation, checked against the creator and admin role.
-//   - currentTime: Current Unix timestamp used to enforce the incentive end time.
-//
-// Returns:
-//   - incentive: Stored incentive record with its pre-refund accounting state.
-//   - refund: Reward-token amount made refundable after unclaimable rewards and remainder are calculated, capped at the remaining reward amount.
-//   - err: Non-nil when the incentive has not ended, caller lacks permission, or the calculated refund is invalid.
+// endExternalIncentive processes the end of an external incentive program.
 func (s *stakerV1) endExternalIncentive(resolver *PoolResolver, incentiveResolver *ExternalIncentiveResolver, caller address, currentTime int64) (*sr.ExternalIncentive, int64, error) {
 	if currentTime < incentiveResolver.EndTimestamp() {
 		return nil, 0, makeErrorWithDetails(

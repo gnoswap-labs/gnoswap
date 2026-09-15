@@ -99,12 +99,6 @@ func (self *Deposits) Size() int {
 }
 
 // get retrieves a deposit by position ID.
-//
-// Parameters:
-//   - positionId: LP position NFT ID whose deposit should be loaded.
-//
-// Returns:
-//   - deposit: Stored deposit for positionId; missing IDs panic with a not-found error.
 func (self *Deposits) get(positionId uint64) *sr.Deposit {
 	depositI := self.tree.Get(utils.EncodeUint64(positionId))
 	if depositI == nil {
@@ -117,12 +111,6 @@ func (self *Deposits) get(positionId uint64) *sr.Deposit {
 }
 
 // retrieveDeposit safely casts data to Deposit type.
-//
-// Parameters:
-//   - data: Tree value expected to contain a *sr.Deposit.
-//
-// Returns:
-//   - deposit: Deposit pointer extracted from data; an incompatible value panics.
 func retrieveDeposit(data any) *sr.Deposit {
 	deposit, ok := data.(*sr.Deposit)
 	if !ok {
@@ -132,18 +120,11 @@ func retrieveDeposit(data any) *sr.Deposit {
 }
 
 // set stores a deposit for a position ID.
-//
-// Parameters:
-//   - positionId: LP position NFT ID under which to store the deposit.
-//   - deposit: Deposit value to associate with positionId.
 func (self *Deposits) set(positionId uint64, deposit *sr.Deposit) {
 	self.tree.Set(utils.EncodeUint64(positionId), deposit)
 }
 
 // remove deletes a deposit by position ID.
-//
-// Parameters:
-//   - positionId: LP position NFT ID whose stored deposit should be removed.
 func (self *Deposits) remove(positionId uint64) {
 	self.tree.Remove(utils.EncodeUint64(positionId))
 }
@@ -179,12 +160,6 @@ func (self *ExternalIncentives) Has(incentiveId string) bool { return self.tree.
 func (self *ExternalIncentives) Size() int { return self.tree.Size() }
 
 // get retrieves an external incentive by ID.
-//
-// Parameters:
-//   - incentiveId: External incentive ID whose stored record should be loaded.
-//
-// Returns:
-//   - incentive: Stored external incentive for incentiveId; missing IDs or incompatible values panic.
 func (self *ExternalIncentives) get(incentiveId string) *sr.ExternalIncentive {
 	incentiveI := self.tree.Get(incentiveId)
 	if incentiveI == nil {
@@ -202,29 +177,17 @@ func (self *ExternalIncentives) get(incentiveId string) *sr.ExternalIncentive {
 }
 
 // set stores an external incentive.
-//
-// Parameters:
-//   - incentiveId: External incentive ID under which to store the incentive.
-//   - incentive: External incentive record to associate with incentiveId.
 func (self *ExternalIncentives) set(incentiveId string, incentive *sr.ExternalIncentive) {
 	self.tree.Set(incentiveId, incentive)
 }
 
 // remove deletes an external incentive by ID.
-//
-// Parameters:
-//   - incentiveId: External incentive ID whose stored record should be removed.
 func (self *ExternalIncentives) remove(incentiveId string) {
 	self.tree.Remove(incentiveId)
 }
 
 // EmissionCacheUpdateHook updates the emission cache when called.
 // This follows the same pattern as other hooks in the staker contract.
-//
-// Parameters:
-//   - _: Realm-call discriminator forwarded through the emission hook; pass 0.
-//   - rlm: Propagated current realm context used when persisting the updated pool-tier state.
-//   - emissionAmountPerSecond: New GNS emission rate in token smallest units per second.
 func (s *stakerV1) emissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSecond int64) {
 	poolTier := s.getPoolTier()
 	if poolTier != nil {
@@ -247,12 +210,6 @@ func (s *stakerV1) emissionCacheUpdateHook(_ int, rlm realm, emissionAmountPerSe
 // stakeScanLowerBound returns the lower bound of the stake-time incentive scan
 // window, clamped to 0. The start-time index encodes keys as unsigned, so a
 // negative bound aborts when the chain time is under TIMESTAMP_365DAYS.
-//
-// Parameters:
-//   - currentTime: Current timestamp in Unix seconds used as the scan-window endpoint.
-//
-// Returns:
-//   - lowerBound: Maximum of zero and currentTime minus the one-year scan window, in Unix seconds.
 func stakeScanLowerBound(currentTime int64) int64 {
 	if currentTime < TIMESTAMP_365DAYS {
 		return 0
@@ -465,21 +422,20 @@ func (s *stakerV1) StakeToken(_ int, rlm realm, positionId uint64, referrer stri
 // Handles cases where the staker already holds custody.
 //
 // Parameters:
-//   - _: Realm-call discriminator forwarded through the staking operation; pass 0.
-//   - rlm: Propagated current realm context used for NFT custody transfer.
-//   - positionId: The ID of the position NFT to transfer.
-//   - owner: The current owner of the position.
-//   - caller: The entity initiating the transfer.
-//   - to: The recipient address, usually the staker contract.
+//   - positionId: The ID of the position NFT to transfer
+//   - owner: The current owner of the position
+//   - caller: The entity initiating the transfer
+//   - to: The recipient address (usually staker contract)
 //
 // Security Features:
-//   - Prevents self-transfer exploits.
-//   - Validates ownership before transfer.
-//   - Atomic operation with staking.
-//   - No transfer if owner == to because custody already exists.
+//   - Prevents self-transfer exploits
+//   - Validates ownership before transfer
+//   - Atomic operation with staking
+//   - No transfer if owner == to (already in custody)
 //
 // Returns:
-//   - err: Nil when owner == to or the NFT transfer succeeds; non-nil when caller == to or the underlying transfer fails.
+//   - nil: If owner and recipient are same
+//   - error: If caller unauthorized or transfer fails
 //
 // NFT remains locked in staker until unstaking.
 // Otherwise delegates the transfer to `gnft.TransferFrom`.
@@ -529,16 +485,6 @@ type collectContext struct {
 // newCollectContext resolves the deposit and snapshots the accumulator values used for reward
 // calculation tracking. Call it AFTER the calculation's state update has been applied, so a lazily
 // created pool is already persisted.
-//
-// Parameters:
-//   - _: Realm-call discriminator forwarded through the collect operation; pass 0.
-//   - rlm: Propagated current realm context used to snapshot accumulator state.
-//   - target: Live deposit or exit checkpoint that identifies the collection target.
-//   - currentTime: Collection timestamp in Unix seconds used for reward-state snapshots.
-//   - blockHeight: Chain height associated with the collection snapshot.
-//
-// Returns:
-//   - context: Collection context containing the target deposit, timestamps, caller metadata, and accumulator snapshot.
 func (s *stakerV1) newCollectContext(_ int, rlm realm, target *collectTarget, currentTime, blockHeight int64) *collectContext {
 	positionId := target.positionId
 	deposit := target.deposit
@@ -570,12 +516,6 @@ func (s *stakerV1) newCollectContext(_ int, rlm realm, target *collectTarget, cu
 
 // unstakingFee returns the fee rate this collect settles under: the live rate while staked,
 // and the rate pinned at exit for a checkpoint, whose window closed under it.
-//
-// Parameters:
-//   - s: Staker instance supplying the current live unstaking-fee rate when no checkpoint fee is pinned.
-//
-// Returns:
-//   - fee: Staking reward fee rate in the contract's fee-rate units.
 func (self *collectContext) unstakingFee(s *stakerV1) uint64 {
 	if self.checkpoint != nil {
 		return self.checkpoint.UnstakingFee()
@@ -585,9 +525,6 @@ func (self *collectContext) unstakingFee(s *stakerV1) uint64 {
 }
 
 // persistDeposit writes the deposit back, unless it belongs to a checkpoint and is not there.
-//
-// Parameters:
-//   - s: Staker instance whose deposit tree receives the live deposit.
 func (self *collectContext) persistDeposit(s *stakerV1) {
 	if self.checkpoint != nil {
 		return
@@ -620,11 +557,6 @@ const (
 
 // markEmissionCollected records the emission collect on the checkpoint. Idempotent: a
 // re-entering collect may have marked it already.
-//
-// Parameters:
-//   - _: Realm-call discriminator forwarded through checkpoint bookkeeping; pass 0.
-//   - rlm: Propagated current realm context used for checkpoint events and cleanup.
-//   - target: Collection target whose checkpoint emission source should be marked.
 func (s *stakerV1) markEmissionCollected(_ int, rlm realm, target *collectTarget) {
 	if !target.isCheckpoint() || target.checkpoint.EmissionCollected() {
 		return
@@ -639,15 +571,6 @@ func (s *stakerV1) markEmissionCollected(_ int, rlm realm, target *collectTarget
 // reported outcome. A paid, empty or already-delivered source is done. A deferred one stays
 // pending. An unpayable one is forfeited: keeping it pending forever would lock both this
 // position's re-staking and the incentive's own refund, with no escape path.
-//
-// Parameters:
-//   - _: Realm-call discriminator forwarded through checkpoint bookkeeping; pass 0.
-//   - rlm: Propagated current realm context used for checkpoint events and cleanup.
-//   - target: Collection target whose checkpoint incentive should be marked.
-//   - incentiveId: External incentive ID being settled or forfeited.
-//   - rewardAmount: Gross incentive reward amount considered for this collection, in token smallest units.
-//   - rewardPenalty: Warmup penalty amount considered for this collection, in token smallest units.
-//   - outcome: Delivery result determining whether the checkpoint source remains pending, is paid, or is forfeited.
 func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarget, incentiveId string, rewardAmount, rewardPenalty int64, outcome externalDeliveryOutcome) {
 	if !target.isCheckpoint() || !target.checkpoint.HasPendingIncentiveId(incentiveId) {
 		return
@@ -682,13 +605,6 @@ func (s *stakerV1) markIncentiveCollected(_ int, rlm realm, target *collectTarge
 
 // emitCheckpointSourceCollected reports one reward source of a checkpoint as settled, so an
 // indexer can follow what the checkpoint still owes without reading realm state.
-//
-// Parameters:
-//   - _: Realm-call discriminator forwarded through event emission; pass 0.
-//   - rlm: Propagated current realm context used to identify the previous caller in the event.
-//   - target: Collection target whose checkpoint source state should be reported.
-//   - source: Reward source label, normally "emission" or "external".
-//   - incentiveId: External incentive ID for an external source; empty for the emission source.
 func (s *stakerV1) emitCheckpointSourceCollected(_ int, rlm realm, target *collectTarget, source, incentiveId string) {
 	previousRealm := rlm.Previous()
 	chain.Emit(
@@ -718,9 +634,6 @@ type collectTarget struct {
 }
 
 // checkpointDeposit returns the deposit to calculate against when it is not in the tree.
-//
-// Returns:
-//   - deposit: Checkpoint deposit when target is an exit checkpoint, otherwise nil.
 func (self *collectTarget) checkpointDeposit() *sr.Deposit {
 	if self.checkpoint == nil {
 		return nil
@@ -730,21 +643,11 @@ func (self *collectTarget) checkpointDeposit() *sr.Deposit {
 }
 
 // isCheckpoint reports whether the collect runs against an exit checkpoint.
-//
-// Returns:
-//   - checkpoint: True when this target represents an exit checkpoint; false for a live deposit.
 func (self *collectTarget) isCheckpoint() bool {
 	return self.checkpoint != nil
 }
 
 // resolveCollectTarget resolves what a collect runs against and asserts the caller may.
-//
-// Parameters:
-//   - positionId: LP position NFT ID whose live deposit or exit checkpoint should be selected.
-//   - caller: Address requesting collection; live deposits require this address to own the deposit, while checkpoint collection is permissionless.
-//
-// Returns:
-//   - target: Resolved live deposit or exit checkpoint and its effective collection timestamp.
 func (s *stakerV1) resolveCollectTarget(positionId uint64, caller address) *collectTarget {
 	position := s.getUnstakedPositions().get(positionId)
 	if position == nil {
@@ -769,14 +672,6 @@ func (s *stakerV1) resolveCollectTarget(positionId uint64, caller address) *coll
 }
 
 // newRewardCollectParam builds the calculation input for a collect of the given position.
-//
-// Parameters:
-//   - target: Live deposit or exit checkpoint to calculate rewards for.
-//   - currentTime: Collection timestamp in Unix seconds.
-//   - blockHeight: Chain height associated with this collection.
-//
-// Returns:
-//   - param: Calculation inputs populated from target, the staker's stores, currentTime, and blockHeight.
 func (s *stakerV1) newRewardCollectParam(target *collectTarget, currentTime, blockHeight int64) *calculatePositionRewardParam {
 	return &calculatePositionRewardParam{
 		CurrentHeight: blockHeight,
@@ -983,39 +878,23 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 	return utils.FormatInt(internalRewardToUser), utils.FormatInt(internalRewardPenalty), toUserExternalReward, toUserExternalPenalty
 }
 
-// deliverExternalIncentiveReward attempts to settle one external incentive reward and its warmup penalty.
+// deliverExternalIncentiveReward pays out one incentive's already-calculated reward: it debits the
+// incentive, advances its lastCollectTime, takes the staking reward fee and transfers the rest.
 //
-// For a live deposit, the incentive is skipped WITHOUT advancing its lastCollectTime when it yields
-// no user reward or does not hold enough reward token, so the amount stays collectible later. For an
-// exit checkpoint, a penalty-only source is settled and its cursor advances; an incentive-balance
-// shortfall is reported as unpayable so checkpoint bookkeeping can forfeit the source. A shortfall in
-// the staker's token ledger instead aborts checkpoint collection and leaves that source owed.
-// A skipped live incentive is reported by an empty reward token, and the outcome tells checkpoint
-// bookkeeping whether the source was deferred or can never be paid.
+// The incentive is skipped WITHOUT advancing its lastCollectTime when it yields no user reward or does
+// not hold enough reward token, so the amount stays collectible later. A skipped incentive is reported
+// by an empty reward token, and the outcome says why, so a checkpoint can tell a deferral from a debt
+// it will never be able to pay.
 //
-// A warmup ratio below 100% can floor the user reward to zero while externalPenalty > 0. For a live
-// deposit, that call is skipped as a whole: the penalty is NOT booked and the cursor is NOT advanced,
-// leaving the untouched accrual to be recalculated over the wider window of the next collect. For an
-// exit checkpoint there is no next collection, so the penalty is booked and the cursor advances even
-// when rewardAmount == 0. After EndExternalIncentive, accumulated penalties are collected separately
-// with CollectExternalIncentivePenalty to its explicit refund address.
+// A warmup ratio below 100% floors the user reward, so a small accrual can yield rewardAmount == 0 while
+// externalPenalty > 0. Such a call is skipped as a whole: the penalty is NOT booked and the cursor is NOT
+// advanced, which leaves the untouched accrual to be recalculated over the wider window of the next
+// collect. Nothing is lost either way, because an unbooked penalty stays in the incentive's reward
+// amount, and endExternalIncentive refunds the reward amount and the accumulated penalty to the same
+// address.
 //
 // Returns the reward token, the collected reward amount before the staking reward fee, the penalty,
 // and the delivery outcome.
-//
-// Parameters:
-//   - _: Realm-call discriminator forwarded through reward delivery; pass 0.
-//   - rlm: Propagated current realm context used for token transfers and event emission.
-//   - ctx: Collection context containing the deposit, collection window, and accumulator snapshot.
-//   - incentiveId: External incentive ID whose computed reward is being delivered.
-//   - rewardAmount: Gross reward amount computed for the position, before the staking reward fee.
-//   - externalPenalty: Warmup penalty amount to account for on the incentive.
-//
-// Returns:
-//   - rewardToken: Incentive reward-token path when delivery occurs; empty when delivery is deferred, unpayable, or nothing is owed.
-//   - deliveredReward: Gross reward amount successfully debited and delivered, in token smallest units.
-//   - deliveredPenalty: Penalty amount successfully accounted for, in token smallest units.
-//   - outcome: Delivery status used by checkpoint bookkeeping, such as paid, deferred, unpayable, or nothing owed.
 func (s *stakerV1) deliverExternalIncentiveReward(
 	_ int,
 	rlm realm,
@@ -1207,19 +1086,10 @@ func (s *stakerV1) deliverExternalIncentiveReward(
 // fee, settles the pool's unclaimable accumulation to the community pool, advances totalEmissionSent and
 // the deposit's internal lastCollectTime, and transfers the GNS.
 //
-// For a live position with no user reward, the internal lastCollectTime is left untouched so the amount
-// keeps accruing. A checkpoint has no next collection: when it has only a penalty, the penalty is settled
-// and the internal cursor advances even though the user reward is zero.
+// When the position has no emission reward to deliver, the internal lastCollectTime is left untouched so
+// the amount keeps accruing; the pool's unclaimable accumulation is still settled.
 //
-// Parameters:
-//   - _: Realm-call discriminator forwarded through reward delivery; pass 0.
-//   - rlm: Propagated current realm context used for GNS transfers and persistence.
-//   - ctx: Collection context containing the deposit, collection window, and accumulator snapshot.
-//   - reward: Aggregated per-position reward containing the internal emission and penalty amounts to deliver.
-//
-// Returns:
-//   - rewardToUser: GNS emission amount transferred to the position owner, in token smallest units.
-//   - rewardPenalty: GNS warmup penalty transferred to the community pool, in token smallest units.
+// Returns the GNS amount sent to the user and the penalty amount sent to the community pool.
 func (s *stakerV1) deliverEmissionReward(_ int, rlm realm, ctx *collectContext, reward Reward) (int64, int64) {
 	// Same reentrancy backstop as deliverExternalIncentiveReward: a checkpoint whose internal
 	// cursor already reached its window's close has had this delivery, and reward was computed
@@ -1468,12 +1338,6 @@ func (s *stakerV1) applyUnStake(positionId uint64) error {
 
 // poolHasIncentives checks if the pool has any stakeable incentives (internal or external).
 // External eligibility includes active and future incentives.
-//
-// Parameters:
-//   - pool: Pool whose internal or external incentive eligibility should be checked.
-//
-// Returns:
-//   - err: Non-nil when pool has neither an internal tier nor an active/future external incentive; nil when it is stakeable.
 func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 	poolPath := pool.PoolPath()
 	if s.getPoolTier().IsInternallyIncentivizedPool(poolPath) {
@@ -1491,12 +1355,6 @@ func (s *stakerV1) poolHasIncentives(pool *sr.Pool) error {
 }
 
 // tokenHasLiquidity checks if the target positionId has non-zero liquidity
-//
-// Parameters:
-//   - positionId: LP position NFT ID whose liquidity should be checked.
-//
-// Returns:
-//   - err: Non-nil when the position liquidity is zero; nil when it has positive liquidity.
 func tokenHasLiquidity(positionId uint64) error {
 	if getLiquidity(positionId).Lte(u256.Zero()) {
 		return ufmt.Errorf(
@@ -1532,16 +1390,6 @@ func getTickOf(positionId uint64) (int32, int32) {
 }
 
 // calculateAmounts calculates the amounts of token0 and token1 for a given liquidity and range.
-//
-// Parameters:
-//   - poolPath: Pool identifier whose current square-root price is used.
-//   - tickLower: Lower signed tick boundary of the position's range.
-//   - tickUpper: Upper signed tick boundary of the position's range.
-//   - liquidity: Position liquidity for which token amounts should be calculated.
-//
-// Returns:
-//   - amount0: Token0 amount represented by liquidity at the current pool price and range.
-//   - amount1: Token1 amount represented by liquidity at the current pool price and range.
 func (s *stakerV1) calculateAmounts(poolPath string, tickLower, tickUpper int32, liquidity *u256.Uint) (*u256.Uint, *u256.Uint) {
 	sqrtPriceX96 := u256.MustFromDecimal(s.poolAccessor.GetSlot0SqrtPriceX96(poolPath))
 	sqrtPriceLowerX96 := gnsmath.TickMathGetSqrtRatioAtTick(tickLower)

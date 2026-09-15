@@ -12,23 +12,18 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 )
 
-// getPositionKey generates a compact deterministic key for a pool liquidity
-// accounting entry.
+// getPositionKey generates a compact deterministic key for a liquidity position.
 //
-// The key encodes only the lower and upper ticks. It is scoped by the pool,
-// so positions with the same range share the pool's aggregate liquidity and
-// fee-growth accounting.
+// Creates deterministic identifier for position tracking.
+// Ensures unique positions per price range while preserving lexical ordering.
 //
-// Used internally for pool position state management.
+// Used internally for position state management.
 //
 // Parameters:
 //   - tickLower: Lower boundary tick of position range
 //   - tickUpper: Upper boundary tick of position range
 //
 // Key Format: EncodePositionKey(tickLower, tickUpper)
-//
-// Returns:
-//   - string: deterministic key encoding the lower and upper tick boundaries.
 func getPositionKey(
 	tickLower int32,
 	tickUpper int32,
@@ -36,18 +31,8 @@ func getPositionKey(
 	return pl.EncodePositionKey(tickLower, tickUpper)
 }
 
-// positionUpdate applies a signed liquidity delta and refreshes fee-growth checkpoints
-// and tokens owed for one position.
-//
-// Parameters:
-//   - position: current position state to update.
-//   - liquidityDelta: signed liquidity change; negative values remove liquidity.
-//   - feeGrowthInside0X128: current token0 fee growth inside the position range, scaled by 2^128.
-//   - feeGrowthInside1X128: current token1 fee growth inside the position range, scaled by 2^128.
-//
-// Returns:
-//   - pl.PositionInfo: updated position state with liquidity, fee checkpoints, and owed tokens.
-//   - error: non-nil when both current and delta liquidity are zero or removal exceeds current liquidity.
+// positionUpdate updates a position's liquidity and calculates fees owed.
+// Returns the updated position information and any error.
 func positionUpdate(
 	position pl.PositionInfo,
 	liquidityDelta *i256.Int,
@@ -116,44 +101,17 @@ func positionUpdate(
 	return position, nil
 }
 
-// calculateToken0Amount calculates the signed token0 amount implied by a price range and liquidity delta.
-//
-// Parameters:
-//   - sqrtPriceLower: lower range price as a Q96 square-root ratio.
-//   - sqrtPriceUpper: upper range price as a Q96 square-root ratio.
-//   - liquidityDelta: signed liquidity to add or remove.
-//
-// Returns:
-//   - *i256.Int: signed token0 amount required for the liquidity change.
+// calculateToken0Amount calculates the amount of token0 based on price range and liquidity delta.
 func calculateToken0Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
 	return gnsmath.GetAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
-// calculateToken1Amount calculates the signed token1 amount implied by a price range and liquidity delta.
-//
-// Parameters:
-//   - sqrtPriceLower: lower range price as a Q96 square-root ratio.
-//   - sqrtPriceUpper: upper range price as a Q96 square-root ratio.
-//   - liquidityDelta: signed liquidity to add or remove.
-//
-// Returns:
-//   - *i256.Int: signed token1 amount required for the liquidity change.
+// calculateToken1Amount calculates the amount of token1 based on price range and liquidity delta.
 func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
 	return gnsmath.GetAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 }
 
-// positionUpdateWithKey loads, updates, and stores one pool position by its encoded range key.
-//
-// Parameters:
-//   - p: pool whose aggregate position tree is updated.
-//   - positionKey: encoded lower/upper tick-range key.
-//   - liquidityDelta: signed liquidity change; negative values remove liquidity.
-//   - feeGrowthInside0X128: current token0 inside fee growth, scaled by 2^128.
-//   - feeGrowthInside1X128: current token1 inside fee growth, scaled by 2^128.
-//
-// Returns:
-//   - pl.PositionInfo: resulting position state stored under positionKey.
-//   - error: non-nil when the position update rejects the liquidity delta.
+// positionUpdateWithKey updates a position in the pool and returns the updated position.
 func positionUpdateWithKey(
 	p *pl.Pool,
 	positionKey string,
@@ -179,12 +137,7 @@ func positionUpdateWithKey(
 	return positionAfterUpdate, nil
 }
 
-// setPosition stores position information under an encoded range key.
-//
-// Parameters:
-//   - p: pool whose position tree receives the entry.
-//   - posKey: encoded lower/upper tick-range key.
-//   - positionInfo: aggregate position state to store.
+// setPosition sets the position info for a given key.
 func setPosition(p *pl.Pool, posKey string, positionInfo pl.PositionInfo) {
 	p.SetPosition(posKey, positionInfo)
 }
@@ -199,15 +152,12 @@ func setPosition(p *pl.Pool, posKey string, positionInfo pl.PositionInfo) {
 //  3. Current price above range (tick >= tickUpper): only token1 is used/returned
 //
 // Parameters:
-//   - p: pool whose slot0, liquidity, ticks, and position state are updated.
-//   - observations: pool observation tree used when the current price is inside the range.
-//   - params: owner, tick bounds, and signed liquidity delta for the position update.
+//   - params: ModifyPositionParams containing owner, tickLower, tickUpper, and liquidityDelta
 //
 // Returns:
-//   - pl.PositionInfo: updated aggregate position information.
-//   - *u256.Uint: absolute token0 amount needed or returned.
-//   - *u256.Uint: absolute token1 amount needed or returned.
-//   - error: non-nil when tick bounds, observations, or position accounting are invalid.
+//   - PositionInfo: updated position information
+//   - *u256.Uint: amount of token0 needed/returned
+//   - *u256.Uint: amount of token1 needed/returned
 func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyPositionParams) (pl.PositionInfo, *u256.Uint, *u256.Uint, error) {
 	if err := validateTicks(params.tickLower, params.tickUpper); err != nil {
 		return pl.NewDefaultPositionInfo(), zero, zero, err
@@ -292,14 +242,15 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 // It also manages the fee growth, tick state flipping, and cleanup of unused tick data.
 //
 // Parameters:
-//   - p: Pool whose aggregate position entry is updated.
-//   - observations: Pool observation history used when liquidity changes.
-//   - positionParams: Tick bounds and signed liquidity delta for the update.
-//   - tick: Current pool tick.
+//   - positionParams: ModifyPositionParams, the parameters for the position modification, which include:
+//   - owner: The address of the position owner.
+//   - tickLower: The lower tick boundary of the position.
+//   - tickUpper: The upper tick boundary of the position.
+//   - liquidityDelta: The change in liquidity (positive or negative).
+//   - tick: int32, the current tick position.
 //
 // Returns:
 //   - PositionInfo: The updated position information.
-//   - error: Observation or position update failure.
 //
 // Workflow:
 //  1. Clone the global fee growth values (token 0 and token 1).
@@ -307,8 +258,7 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 //     - Update the lower and upper ticks using `tickUpdate`, flipping their states if necessary.
 //     - If a tick's state was flipped, update the tick bitmap to reflect the new state.
 //  3. Calculate the fee growth inside the tick range using `getFeeGrowthInside`.
-//  4. Encode the lower/upper tick pair and update the aggregate pool accounting
-//     entry using `positionUpdateWithKey`.
+//  4. Generate a unique position key and update the position data using `positionUpdateWithKey`.
 //  5. If liquidity is being removed (negative delta), clean up unused tick data by deleting the tick entries.
 //  6. Return the updated position.
 //
@@ -320,8 +270,8 @@ func modifyPosition(p *pl.Pool, observations *pl.ObservationTree, params ModifyP
 //
 // ```gno
 //
-//	updatedPosition, err := updatePosition(pool, observations, positionParams, currentTick)
-//	println("Updated Position Info:", updatedPosition, err)
+//	updatedPosition := pool.updatePosition(positionParams, currentTick)
+//	println("Updated Position Info:", updatedPosition)
 //
 // ```
 func updatePosition(p *pl.Pool, observations *pl.ObservationTree, positionParams ModifyPositionParams, tick int32) (pl.PositionInfo, error) {

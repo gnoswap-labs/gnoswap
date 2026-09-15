@@ -25,8 +25,6 @@ const (
 )
 
 // assertIsValidAmount ensures the amount is non-negative.
-// Parameters:
-//   - amount: Signed token amount; values below zero panic as invalid input.
 func assertIsValidAmount(amount int64) {
 	if amount < 0 {
 		panic(makeErrorWithDetails(
@@ -37,8 +35,6 @@ func assertIsValidAmount(amount int64) {
 }
 
 // assertIsValidRewardAmountFormat ensures the reward amount string is formatted as "tokenPath:amount".
-// Parameters:
-//   - rewardAmountStr: Reward specification expected in tokenPath:amount form; validation requires the colon delimiter.
 func assertIsValidRewardAmountFormat(rewardAmountStr string) {
 	parts := strings.SplitN(rewardAmountStr, ":", 2)
 	if len(parts) != 2 {
@@ -50,10 +46,6 @@ func assertIsValidRewardAmountFormat(rewardAmountStr string) {
 }
 
 // assertIsDepositor ensures the caller is the owner of the deposit.
-// Parameters:
-//   - s: Staker instance whose deposit store is checked.
-//   - caller: Address that must own the requested deposit.
-//   - positionId: Identifier of the deposit whose ownership is being asserted.
 func assertIsDepositor(s *stakerV1, caller address, positionId uint64) {
 	deposit := s.getDeposits().get(positionId)
 	if deposit == nil {
@@ -71,12 +63,9 @@ func assertIsDepositor(s *stakerV1, caller address, positionId uint64) {
 	}
 }
 
+// assertIsIncentiveOfDeposit ensures the incentive exists and targets the pool the position is staked
+// in, so a caller cannot ask a deposit to collect an incentive that can never pay it.
 // assertIsIncentiveOfPool ensures the incentive targets the pool the position is staked in.
-// Parameters:
-//   - s: Staker instance containing the external incentive and deposit stores.
-//   - poolPath: Pool in which the position is staked.
-//   - positionId: Position identifier used in the mismatch diagnostic.
-//   - incentiveId: External incentive identifier to resolve and validate.
 func assertIsIncentiveOfPool(s *stakerV1, poolPath string, positionId uint64, incentiveId string) {
 	// get panics with errDataNotFound when the incentive does not exist.
 	incentive := s.getExternalIncentives().get(incentiveId)
@@ -95,9 +84,6 @@ func assertIsIncentiveOfPool(s *stakerV1, poolPath string, positionId uint64, in
 // assertHasNoExitCheckpoint ensures the position carries no reward from a previous stake.
 // Collecting it here would smuggle an unbounded calculation into staking, and leaving it would
 // let the next unstake overwrite the checkpoint.
-// Parameters:
-//   - s: Staker instance whose unstaked-position store is checked.
-//   - positionId: Position identifier that must not have an outstanding exit checkpoint.
 func assertHasNoExitCheckpoint(s *stakerV1, positionId uint64) {
 	if s.HasUnstakedPosition(positionId) {
 		panic(makeErrorWithDetails(
@@ -109,9 +95,6 @@ func assertHasNoExitCheckpoint(s *stakerV1, positionId uint64) {
 
 // assertHasNoUncollectedIncentive ensures no unstaked position still owes a reward from this
 // incentive, which has not been drawn down from it yet.
-// Parameters:
-//   - s: Staker instance whose uncollected-incentive counts are checked.
-//   - incentiveId: Incentive identifier whose outstanding position count must be zero.
 func assertHasNoUncollectedIncentive(s *stakerV1, incentiveId string) {
 	count := s.uncollectedIncentiveCountOf(incentiveId)
 	if count > 0 {
@@ -123,9 +106,6 @@ func assertHasNoUncollectedIncentive(s *stakerV1, incentiveId string) {
 }
 
 // assertIsNotStaked ensures the position is not already staked.
-// Parameters:
-//   - s: Staker instance whose deposit store is checked.
-//   - positionId: Position identifier that must not already be present in deposits.
 func assertIsNotStaked(s *stakerV1, positionId uint64) {
 	if s.getDeposits().Has(positionId) {
 		panic(makeErrorWithDetails(
@@ -136,9 +116,6 @@ func assertIsNotStaked(s *stakerV1, positionId uint64) {
 }
 
 // assertIsPoolExists ensures the pool exists.
-// Parameters:
-//   - s: Staker instance whose pool accessor is queried.
-//   - poolPath: Pool path that must resolve to an existing pool.
 func assertIsPoolExists(s *stakerV1, poolPath string) {
 	if !s.poolAccessor.ExistsPoolPath(poolPath) {
 		panic(makeErrorWithDetails(
@@ -149,8 +126,6 @@ func assertIsPoolExists(s *stakerV1, poolPath string) {
 }
 
 // assertIsValidPoolTier ensures the tier is within valid range.
-// Parameters:
-//   - tier: Pool tier number; valid values are below AllTierCount.
 func assertIsValidPoolTier(tier uint64) {
 	if tier >= AllTierCount {
 		panic(makeErrorWithDetails(
@@ -161,9 +136,6 @@ func assertIsValidPoolTier(tier uint64) {
 }
 
 // assertTier1HasSparePool ensures tier 1 keeps at least one pool after a tier change.
-// Parameters:
-//   - currentTier: Tier currently assigned to the pool, used to detect removal from tier 1.
-//   - tier1Count: Number of pools currently assigned to tier 1.
 func assertTier1HasSparePool(currentTier, tier1Count uint64) {
 	if currentTier == Tier1 && tier1Count == 1 {
 		panic(makeErrorWithDetails(errInvalidPoolTier, "tier 1 must have at least one pool"))
@@ -171,10 +143,6 @@ func assertTier1HasSparePool(currentTier, tier1Count uint64) {
 }
 
 // assertIsGreaterThanMinimumRewardAmount ensures the reward amount meets minimum requirements.
-// Parameters:
-//   - s: Staker instance providing global and token-specific minimum reward settings.
-//   - rewardToken: Token path whose minimum reward override is looked up.
-//   - rewardAmount: Proposed reward amount compared with the applicable minimum.
 func assertIsGreaterThanMinimumRewardAmount(s *stakerV1, rewardToken string, rewardAmount int64) {
 	minReward := s.getMinimumRewardAmount()
 
@@ -191,10 +159,6 @@ func assertIsGreaterThanMinimumRewardAmount(s *stakerV1, rewardToken string, rew
 }
 
 // assertIsAllowedForExternalReward ensures the token is allowed for external rewards.
-// Parameters:
-//   - s: Staker instance providing the denied-token list and allowed-token list.
-//   - poolPath: Pool path whose two constituent tokens are intrinsically eligible.
-//   - tokenPath: Reward-token path that must be allowed and not denied.
 func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
 	// Operational stop switch: a denied token can never start a NEW incentive,
 	// whether it qualifies as a pool-pair token or through the governance
@@ -226,11 +190,6 @@ func assertIsAllowedForExternalReward(s *stakerV1, poolPath, tokenPath string) {
 }
 
 // assertIsExternalRewardTokenAvailable ensures a pool has no unfinished incentive for the token.
-// Parameters:
-//   - s: Staker instance containing pool and external incentive state.
-//   - poolPath: Pool whose unfinished incentives are searched.
-//   - tokenPath: Reward-token path that must not have another unfinished incentive.
-//   - currentTime: Current Unix timestamp used to determine whether an incentive has ended.
 func assertIsExternalRewardTokenAvailable(s *stakerV1, poolPath, tokenPath string, currentTime int64) {
 	pool := s.getPools().GetPoolOrNil(poolPath)
 	if pool == nil || pool.Incentives() == nil {
@@ -265,8 +224,6 @@ func assertIsExternalRewardTokenAvailable(s *stakerV1, poolPath, tokenPath strin
 }
 
 // assertIsValidFeeRate ensures the fee rate is within valid range (0-1000 basis points).
-// Parameters:
-//   - fee: Unstaking fee in basis points; values above 1000 (10%) are rejected.
 func assertIsValidFeeRate(fee uint64) {
 	if fee > maxUnstakingFee {
 		panic(makeErrorWithDetails(
@@ -278,8 +235,6 @@ func assertIsValidFeeRate(fee uint64) {
 
 // assertIsValidIncentiveStartTime ensures the incentive starts at midnight no earlier than 24 hours after creation
 // and no later than 7 days after the first eligible midnight.
-// Parameters:
-//   - startTimestamp: Incentive start time in Unix seconds; it must fall in the permitted future window at midnight.
 func assertIsValidIncentiveStartTime(startTimestamp int64) {
 	// must be in seconds format, not milliseconds
 	// REF: https://stackoverflow.com/a/23982005
@@ -322,9 +277,6 @@ func assertIsValidIncentiveStartTime(startTimestamp int64) {
 // assertIsAdminGovernanceOrCreator ensures the caller may act on an incentive:
 // admin and governance are the protocol-level operators, and the creator is the
 // address that funded the incentive in CreateExternalIncentive.
-// Parameters:
-//   - caller: Address attempting to act on the incentive.
-//   - creator: Address that funded or created the incentive and is therefore authorized.
 func assertIsAdminGovernanceOrCreator(caller, creator address) {
 	if caller == creator {
 		return
@@ -348,9 +300,6 @@ func assertIsAdminGovernanceOrCreator(caller, creator address) {
 // incentive may be removed outright; anything that already emitted rewards has
 // to be finalized through EndExternalIncentive so the refund accounting and the
 // penalty balance stay reachable.
-// Parameters:
-//   - incentiveResolver: Resolver exposing the incentive's start, refund, and accrued-reward state.
-//   - currentTime: Current Unix timestamp used to determine whether the incentive has started.
 func assertIsNotStartedIncentive(incentiveResolver *ExternalIncentiveResolver, currentTime int64) {
 	if incentiveResolver.IsStarted(currentTime) {
 		panic(makeErrorWithDetails(
@@ -385,18 +334,13 @@ func assertIsNotStartedIncentive(incentiveResolver *ExternalIncentiveResolver, c
 	}
 }
 
-// getMinimumIncentiveStartTimestamp returns the earliest permitted incentive start timestamp.
-//
-// Returns:
-//   - int64: Unix timestamp exactly 24 hours after the current wall-clock time.
+// getMinimumIncentiveStartTimestamp returns after 24 hours from now.
 func getMinimumIncentiveStartTimestamp() int64 {
 	return time.Now().Add(24 * time.Hour).Unix()
 }
 
-// getMaximumIncentiveStartTimestamp returns the latest permitted incentive start timestamp.
-//
-// Returns:
-//   - int64: Unix timestamp seven days after the first midnight meeting the minimum 24-hour delay.
+// getMaximumIncentiveStartTimestamp returns 7 days after the first midnight that satisfies
+// the minimum 24-hour delay.
 func getMaximumIncentiveStartTimestamp() int64 {
 	minimumStartTimestamp := getMinimumIncentiveStartTimestamp()
 	firstEligibleMidnight := time.Unix(minimumStartTimestamp, 0).Truncate(24 * time.Hour)
@@ -408,8 +352,6 @@ func getMaximumIncentiveStartTimestamp() int64 {
 }
 
 // assertIsValidIncentiveEndTime ensures the end timestamp is within valid epoch range.
-// Parameters:
-//   - endTimestamp: Incentive end time in Unix seconds; it must be earlier than the maximum supported epoch.
 func assertIsValidIncentiveEndTime(endTimestamp int64) {
 	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
 		panic(makeErrorWithDetails(
@@ -420,8 +362,6 @@ func assertIsValidIncentiveEndTime(endTimestamp int64) {
 }
 
 // assertIsValidIncentiveDuration ensures the duration is 90, 180, or 365 days.
-// Parameters:
-//   - externalDuration: Incentive duration in seconds; only 90, 180, or 365 days are accepted.
 func assertIsValidIncentiveDuration(externalDuration int64) {
 	switch externalDuration {
 	case TIMESTAMP_90DAYS, TIMESTAMP_180DAYS, TIMESTAMP_365DAYS:
@@ -435,8 +375,6 @@ func assertIsValidIncentiveDuration(externalDuration int64) {
 }
 
 // AssertIsValidAddress panics if the provided address is invalid.
-// Parameters:
-//   - addr: Address value to validate; empty or invalid addresses panic.
 func assertIsValidAddress(addr address) {
 	if addr == "" || !addr.IsValid() {
 		panic(makeErrorWithDetails(
@@ -447,11 +385,6 @@ func assertIsValidAddress(addr address) {
 }
 
 // isMidnight checks if a time represents midnight (00:00:00).
-// Parameters:
-//   - startTime: Time value whose hour, minute, and second must all be zero.
-//
-// Returns:
-//   - bool: True when startTime's hour, minute, and second are all zero; false otherwise.
 func isMidnight(startTime time.Time) bool {
 	hour := startTime.Hour()
 	minute := startTime.Minute()
@@ -460,10 +393,7 @@ func isMidnight(startTime time.Time) bool {
 	return hour == 0 && minute == 0 && second == 0
 }
 
-// assertIsPositionOwner validates that the caller owns the position.
-// Parameters:
-//   - owner: Address recorded as the position owner.
-//   - caller: Address attempting to operate the position; it must equal owner.
+// assertIsPositionOwner validates that the caller has permission to operate the token.
 func assertIsPositionOwner(owner, caller address) {
 	if owner != caller {
 		panic(makeErrorWithDetails(

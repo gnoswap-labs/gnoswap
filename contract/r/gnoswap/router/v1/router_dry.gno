@@ -205,21 +205,8 @@ func (r *routerV1) DrySwapRoute(
 	return utils.FormatInt(inputAmount), utils.FormatInt(outputAmount), err
 }
 
-// drySwapRoute runs the internal integer-valued simulation used by DrySwapRoute.
-//
-// Parameters:
-//   - inputToken: input token contract path
-//   - outputToken: output token contract path
-//   - specifiedAmount: positive exact input or output amount in token units
-//   - swapTypeStr: EXACT_IN or EXACT_OUT
-//   - strRouteArr: comma-separated route paths
-//   - quoteArr: comma-separated route allocation percentages
-//   - tokenAmountLimit: minimum output or maximum input in token units
-//
-// Returns:
-//   - amountIn: simulated aggregate input amount
-//   - amountOut: simulated aggregate output after router fee
-//   - err: nil on successful validation and simulation; input, liquidity, or slippage error otherwise
+// drySwapRoute is the internal dry-run swap simulation that returns errors
+// instead of panicking on validation or liquidity failures.
 func (r *routerV1) drySwapRoute(
 	inputToken, outputToken string,
 	specifiedAmount int64,
@@ -331,14 +318,7 @@ func (r *routerV1) drySwapRoute(
 	return processor.ValidateSwapResults(swapType, resultAmountIn, resultAmountOut, originalAmountSpecified, tokenAmountLimit, swapCount)
 }
 
-// getPathIndex selects the first hop for ExactIn or last hop for ExactOut.
-//
-// Parameters:
-//   - swapType: ExactIn or ExactOut direction
-//   - numHops: number of pools in the route
-//
-// Returns:
-//   - index: zero-based hop index used to initialize the simulation
+// getPathIndex returns the path index based on swap type and number of hops.
 func getPathIndex(swapType SwapType, numHops int) int {
 	switch swapType {
 	case ExactIn:

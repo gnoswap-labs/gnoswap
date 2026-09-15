@@ -7,10 +7,6 @@
 package fuzz
 
 type generatorImpl interface {
-	// String returns the implementation's display description.
-	//
-	// Returns:
-	//   - string: Constructor-style text identifying the concrete generator implementation.
 	String() string
 	value(t *T) any
 }
@@ -28,22 +24,11 @@ func newGenerator(impl generatorImpl) *Generator {
 	}
 }
 
-// String returns the cached description of the generator.
-//
-// Returns:
-//   - string: The cached constructor-style description captured when the generator was created.
 func (g *Generator) String() string {
 	return g.str
 }
 
 // Draw produces a value from the generator.
-//
-// Parameters:
-//   - t: Test state used to generate and record the draw.
-//   - label: Caller-supplied draw label; retained for API compatibility but not consumed by this Gno implementation.
-//
-// Returns:
-//   - any: The value produced by this generator and recorded as one draw on t.
 func (g *Generator) Draw(t *T, label string) any {
 	v := g.value(t)
 
@@ -58,12 +43,6 @@ func (g *Generator) Draw(t *T, label string) any {
 }
 
 // value produces a value from the generator.
-//
-// Parameters:
-//   - t: Test state whose bit stream is grouped around this generator's draw.
-//
-// Returns:
-//   - any: The value returned by the wrapped generator implementation.
 func (g *Generator) value(t *T) any {
 	i := t.s.beginGroup(g.str, true)
 	v := g.impl.value(t)
@@ -72,12 +51,6 @@ func (g *Generator) value(t *T) any {
 }
 
 // Example produces an example value from the generator.
-//
-// Parameters:
-//   - seed: Seed used to initialize an independent deterministic random bit stream.
-//
-// Returns:
-//   - any: One example value generated from seed without modifying an existing test state.
 func (g *Generator) Example(seed uint64) any {
 	s := newRandomBitStream(seed, false)
 	t := newT(s)
@@ -86,12 +59,6 @@ func (g *Generator) Example(seed uint64) any {
 }
 
 // Map creates a generator producing fn(v) for each v produced by g.
-//
-// Parameters:
-//   - fn: Callback applied to each value produced by this generator.
-//
-// Returns:
-//   - *Generator: A mapped generator that transforms values from the receiver with fn.
 func (g *Generator) Map(fn func(any) any) *Generator {
 	return Map(g, fn)
 }

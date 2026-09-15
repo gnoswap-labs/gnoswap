@@ -90,23 +90,11 @@ type ParameterHandlerOptions struct {
 }
 
 // paramValidator validates a single parameter value and returns an error on failure.
-//
-// Parameters:
-//   - value: serialized parameter value to validate
-//
-// Returns:
-//   - error: nil when value satisfies the validator, or a validation error otherwise
 type paramValidator func(string) error
 
 // compositeValidator validates relationships between a handler's parameters.
 // It must only enforce deterministic, state-independent rules so that a
 // proposal is not rejected merely because on-chain state changes while voting.
-//
-// Parameters:
-//   - values: serialized handler parameters whose cross-parameter relationship is checked
-//
-// Returns:
-//   - error: nil when the parameter relationship is valid, or a deterministic business-rule error
 type compositeValidator func([]string) error
 
 // NewParameterHandlerOptions creates a new parameter handler with the specified configuration.
@@ -967,13 +955,7 @@ func registerHandlers(registry *ParameterRegistry, handlerOptions []*ParameterHa
 	}
 }
 
-// runValidator executes a validator callback and converts any panic into an error.
-//
-// Parameters:
-//   - fn: validation callback whose panic should be captured as an error
-//
-// Returns:
-//   - err: nil when fn returns normally, otherwise the recovered error or panic value
+// runValidator executes a validator function and converts panics to errors.
 func runValidator(fn func()) (err error) {
 	defer func() {
 		if r := recover(); r != nil {

@@ -8,16 +8,8 @@ import (
 )
 
 // singleSwap executes a swap within a single pool using the provided parameters.
-// It processes two assets using one fee tier and sends output to the router recipient.
-//
-// Parameters:
-//   - _: leading call discriminator; callers pass 0
-//   - rlm: propagated current realm context used for pool interaction and callback
-//   - p: single-pool token, fee, amount, and price-limit parameters
-//
-// Returns:
-//   - amountIn: input amount received by the pool
-//   - amountOut: output amount sent by the pool
+// It processes a token swap within two assets using a specific fee tier and
+// automatically sets the recipient to the caller's address.
 func (r *routerV1) singleSwap(_ int, rlm realm, p *SingleSwapParams) (int64, int64) {
 	assertSingleSwap(p)
 
@@ -34,14 +26,7 @@ func (r *routerV1) singleSwap(_ int, rlm realm, p *SingleSwapParams) (int64, int
 	)
 }
 
-// singleDrySwap simulates a single-pool swap without executing transfers or changing state.
-//
-// Parameters:
-//   - p: single-pool token, fee, and signed amount parameters to simulate
-//
-// Returns:
-//   - amountIn: input amount the pool would receive
-//   - amountOut: output amount the pool would send
+// singleDrySwap simulates a single-token swap operation without executing it.
 func (r *routerV1) singleDrySwap(p *SingleSwapParams) (int64, int64) {
 	assertSingleSwap(p)
 

@@ -11,10 +11,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-// assertIsNotExpired panics when deadline is earlier than the current Unix timestamp.
-//
-// Parameters:
-//   - deadline: transaction expiration timestamp, compared with time.Now().Unix()
+// assertIsNotExpired panics if the deadline is expired.
 func assertIsNotExpired(deadline int64) {
 	now := time.Now().Unix()
 
@@ -26,10 +23,7 @@ func assertIsNotExpired(deadline int64) {
 	}
 }
 
-// assertValidNumberString panics when input is empty or contains a non-decimal character.
-//
-// Parameters:
-//   - input: signed decimal integer string; a leading minus sign is accepted
+// assertValidNumberString panics if the input string does not represent a valid integer.
 func assertValidNumberString(input string) {
 	if len(input) == 0 {
 		panic(newErrorWithDetail(errInvalidInput, "input is empty"))
@@ -48,10 +42,7 @@ func assertValidNumberString(input string) {
 	}
 }
 
-// assertValidLiquidityAmount panics when liquidity is not a positive decimal amount.
-//
-// Parameters:
-//   - liquidity: decimal liquidity string to parse and verify as greater than zero
+// assertValidLiquidityAmount panics if the liquidity amount is zero.
 func assertValidLiquidityAmount(liquidity string) {
 	if u256.MustFromDecimal(liquidity).IsZero() {
 		panic(newErrorWithDetail(
@@ -61,11 +52,7 @@ func assertValidLiquidityAmount(liquidity string) {
 	}
 }
 
-// assertExistsPosition panics when a position NFT ID is not present in storage.
-//
-// Parameters:
-//   - p: position implementation used to query stored positions
-//   - positionId: position NFT token ID that must exist
+// assertExistsPosition panics if the position does not exist.
 func assertExistsPosition(p *positionV1, positionId uint64) {
 	if !p.exists(positionId) {
 		panic(newErrorWithDetail(
@@ -75,12 +62,7 @@ func assertExistsPosition(p *positionV1, positionId uint64) {
 	}
 }
 
-// assertIsOwnerForToken panics unless caller owns the position.
-//
-// Parameters:
-//   - p: position implementation used to inspect ownership
-//   - positionId: position NFT token ID to authorize
-//   - caller: address requesting access; it must be the position owner
+// assertIsOwnerForToken panics if caller is not the owner of the position.
 func assertIsOwnerForToken(p *positionV1, positionId uint64, caller address) {
 	assertExistsPosition(p, positionId)
 
@@ -92,12 +74,7 @@ func assertIsOwnerForToken(p *positionV1, positionId uint64, caller address) {
 	}
 }
 
-// assertIsOwnerOrOperatorForToken panics unless caller owns the position or is its approved operator.
-//
-// Parameters:
-//   - p: position implementation used to inspect ownership and operator approval
-//   - positionId: position NFT token ID to authorize
-//   - caller: address requesting access; it must be the owner or approved operator
+// assertIsOwnerOrOperatorForToken panics if caller is not the owner or operator of the position.
 func assertIsOwnerOrOperatorForToken(p *positionV1, positionId uint64, caller address) {
 	assertExistsPosition(p, positionId)
 
@@ -109,11 +86,7 @@ func assertIsOwnerOrOperatorForToken(p *positionV1, positionId uint64, caller ad
 	}
 }
 
-// assertEqualsAddress panics unless both addresses are valid and equal.
-//
-// Parameters:
-//   - prevAddr: first address to validate and compare
-//   - otherAddr: second address to validate and compare against prevAddr
+// assertEqualsAddress panics if addresses are invalid or not equal.
 func assertEqualsAddress(prevAddr, otherAddr address) {
 	access.AssertIsValidAddress(prevAddr)
 	access.AssertIsValidAddress(otherAddr)
@@ -126,21 +99,15 @@ func assertEqualsAddress(prevAddr, otherAddr address) {
 	}
 }
 
-// assertValidOperatorAddress validates an operator address.
-// Empty address is allowed for operator removal; non-empty addresses must be valid.
-//
-// Parameters:
-//   - operator: address to approve as operator, or the zero address to remove the operator
+// assertValidOperatorAddress validates operator address.
+// Empty address is allowed (for operator removal), but non-empty addresses must be valid.
 func assertValidOperatorAddress(operator address) {
 	if operator != address("") && !operator.IsValid() {
 		panic(newErrorWithDetail(errInvalidAddress, ufmt.Sprintf("operator(%s)", operator)))
 	}
 }
 
-// assertIsNotMintToStaker panics when mintTo is the staker role address.
-//
-// Parameters:
-//   - mintTo: address that would receive the newly minted position NFT; the staker role address is forbidden
+// assertIsNotMintToStaker panics if the mintTo address is staker.
 func assertIsNotMintToStaker(mintTo address) {
 	stakerAddr := access.MustGetAddress(prbac.ROLE_STAKER.String())
 	if mintTo == stakerAddr {

@@ -15,14 +15,9 @@ func isRewardStateClaimable(r *launchpad.RewardState, currentTime int64) bool {
 	return currentTime >= r.ClaimableTime()
 }
 
-// calculateReward computes total accrued reward from the Q128 accumulator and price debt.
-//
-// Parameters:
-//   - r: reward state containing deposit amount and Q128 price debt.
-//   - accumRewardPerDepositX128: current accumulated reward per deposit scaled by 2^128.
-//
-// Returns:
-//   - amount: accrued reward-token amount after Q128 conversion, or zero when inputs are nil or no reward accrued.
+// calculateReward calculates the total reward amount based on
+// the accumulated reward per deposit.
+// Returns the total reward amount.
 func calculateReward(r *launchpad.RewardState, accumRewardPerDepositX128 *u256.Uint) int64 {
 	if accumRewardPerDepositX128 == nil || r.PriceDebtX128() == nil {
 		return 0
@@ -41,14 +36,9 @@ func calculateReward(r *launchpad.RewardState, accumRewardPerDepositX128 *u256.U
 	return gnsmath.SafeConvertToInt64(reward)
 }
 
-// calculateClaimableReward computes accrued reward not already marked as claimed.
-//
-// Parameters:
-//   - r: reward state containing deposit amount and claimed amount.
-//   - accumRewardPerDepositX128: current accumulated reward per deposit scaled by 2^128.
-//
-// Returns:
-//   - amount: accrued amount minus claimed amount, or zero when nothing remains claimable.
+// calculateClaimableReward calculates the amount of reward that can be claimed
+// based on the current accumulated reward per deposit.
+// Returns the amount of reward that can be claimed.
 func calculateClaimableReward(r *launchpad.RewardState, accumRewardPerDepositX128 *u256.Uint) int64 {
 	if accumRewardPerDepositX128 == nil {
 		return 0

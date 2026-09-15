@@ -34,10 +34,6 @@ type floatGen struct {
 	is32   bool
 }
 
-// String describes the floating-point generator's kind and configured bounds.
-//
-// Returns:
-//   - string: A constructor-style description such as Float32(), Float64Min(x), or a bounded range.
 func (g *floatGen) String() string {
 	if g.min != g.minVal && g.max != g.maxVal {
 		return ufmt.Sprintf("%sRange(%g, %g)", g.kind, g.min, g.max)
@@ -59,43 +55,21 @@ func (g *floatGen) value(t *T) any {
 }
 
 // Float32 creates a generator for float32 values
-//
-// Returns:
-//   - *Generator: A generator spanning the full finite float32 range from -math.MaxFloat32 through math.MaxFloat32.
 func Float32() *Generator {
 	return Float32Range(-math.MaxFloat32, math.MaxFloat32)
 }
 
 // Float32Min creates a generator for float32 values >= min
-//
-// Parameters:
-//   - min: Inclusive lower bound for generated float32 values.
-//
-// Returns:
-//   - *Generator: A float32 generator whose values are at least min and at most math.MaxFloat32.
 func Float32Min(min float32) *Generator {
 	return Float32Range(min, math.MaxFloat32)
 }
 
 // Float32Max creates a generator for float32 values <= max
-//
-// Parameters:
-//   - max: Inclusive upper bound for generated float32 values.
-//
-// Returns:
-//   - *Generator: A float32 generator whose values are at least -math.MaxFloat32 and at most max.
 func Float32Max(max float32) *Generator {
 	return Float32Range(-math.MaxFloat32, max)
 }
 
 // Float32Range creates a generator for float32 values in [min, max]
-//
-// Parameters:
-//   - min: Inclusive lower bound for generated float32 values; NaN is rejected.
-//   - max: Inclusive upper bound for generated float32 values; NaN or a value below min is rejected.
-//
-// Returns:
-//   - *Generator: A float32 generator producing values in the inclusive [min, max] range.
 func Float32Range(min float32, max float32) *Generator {
 	assertf(min == min, "min should not be a NaN")
 	assertf(max == max, "max should not be a NaN")
@@ -112,43 +86,21 @@ func Float32Range(min float32, max float32) *Generator {
 }
 
 // Float64 creates a generator for float64 values
-//
-// Returns:
-//   - *Generator: A generator spanning the full finite float64 range from -math.MaxFloat64 through math.MaxFloat64.
 func Float64() *Generator {
 	return Float64Range(-math.MaxFloat64, math.MaxFloat64)
 }
 
 // Float64Min creates a generator for float64 values >= min
-//
-// Parameters:
-//   - min: Inclusive lower bound for generated float64 values.
-//
-// Returns:
-//   - *Generator: A float64 generator whose values are at least min and at most math.MaxFloat64.
 func Float64Min(min float64) *Generator {
 	return Float64Range(min, math.MaxFloat64)
 }
 
 // Float64Max creates a generator for float64 values <= max
-//
-// Parameters:
-//   - max: Inclusive upper bound for generated float64 values.
-//
-// Returns:
-//   - *Generator: A float64 generator whose values are at least -math.MaxFloat64 and at most max.
 func Float64Max(max float64) *Generator {
 	return Float64Range(-math.MaxFloat64, max)
 }
 
 // Float64Range creates a generator for float64 values in [min, max]
-//
-// Parameters:
-//   - min: Inclusive lower bound for generated float64 values; NaN is rejected.
-//   - max: Inclusive upper bound for generated float64 values; NaN or a value below min is rejected.
-//
-// Returns:
-//   - *Generator: A float64 generator producing values in the inclusive [min, max] range.
 func Float64Range(min float64, max float64) *Generator {
 	assertf(min == min, "min should not be a NaN")
 	assertf(max == max, "max should not be a NaN")

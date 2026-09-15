@@ -217,9 +217,6 @@ func Render(path string) string {
 }
 
 // checkErr panics if error is not nil.
-//
-// Parameters:
-//   - err: operation error to inspect
 func checkErr(err error) {
 	if err != nil {
 		panic(err.Error())
@@ -229,17 +226,6 @@ func checkErr(err error) {
 // calculateAmountToMint calculates and allocates GNS tokens to mint for given timestamp range.
 // This function has side effects: it updates the accumulated and remaining amounts
 // for each halving year in the emission state.
-//
-// Parameters:
-//   - state: emission state whose halving-year allocation counters are updated
-//   - fromTimestamp: inclusive Unix timestamp at which allocation begins
-//   - toTimestamp: inclusive Unix timestamp at which allocation ends
-//
-// Returns:
-//   - amount: total GNS allocation for the overlapping schedule interval; zero
-//     when the interval does not overlap the schedule
-//   - error: nil after all affected halving-year counters are updated; an error
-//     when state bookkeeping rejects an allocation
 func calculateAmountToMint(state *EmissionState, fromTimestamp, toTimestamp int64) (int64, error) {
 	// Cache state to avoid repeated lookups
 	endTimestamp := state.getEndTimestamp()
@@ -328,19 +314,10 @@ func LeftEmissionAmount() int64 { return leftEmissionAmount }
 func MintedEmissionAmount() int64 { return mintedEmissionAmount }
 
 // setLastMintedTimestamp sets the timestamp of the last emission mint.
-//
-// Parameters:
-//   - timestamp: Unix timestamp recorded as the last emission mint
 func setLastMintedTimestamp(timestamp int64) { lastMintedTimestamp = timestamp }
 
 // setLeftEmissionAmount sets the remaining emission amount.
-//
-// Parameters:
-//   - amount: remaining GNS amount available for emission
 func setLeftEmissionAmount(amount int64) { leftEmissionAmount = amount }
 
 // setMintedEmissionAmount sets the total minted emission amount.
-//
-// Parameters:
-//   - amount: cumulative GNS amount minted through emission
 func setMintedEmissionAmount(amount int64) { mintedEmissionAmount = amount }

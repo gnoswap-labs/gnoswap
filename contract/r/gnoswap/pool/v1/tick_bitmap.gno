@@ -16,7 +16,6 @@ const bitMask8 = 0xff // 256 - 1
 // flips the corresponding bit in the bitmap representation.
 //
 // Parameters:
-//   - p: Pool state whose tick bitmap is toggled.
 //   - tick: int32, the tick index to toggle.
 //   - tickSpacing: int32, the spacing between valid ticks.
 //     The tick must align with this spacing.
@@ -62,19 +61,6 @@ func tickBitmapFlipTick(
 
 // tickBitmapNextInitializedTickWithInOneWord finds the next initialized tick within
 // one word of the bitmap.
-//
-// Parameters:
-//   - p: Pool state containing the compressed tick bitmap.
-//   - tick: Current tick from which the search starts.
-//   - tickSpacing: Distance between valid ticks used to compress the search
-//     coordinate.
-//   - lte: True to search at or below the current compressed tick; false to
-//     search above it.
-//
-// Returns:
-//   - int32: Nearest tick boundary selected within the current bitmap word, or
-//     the word edge when no initialized bit is present there.
-//   - bool: True when the masked word contains at least one initialized bit.
 func tickBitmapNextInitializedTickWithInOneWord(
 	p *pl.Pool,
 	tick int32,
@@ -98,14 +84,6 @@ func tickBitmapNextInitializedTickWithInOneWord(
 
 // getTickBitmap gets the tick bitmap for the given word position.
 // Missing words are implicit zeroes.
-//
-// Parameters:
-//   - p: Pool state containing the tick bitmap map.
-//   - wordPos: Signed bitmap word position to read.
-//
-// Returns:
-//   - *u256.Uint: Bitmap word as an unsigned 256-bit value; zero when wordPos
-//     has no stored entry.
 func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 	value, exist := p.TickBitmaps()[wordPos]
 	if !exist {
@@ -115,52 +93,22 @@ func getTickBitmap(p *pl.Pool, wordPos int16) *u256.Uint {
 	return u256.MustFromDecimal(value)
 }
 
-// setTickBitmap stores a bitmap word for the given word position.
-//
-// Parameters:
-//   - p: Pool state whose tick bitmap map is updated.
-//   - wordPos: Signed bitmap word position to write.
-//   - tickBitmap: 256-bit bitmap value; each set bit denotes an initialized
-//     compressed tick.
+// setTickBitmap sets the tick bitmap for the given word position.
 func setTickBitmap(p *pl.Pool, wordPos int16, tickBitmap *u256.Uint) {
 	p.SetTickBitmap(wordPos, tickBitmap.ToString())
 }
 
-// deleteTickBitmap removes the bitmap word for a word position.
-//
-// Parameters:
-//   - p: Pool state whose tick bitmap map is updated.
-//   - wordPos: Signed bitmap word position to remove; removing an all-zero word
-//     keeps the sparse bitmap compact.
+// deleteTickBitmap deletes the tick bitmap for the given word position.
 func deleteTickBitmap(p *pl.Pool, wordPos int16) {
 	p.DeleteTickBitmap(wordPos)
 }
 
-// tickBitmapPosition maps a compressed tick index to its signed bitmap word and
-// bit offset within that word.
-//
-// Parameters:
-//   - tick: Compressed tick index; arithmetic shifting groups 256 consecutive
-//     indices into one word.
-//
-// Returns:
-//   - int16: Signed bitmap word position, equivalent to tick divided by 256.
-//   - uint8: Bit offset within the word, in the range 0 through 255.
+// tickBitmapPosition calculates the word and bit position for a given tick
 func tickBitmapPosition(tick int32) (int16, uint8) {
 	return int16(tick >> 8), uint8(tick) & bitMask8
 }
 
-// getWordAndBitPos computes the bitmap position used for a directional tick
-// search.
-//
-// Parameters:
-//   - tick: Compressed tick index at the current search boundary.
-//   - lte: True for a search at-or-below tick; false increments tick before
-//     mapping so the search begins strictly above it.
-//
-// Returns:
-//   - int16: Signed bitmap word containing the directional search boundary.
-//   - uint8: Bit offset of that boundary within the word.
+// getWordAndBitPos gets tick's wordPos and bitPos depending on the swap direction
 func getWordAndBitPos(tick int32, lte bool) (int16, uint8) {
 	if !lte {
 		tick++
@@ -168,18 +116,11 @@ func getWordAndBitPos(tick int32, lte bool) (int16, uint8) {
 	return tickBitmapPosition(tick)
 }
 
-// getMaskBit builds the directional mask used to inspect candidate bits in one
-// bitmap word.
+// getMaskBit generates a mask based on the provided bit position (bitPos) and a boolean flag (lte).
+// The function constructs a bitmask with a shift depending on the bit position and the boolean value.
+// It either returns the mask or its negation, based on the value of 'lte' (swap direction).
 //
-// Parameters:
-//   - bitPos: Bit offset of the current compressed tick within its word, from 0
-//     through 255.
-//   - lte: True to retain bits at or below bitPos; false to retain bits at or
-//     above bitPos.
-//
-// Returns:
-//   - *u256.Uint: 256-bit mask selecting the search interval for the requested
-//     direction.
+// NOTE: should always use a newly created `u256.One()` object.
 func getMaskBit(bitPos uint, lte bool) *u256.Uint {
 	if lte {
 		if bitPos == bitMask8 {
@@ -193,19 +134,7 @@ func getMaskBit(bitPos uint, lte bool) *u256.Uint {
 	return u256.Zero().Not(u256.Zero().Sub(u256.Zero().Lsh(u256.One(), bitPos), u256.One()))
 }
 
-// getNextTick chooses the nearest candidate tick from the initialized or
-// uninitialized branch of a directional bitmap search.
-//
-// Parameters:
-//   - lte: True to search toward lower compressed ticks; false to search higher.
-//   - initialized: True when masked contains an initialized bit.
-//   - compress: Compressed current tick index.
-//   - bitPos: Current bit offset within the bitmap word.
-//   - tickSpacing: Distance between valid ticks.
-//   - masked: Directionally masked bitmap word used when initialized is true.
-//
-// Returns:
-//   - int32: Candidate tick index in pool tick units for the next swap step.
+// getNextTick gets the next tick depending on the initialized state and the swap direction
 func getNextTick(lte, initialized bool, compress int32, bitPos uint8, tickSpacing int32, masked *u256.Uint) int32 {
 	if initialized {
 		return getTickIfInitialized(compress, tickSpacing, bitPos, masked, lte)
@@ -213,19 +142,7 @@ func getNextTick(lte, initialized bool, compress int32, bitPos uint8, tickSpacin
 	return getTickIfNotInitialized(compress, tickSpacing, bitPos, lte)
 }
 
-// getTickIfInitialized selects the nearest initialized compressed tick in the
-// masked bitmap word.
-//
-// Parameters:
-//   - compress: Compressed current tick index.
-//   - tickSpacing: Distance between valid ticks.
-//   - bitPos: Current bit offset within the word.
-//   - masked: Non-zero directional mask containing initialized bits.
-//   - lte: True to select the most-significant retained bit below or at bitPos;
-//     false selects the least-significant retained bit above bitPos.
-//
-// Returns:
-//   - int32: Initialized pool tick corresponding to the selected bitmap bit.
+// getTickIfInitialized gets the next tick if the tick bitmap is initialized
 func getTickIfInitialized(compress, tickSpacing int32, bitPos uint8, masked *u256.Uint, lte bool) int32 {
 	if lte {
 		return (compress - int32(bitPos-gnsmath.BitMathMostSignificantBit(masked))) * tickSpacing
@@ -233,18 +150,7 @@ func getTickIfInitialized(compress, tickSpacing int32, bitPos uint8, masked *u25
 	return (compress + 1 + int32(gnsmath.BitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
 }
 
-// getTickIfNotInitialized returns the edge tick for a bitmap word with no
-// initialized bit in the requested direction.
-//
-// Parameters:
-//   - compress: Compressed current tick index.
-//   - tickSpacing: Distance between valid ticks.
-//   - bitPos: Current bit offset within the word.
-//   - lte: True to return the lower edge at or below bitPos; false to return
-//     the upper edge after the current word.
-//
-// Returns:
-//   - int32: Candidate pool tick at the directional edge of the current word.
+// getTickIfNotInitialized gets the next tick if the tick bitmap is not initialized
 func getTickIfNotInitialized(compress, tickSpacing int32, bitPos uint8, lte bool) int32 {
 	if lte {
 		return (compress - int32(bitPos)) * tickSpacing

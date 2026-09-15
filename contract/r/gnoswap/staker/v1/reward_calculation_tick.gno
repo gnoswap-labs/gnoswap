@@ -38,9 +38,6 @@ func (self *TickResolver) CurrentOutsideAccumulation(timestamp int64) *u256.Uint
 }
 
 // modifyDepositLower updates the tick's liquidity info by treating the deposit as a lower tick
-// Parameters:
-//   - currentTime: Timestamp associated with the deposit update; retained for the hook API.
-//   - liquidity: Signed liquidity delta added to the tick's gross and lower-bound delta.
 func (self *TickResolver) modifyDepositLower(currentTime int64, liquidity *i256.Int) {
 	// update staker side tick info
 	self.SetStakedLiquidityGross(gnsmath.LiquidityMathAddDelta(self.StakedLiquidityGross(), liquidity))
@@ -51,9 +48,6 @@ func (self *TickResolver) modifyDepositLower(currentTime int64, liquidity *i256.
 }
 
 // modifyDepositUpper updates the tick's liquidity info by treating the deposit as an upper tick
-// Parameters:
-//   - currentTime: Timestamp associated with the deposit update; retained for the hook API.
-//   - liquidity: Signed liquidity delta added to gross liquidity and subtracted from the upper-bound delta.
 func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.Int) {
 	self.SetStakedLiquidityGross(gnsmath.LiquidityMathAddDelta(self.StakedLiquidityGross(), liquidity))
 	if self.StakedLiquidityGross().Lt(u256.Zero()) {
@@ -66,12 +60,6 @@ func (self *TickResolver) modifyDepositUpper(currentTime int64, liquidity *i256.
 // It "flips" the accumulation's inside/outside by subtracting the current outside accumulation from the global accumulation.
 // An unchanged result does not require a checkpoint because predecessor queries
 // return the same value for this and all subsequent timestamps.
-// Parameters:
-//   - timestamp: Timestamp at which the outside accumulation is read and potentially checkpointed.
-//   - acc: Global accumulation value used to derive the tick's new outside accumulation.
-//
-// Returns:
-//   - *u256.Uint: Updated outside accumulation, or the existing value when the computed value is unchanged.
 func (self *TickResolver) updateCurrentOutsideAccumulation(timestamp int64, acc *u256.Uint) *u256.Uint {
 	currentOutsideAccumulation := self.CurrentOutsideAccumulation(timestamp)
 	newOutsideAccumulation := u256.Zero().Sub(acc, currentOutsideAccumulation)
@@ -98,11 +86,6 @@ func NewTickResolver(tick *sr.Tick) *TickResolver {
 
 // swapStartHook is called when a swap starts
 // This hook initializes the batch processor for accumulating tick crosses
-// Parameters:
-//   - _: Leading realm-call discriminator for the forwarded callback; callers pass 0.
-//   - rlm: Propagated current staker realm context used to persist the new batch.
-//   - poolPath: Pool path whose swap is starting.
-//   - timestamp: Unix timestamp recorded on the batch for reward calculations.
 func (s *stakerV1) swapStartHook(_ int, rlm realm, poolPath string, timestamp int64) {
 	pool, ok := s.getPools().Get(poolPath)
 	if !ok {
@@ -127,13 +110,6 @@ func (s *stakerV1) swapStartHook(_ int, rlm realm, poolPath string, timestamp in
 // 1. O(1) pool state updates instead of O(n) where n = number of tick crosses
 // 2. Reduced computational overhead for reward calculations
 // 3. Atomic processing ensuring consistency across all tick updates
-// Parameters:
-//   - _: Leading realm-call discriminator for the forwarded callback; callers pass 0.
-//   - rlm: Propagated current staker realm context used to process and clear the swap batch.
-//   - poolPath: Pool path whose active swap batch is finalized.
-//
-// Returns:
-//   - error: Error from batched processing or batch cleanup; nil when no active batch exists or finalization succeeds.
 func (s *stakerV1) swapEndHook(_ int, rlm realm, poolPath string) error {
 	// Validate batch processor state
 	currentSwapBatch := s.store.GetCurrentSwapBatch()
@@ -166,13 +142,6 @@ func (s *stakerV1) swapEndHook(_ int, rlm realm, poolPath string) error {
 // Active swaps accumulate crosses and process their net liquidity change once at
 // swap end. Calls without an active batch use the immediate fallback, which
 // materializes the reward cache for each individual tick cross.
-// Parameters:
-//   - _: Leading realm-call discriminator for the forwarded callback; callers pass 0.
-//   - rlm: Propagated current staker realm context supplied by the hook; this helper forwards it only through the callback signature.
-//   - poolPath: Pool path containing the crossed tick.
-//   - tickId: Identifier of the crossed tick.
-//   - zeroForOne: True when the swap moves toward lower ticks and the liquidity delta is negated.
-//   - timestamp: Unix timestamp used by the immediate reward-cache fallback.
 func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32, zeroForOne bool, timestamp int64) {
 	pool, ok := s.getPools().Get(poolPath)
 	if !ok {
@@ -214,12 +183,6 @@ func (s *stakerV1) tickCrossHook(_ int, rlm realm, poolPath string, tickId int32
 // processTickCrossImmediate processes one unbatched tick cross.
 // It materializes elapsed halving boundaries while the pre-cross liquidity is
 // still effective, before modifying the deposit for that individual cross.
-// Parameters:
-//   - pool: Pool whose staked liquidity and reward cache are updated.
-//   - tick: Crossed tick whose outside accumulation is updated.
-//   - tickId: Identifier of the crossed tick and reference for the post-cross position.
-//   - zeroForOne: True when the swap moves toward lower ticks, reversing the liquidity delta.
-//   - timestamp: Unix timestamp at which reward caching and accumulation updates occur.
 func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickId int32, zeroForOne bool, timestamp int64) {
 	// Calculate the effective tick position after crossing
 	// For zeroForOne swaps, liquidity becomes effective one tick lower
@@ -250,12 +213,6 @@ func (s *stakerV1) processTickCrossImmediate(pool *sr.Pool, tick *sr.Tick, tickI
 // This is the core optimization function that processes multiple tick crosses in a single operation.
 // Instead of updating pool state for each tick cross individually (O(n) operations),
 // it calculates the cumulative effect and applies it once (O(1) pool updates + O(n) tick updates).
-// Parameters:
-//   - _: Leading realm-call discriminator for the forwarded callback; callers pass 0.
-//   - rlm: Propagated current staker realm context used for event provenance.
-//
-// Returns:
-//   - error: errPoolNotFound when the active batch has no pool; nil when the batch is empty or processed successfully.
 func (s *stakerV1) processBatchedTickCrosses(_ int, rlm realm) error {
 	// Early exit for empty batches
 	currentSwapBatch := s.store.GetCurrentSwapBatch()

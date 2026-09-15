@@ -9,12 +9,14 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-// assertIsValidDelegateAmount validates that the delegation amount meets system
-// requirements and panics when it does not.
+// assertIsValidDelegateAmount validates that the delegation amount meets system requirements.
+// This function checks minimum amount and multiple requirements.
 //
 // Parameters:
-//   - amount: delegation amount; it must be at least minimumAmount and an exact
-//     multiple of minimumAmount.
+//   - amount: amount to validate
+//
+// Returns:
+//   - error: nil if valid, error describing validation failure
 func assertIsValidDelegateAmount(amount int64) {
 	if amount < minimumAmount {
 		panic(makeErrorWithDetails(
@@ -50,12 +52,7 @@ func assertIsValidSnapshotTime(snapshotTime int64) {
 	}
 }
 
-// assertIsAvailableCleanupSnapshotTime ensures delegation-history cleanup will
-// not remove data needed by an active governance proposal.
-//
-// Parameters:
-//   - cleanupSnapshotTime: oldest history timestamp that cleanup would retain;
-//     it must not be later than the oldest active proposal snapshot.
+// assertIsAvailableCleanupSnapshotTime checks that no active proposals need
 func assertIsAvailableCleanupSnapshotTime(cleanupSnapshotTime int64) {
 	oldestActiveSnapshotTime, hasActiveProposal, err := governance.GetOldestActiveProposalSnapshotTime()
 	if err != nil {

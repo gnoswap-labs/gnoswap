@@ -35,15 +35,8 @@ const (
 // SwapValidator provides validation methods for swap operations
 type SwapValidator struct{}
 
-// exactOutAmount verifies that exact-output execution is within per-hop rounding tolerance.
-//
-// Parameters:
-//   - resultAmount: actual output amount obtained
-//   - specifiedAmount: requested output amount
-//   - swapCount: number of pool hops contributing rounding tolerance
-//
-// Returns:
-//   - err: nil when absolute difference is at most swapCount; exceeded-target error otherwise
+// exactOutAmount checks if output amount meets specified requirements.
+// For exact-out swaps, the output must be exactly the specified amount with tolerance up to swapCount units for rounding.
 func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount int64, swapCount int64) error {
 	diff := int64(0)
 
@@ -60,14 +53,7 @@ func (v *SwapValidator) exactOutAmount(resultAmount, specifiedAmount int64, swap
 	return nil
 }
 
-// exactInAmount verifies that exact-input execution consumed the requested amount exactly.
-//
-// Parameters:
-//   - resultAmount: actual input amount consumed
-//   - specifiedAmount: requested input amount
-//
-// Returns:
-//   - err: nil when amounts match; mismatch error otherwise
+// exactInAmount checks that the swap consumed exactly the requested input amount.
 func (v *SwapValidator) exactInAmount(resultAmount, specifiedAmount int64) error {
 	if resultAmount != specifiedAmount {
 		return ufmt.Errorf(errExactInAmountMismatch, specifiedAmount, resultAmount)
@@ -76,16 +62,7 @@ func (v *SwapValidator) exactInAmount(resultAmount, specifiedAmount int64) error
 	return nil
 }
 
-// slippage checks the caller's minimum-output or maximum-input constraint.
-//
-// Parameters:
-//   - swapType: ExactIn or ExactOut, selecting the limit comparison
-//   - amountIn: actual input amount consumed
-//   - amountOut: actual output amount after fees
-//   - limit: minimum output for ExactIn or maximum input for ExactOut
-//
-// Returns:
-//   - err: nil when the selected constraint passes; slippage or invalid-type error otherwise
+// slippage ensures swap amounts meet slippage requirements.
 func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit int64) error {
 	switch swapType {
 	case ExactIn:
@@ -102,14 +79,7 @@ func (v *SwapValidator) slippage(swapType SwapType, amountIn, amountOut, limit i
 	return nil
 }
 
-// swapType parses and validates a string swap type.
-//
-// Parameters:
-//   - swapTypeStr: expected EXACT_IN or EXACT_OUT string
-//
-// Returns:
-//   - swapType: parsed ExactIn or ExactOut value
-//   - err: nil for a supported string; invalid-swap-type error otherwise
+// swapType ensures the swap type string is valid.
 func (v *SwapValidator) swapType(swapTypeStr string) (SwapType, error) {
 	swapType, err := trySwapTypeFromStr(swapTypeStr)
 	if err != nil {
@@ -118,14 +88,7 @@ func (v *SwapValidator) swapType(swapTypeStr string) (SwapType, error) {
 	return swapType, nil
 }
 
-// amount validates that an amount is strictly positive.
-//
-// Parameters:
-//   - amount: amount to validate in token units
-//
-// Returns:
-//   - validAmount: amount unchanged when positive, or zero on failure
-//   - err: nil for a positive amount; invalid-positive-amount error otherwise
+// amount ensures the amount is properly formatted and positive.
 func (v *SwapValidator) amount(amount int64) (int64, error) {
 	if amount <= 0 {
 		return 0, ufmt.Errorf(ErrInvalidPositiveAmount, amount)
@@ -239,24 +202,7 @@ func (p *RouteParser) ValidateQuoteSum(quotes []string) error {
 	return nil
 }
 
-// finalizeSwap applies router fees and enforces exact-amount and slippage constraints.
-//
-// Parameters:
-//   - _: leading operation discriminator; callers pass 0
-//   - rlm: propagated current realm context used for fee settlement
-//   - inputToken: input token contract path retained for finalization context
-//   - outputToken: output token contract path whose output fee is settled
-//   - resultAmountIn: aggregate input amount from pool execution
-//   - resultAmountOut: aggregate output amount before router fee
-//   - swapType: ExactIn or ExactOut validation direction
-//   - tokenAmountLimit: minimum output or maximum input slippage bound
-//   - amountSpecified: requested exact input or output amount
-//   - swapCount: number of pool hops used for exact-output rounding tolerance
-//   - isSetSqrtPriceLimitX96: true when a caller price limit allows partial fill
-//
-// Returns:
-//   - amountIn: finalized input amount
-//   - amountOut: output amount after router fee
+// finalizeSwap handles post-swap operations and validations.
 func (r *routerV1) finalizeSwap(
 	_ int,
 	rlm realm,
@@ -297,16 +243,7 @@ func (r *routerV1) finalizeSwap(
 	return resultAmountIn, resultAmountOutWithoutFee
 }
 
-// validateRoutesAndQuotes parses and validates encoded routes and quotes.
-//
-// Parameters:
-//   - routes: comma-separated route paths
-//   - quotes: comma-separated route allocation percentages
-//
-// Returns:
-//   - routePaths: parsed route path strings
-//   - quoteValues: parsed quote strings
-//   - err: nil when route and quote validation succeeds; validation error otherwise
+// validateRoutesAndQuotes is a convenience function that parses and validates routes in one call.
 func validateRoutesAndQuotes(routes, quotes string) ([]string, []string, error) {
 	return NewRouteParser().ParseRoutes(routes, quotes)
 }

@@ -25,13 +25,6 @@ type MintParams struct {
 }
 
 // newMintParams creates `MintParams` from processed input data.
-//
-// Parameters:
-//   - input: normalized token pair, parsed amount values, tick range, and derived pool path
-//   - mintInput: original fee tier, deadline, recipient, and caller values
-//
-// Returns:
-//   - params: mint parameters combining normalized liquidity inputs with the original transaction fields
 func newMintParams(input ProcessedMintInput, mintInput MintInput) MintParams {
 	return MintParams{
 		token0:         input.tokenPair.token0,

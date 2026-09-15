@@ -215,12 +215,6 @@ func (vm *versionManager) GetCurrentImplementation() any {
 // Validation rules:
 //   - Package path must start with domainPath + "/"
 //
-// Parameters:
-//   - targetPackagePath: Package path to test against the configured domainPath prefix.
-//
-// Returns:
-//   - bool: true when targetPackagePath starts with domainPath followed by "/", allowing it as a version package; false otherwise.
-//
 // Example:
 //   - domainPath: "gno.land/r/gnoswap/protocol_fee"
 //   - Valid callers: "gno.land/r/gnoswap/protocol_fee/v1", "gno.land/r/gnoswap/protocol_fee/v2"

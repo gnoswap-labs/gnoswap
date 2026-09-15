@@ -66,14 +66,7 @@ func SetOperationStatus(cur realm, op OpType, halted bool) {
 	)
 }
 
-// setHaltLevel applies the predefined halt configuration for a level.
-//
-// Parameters:
-//   - level: halt level selecting the operation configuration to apply.
-//
-// Returns:
-//   - error: nil when the level is recognized and applied; otherwise an invalid-level
-//     or operation-state update error.
+// setHaltLevel applies predefined halt level configuration.
 func setHaltLevel(level HaltLevel) error {
 	var config HaltConfig
 

@@ -351,18 +351,6 @@ func (gs *govStakerV1) CollectUndelegatedGns(_ int, rlm realm) int64 {
 
 // delegate processes delegation operations.
 // Validates delegation amount, creates delegation records, and updates reward tracking.
-// Parameters:
-//   - _: leading realm-call discriminator for the internal helper; callers pass 0.
-//   - rlm: forwarded realm context used by delegation and reward storage; downstream domain methods validate the current context.
-//   - from: address whose tokens are being delegated.
-//   - to: address receiving the delegated voting power.
-//   - amount: GNS amount to record in the smallest token unit.
-//   - currentHeight: block height recorded on the delegation.
-//   - currentTimestamp: Unix timestamp in seconds recorded on the delegation and reward entries.
-//
-// Returns:
-//   - *staker.Delegation: newly created delegation record.
-//   - error: nil on success; otherwise a negative-amount or delegation/reward storage error.
 func (gs *govStakerV1) delegate(
 	_ int,
 	rlm realm,
@@ -403,18 +391,6 @@ func (gs *govStakerV1) delegate(
 
 // unDelegate processes undelegation operations with lockup.
 // Validates undelegation amount, processes withdrawals, and updates reward tracking.
-// Parameters:
-//   - _: leading realm-call discriminator for the internal helper; callers pass 0.
-//   - rlm: forwarded realm context used by delegation and reward storage; downstream domain methods validate the current context.
-//   - delegator: address whose delegation is being reduced.
-//   - delegatee: address whose voting power is being reduced.
-//   - amount: GNS amount to move into lockup, in the smallest token unit.
-//   - currentHeight: block height recorded on withdrawal entries.
-//   - currentTimestamp: Unix timestamp in seconds used to start each lockup.
-//
-// Returns:
-//   - int64: requested amount accepted for undelegation, or zero when no delegation IDs exist.
-//   - error: nil on success; otherwise insufficient delegation, invalid amount, or storage/reward update error.
 func (gs *govStakerV1) unDelegate(
 	_ int,
 	rlm realm,
@@ -501,18 +477,6 @@ func (gs *govStakerV1) unDelegate(
 
 // unDelegateWithoutLockup processes undelegation without lockup.
 // Used for redelegation where tokens are immediately available.
-// Parameters:
-//   - _: leading realm-call discriminator for the internal helper; callers pass 0.
-//   - rlm: forwarded realm context used by delegation and reward storage; downstream domain methods validate the current context.
-//   - delegator: address whose delegation is being reduced.
-//   - delegatee: address whose voting power is being reduced.
-//   - amount: GNS amount to remove immediately, in the smallest token unit.
-//   - currentHeight: block height recorded on the delegation update.
-//   - currentTime: Unix timestamp in seconds used for reward and delegation history updates.
-//
-// Returns:
-//   - int64: requested amount accepted for immediate undelegation.
-//   - error: nil on success; otherwise insufficient delegation or storage/reward update error.
 func (gs *govStakerV1) unDelegateWithoutLockup(
 	_ int,
 	rlm realm,
@@ -645,15 +609,6 @@ func (gs *govStakerV1) decreaseTotalLockedAmount(_ int, rlm realm, amount int64)
 
 // collectDelegations processes collection of undelegated tokens.
 // Iterates through user delegations and collects available amounts.
-// Parameters:
-//   - _: leading realm-call discriminator for the internal helper; callers pass 0.
-//   - rlm: forwarded realm context used while persisting collected delegation records; downstream storage validates the current context.
-//   - user: address whose matured delegation withdrawals are collected.
-//   - currentTime: Unix timestamp in seconds used to determine which withdrawals have matured.
-//
-// Returns:
-//   - int64: total GNS amount collected from all matured withdrawals.
-//   - error: nil on success; otherwise an invalid-amount or delegation storage error.
 func (gs *govStakerV1) collectDelegations(_ int, rlm realm, user address, currentTime int64) (int64, error) {
 	totalCollectedAmount := int64(0)
 

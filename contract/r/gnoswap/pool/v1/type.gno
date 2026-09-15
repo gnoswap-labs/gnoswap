@@ -146,12 +146,6 @@ type StepComputations struct {
 }
 
 // init initializes the computation for a single swap step
-// Parameters:
-//   - state: current swap state supplying the current price and tick.
-//   - p: pool whose tick bitmap and tick spacing determine the next initialized
-//     tick.
-//   - zeroForOne: true when swapping token0 for token1 and traversing ticks
-//     downward; false for the opposite direction.
 func (step *StepComputations) initSwapStep(state SwapState, p *pl.Pool, zeroForOne bool) {
 	step.sqrtPriceStartX96 = state.sqrtPriceX96
 	step.tickNext, step.initialized = tickBitmapNextInitializedTickWithInOneWord(
@@ -170,8 +164,6 @@ func (step *StepComputations) initSwapStep(state SwapState, p *pl.Pool, zeroForO
 
 // clampTickNext ensures that `tickNext` stays within the min, max tick boundaries
 // as the tick bitmap is not aware of these bounds
-// No parameters or return values; clamps tickNext in place to the supported
-// minimum and maximum tick bounds.
 func (step *StepComputations) clampTickNext() {
 	if step.tickNext < MIN_TICK {
 		step.tickNext = MIN_TICK

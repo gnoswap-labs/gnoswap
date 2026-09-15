@@ -27,14 +27,8 @@ const (
 	ExactOut SwapType = rawExactOut
 )
 
-// trySwapTypeFromStr converts a wire-format swap type string to SwapType.
-//
-// Parameters:
-//   - swapType: expected EXACT_IN or EXACT_OUT string
-//
-// Returns:
-//   - typ: ExactIn or ExactOut for a recognized string; the zero value when invalid
-//   - err: nil for a recognized type; an error describing an unsupported string otherwise
+// trySwapTypeFromStr attempts to convert a string into a SwapType.
+// It validates and converts string representations of swap types into their corresponding enum values.
 func trySwapTypeFromStr(swapType string) (SwapType, error) {
 	switch swapType {
 	case rawExactIn:
@@ -137,17 +131,7 @@ func (p SwapParams) Fee() uint32 { return p.fee }
 //   - recipient: configured output recipient address
 func (p SwapParams) Recipient() address { return p.recipient }
 
-// newSwapParams constructs multi-hop swap parameters for one hop.
-//
-// Parameters:
-//   - tokenIn: token spent by the hop
-//   - tokenOut: token received by the hop
-//   - fee: pool fee tier for the hop
-//   - recipient: address receiving the final pool output
-//   - amountSpecified: signed amount; positive for exact input and negative for exact output
-//
-// Returns:
-//   - params: initialized SwapParams carrying the hop and recipient data
+// newSwapParams creates a new SwapParams instance with the provided parameters.
 func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient address, amountSpecified int64) *SwapParams {
 	return &SwapParams{
 		SingleSwapParams: SingleSwapParams{
@@ -198,14 +182,7 @@ type SwapCallbackData struct {
 	payer    address // address to spend the token
 }
 
-// newSwapCallbackData packages swap token, fee, and payer data for a real callback.
-//
-// Parameters:
-//   - params: swap parameters exposing token and fee values
-//   - payer: address whose balance supplies pool input
-//
-// Returns:
-//   - data: callback payload containing token paths, fee, and payer
+// newSwapCallbackData creates a new SwapCallbackData from a SwapParamsI.
 func newSwapCallbackData(params SwapParamsI, payer address) SwapCallbackData {
 	return SwapCallbackData{
 		tokenIn:  params.TokenIn(),
@@ -215,14 +192,9 @@ func newSwapCallbackData(params SwapParamsI, payer address) SwapCallbackData {
 	}
 }
 
-// newDrySwapCallbackData packages swap token and fee data for a simulation.
-// The payer is set to the zero address because dry swaps do not transfer tokens.
-//
-// Parameters:
-//   - params: swap parameters exposing token and fee values
-//
-// Returns:
-//   - data: callback payload with token paths and fee and a zero payer
+// newDrySwapCallbackData creates callback data for a dry swap. The payer is
+// deliberately the zero address because dry swaps do not execute callbacks or
+// token transfers.
 func newDrySwapCallbackData(params SwapParamsI) SwapCallbackData {
 	return SwapCallbackData{
 		tokenIn:  params.TokenIn(),

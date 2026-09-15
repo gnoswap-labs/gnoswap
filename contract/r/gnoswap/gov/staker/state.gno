@@ -37,11 +37,7 @@ func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return NewGovStakerStore(kvStore)
 }
 
-// getImplementation returns the active gov/staker implementation.
-// It panics when updateImplementation has not installed one.
-//
-// Returns:
-//   - IGovStaker: currently selected implementation.
+// getImplementation returns the current active implementation
 func getImplementation() IGovStaker {
 	if implementation == nil {
 		panic("implementation is not initialized")

@@ -26,13 +26,6 @@ const (
 )
 
 // makeErrorWithDetails creates an error with additional context.
-//
-// Parameters:
-//   - message: primary error text identifying the failed operation.
-//   - details: additional context appended to the primary message.
-//
-// Returns:
-//   - err: error formatted as "message || details".
 func makeErrorWithDetails(message string, details string) error {
 	return ufmt.Errorf("%s || %s", message, details)
 }

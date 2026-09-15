@@ -12,9 +12,10 @@ Original copyright: Copyright 2019 Gregory Petrosyan <gregory.petrosyan@gmail.co
 
 This fuzz package provides generators for property-based testing in Gno smart contracts. It allows you to:
 
-- Generate random test data for primitive, collection, and 256-bit integer types
-- Compose and transform generators
-- Check properties over explicitly requested numbers of generated cases
+- Generate random test data for various types
+- Create complex data structures with constraints
+- Test stateful systems with state machine testing
+- Combine and transform generators
 
 ## Quick Start
 
@@ -37,7 +38,7 @@ func TestProperty(t *testing.T) {
             ft.Fatalf("commutativity failed: %d + %d != %d + %d", x, y, y, x)
         }
     })
-    // Check runs one case by default; use CheckN for an explicit count.
+    // Automatically runs random test cases
 }
 ```
 
@@ -73,7 +74,6 @@ func TestExample() {
   - **uint32**: `Uint32()`, `Uint32Min()`, `Uint32Max()`, `Uint32Range()`
   - **uint64**: `Uint64()`, `Uint64Min()`, `Uint64Max()`, `Uint64Range()`
   - **uint**: `Uint()`, `UintMin()`, `UintMax()`, `UintRange()`
-- **256-bit integers**: `Uint256*()` and `Int256*()` generators
 - **Floats**:
   - **float32**: `Float32()`, `Float32Min()`, `Float32Max()`, `Float32Range()`
   - **float64**: `Float64()`, `Float64Min()`, `Float64Max()`, `Float64Range()`
@@ -87,39 +87,43 @@ func TestExample() {
 
 #### Combinators
 
-- `Custom(fn)` - Package-local custom generator (callback uses internal `bitStream`)
+- `Custom(fn)` - Create custom generators
 - `Just(val)` - Always return the same value
 - `SampledFrom(slice)` - Sample from a slice
 - `OneOf(gens...)` - Choose from multiple generators
 - `Map(gen, transform)` - Transform generated values
-- `Deferred(fn)` - Lazily construct a generator when it is drawn
+- `Deferred(fn)` - Lazy generator for recursive structures
 - `Permutation(slice)` - Generate permutations
 
 #### Property-Based Testing
 
-- `Check(t, prop)` - Run one random test case by default
-- `CheckN(t, n, prop)` - Run up to N valid random test cases
+- `Check(t, prop)` - Run 100 random test cases
+- `CheckN(t, n, prop)` - Run N random test cases
 
 ## Basic Usage
 
-### Generating with Check
+### Simple Generators
 
 ```go
 package mypackage
 
-import (
-    "testing"
-    "gno.land/p/gnoswap/fuzz"
-)
+import "gno.land/p/gnoswap/fuzz"
 
-func TestBasic(t *testing.T) {
-    fuzz.CheckN(t, 10, func(ft *fuzz.T) {
-        // Draw values through the public Generator API.
-        value := fuzz.Int64Range(0, 100).Draw(ft, "value").(int64)
-        str := fuzz.StringN(5, 10, 20).Draw(ft, "str").(string)
-        flag := fuzz.Bool().Draw(ft, "flag").(bool)
-        _, _, _ = value, str, flag
-    })
+func TestBasic() {
+    seed := uint64(12345)
+    s := fuzz.NewRandomBitStream(seed, false)
+
+    // Integers
+    intGen := fuzz.Int64Range(0, 100)
+    value := intGen.value(s).(int64)
+
+    // Strings
+    strGen := fuzz.StringN(5, 10, 20) // 5-10 runes, max 20 bytes
+    str := strGen.value(s).(string)
+
+    // Booleans
+    boolGen := fuzz.Bool()
+    flag := boolGen.value(s).(bool)
 }
 ```
 
@@ -137,26 +141,33 @@ str := strGen.Example(54321).(string)
 ### Collections
 
 ```go
-seed := uint64(12345)
-
+// Generate slices
 elemGen := fuzz.Int32Range(0, 100)
 sliceGen := fuzz.SliceOfN(elemGen, 5, 10) // 5-10 elements
-slice := sliceGen.Example(seed).([]any)
+slice := sliceGen.value(s).([]any)
 
+// Generate maps
 keyGen := fuzz.String()
 valGen := fuzz.Int64()
 mapGen := fuzz.MapOfN(keyGen, valGen, 3, 5) // 3-5 entries
-m := mapGen.Example(seed).(map[any]any)
+m := mapGen.value(s).(map[any]any)
 ```
 
-### Transforming Generated Values
+### Custom Generators
 
 ```go
-squareGen := fuzz.Int32Range(0, 10).Map(func(v any) any {
-    n := v.(int32)
-    return n * n
+// Create a custom generator for a struct
+type Point struct {
+    X, Y int64
+}
+
+pointGen := fuzz.Custom(func(s bitStream) any {
+    x := fuzz.Int64Range(-100, 100).value(s).(int64)
+    y := fuzz.Int64Range(-100, 100).value(s).(int64)
+    return Point{X: x, Y: y}
 })
-square := squareGen.Example(12345).(int32)
+
+point := pointGen.value(s).(Point)
 ```
 
 ### Combinators
@@ -184,39 +195,85 @@ constGen := fuzz.Just(42)
 
 ## Advanced Patterns
 
-### Selecting Among Generators
+### Conditional Generation
 
 ```go
-// OneOf selects one of the supplied generators for each example.
-numberOrText := fuzz.OneOf(
-    fuzz.Int64Range(-100, 100),
-    fuzz.StringN(1, 8, 16),
-)
-value := numberOrText.Example(12345)
+// Generate different values based on condition
+gen := fuzz.Custom(func(s bitStream) any {
+    usePositive := fuzz.Bool().value(s).(bool)
+    if usePositive {
+        return fuzz.Int64Range(1, 100).value(s)
+    }
+    return fuzz.Int64Range(-100, -1).value(s)
+})
 ```
 
-### Building Derived Values
+### Nested Structures
 
 ```go
-type Point struct {
-    X, Y int64
+type Address struct {
+    Street string
+    City   string
+    Zip    int32
 }
 
-pointGen := fuzz.Int64Range(-100, 100).Map(func(v any) any {
-    x := v.(int64)
-    return Point{X: x, Y: x}
+type Person struct {
+    Name    string
+    Age     int32
+    Address Address
+}
+
+personGen := fuzz.Custom(func(s bitStream) any {
+    name := fuzz.StringN(3, 10, 20).value(s).(string)
+    age := fuzz.Int32Range(0, 120).value(s).(int32)
+
+    street := fuzz.StringN(5, 20, 50).value(s).(string)
+    city := fuzz.StringN(3, 15, 30).value(s).(string)
+    zip := fuzz.Int32Range(10000, 99999).value(s).(int32)
+
+    return Person{
+        Name: name,
+        Age:  age,
+        Address: Address{
+            Street: street,
+            City:   city,
+            Zip:    zip,
+        },
+    }
 })
-point := pointGen.Example(12345).(Point)
 ```
 
-### Deferred Generators
+### Recursive Generators
 
 ```go
-// Deferred delays construction until the generator is drawn.
-lazyString := fuzz.Deferred(func() *fuzz.Generator {
-    return fuzz.String()
-})
-value := lazyString.Example(12345).(string)
+type Tree struct {
+    Value int64
+    Left  *Tree
+    Right *Tree
+}
+
+func treeGen(maxDepth int) *fuzz.Generator {
+    return fuzz.Custom(func(s bitStream) any {
+        value := fuzz.Int64Range(0, 100).value(s).(int64)
+
+        if maxDepth <= 0 {
+            return &Tree{Value: value}
+        }
+
+        hasLeft := fuzz.Bool().value(s).(bool)
+        hasRight := fuzz.Bool().value(s).(bool)
+
+        tree := &Tree{Value: value}
+        if hasLeft {
+            tree.Left = treeGen(maxDepth - 1).value(s).(*Tree)
+        }
+        if hasRight {
+            tree.Right = treeGen(maxDepth - 1).value(s).(*Tree)
+        }
+
+        return tree
+    })
+}
 ```
 
 ## Best Practices
@@ -231,78 +288,96 @@ positiveGen := fuzz.Int64Range(1, 1000)
 ### 2. Handle Invalid States Gracefully
 
 ```go
-func TestSkipEmpty(t *testing.T) {
-    fuzz.Check(t, func(ft *fuzz.T) {
-        count := fuzz.Int32Range(0, 10).Draw(ft, "count").(int32)
-        if count == 0 {
-            ft.SkipNow()
-            return
-        }
-        ft.Logf("testing a non-empty case with %d items", count)
-    })
+actions := []fuzz.Action{
+    {
+        Name: "RemoveItem",
+        Run: func(s bitStream) {
+            if len(items) == 0 {
+                // Skip this action instead of panicking
+                panic(fuzz.invalidData("no items to remove"))
+            }
+            // ... remove item
+        },
+    },
 }
 ```
 
 ### 3. Write Clear Invariants
 
 ```go
-func TestInvariant(t *testing.T) {
-    fuzz.Check(t, func(ft *fuzz.T) {
-        value := fuzz.Int64Range(0, 100).Draw(ft, "value").(int64)
-        if value < 0 {
-            ft.Fatalf("value should never be negative: %d", value)
-        }
-    })
+check := func(s bitStream) {
+    // Clear invariant checks
+    if total < 0 {
+        panic("total should never be negative")
+    }
+    if len(items) > maxCapacity {
+        panic("items exceed maximum capacity")
+    }
+    // Verify data consistency
+    sum := int64(0)
+    for _, item := range items {
+        sum += item.value
+    }
+    if sum != total {
+        panic("sum of items doesn't match total")
+    }
 }
 ```
 
 ### 4. Use Seeds for Reproducibility
 
 ```go
-// Example uses the supplied seed to reproduce a generated value.
-seed := uint64(12345)
-value := fuzz.Int64Range(0, 100).Example(seed).(int64)
+// Use consistent seeds for reproducible tests
+func TestWithSeed() {
+    seeds := []uint64{12345, 67890, 11111}
+
+    for _, seed := range seeds {
+        s := fuzz.NewRandomBitStream(seed, false)
+        // Run test with this seed
+    }
+}
 ```
 
 ## API Reference
 
 ### Core Types
 
-- `TestingT` - Minimal test interface accepted by `Check` and `CheckN`
-- `T` - Test context passed to a property callback
-- `Generator` - Public generator value
-
-The package also has internal bit-stream and state-machine implementation types;
-they are not part of the public API.
+- `T` - Test context (like rapid's \*T)
+- `Generator` - Generates random values
+- `bitStream` - Interface for random bit generation
+- `Action` - State machine action with name and function
+- `StateMachine` - Stateful test runner
 
 ### Key Functions
 
-- `Check(t, prop)` - Run one valid random case
-- `CheckN(t, n, prop)` - Run up to `n` valid random cases
-- Primitive generators such as `Bool`, `Int64Range`, `Uint64Range`, and `StringN`
-- 256-bit generators: `Uint256`, `Uint256Min`, `Uint256Max`, `Uint256Range`,
-  `Uint256RangeFrom`, and the corresponding `Int256*` functions
-- Collection generators: `SliceOf`, `SliceOfN`, `MapOf`, and `MapOfN`
-- Combinators: `Map`, `Just`, `SampledFrom`, `OneOf`, `Deferred`, and
-  `Permutation`
-
-`Custom` is declared for package-local use, but its callback accepts the
-unexported `bitStream` type and cannot be named by external callers.
+- `newT(s bitStream) *T` - Create test context
+- `newRandomBitStream(seed, persist) *randomBitStream` - Create random bit stream
+- `newBufBitStream(buf, persist) *bufBitStream` - Create buffered bit stream
+- `NewStateMachine(actions, check, steps) *StateMachine` - Create state machine
+- `Repeat(s, actions, steps)` - Run state machine with actions map (low-level)
 
 ### T Methods (testing.T-like API)
 
-- `Skip(args ...any)`, `SkipNow()`, and `Skipf(format string, args ...any)`
-- `Error(args ...any)`, `Errorf(format string, args ...any)`
-- `Fatal(args ...any)`, `Fatalf(format string, args ...any)`
-- `Fail()`, `FailNow()`, and `Failed() bool`
-- `Log(args ...any)` and `Logf(format string, args ...any)`
+- `Draw(gen *Generator, label string) any` - Generate a value
+- `Repeat(actions map[string]func(*T), steps int)` - Run state machine
+- `Skip(args ...any)` - Skip current test case
+- `SkipNow()` - Skip without logging
+- `Skipf(format string, args ...any)` - Skip with formatted message
+- `Error(args ...any)` - Mark test as failed, continue
+- `Errorf(format string, args ...any)` - Mark test as failed with format, continue
+- `Fatal(args ...any)` - Mark test as failed, stop immediately
+- `Fatalf(format string, args ...any)` - Mark test as failed with format, stop
+- `Fail()` - Mark test as failed, continue
+- `FailNow()` - Mark test as failed, stop immediately
+- `Failed() bool` - Check if test has failed
+- `Log(args ...any)` - Log a message
+- `Logf(format string, args ...any)` - Log a formatted message
 
 ### Generator Methods
 
-- `String() string` - Describe the generator
-- `Draw(t *T, label string) any` - Generate a value within a property callback
-- `Example(seed uint64) any` - Generate a reproducible example value
-- `Map(fn func(any) any) *Generator` - Transform generated values
+- `value(s bitStream) any` - Generate a value (low-level)
+- `Example(seed uint64) any` - Generate example value with seed
+- `Map(fn func(any) any) *Generator` - Transform values
 
 ## Porting Notes
 
@@ -311,31 +386,21 @@ This package is a port of the [rapid](https://github.com/flyingmutant/rapid) lib
 1. **No Generics**: Gno doesn't support generics, so all generators return `any`
 2. **No Reflection**: `Make[T]()` and reflection-based features are not available
 3. **No Regexp**: `StringMatching()` is not available
-4. **No State-Machine Runner**: The current package exposes property checks and
-   generators, not rapid's state-machine API
-5. **Simplified API**: Shrinking and visualization features are omitted
+4. **Simplified API**: Some advanced features like shrinking and visualization are omitted
 
 ### ❌ Not Supported (Gno Limitations)
 
 - Reflection-based generators (`Make[T]()`)
 - Regex-based string generation (`StringMatching()`)
 - Test case shrinking (minimization)
-- Stateful action runners/state-machine tests
 - Fail file persistence
 - Visualization tools
 
 ### ⚠️ Known Limitations
 
 1. **No generic types**: All generators return `any` due to Gno's lack of generics
-2. **One case by default**: `Check` runs one valid case; use `CheckN` to request
-   a different number of valid cases
-3. **Package-local `Custom` callback**: Its `bitStream` parameter is unexported,
-   so external callers should use `Map`, `OneOf`, or other public combinators
-4. **No test case shrinking**: Failing test cases are not automatically minimized
-5. **Fixed base seed**: Uses a constant base seed
-6. **Signed 256-bit span cap**: For bounds whose span exceeds `MaxInt256`,
-   current `Int256*` generators cap the span and may omit values near the
-   requested upper bound.
+2. **No test case shrinking**: Failing test cases are not automatically minimized
+3. **Fixed base seed**: Uses a constant base seed (can be improved with time-based seeding)
 
 ## Contributing
 

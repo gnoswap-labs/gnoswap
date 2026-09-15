@@ -22,12 +22,6 @@ type Ownable2Step struct {
 }
 
 // newOwnable2StepWithAddress creates a new Ownable2Step instance with addr as owner.
-//
-// Parameters:
-//   - addr: Address stored as the initial owner; this constructor does not validate it.
-//
-// Returns:
-//   - *Ownable2Step: New ownership controller with addr as owner and no pending owner.
 func newOwnable2StepWithAddress(addr address) *Ownable2Step {
 	return &Ownable2Step{
 		owner:        addr,

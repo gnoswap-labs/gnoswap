@@ -79,16 +79,7 @@ func (r *routerV1) SetSwapFee(_ int, rlm realm, fee uint64) {
 	)
 }
 
-// handleSwapFee computes and settles the protocol fee for outputToken.
-//
-// Parameters:
-//   - _: leading call discriminator; callers pass 0
-//   - rlm: propagated current realm context used for fee settlement
-//   - outputToken: output token contract path whose fee is settled
-//   - amount: gross output amount before router fee
-//
-// Returns:
-//   - netAmount: amount after subtracting the settled router fee
+// handleSwapFee deducts the protocol fee from the swap amount and transfers it to the protocol fee contract.
 func (r *routerV1) handleSwapFee(
 	_ int,
 	rlm realm,
@@ -137,14 +128,14 @@ func (r *routerV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amo
 	}
 }
 
-// settleProtocolFee forwards current and pending fees for one token to the protocol-fee realm.
-// When that realm is halted or forwarding fails, the amount remains pending for a later call.
+// settleProtocolFee forwards amount, plus anything already pending for tokenPath, to
+// the protocol fee realm. When collection is halted or the transfer fails, the amount
+// is recorded as pending instead and settled by a later call for the same token, which
+// every fee path makes even when the fee is zero.
 //
-// Parameters:
-//   - _: leading call discriminator; callers pass 0
-//   - rlm: propagated current realm context used for approval and storage writes
-//   - tokenPath: token contract path whose fee is settled
-//   - amount: newly accrued fee amount to forward
+// Only tokenPath is touched, so an unrelated token can never block settlement. The
+// pending entry is written only when the fee cannot be forwarded, so the common path
+// performs no store write at all.
 func (r *routerV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if halt.IsHaltedProtocolFee() {
 		r.addPendingProtocolFee(0, rlm, tokenPath, amount)
@@ -182,14 +173,9 @@ func calculateRouterFee(amount int64, swapFee uint64) int64 {
 	return gnsmath.SafeConvertToInt64(feeAmount)
 }
 
-// calculateExactOutWithRouterFee computes the gross pool output required for a target net amount.
-//
-// Parameters:
-//   - amount: requested net output amount in token units
-//   - swapFee: router fee rate in basis points
-//
-// Returns:
-//   - poolAmount: gross amount required before router fee deduction
+// calculate amount to fetch from pool including router fee
+// poolAmount = userAmount / (1 - feeRate)
+// = userAmount * 10000 / (10000 - swapFeeBPS)
 func calculateExactOutWithRouterFee(amount int64, swapFee uint64) int64 {
 	if amount == 0 {
 		return amount

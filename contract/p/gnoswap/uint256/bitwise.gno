@@ -100,15 +100,7 @@ func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 	return z.lsh(x, n)
 }
 
-// lsh performs the 256-bit left shift used by Lsh after its zero and identity shortcuts.
-// The result is truncated to the receiver's four 64-bit limbs.
-//
-// Parameters:
-//   - x: 256-bit operand to shift.
-//   - n: Number of bit positions to shift left.
-//
-// Returns:
-//   - z: The low 256 bits of x << n, stored in the receiver.
+// lsh performs left shift without overflow checking
 func (z *Uint) lsh(x *Uint, n uint) *Uint {
 	// n % 64 == 0
 	if n&0x3f == 0 {

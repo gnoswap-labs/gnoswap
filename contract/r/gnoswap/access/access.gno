@@ -43,15 +43,8 @@ func SetRoleAddress(cur realm, roleName string, roleAddress address) {
 	)
 }
 
-// setRoleAddress stores a role address for the internal SetRoleAddress path.
-// It trims roleName and panics for an empty name.
-//
-// Parameters:
-//   - roleName: role identifier to normalize and store
-//   - roleAddress: non-empty, valid address to associate with the normalized roleName
-//
-// Returns:
-//   - error: nil after storing the mapping; non-nil when roleAddress is invalid or empty
+// setRoleAddress is the internal implementation of SetRoleAddress.
+// Separated for testability.
 func setRoleAddress(roleName string, roleAddress address) error {
 	roleName = strings.TrimSpace(roleName)
 	if roleName == "" {

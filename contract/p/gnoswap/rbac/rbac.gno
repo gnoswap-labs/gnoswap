@@ -239,12 +239,6 @@ func (rb *RBAC) TransferOwnershipBy(newOwner, caller address) error {
 }
 
 // existsRole checks if name exists in the RBAC system.
-//
-// Parameters:
-//   - name: Exact role name to test in the role registry.
-//
-// Returns:
-//   - bool: true when name is a registered role key; false otherwise.
 func (rb *RBAC) existsRole(name string) bool {
 	_, exists := rb.roles[name]
 	return exists

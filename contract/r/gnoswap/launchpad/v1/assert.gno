@@ -6,10 +6,6 @@ import (
 
 // assertIsDepositOwner asserts that the caller is the owner of the deposit.
 // Panics if the caller is not the owner of the deposit.
-//
-// Parameters:
-//   - depositID: identifier of the deposit whose depositor is being checked.
-//   - caller: address expected to own the deposit; comparison uses its canonical address string.
 func (lp *launchpadV1) assertIsDepositOwner(depositID string, caller address) {
 	deposit, err := lp.getDeposit(depositID)
 	if err != nil {
@@ -21,10 +17,7 @@ func (lp *launchpadV1) assertIsDepositOwner(depositID string, caller address) {
 	}
 }
 
-// assertIsValidAmount panics if the amount is below the minimum deposit or is not a multiple of it.
-//
-// Parameters:
-//   - amount: GNS amount to validate in base units; it must be at least the minimum deposit and divisible by that minimum.
+// assertIsValidAmount panics if the amount is zero.
 func assertIsValidAmount(amount int64) {
 	if amount < minimumDepositAmount {
 		panic(makeErrorWithDetails(
@@ -43,9 +36,6 @@ func assertIsValidAmount(amount int64) {
 
 // assertHasProject asserts that the caller is the owner of at least one project.
 // Panics if the caller is not the owner of any project.
-//
-// Parameters:
-//   - caller: address that must appear in the project's recipient membership tree.
 func (lp *launchpadV1) assertHasProject(caller address) {
 	if !lp.store.GetProjectRecipients().Has(caller.String()) {
 		panic(makeErrorWithDetails(

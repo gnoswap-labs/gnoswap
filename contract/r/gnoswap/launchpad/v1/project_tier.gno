@@ -56,17 +56,7 @@ func updateTierDistributeAmountPerSecond(t *launchpad.ProjectTier) {
 	t.SetDistributeAmountPerSecondX128(distributeAmountPerSecondX128)
 }
 
-// newProjectTier creates a project tier and initializes its Q128-scaled per-second distribution rate.
-//
-// Parameters:
-//   - projectID: identifier of the project owning the tier.
-//   - tierDuration: tier duration in seconds.
-//   - totalDistributeAmount: total reward-token amount allocated to the tier.
-//   - startTime: reward distribution start Unix timestamp.
-//   - endTime: reward distribution end Unix timestamp.
-//
-// Returns:
-//   - tier: initialized project tier with its distribution rate calculated.
+// newProjectTier returns a pointer to a new ProjectTier with the given values.
 func newProjectTier(
 	projectID string,
 	tierDuration int64,

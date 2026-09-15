@@ -158,13 +158,6 @@ func IsHaltedWithdraw() bool {
 
 // isHaltedOperation returns halt status for the specified operation type.
 // Panics if operation type is invalid.
-//
-// Parameters:
-//   - op: operation type whose halt state is requested
-//
-// Returns:
-//   - halted: true when op is halted; false when it is enabled; panics for an
-//     invalid operation type or halt-state lookup error
 func isHaltedOperation(op OpType) bool {
 	if !op.IsValid() {
 		panic(makeErrorWithDetails(errInvalidOpType, op.String()))

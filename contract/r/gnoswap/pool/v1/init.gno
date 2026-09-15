@@ -145,12 +145,6 @@ func initStoreData(_ int, rlm realm, poolStore pool.IPoolStore) error {
 // validatePoolObservations ensures every persisted pool owns an observation tree.
 // CreatePool initializes the pair in one transaction; this check catches an
 // implementation or upgrade that would otherwise leave a pool unusable later.
-//
-// Parameters:
-//   - poolStore: pool storage interface providing pool and observation trees to compare.
-//
-// Returns:
-//   - error: nil when every persisted pool has an observation tree; otherwise the first missing-pair error.
 func validatePoolObservations(poolStore pool.IPoolStore) error {
 	pools := poolStore.GetPools()
 	observations := poolStore.GetObservations()

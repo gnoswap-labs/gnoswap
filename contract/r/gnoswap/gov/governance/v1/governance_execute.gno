@@ -87,20 +87,6 @@ func (gv *governanceV1) Execute(_ int, rlm realm, proposalID int64) int64 {
 	return proposal.ID()
 }
 
-// executeProposal resolves and executes the proposal identified by proposalID.
-//
-// Parameters:
-//   - _: Internal call discriminator; pass 0 when forwarding the governance realm.
-//   - rlm: Propagated current realm context used for proposal action calls.
-//   - proposalID: Identifier of the proposal to execute.
-//   - executedAt: Unix timestamp at which execution is attempted.
-//   - executedHeight: Chain height at which execution is attempted.
-//   - executedBy: Address credited as the executor.
-//
-// Returns:
-//   - *governance.Proposal: executed proposal, or nil when lookup/validation/action execution fails.
-//   - error: nil on success; non-nil when the proposal is missing, not executable, or an action fails.
-//
 // executeProposal handles core logic of proposal execution.
 func (gv *governanceV1) executeProposal(
 	_ int, rlm realm,
@@ -248,17 +234,6 @@ func (gv *governanceV1) RemoveInactiveProposalFromIndex(_ int, rlm realm, propos
 
 // cancel handles core logic of proposal cancellation.
 // Validates proposal state and updates status to canceled.
-// cancel validates and marks a proposal as cancelled.
-//
-// Parameters:
-//   - proposalID: Identifier of the proposal to cancel.
-//   - canceledAt: Unix timestamp at which cancellation is recorded.
-//   - canceledHeight: Chain height at which cancellation is recorded.
-//   - canceledBy: Address credited as the cancelling proposer.
-//
-// Returns:
-//   - proposal: cancelled proposal, or nil when it is missing or fails validation.
-//   - err: nil on success; non-nil when lookup or cancellation-state validation fails.
 func (gv *governanceV1) cancel(
 	proposalID, canceledAt, canceledHeight int64,
 	canceledBy address,
@@ -282,17 +257,6 @@ func (gv *governanceV1) cancel(
 
 // executeCommunityPoolSpend executes community pool spending proposals.
 // Handles token transfers from community pool to specified recipients.
-// Parameters:
-//   - _: Internal call discriminator; pass 0 when forwarding the governance realm.
-//   - rlm: Propagated realm context used for handler execution and token authorization.
-//   - proposal: Community-pool-spend proposal whose encoded actions are executed.
-//   - parameterRegistry: Registry resolving each encoded package/function handler.
-//   - executedAt: Unix timestamp at which the proposal is executed.
-//   - executedHeight: Chain height at which the proposal is executed.
-//   - executedBy: Address credited as executor of the proposal.
-//
-// Returns:
-//   - error: nil when every registered action succeeds; non-nil when token validation, decoding, lookup, or handler execution fails.
 func executeCommunityPoolSpend(
 	_ int, rlm realm,
 	proposal *governance.Proposal,
@@ -332,17 +296,6 @@ func executeCommunityPoolSpend(
 
 // executeParameterChange executes parameter change proposals.
 // Handles governance configuration updates and system parameter modifications.
-// Parameters:
-//   - _: Internal call discriminator; pass 0 when forwarding the governance realm.
-//   - rlm: Propagated realm context used for handler execution and parameter authorization.
-//   - proposal: Parameter-change proposal whose encoded actions are executed.
-//   - parameterRegistry: Registry resolving each encoded package/function handler.
-//   - executedAt: Unix timestamp at which the proposal is executed.
-//   - executedHeight: Chain height at which the proposal is executed.
-//   - executedBy: Address credited as executor of the proposal.
-//
-// Returns:
-//   - error: nil when every registered action succeeds; non-nil when decoding, lookup, or handler execution fails.
 func executeParameterChange(
 	_ int, rlm realm,
 	proposal *governance.Proposal,

@@ -129,13 +129,7 @@ func ChangeDistributionPct(
 	)
 }
 
-// changeDistributionPcts updates the basis-point distribution percentage for each target.
-//
-// Parameters:
-//   - liquidityStakerPct: validated liquidity-staker share in basis points.
-//   - devOpsPct: validated DevOps share in basis points.
-//   - communityPoolPct: validated community-pool share in basis points.
-//   - govStakerPct: validated governance-staker share in basis points.
+// changeDistributionPcts updates the distribution percentages for all targets.
 func changeDistributionPcts(liquidityStakerPct, devOpsPct, communityPoolPct, govStakerPct int64) {
 	setDistributionBpsPct(LIQUIDITY_STAKER, liquidityStakerPct)
 	setDistributionBpsPct(DEVOPS, devOpsPct)
@@ -161,14 +155,7 @@ func calculateDistributableAmounts(amount int64) (map[int]int64, int64) {
 	return distributable, leftAmount
 }
 
-// calculateAmount converts a basis-point share into an integer token amount using floor division.
-//
-// Parameters:
-//   - amount: total token amount in base units; must be nonnegative and small enough to avoid multiplication overflow.
-//   - bptPct: target share in basis points, from 0 through 10000 inclusive (100 = 1%).
-//
-// Returns:
-//   - calculatedAmount: floor(amount * bptPct / 10000), or zero when bptPct is zero.
+// calculateAmount converts basis points to actual token amount.
 func calculateAmount(amount, bptPct int64) int64 {
 	if amount < 0 || bptPct < 0 || bptPct > 10000 {
 		panic("invalid amount or bptPct")
@@ -426,12 +413,8 @@ func ClearDistributedToGovStaker(cur realm) {
 	distributedToGovStaker = 0
 }
 
-// setDistributionBpsPct stores a target's distribution share in the basis-point map.
-// It creates the map when the package has not initialized it.
-//
-// Parameters:
-//   - target: distribution target constant whose share is updated.
-//   - pct: target share in basis points (100 = 1%; validation is performed by the caller).
+// setDistributionBpsPct changes percentage of each target for how much GNS it will get by emission.
+// Creates new map if nil.
 func setDistributionBpsPct(target int, pct int64) {
 	if distributionBpsPct == nil {
 		distributionBpsPct = make(map[int]int64)
@@ -440,13 +423,7 @@ func setDistributionBpsPct(target int, pct int64) {
 	distributionBpsPct[target] = pct
 }
 
-// targetToStr converts a distribution target constant to its event/log string.
-//
-// Parameters:
-//   - target: distribution target constant to convert.
-//
-// Returns:
-//   - name: target name, or "UNKNOWN" when target is not recognized.
+// targetToStr converts target constant to string representation.
 func targetToStr(target int) string {
 	switch target {
 	case LIQUIDITY_STAKER:

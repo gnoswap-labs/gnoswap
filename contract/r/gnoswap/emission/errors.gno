@@ -12,14 +12,7 @@ const (
 	errInvalidEmissionStart        = "[GNOSWAP-EMISSION-005] invalid emission start"
 )
 
-// makeErrorWithDetails combines a base emission error message with detail text.
-//
-// Parameters:
-//   - message: base emission error text identifying the failure category
-//   - detail: contextual text appended to the base message
-//
-// Returns:
-//   - error: newly formatted error containing message, a separator, and detail
+// makeErrorWithDetails creates a new error by combining a base error with additional details.
 func makeErrorWithDetails(message string, detail string) error {
 	return ufmt.Errorf("%s || %s", message, detail)
 }

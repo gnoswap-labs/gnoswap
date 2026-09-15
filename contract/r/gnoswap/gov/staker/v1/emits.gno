@@ -18,9 +18,6 @@ import (
 //     will use for the next delta), not the live emission distribution snapshot.
 //   - totalStakedAmount reflects the current total after the stake change and is the
 //     divisor for the next accumulation delta.
-//
-// Parameters:
-//   - manager: emission reward manager whose post-update persisted state is emitted
 func emitUpdateEmissionRewardAccumulation(manager *staker.EmissionRewardManager) {
 	chain.Emit(
 		"UpdateEmissionRewardAccumulation",
@@ -34,9 +31,6 @@ func emitUpdateEmissionRewardAccumulation(manager *staker.EmissionRewardManager)
 // emitUpdateProtocolFeeStakeAccrual emits the accrual epoch opened by a stake change
 // together with the total stake in force from it, so that off-chain indexers can
 // attribute fees bucketed under that epoch without re-deriving the stake history.
-//
-// Parameters:
-//   - manager: protocol-fee reward manager providing the current epoch and total stake
 func emitUpdateProtocolFeeStakeAccrual(manager *staker.ProtocolFeeRewardManager) {
 	chain.Emit(
 		"UpdateProtocolFeeStakeAccrual",
@@ -49,10 +43,6 @@ func emitUpdateProtocolFeeStakeAccrual(manager *staker.ProtocolFeeRewardManager)
 // every token that was just folded. Like the emission variant it must be emitted after
 // every path that folds accrual buckets, otherwise the off-chain accumulator drifts
 // from the contract.
-//
-// Parameters:
-//   - manager: protocol-fee reward manager providing total stake, fee amounts, and token accumulators
-//   - tokenPaths: token paths whose just-folded accumulation state should be emitted
 func emitUpdateProtocolFeeRewardAccumulation(manager *staker.ProtocolFeeRewardManager, tokenPaths []string) {
 	for _, tokenPath := range tokenPaths {
 		accumulatedProtocolFeeX128PerStake := "0"

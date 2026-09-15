@@ -419,16 +419,9 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 	return mu
 }
 
-// reduce4 computes the least non-negative residue of an eight-word value modulo a
-// four-word unsigned modulus using a precomputed Barrett reciprocal.
+// reduce4 computes the least non-negative residue of x modulo m
 //
-// Parameters:
-//   - x: Eight little-endian uint64 words representing the 512-bit value to reduce.
-//   - m: Four-word modulus with a non-zero most-significant word.
-//   - mu: Five-word reciprocal estimate produced for m by Reciprocal.
-//
-// Returns:
-//   - z: Residue x modulo m, represented as a Uint in the range [0, m).
+// requires a four-word modulus (m[3] > 1) and its inverse (mu)
 func reduce4(x [8]uint64, m *Uint, mu [5]uint64) (z Uint) {
 	// NB: Most variable names in the comments match the pseudocode for
 	// 	Barrett reduction in the Handbook of Applied Cryptography.

@@ -21,10 +21,6 @@ const (
 // boolGen generates boolean values
 type boolGen struct{}
 
-// String returns the constructor-style name of the bool generator.
-//
-// Returns:
-//   - description: "Bool()", identifying this generator.
 func (g *boolGen) String() string {
 	return "Bool()"
 }
@@ -33,10 +29,7 @@ func (g *boolGen) value(t *T) any {
 	return t.s.drawBits(1) == 1
 }
 
-// Bool creates a generator for bool values.
-//
-// Returns:
-//   - generator: generator that produces bool values.
+// Bool creates a generator for bool values
 func Bool() *Generator {
 	return newGenerator(&boolGen{})
 }
@@ -54,10 +47,6 @@ type integerGen struct {
 	bitSize int // 8, 16, 32, 64, or 0 for native int/uint
 }
 
-// String returns the constructor-style description of the configured integer generator.
-//
-// Returns:
-//   - description: the generator name with its inclusive bounds, when configured.
 func (g *integerGen) String() string {
 	if g.hasMin && g.hasMax {
 		if g.signed {
@@ -109,10 +98,7 @@ func (g *integerGen) value(t *T) any {
 	}
 }
 
-// Int8 creates a generator for int8 values.
-//
-// Returns:
-//   - generator: generator that samples every int8 value from -128 through 127.
+// Int8 creates a generator for int8 values
 func Int8() *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int8",
@@ -123,13 +109,7 @@ func Int8() *Generator {
 	})
 }
 
-// Int8Min creates a generator for int8 values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound; the upper bound remains math.MaxInt8.
-//
-// Returns:
-//   - generator: generator that samples int8 values in [min, math.MaxInt8].
+// Int8Min creates a generator for int8 values >= min
 func Int8Min(min int8) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int8",
@@ -141,13 +121,7 @@ func Int8Min(min int8) *Generator {
 	})
 }
 
-// Int8Max creates a generator for int8 values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound; the lower bound remains math.MinInt8.
-//
-// Returns:
-//   - generator: generator that samples int8 values in [math.MinInt8, max].
+// Int8Max creates a generator for int8 values <= max
 func Int8Max(max int8) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int8",
@@ -159,14 +133,7 @@ func Int8Max(max int8) *Generator {
 	})
 }
 
-// Int8Range creates a generator for int8 values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound of the generated int8 range.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples int8 values in [min, max].
+// Int8Range creates a generator for int8 values in [min, max]
 func Int8Range(min int8, max int8) *Generator {
 	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
 	return newGenerator(&integerGen{
@@ -180,10 +147,7 @@ func Int8Range(min int8, max int8) *Generator {
 	})
 }
 
-// Int16 creates a generator for int16 values.
-//
-// Returns:
-//   - generator: generator that samples every int16 value from math.MinInt16 through math.MaxInt16.
+// Int16 creates a generator for int16 values
 func Int16() *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int16",
@@ -194,13 +158,7 @@ func Int16() *Generator {
 	})
 }
 
-// Int16Min creates a generator for int16 values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound; the upper bound remains math.MaxInt16.
-//
-// Returns:
-//   - generator: generator that samples int16 values in [min, math.MaxInt16].
+// Int16Min creates a generator for int16 values >= min
 func Int16Min(min int16) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int16",
@@ -212,13 +170,7 @@ func Int16Min(min int16) *Generator {
 	})
 }
 
-// Int16Max creates a generator for int16 values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound; the lower bound remains math.MinInt16.
-//
-// Returns:
-//   - generator: generator that samples int16 values in [math.MinInt16, max].
+// Int16Max creates a generator for int16 values <= max
 func Int16Max(max int16) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int16",
@@ -230,14 +182,7 @@ func Int16Max(max int16) *Generator {
 	})
 }
 
-// Int16Range creates a generator for int16 values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound of the generated int16 range.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples int16 values in [min, max].
+// Int16Range creates a generator for int16 values in [min, max]
 func Int16Range(min int16, max int16) *Generator {
 	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
 	return newGenerator(&integerGen{
@@ -251,10 +196,7 @@ func Int16Range(min int16, max int16) *Generator {
 	})
 }
 
-// Int32 creates a generator for int32 values.
-//
-// Returns:
-//   - generator: generator that samples every int32 value from math.MinInt32 through math.MaxInt32.
+// Int32 creates a generator for int32 values
 func Int32() *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int32",
@@ -265,13 +207,7 @@ func Int32() *Generator {
 	})
 }
 
-// Int32Min creates a generator for int32 values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound; the upper bound remains math.MaxInt32.
-//
-// Returns:
-//   - generator: generator that samples int32 values in [min, math.MaxInt32].
+// Int32Min creates a generator for int32 values >= min
 func Int32Min(min int32) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int32",
@@ -283,13 +219,7 @@ func Int32Min(min int32) *Generator {
 	})
 }
 
-// Int32Max creates a generator for int32 values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound; the lower bound remains math.MinInt32.
-//
-// Returns:
-//   - generator: generator that samples int32 values in [math.MinInt32, max].
+// Int32Max creates a generator for int32 values <= max
 func Int32Max(max int32) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int32",
@@ -301,14 +231,7 @@ func Int32Max(max int32) *Generator {
 	})
 }
 
-// Int32Range creates a generator for int32 values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound of the generated int32 range.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples int32 values in [min, max].
+// Int32Range creates a generator for int32 values in [min, max]
 func Int32Range(min int32, max int32) *Generator {
 	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
 	return newGenerator(&integerGen{
@@ -322,10 +245,7 @@ func Int32Range(min int32, max int32) *Generator {
 	})
 }
 
-// Int64 creates a generator for int64 values.
-//
-// Returns:
-//   - generator: generator that samples every int64 value from math.MinInt64 through math.MaxInt64.
+// Int64 creates a generator for int64 values
 func Int64() *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int64",
@@ -336,13 +256,7 @@ func Int64() *Generator {
 	})
 }
 
-// Int64Min creates a generator for int64 values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound; the upper bound remains math.MaxInt64.
-//
-// Returns:
-//   - generator: generator that samples int64 values in [min, math.MaxInt64].
+// Int64Min creates a generator for int64 values >= min
 func Int64Min(min int64) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int64",
@@ -354,13 +268,7 @@ func Int64Min(min int64) *Generator {
 	})
 }
 
-// Int64Max creates a generator for int64 values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound; the lower bound remains math.MinInt64.
-//
-// Returns:
-//   - generator: generator that samples int64 values in [math.MinInt64, max].
+// Int64Max creates a generator for int64 values <= max
 func Int64Max(max int64) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int64",
@@ -372,14 +280,7 @@ func Int64Max(max int64) *Generator {
 	})
 }
 
-// Int64Range creates a generator for int64 values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound of the generated int64 range.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples int64 values in [min, max].
+// Int64Range creates a generator for int64 values in [min, max]
 func Int64Range(min int64, max int64) *Generator {
 	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
 	return newGenerator(&integerGen{
@@ -393,10 +294,7 @@ func Int64Range(min int64, max int64) *Generator {
 	})
 }
 
-// Int creates a generator for native int values.
-//
-// Returns:
-//   - generator: generator that samples native int values across the configured 64-bit integer bounds.
+// Int creates a generator for int values
 func Int() *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int",
@@ -407,13 +305,7 @@ func Int() *Generator {
 	})
 }
 
-// IntMin creates a generator for native int values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound; the upper bound remains math.MaxInt64 before conversion to int.
-//
-// Returns:
-//   - generator: generator that samples native int values in [min, math.MaxInt64].
+// IntMin creates a generator for int values >= min
 func IntMin(min int) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int",
@@ -425,13 +317,7 @@ func IntMin(min int) *Generator {
 	})
 }
 
-// IntMax creates a generator for native int values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound; the lower bound remains math.MinInt64 before conversion to int.
-//
-// Returns:
-//   - generator: generator that samples native int values in [math.MinInt64, max].
+// IntMax creates a generator for int values <= max
 func IntMax(max int) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Int",
@@ -443,14 +329,7 @@ func IntMax(max int) *Generator {
 	})
 }
 
-// IntRange creates a generator for native int values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound of the generated native int range.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples native int values in [min, max].
+// IntRange creates a generator for int values in [min, max]
 func IntRange(min int, max int) *Generator {
 	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
 	return newGenerator(&integerGen{
@@ -464,10 +343,7 @@ func IntRange(min int, max int) *Generator {
 	})
 }
 
-// Uint8 creates a generator for uint8 values.
-//
-// Returns:
-//   - generator: generator that samples every uint8 value from 0 through math.MaxUint8.
+// Uint8 creates a generator for uint8 values
 func Uint8() *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint8",
@@ -478,13 +354,7 @@ func Uint8() *Generator {
 	})
 }
 
-// Uint8Min creates a generator for uint8 values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound; the upper bound remains math.MaxUint8.
-//
-// Returns:
-//   - generator: generator that samples uint8 values in [min, math.MaxUint8].
+// Uint8Min creates a generator for uint8 values >= min
 func Uint8Min(min uint8) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint8",
@@ -496,13 +366,7 @@ func Uint8Min(min uint8) *Generator {
 	})
 }
 
-// Uint8Max creates a generator for uint8 values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound; the lower bound remains zero.
-//
-// Returns:
-//   - generator: generator that samples uint8 values in [0, max].
+// Uint8Max creates a generator for uint8 values <= max
 func Uint8Max(max uint8) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint8",
@@ -514,14 +378,7 @@ func Uint8Max(max uint8) *Generator {
 	})
 }
 
-// Uint8Range creates a generator for uint8 values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound of the generated uint8 range.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples uint8 values in [min, max].
+// Uint8Range creates a generator for uint8 values in [min, max]
 func Uint8Range(min uint8, max uint8) *Generator {
 	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
 	return newGenerator(&integerGen{
@@ -535,10 +392,7 @@ func Uint8Range(min uint8, max uint8) *Generator {
 	})
 }
 
-// Uint16 creates a generator for uint16 values.
-//
-// Returns:
-//   - generator: generator that samples every uint16 value from 0 through math.MaxUint16.
+// Uint16 creates a generator for uint16 values
 func Uint16() *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint16",
@@ -549,13 +403,7 @@ func Uint16() *Generator {
 	})
 }
 
-// Uint16Min creates a generator for uint16 values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound; the upper bound remains math.MaxUint16.
-//
-// Returns:
-//   - generator: generator that samples uint16 values in [min, math.MaxUint16].
+// Uint16Min creates a generator for uint16 values >= min
 func Uint16Min(min uint16) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint16",
@@ -567,13 +415,7 @@ func Uint16Min(min uint16) *Generator {
 	})
 }
 
-// Uint16Max creates a generator for uint16 values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound; the lower bound remains zero.
-//
-// Returns:
-//   - generator: generator that samples uint16 values in [0, max].
+// Uint16Max creates a generator for uint16 values <= max
 func Uint16Max(max uint16) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint16",
@@ -585,14 +427,7 @@ func Uint16Max(max uint16) *Generator {
 	})
 }
 
-// Uint16Range creates a generator for uint16 values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound of the generated uint16 range.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples uint16 values in [min, max].
+// Uint16Range creates a generator for uint16 values in [min, max]
 func Uint16Range(min uint16, max uint16) *Generator {
 	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
 	return newGenerator(&integerGen{
@@ -606,10 +441,7 @@ func Uint16Range(min uint16, max uint16) *Generator {
 	})
 }
 
-// Uint32 creates a generator for uint32 values.
-//
-// Returns:
-//   - generator: generator that samples every uint32 value from 0 through math.MaxUint32.
+// Uint32 creates a generator for uint32 values
 func Uint32() *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint32",
@@ -620,13 +452,7 @@ func Uint32() *Generator {
 	})
 }
 
-// Uint32Min creates a generator for uint32 values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound; the upper bound remains math.MaxUint32.
-//
-// Returns:
-//   - generator: generator that samples uint32 values in [min, math.MaxUint32].
+// Uint32Min creates a generator for uint32 values >= min
 func Uint32Min(min uint32) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint32",
@@ -638,13 +464,7 @@ func Uint32Min(min uint32) *Generator {
 	})
 }
 
-// Uint32Max creates a generator for uint32 values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound; the lower bound remains zero.
-//
-// Returns:
-//   - generator: generator that samples uint32 values in [0, max].
+// Uint32Max creates a generator for uint32 values <= max
 func Uint32Max(max uint32) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint32",
@@ -656,14 +476,7 @@ func Uint32Max(max uint32) *Generator {
 	})
 }
 
-// Uint32Range creates a generator for uint32 values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound of the generated uint32 range.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples uint32 values in [min, max].
+// Uint32Range creates a generator for uint32 values in [min, max]
 func Uint32Range(min uint32, max uint32) *Generator {
 	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
 	return newGenerator(&integerGen{
@@ -677,10 +490,7 @@ func Uint32Range(min uint32, max uint32) *Generator {
 	})
 }
 
-// Uint64 creates a generator for uint64 values.
-//
-// Returns:
-//   - generator: generator that samples every uint64 value from 0 through math.MaxUint64.
+// Uint64 creates a generator for uint64 values
 func Uint64() *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint64",
@@ -691,13 +501,7 @@ func Uint64() *Generator {
 	})
 }
 
-// Uint64Min creates a generator for uint64 values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound; the upper bound remains math.MaxUint64.
-//
-// Returns:
-//   - generator: generator that samples uint64 values in [min, math.MaxUint64].
+// Uint64Min creates a generator for uint64 values >= min
 func Uint64Min(min uint64) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint64",
@@ -709,13 +513,7 @@ func Uint64Min(min uint64) *Generator {
 	})
 }
 
-// Uint64Max creates a generator for uint64 values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound; the lower bound remains zero.
-//
-// Returns:
-//   - generator: generator that samples uint64 values in [0, max].
+// Uint64Max creates a generator for uint64 values <= max
 func Uint64Max(max uint64) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint64",
@@ -727,14 +525,7 @@ func Uint64Max(max uint64) *Generator {
 	})
 }
 
-// Uint64Range creates a generator for uint64 values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound of the generated uint64 range.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples uint64 values in [min, max].
+// Uint64Range creates a generator for uint64 values in [min, max]
 func Uint64Range(min uint64, max uint64) *Generator {
 	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
 	return newGenerator(&integerGen{
@@ -748,10 +539,7 @@ func Uint64Range(min uint64, max uint64) *Generator {
 	})
 }
 
-// Uint creates a generator for native uint values.
-//
-// Returns:
-//   - generator: generator that samples native uint values from zero through math.MaxUint64.
+// Uint creates a generator for uint values
 func Uint() *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint",
@@ -762,13 +550,7 @@ func Uint() *Generator {
 	})
 }
 
-// UintMin creates a generator for native uint values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound; the upper bound remains math.MaxUint64 before conversion to uint.
-//
-// Returns:
-//   - generator: generator that samples native uint values in [min, math.MaxUint64].
+// UintMin creates a generator for uint values >= min
 func UintMin(min uint) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint",
@@ -780,13 +562,7 @@ func UintMin(min uint) *Generator {
 	})
 }
 
-// UintMax creates a generator for native uint values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound; the lower bound remains zero.
-//
-// Returns:
-//   - generator: generator that samples native uint values in [0, max].
+// UintMax creates a generator for uint values <= max
 func UintMax(max uint) *Generator {
 	return newGenerator(&integerGen{
 		kind:    "Uint",
@@ -798,14 +574,7 @@ func UintMax(max uint) *Generator {
 	})
 }
 
-// UintRange creates a generator for native uint values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound of the generated native uint range.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples native uint values in [min, max].
+// UintRange creates a generator for uint values in [min, max]
 func UintRange(min uint, max uint) *Generator {
 	assertf(min <= max, "invalid integer range [%v, %v]", min, max)
 	return newGenerator(&integerGen{
@@ -819,44 +588,22 @@ func UintRange(min uint, max uint) *Generator {
 	})
 }
 
-// Byte creates a generator for byte values; byte is an alias for uint8.
-//
-// Returns:
-//   - generator: generator that samples every byte value from 0 through math.MaxUint8.
+// Byte creates a generator for byte values (alias for Uint8)
 func Byte() *Generator {
 	return Uint8()
 }
 
-// ByteMin creates a generator for byte values greater than or equal to min.
-//
-// Parameters:
-//   - min: inclusive lower bound delegated to the uint8 generator.
-//
-// Returns:
-//   - generator: generator that samples byte values in [min, math.MaxUint8].
+// ByteMin creates a generator for byte values >= min
 func ByteMin(min byte) *Generator {
 	return Uint8Min(min)
 }
 
-// ByteMax creates a generator for byte values less than or equal to max.
-//
-// Parameters:
-//   - max: inclusive upper bound delegated to the uint8 generator.
-//
-// Returns:
-//   - generator: generator that samples byte values in [0, max].
+// ByteMax creates a generator for byte values <= max
 func ByteMax(max byte) *Generator {
 	return Uint8Max(max)
 }
 
-// ByteRange creates a generator for byte values in the inclusive range [min, max].
-//
-// Parameters:
-//   - min: inclusive lower bound delegated to the uint8 generator.
-//   - max: inclusive upper bound; min greater than max causes a panic.
-//
-// Returns:
-//   - generator: generator that samples byte values in [min, max].
+// ByteRange creates a generator for byte values in [min, max]
 func ByteRange(min byte, max byte) *Generator {
 	return Uint8Range(min, max)
 }

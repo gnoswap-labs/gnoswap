@@ -13,20 +13,7 @@ import (
 	"gno.land/r/gnoswap/gov/governance"
 )
 
-// makeConfig creates a new governance configuration from the supplied timing,
-// quorum, threshold, and execution settings.
-//
-// Parameters:
-//   - votingStartDelay: delay in seconds from proposal creation until voting starts
-//   - votingPeriod: duration in seconds for which voting remains open
-//   - votingWeightSmoothingDuration: duration in seconds used to smooth voting weight snapshots
-//   - quorum: quorum percentage applied to the proposal's quorum-weight base
-//   - proposalCreationThreshold: minimum voting weight required to create a proposal
-//   - executionDelay: delay in seconds from voting end until execution becomes available
-//   - executionWindow: duration in seconds during which an executable proposal may run
-//
-// Returns:
-//   - governance.Config: configuration containing the supplied governance parameters
+// makeConfig creates a new governance configuration.
 func makeConfig(
 	votingStartDelay int64,
 	votingPeriod int64,
@@ -133,14 +120,6 @@ func (gv *governanceV1) Reconfigure(
 }
 
 // reconfigure stores the validated configuration with incremented version number.
-//
-// Parameters:
-//   - _: integer discriminator required by the internal realm-threading convention; callers use 0
-//   - rlm: propagated governance realm context used to select and update the versioned store
-//   - cfg: validated governance configuration to store
-//
-// Returns:
-//   - int64: newly stored governance configuration version
 func (gv *governanceV1) reconfigure(_ int, rlm realm, cfg governance.Config) int64 {
 	// Generate next version number
 	nextVersion := gv.nextConfigVersion(0, rlm)

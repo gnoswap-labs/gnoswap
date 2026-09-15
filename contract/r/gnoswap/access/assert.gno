@@ -169,11 +169,8 @@ func AssertIsValidAddress(addr address) {
 	}
 }
 
-// assertIsRBAC panics unless caller is the deployed RBAC contract address.
-// It protects internal role-management entrypoints from other callers.
-//
-// Parameters:
-//   - caller: address expected to equal the RBAC package address
+// assertIsRBAC panics if the caller is not the RBAC contract.
+// Used internally to protect role management functions.
 func assertIsRBAC(caller address) {
 	rbacAddress := chain.PackageAddress(rbacPackagePath)
 

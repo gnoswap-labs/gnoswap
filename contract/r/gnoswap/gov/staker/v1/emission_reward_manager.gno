@@ -61,15 +61,6 @@ func (self *EmissionRewardManagerResolver) GetClaimableRewardAmount(
 }
 
 // calculateAccumulatedRewardX128PerStake calculates the updated accumulated reward per stake.
-//
-// Parameters:
-//   - currentDistributedAmount: total emission amount distributed at the current
-//     observation point.
-//   - currentTimestamp: Unix timestamp at which the accumulator is evaluated.
-//
-// Returns:
-//   - *u256.Uint: accumulated emission reward per stake scaled by 2^128.
-//   - error: nil; this calculation currently has no explicit error path.
 func (self *EmissionRewardManagerResolver) calculateAccumulatedRewardX128PerStake(
 	currentDistributedAmount int64,
 	currentTimestamp int64,
@@ -107,15 +98,7 @@ func (self *EmissionRewardManagerResolver) calculateAccumulatedRewardX128PerStak
 
 // updateAccumulatedRewardX128PerStake updates the internal accumulated reward state.
 // This method should be called before any stake changes to ensure accurate reward calculations.
-//
-// Parameters:
-//   - currentDistributedAmount: total emission amount distributed at the current
-//     observation point.
-//   - currentTimestamp: Unix timestamp used as the manager's accumulation cursor.
-//
-// Returns:
-//   - error: nil when the state is updated or the timestamp is older than the
-//     current cursor; otherwise the calculation error.
+// Updates accumulated reward per stake with current distribution data.
 func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 	currentDistributedAmount int64,
 	currentTimestamp int64,
@@ -143,15 +126,7 @@ func (self *EmissionRewardManagerResolver) updateAccumulatedRewardX128PerStake(
 
 // addStake adds a stake for an address and updates their reward state.
 // This method ensures rewards are properly calculated before the stake change.
-//
-// Parameters:
-//   - address: reward-state identifier receiving the stake.
-//   - amount: non-negative stake amount to add.
-//   - currentTimestamp: Unix timestamp at which the stake is added.
-//
-// Returns:
-//   - error: nil on success; an error when amount is negative, reward state
-//     resolution fails, or total stake would overflow.
+// Adds stake for specified address and updates reward calculations.
 func (self *EmissionRewardManagerResolver) addStake(address string, amount int64, currentTimestamp int64) error {
 	if amount < 0 {
 		return errors.New(errAmountMustBeNonNegative)
@@ -185,15 +160,7 @@ func (self *EmissionRewardManagerResolver) addStake(address string, amount int64
 
 // removeStake removes a stake for an address and updates their reward state.
 // This method ensures rewards are properly calculated before the stake change.
-//
-// Parameters:
-//   - address: reward-state identifier whose stake is reduced.
-//   - amount: non-negative stake amount to remove.
-//   - currentTimestamp: Unix timestamp at which the stake is removed.
-//
-// Returns:
-//   - error: nil on success; an error when amount is negative, exceeds total
-//     stake, or reward-state resolution fails.
+// Removes stake for specified address and updates reward calculations.
 func (self *EmissionRewardManagerResolver) removeStake(address string, amount int64, currentTimestamp int64) error {
 	if amount < 0 {
 		return errors.New(errAmountMustBeNonNegative)
@@ -231,16 +198,7 @@ func (self *EmissionRewardManagerResolver) removeStake(address string, amount in
 
 // claimRewards processes reward claiming for an address.
 // This method calculates and returns the amount of rewards claimed.
-//
-// Parameters:
-//   - address: reward-state identifier whose emission rewards are claimed.
-//   - currentTimestamp: Unix timestamp used to settle the reward state.
-//
-// Returns:
-//   - claimedRewardAmount: whole-unit emission reward amount claimed; zero when
-//     no reward state exists or an error prevents claiming.
-//   - err: nil on success; an error returned while resolving or updating the
-//     address's reward state.
+// Claims available rewards for specified address.
 func (self *EmissionRewardManagerResolver) claimRewards(address string, currentTimestamp int64) (claimedRewardAmount int64, err error) {
 	rewardState, ok, err := self.GetRewardState(address)
 	if err != nil || !ok {

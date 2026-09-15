@@ -642,13 +642,7 @@ func NewGovernanceStore(kvStore store.KVStore) IGovernanceStore {
 	}
 }
 
-// formatInt64Key formats an int64 identifier as its base-ten storage-key string.
-//
-// Parameters:
-//   - id: integer identifier to encode for a tree or KV-store key
-//
-// Returns:
-//   - string: decimal representation of id without additional padding
+// formatInt64Key formats int64 identifiers for storage keys.
 func formatInt64Key(id int64) string {
 	return strconv.FormatInt(id, 10)
 }

@@ -15,12 +15,12 @@ import (
 	gov_staker "gno.land/r/gnoswap/gov/staker"
 )
 
-// CollectDepositGns withdraws the original GNS deposit after its lock period.
+// CollectDepositGns collects rewards from a deposit.
 //
 // Parameters:
-//   - depositID: ID of the deposit to withdraw
+//   - depositID: ID of the deposit to collect from
 //
-// Returns the withdrawn amount and any error.
+// Returns amount collected and any error.
 func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (int64, error) {
 	if !rlm.IsCurrent() {
 		return 0, errSpoofedRealm

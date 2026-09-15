@@ -46,10 +46,6 @@ type runeGen struct {
 	default_ bool
 }
 
-// String returns the configured rune generator in a readable form.
-//
-// Returns:
-//   - text: Configuration text naming the default rune generator or its explicit rune/table counts.
 func (g *runeGen) String() string {
 	if g.default_ {
 		return "Rune()"
@@ -71,21 +67,11 @@ func (g *runeGen) value(t *T) any {
 }
 
 // Rune creates a rune generator with default runes and tables
-//
-// Returns:
-//   - generator: Generator producing runes from the package's default ASCII/control set and Unicode categories.
 func Rune() *Generator {
 	return runesFrom(true, defaultRunes, defaultTables...)
 }
 
 // RuneFrom creates a rune generator from provided runes and tables
-//
-// Parameters:
-//   - runes: Explicit rune values included in the generator's weighted source pool; may be empty when tables are supplied.
-//   - tables: Unicode range tables expanded into candidate runes; may be empty when runes are supplied.
-//
-// Returns:
-//   - generator: Generator producing runes from the supplied explicit values and/or expanded tables.
 func RuneFrom(runes []rune, tables ...*unicode.RangeTable) *Generator {
 	return runesFrom(false, runes, tables...)
 }
@@ -128,10 +114,6 @@ type stringGen struct {
 	maxLen   int
 }
 
-// String returns the configured string generator in a readable form.
-//
-// Returns:
-//   - text: Configuration text showing rune-count and byte-length constraints.
 func (g *stringGen) String() string {
 	if g.minRunes < 0 && g.maxRunes < 0 && g.maxLen < 0 {
 		return "String()"
@@ -165,47 +147,21 @@ func (g *stringGen) value(t *T) any {
 }
 
 // String creates a UTF-8 string generator
-//
-// Returns:
-//   - generator: Generator producing UTF-8 strings with no configured rune-count or byte-length limits.
 func String() *Generator {
 	return StringOfN(Rune(), -1, -1, -1)
 }
 
 // StringN creates a string generator with constraints on runes and length
-//
-// Parameters:
-//   - minRunes: Inclusive minimum number of runes; a negative value leaves the lower bound unconstrained.
-//   - maxRunes: Inclusive maximum number of runes; a negative value leaves the upper bound unconstrained.
-//   - maxLen: Maximum encoded UTF-8 byte length; a negative value leaves the byte-length bound unconstrained.
-//
-// Returns:
-//   - generator: Generator producing UTF-8 strings within the configured rune-count and byte-length constraints.
 func StringN(minRunes int, maxRunes int, maxLen int) *Generator {
 	return StringOfN(Rune(), minRunes, maxRunes, maxLen)
 }
 
 // StringOf creates a string generator from a rune generator
-//
-// Parameters:
-//   - elem: Rune generator used for each string element.
-//
-// Returns:
-//   - generator: Generator producing UTF-8 strings from elem with no configured count or byte-length bounds.
 func StringOf(elem *Generator) *Generator {
 	return StringOfN(elem, -1, -1, -1)
 }
 
 // StringOfN creates a UTF-8 string generator with constraints
-//
-// Parameters:
-//   - elem: Rune generator used for each string element.
-//   - minRunes: Inclusive minimum number of runes; a negative value leaves the lower bound unconstrained.
-//   - maxRunes: Inclusive maximum number of runes; a negative value leaves the upper bound unconstrained.
-//   - maxLen: Maximum encoded UTF-8 byte length; a negative value leaves the byte-length bound unconstrained.
-//
-// Returns:
-//   - generator: Generator producing UTF-8 strings satisfying the configured rune-count and byte-length constraints.
 func StringOfN(elem *Generator, minRunes int, maxRunes int, maxLen int) *Generator {
 	assertValidRange(minRunes, maxRunes)
 	assertf(maxLen < 0 || maxLen >= maxRunes, "maximum length (%v) should not be less than maximum number of runes (%v)", maxLen, maxRunes)

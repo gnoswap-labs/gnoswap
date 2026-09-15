@@ -24,17 +24,9 @@ const (
 // deductWithdrawalFee splits amount into the fee withheld for the protocol and
 // the remainder paid out to the collector.
 //
-// Parameters:
-//   - amount: Amount available for collection, in token base units; non-positive
-//     values bypass fee calculation and produce no fee.
-//   - withdrawalFeeBPS: Withdrawal fee rate in basis points, applied as
-//     amount*withdrawalFeeBPS/10,000 with truncation.
-//
-// Returns:
-//   - feeAmount: Truncated withdrawal fee withheld for the protocol, in token
-//     base units.
-//   - amountAfterFee: Amount left for the collector after fee deduction, in
-//     token base units.
+// Rounding favours the collector: the fee is truncated. The two results always
+// sum back to amount, so a caller that debits amount and pays out
+// amountAfterFee never leaves the pool short.
 func deductWithdrawalFee(amount int64, withdrawalFeeBPS uint64) (feeAmount, amountAfterFee int64) {
 	if amount <= 0 || withdrawalFeeBPS == ZeroBps {
 		return 0, amount
@@ -76,15 +68,6 @@ func (i *poolV1) addPendingProtocolFee(_ int, rlm realm, tokenPath string, amoun
 // Only tokenPath is touched, so an unrelated token can never block settlement. The
 // pending entry is written only when the fee cannot be forwarded, so the common path
 // performs no store write at all.
-// Parameters:
-//   - _: Leading integer discriminator for the forwarded realm call; callers
-//     pass 0.
-//   - rlm: Propagated realm context used for token approval, cross-realm
-//     settlement, and pending-balance writes.
-//   - tokenPath: Token contract path whose pending amount and protocol fee are
-//     settled.
-//   - amount: Newly accrued protocol fee in token base units; it is combined
-//     with any pending amount for tokenPath.
 func (i *poolV1) settleProtocolFee(_ int, rlm realm, tokenPath string, amount int64) {
 	if halt.IsHaltedProtocolFee() {
 		i.addPendingProtocolFee(0, rlm, tokenPath, amount)
@@ -190,16 +173,15 @@ func (i *poolV1) SetWithdrawalFee(_ int, rlm realm, fee uint64) {
 	)
 }
 
-// calculateAmountWithFee calculates the fee amount and the amount after the fee.
+// calculateAmountWithFee calculates the fee amount and the amount after the fee
 //
-// Parameters:
-//   - amount: Unsigned amount before the fee is applied, in token base units.
-//   - fee: Fee denominator expressed in basis points; the calculation divides
-//     amount*fee by 10,000 and truncates the result.
+// Inputs:
+// - amount: the amount before the fee
+// - fee: the fee in BPS
 //
-// Returns:
-//   - feeAmount: Truncated fee amount in the same base units as amount.
-//   - afterAmount: amount minus feeAmount, preserving the original units.
+// Outputs:
+// - the fee amount
+// - the amount after the fee applied
 func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u256.Uint) {
 	feeAmount, overflow := u256.Zero().MulOverflow(amount, fee)
 	if overflow {
@@ -210,20 +192,8 @@ func calculateAmountWithFee(amount, fee *u256.Uint) (feeAmount, afterAmount *u25
 	return feeAmount, afterAmount
 }
 
-// setPoolCreationFee validates and stores the pool creation fee for the active
-// implementation.
-//
-// Parameters:
-//   - _: Leading integer discriminator for the forwarded realm call; callers
-//     pass 0.
-//   - rlm: Propagated realm context passed to the store write; the store checks
-//     that it is current.
-//   - fee: New pool creation fee in native-token base units; negative values are
-//     rejected.
-//
-// Returns:
-//   - error: Nil when the fee is stored; non-nil when fee is negative or the
-//     underlying store write fails.
+// setPoolCreationFee this function is internal function called by SetPoolCreationFee
+// And SetPoolCreationFee
 func (i *poolV1) setPoolCreationFee(_ int, rlm realm, fee int64) error {
 	if fee < 0 {
 		return makeErrorWithDetails(
@@ -241,20 +211,8 @@ func (i *poolV1) setPoolCreationFee(_ int, rlm realm, fee int64) error {
 	return nil
 }
 
-// setWithdrawalFee validates and stores the withdrawal fee for the active
-// implementation.
-//
-// Parameters:
-//   - _: Leading integer discriminator for the forwarded realm call; callers
-//     pass 0.
-//   - rlm: Propagated realm context passed to the store write; the store checks
-//     that it is current.
-//   - fee: New withdrawal fee in basis points; values above 1,000 (10%) are
-//     rejected.
-//
-// Returns:
-//   - error: Nil when the fee is stored; non-nil when fee exceeds the allowed
-//     maximum or the underlying store write fails.
+// setWithdrawalFee this function is internal function called by SetWithdrawalFee
+// function and SetWithdrawalFee function
 func (i *poolV1) setWithdrawalFee(_ int, rlm realm, fee uint64) error {
 	if fee > MaxBpsValue {
 		return makeErrorWithDetails(

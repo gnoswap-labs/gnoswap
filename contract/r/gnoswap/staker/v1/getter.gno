@@ -16,12 +16,6 @@ import (
 // findPoolByPoolPath retrieves the pool by its path, or nil when it does not
 // exist. Read-only views use it so a missing pool reads as nil rather than
 // aborting the caller's transaction.
-//
-// Parameters:
-//   - poolPath: Pool path whose stored pool entry is queried.
-//
-// Returns:
-//   - *sr.Pool: Matching pool pointer, or nil when the path is absent or the stored value has the wrong type.
 func (s *stakerV1) findPoolByPoolPath(poolPath string) *sr.Pool {
 	result := s.store.GetPools().Get(poolPath)
 	if result == nil {
@@ -37,13 +31,6 @@ func (s *stakerV1) findPoolByPoolPath(poolPath string) *sr.Pool {
 }
 
 // getPoolByPoolPath retrieves the pool by its path.
-//
-// Parameters:
-//   - poolPath: Pool path whose stored pool entry is queried.
-//
-// Returns:
-//   - *sr.Pool: Matching pool pointer on success, or nil when the pool cannot be found.
-//   - error: Non-nil data-not-found error when poolPath is absent or stores an incompatible value; nil on success.
 func (s *stakerV1) getPoolByPoolPath(poolPath string) (*sr.Pool, error) {
 	result := s.store.GetPools().Get(poolPath)
 	if result == nil {
@@ -81,14 +68,6 @@ func (s *stakerV1) GetPool(poolPath string) (*sr.Pool, error) {
 }
 
 // getIncentive retrieves an external incentive by ID.
-//
-// Parameters:
-//   - poolPath: Pool path containing the incentive.
-//   - incentiveId: External incentive identifier to retrieve.
-//
-// Returns:
-//   - *sr.ExternalIncentive: Matching external incentive, or nil when lookup fails.
-//   - error: Non-nil when the pool or incentive is absent, or its stored value cannot be cast.
 func (s *stakerV1) getIncentive(poolPath string, incentiveId string) (*sr.ExternalIncentive, error) {
 	pool, err := s.getPoolByPoolPath(poolPath)
 	if err != nil {
@@ -419,13 +398,6 @@ func (s *stakerV1) GetIncentiveCreator(poolPath string, incentiveId string) (add
 }
 
 // getDeposit retrieves a deposit by LP token ID.
-//
-// Parameters:
-//   - lpTokenId: LP position NFT token ID whose deposit is queried.
-//
-// Returns:
-//   - *sr.Deposit: Stored live deposit, or nil when lookup fails.
-//   - error: Non-nil data-not-found error when lpTokenId is not currently deposited; nil on success.
 func (s *stakerV1) getDeposit(lpTokenId uint64) (*sr.Deposit, error) {
 	deposits := s.getDeposits()
 	if !deposits.Has(lpTokenId) {
@@ -439,12 +411,6 @@ func (s *stakerV1) getDeposit(lpTokenId uint64) (*sr.Deposit, error) {
 }
 
 // assertIsCollectablePosition ensures the position is staked or holds an exit checkpoint.
-//
-// Parameters:
-//   - positionId: LP position NFT token ID to test for collection eligibility.
-//
-// Returns:
-//   - error: Nil when positionId is staked or has an exit checkpoint; non-nil data-not-found error otherwise.
 func (s *stakerV1) assertIsCollectablePosition(positionId uint64) error {
 	if s.getDeposits().Has(positionId) || s.getUnstakedPositions().Has(positionId) {
 		return nil

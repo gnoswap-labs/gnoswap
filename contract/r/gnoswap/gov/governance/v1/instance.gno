@@ -32,11 +32,6 @@ func NewGovernanceV1(
 }
 
 // Config version methods
-// getCurrentConfigVersion returns the version number held by the configuration
-// counter in persistent governance state.
-//
-// Returns:
-//   - int64: current configuration version counter value
 func (g *governanceV1) getCurrentConfigVersion() int64 {
 	return g.store.GetConfigCounter().Get()
 }
@@ -44,13 +39,6 @@ func (g *governanceV1) getCurrentConfigVersion() int64 {
 // nextConfigVersion increments and persists the config counter. It mutates the
 // underlying KV store, so it requires a realm value that resolves to the
 // governance proxy realm (the only writer-permitted address).
-//
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0 for the forwarded store write
-//   - rlm: propagated current realm context validated by the store before persisting the counter
-//
-// Returns:
-//   - int64: newly allocated configuration version
 func (g *governanceV1) nextConfigVersion(_ int, rlm realm) int64 {
 	counter := g.store.GetConfigCounter()
 	next := counter.Next()
@@ -61,24 +49,12 @@ func (g *governanceV1) nextConfigVersion(_ int, rlm realm) int64 {
 }
 
 // Proposal ID methods
-// getCurrentProposalID returns the proposal identifier held by the persistent
-// proposal counter.
-//
-// Returns:
-//   - int64: current proposal ID counter value
 func (g *governanceV1) getCurrentProposalID() int64 {
 	return g.store.GetProposalCounter().Get()
 }
 
 // nextProposalID increments and persists the proposal counter. Same realm
 // rules as nextConfigVersion.
-//
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0 for the forwarded store write
-//   - rlm: propagated current realm context validated by the store before persisting the counter
-//
-// Returns:
-//   - int64: newly allocated proposal ID
 func (g *governanceV1) nextProposalID(_ int, rlm realm) int64 {
 	counter := g.store.GetProposalCounter()
 	next := counter.Next()
@@ -89,14 +65,6 @@ func (g *governanceV1) nextProposalID(_ int, rlm realm) int64 {
 }
 
 // Config methods
-// getConfig retrieves one governance configuration by its persisted version.
-//
-// Parameters:
-//   - version: configuration version used as the storage lookup key
-//
-// Returns:
-//   - governance.Config: configuration stored at version, or the zero value when absent
-//   - bool: true when a configuration exists at version; false when no entry exists
 func (g *governanceV1) getConfig(version int64) (governance.Config, bool) {
 	return g.store.GetConfig(version)
 }
@@ -110,14 +78,6 @@ func (g *governanceV1) getCurrentConfig() (governance.Config, bool) {
 }
 
 // Proposal methods
-// getProposal retrieves a proposal by its identifier.
-//
-// Parameters:
-//   - id: proposal identifier used as the storage lookup key
-//
-// Returns:
-//   - *governance.Proposal: stored proposal pointer, or nil when absent or not stored as a proposal
-//   - bool: true when a proposal is found and has the expected type; false otherwise
 func (g *governanceV1) getProposal(id int64) (*governance.Proposal, bool) {
 	proposal, exists := g.store.GetProposal(id)
 	if !exists {
@@ -155,14 +115,6 @@ func (g *governanceV1) addProposal(_ int, rlm realm, proposal *governance.Propos
 }
 
 // removeActiveProposal removes a proposal from the active snapshot index.
-//
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0 for the forwarded store write
-//   - rlm: propagated current realm context validated before updating the active index
-//   - proposal: proposal whose snapshot index entry is removed
-//
-// Returns:
-//   - error: nil when the index entry is removed; otherwise not-found or store-write error
 func (g *governanceV1) removeActiveProposal(_ int, rlm realm, proposal *governance.Proposal) error {
 	snapshotIndex := g.store.GetActiveProposalsBySnapshot()
 	key := activeProposalSnapshotKey(proposal)
@@ -175,14 +127,6 @@ func (g *governanceV1) removeActiveProposal(_ int, rlm realm, proposal *governan
 }
 
 // User proposals methods
-// getUserProposals retrieves stored proposals associated with a user's address
-// string, skipping IDs whose proposal records are no longer present.
-//
-// Parameters:
-//   - user: user address string used to look up proposal IDs
-//
-// Returns:
-//   - []*governance.Proposal: proposals found for the user, or an empty slice when no IDs or records are available
 func (g *governanceV1) getUserProposals(user string) []*governance.Proposal {
 	proposalIDs, exists := g.store.GetUserProposalIDs(user)
 	if !exists {
@@ -204,14 +148,6 @@ func (g *governanceV1) getUserProposals(user string) []*governance.Proposal {
 }
 
 // hasActiveProposal assumes removeInactiveUserProposals has already pruned stale proposals.
-// hasActiveProposal reports whether a proposer has any proposals in the user's
-// list after inactive entries have been pruned.
-//
-// Parameters:
-//   - proposerAddress: address whose stored proposal list is checked
-//
-// Returns:
-//   - bool: true when at least one listed proposal remains; false when the list is empty
 func (g *governanceV1) hasActiveProposal(proposerAddress address) bool {
 	proposals := g.getUserProposals(proposerAddress.String())
 
@@ -221,17 +157,6 @@ func (g *governanceV1) hasActiveProposal(proposerAddress address) bool {
 // Remove inactive user proposals
 // This function is used to remove inactive proposals from the user proposals list.
 // It is used to clean up user's active proposal list when creating a new proposal.
-// removeInactiveUserProposals removes a proposer's proposals that are no longer
-// active according to the supplied current time.
-//
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0 for forwarded store writes
-//   - rlm: propagated current realm context validated before removing user-proposal entries
-//   - proposerAddress: address whose proposal ID list is pruned
-//   - current: current Unix timestamp passed to each proposal's activity check
-//
-// Returns:
-//   - error: nil when pruning completes; otherwise the first user-proposal store removal error
 func (g *governanceV1) removeInactiveUserProposals(_ int, rlm realm, proposerAddress address, current int64) error {
 	proposals := g.getUserProposals(proposerAddress.String())
 
@@ -250,15 +175,6 @@ func (g *governanceV1) removeInactiveUserProposals(_ int, rlm realm, proposerAdd
 }
 
 // Proposal voting info methods
-// getProposalUserVotingInfos retrieves the per-user voting-info tree for a
-// proposal.
-//
-// Parameters:
-//   - proposalID: proposal identifier whose voting-info tree is requested
-//
-// Returns:
-//   - *bptree.BPTree: tree of address-keyed voting information, or nil when absent
-//   - bool: true when a voting-info tree exists for the proposal; false otherwise
 func (g *governanceV1) getProposalUserVotingInfos(proposalID int64) (*bptree.BPTree, bool) {
 	return g.store.GetProposalVotingInfos(proposalID)
 }
@@ -268,14 +184,6 @@ func (g *governanceV1) updateProposalUserVotes(_ int, rlm realm, proposal *gover
 }
 
 // Helper methods for API
-// mustGetProposal retrieves a proposal and panics when the identifier is not
-// present in governance storage.
-//
-// Parameters:
-//   - id: proposal identifier used for the lookup
-//
-// Returns:
-//   - *governance.Proposal: stored proposal pointer; never nil when the function returns
 func (g *governanceV1) mustGetProposal(id int64) *governance.Proposal {
 	proposal, exists := g.getProposal(id)
 	if !exists {

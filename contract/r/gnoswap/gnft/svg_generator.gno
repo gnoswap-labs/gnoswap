@@ -98,14 +98,8 @@ const (
 	y2Range = y2Max - y2Min + 1
 )
 
-// genImageParamsString generates pseudo-random gradient parameters from the
-// supplied source and returns them as a compact string.
-//
-// Parameters:
-//   - r: pseudo-random generator used for coordinate and color selection
-//
-// Returns:
-//   - params: comma-separated x1,y1,x2,y2,color1,color2 values, with coordinates in their configured ranges and #RRGGBB colors
+// genImageParamsString generates random gradient parameters and returns them as a compact string.
+// Format: "x1,y1,x2,y2,color1,color2" (e.g., "10,12,125,123,#AABBCC,#DDEEFF")
 func genImageParamsString(r *rand.Rand) string {
 	x1 := x1Min + r.Uint64N(x1Range)
 	y1 := y1Min + r.Uint64N(y1Range)
@@ -134,16 +128,8 @@ type ImageParams struct {
 	color1, color2 string
 }
 
-// validateCoordinate checks whether value lies within the inclusive [min, max] range.
-//
-// Parameters:
-//   - value: coordinate value to validate
-//   - min: inclusive lower bound accepted for the coordinate
-//   - max: inclusive upper bound accepted for the coordinate
-//   - name: coordinate label included in an out-of-range error
-//
-// Returns:
-//   - error: nil when value is within [min, max]; otherwise an error naming value and the expected range
+// validateCoordinate checks if a coordinate value is within valid range.
+// Returns error with details about which coordinate failed if out of range.
 func validateCoordinate(value int, min int, max int, name string) error {
 	if value < min || value > max {
 		details := ufmt.Sprintf("%s=%d (expected range: [%d, %d])", name, value, min, max)
@@ -152,15 +138,10 @@ func validateCoordinate(value int, min int, max int, name string) error {
 	return nil
 }
 
-// parseImageParams parses and validates a compact image-parameter string.
-// The expected format is "x1,y1,x2,y2,color1,color2".
-//
-// Parameters:
-//   - s: comma-separated image parameters containing four coordinates and two #RRGGBB colors
-//
-// Returns:
-//   - params: parsed image parameters when all fields and ranges are valid; nil when parsing or validation fails
-//   - error: nil for a valid six-field string; non-nil for malformed fields, out-of-range coordinates, or invalid colors
+// parseImageParams parses and validates parameters in one step.
+// Returns parsed ImageParams pointer or error.
+// Returns nil on error to avoid allocating zero-value struct.
+// Expected format: "x1,y1,x2,y2,color1,color2"
 func parseImageParams(s string) (*ImageParams, error) {
 	parts := strings.Split(s, ",")
 	if len(parts) != 6 {
@@ -219,13 +200,7 @@ func parseImageParams(s string) (*ImageParams, error) {
 	}, nil
 }
 
-// generateImageURI converts parsed image parameters to a base64-encoded SVG data URI.
-//
-// Parameters:
-//   - tid: token identifier used to derive unique SVG element IDs
-//
-// Returns:
-//   - uri: data:image/svg+xml;base64 URI containing the generated SVG
+// generateImageURI converts parsed image parameters to a base64-encoded SVG image URI.
 func (params ImageParams) generateImageURI(tid grc721.TokenID) string {
 	svg := params.generateSVG(tid)
 	sEnc := b64.StdEncoding.EncodeToString([]byte(svg))
@@ -233,13 +208,7 @@ func (params ImageParams) generateImageURI(tid grc721.TokenID) string {
 	return "data:image/svg+xml;base64," + sEnc
 }
 
-// generateSVG generates an SVG image from parsed and validated parameters.
-//
-// Parameters:
-//   - tid: token identifier used to derive unique clip-path and gradient IDs
-//
-// Returns:
-//   - svg: complete SVG document rendered with this parameter set
+// generateSVG generates SVG image from parsed and validated parameters.
 func (params ImageParams) generateSVG(tid grc721.TokenID) string {
 	suffix := svgIDSuffix(tid)
 	paintID := "paint0_linear_" + suffix
@@ -255,13 +224,7 @@ func svgIDSuffix(tid grc721.TokenID) string {
 	return "gnft_" + string(tid)
 }
 
-// isValidHexColor reports whether color is exactly # followed by six hexadecimal digits.
-//
-// Parameters:
-//   - color: color string to validate; hexadecimal digits may be upper- or lowercase
-//
-// Returns:
-//   - valid: true only for a seven-byte #RRGGBB string; false for any other format
+// isValidHexColor checks if a string is a valid hex color in #XXXXXX format.
 func isValidHexColor(color string) bool {
 	if len(color) != 7 || color[0] != '#' {
 		return false

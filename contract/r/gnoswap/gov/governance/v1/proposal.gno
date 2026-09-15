@@ -172,15 +172,7 @@ func (r *ProposalResolver) Vote(votedYes bool, weight int64) error {
 }
 
 // execute marks the proposal as executed and records execution details.
-// It first requires the proposal to be executable at executedAt.
-//
-// Parameters:
-//   - executedAt: timestamp at which execution is recorded and checked
-//   - executedHeight: block height at which execution is recorded
-//   - executedBy: address that executed the proposal
-//
-// Returns:
-//   - error: nil when execution details are recorded; an error when execution is not permitted
+// This method validates execution conditions before proceeding.
 func (r *ProposalResolver) execute(
 	executedAt, executedHeight int64,
 	executedBy address,
@@ -195,15 +187,7 @@ func (r *ProposalResolver) execute(
 }
 
 // cancel marks the proposal as canceled and records cancellation details.
-// Cancellation is allowed only once, while the proposal is still upcoming.
-//
-// Parameters:
-//   - canceledAt: timestamp at which cancellation is checked and recorded
-//   - canceledHeight: block height at which cancellation is recorded
-//   - canceledBy: address that canceled the proposal
-//
-// Returns:
-//   - error: nil when cancellation details are recorded; an error when already canceled or no longer upcoming
+// This method validates cancellation conditions before proceeding.
 func (r *ProposalResolver) cancel(
 	canceledAt, canceledHeight int64,
 	canceledBy address,

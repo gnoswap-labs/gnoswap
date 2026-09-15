@@ -236,14 +236,6 @@ func initStoreData(_ int, rlm realm, stakerStore sr.IStakerStore, emissionAccess
 // accrual. Keeping both sides on emission's single constant structurally
 // enforces that invariant and removes any risk of the two realms drifting
 // apart on the canonical default pool identity.
-// Parameters:
-//   - stakerStore: Existing staker storage interface accepted by the initializer helper; this function does not read it.
-//
-// Returns:
-//   - *PoolTier: Initialized tier manager containing the default pool and reward settings.
-//   - *Pools: Pool collection containing the canonical initial pool.
-//   - int64: Unix timestamp used when the initial tier state was created.
-//   - map[uint64]int64: Initial per-tier pool reward rates keyed by tier number.
 func initializePoolTier(stakerStore sr.IStakerStore) (*PoolTier, *Pools, int64, map[uint64]int64) {
 	pools := NewPools()
 	currentTime := time.Now().Unix()

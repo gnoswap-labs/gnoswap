@@ -182,12 +182,6 @@ var multipliers = [5]Uint{
 
 // fromDecimal parses a decimal string by processing it in 19-character chunks.
 // Each chunk is multiplied by the appropriate power of 10 and accumulated.
-//
-// Parameters:
-//   - bs: the unsigned decimal digits to parse into z in 19-digit chunks
-//
-// Returns:
-//   - err: nil when bs is parsed into z; otherwise the empty-input, parse, or range error
 func (z *Uint) fromDecimal(bs string) error {
 	// first clear the input
 	z.Clear()

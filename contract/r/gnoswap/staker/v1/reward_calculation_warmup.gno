@@ -12,15 +12,7 @@ import (
 
 const maxDurationOneYear = int64(365 * 86400) // 31,536,000 seconds
 
-// modifyWarmup updates one warmup tier duration while enforcing schedule bounds; it is expected to be called by governance.
-//
-// Parameters:
-//   - warmupTemplate: Warmup tiers to modify.
-//   - index: Zero-based tier index to update; out-of-range values panic.
-//   - timeDuration: New tier duration in seconds; non-final tiers are limited to one year and the final tier must use math.MaxInt64.
-//
-// Returns:
-//   - warmups: The warmup template with the selected tier's duration updated; the final tier is returned unchanged.
+// expected to be called by governance
 func modifyWarmup(warmupTemplate []sr.Warmup, index int, timeDuration int64) []sr.Warmup {
 	if index >= len(warmupTemplate) {
 		panic(ufmt.Sprintf("index(%d) is out of range", index))
@@ -95,13 +87,6 @@ func applyWarmup(warmup sr.Warmup, poolReward int64, positionLiquidity, stakedLi
 }
 
 // safeAddTime performs safe addition with overflow protection
-//
-// Parameters:
-//   - currentTime: Base timestamp in Unix seconds.
-//   - duration: Duration in seconds to add; math.MaxInt64 is treated as an unbounded end time.
-//
-// Returns:
-//   - endTime: Checked sum of currentTime and duration, saturated at math.MaxInt64 for the unbounded duration or positive overflow.
 func safeAddTime(currentTime, duration int64) int64 {
 	if duration == math.MaxInt64 {
 		return math.MaxInt64

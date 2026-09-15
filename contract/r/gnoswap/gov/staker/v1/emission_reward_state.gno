@@ -66,16 +66,15 @@ func (self *EmissionRewardStateResolver) GetClaimableRewardAmount(
 }
 
 // calculateClaimableRewards calculates newly earned rewards since the last update.
-// It uses the accumulator difference and this address's stake, returning zero
-// before the stored timestamp or when no stake is held.
+// Uses the difference between current and stored reward debt to calculate earnings.
 //
 // Parameters:
-//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake, scaled by 2^128
-//   - currentTimestamp: timestamp through which newly earned rewards are calculated
+//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake
+//   - currentTimestamp: current timestamp
 //
 // Returns:
-//   - int64: newly earned reward amount since the stored reward-debt timestamp
-//   - error: nil in the current implementation; arithmetic or int64-conversion failures panic
+//   - int64: newly earned reward amount since last update
+//   - error: nil on success, error if calculation fails
 func (self *EmissionRewardStateResolver) calculateClaimableRewards(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,
@@ -105,13 +104,10 @@ func (self *EmissionRewardStateResolver) calculateClaimableRewards(
 }
 
 // addStake increases the staked amount for this address.
-// Negative amounts are rejected.
+// This method should be called when a user increases their stake.
 //
 // Parameters:
-//   - amount: nonnegative amount of stake to add
-//
-// Returns:
-//   - error: nil when the stake is updated; an error when amount is negative
+//   - amount: amount of stake to add
 func (self *EmissionRewardStateResolver) addStake(amount int64) error {
 	if amount < 0 {
 		return errors.New(errAmountMustBeNonNegative)
@@ -121,13 +117,10 @@ func (self *EmissionRewardStateResolver) addStake(amount int64) error {
 }
 
 // removeStake decreases the staked amount for this address.
-// Negative amounts and amounts greater than the current stake are rejected.
+// This method should be called when a user decreases their stake.
 //
 // Parameters:
-//   - amount: nonnegative amount of stake to remove
-//
-// Returns:
-//   - error: nil when the stake is updated; an error when amount is negative or exceeds the current stake
+//   - amount: amount of stake to remove
 func (self *EmissionRewardStateResolver) removeStake(amount int64) error {
 	if amount < 0 {
 		return errors.New(errAmountMustBeNonNegative)
@@ -164,15 +157,11 @@ func (self *EmissionRewardStateResolver) claimRewards(currentTimestamp int64) (i
 }
 
 // updateRewardDebtX128 updates the reward debt and accumulates new rewards.
-// It records the supplied accumulator and timestamp after calculating rewards
-// through currentTimestamp.
+// This method should be called before any stake changes to ensure accurate reward tracking.
 //
 // Parameters:
-//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake, scaled by 2^128
-//   - currentTimestamp: timestamp at which the reward debt is refreshed
-//
-// Returns:
-//   - error: nil when state is updated; an error propagated from reward calculation otherwise
+//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake
+//   - currentTimestamp: current timestamp
 func (self *EmissionRewardStateResolver) updateRewardDebtX128(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,
@@ -193,16 +182,13 @@ func (self *EmissionRewardStateResolver) updateRewardDebtX128(
 	return nil
 }
 
-// addStakeWithUpdateRewardDebtX128 refreshes reward debt before adding stake.
-// This prevents the stake change from affecting rewards earned before it.
+// addStakeWithUpdateRewardDebtX128 adds stake and updates reward debt in one operation.
+// This ensures rewards are properly calculated before the stake change takes effect.
 //
 // Parameters:
-//   - amount: nonnegative amount of stake to add
-//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake, scaled by 2^128
-//   - currentTimestamp: timestamp through which rewards are settled before the stake change
-//
-// Returns:
-//   - error: nil when debt refresh and stake addition succeed; an error from either operation otherwise
+//   - amount: amount of stake to add
+//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake
+//   - currentTimestamp: current timestamp
 func (self *EmissionRewardStateResolver) addStakeWithUpdateRewardDebtX128(
 	amount int64,
 	accumulatedRewardX128PerStake *u256.Uint,
@@ -214,16 +200,13 @@ func (self *EmissionRewardStateResolver) addStakeWithUpdateRewardDebtX128(
 	return self.addStake(amount)
 }
 
-// removeStakeWithUpdateRewardDebtX128 refreshes reward debt before removing stake.
-// This prevents the stake change from affecting rewards earned before it.
+// removeStakeWithUpdateRewardDebtX128 removes stake and updates reward debt in one operation.
+// This ensures rewards are properly calculated before the stake change takes effect.
 //
 // Parameters:
-//   - amount: nonnegative amount of stake to remove
-//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake, scaled by 2^128
-//   - currentTimestamp: timestamp through which rewards are settled before the stake change
-//
-// Returns:
-//   - error: nil when debt refresh and stake removal succeed; an error from either operation otherwise
+//   - amount: amount of stake to remove
+//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake
+//   - currentTimestamp: current timestamp
 func (self *EmissionRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 	amount int64,
 	accumulatedRewardX128PerStake *u256.Uint,
@@ -235,16 +218,16 @@ func (self *EmissionRewardStateResolver) removeStakeWithUpdateRewardDebtX128(
 	return self.removeStake(amount)
 }
 
-// claimRewardsWithUpdateRewardDebtX128 settles newly earned rewards, refreshes
-// reward debt, and then marks all accumulated rewards as claimed.
+// claimRewardsWithUpdateRewardDebtX128 claims rewards and updates reward debt in one operation.
+// This ensures all rewards are properly calculated before claiming.
 //
 // Parameters:
-//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake, scaled by 2^128
-//   - currentTimestamp: timestamp through which rewards are settled and claim time is recorded
+//   - accumulatedRewardX128PerStake: current system-wide accumulated reward per stake
+//   - currentTimestamp: current timestamp
 //
 // Returns:
-//   - int64: amount of accumulated rewards marked claimed after the debt refresh
-//   - error: nil when debt refresh and claim succeed; an error propagated from debt refresh otherwise
+//   - int64: amount of rewards claimed
+//   - error: nil on success, error if claiming fails
 func (self *EmissionRewardStateResolver) claimRewardsWithUpdateRewardDebtX128(
 	accumulatedRewardX128PerStake *u256.Uint,
 	currentTimestamp int64,

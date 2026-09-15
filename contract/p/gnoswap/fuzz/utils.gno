@@ -33,13 +33,6 @@ func genFloat01(s bitStream) float64 {
 
 // genGeom generates a geometrically distributed value.
 // Used for biased generation of integers.
-//
-// Parameters:
-//   - s: Bit stream supplying the random draw.
-//   - p: Geometric continuation parameter; it must satisfy 0 < p < 1.
-//
-// Returns:
-//   - uint64: A nonnegative geometrically distributed count, with invalid p causing an assertion panic.
 func genGeom(s bitStream, p float64) uint64 {
 	assertf(p > 0 && p < 1, "genGeom: p must be in (0, 1)")
 
@@ -76,15 +69,6 @@ func genUintNUnbiased(s bitStream, max uint64) uint64 {
 // genUintNBiased generates a biased uint64 in [0, max].
 // Prefers smaller values for better test case minimization.
 // Returns (value, isMin, isMax).
-//
-// Parameters:
-//   - s: Bit stream supplying bias and integer-bit draws.
-//   - max: Inclusive upper bound for the generated value.
-//
-// Returns:
-//   - value: A value in [0, max], favoring smaller values to produce shrink-friendly cases.
-//   - isMin: True when value is zero and the draw used minimal bit usage; false otherwise.
-//   - isMax: True when value equals max and the draw used high bit usage; false otherwise.
 func genUintNBiased(s bitStream, max uint64) (uint64, bool, bool) {
 	bitlen := bits.Len64(max)
 

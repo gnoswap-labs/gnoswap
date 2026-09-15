@@ -68,7 +68,7 @@ func TestFuzzCollectReward_ExternalIncentive_Stateless(cur realm, t *testing.T) 
 	})
 }
 
-// runTestCollectReward runs the reward-collection scenario.
+// runTestCollectReward runs the test swap route.
 func runTestCollectReward(cur realm, ft *fuzz.T, params *collectRewardParams) {
 	func(cur realm) {
 		testing.SetRealm(testing.NewUserRealm(adminAddr))

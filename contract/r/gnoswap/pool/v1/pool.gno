@@ -288,31 +288,19 @@ func (i *poolV1) Collect(
 
 // collect settles the pool ledger for a position and pays the recipient.
 //
-// The payout is capped by both the requested amount and the position's
-// tokensOwed. The ledger is written before token transfers, under the pool lock.
+// The payout is capped by the position's tokensOwed, never by a caller
+// supplied number, and the ledger is written before any token leaves the
+// realm. Both happen under a single pool lock, so the pool's accounting and
+// its token balance are never observably out of step.
 //
 // The collected amount is NOT capped by the pool's internal balance: a balance
 // short of the owed amount means the internal ledger has drifted, so the call
 // reverts rather than silently paying out less.
 //
-// Parameters:
-//   - _: Leading integer discriminator forwarded to the pool realm; pass 0 for this internal call.
-//   - rlm: Propagated realm context; this helper validates that it is current before changing pool state.
-//   - token0Path: Registered token contract path for token0.
-//   - token1Path: Registered token contract path for token1.
-//   - fee: Fee tier identifying the pool.
-//   - recipient: Nonzero address receiving the post-fee token amounts.
-//   - tickLower: Lower tick of the position's price range.
-//   - tickUpper: Upper tick of the position's price range.
-//   - amount0Requested: Non-negative decimal int64 amount of token0 requested.
-//   - amount1Requested: Non-negative decimal int64 amount of token1 requested.
-//   - applyWithdrawalFee: When true, deduct and settle the configured withdrawal fee; false selects fee-free principal collection.
-//
-// Returns:
-//   - amount0: Token0 amount removed from the position ledger before any withdrawal fee.
-//   - amount1: Token1 amount removed from the position ledger before any withdrawal fee.
-//   - fee0: Token0 withdrawal fee deducted from amount0, or zero when fee application is disabled.
-//   - fee1: Token1 withdrawal fee deducted from amount1, or zero when fee application is disabled.
+// applyWithdrawalFee selects the fee policy; pass false for a fee-free payout.
+// It is the entry point, not the configured rate, that decides whether the
+// protocol fee is settled: a rate of zero must still flush a backlog left
+// pending by an earlier halted settlement.
 func (i *poolV1) collect(
 	_ int,
 	rlm realm,
@@ -482,20 +470,7 @@ func (i *poolV1) CollectProtocol(
 
 // collectProtocol performs the actual protocol fee collection.
 // It ensures requested amounts don't exceed available protocol fees.
-//
-// Parameters:
-//   - _: Leading integer discriminator forwarded to the pool realm; pass 0 for this internal call.
-//   - rlm: Propagated realm context used to save pool state and transfer tokens.
-//   - token0Path: Registered token contract path for token0.
-//   - token1Path: Registered token contract path for token1.
-//   - fee: Fee tier identifying the pool.
-//   - recipient: Nonzero address receiving the collected protocol fees.
-//   - amount0Requested: Non-negative decimal amount of token0 protocol fees requested; capped at available reserves.
-//   - amount1Requested: Non-negative decimal amount of token1 protocol fees requested; capped at available reserves.
-//
-// Returns:
-//   - amount0: Token0 protocol fees collected and transferred, as a decimal string.
-//   - amount1: Token1 protocol fees collected and transferred, as a decimal string.
+// Returns amount0, amount1 as strings representing collected fees.
 func (i *poolV1) collectProtocol(
 	_ int,
 	rlm realm,
@@ -544,15 +519,7 @@ func (i *poolV1) collectProtocol(
 }
 
 // saveProtocolFees updates the protocol fee balances after collection.
-//
-// Parameters:
-//   - pool: Mutable pool whose token0 and token1 protocol-fee reserves are reduced.
-//   - amount0: Token0 protocol-fee amount to subtract from pool reserves.
-//   - amount1: Token1 protocol-fee amount to subtract from pool reserves.
-//
-// Returns:
-//   - amount0Saved: Token0 amount deducted from protocol reserves.
-//   - amount1Saved: Token1 amount deducted from protocol reserves.
+// Returns amount0, amount1 representing the fees deducted from protocol reserves.
 func (i *poolV1) saveProtocolFees(pool *pl.Pool, amount0, amount1 int64) (int64, int64) {
 	if pool.ProtocolFeesToken0() < amount0 {
 		panic(errors.New(errUnderflow))

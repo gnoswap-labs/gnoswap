@@ -32,18 +32,6 @@ type poolCreateConfig struct {
 }
 
 // newPoolParams defines the essential parameters for creating a new pool.
-// Parameters:
-//   - token0Path: path of the first token contract.
-//   - token1Path: path of the second token contract.
-//   - fee: fee tier stored with the pool configuration.
-//   - sqrtPriceX96: initial square-root price encoded as a decimal Q64.96
-//     integer; invalid decimal text causes the underlying conversion to panic.
-//   - tickSpacing: signed tick interval permitted for this fee tier.
-//   - slot0FeeProtocol: packed token0/token1 protocol-fee denominator setting.
-//
-// Returns:
-//   - config: pool-creation configuration containing the parsed price and all
-//     supplied pool parameters.
 func newPoolParams(
 	token0Path string,
 	token1Path string,
@@ -114,9 +102,6 @@ func (p *poolCreateConfig) update() error {
 }
 
 // isInOrder checks if token paths are in lexicographical (or, alphabetical) order
-// Returns:
-//   - inOrder: true when token0Path sorts lexicographically before token1Path;
-//     false otherwise.
 func (p *poolCreateConfig) isInOrder() bool {
 	if strings.Compare(p.token0Path, p.token1Path) < 0 {
 		return true
@@ -129,12 +114,6 @@ func (p *poolCreateConfig) poolPath() string {
 }
 
 // validateSqrtPriceX96 validates that the given sqrtPriceX96 is within valid range
-// Parameters:
-//   - sqrtPriceX96: square-root price in Q64.96 integer form to validate.
-//
-// Returns:
-//   - err: nil when sqrtPriceX96 is in [MIN_SQRT_RATIO, MAX_SQRT_RATIO); an
-//     out-of-range error otherwise.
 func validateSqrtPriceX96(sqrtPriceX96 *u256.Uint) error {
 	// Valid range is [minSqrtRatio, maxSqrtRatio) - same as TickMathGetTickAtSqrtRatio
 	if sqrtPriceX96.Lt(consts.MinSqrtRatio()) || sqrtPriceX96.Gte(consts.MaxSqrtRatio()) {

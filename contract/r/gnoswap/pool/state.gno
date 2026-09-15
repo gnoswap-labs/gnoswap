@@ -32,10 +32,6 @@ var (
 
 // init initializes the pool domain state.
 // This function is called when the pool domain contract is first deployed.
-//
-// Parameters:
-//   - cur: Realm context supplied by the runtime during domain initialization;
-//     its package path and address identify this pool domain.
 func init(cur realm) {
 	domainPath = cur.PkgPath()
 	currentAddress = cur.Address()
@@ -60,10 +56,6 @@ func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 // getImplementation returns the currently active pool implementation.
 // This function is used by all proxy functions to route calls to the active implementation.
 // If no implementation is set, it panics to prevent invalid state.
-//
-// Returns:
-//   - IPool: Currently active implementation used by proxy calls; panics when
-//     no implementation has been registered.
 func getImplementation() IPool {
 	if implementation == nil {
 		panic("implementation is not initialized")

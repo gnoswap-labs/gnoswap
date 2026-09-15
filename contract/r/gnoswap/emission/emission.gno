@@ -51,10 +51,7 @@ func init(cur realm) {
 	emissionAddr = cur.Address()
 }
 
-// setLeftGNSAmount stores the GNS amount that remains undistributed for a later call.
-//
-// Parameters:
-//   - amount: undistributed GNS amount in token base units; must be nonnegative.
+// setLeftGNSAmount updates the undistributed GNS token amount
 func setLeftGNSAmount(amount int64) {
 	if amount < 0 {
 		panic("left GNS amount cannot be negative")
@@ -63,10 +60,7 @@ func setLeftGNSAmount(amount int64) {
 	leftGNSAmount = amount
 }
 
-// setLastExecutedTimestamp records the timestamp of the most recent emission distribution.
-//
-// Parameters:
-//   - timestamp: nonnegative Unix timestamp of the most recent distribution execution.
+// setLastExecutedTimestamp updates the timestamp of the last emission distribution execution.
 func setLastExecutedTimestamp(timestamp int64) {
 	if timestamp < 0 {
 		panic("last executed timestamp cannot be negative")

@@ -296,18 +296,7 @@ func Render(path string) string {
 	return "404\n"
 }
 
-// setTokenURI sets the metadata URI for a specific token ID after validating
-// that rlm is the current realm and emits a storage event.
-//
-// Parameters:
-//   - _: realm-call discriminator; callers pass 0
-//   - rlm: propagated realm context that must be current before metadata is written
-//   - tid: token ID whose metadata URI is replaced
-//   - tURI: metadata URI to store
-//
-// Returns:
-//   - error: nil after the URI is stored and readable; spoofed-realm or
-//     metadata-storage error otherwise
+// setTokenURI sets the metadata URI for a specific token ID.
 func setTokenURI(_ int, rlm realm, tid grc721.TokenID, tURI string) error {
 	if !rlm.IsCurrent() {
 		return errors.New(errSpoofedRealm)

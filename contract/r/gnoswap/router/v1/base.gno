@@ -40,16 +40,7 @@ type RouterOperation interface {
 	Process(_ int, rlm realm) (*SwapResult, error)
 }
 
-// executeSwapOperation validates an operation and then processes it.
-//
-// Parameters:
-//   - _: leading operation discriminator; callers pass 0
-//   - rlm: propagated current realm context used by the operation
-//   - op: swap operation to validate and execute
-//
-// Returns:
-//   - result: populated swap result, or nil when validation or processing fails
-//   - err: nil on success; validation or processing error otherwise
+// executeSwapOperation validates and processes a swap operation.
 func executeSwapOperation(_ int, rlm realm, op RouterOperation) (*SwapResult, error) {
 	if err := op.Validate(); err != nil {
 		return nil, err
@@ -80,18 +71,7 @@ type baseSwapOperation struct {
 	amountSpecified   int64
 }
 
-// processRoutes allocates the requested amount across all route strings and aggregates results.
-//
-// Parameters:
-//   - _: leading operation discriminator; callers pass 0
-//   - rlm: propagated current realm context used for each pool swap
-//   - r: router implementation that executes each route
-//   - swapType: ExactIn or ExactOut execution direction
-//
-// Returns:
-//   - amountIn: aggregate input consumed by all routes
-//   - amountOut: aggregate output produced by all routes
-//   - err: nil on success; quote parsing or route execution error otherwise
+// processRoutes processes all swap routes and returns total amounts.
 func (op *baseSwapOperation) processRoutes(_ int, rlm realm, r *routerV1, swapType SwapType) (int64, int64, error) {
 	resultAmountIn, resultAmountOut := int64(0), int64(0)
 	remainRequestAmount := op.amountSpecified
@@ -127,20 +107,7 @@ func (op *baseSwapOperation) processRoutes(_ int, rlm realm, r *routerV1, swapTy
 	return resultAmountIn, resultAmountOut, nil
 }
 
-// processRoute executes one route, selecting single- or multi-hop processing by hop count.
-//
-// Parameters:
-//   - _: leading operation discriminator; callers pass 0
-//   - rlm: propagated current realm context used for pool interaction
-//   - r: router implementation that executes the route
-//   - route: one route path containing one to three pool hops
-//   - toSwap: signed amount assigned to this route
-//   - swapType: ExactIn or ExactOut execution direction
-//
-// Returns:
-//   - amountIn: input amount consumed by this route
-//   - amountOut: output amount produced by this route
-//   - err: always nil after a one-to-three-hop dispatch; an out-of-range hop count panics before returning
+// processRoute processes a single route with specified swap amount.
 func (op *baseSwapOperation) processRoute(
 	_ int,
 	rlm realm,
@@ -162,18 +129,7 @@ func (op *baseSwapOperation) processRoute(
 	return amountIn, amountOut, nil
 }
 
-// handleSingleSwap executes one pool swap from a route string.
-//
-// Parameters:
-//   - _: leading operation discriminator; callers pass 0
-//   - rlm: propagated current realm context used for pool interaction
-//   - route: single-hop token path and fee
-//   - amountSpecified: signed input or output amount for the hop
-//   - sqrtPriceLimitX96: optional Q64.96 price limit; zero selects a directional boundary
-//
-// Returns:
-//   - amountIn: input amount received by the pool
-//   - amountOut: output amount sent by the pool
+// handleSingleSwap executes a single-hop swap with the specified amount.
 func (r *routerV1) handleSingleSwap(_ int, rlm realm, route string, amountSpecified int64, sqrtPriceLimitX96 *u256.Uint) (int64, int64) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
@@ -187,19 +143,7 @@ func (r *routerV1) handleSingleSwap(_ int, rlm realm, route string, amountSpecif
 	return r.singleSwap(0, rlm, &singleParams)
 }
 
-// handleMultiSwap executes a multi-hop route in the direction selected by swapType.
-//
-// Parameters:
-//   - _: leading operation discriminator; callers pass 0
-//   - rlm: propagated current realm context used for pool interaction
-//   - swapType: ExactIn for forward execution or ExactOut for backward quoting
-//   - route: multi-hop path separated by POOL_SEPARATOR
-//   - numHops: number of pool hops in route
-//   - amountSpecified: signed amount assigned to the route
-//
-// Returns:
-//   - amountIn: input amount consumed by the route
-//   - amountOut: output amount produced by the route
+// handleMultiSwap processes multi-hop swaps across multiple pools.
 func (r *routerV1) handleMultiSwap(
 	_ int,
 	rlm realm,
@@ -294,15 +238,7 @@ func (p *SwapRouteParams) IsSetSqrtPriceLimitX96() bool {
 	return p.sqrtPriceLimitX96 != nil && !p.sqrtPriceLimitX96.IsZero()
 }
 
-// createSwapOperation constructs the exact-in or exact-out operation for params.
-//
-// Parameters:
-//   - r: router implementation used by the operation
-//   - params: validated route settings and exact amount/limit configuration
-//
-// Returns:
-//   - op: exact-in or exact-out operation selected by params.typ
-//   - err: nil for a supported swap type; invalid-swap-type error otherwise
+// createSwapOperation creates the appropriate swap operation based on swap type.
 func createSwapOperation(r *routerV1, params SwapRouteParams) (RouterOperation, error) {
 	baseParams := BaseSwapParams{
 		InputToken:        params.inputToken,
@@ -327,17 +263,7 @@ func createSwapOperation(r *routerV1, params SwapRouteParams) (RouterOperation, 
 	}
 }
 
-// commonSwapRoute executes and finalizes either an exact-in or exact-out route.
-//
-// Parameters:
-//   - _: leading operation discriminator; callers pass 0
-//   - rlm: propagated current realm context used for swaps and fee settlement
-//   - params: route tokens, quotes, amounts, deadline, type, and price limit
-//
-// Returns:
-//   - amountIn: input amount consumed across routes
-//   - amountOut: net output after router fee
-//   - err: nil on success; operation validation or execution error otherwise
+// commonSwapRoute handles the common logic for both ExactIn and ExactOut swaps.
 func (r *routerV1) commonSwapRoute(_ int, rlm realm, params SwapRouteParams) (int64, int64, error) {
 	op, err := createSwapOperation(r, params)
 	if err != nil {

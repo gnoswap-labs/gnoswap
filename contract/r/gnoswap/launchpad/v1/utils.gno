@@ -32,14 +32,6 @@ func buildConditionEventAttrs(conditionTokens string, conditionAmounts string) [
 
 // parseProjectTierID parses a project tier ID into its project ID and duration.
 // Returns the project ID {tokenPath}:{createdHeight} and the duration of the project tier (30, 90, 180).
-// It panics when the identifier has the wrong shape, an unparsable duration, or an unsupported tier duration.
-//
-// Parameters:
-//   - projectTierID: tier identifier in "{projectID}:{duration}" form, where projectID itself contains the token path and creation height.
-//
-// Returns:
-//   - projectID: project identifier portion, reconstructed from the first two colon-separated components.
-//   - duration: validated tier duration in days; one of 30, 90, or 180.
 func parseProjectTierID(projectTierID string) (string, int64) {
 	parts := strings.Split(projectTierID, ":")
 	if len(parts) != 3 {

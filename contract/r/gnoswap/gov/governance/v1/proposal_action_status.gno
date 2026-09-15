@@ -26,7 +26,7 @@ func NewProposalActionStatusResolver(status *governance.ProposalActionStatus) *P
 // This method validates that the proposal is eligible for cancellation.
 //
 // Parameters:
-//   - canceledAt: Unix timestamp when cancellation occurred.
+//   - canceledAt: timestamp when cancellation occurred
 //   - canceledHeight: block height when cancellation occurred
 //   - canceledBy: address performing the cancellation
 //

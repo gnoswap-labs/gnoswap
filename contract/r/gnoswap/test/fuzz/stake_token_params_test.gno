@@ -7,7 +7,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// stakeTokenParams contains parameters for the StakeToken fuzz test.
+// stakeTokenParams is the parameters for the ExactOutSwapRoute fuzz test.
 type stakeTokenParams struct {
 	positionID            uint64
 	internalIncentiveTier uint64

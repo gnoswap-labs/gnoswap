@@ -99,11 +99,6 @@ func (gs *govStakerV1) CleanStakerDelegationSnapshotByAdmin(_ int, rlm realm, sn
 
 // cleanTotalDelegationHistory removes total delegation history entries older than cutoff time.
 // Keeps the most recent entry before cutoff to preserve state continuity.
-//
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0 for the forwarded store write
-//   - rlm: propagated current realm context validated before persisting cleaned total history
-//   - cutoffTimestamp: Unix timestamp; entries strictly before it are removed while the latest prior value is preserved at the cutoff
 func (gs *govStakerV1) cleanTotalDelegationHistory(_ int, rlm realm, cutoffTimestamp int64) {
 	history := gs.store.GetTotalDelegationHistory()
 
@@ -143,13 +138,6 @@ func (gs *govStakerV1) cleanTotalDelegationHistory(_ int, rlm realm, cutoffTimes
 // older than cutoff time for a single target address.
 // Keeps the most recent entry strictly before cutoff
 // in place so range-based snapshot lookups continue to resolve correctly.
-// A non-positive cutoff leaves the user's history unchanged.
-//
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0 for the forwarded store write
-//   - rlm: propagated current realm context validated before persisting cleaned user history
-//   - target: address whose composite-keyed delegation history is cleaned
-//   - cutoffTimestamp: Unix timestamp; entries strictly before it are removed while the latest prior value is preserved at the cutoff
 func (gs *govStakerV1) cleanUserDelegationHistoryForAddress(_ int, rlm realm, target address, cutoffTimestamp int64) {
 	if cutoffTimestamp <= 0 {
 		return

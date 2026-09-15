@@ -58,9 +58,6 @@ func (r *Role) IsAuthorized(addr address) bool {
 }
 
 // setAddress assigns addr to this role.
-//
-// Parameters:
-//   - addr: Address to store as this role's assignment; this helper performs no validation.
 func (r *Role) setAddress(addr address) {
 	r.address = addr
 }

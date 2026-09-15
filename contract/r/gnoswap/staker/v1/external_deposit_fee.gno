@@ -178,29 +178,16 @@ func (s *stakerV1) SetTokenMinimumRewardAmount(_ int, rlm realm, paramsStr strin
 }
 
 // setDepositGnsAmount internally updates the deposit GNS amount.
-//
-// Parameters:
-//   - _: Realm-call discriminator forwarded to the store update; pass 0.
-//   - rlm: Propagated realm context used by the store's persistent update.
-//   - amount: GNS deposit amount in token smallest units to store.
 func (s *stakerV1) setDepositGnsAmount(_ int, rlm realm, amount int64) {
 	s.store.SetDepositGnsAmount(0, rlm, amount)
 }
 
 // setMinimumRewardAmount internally updates the minimum reward amount.
-//
-// Parameters:
-//   - _: Realm-call discriminator forwarded to the store update; pass 0.
-//   - rlm: Propagated realm context used by the store's persistent update.
-//   - amount: Default minimum reward amount in token smallest units to store.
 func (s *stakerV1) setMinimumRewardAmount(_ int, rlm realm, amount int64) {
 	s.store.SetMinimumRewardAmount(0, rlm, amount)
 }
 
 // getMinimumRewardAmount internally retrieves the minimum reward amount.
-//
-// Returns:
-//   - amount: Persisted default minimum reward amount in token smallest units.
 func (s *stakerV1) getMinimumRewardAmount() int64 {
 	return s.store.GetMinimumRewardAmount()
 }

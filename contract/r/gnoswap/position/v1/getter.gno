@@ -13,13 +13,7 @@ import (
 )
 
 // getPosition returns a position for a given position ID.
-//
-// Parameters:
-//   - positionId: numeric ID used to look up the position in the store
-//
-// Returns:
-//   - position: stored position value, or the store's zero value when the ID is absent
-//   - err: nil when the position exists; an errPositionDoesNotExist error otherwise
+// Returns an error if the position doesn't exist.
 func (p *positionV1) getPosition(positionId uint64) (position.Position, error) {
 	pos, exists := p.store.GetPosition(positionId)
 	if !exists {
@@ -33,14 +27,7 @@ func (p *positionV1) getPosition(positionId uint64) (position.Position, error) {
 }
 
 // mustGetPosition returns a position for a given position ID.
-//
-// Parameters:
-//   - positionId: numeric ID used to look up the position in the store
-//
-// Returns:
-//   - position: pointer to the stored position value
-//
-// It panics when positionId does not identify a stored position.
+// panics if position doesn't exist
 func (p *positionV1) mustGetPosition(positionId uint64) *position.Position {
 	position, err := p.getPosition(positionId)
 	if err != nil {

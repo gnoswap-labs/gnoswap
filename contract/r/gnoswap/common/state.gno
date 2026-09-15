@@ -35,15 +35,6 @@ func init(cur realm) {
 }
 
 // common keeps no domain state; implementations only resolve tokens.
-//
-// Parameters:
-//   - _: version-manager discriminator; callers pass 0
-//   - rlm: propagated realm context supplied to the initializer callback
-//   - kvStore: domain key-value store supplied by the version manager; this
-//     common package does not persist additional domain state in it
-//
-// Returns:
-//   - state: nil because common has no implementation-specific domain state
 func initializeDomainStore(_ int, rlm realm, kvStore store.KVStore) any {
 	return nil
 }

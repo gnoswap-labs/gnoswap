@@ -79,12 +79,12 @@ func (s *mockPoolStore) HasSlot0FeeProtocol() bool {
 	return true
 }
 
-// GetSlot0FeeProtocol retrieves the protocol-fee denominator configured for slot0.
+// GetSlot0FeeProtocol retrieves the protocol fee percentage for slot0.
 func (s *mockPoolStore) GetSlot0FeeProtocol() uint8 {
 	return s.slot0FeeProtocol
 }
 
-// SetSlot0FeeProtocol stores the protocol-fee denominator configured for slot0.
+// SetSlot0FeeProtocol stores the protocol fee percentage for slot0.
 func (s *mockPoolStore) SetSlot0FeeProtocol(_ int, rlm realm, slot0FeeProtocol uint8) error {
 	s.slot0FeeProtocol = slot0FeeProtocol
 	return nil

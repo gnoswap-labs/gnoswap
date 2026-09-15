@@ -193,15 +193,6 @@ func (i *poolV1) SetFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uin
 }
 
 // setFeeAmountTickSpacing associates a tick spacing value with a fee amount.
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0.
-//   - rlm: propagated realm context forwarded to storage, which validates it is
-//     current before writing.
-//   - fee: fee tier key to associate with tickSpacing.
-//   - tickSpacing: signed spacing between usable initialized ticks for fee.
-//
-// Returns:
-//   - err: nil when the fee mapping is stored; the storage error otherwise.
 func (i *poolV1) setFeeAmountTickSpacing(_ int, rlm realm, fee uint32, tickSpacing int32) error {
 	feeAmountTickSpacing := i.store.GetFeeAmountTickSpacing()
 	feeAmountTickSpacing[fee] = tickSpacing
@@ -226,11 +217,6 @@ func (i *poolV1) getPool(poolPath string) (*pl.Pool, error) {
 }
 
 // mustGetPool retrieves a pool instance by its path and ensures it exists.
-// Parameters:
-//   - poolPath: canonical pool identifier to retrieve.
-//
-// Returns:
-//   - pool: stored pool instance; panics with errDataNotFound when lookup fails.
 func (i *poolV1) mustGetPool(poolPath string) (pool *pl.Pool) {
 	p, err := i.getPool(poolPath)
 	if err != nil {
@@ -270,15 +256,6 @@ func (i *poolV1) mustGetObservations(poolPath string) *pl.ObservationTree {
 
 // savePool updates a pool in the pools map and persists to storage.
 // This ensures that modifications to pool objects are properly saved.
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0.
-//   - rlm: propagated realm context forwarded to storage, which validates it is
-//     current before writing.
-//   - pool: non-nil pool instance to place under its own canonical pool path.
-//
-// Returns:
-//   - err: nil when the updated pool tree is persisted; the storage error
-//     otherwise.
 func (i *poolV1) savePool(_ int, rlm realm, pool *pl.Pool) error {
 	pools := i.store.GetPools()
 	pools.Set(pool.PoolPath(), pool)
@@ -287,15 +264,6 @@ func (i *poolV1) savePool(_ int, rlm realm, pool *pl.Pool) error {
 }
 
 // setFeeProtocolInternal updates the protocol fee for all pools and emits an event.
-// Parameters:
-//   - _: leading realm-call discriminator; callers pass 0.
-//   - rlm: propagated realm context used for the pool-wide protocol-fee update.
-//   - feeProtocol0: token0 protocol-fee denominator; must be 0 or 4-10.
-//   - feeProtocol1: token1 protocol-fee denominator; must be 0 or 4-10.
-//
-// Returns:
-//   - err: nil after all pool slot0 values and the update event are processed;
-//     validation or persistent-configuration error otherwise.
 func (i *poolV1) setFeeProtocolInternal(_ int, rlm realm, feeProtocol0, feeProtocol1 uint8) error {
 	oldFee := i.store.GetSlot0FeeProtocol()
 	newFee, err := i.setFeeProtocol(0, rlm, feeProtocol0, feeProtocol1)
@@ -331,16 +299,11 @@ func (i *poolV1) setFeeProtocolInternal(_ int, rlm realm, feeProtocol0, feeProto
 // The updated fee protocol is applied uniformly to all pools managed by the system.
 //
 // Parameters:
-//   - _: leading realm-call discriminator; callers pass 0.
-//   - rlm: propagated realm context forwarded to each pool and storage update.
-//   - feeProtocol0: token0 protocol-fee denominator (0 or 4-10 inclusive).
-//   - feeProtocol1: token1 protocol-fee denominator (0 or 4-10 inclusive).
+//   - feeProtocol0: protocol fee for token0 (must be 0 or between 4 and 10 inclusive).
+//   - feeProtocol1: protocol fee for token1 (must be 0 or between 4 and 10 inclusive).
 //
 // Returns:
-//   - newFee: packed uint8 with feeProtocol0 in the lower four bits and
-//     feeProtocol1 in the upper four bits.
-//   - err: nil after every pool and persistent slot0 configuration is updated;
-//     validation or storage error otherwise.
+//   - newFee (uint8): the combined fee protocol value.
 //
 // Example:
 // If feeProtocol0 = 4 and feeProtocol1 = 5:
@@ -390,16 +353,19 @@ func (i *poolV1) setFeeProtocol(_ int, rlm realm, feeProtocol0, feeProtocol1 uin
 	return newFee, nil
 }
 
-// validateFeeProtocol validates the protocol fee denominators for token0 and
-// token1. Each value must be 0 (disabled) or between 4 and 10 inclusive.
+// validateFeeProtocol validates the fee protocol values for token0 and token1.
+//
+// This function checks whether the provided fee protocol values (`feeProtocol0` and `feeProtocol1`)
+// are valid using the `isValidFeeProtocolValue` function. If either value is invalid, it returns
+// an error indicating that the protocol fee percentage is invalid.
 //
 // Parameters:
-//   - feeProtocol0: denominator for token0
-//   - feeProtocol1: denominator for token1
+//   - feeProtocol0: uint8, the fee protocol value for token0.
+//   - feeProtocol1: uint8, the fee protocol value for token1.
 //
 // Returns:
-//   - error: the existing errInvalidProtocolFeePct error when either
-//     denominator is invalid; nil when both values are valid.
+//   - error: Returns `errInvalidProtocolFeePct` if either `feeProtocol0` or `feeProtocol1` is invalid.
+//     Returns `nil` if both values are valid.
 func validateFeeProtocol(feeProtocol0, feeProtocol1 uint8) error {
 	if !isValidFeeProtocolValue(feeProtocol0) || !isValidFeeProtocolValue(feeProtocol1) {
 		return errors.New(errInvalidProtocolFeePct)
@@ -412,13 +378,6 @@ func validateFeeProtocol(feeProtocol0, feeProtocol1 uint8) error {
 //
 // The value is used as a denominator: protocolFee = swapFee / feeProtocol
 // (e.g., feeProtocol=4 means 1/4 = 25% of swap fees go to protocol)
-//
-// Parameters:
-//   - value: Protocol-fee denominator to validate; zero disables the fee.
-//
-// Returns:
-//   - valid: true when value is zero (protocol fees disabled) or between 4 and
-//     10 inclusive; false for every other denominator.
 func isValidFeeProtocolValue(value uint8) bool {
 	return value == 0 || (value >= 4 && value <= 10)
 }

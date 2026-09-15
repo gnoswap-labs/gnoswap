@@ -92,9 +92,6 @@ func (lp *launchpadV1) mustGetDeposit(depositID string) launchpad.Deposit {
 
 // nextDepositID increments and returns the next unique deposit ID.
 // This is used when creating new deposits.
-//
-// Returns:
-//   - depositID: next unique deposit identifier after incrementing the store counter.
 func (lp *launchpadV1) nextDepositID() string {
 	return lp.store.NextDepositID()
 }

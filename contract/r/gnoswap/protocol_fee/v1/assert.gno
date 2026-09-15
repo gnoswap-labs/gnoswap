@@ -7,10 +7,7 @@ import (
 	"gno.land/r/gnoswap/access"
 )
 
-// assertIsPoolOrPositionOrRouterOrStaker panics if the caller is not the pool, position, router, or staker contract.
-//
-// Parameters:
-//   - caller: Address that must hold the pool, position, router, or staker authorization role; unauthorized callers cause a panic.
+// assertIsPoolOrPositionOrRouterOrStaker panics if the caller is not the pool, router, or staker contract.
 func assertIsPoolOrPositionOrRouterOrStaker(caller address) {
 	if access.IsAuthorized(prbac.ROLE_POOL.String(), caller) ||
 		access.IsAuthorized(prbac.ROLE_POSITION.String(), caller) ||
@@ -23,9 +20,6 @@ func assertIsPoolOrPositionOrRouterOrStaker(caller address) {
 }
 
 // assertIsAdminOrGovStaker panics if the caller is not admin or gov/staker.
-//
-// Parameters:
-//   - caller: Address that must hold the admin or Gov/Staker authorization role; unauthorized callers cause a panic.
 func assertIsAdminOrGovStaker(caller address) {
 	if access.IsAuthorized(prbac.ROLE_ADMIN.String(), caller) {
 		return
@@ -39,9 +33,6 @@ func assertIsAdminOrGovStaker(caller address) {
 }
 
 // assertIsValidPercent panics if the percentage is invalid (not between 0-10000).
-//
-// Parameters:
-//   - pct: Percentage in basis points; valid values are inclusive 0 through 10000, and values outside that range cause a panic.
 func assertIsValidPercent(pct int64) {
 	if pct > 10000 {
 		panic(makeErrorWithDetail(

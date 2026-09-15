@@ -18,17 +18,24 @@ import (
 // the pool has sufficient balance and updating internal accounting.
 // This function is typically used during swaps and liquidity removals.
 //
-// Parameters:
-//   - _: interrealm call discriminator; callers pass 0.
-//   - rlm: propagated realm context used for the token transfer.
-//   - p: pool whose selected token balance is decremented.
-//   - to: destination address receiving the tokens.
-//   - tokenPath: path identifier of the token to transfer.
-//   - amount: non-negative token amount to transfer; it must fit in int64.
-//   - isToken0: true to transfer token0, false to transfer token1.
+// Important requirements:
+//   - The amount must be a positive value representing tokens to transfer out
+//   - The pool must have sufficient balance for the transfer
+//   - The transfer amount must fit within int64 range
 //
-// Panics when the amount cannot fit in int64, the selected balance is
-// insufficient, the token transfer fails, or internal balance arithmetic fails.
+// Parameters:
+//   - p: the pool instance
+//   - to: destination address for the transfer
+//   - tokenPath: path identifier of the token to transfer
+//   - amount: amount to transfer (positive u256.Uint value)
+//   - isToken0: true if transferring token0, false for token1
+//
+// The function will:
+//  1. Check pool has sufficient balance
+//  2. Execute the transfer
+//  3. Subtract the amount from pool's internal balance
+//
+// Panics if any validation fails or if the transfer fails
 func (i *poolV1) safeTransfer(
 	_ int,
 	rlm realm,
@@ -66,19 +73,30 @@ func (i *poolV1) safeTransfer(
 
 // safeTransferFrom securely transfers tokens into the pool while ensuring balance consistency.
 //
-// Parameters:
-//   - _: interrealm call discriminator; callers pass 0.
-//   - rlm: propagated realm context used for the token transfer.
-//   - p: pool whose selected token balance is incremented.
-//   - from: source address authorized to transfer tokens.
-//   - to: destination address whose token balance must increase; normally the pool address.
-//   - tokenPath: path identifier of the token being transferred.
-//   - amount: non-negative token amount to transfer; it must fit in int64.
-//   - isToken0: true to update token0, false to update token1.
+// This function performs the following steps:
+// 1. Validates and converts the transfer amount to `int64` using `gnsmath.SafeConvertToInt64`.
+// 2. Executes the token transfer using `TransferFrom` via the token teller contract.
+// 3. Verifies that the destination balance reflects the correct amount after transfer.
+// 4. Updates the pool's internal balances (`token0` or `token1`) and validates the updated state.
 //
-// The destination balance is checked before and after TransferFrom so the
-// internal pool balance cannot diverge from the token contract. The function
-// panics if conversion, transfer, balance verification, or checked addition fails.
+// Parameters:
+// - p (*pl.Pool): The pool instance to transfer tokens into.
+// - from (address): Source address for the token transfer.
+// - to (address): Destination address, typically the pool address.
+// - tokenPath (string): Path identifier for the token being transferred.
+// - amount (*u256.Uint): The amount of tokens to transfer (must be a positive value).
+// - isToken0 (bool): A flag indicating whether the token being transferred is token0 (`true`) or token1 (`false`).
+//
+// Panics:
+// - If the `amount` exceeds the int64 range during conversion.
+// - If the token transfer (`TransferFrom`) fails.
+// - If the destination balance after the transfer does not match the expected amount.
+// - If the pool's internal balances (`token0` or `token1`) overflow or become inconsistent.
+//
+// Notes:
+// - The function assumes that the sender (`from`) has approved the pool to spend the specified tokens.
+// - The balance consistency check ensures that no tokens are lost or double-counted during the transfer.
+// - Pool balance updates are performed atomically to ensure internal consistency.
 func (i *poolV1) safeTransferFrom(
 	_ int,
 	rlm realm,
@@ -116,23 +134,60 @@ func (i *poolV1) safeTransferFrom(
 
 // safeSwapCallback executes a swap callback and validates the token payment.
 //
-// The pool first sends output tokens, then invokes swapCallback so the caller
-// can transfer the required input tokens back to the pool. Positive callback
-// deltas mean the pool must receive that token; negative deltas mean the pool
-// already sent it.
+// This function implements the flash swap pattern where the pool first sends output tokens
+// to the recipient, then invokes the callback to receive input tokens from the caller.
+// The callback is responsible for transferring the required input tokens to the pool.
+//
+// Callback Signature:
+//
+//	func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error
+//
+// Delta Convention (following Uniswap V3 standard):
+//   - Positive delta: Amount the pool must RECEIVE (input token)
+//   - Negative delta: Amount the pool has SENT (output token)
+//
+// For zeroForOne swaps (token0 → token1):
+//   - amount0Delta > 0: Pool receives token0 (input)
+//   - amount1Delta < 0: Pool sends token1 (output)
+//
+// For oneForZero swaps (token1 → token0):
+//   - amount0Delta < 0: Pool sends token0 (output)
+//   - amount1Delta > 0: Pool receives token1 (input)
 //
 // Parameters:
-//   - _: interrealm call discriminator; callers pass 0.
-//   - rlm: propagated realm context passed to the callback.
-//   - p: pool whose input-token balance is incremented after payment.
-//   - tokenPath: path of the input token that the pool must receive.
-//   - amountInInt256: signed input amount; its int64 value is required from the callback.
-//   - amountOutInt256: signed output amount, normally negative under the delta convention.
-//   - zeroForOne: true for token0-to-token1 swaps, false for token1-to-token0 swaps.
-//   - swapCallback: callback that must pay the input token and return nil on success.
+//   - p: The pool instance
+//   - tokenPath: Path of the input token that pool must receive
+//   - amountInInt256: Amount pool must receive (positive i256.Int)
+//   - amountOutInt256: Amount pool has sent (negative i256.Int)
+//   - zeroForOne: Swap direction (true = token0 to token1)
+//   - swapCallback: Callback function that must transfer input tokens to pool
 //
-// Panics when the callback is nil or returns an error, payment is insufficient,
-// or the resulting pool balance cannot be represented safely.
+// The callback needed:
+//  1. Verify the caller is the legitimate pool contract address to prevent unauthorized invocations
+//  2. Transfer at least `amountIn` of input tokens to the pool
+//  3. Return nil on success, or an error to revert the swap
+//
+// Example callback implementation:
+//
+//	func(cur realm, amount0Delta, amount1Delta int64, _ *pool.CallbackMarker) error {
+//	    // Security check: ensure this callback is invoked by the legitimate pool
+//	    caller := runtime.PreviousRealm().Address()
+//	    poolAddr := chain.PackageAddress("gno.land/r/gnoswap/pool")
+//
+//	    if caller != poolAddr {
+//	        panic("unauthorized caller")
+//	    }
+//
+//	    if amount0Delta > 0 {
+//	        // Transfer token0 to pool
+//	        token0.Transfer(cross, poolAddr, amount0Delta)
+//	    }
+//	    if amount1Delta > 0 {
+//	        // Transfer token1 to pool
+//	        token1.Transfer(cross, poolAddr, amount1Delta)
+//	    }
+//	    return nil
+//	}
 func (i *poolV1) safeSwapCallback(
 	_ int,
 	rlm realm,
@@ -209,17 +264,8 @@ func (i *poolV1) safeSwapCallback(
 	p.SetBalances(poolBalances)
 }
 
-// validatePoolBalance checks that amount is non-negative and does not exceed
-// the selected token balance before a transfer out of the pool.
-//
-// Parameters:
-//   - token0: current token0 balance.
-//   - token1: current token1 balance.
-//   - amount: amount to subtract from the selected balance.
-//   - isToken0: true to validate token0, false to validate token1.
-//
-// Returns:
-//   - error: nil when the selected balance covers amount; otherwise an error describing the violation.
+// validatePoolBalance checks if the pool has sufficient balance of either token0 and token1
+// before proceeding with a transfer. This prevents the pool won't go into a negative balance.
 func validatePoolBalance(token0, token1, amount int64, isToken0 bool) error {
 	if amount < 0 {
 		return ufmt.Errorf("%v. amount(%d) must be positive", errTransferFailed, amount)
@@ -243,18 +289,8 @@ func validatePoolBalance(token0, token1, amount int64, isToken0 bool) error {
 	return nil
 }
 
-// updatePoolBalance calculates the selected token balance after a transfer out.
-// It rejects negative amounts and subtraction that would make the balance negative.
-//
-// Parameters:
-//   - token0: current token0 balance.
-//   - token1: current token1 balance.
-//   - amount: amount to subtract from the selected balance.
-//   - isToken0: true to update token0, false to update token1.
-//
-// Returns:
-//   - int64: selected token balance after subtracting amount; zero on error.
-//   - error: nil when subtraction succeeds; non-nil for a negative amount or insufficient balance.
+// updatePoolBalance calculates the new balance after a transfer and validate.
+// It ensures the resulting balance won't be negative or overflow.
 func updatePoolBalance(
 	token0, token1, amount int64,
 	isToken0 bool,

@@ -10,12 +10,6 @@ type ExternalIncentiveResolver struct {
 }
 
 // isActive checks if the incentive is currently active at the given timestamp
-//
-// Parameters:
-//   - currentTimestamp: Timestamp in Unix seconds at which to evaluate the incentive window.
-//
-// Returns:
-//   - active: True when currentTimestamp is between the inclusive start and end timestamps; false otherwise.
 func (self *ExternalIncentiveResolver) isActive(currentTimestamp int64) bool {
 	return currentTimestamp >= self.StartTimestamp() && currentTimestamp <= self.EndTimestamp()
 }
@@ -43,10 +37,7 @@ func (self *ExternalIncentiveResolver) IsStarted(currentTimestamp int64) bool {
 }
 
 // addDistributedRewardAmount adds the given amount to the distributed reward amount.
-// It records reward delivered to positions and reward refunded when an incentive ends.
-//
-// Parameters:
-//   - amount: Reward amount in the incentive token's smallest units to add to the distributed total.
+// This function is used to add the distributed reward amount when the incentive is un-staked and refunded.
 func (self *ExternalIncentiveResolver) addDistributedRewardAmount(amount int64) {
 	distributedRewardAmount := gnsmath.SafeAddInt64(self.DistributedRewardAmount(), amount)
 	self.SetDistributedRewardAmount(distributedRewardAmount)
@@ -54,9 +45,6 @@ func (self *ExternalIncentiveResolver) addDistributedRewardAmount(amount int64) 
 
 // addAccumulatedPenaltyAmount adds the given amount to the accumulated penalty amount.
 // Called during CollectReward to track warmup penalties for later collection.
-//
-// Parameters:
-//   - amount: Penalty amount in the incentive token's smallest units to add to the accumulated total.
 func (self *ExternalIncentiveResolver) addAccumulatedPenaltyAmount(amount int64) {
 	accumulatedPenaltyAmount := gnsmath.SafeAddInt64(self.AccumulatedPenaltyAmount(), amount)
 	self.SetAccumulatedPenaltyAmount(accumulatedPenaltyAmount)
@@ -138,12 +126,6 @@ func (self *DepositResolver) addCollectedExternalReward(incentiveID string, rewa
 
 // updateInternalRewardLastCollectTime updates the last collect time for the internal reward.
 // It returns an error if the current time is less than the last collect time for the internal reward.
-//
-// Parameters:
-//   - currentTime: New internal reward collection time in Unix seconds; must not precede the existing cursor.
-//
-// Returns:
-//   - err: Non-nil when currentTime is earlier than the existing internal cursor; nil after storing the new cursor.
 func (self *DepositResolver) updateInternalRewardLastCollectTime(currentTime int64) error {
 	if self.InternalRewardLastCollectTime() > currentTime {
 		return makeErrorWithDetails(errNotAvailableUpdateCollectTime, "currentTime must be greater than internal reward last collect time")
@@ -156,13 +138,6 @@ func (self *DepositResolver) updateInternalRewardLastCollectTime(currentTime int
 
 // updateExternalRewardLastCollectTime lazily updates the last collect time for the external reward for the given incentive ID.
 // It returns an error if the current time is less than the last collect time for the external reward for the given incentive ID.
-//
-// Parameters:
-//   - incentiveID: External incentive ID whose collection cursor should be advanced.
-//   - currentTime: New collection time in Unix seconds; must not precede the existing cursor for that incentive.
-//
-// Returns:
-//   - err: Non-nil when currentTime is earlier than the incentive's existing cursor; nil after storing the new cursor.
 func (self *DepositResolver) updateExternalRewardLastCollectTime(incentiveID string, currentTime int64) error {
 	if self.ExternalRewardLastCollectTimes() == nil {
 		self.SetExternalRewardLastCollectTimes(make(map[string]int64))

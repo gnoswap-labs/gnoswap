@@ -15,10 +15,7 @@ func init(cur realm) {
 	initRbac(cur)
 }
 
-// initRbac initializes the RBAC manager with the default admin and role mappings.
-//
-// Parameters:
-//   - cur: current realm context used to register each default role in access control.
+// initRbac initializes RBAC manager with default admin and role mappings.
 func initRbac(cur realm) {
 	manager = prbac.NewRBACWithAddress(ADMIN)
 

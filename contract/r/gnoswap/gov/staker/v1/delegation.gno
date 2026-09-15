@@ -107,14 +107,7 @@ func (r *DelegationResolver) UnDelegateWithoutLockup(
 	r.delegation.SetCollectedAmount(gnsmath.SafeAddInt64(r.delegation.CollectedAmount(), amount))
 }
 
-// processCollection collects every withdrawal currently available at currentTime.
-//
-// Parameters:
-//   - currentTime: current Unix timestamp used to determine collectible withdrawals
-//
-// Returns:
-//   - int64: total amount collected and removed from pending withdrawals
-//   - error: collection or collected-amount update error; nil when all eligible withdrawals are processed
+// processCollection handles the actual collection logic
 func (r *DelegationResolver) processCollection(currentTime int64) (int64, error) {
 	collectedAmount := int64(0)
 	withdraws := r.delegation.Withdraws()

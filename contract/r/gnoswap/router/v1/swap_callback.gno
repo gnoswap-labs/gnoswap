@@ -73,14 +73,7 @@ func (r *routerV1) SwapCallback(
 	return nil
 }
 
-// transferToPool transfers an owed input amount from payer to the pool.
-//
-// Parameters:
-//   - _: leading callback discriminator; callers pass 0
-//   - rlm: propagated current realm context used for token transfer authorization
-//   - token: token contract path to transfer
-//   - amount: positive token amount owed to the pool
-//   - payer: address whose balance is debited; the router address uses a direct transfer
+// transferToPool transfers tokens from router to pool
 func (r *routerV1) transferToPool(_ int, rlm realm, token string, amount *u256.Uint, payer address) {
 	balance := common.BalanceOf(token, payer)
 

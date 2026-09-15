@@ -7,13 +7,6 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 )
 
-// RunFuzzTest executes a fuzz property for the requested number of iterations and records its outcomes.
-//
-// Parameters:
-//   - t: Test logger used by the fuzz engine and final result report.
-//   - iterations: Number of valid fuzz cases requested from the engine.
-//   - fn: Callback invoked once per generated case with its fuzz state, result accumulator, and one-based iteration number.
-//   - options: Optional settings in positional order: options[0] bool enables panic handling (default true), and options[1] bool enables per-iteration logging (default false); other values are ignored.
 func RunFuzzTest(t fuzz.TestingT, iterations int, fn func(*fuzz.T, *Result, int), options ...any) {
 	result := NewFuzzResult(fuzz.BASE_SEED)
 	isHandlePanic := true
