@@ -14,7 +14,7 @@ import (
 	"gno.land/p/gnoswap/utils/v1"
 
 	"gno.land/r/gnoswap/access"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"

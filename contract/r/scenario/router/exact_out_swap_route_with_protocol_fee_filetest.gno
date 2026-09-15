@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/router"
 
 	prabc "gno.land/p/gnoswap/rbac/v1"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"

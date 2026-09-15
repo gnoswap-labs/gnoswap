@@ -129,7 +129,7 @@ func TestAssert_assertIsAdmin(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
 
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac/v1"))
 	initRbac(cur)
 
 	tests := []struct {
@@ -221,7 +221,7 @@ func TestAssert_assertIsAdminWithRoleUpdate(cur realm, t *testing.T) {
 func TestAssert_assertFunctionsIntegration(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac/v1"))
 	initRbac(cur)
 
 	// Test complete ownership transfer workflow with assertions
@@ -240,7 +240,7 @@ func TestAssert_assertFunctionsIntegration(cur realm, t *testing.T) {
 	t.Run("Pending owner assertions after transfer", func(cur realm, t *testing.T) {
 		// Transfer ownership
 		manager = prbac.NewRBACWithAddress(ADMIN)
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac/v1"))
 		initRbac(cur)
 
 		testing.SetRealm(testing.NewUserRealm(ADMIN))
@@ -261,7 +261,7 @@ func TestAssert_assertFunctionsIntegration(cur realm, t *testing.T) {
 	t.Run("Admin assertions", func(cur realm, t *testing.T) {
 		// Reset for clean admin test
 		manager = prbac.NewRBACWithAddress(ADMIN)
-		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+		testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac/v1"))
 		initRbac(cur)
 
 		// ADMIN should pass admin assertion
@@ -410,7 +410,7 @@ func TestAssert_assertIsValidAddress(cur realm, t *testing.T) {
 func TestAssert_assertIsAdminOrGovernance(cur realm, t *testing.T) {
 	// Reset manager for test
 	manager = prbac.NewRBACWithAddress(ADMIN)
-	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac"))
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac/v1"))
 	initRbac(cur)
 
 	tests := []struct {

@@ -7,7 +7,7 @@ import (
 	"gno.land/p/gnoswap/version_manager/v1"
 
 	// initialize rbac roles
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 )
 
 var (

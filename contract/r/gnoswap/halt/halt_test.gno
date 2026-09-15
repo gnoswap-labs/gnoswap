@@ -7,7 +7,7 @@ import (
 	"gno.land/r/gnoswap/access"
 
 	prbac "gno.land/p/gnoswap/rbac/v1"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 )
 
 func TestHalt_SetHaltLevel_Internal(cur realm, t *testing.T) {

@@ -26,7 +26,7 @@ import (
 
 	uassert "gno.land/p/nt/uassert/v0"
 
-	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
+	_ "gno.land/r/gnoswap/rbac/v1" // initialize rbac package
 )
 
 const (

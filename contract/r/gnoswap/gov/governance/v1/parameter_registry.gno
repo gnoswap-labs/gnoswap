@@ -9,7 +9,7 @@ import (
 	cm "gno.land/r/gnoswap/common"
 	cp "gno.land/r/gnoswap/community_pool"
 	en "gno.land/r/gnoswap/emission"
-	"gno.land/r/gnoswap/rbac"
+	"gno.land/r/gnoswap/rbac/v1"
 
 	"gno.land/r/gnoswap/gov/governance"
 	gs "gno.land/r/gnoswap/gov/staker"
@@ -35,7 +35,7 @@ func init() {
 const (
 	GNS_TOKEN_KEY       = "gno.land/r/gnoswap/gns.GNS"
 	HALT_PATH           = "gno.land/r/gnoswap/halt"
-	RBAC_PATH           = "gno.land/r/gnoswap/rbac"
+	RBAC_PATH           = "gno.land/r/gnoswap/rbac/v1"
 	ACCESS_PATH         = "gno.land/r/gnoswap/access"
 	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
 	COMMON_PATH         = "gno.land/r/gnoswap/common"

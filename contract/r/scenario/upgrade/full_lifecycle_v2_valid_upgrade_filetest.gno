@@ -88,7 +88,7 @@ import (
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/gov/governance/v1"

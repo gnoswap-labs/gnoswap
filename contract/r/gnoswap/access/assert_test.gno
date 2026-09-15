@@ -752,7 +752,7 @@ func TestAssertIsValidAddress(cur realm, t *testing.T) {
 }
 
 func TestAssert_assertIsRBAC(cur realm, t *testing.T) {
-	rbacAddress := chain.PackageAddress("gno.land/r/gnoswap/rbac")
+	rbacAddress := chain.PackageAddress("gno.land/r/gnoswap/rbac/v1")
 	unauthorizedAddr := testutils.TestAddress("unauthorized")
 
 	tests := []struct {

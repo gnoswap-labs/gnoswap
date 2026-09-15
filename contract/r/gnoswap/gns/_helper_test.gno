@@ -11,7 +11,7 @@ import (
 
 	"gno.land/r/gnoswap/access"
 
-	_ "gno.land/r/gnoswap/rbac" // initialize rbac package
+	_ "gno.land/r/gnoswap/rbac/v1" // initialize rbac package
 )
 
 var adminAddr = access.MustGetAddress(prabc.ROLE_ADMIN.String())

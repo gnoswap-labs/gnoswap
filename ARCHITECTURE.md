@@ -218,7 +218,7 @@ These contracts form the core infrastructure and are never upgraded after deploy
 
 - **`p/gnoswap/store/v1`**: Core storage infrastructure providing type-agnostic key-value storage
 - **`r/gnoswap/access`**: Access control system managing role-based permissions
-- **`r/gnoswap/rbac`**: Role-based access control for managing role addresses
+- **`r/gnoswap/rbac/v1`**: Role-based access control for managing role addresses
 - **`r/gnoswap/halt`**: Emergency halt system for protocol safety
 
 **Characteristics:**

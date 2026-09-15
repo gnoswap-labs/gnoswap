@@ -20,7 +20,7 @@ import (
 	_ "gno.land/r/gnoswap/pool/v1"
 	pn "gno.land/r/gnoswap/position"
 	_ "gno.land/r/gnoswap/position/v1"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 	rt "gno.land/r/gnoswap/router"
 	_ "gno.land/r/gnoswap/router/v1"
 	"gno.land/r/gnoswap/scenarioutils"

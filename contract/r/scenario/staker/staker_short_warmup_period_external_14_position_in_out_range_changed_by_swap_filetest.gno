@@ -9,7 +9,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prabc "gno.land/p/gnoswap/rbac/v1"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	"gno.land/r/gnoswap/access"
 

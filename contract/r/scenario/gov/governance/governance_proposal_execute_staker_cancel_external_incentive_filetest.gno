@@ -24,7 +24,7 @@ import (
 	ufmt "gno.land/p/nt/ufmt/v0"
 
 	prbac "gno.land/p/gnoswap/rbac/v1"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee"

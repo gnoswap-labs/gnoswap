@@ -29,7 +29,7 @@ import (
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 	"gno.land/r/gnoswap/staker"
 
 	_ "gno.land/r/gnoswap/common/v1"

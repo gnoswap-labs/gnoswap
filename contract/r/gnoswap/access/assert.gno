@@ -9,7 +9,7 @@ import (
 
 // rbacPackagePath is the package path of the RBAC contract
 // Used to verify that role management functions are called only by RBAC
-const rbacPackagePath = "gno.land/r/gnoswap/rbac"
+const rbacPackagePath = "gno.land/r/gnoswap/rbac/v1"
 
 // AssertIsRlmCurrent panics if the realm token is not the current crossing frame.
 func AssertIsRlmCurrent(_ int, rlm realm) {

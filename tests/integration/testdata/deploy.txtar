@@ -121,7 +121,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/access -pkgpat
 # stdout 'STORAGE FEE:    (2|3)[0-9]{6}ugnot'
 
 ### deploy rbac realm (expected gas fee: 13302ugnot, gas wanted: 13302000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/rbac -pkgpath gno.land/r/gnoswap/rbac -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/rbac/v1 -pkgpath gno.land/r/gnoswap/rbac/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   13[0-9]{6}'
 # stdout 'STORAGE DELTA:  (5|6)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (5|6)[0-9]{6}ugnot'

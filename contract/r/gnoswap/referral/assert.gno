@@ -4,7 +4,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac/v1"
 
 	"gno.land/r/gnoswap/access"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 )
 
 // MUST BE IMMUTABLE, DO NOT MODIFY.

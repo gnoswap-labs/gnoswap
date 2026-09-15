@@ -15,7 +15,7 @@ import (
 	"gno.land/r/gnoswap/halt"
 
 	_ "gno.land/r/gnoswap/common/v1"
-	_ "gno.land/r/gnoswap/rbac" // Initialize contract roles
+	_ "gno.land/r/gnoswap/rbac/v1" // Initialize contract roles
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/obl"

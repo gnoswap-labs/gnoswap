@@ -42,7 +42,7 @@ import (
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v1"
 	_ "gno.land/r/gnoswap/protocol_fee/v2_valid"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	"gno.land/r/onbloc/bar"
 )

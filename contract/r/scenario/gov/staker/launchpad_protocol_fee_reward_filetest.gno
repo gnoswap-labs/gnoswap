@@ -14,7 +14,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/protocol_fee"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	pf "gno.land/r/gnoswap/protocol_fee"

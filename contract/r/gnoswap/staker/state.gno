@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	prbac "gno.land/p/gnoswap/rbac/v1"
-	_ "gno.land/r/gnoswap/rbac" // initialize readable contract role(s)
+	_ "gno.land/r/gnoswap/rbac/v1" // initialize readable contract role(s)
 
 	"gno.land/p/gnoswap/store/v1"
 	"gno.land/p/gnoswap/version_manager/v1"

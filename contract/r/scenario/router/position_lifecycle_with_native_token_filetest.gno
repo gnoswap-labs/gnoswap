@@ -22,7 +22,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 
 	prabc "gno.land/p/gnoswap/rbac/v1"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 
 	_ "gno.land/r/gnoswap/common/v1"
 	_ "gno.land/r/gnoswap/pool/v1"

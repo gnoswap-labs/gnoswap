@@ -7,7 +7,7 @@ import (
 	"gno.land/p/gnoswap/store/v1"
 	"gno.land/p/gnoswap/version_manager/v1"
 	"gno.land/r/gnoswap/access"
-	_ "gno.land/r/gnoswap/rbac"
+	_ "gno.land/r/gnoswap/rbac/v1"
 )
 
 var adminAddr = access.MustGetAddress(prbac.ROLE_ADMIN.String())
