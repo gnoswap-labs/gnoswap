@@ -1,7 +1,6 @@
 package referral
 
 import (
-	"chain/runtime/unsafe"
 	"testing"
 	"time"
 
@@ -217,6 +216,10 @@ func TestRateLimit_SelfReferralTakesPrecedence(cur realm, t *testing.T) {
 	uassert.ErrorContains(t, err, ErrSelfReferral)
 }
 
+// defaultTestCaller is the origin caller the gno test runner starts with.
+// Caller setup helpers restore it instead of reading unsafe.OriginCaller.
+const defaultTestCaller = address("g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm")
+
 func setupRateLimitKeeper(t *testing.T) *keeper {
 	t.Helper()
 	return NewKeeper().(*keeper)
@@ -224,17 +227,15 @@ func setupRateLimitKeeper(t *testing.T) *keeper {
 
 func setupValidCaller(t *testing.T) func() {
 	t.Helper()
-	origCaller := unsafe.OriginCaller()
 	routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
 	testing.SetOriginCaller(routerAddr)
 	return func() {
-		testing.SetOriginCaller(origCaller)
+		testing.SetOriginCaller(defaultTestCaller)
 	}
 }
 
 func setupRateLimitCaller(t *testing.T, caller string) func() {
 	t.Helper()
-	origCaller := unsafe.OriginCaller()
 	switch caller {
 	case "router":
 		routerAddr, _ := access.GetAddress(prabc.ROLE_ROUTER.String())
@@ -243,6 +244,6 @@ func setupRateLimitCaller(t *testing.T, caller string) func() {
 		testing.SetOriginCaller(address("unauthorized"))
 	}
 	return func() {
-		testing.SetOriginCaller(origCaller)
+		testing.SetOriginCaller(defaultTestCaller)
 	}
 }
