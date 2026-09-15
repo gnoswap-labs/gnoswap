@@ -19,7 +19,7 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/gnoswap/halt"
+	"gno.land/r/gnoswap/halt/v1"
 	sr "gno.land/r/gnoswap/staker"
 )
 
@@ -224,6 +224,13 @@ func TestCollectReward_EmissionHaltDefersInternalReward(cur realm, t *testing.T)
 
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
+	defer func() {
+		func(cur realm) {
+			testing.SetOriginCaller(adminAddr)
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+		}(cross(cur))
+	}()
 	testing.SkipHeights(100)
 	collectableDuringHalt, err := sr.CollectableEmissionReward(positionId)
 	uassert.NoError(t, err)
@@ -240,6 +247,18 @@ func TestCollectReward_EmissionHaltDefersInternalReward(cur realm, t *testing.T)
 	uassert.Equal(t, stakerGnsBefore, gns.BalanceOf(stakerV1Addr))
 	uassert.Equal(t, internalLastCollectBefore, resolver.InternalRewardLastCollectTime())
 	uassert.Equal(t, collectedInternalBefore, resolver.CollectedInternalReward())
+
+	// A second halted collect must observe the persisted external cursor and pay nothing twice.
+	userBarAfterFirstCollect := TokenBalance(t, barPath, addr01)
+	secondInternalToUser, secondInternalPenalty, secondExternalToUser, secondExternalPenalty := sr.CollectReward(cross(cur), positionId)
+	uassert.Equal(t, "0", secondInternalToUser)
+	uassert.Equal(t, "0", secondInternalPenalty)
+	uassert.Equal(t, 0, len(secondExternalToUser))
+	uassert.Equal(t, 0, len(secondExternalPenalty))
+	uassert.Equal(t, userBarAfterFirstCollect, TokenBalance(t, barPath, addr01))
+	collectableExternalAfterSecondCollect, err := sr.CollectableExternalIncentiveReward(positionId, barIncentiveId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), collectableExternalAfterSecondCollect)
 
 	// The emission-only entry point is also a no-op while halted.
 	emissionToUser, emissionPenalty := sr.CollectEmissionReward(cross(cur), positionId)

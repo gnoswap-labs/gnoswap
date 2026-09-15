@@ -48,9 +48,10 @@ provided.
 - **Invariant the deferred collect depends on**: every path that changes the tier layout must materialize the reward cache of all tiered pools first, at the current time (`changeTier` does this via `cacheReward`). A tier change that skips it would let `resolveInternalRewardSegments` re-rate a checkpoint's closed window with the new layout.
 
 ### Emission Halt
-- `MintAndDistributeGns` returning `active = false` defers internal reward calculation, cache updates, checkpoint settlement, and GNS transfers.
+- `MintAndDistributeGns` returning `active = false` defers internal reward calculation, cache updates, internal checkpoint settlement, and GNS transfers.
 - Internal reward cursors remain unchanged during the halt, so the accrued interval is payable after emission resumes.
 - `CollectReward` continues discovering, paying, and checkpointing external incentives while internal settlement is deferred.
+- A tiered position unstaked during an emission halt cannot be staked again until emission resumes and a collect clears its internal checkpoint source. A checkpoint whose internal reward and penalty are both zero is settled during the halted collect and does not block re-staking.
 
 ### External Incentives
 - Active window: `startTimestamp <= now < endTimestamp`. Both bounds required.

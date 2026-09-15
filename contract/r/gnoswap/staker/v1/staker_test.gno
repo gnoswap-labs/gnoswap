@@ -729,7 +729,8 @@ func TestUnStakeToken(cur realm, t *testing.T) {
 		"upper tick liquidity should be reduced")
 }
 
-func TestUnStakeToken_EmergencyHaltDefersEmissionReward(cur realm, t *testing.T) {
+func setupUnstakeHaltPosition(cur realm, t *testing.T, tier uint64) (uint64, string) {
+	t.Helper()
 	initStakerTest(cur, t)
 
 	poolPath := pl.GetPoolPath(barPath, bazPath, fee3000)
@@ -738,8 +739,21 @@ func TestUnStakeToken_EmergencyHaltDefersEmissionReward(cur realm, t *testing.T)
 	createDefaultInitialPoolForStakerTest(cur, t)
 	emission.SetDistributionStartTime(cross(cur), time.Now().Unix()+1)
 	CreatePool(cur, barPath, bazPath, fee3000, "79228162514264337593543950336", adminAddr)
-	mockInstanceSetPoolTier(cross(cur), poolPath, 1)
+	mockInstanceSetPoolTier(cross(cur), poolPath, tier)
 	mockInstanceAddToken(cross(cur), barPath)
+
+	if tier == 0 {
+		startTimestamp := time.Now().AddDate(0, 0, 2).Truncate(24 * time.Hour).Unix()
+		CreateExternalIncentiveAsAdmin(
+			cur, t,
+			poolPath,
+			barPath,
+			rewardMinimumAmount,
+			startTimestamp,
+			startTimestamp+incentiveDuration,
+		)
+		testing.SkipHeights((startTimestamp - time.Now().Unix()) / 5)
+	}
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	TokenFaucet(cur, t, barPath, addr01)
@@ -769,10 +783,18 @@ func TestUnStakeToken_EmergencyHaltDefersEmissionReward(cur realm, t *testing.T)
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	sr.StakeToken(cross(cur), positionId, "")
 
-	pool := getMockInstance().getPools().GetPoolOrNil(poolPath)
-	uassert.NotNil(t, pool)
-	NewPoolResolver(pool).cacheReward(time.Now().Unix(), 1_000_000)
+	if tier > 0 {
+		pool := getMockInstance().getPools().GetPoolOrNil(poolPath)
+		uassert.NotNil(t, pool)
+		NewPoolResolver(pool).cacheReward(time.Now().Unix(), 1_000_000)
+	}
 	testing.SkipHeights(100)
+
+	return positionId, poolPath
+}
+
+func TestUnStakeToken_EmergencyHaltDefersEmissionReward(cur realm, t *testing.T) {
+	positionId, poolPath := setupUnstakeHaltPosition(cur, t, 1)
 
 	collectableBeforeHalt, err := sr.CollectableEmissionReward(positionId)
 	uassert.NoError(t, err)
@@ -781,6 +803,13 @@ func TestUnStakeToken_EmergencyHaltDefersEmissionReward(cur realm, t *testing.T)
 
 	testing.SetRealm(adminRealm)
 	halt.SetHaltLevel(cross(cur), halt.HaltLevelEmergency)
+	defer func() {
+		func(cur realm) {
+			testing.SetOriginCaller(adminAddr)
+			testing.SetRealm(adminRealm)
+			halt.SetHaltLevel(cross(cur), halt.HaltLevelNone)
+		}(cross(cur))
+	}()
 
 	testing.SetRealm(testing.NewUserRealm(addr01))
 	resultPoolPath := sr.UnStakeToken(cross(cur), positionId)
@@ -803,6 +832,40 @@ func TestUnStakeToken_EmergencyHaltDefersEmissionReward(cur realm, t *testing.T)
 	uassert.True(t, penaltyAfterResume >= 0)
 	uassert.Equal(t, ownerGnsBefore+rewardAfterResume, gns.BalanceOf(addr01))
 	uassert.False(t, sr.HasUnstakedPosition(positionId))
+}
+
+func TestUnStakeToken_EmissionHaltAllowsZeroEmissionRestake(cur realm, t *testing.T) {
+	positionId, poolPath := setupUnstakeHaltPosition(cur, t, 0)
+
+	collectable, err := sr.CollectableEmissionReward(positionId)
+	uassert.NoError(t, err)
+	uassert.Equal(t, int64(0), collectable)
+
+	testing.SetRealm(adminRealm)
+	halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, true)
+	defer func() {
+		func(cur realm) {
+			testing.SetOriginCaller(adminAddr)
+			testing.SetRealm(adminRealm)
+			halt.SetOperationStatus(cross(cur), halt.OpTypeEmission, false)
+		}(cross(cur))
+	}()
+
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	resultPoolPath := sr.UnStakeToken(cross(cur), positionId)
+	uassert.Equal(t, poolPath, resultPoolPath)
+	uassert.True(t, sr.HasUnstakedPosition(positionId))
+
+	internalReward, internalPenalty, externalRewards, _ := sr.CollectReward(cross(cur), positionId)
+	uassert.Equal(t, "0", internalReward)
+	uassert.Equal(t, "0", internalPenalty)
+	uassert.True(t, externalRewards[barPath] > 0)
+	uassert.False(t, sr.HasUnstakedPosition(positionId))
+
+	mockNFTApprove(cur, stakerAddr, positionId)
+	testing.SetRealm(testing.NewUserRealm(addr01))
+	sr.StakeToken(cross(cur), positionId, "")
+	uassert.True(t, getMockInstance().getDeposits().Has(positionId))
 }
 
 // TestStakeToken_EmptyIncentiveList tests that after staking,

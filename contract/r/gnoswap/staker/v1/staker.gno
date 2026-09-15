@@ -746,7 +746,7 @@ func (s *stakerV1) CollectExternalIncentiveReward(_ int, rlm realm, positionId u
 	rewardParam := s.newRewardCollectParam(target, currentTime, blockHeight)
 	rewards, rewardUpdate := s.calculateExternalPositionReward(rewardParam, incentiveId)
 	reward := aggregateRewards(rewards)
-	s.updateExternalPositionReward(rewardParam, rewardUpdate)
+	s.updateExternalPositionReward(cross(rlm), rewardParam, rewardUpdate)
 
 	ctx := s.newCollectContext(0, rlm, target, currentTime, blockHeight)
 
@@ -803,10 +803,23 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 		if err != nil {
 			panic(err)
 		}
-		s.updatePositionReward(rewardParam, rewardUpdate)
+		s.updatePositionReward(cross(rlm), rewardParam, rewardUpdate)
 	} else {
 		rewards, rewardUpdate = s.calculateExternalPositionRewards(rewardParam)
-		s.updateExternalPositionReward(rewardParam, rewardUpdate)
+		s.updateExternalPositionReward(cross(rlm), rewardParam, rewardUpdate)
+	}
+
+	// A checkpoint with no internal reward has no emission debt to defer. Marking it now
+	// prevents emission-only halts from locking zero-emission positions out of re-staking.
+	if !emissionActive && target.isCheckpoint() {
+		internalRewards, _, err := s.calculateInternalPositionReward(rewardParam)
+		if err != nil {
+			panic(err)
+		}
+		internalReward := aggregateRewards(internalRewards)
+		if internalReward.Internal == 0 && internalReward.InternalPenalty == 0 {
+			s.markEmissionCollected(0, rlm, target)
+		}
 	}
 	reward := aggregateRewards(rewards)
 
@@ -830,6 +843,12 @@ func (s *stakerV1) CollectReward(_ int, rlm realm, positionId uint64) (string, s
 
 		toUserExternalReward[rewardToken] = gnsmath.SafeAddInt64(toUserExternalReward[rewardToken], rewardAmount)
 		toUserExternalPenalty[rewardToken] = gnsmath.SafeAddInt64(toUserExternalPenalty[rewardToken], rewardPenalty)
+	}
+
+	// The halted path does not reach deliverEmissionReward, so persist live-deposit index and
+	// cursor updates after external delivery. For checkpoint targets this is intentionally a no-op.
+	if !emissionActive {
+		ctx.persistDeposit(s)
 	}
 
 	internalRewardToUser := int64(0)
