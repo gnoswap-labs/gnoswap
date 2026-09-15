@@ -1,11 +1,11 @@
 // emission halt distribution
 //
 // Scenario:
-//   1. Collect emission reward before halt
-//   2. Halt emission
-//   3. Collect emission reward after halt
-//   4. Resume emission
-//   5. Collect emission reward after resume
+//  1. Collect internal reward before halt
+//  2. Halt emission after another reward becomes collectable
+//  3. Verify combined and emission-only collects defer GNS without advancing accounting
+//  4. Stake another position during the halt
+//  5. Resume emission and collect both positions' deferred rewards
 
 // PKGPATH: gno.land/r/demo/main
 
@@ -66,6 +66,8 @@ var (
 	fee3000    uint32 = 3000
 
 	wugnotGnsPoolPath = ufmt.Sprintf("%s:%s:%d", wugnotPath, gnsPath, fee3000)
+
+	deferredQuote int64
 )
 
 func main(cur realm) {
@@ -86,33 +88,36 @@ func main(cur realm) {
 
 	ufmt.Println("[SCENARIO] 3. Collect rewards before halt")
 	collectRewards(cur, 1)
-	testing.SkipHeights(1)
+	testing.SkipHeights(3)
 	println()
 
 	ufmt.Println("[SCENARIO] 4. Set emission halt")
 	setEmissionHaltState(cur, true)
 	println()
 
-	ufmt.Println("[SCENARIO] 5. Collect rewards after halt")
-	testing.SkipHeights(1)
+	ufmt.Println("[SCENARIO] 5. Verify reward settlement is deferred during halt")
+	collectRewardsWhileHalted(cur, 1)
 	println()
 
-	ufmt.Println("[SCENARIO] 5. Mint position and stake after halt")
+	ufmt.Println("[SCENARIO] 6. Mint position and stake during halt")
 	testing.SetRealm(adminRealm)
 	testing.SetOriginSend(chain.Coins{{"ugnot", 100000000000000}})
 	wugnot.Deposit(cross(cur))
 	testing.SetOriginSend(chain.Coins{})
 	mintPositionAndStake(cur)
-	testing.SkipHeights(1)
+	testing.SkipHeights(3)
 	println()
 
-	ufmt.Println("[SCENARIO] 6. Resume emission")
+	ufmt.Println("[SCENARIO] 7. Resume emission")
 	setEmissionHaltState(cur, false)
 	println()
 
-	ufmt.Println("[SCENARIO] 7. Collect rewards after resume")
-	collectRewards(cur, 1, 2)
-	testing.SkipHeights(1)
+	ufmt.Println("[SCENARIO] 8. Collect deferred reward after resume")
+	collectDeferredRewardAfterResume(cur, 1)
+	println()
+
+	ufmt.Println("[SCENARIO] 9. Collect reward for position staked during halt")
+	collectRewards(cur, 2)
 	println()
 }
 
@@ -186,6 +191,73 @@ func setEmissionHaltState(cur realm, halted bool) {
 	ufmt.Printf("[INFO] Emission halt state set to %t\n", halted)
 }
 
+func collectRewardsWhileHalted(cur realm, positionId uint64) {
+	testing.SetRealm(adminRealm)
+
+	quote, err := staker.CollectableEmissionReward(positionId)
+	if err != nil {
+		panic(err)
+	}
+	deferredQuote = quote
+
+	cursorBefore, err := staker.GetDepositInternalRewardLastCollectTimestamp(positionId)
+	if err != nil {
+		panic(err)
+	}
+	collectedBefore, err := staker.GetDepositCollectedInternalReward(positionId)
+	if err != nil {
+		panic(err)
+	}
+	ownerBefore := gns.BalanceOf(adminAddr)
+	reserveBefore := gns.BalanceOf(stakerAddr)
+	distributedBefore := emission.GetDistributedToStaker()
+
+	internalReward, internalPenalty, externalRewards, externalPenalties := staker.CollectReward(cross(cur), positionId)
+
+	cursorAfterCombined, _ := staker.GetDepositInternalRewardLastCollectTimestamp(positionId)
+	collectedAfterCombined, _ := staker.GetDepositCollectedInternalReward(positionId)
+	ufmt.Printf("[EXPECTED] internal reward was collectable before halted collect: %t\n", quote > 0)
+	ufmt.Printf("[EXPECTED] combined collect deferred internal reward: %t\n", internalReward == "0" && internalPenalty == "0")
+	ufmt.Printf("[EXPECTED] combined collect returned no external rewards: %t\n", len(externalRewards) == 0 && len(externalPenalties) == 0)
+	ufmt.Printf("[EXPECTED] combined collect preserved owner GNS balance: %t\n", gns.BalanceOf(adminAddr) == ownerBefore)
+	ufmt.Printf("[EXPECTED] combined collect preserved staker GNS reserve: %t\n", gns.BalanceOf(stakerAddr) == reserveBefore)
+	ufmt.Printf("[EXPECTED] combined collect did not distribute GNS: %t\n", emission.GetDistributedToStaker() == distributedBefore)
+	ufmt.Printf("[EXPECTED] combined collect preserved internal cursor: %t\n", cursorAfterCombined == cursorBefore)
+	ufmt.Printf("[EXPECTED] combined collect preserved collected internal amount: %t\n", collectedAfterCombined == collectedBefore)
+
+	emissionReward, emissionPenalty := staker.CollectEmissionReward(cross(cur), positionId)
+	cursorAfterEmissionOnly, _ := staker.GetDepositInternalRewardLastCollectTimestamp(positionId)
+	collectedAfterEmissionOnly, _ := staker.GetDepositCollectedInternalReward(positionId)
+	ufmt.Printf("[EXPECTED] emission-only collect returned zero: %t\n", emissionReward == 0 && emissionPenalty == 0)
+	ufmt.Printf("[EXPECTED] emission-only collect preserved owner and reserve balances: %t\n",
+		gns.BalanceOf(adminAddr) == ownerBefore && gns.BalanceOf(stakerAddr) == reserveBefore)
+	ufmt.Printf("[EXPECTED] emission-only collect preserved internal accounting: %t\n",
+		cursorAfterEmissionOnly == cursorBefore && collectedAfterEmissionOnly == collectedBefore)
+}
+
+func collectDeferredRewardAfterResume(cur realm, positionId uint64) {
+	testing.SetRealm(adminRealm)
+
+	quoteAfterResume, err := staker.CollectableEmissionReward(positionId)
+	if err != nil {
+		panic(err)
+	}
+	cursorBefore, _ := staker.GetDepositInternalRewardLastCollectTimestamp(positionId)
+	collectedBefore, _ := staker.GetDepositCollectedInternalReward(positionId)
+	ownerBefore := gns.BalanceOf(adminAddr)
+
+	rewardToUser, rewardPenalty := staker.CollectEmissionReward(cross(cur), positionId)
+
+	cursorAfter, _ := staker.GetDepositInternalRewardLastCollectTimestamp(positionId)
+	collectedAfter, _ := staker.GetDepositCollectedInternalReward(positionId)
+	ownerDelta := gns.BalanceOf(adminAddr) - ownerBefore
+	ufmt.Printf("[EXPECTED] deferred quote remained available after resume: %t\n", quoteAfterResume >= deferredQuote && deferredQuote > 0)
+	ufmt.Printf("[EXPECTED] resumed collect paid deferred reward: %t\n", rewardToUser > 0 && ownerDelta == rewardToUser)
+	ufmt.Printf("[EXPECTED] resumed collect returned a non-negative penalty: %t\n", rewardPenalty >= 0)
+	ufmt.Printf("[EXPECTED] resumed collect advanced internal cursor: %t\n", cursorAfter > cursorBefore)
+	ufmt.Printf("[EXPECTED] resumed collect advanced collected internal amount: %t\n", collectedAfter > collectedBefore)
+}
+
 func collectRewards(cur realm, positionIds ...uint64) {
 	testing.SetRealm(adminRealm)
 
@@ -244,22 +316,39 @@ func checkEmissionDistributionChangesFn(cur realm, fn func()) {
 // [SCENARIO] 4. Set emission halt
 // [INFO] Emission halt state set to true
 //
-// [SCENARIO] 5. Collect rewards after halt
+// [SCENARIO] 5. Verify reward settlement is deferred during halt
+// [EXPECTED] internal reward was collectable before halted collect: true
+// [EXPECTED] combined collect deferred internal reward: true
+// [EXPECTED] combined collect returned no external rewards: true
+// [EXPECTED] combined collect preserved owner GNS balance: true
+// [EXPECTED] combined collect preserved staker GNS reserve: true
+// [EXPECTED] combined collect did not distribute GNS: true
+// [EXPECTED] combined collect preserved internal cursor: true
+// [EXPECTED] combined collect preserved collected internal amount: true
+// [EXPECTED] emission-only collect returned zero: true
+// [EXPECTED] emission-only collect preserved owner and reserve balances: true
+// [EXPECTED] emission-only collect preserved internal accounting: true
 //
-// [SCENARIO] 5. Mint position and stake after halt
+// [SCENARIO] 6. Mint position and stake during halt
 // [INFO] Minting and staking position
 // [EXPECTED] Position ID should be 2
 // [EXPECTED] Liquidity should be 170132354
 // [EXPECTED] Amount0 should be 50000000
 // [EXPECTED] Amount1 should be 50000000
 //
-// [SCENARIO] 6. Resume emission
+// [SCENARIO] 7. Resume emission
 // [INFO] Emission halt state set to false
 //
-// [SCENARIO] 7. Collect rewards after resume
-// [INFO] reward accumulated for position 1: 19865688
-// [INFO] reward accumulated for position 2: 3973138
-// [INFO] Check emission distribution amount to staker (last distributed: 1234567915)
-// [INFO] Emission distribution balance changed: 80265409 (0 seconds)
-// [EXPECTED] total staker balance changes: 80265409
-// [EXPECTED] total reward: 23838826
+// [SCENARIO] 8. Collect deferred reward after resume
+// [EXPECTED] deferred quote remained available after resume: true
+// [EXPECTED] resumed collect paid deferred reward: true
+// [EXPECTED] resumed collect returned a non-negative penalty: true
+// [EXPECTED] resumed collect advanced internal cursor: true
+// [EXPECTED] resumed collect advanced collected internal amount: true
+//
+// [SCENARIO] 9. Collect reward for position staked during halt
+// [INFO] reward accumulated for position 2: 11919412
+// [INFO] Check emission distribution amount to staker (last distributed: 1234567930)
+// [INFO] Emission distribution balance changed: 0 (0 seconds)
+// [EXPECTED] total staker balance changes: 0
+// [EXPECTED] total reward: 11919412
