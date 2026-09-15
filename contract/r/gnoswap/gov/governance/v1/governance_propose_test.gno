@@ -1050,7 +1050,7 @@ func TestGovernancePropose_ParameterChangeValidation(cur realm, t *testing.T) {
 		{
 			name:          "fail - community_pool TransferToken empty recipient",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
+			executions:    "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
 			expectedError: "invalid address",
 			shouldFail:    true,
 		},

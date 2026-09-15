@@ -25,7 +25,7 @@ import (
 	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	_ "gno.land/r/gnoswap/common/v1"
-	communitypool "gno.land/r/gnoswap/community_pool"
+	communitypool "gno.land/r/gnoswap/community_pool/v1"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"

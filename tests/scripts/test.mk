@@ -317,7 +317,7 @@ execute-community:
 # propose parameter change proposal
 propose-param:
 	$(info ************ propose param change ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeParameterChange -args "title param change" -args "desc param change" -args "1" -args "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gov/governance -func ProposeParameterChange -args "title param change" -args "desc param change" -args "1" -args "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1000000ugnot -gas-wanted 1000000000 -memo "" gnoswap_admin
 	@echo
 
 

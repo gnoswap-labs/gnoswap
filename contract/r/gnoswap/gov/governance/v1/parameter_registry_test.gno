@@ -152,7 +152,7 @@ func TestCreateParameterHandlers(cur realm, t *testing.T) {
 		function string
 	}{
 		{"gno.land/r/gnoswap/halt/v1", "SetHaltLevel"},
-		{"gno.land/r/gnoswap/community_pool", "TransferToken"},
+		{"gno.land/r/gnoswap/community_pool/v1", "TransferToken"},
 		{"gno.land/r/gnoswap/emission", "ChangeDistributionPct"},
 		{"gno.land/r/gnoswap/protocol_fee", "UpgradeImpl"},
 		{"gno.land/r/gnoswap/common", "UpgradeImpl"},
@@ -406,7 +406,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:          "Success - community_pool TransferToken",
 			numToExecute:  1,
-			executions:    "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("valid").String() + ",1000000",
+			executions:    "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("valid").String() + ",1000000",
 			expectedError: false,
 		},
 		// emission
@@ -671,9 +671,9 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - community_pool TransferToken wrong param count",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,g1address",
+			executions:            "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,g1address",
 			expectedError:         true,
-			expectedErrorContains: "expected 3 parameters for gno.land/r/gnoswap/community_pool:TransferToken",
+			expectedErrorContains: "expected 3 parameters for gno.land/r/gnoswap/community_pool/v1:TransferToken",
 		},
 
 		/* Failure cases - Parameter type validation */
@@ -708,14 +708,14 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - community_pool TransferToken empty address",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
+			executions:            "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,,1000000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
 		{
 			name:                  "Failure - community_pool TransferToken invalid address",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,invalidAddress,1000000",
+			executions:            "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS,invalidAddress,1000000",
 			expectedError:         true,
 			expectedErrorContains: "invalid address",
 		},
@@ -785,7 +785,7 @@ func TestValidateExecutions(cur realm, t *testing.T) {
 		{
 			name:                  "Failure - community_pool TransferToken non-positive amount",
 			numToExecute:          1,
-			executions:            "gno.land/r/gnoswap/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("recipient").String() + ",-1",
+			executions:            "gno.land/r/gnoswap/community_pool/v1*EXE*TransferToken*EXE*gno.land/r/gnoswap/gns.GNS," + testutils.TestAddress("recipient").String() + ",-1",
 			expectedError:         true,
 			expectedErrorContains: "amount must be positive",
 		},

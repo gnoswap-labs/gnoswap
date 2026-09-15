@@ -88,7 +88,7 @@ func TestAssert_assertIsPendingOwner(cur realm, t *testing.T) {
 			name:        "Random address should panic",
 			addr:        COMMUNITY_POOL_ADDR,
 			shouldPanic: true,
-			expectedMsg: "caller is not pending owner || caller: g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7",
+			expectedMsg: "caller is not pending owner || caller: g1uv80ae4csts8k6w78prvy8kp7aqe3rtl66k2dq",
 		},
 		{
 			name:        "Empty address should panic",
@@ -439,7 +439,7 @@ func TestAssert_assertIsAdminOrGovernance(cur realm, t *testing.T) {
 			name:        "Random address should panic",
 			addr:        COMMUNITY_POOL_ADDR,
 			shouldPanic: true,
-			expectedMsg: "caller is not admin or governance || caller: g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7",
+			expectedMsg: "caller is not admin or governance || caller: g1uv80ae4csts8k6w78prvy8kp7aqe3rtl66k2dq",
 		},
 		{
 			name:        "Empty address should panic",
@@ -500,7 +500,7 @@ func TestPackageAddress(cur realm, t *testing.T) {
 		},
 		{
 			name:         "community pool package address",
-			pkgPath:      "gno.land/r/gnoswap/community_pool",
+			pkgPath:      "gno.land/r/gnoswap/community_pool/v1",
 			expectedAddr: COMMUNITY_POOL_ADDR,
 		},
 		{

@@ -196,7 +196,7 @@ gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/staker -pkgpat
 # stdout 'STORAGE FEE:    2[0-9]{7}ugnot'
 
 ### deploy community_pool (expected gas fee: 18322ugnot, gas wanted: 18322000)
-gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/community_pool -pkgpath gno.land/r/gnoswap/community_pool -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx addpkg -pkgdir ../../../examples/gno.land/r/gnoswap/community_pool/v1 -pkgpath gno.land/r/gnoswap/community_pool/v1 -gas-fee 1000000ugnot -gas-wanted 500000000 -broadcast -chainid=tendermint_test test1
 # stdout 'GAS USED:   20[0-9]{6}'
 # stdout 'STORAGE DELTA:  (1|2)[0-9]{4} bytes'
 # stdout 'STORAGE FEE:    (1|2)[0-9]{6}ugnot'

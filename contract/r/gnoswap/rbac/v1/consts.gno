@@ -20,7 +20,7 @@ var (
 	ROUTER_ADDR       = chain.PackageAddress("gno.land/r/gnoswap/router")
 	STAKER_ADDR       = chain.PackageAddress("gno.land/r/gnoswap/staker")
 	PROTOCOL_FEE_ADDR = chain.PackageAddress("gno.land/r/gnoswap/protocol_fee")
-	COMMUNITY_POOL_ADDR = chain.PackageAddress("gno.land/r/gnoswap/community_pool")
+	COMMUNITY_POOL_ADDR = chain.PackageAddress("gno.land/r/gnoswap/community_pool/v1")
 	GOV_GOVERNANCE_ADDR = chain.PackageAddress("gno.land/r/gnoswap/gov/governance")
 	GOV_STAKER_ADDR     = chain.PackageAddress("gno.land/r/gnoswap/gov/staker")
 	GOV_XGNS_ADDR       = chain.PackageAddress("gno.land/r/gnoswap/gov/xgns")

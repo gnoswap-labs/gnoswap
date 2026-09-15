@@ -196,7 +196,7 @@ func TestInstance_RemoveInactiveUserProposals(cur realm, t *testing.T) {
 						"gno.land/r/gnoswap/gns.GNS",
 						testutils.TestAddress("recipient"),
 						100,
-						"gno.land/r/gnoswap/community_pool",
+						"gno.land/r/gnoswap/community_pool/v1",
 					),
 					proposerAddr, 1, baseCreatedAt,
 					100,

@@ -91,7 +91,7 @@ deploy-common:
 
 deploy-community_pool:
 	$(info ************ deploy community_pool ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/community_pool -pkgpath gno.land/r/gnoswap/community_pool -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 25140ugnot -gas-wanted 25140000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/community_pool/v1 -pkgpath gno.land/r/gnoswap/community_pool/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 25140ugnot -gas-wanted 25140000 -memo "" gnoswap_admin
 	@echo
 
 deploy-emission:
