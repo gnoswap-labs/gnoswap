@@ -6,7 +6,7 @@ import (
 	"gno.land/p/onbloc/json/v0"
 
 	prbac "gno.land/p/gnoswap/rbac/v1"
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gov/governance"
 
 	_ "gno.land/r/gnoswap/common/v1"

@@ -5,7 +5,7 @@ import (
 	"chain/runtime"
 	"time"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/gnoswap/launchpad"

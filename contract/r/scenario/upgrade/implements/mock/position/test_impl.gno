@@ -4,7 +4,7 @@ package mock
 import (
 	"errors"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	"gno.land/p/nt/grc721/v0"
 	u256 "gno.land/p/gnoswap/uint256/v1"

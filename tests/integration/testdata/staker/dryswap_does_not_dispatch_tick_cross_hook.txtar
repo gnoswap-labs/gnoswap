@@ -17,7 +17,7 @@ loadpkg gno.land/r/onbloc/baz
 loadpkg gno.land/r/onbloc/qux
 loadpkg gno.land/r/onbloc/obl
 
-loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/r/gnoswap/access/v1
 loadpkg gno.land/p/gnoswap/uint256/v1
 loadpkg gno.land/p/gnoswap/int256/v1
 loadpkg gno.land/p/gnoswap/gnsmath/v1

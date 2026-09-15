@@ -12,7 +12,7 @@ import (
 	"gno.land/r/gnoswap/halt"
 	"gno.land/r/onbloc/obl"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
 

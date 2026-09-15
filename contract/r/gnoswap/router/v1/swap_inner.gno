@@ -1,7 +1,7 @@
 package router
 
 import (
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/router"
 
 	i256 "gno.land/p/gnoswap/int256/v1"

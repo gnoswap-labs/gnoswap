@@ -9,7 +9,7 @@ import (
 	prbac "gno.land/p/gnoswap/rbac/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	govGovernance "gno.land/r/gnoswap/gov/governance"
 
 	_ "gno.land/r/gnoswap/common/v1"

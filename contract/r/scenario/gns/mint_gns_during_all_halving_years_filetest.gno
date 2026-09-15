@@ -18,7 +18,7 @@ import (
 
 	_ "gno.land/r/gnoswap/staker"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 var t *testing.T

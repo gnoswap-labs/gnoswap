@@ -40,7 +40,7 @@ import (
 	_ "gno.land/r/gnoswap/router/v1"
 	_ "gno.land/r/gnoswap/staker/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/emission"
 	_ "gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/halt"

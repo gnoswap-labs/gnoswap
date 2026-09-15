@@ -8,7 +8,7 @@ import (
 
 	prabc "gno.land/p/gnoswap/rbac/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 func TestUtils_assertValidCaller_AllAuthorizedRoles(cur realm, t *testing.T) {

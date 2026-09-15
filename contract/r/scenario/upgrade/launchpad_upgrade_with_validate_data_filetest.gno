@@ -25,7 +25,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
 	govStaker "gno.land/r/gnoswap/gov/staker"
 	"gno.land/r/gnoswap/launchpad"

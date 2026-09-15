@@ -2,7 +2,7 @@ package gns
 
 import (
 	"gno.land/p/gnoswap/rbac/v1"
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 // setupPreMint mints the initial GNS supply

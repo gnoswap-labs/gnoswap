@@ -10,14 +10,14 @@ loadpkg gno.land/r/sys/users
 loadpkg gno.land/r/gnoland/wugnot
 loadpkg gno.land/r/nt/grc20reg/v0
 
-loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/r/gnoswap/access/v1
 loadpkg gno.land/p/gnoswap/uint256/v1
 loadpkg gno.land/p/gnoswap/int256/v1
 loadpkg gno.land/p/gnoswap/gnsmath/v1
 loadpkg gno.land/p/gnoswap/store/v1
 loadpkg gno.land/p/gnoswap/version_manager/v1
 
-loadpkg gno.land/r/gnoswap/access
+loadpkg gno.land/r/gnoswap/access/v1
 loadpkg gno.land/r/gnoswap/rbac/v1
 loadpkg gno.land/r/gnoswap/halt
 loadpkg gno.land/r/gnoswap/common

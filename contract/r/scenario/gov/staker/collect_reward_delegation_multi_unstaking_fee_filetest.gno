@@ -35,7 +35,7 @@ import (
 	"gno.land/r/gnoswap/position"
 	"gno.land/r/gnoswap/staker"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	govStaker "gno.land/r/gnoswap/gov/staker"
 

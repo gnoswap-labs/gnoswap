@@ -17,7 +17,7 @@ import (
 
 	"gno.land/r/gnoland/wugnot"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/gns"

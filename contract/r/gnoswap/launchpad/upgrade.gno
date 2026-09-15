@@ -1,7 +1,7 @@
 package launchpad
 
 import (
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 // RegisterInitializer registers a new launchpad implementation version.

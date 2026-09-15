@@ -6,7 +6,7 @@ import (
 
 	prbac "gno.land/p/gnoswap/rbac/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/halt"
 )

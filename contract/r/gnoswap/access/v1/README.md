@@ -178,7 +178,7 @@ access.AssertIsValidAddress(addr)
 ```go
 package pool
 
-import "gno.land/r/gnoswap/access"
+import "gno.land/r/gnoswap/access/v1"
 
 func SetPoolFeeRate(rate uint64) {
     caller := std.PrevRealm().Addr()
@@ -194,7 +194,7 @@ func SetPoolFeeRate(rate uint64) {
 ```go
 package staker
 
-import "gno.land/r/gnoswap/access"
+import "gno.land/r/gnoswap/access/v1"
 
 func DistributeRewards(amount uint64) {
     caller := std.PrevRealm().Addr()
@@ -210,7 +210,7 @@ func DistributeRewards(amount uint64) {
 ```go
 package common
 
-import "gno.land/r/gnoswap/access"
+import "gno.land/r/gnoswap/access/v1"
 
 func EmergencyPause() {
     caller := std.PrevRealm().Addr()
@@ -226,7 +226,7 @@ func EmergencyPause() {
 ```go
 package router
 
-import "gno.land/r/gnoswap/access"
+import "gno.land/r/gnoswap/access/v1"
 
 func GetSwapFee(caller address) uint64 {
     // Lower fee for admin

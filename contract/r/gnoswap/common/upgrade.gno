@@ -1,7 +1,7 @@
 package common
 
 import (
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 func RegisterInitializer(cur realm, initializer func(_ int, rlm realm) ICommon) {

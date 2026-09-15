@@ -81,7 +81,7 @@ deploy-rbac-realm:
 
 deploy-access:
 	$(info ************ deploy access ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/access -pkgpath gno.land/r/gnoswap/access -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 13563ugnot -gas-wanted 13563000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/contract/r/gnoswap/access/v1 -pkgpath gno.land/r/gnoswap/access/v1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 13563ugnot -gas-wanted 13563000 -memo "" gnoswap_admin
 	@echo
 
 deploy-common:

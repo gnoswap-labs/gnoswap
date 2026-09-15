@@ -21,7 +21,7 @@ import (
 	prabc "gno.land/p/gnoswap/rbac/v1"
 	u256 "gno.land/p/gnoswap/uint256/v1"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 
 	uassert "gno.land/p/nt/uassert/v0"

@@ -3,7 +3,7 @@ package router
 import (
 	"chain"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 

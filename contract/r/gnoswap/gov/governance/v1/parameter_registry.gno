@@ -36,7 +36,7 @@ const (
 	GNS_TOKEN_KEY       = "gno.land/r/gnoswap/gns.GNS"
 	HALT_PATH           = "gno.land/r/gnoswap/halt"
 	RBAC_PATH           = "gno.land/r/gnoswap/rbac/v1"
-	ACCESS_PATH         = "gno.land/r/gnoswap/access"
+	ACCESS_PATH         = "gno.land/r/gnoswap/access/v1"
 	EMISSION_PATH       = "gno.land/r/gnoswap/emission"
 	COMMON_PATH         = "gno.land/r/gnoswap/common"
 	POOL_PATH           = "gno.land/r/gnoswap/pool"

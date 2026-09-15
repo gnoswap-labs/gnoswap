@@ -4,7 +4,7 @@ import (
 	"chain"
 	"strconv"
 
-	"gno.land/r/gnoswap/access"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 var haltStates HaltStateManager
