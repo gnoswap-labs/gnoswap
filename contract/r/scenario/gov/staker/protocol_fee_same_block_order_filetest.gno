@@ -3,10 +3,11 @@
 // attribution follows transaction order within one block, not timestamps
 //
 // Everything below happens at the same height and second. Hand check:
-//   alice 1_000_000, fee 1_000_000 -> alice 1_000_000
-//   bob 1_000_000 (total 2_000_000), fee 2_000_000 -> 1_000_000 each
-//   bob undelegates, fee 3_000_000 -> alice 3_000_000
-//   alice 5_000_000, bob 1_000_000.
+//
+//	alice 1_000_000, fee 1_000_000 -> alice 1_000_000
+//	bob 1_000_000 (total 2_000_000), fee 2_000_000 -> 1_000_000 each
+//	bob undelegates, fee 3_000_000 -> alice 3_000_000
+//	alice 5_000_000, bob 1_000_000.
 package main
 
 import (

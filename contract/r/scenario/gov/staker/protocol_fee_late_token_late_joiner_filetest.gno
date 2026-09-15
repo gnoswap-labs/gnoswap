@@ -3,9 +3,10 @@
 // a token that first collects after a staker joined, and a staker who joins after a token collected
 //
 // Hand check:
-//   epoch 1: alice 1_000_000, fee BAR 1_000_000 -> alice BAR 1_000_000
-//   epoch 2: bob 1_000_000 (total 2_000_000), fee QUX 4_000_000 -> QUX 2_000_000 each
-//   bob has no BAR share (joined after), alice has both.
+//
+//	epoch 1: alice 1_000_000, fee BAR 1_000_000 -> alice BAR 1_000_000
+//	epoch 2: bob 1_000_000 (total 2_000_000), fee QUX 4_000_000 -> QUX 2_000_000 each
+//	bob has no BAR share (joined after), alice has both.
 package main
 
 import (

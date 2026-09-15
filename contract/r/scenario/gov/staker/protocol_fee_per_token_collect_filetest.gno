@@ -3,11 +3,12 @@
 // collecting one token leaves the others untouched
 //
 // Hand check (alice and bob 1_000_000 each, total 2_000_000):
-//   fee BAR 2_000_000 -> +1 per stake -> 1_000_000 each
-//   fee QUX 4_000_000 -> +2 per stake -> 2_000_000 each
-//   alice collects BAR only: BAR 1_000_000, QUX untouched (query still 2_000_000).
-//   fee BAR 2_000_000 -> +1 per stake -> 1_000_000 each more
-//   alice CollectReward: BAR 2_000_000, QUX 2_000_000; bob CollectReward: BAR 2_000_000, QUX 2_000_000.
+//
+//	fee BAR 2_000_000 -> +1 per stake -> 1_000_000 each
+//	fee QUX 4_000_000 -> +2 per stake -> 2_000_000 each
+//	alice collects BAR only: BAR 1_000_000, QUX untouched (query still 2_000_000).
+//	fee BAR 2_000_000 -> +1 per stake -> 1_000_000 each more
+//	alice CollectReward: BAR 2_000_000, QUX 2_000_000; bob CollectReward: BAR 2_000_000, QUX 2_000_000.
 package main
 
 import (

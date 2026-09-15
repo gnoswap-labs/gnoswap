@@ -19,4 +19,5 @@ type ICommon interface {
 	Transfer(_ int, rlm realm, tokenKey string, to address, amount int64) error
 	TransferFrom(_ int, rlm realm, tokenKey string, from, to address, amount int64) error
 	Approve(_ int, rlm realm, tokenKey string, spender address, amount int64) error
+	Render(path string) string
 }

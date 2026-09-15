@@ -8,8 +8,9 @@ Manages referral relationships between users with cooldown periods to prevent ga
 
 ## Global Functions
 
-### `TryRegister(cur realm, addr address, referral string) bool`
-Attempts to register a referral relationship. Returns true on success, false on failure.
+### `TryRegister(cur realm, addr address, referral string) string`
+Attempts to register a referral relationship and returns the effective referrer.
+On registration failure, returns the previously stored referrer, or an empty string.
 Emits `ReferralRegistrationFailed` event on error.
 
 ### `GetReferral(addr string) string`
@@ -24,6 +25,12 @@ Returns true if no referrals exist in the system.
 ### `ContractAddress() string`
 Returns the address of the referral contract. Use this address as the referral parameter in `TryRegister` to remove an existing referral.
 
+## Gnoweb
+
+`Render("")` explains the registration interval and removal behavior.
+`Render("referral/<address>")` shows the current referrer and last registration or
+update time in UTC. Missing records and unsupported paths return `404`.
+
 ## Usage
 
 ### Registering a Referral
@@ -37,7 +44,7 @@ import (
 
 // RegisterUserReferral registers a referral relationship for a user.
 // Must be called from an authorized realm (router, staker, etc.)
-func RegisterUserReferral(cur realm, userAddr, referrerAddr address) bool {
+func RegisterUserReferral(cur realm, userAddr, referrerAddr address) string {
     return referral.TryRegister(cross(cur), userAddr, referrerAddr.String())
 }
 ```
@@ -53,7 +60,7 @@ import (
 
 // RemoveUserReferral removes the referral relationship for a user.
 // Pass the contract's own address as the referral to indicate removal.
-func RemoveUserReferral(cur realm, userAddr address) bool {
+func RemoveUserReferral(cur realm, userAddr address) string {
     return referral.TryRegister(cross(cur), userAddr, referral.ContractAddress())
 }
 ```

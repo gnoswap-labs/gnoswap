@@ -4,10 +4,11 @@
 //
 // Redelegate is a remove followed by an add, so it opens two epochs with the same
 // final stake. Hand check (alice alone with 2_000_000 throughout):
-//   fee 2_000_000 -> +1 per stake -> 2_000_000
-//   redelegate alice -> bob (epochs 2 and 3, total back to 2_000_000)
-//   fee 4_000_000 -> +2 per stake -> 4_000_000
-//   alice collects 6_000_000.
+//
+//	fee 2_000_000 -> +1 per stake -> 2_000_000
+//	redelegate alice -> bob (epochs 2 and 3, total back to 2_000_000)
+//	fee 4_000_000 -> +2 per stake -> 4_000_000
+//	alice collects 6_000_000.
 package main
 
 import (

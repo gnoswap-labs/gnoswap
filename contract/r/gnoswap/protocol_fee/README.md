@@ -6,6 +6,12 @@ Fee collection and distribution for protocol operations.
 
 Protocol Fee contract collects fees from various protocol operations and distributes them to xGNS holders and DevOps.
 
+## Gnoweb
+
+The root `Render("")` delegates to the active implementation and shows realm identity, distribution allocations in basis points, recipient addresses, the accrual epoch, and halt flags.
+
+Rendering reads fixed configuration without aggregating balances across tokens. Unsupported paths return `404`.
+
 ## Configuration
 
 - **Router Fee**: 0.15% of swap amount

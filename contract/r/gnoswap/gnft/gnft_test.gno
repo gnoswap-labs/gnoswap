@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"gno.land/p/nt/grc721/v0"
 	"gno.land/p/nt/grc721/metadata/v0"
+	"gno.land/p/nt/grc721/v0"
 	"gno.land/p/nt/seqid/v0"
 	"gno.land/p/nt/testutils/v0"
 	"gno.land/p/nt/uassert/v0"

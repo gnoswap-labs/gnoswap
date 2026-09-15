@@ -183,7 +183,6 @@ func (r *routerV1) exactOutSwapRoute(
 	// handle referral registration
 	actualReferrer := referral.TryRegister(cross(rlm), caller, referrer)
 
-
 	eventAttrs := append([]string{
 		"prevAddr", caller.String(),
 		"prevRealm", previousRealm.PkgPath(),

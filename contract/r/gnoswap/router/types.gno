@@ -14,6 +14,7 @@ type IRouter interface {
 	SetSwapFee(_ int, rlm realm, fee uint64)
 
 	GetPendingProtocolFees() map[string]int64
+	Render(path string) string
 }
 
 type IRouterStore interface {

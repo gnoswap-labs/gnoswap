@@ -6,9 +6,32 @@ Swap routing engine for optimal trade execution across pools.
 
 Router handles swap execution across multiple pools, finding optimal paths and managing slippage protection for traders.
 
+## Gnoweb
+
+The root `Render("")` delegates to the active implementation. It exposes separate
+status and read-only swap-fee sections. Native Gnoweb execution forms show
+one user-facing swap action per page:
+
+- `""`: `ExactInSingleSwapRoute`
+- `"swap/exact-in"`: `ExactInSwapRoute`
+- `"swap/exact-out-single"`: `ExactOutSingleSwapRoute`
+- `"swap/exact-out"`: `ExactOutSwapRoute`
+
+Input placeholders show token-key, route, and percentage examples without
+separate explanatory paragraphs. Token amounts are integer base units.
+Set `amountOutMin` or `amountInMax` for slippage
+protection, use a future Unix `deadline`, and set multi-route `quoteArr`
+percentages to sum to 100. Approve each input GRC20 token for the router realm
+before swapping. The single-route price limit accepts `sqrtPriceLimitX96` as a
+base-10 Q64.96 square-root price; `0` disables it.
+
+No privileged fee-setting form, guidance route, or navigation link is exposed.
+`SetSwapFee` itself is unchanged. No internal callback form is exposed.
+Unsupported render paths, including `"fee"`, return `404`.
+
 ## Configuration
 
-- **Router Fee**: 0.15% on all swaps
+- **Router Fee**: 0.15% default; admin or governance may set 0-10%
 - **Max Hops**: 3 pools per route
 - **Deadline Buffer**: 5-30 minutes recommended
 

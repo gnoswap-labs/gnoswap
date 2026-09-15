@@ -34,7 +34,7 @@ func (h HaltLevel) String() string {
 
 // Description returns a human-readable description of the halt level.
 func (h HaltLevel) Description() string {
-	var haltLevelDescriptions = map[HaltLevel]string{
+	haltLevelDescriptions := map[HaltLevel]string{
 		HaltLevelNone:      "All operations enabled",
 		HaltLevelSafeMode:  "All operations enabled except withdrawals",
 		HaltLevelEmergency: "Only governance and withdrawal operations enabled",
@@ -92,7 +92,7 @@ func (o OpType) IsValid() bool {
 func OpTypes() []OpType {
 	allOpTypes := make([]OpType, 0, len(opTypes))
 
-	for op, _ := range opTypes {
+	for op := range opTypes {
 		allOpTypes = append(allOpTypes, op)
 	}
 

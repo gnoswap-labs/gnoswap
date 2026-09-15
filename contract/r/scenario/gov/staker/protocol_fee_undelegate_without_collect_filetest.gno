@@ -3,11 +3,12 @@
 // undelegate never folds fees; the share earned before leaving is paid on a later collect
 //
 // Hand check:
-//   epoch 1: alice 1_000_000            fee 2_000_000 -> +2 per stake -> alice 2_000_000
-//   epoch 2: alice leaves (0 staked)     fee 5_000_000 -> nobody to credit, dropped
-//   epoch 3: bob 2_000_000               fee 4_000_000 -> +2 per stake -> bob 4_000_000
-//   bob collects first and folds every bucket; alice then collects 2_000_000.
-//   residue = the dropped 5_000_000.
+//
+//	epoch 1: alice 1_000_000            fee 2_000_000 -> +2 per stake -> alice 2_000_000
+//	epoch 2: alice leaves (0 staked)     fee 5_000_000 -> nobody to credit, dropped
+//	epoch 3: bob 2_000_000               fee 4_000_000 -> +2 per stake -> bob 4_000_000
+//	bob collects first and folds every bucket; alice then collects 2_000_000.
+//	residue = the dropped 5_000_000.
 package main
 
 import (

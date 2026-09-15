@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"errors"
+
 	"gno.land/r/gnoswap/launchpad"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath/v1"

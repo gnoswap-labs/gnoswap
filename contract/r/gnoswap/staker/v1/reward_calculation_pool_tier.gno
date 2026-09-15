@@ -408,8 +408,6 @@ func (self *PoolTier) IsInternallyIncentivizedPool(poolPath string) bool {
 	return self.CurrentTier(poolPath) > 0
 }
 
-
-
 // calculatePoolReward calculates the reward for a pool based on the emission, tier ratio, and tier count.
 //
 // Parameters:
@@ -433,7 +431,6 @@ func calculatePoolReward(emission int64, tierRatio int64, tierCount int64) (int6
 
 	return tierReward / tierCount, nil
 }
-
 
 // computeTierRewards caches per-tier pool rewards to avoid recalculating for each pool iteration.
 func (self *PoolTier) computeTierRewards(emission int64) map[uint64]int64 {

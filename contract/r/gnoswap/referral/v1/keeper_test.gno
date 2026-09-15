@@ -23,24 +23,24 @@ func TestKeeper_Register(cur realm, t *testing.T) {
 		expectedPanicMessage string
 	}{
 		{
-			name:            "Success register with valid addresses",
-			callerRealm:     routerRealm,
-			addr:            testutils.TestAddress("user1"),
-			refAddr:         testutils.TestAddress("referrer1"),
+			name:             "Success register with valid addresses",
+			callerRealm:      routerRealm,
+			addr:             testutils.TestAddress("user1"),
+			refAddr:          testutils.TestAddress("referrer1"),
 			expectedReferrer: testutils.TestAddress("referrer1").String(),
 		},
 		{
-			name:            "Success register with contract address referral (removal)",
-			callerRealm:     routerRealm,
-			addr:            testutils.TestAddress("user2"),
-			refAddr:         contractAddress(),
+			name:             "Success register with contract address referral (removal)",
+			callerRealm:      routerRealm,
+			addr:             testutils.TestAddress("user2"),
+			refAddr:          contractAddress(),
 			expectedReferrer: "",
 		},
 		{
-			name:            "Fail register with self referral",
-			callerRealm:     routerRealm,
-			addr:            testutils.TestAddress("user3"),
-			refAddr:         testutils.TestAddress("user3"),
+			name:             "Fail register with self referral",
+			callerRealm:      routerRealm,
+			addr:             testutils.TestAddress("user3"),
+			refAddr:          testutils.TestAddress("user3"),
 			expectedReferrer: "",
 		},
 		{

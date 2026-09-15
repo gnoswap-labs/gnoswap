@@ -96,7 +96,6 @@ func (z *Uint) Dec() string {
 	return string(out[pos-len(bufSlice):])
 }
 
-
 // ToString returns the decimal string representation of z.
 // Returns an empty string if z is nil. This method doesn't exist in holiman's uint256.
 func (z *Uint) ToString() string {
