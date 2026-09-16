@@ -210,9 +210,8 @@ stakerAddress := access.MustGetAddress(prabc.ROLE_STAKER.String())
 gnft.Approve(cross(cur), stakerAddress, grc721.TokenID("123"))
 StakeToken(cross(cur), 123, "")
 
-// Approve both the reward token and the GNS deposit before creating an incentive
-reward.Approve(cross(cur), stakerAddress, 1_000_000_000)
-gns.Approve(cross(cur), stakerAddress, GetDepositGnsAmount())
+// GNS pays both the external reward and the required deposit
+gns.Approve(cross(cur), stakerAddress, 1_000_000_000+GetDepositGnsAmount())
 ```
 
 ## Usage
@@ -227,8 +226,8 @@ StakeToken(cross(cur), 123, "g1referrer...")
 // Create an external incentive (rewardAmount is an int64 token-unit amount)
 CreateExternalIncentive(
     cross(cur),
-    "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",
-    "gno.land/r/demo/reward",
+    "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000",
+    "gno.land/r/gnoswap/gns.GNS",
     1_000_000_000,
     startTime,
     endTime,

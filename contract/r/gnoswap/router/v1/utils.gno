@@ -121,7 +121,7 @@ func i256MinMax(x, y *i256.Int) (min, max *u256.Uint) {
 // - Route path format consistency (prevents swap-direction vs alphabetical pool ordering confusion)
 //
 // Parameters:
-// - routePathArrString: comma-separated route paths (e.g., "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000*POOL*gno.land/r/demo/gns:gno.land/r/demo/usdc:500")
+// - routePathArrString: comma-separated route paths (e.g., "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500,gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000")
 // - inputToken: expected first token in all route paths
 // - outputToken: expected last token in all route paths
 //
@@ -155,7 +155,7 @@ func validateRoutePaths(routePathArrString, inputToken, outputToken string) erro
 // - multi-hop: "tokenA:tokenB:fee1*POOL*tokenB:tokenC:fee2" (swap through intermediate tokens)
 //
 // Parameters:
-// - routePath: single route path string (e.g., "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500")
+// - routePath: single route path string (e.g., "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500")
 // - inputToken: expected first token in the route path
 // - outputToken: expected last token in the route path
 //
@@ -287,8 +287,8 @@ func splitSingleChar(s string, sep byte) []string {
 //
 // Example:
 //
-//	input: "gno.land/r/demo/wugnot:gno.land/r/demo/usdc:500,gno.land/r/demo/usdc:gno.land/r/demo/gns:3000"
-//	output: ["gno.land/r/demo/usdc:gno.land/r/demo/wugnot:500", "gno.land/r/demo/gns:gno.land/r/demo/usdc:3000"]
+//	input: "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:500,gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000"
+//	output: ["gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:500", "gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000"]
 func parsePoolPathsByRoutePathArr(routePathArr string) ([]string, error) {
 	poolPaths := make([]string, 0)
 

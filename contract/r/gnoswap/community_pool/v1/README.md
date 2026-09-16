@@ -55,7 +55,7 @@ Unsupported paths return `404`.
 // Governance execution, or emergency admin action under the operational policy
 TransferToken(
     cross(cur),
-    "gno.land/r/demo/usdc",
+    "gno.land/r/gnoswap/gns.GNS",
     recipientAddr,
     1000000,
 )
