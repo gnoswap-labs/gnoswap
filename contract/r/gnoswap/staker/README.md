@@ -227,7 +227,7 @@ StakeToken(cross(cur), 123, "g1referrer...")
 // Create an external incentive (rewardAmount is an int64 token-unit amount)
 CreateExternalIncentive(
     cross(cur),
-    "gno.land/r/demo/bar:gno.land/r/demo/baz:3000",
+    "gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000",
     "gno.land/r/demo/reward",
     1_000_000_000,
     startTime,

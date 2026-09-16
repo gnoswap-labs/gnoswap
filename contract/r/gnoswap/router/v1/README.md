@@ -57,10 +57,10 @@ Routes in the router follow **swap direction ordering**: `tokenIn:tokenOut:fee`
 - Second token = Output token (what you're swapping TO)
 - This represents the actual flow of the swap
 
-Example for swapping BAR to BAZ:
+Example for swapping GNS to WUGNOT:
 
 ```
-gno.land/r/demo/bar:gno.land/r/demo/baz:3000
+gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000
 ```
 
 #### Pool Format (Alphabetical)
@@ -73,7 +73,7 @@ Pools are identified using **alphabetical ordering**: `token0:token1:fee`
 Example pool identifier (same pool as above):
 
 ```
-gno.land/r/demo/bar:gno.land/r/demo/baz:3000  # if bar < baz alphabetically
+gno.land/r/gnoland/wugnot.wugnot:gno.land/r/gnoswap/gns.GNS:3000  # gnoland/wugnot < gnoswap/gns alphabetically
 ```
 
 #### Key Difference
@@ -86,8 +86,8 @@ gno.land/r/demo/bar:gno.land/r/demo/baz:3000  # if bar < baz alphabetically
 
 **IMPORTANT**: Router swap functions do **not** accept native `ugnot` directly.
 
-- **Token Parameters**: Use token contract paths such as `"gno.land/r/gnoland/wugnot"`
-- **Route Paths**: Also use token contract paths such as `"gno.land/r/gnoland/wugnot"`
+- **Token Parameters**: Use token keys (`pkgPath.SYMBOL`) such as `"gno.land/r/gnoland/wugnot.wugnot"`
+- **Route Paths**: Also use token keys (`pkgPath.SYMBOL`) such as `"gno.land/r/gnoland/wugnot.wugnot"`
 
 This matches the current implementation:
 
@@ -112,16 +112,16 @@ tokenIn:tokenB:fee1*POOL*tokenB:tokenC:fee2*POOL*tokenC:tokenOut:fee3
 Single-hop example:
 
 ```
-# Swapping BAR to BAZ
-Route: gno.land/r/demo/bar:gno.land/r/demo/baz:3000
-# Router interprets: tokenIn=bar, tokenOut=baz, fee=3000
+# Swapping GNS to WUGNOT
+Route: gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000
+# Router interprets: tokenIn=gns, tokenOut=wugnot, fee=3000
 ```
 
-Multi-hop example (BAR → BAZ → QUX):
+Multi-hop example (GNS → WUGNOT → TOKEN_C):
 
 ```
 # Each segment follows swap direction, connected by *POOL*
-gno.land/r/demo/bar:gno.land/r/demo/baz:3000*POOL*gno.land/r/demo/baz:gno.land/r/demo/qux:500
+gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000*POOL*gno.land/r/gnoland/wugnot.wugnot:gno.land/r/<namespace>/token_c.TOKEN_C:500
 ```
 
 ### Quote Distribution
@@ -134,11 +134,11 @@ Split large trades across routes to minimize impact:
 
 ### Native Token Handling
 
-The current router implementation does **not** handle native `ugnot` directly. It rejects native-coin handling and routes swaps only through token contract paths such as wrapped GNOT (`wugnot`).
+The current router implementation does **not** handle native `ugnot` directly. It rejects native-coin handling and routes swaps only through token keys (`pkgPath.SYMBOL`) such as wrapped GNOT (`wugnot`).
 
 #### Token Identifier Requirements
 
-- Use token contract paths such as `gno.land/r/gnoland/wugnot` for both inputs/outputs and route specifications.
+- Use token keys (`pkgPath.SYMBOL`) such as `gno.land/r/gnoland/wugnot.wugnot` for both inputs/outputs and route specifications.
 - Do not pass `"ugnot"` as `inputToken` or `outputToken` to router swap functions.
 
 #### Approval and Transfer Requirements
@@ -165,10 +165,10 @@ Import the proxy package and qualify its function names in integrating code.
 // Simple exact input swap
 amountIn, amountOut := ExactInSwapRoute(
     cross(cur),
-    "gno.land/r/demo/bar",     // input token
-    "gno.land/r/demo/baz",     // output token
+    "gno.land/r/gnoswap/gns.GNS",       // input token
+    "gno.land/r/gnoland/wugnot.wugnot", // output token
     "1000000",                 // amount (6 decimals)
-    "gno.land/r/demo/bar:gno.land/r/demo/baz:3000", // route
+    "gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000", // route
     "100",                     // 100% through route
     "950000",                  // min output
     time.Now().Unix() + 300,   // deadline
@@ -178,10 +178,10 @@ amountIn, amountOut := ExactInSwapRoute(
 // Multi-hop swap
 ExactInSwapRoute(
     cross(cur),
-    "gno.land/r/demo/bar",
-    "gno.land/r/demo/baz",
+    "gno.land/r/gnoswap/gns.GNS",
+    "gno.land/r/<namespace>/token_c.TOKEN_C",
     "1000000",
-    "gno.land/r/demo/bar:gno.land/r/gnoland/wugnot:3000*POOL*gno.land/r/gnoland/wugnot:gno.land/r/demo/baz:3000",
+    "gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000*POOL*gno.land/r/gnoland/wugnot.wugnot:gno.land/r/<namespace>/token_c.TOKEN_C:3000",
     "100",
     "900000",
     deadline,
@@ -191,10 +191,10 @@ ExactInSwapRoute(
 // Split route for large trades
 ExactInSwapRoute(
     cross(cur),
-    "gno.land/r/demo/usdc",
-    "gno.land/r/gnoland/wugnot",
+    "gno.land/r/gnoswap/gns.GNS",
+    "gno.land/r/gnoland/wugnot.wugnot",
     "10000000000",
-    "gno.land/r/demo/usdc:gno.land/r/gnoland/wugnot:500,gno.land/r/demo/usdc:gno.land/r/gnoland/wugnot:3000",
+    "gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:500,gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000",
     "60,40",  // 60% through 0.05%, 40% through 0.3%
     "9500000000",
     deadline,
@@ -209,10 +209,10 @@ Single-hop functions support partial execution through a nonzero
 // Partial swap with price limit - may not consume full input amount
 amountIn, amountOut := ExactInSingleSwapRoute(
     cross(cur),
-    "gno.land/r/demo/bar",     // input token
-    "gno.land/r/demo/baz",     // output token
+    "gno.land/r/gnoswap/gns.GNS",       // input token
+    "gno.land/r/gnoland/wugnot.wugnot", // output token
     "1000000",                 // max amount to swap
-    "gno.land/r/demo/bar:gno.land/r/demo/baz:3000", // single route
+    "gno.land/r/gnoswap/gns.GNS:gno.land/r/gnoland/wugnot.wugnot:3000", // single route
     "950000",                  // min output
     "1000000000000000000",     // sqrtPriceLimitX96 (price limit)
     deadline,
@@ -229,18 +229,18 @@ amountIn, amountOut := ExactInSingleSwapRoute(
 
 1. **Native Token Assumptions**: Passing `"ugnot"` to router swap functions will fail because router entrypoints reject native-coin handling.
 
-2. **Route vs Token Identifier Confusion**: Using `"ugnot"` in route strings instead of `"gno.land/r/gnoland/wugnot"` will cause transactions to fail since no pools exist for the `"ugnot"` identifier.
+2. **Route vs Token Identifier Confusion**: Using `"ugnot"` in route strings instead of `"gno.land/r/gnoland/wugnot.wugnot"` will cause transactions to fail since no pools exist for the `"ugnot"` identifier.
 
 3. **Wrong Token Path**:
 
-   - Use `gno.land/r/gnoland/wugnot` when swapping wrapped GNOT
+   - Use `gno.land/r/gnoland/wugnot.wugnot` when swapping wrapped GNOT
    - Do not pass native `ugnot` to router swap functions
    - Route strings must stay in swap-direction order and use token contract paths
 
 ### Frontend Integration Checklist
 
 - [ ] Implement WUGNOT approval before wrapped-GNOT swaps
-- [ ] Use token contract paths such as `"gno.land/r/gnoland/wugnot"` for both parameters and routes
+- [ ] Use token keys (`pkgPath.SYMBOL`) such as `"gno.land/r/gnoland/wugnot.wugnot"` for both parameters and routes
 - [ ] Test both partial and full swap scenarios
 - [ ] Implement proper error handling for failed approvals
 

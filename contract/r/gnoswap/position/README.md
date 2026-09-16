@@ -181,8 +181,8 @@ Import the proxy package and qualify its function names in integrating code.
 // Mint new position
 tokenId, liquidity, amount0, amount1 := Mint(
     cross(cur),
-    "gno.land/r/onbloc/weth",  // token0
-    "gno.land/r/gnoswap/test_token/test_usdc",  // token1
+    "gno.land/r/gnoland/wugnot.wugnot", // token0
+    "gno.land/r/gnoswap/gns.GNS",   // token1
     3000,                      // fee
     -887220,                   // tickLower
     887220,                    // tickUpper

@@ -21,7 +21,7 @@ func (r *routerV1) Render(path string) string {
 		action = md.H3("Exact-input single-route swap") + "\n" +
 			"<gno-form exec=\"ExactInSingleSwapRoute\">\n" +
 			"  <gno-input name=\"inputToken\" type=\"text\" placeholder=\"Approved input: gno.land/r/gnoland/wugnot.wugnot\" required=\"true\" />\n" +
-			"  <gno-input name=\"outputToken\" type=\"text\" placeholder=\"Output: gno.land/r/gnoswap/test_token/test_usdc.USDC\" required=\"true\" />\n" +
+			"  <gno-input name=\"outputToken\" type=\"text\" placeholder=\"Output: gno.land/r/gnoswap/gns.GNS\" required=\"true\" />\n" +
 			"  <gno-input name=\"amountIn\" type=\"text\" placeholder=\"Exact input amount (base units)\" required=\"true\" />\n" +
 			"  <gno-input name=\"routeArr\" type=\"text\" placeholder=\"Route: inputToken:outputToken:500\" required=\"true\" />\n" +
 			"  <gno-input name=\"amountOutMin\" type=\"text\" placeholder=\"Minimum output amount (base units)\" required=\"true\" />\n" +
@@ -33,7 +33,7 @@ func (r *routerV1) Render(path string) string {
 		action = md.H3("Exact-input multi-route swap") + "\n" +
 			"<gno-form exec=\"ExactInSwapRoute\">\n" +
 			"  <gno-input name=\"inputToken\" type=\"text\" placeholder=\"Approved input: gno.land/r/gnoland/wugnot.wugnot\" required=\"true\" />\n" +
-			"  <gno-input name=\"outputToken\" type=\"text\" placeholder=\"Output: gno.land/r/gnoswap/test_token/test_usdc.USDC\" required=\"true\" />\n" +
+			"  <gno-input name=\"outputToken\" type=\"text\" placeholder=\"Output: gno.land/r/gnoswap/gns.GNS\" required=\"true\" />\n" +
 			"  <gno-input name=\"amountIn\" type=\"text\" placeholder=\"Exact input amount (base units)\" required=\"true\" />\n" +
 			"  <gno-input name=\"routeArr\" type=\"text\" placeholder=\"Routes: A:C:500,A:B:500*POOL*B:C:3000 (A/B/C = token keys)\" required=\"true\" />\n" +
 			"  <gno-input name=\"quoteArr\" type=\"text\" placeholder=\"Route percentages: 100 or 70,30 (total 100)\" required=\"true\" />\n" +
@@ -45,7 +45,7 @@ func (r *routerV1) Render(path string) string {
 		action = md.H3("Exact-output multi-route swap") + "\n" +
 			"<gno-form exec=\"ExactOutSwapRoute\">\n" +
 			"  <gno-input name=\"inputToken\" type=\"text\" placeholder=\"Approved input: gno.land/r/gnoland/wugnot.wugnot\" required=\"true\" />\n" +
-			"  <gno-input name=\"outputToken\" type=\"text\" placeholder=\"Output: gno.land/r/gnoswap/test_token/test_usdc.USDC\" required=\"true\" />\n" +
+			"  <gno-input name=\"outputToken\" type=\"text\" placeholder=\"Output: gno.land/r/gnoswap/gns.GNS\" required=\"true\" />\n" +
 			"  <gno-input name=\"amountOut\" type=\"text\" placeholder=\"Exact output amount (base units)\" required=\"true\" />\n" +
 			"  <gno-input name=\"routeArr\" type=\"text\" placeholder=\"Routes: A:C:500,A:B:500*POOL*B:C:3000 (A/B/C = token keys)\" required=\"true\" />\n" +
 			"  <gno-input name=\"quoteArr\" type=\"text\" placeholder=\"Route percentages: 100 or 70,30 (total 100)\" required=\"true\" />\n" +
@@ -57,7 +57,7 @@ func (r *routerV1) Render(path string) string {
 		action = md.H3("Exact-output single-route swap") + "\n" +
 			"<gno-form exec=\"ExactOutSingleSwapRoute\">\n" +
 			"  <gno-input name=\"inputToken\" type=\"text\" placeholder=\"Approved input: gno.land/r/gnoland/wugnot.wugnot\" required=\"true\" />\n" +
-			"  <gno-input name=\"outputToken\" type=\"text\" placeholder=\"Output: gno.land/r/gnoswap/test_token/test_usdc.USDC\" required=\"true\" />\n" +
+			"  <gno-input name=\"outputToken\" type=\"text\" placeholder=\"Output: gno.land/r/gnoswap/gns.GNS\" required=\"true\" />\n" +
 			"  <gno-input name=\"amountOut\" type=\"text\" placeholder=\"Exact output amount (base units)\" required=\"true\" />\n" +
 			"  <gno-input name=\"routeArr\" type=\"text\" placeholder=\"Route: inputToken:outputToken:500\" required=\"true\" />\n" +
 			"  <gno-input name=\"amountInMax\" type=\"text\" placeholder=\"Maximum input amount (base units)\" required=\"true\" />\n" +
