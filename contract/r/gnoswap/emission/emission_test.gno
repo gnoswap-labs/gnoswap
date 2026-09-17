@@ -631,6 +631,7 @@ func TestSetDistributionStartTime_InitEmissionStateWithBlockHeight(cur realm, t 
 
 			// Manually reset GNS emission state with the correct height
 			// This ensures the emission state is initialized with the test's block height
+			testing.SetOriginCaller(emissionAddr)
 			testing.SetRealm(emissionRealm)
 			gns.InitEmissionState(cross(cur), tt.blockHeight, time.Now().Unix())
 

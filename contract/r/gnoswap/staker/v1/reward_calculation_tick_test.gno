@@ -441,6 +441,7 @@ func TestTickCrossHook_BatchesNetZeroDeltaInitializedTick(cur realm, t *testing.
 		t.Fatalf("batch delta = %s, want 0", crosses[0].Delta().ToString())
 	}
 
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
 	err := instance.swapEndHook(0, cur, poolPath)
 	if err != nil {
 		t.Fatalf("swapEndHook failed: %s", err.Error())
@@ -562,6 +563,7 @@ func TestProcessBatchedTickCrosses_SkipsPrunedTick(cur realm, t *testing.T) {
 	pool.Ticks().SetTick(10, sr.NewTick(10))
 	uassert.False(t, pool.Ticks().Has(10))
 
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
 	var hookErr error
 	uassert.NotAborts(t, cur, func() {
 		hookErr = instance.swapEndHook(0, cur, poolPath)

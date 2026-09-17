@@ -30,6 +30,8 @@ func TestMarkIncentiveCollectedFollowsDeliveryOutcome(cur realm, t *testing.T) {
 
 	target := &collectTarget{positionId: 1, deposit: deposit, currentTime: 100, checkpoint: position}
 
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
+
 	// A deferral stays pending.
 	instance.markIncentiveCollected(0, cur, target, incentiveId, 3, 0, externalDeliveryDeferred)
 	uassert.True(t, position.HasPendingIncentiveId(incentiveId))
@@ -58,6 +60,7 @@ func TestMarkIncentiveCollectedSettlesAlreadyDelivered(cur realm, t *testing.T) 
 
 	target := &collectTarget{positionId: 3, deposit: deposit, currentTime: 100, checkpoint: position}
 
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
 	instance.markIncentiveCollected(0, cur, target, incentiveId, 3, 0, externalDeliveryAlreadyDelivered)
 	uassert.False(t, position.HasPendingIncentiveId(incentiveId))
 	uassert.Equal(t, int64(0), instance.uncollectedIncentiveCountOf(incentiveId))
@@ -84,6 +87,7 @@ func TestMarkIncentiveCollectedOnDelivery(cur realm, t *testing.T) {
 
 	target := &collectTarget{positionId: 2, deposit: deposit, currentTime: 100, checkpoint: position}
 
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
 	instance.markIncentiveCollected(0, cur, target, incentiveId, 10, 0, externalDeliveryPaid)
 	uassert.False(t, position.HasPendingIncentiveId(incentiveId))
 	uassert.Equal(t, int64(0), instance.uncollectedIncentiveCountOf(incentiveId))
