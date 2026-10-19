@@ -84,10 +84,13 @@ func TestStore_AuthorizedCallers(cur realm, t *testing.T) {
 		t.Run(tc.name, func(cur realm, t *testing.T) {
 			resetTestState(t)
 
+			// Enter the domain realm before registering writers; the previous subcase's
+			// SetRealm persists into cur since gnovm#6193.
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
+
 			ss := NewStakerStore(kvStore)
 			initRegisterWritableContract(cur)
 
-			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker"))
 			if !ss.HasAllowedTokensStoreKey() {
 				ss.SetAllowedTokens(0, cur, []string{})
 			}

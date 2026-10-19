@@ -589,6 +589,9 @@ func getContractAddress(roleName string) address {
 }
 
 func cleanup(cur realm, t *testing.T) {
+	// Restore the package realm; a prior SetRealm persists into cur since gnovm#6193.
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gov/xgns"))
+
 	admin = ownable.NewWithAddress(testutils.TestAddress("admin"))
 	token, ledger = grc20.NewToken("XGNS", "xGNS", 6, tokenID, cur)
 }
