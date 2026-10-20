@@ -1,0 +1,310 @@
+package launchpad
+
+import (
+	"errors"
+
+	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/r/gnoswap/launchpad"
+
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	u256 "gno.land/p/gnoswap/uint256/v1"
+)
+
+// Helper functions for RewardManager
+
+func isRewardManagerInitialized(r *launchpad.RewardManager) bool {
+	return r.Rewards().Size() > 0
+}
+
+func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launchpad.RewardState, error) {
+	rewardStateI := r.Rewards().Get(depositId)
+	if rewardStateI == nil {
+		return nil, makeErrorWithDetails(errNotExistDeposit, ufmt.Sprintf("(%s)", depositId))
+	}
+
+	rewardState, ok := rewardStateI.(*launchpad.RewardState)
+	if !ok {
+		return nil, ufmt.Errorf("failed to cast rewardState to *launchpad.RewardState: %T", rewardStateI)
+	}
+
+	return rewardState, nil
+}
+
+func calculateRewardPerDepositX128(r *launchpad.RewardManager, rewardPerSecondX128 *u256.Uint, totalStaked int64, currentTime int64) (*u256.Uint, error) {
+	accumulatedTime := r.AccumulatedTime()
+	if r.DistributeStartTime() > accumulatedTime {
+		accumulatedTime = r.DistributeStartTime()
+	}
+
+	// not started yet
+	if currentTime < accumulatedTime {
+		return u256.Zero(), nil
+	}
+
+	// past distribute end time
+	if accumulatedTime > r.DistributeEndTime() {
+		return u256.Zero(), nil
+	}
+
+	// past distribute end time, set to distribute end time
+	if currentTime > r.DistributeEndTime() {
+		currentTime = r.DistributeEndTime()
+	}
+
+	if rewardPerSecondX128.IsZero() {
+		return nil, makeErrorWithDetails(
+			errNoLeftReward,
+			ufmt.Sprintf("rewardPerSecond(%d)", rewardPerSecondX128),
+		)
+	}
+
+	// no left reward
+	if totalStaked == 0 {
+		return u256.Zero(), nil
+	}
+
+	// timeDuration * rewardPerSecond / totalStaked
+	timeDuration := currentTime - accumulatedTime
+	rewardPerDepositX128 := u256.MulDiv(
+		u256.NewUintFromInt64(timeDuration),
+		rewardPerSecondX128,
+		u256.NewUintFromInt64(totalStaked),
+	)
+
+	return rewardPerDepositX128, nil
+}
+
+func addRewardStateByDeposit(r *launchpad.RewardManager, deposit launchpad.Deposit) *launchpad.RewardState {
+	claimableTime := deposit.CreatedAt() + r.RewardClaimableDuration()
+	if claimableTime > r.DistributeEndTime() {
+		claimableTime = r.DistributeEndTime()
+	}
+
+	rewardState := launchpad.NewRewardState(
+		r.AccumulatedRewardPerDepositX128().Clone(),
+		deposit.DepositAmount(),
+		deposit.CreatedAt(),
+		r.DistributeEndTime(),
+		claimableTime,
+	)
+
+	// if the first deposit, set the distribute start time
+	if !isRewardManagerInitialized(r) {
+		rewardState.SetDistributeStartTime(r.DistributeStartTime())
+		rewardState.SetDistributeEndTime(r.DistributeEndTime())
+		rewardState.SetAccumulatedTime(r.DistributeStartTime())
+		rewardState.SetPriceDebtX128(u256.Zero())
+	}
+
+	return addRewardState(r, deposit, rewardState)
+}
+
+func addRewardState(r *launchpad.RewardManager, deposit launchpad.Deposit, rewardState *launchpad.RewardState) *launchpad.RewardState {
+	addActiveRewardState(r, rewardState)
+	r.SetReward(deposit.ID(), rewardState)
+
+	return rewardState
+}
+
+func removeRewardState(r *launchpad.RewardManager, depositId string) error {
+	rewardState, err := getDepositRewardState(r, depositId)
+	if err != nil {
+		return err
+	}
+
+	removeActiveRewardState(r, rewardState)
+	r.RemoveReward(depositId)
+	return nil
+}
+
+func addActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.RewardState) {
+	debt, overflow := u256.Zero().MulOverflow(
+		rewardState.PriceDebtX128(),
+		u256.NewUintFromInt64(rewardState.DepositAmount()),
+	)
+	if overflow {
+		panic(errors.New(errOverflow))
+	}
+
+	r.SetActiveDepositAmount(gnsmath.SafeAddInt64(r.ActiveDepositAmount(), rewardState.DepositAmount()))
+	r.SetActivePriceDebtX128(u256.Zero().Add(r.ActivePriceDebtX128(), debt))
+}
+
+func removeActiveRewardState(r *launchpad.RewardManager, rewardState *launchpad.RewardState) {
+	debt, overflow := u256.Zero().MulOverflow(
+		rewardState.PriceDebtX128(),
+		u256.NewUintFromInt64(rewardState.DepositAmount()),
+	)
+	if overflow {
+		panic(errors.New(errOverflow))
+	}
+
+	r.SetActiveDepositAmount(gnsmath.SafeSubInt64(r.ActiveDepositAmount(), rewardState.DepositAmount()))
+	r.SetActiveClaimedAmount(gnsmath.SafeSubInt64(r.ActiveClaimedAmount(), rewardState.ClaimedAmount()))
+	r.SetActivePriceDebtX128(u256.Zero().Sub(r.ActivePriceDebtX128(), debt))
+}
+
+func addRewardPerDepositX128(r *launchpad.RewardManager, rewardPerDepositX128 *u256.Uint, currentTime int64) error {
+	if rewardPerDepositX128.IsZero() {
+		return nil
+	}
+
+	if r.AccumulatedTime() > currentTime || r.DistributeStartTime() > currentTime {
+		return nil
+	}
+
+	if currentTime > r.DistributeEndTime() {
+		currentTime = r.DistributeEndTime()
+	}
+
+	accumulated := u256.Zero().Add(r.AccumulatedRewardPerDepositX128(), rewardPerDepositX128)
+	r.SetAccumulatedRewardPerDepositX128(accumulated)
+	r.SetAccumulatedTime(currentTime)
+
+	return nil
+}
+
+// updateRewardPerDepositX128 updates the reward per deposit state.
+// This function calculates and updates the accumulated reward per deposit
+// based on the current total deposit amount and time.
+//
+// Parameters:
+// - totalDepositAmount (int64): Current total deposit amount
+// - time (int64): Current timestamp
+//
+// Returns:
+// - error: If the update fails
+func updateRewardPerDepositX128(r *launchpad.RewardManager, totalDepositAmount int64, currentTime int64) error {
+	if currentTime <= 0 {
+		return makeErrorWithDetails(errInvalidTime, "time must be positive")
+	}
+
+	// Calculate and update rewards
+	rewardPerDepositX128, err := calculateRewardPerDepositX128(
+		r,
+		r.DistributeAmountPerSecondX128(),
+		totalDepositAmount,
+		currentTime,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = addRewardPerDepositX128(r, rewardPerDepositX128, currentTime)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateDistributeAmountPerSecondX128(r *launchpad.RewardManager, totalDistributeAmount int64, distributeStartTime int64, distributeEndTime int64) {
+	// Use time duration for per-second calculation
+	timeDuration := distributeEndTime - distributeStartTime
+	if timeDuration <= 0 {
+		return
+	}
+
+	totalDistributeAmountX128 := u256.Zero().Lsh(
+		u256.NewUintFromInt64(totalDistributeAmount),
+		128,
+	)
+
+	// Divide by time duration in seconds
+	amountPerSecondX128 := u256.Zero().Div(
+		totalDistributeAmountX128,
+		u256.NewUintFromInt64(timeDuration),
+	)
+
+	r.SetDistributeAmountPerSecondX128(amountPerSecondX128)
+	r.SetDistributeStartTime(distributeStartTime)
+	r.SetDistributeEndTime(distributeEndTime)
+}
+
+// collectReward processes the reward collection for a specific deposit.
+// This function ensures that the reward collection is valid and updates
+// the claimed amount accordingly.
+//
+// Parameters:
+// - depositId (string): The ID of the deposit
+// - currentTime (int64): Current timestamp
+//
+// Returns:
+// - int64: The amount of reward collected
+// - error: If the collection fails
+func collectReward(r *launchpad.RewardManager, depositId string, currentTime int64) (int64, error) {
+	if currentTime < r.AccumulatedTime() {
+		return 0, makeErrorWithDetails(
+			errInvalidRewardState,
+			ufmt.Sprintf("currentTime %d is less than AccumulatedTime %d", currentTime, r.AccumulatedTime()),
+		)
+	}
+
+	rewardState, err := getDepositRewardState(r, depositId)
+	if err != nil {
+		return 0, err
+	}
+
+	if !isRewardStateClaimable(rewardState, currentTime) {
+		return 0, makeErrorWithDetails(
+			errInvalidRewardState,
+			ufmt.Sprintf("currentTime %d is less than claimableTime %d", currentTime, rewardState.ClaimableTime()),
+		)
+	}
+
+	if currentTime < rewardState.DistributeStartTime() {
+		return 0, makeErrorWithDetails(
+			errInvalidRewardState,
+			ufmt.Sprintf("currentTime %d is less than DistributeStartTime %d", currentTime, rewardState.DistributeStartTime()),
+		)
+	}
+
+	claimableReward := calculateClaimableReward(rewardState, r.AccumulatedRewardPerDepositX128())
+	if claimableReward == 0 {
+		return 0, nil
+	}
+
+	rewardState.SetClaimedAmount(rewardState.ClaimedAmount() + claimableReward)
+	rewards := r.Rewards()
+	rewards.Set(depositId, rewardState)
+	r.SetRewards(rewards)
+	r.SetTotalClaimedAmount(r.TotalClaimedAmount() + claimableReward)
+	r.SetActiveClaimedAmount(gnsmath.SafeAddInt64(r.ActiveClaimedAmount(), claimableReward))
+
+	return claimableReward, nil
+}
+
+// newRewardManager returns a pointer to a new RewardManager with the given values.
+func newRewardManager(
+	totalDistributeAmount int64,
+	distributeStartTime int64,
+	distributeEndTime int64,
+	rewardCollectableDuration int64,
+) *launchpad.RewardManager {
+	manager := launchpad.NewRewardManager(totalDistributeAmount, distributeStartTime, distributeEndTime, rewardCollectableDuration)
+
+	updateDistributeAmountPerSecondX128(manager, totalDistributeAmount, distributeStartTime, distributeEndTime)
+
+	return manager
+}
+
+// calculateMaximumClaimableRewardsForActiveDeposits reserves every active
+// claim without traversing the attacker-controlled reward tree. Aggregating
+// before Q128 truncation retains rounding dust but cannot under-reserve claims.
+func calculateMaximumClaimableRewardsForActiveDeposits(r *launchpad.RewardManager) int64 {
+	reward, overflow := u256.Zero().MulOverflow(
+		r.AccumulatedRewardPerDepositX128(),
+		u256.NewUintFromInt64(r.ActiveDepositAmount()),
+	)
+	if overflow {
+		panic(errors.New(errOverflow))
+	}
+
+	reward = reward.Sub(reward, r.ActivePriceDebtX128()).Rsh(reward, 128)
+	totalReward := gnsmath.SafeConvertToInt64(reward)
+	if totalReward <= r.ActiveClaimedAmount() {
+		return 0
+	}
+
+	return gnsmath.SafeSubInt64(totalReward, r.ActiveClaimedAmount())
+}

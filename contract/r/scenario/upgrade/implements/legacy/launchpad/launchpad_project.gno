@@ -1,0 +1,602 @@
+package launchpad
+
+import (
+	"chain"
+	"chain/runtime"
+	"errors"
+	"strconv"
+	"strings"
+	"time"
+
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
+	ufmt "gno.land/p/nt/ufmt/v0"
+
+	"gno.land/r/gnoswap/access/v1"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/halt/v1"
+	"gno.land/r/gnoswap/launchpad"
+)
+
+// CreateProject creates a new launchpad project with tiered allocations.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the launchpad proxy.
+//   - name: project name, limited by the project validation rules.
+//   - tokenPath: reward token contract path whose balance is deposited into the project.
+//   - recipient: project recipient address recorded for authorization and later collection.
+//   - depositAmount: amount of reward tokens to deposit into the project.
+//   - conditionTokens: `*PAD*`-separated token paths for eligibility conditions.
+//   - conditionAmounts: `*PAD*`-separated minimum balances aligned with conditionTokens.
+//   - tier30Ratio: percentage of the allocation assigned to the 30-day tier.
+//   - tier90Ratio: percentage of the allocation assigned to the 90-day tier.
+//   - tier180Ratio: percentage of the allocation assigned to the 180-day tier.
+//   - startTime: project start timestamp in Unix seconds, subject to the minimum delay.
+//
+// Returns:
+//   - projectID: newly created launchpad project identifier.
+//
+// Only callable by admin or governance.
+func (lp *launchpadV1) CreateProject(
+	_ int,
+	rlm realm,
+	name string,
+	tokenPath string,
+	recipient address,
+	depositAmount int64,
+	conditionTokens string,
+	conditionAmounts string,
+	tier30Ratio int64,
+	tier90Ratio int64,
+	tier180Ratio int64,
+	startTime int64,
+) string {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedLaunchpad()
+
+	previousRealm := rlm.Previous()
+	caller := previousRealm.Address()
+	access.AssertIsAdminOrGovernance(caller)
+
+	launchpadAddr := rlm.Address()
+	currentHeight := runtime.ChainHeight()
+	currentTime := time.Now().Unix()
+
+	params := &createProjectParams{
+		name:                  name,
+		tokenPath:             tokenPath,
+		recipient:             recipient,
+		depositAmount:         depositAmount,
+		conditionTokens:       conditionTokens,
+		conditionAmounts:      conditionAmounts,
+		tier30Ratio:           tier30Ratio,
+		tier90Ratio:           tier90Ratio,
+		tier180Ratio:          tier180Ratio,
+		startTime:             startTime,
+		currentTime:           currentTime,
+		currentHeight:         currentHeight,
+		minimumStartDelayTime: projectMinimumStartDelayTime,
+	}
+
+	// Checks: validate balance before creating project
+	tokenBalance := common.BalanceOf(tokenPath, caller)
+	if tokenBalance < depositAmount {
+		panic(
+			makeErrorWithDetails(
+				errInsufficientBalance, ufmt.Sprintf(
+					"caller(%s) balance(%d) < depositAmount(%d)",
+					caller.String(), tokenBalance, depositAmount,
+				),
+			),
+		)
+	}
+
+	// Effects: create project and save state
+	project, err := lp.createProject(0, rlm, params)
+	if err != nil {
+		panic(err)
+	}
+
+	// Interactions: transfer tokens
+	common.SafeGRC20TransferFrom(
+		0, rlm,
+		tokenPath,
+		caller,
+		launchpadAddr,
+		depositAmount,
+	)
+
+	tier30, err := getProjectTier(project, projectTier30)
+	if err != nil {
+		panic(err)
+	}
+
+	tier90, err := getProjectTier(project, projectTier90)
+	if err != nil {
+		panic(err)
+	}
+
+	tier180, err := getProjectTier(project, projectTier180)
+	if err != nil {
+		panic(err)
+	}
+
+	conditionEventAttrs := buildConditionEventAttrs(params.conditionTokens, params.conditionAmounts)
+
+	eventAttrs := append([]string{
+		"prevAddr", caller.String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"name", name,
+		"tokenPath", tokenPath,
+		"recipient", recipient.String(),
+		"depositAmount", utils.FormatInt(depositAmount),
+		"tier30Ratio", utils.FormatInt(params.tier30Ratio),
+		"tier90Ratio", utils.FormatInt(params.tier90Ratio),
+		"tier180Ratio", utils.FormatInt(params.tier180Ratio),
+		"startTime", utils.FormatInt(params.startTime),
+		"projectId", project.ID(),
+		"tier30Amount", utils.FormatInt(tier30.TotalDistributeAmount()),
+		"tier30EndTime", utils.FormatInt(tier30.EndTime()),
+		"tier90Amount", utils.FormatInt(tier90.TotalDistributeAmount()),
+		"tier90EndTime", utils.FormatInt(tier90.EndTime()),
+		"tier180Amount", utils.FormatInt(tier180.TotalDistributeAmount()),
+		"tier180EndTime", utils.FormatInt(tier180.EndTime()),
+	}, conditionEventAttrs...)
+
+	chain.Emit(
+		"CreateProject",
+		eventAttrs...,
+	)
+
+	return project.ID()
+}
+
+// createProject creates a new project with the given parameters.
+// This function validates the input parameters, creates the project structure,
+// and sets up the project tiers and reward managers.
+// Returns the created project and any error.
+func (lp *launchpadV1) createProject(_ int, rlm realm, params *createProjectParams) (*launchpad.Project, error) {
+	if err := params.validate(); err != nil {
+		return nil, err
+	}
+
+	// create project
+	project := launchpad.NewProject(
+		params.name,
+		params.tokenPath,
+		params.depositAmount,
+		params.recipient,
+		params.currentHeight,
+		params.currentTime,
+	)
+
+	// Get state components
+	projects := lp.store.GetProjects()
+	projectTierRewardManagers := lp.store.GetProjectTierRewardManagers()
+
+	// check duplicate project
+	if projects.Has(project.ID()) {
+		return nil, makeErrorWithDetails(
+			errDuplicateProject,
+			ufmt.Sprintf("project(%s) already exists", project.ID()),
+		)
+	}
+
+	projectConditions, err := launchpad.NewProjectConditionsWithError(params.conditionTokens, params.conditionAmounts)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, condition := range projectConditions {
+		addProjectCondition(project, condition.TokenPath(), condition)
+	}
+
+	projectTierRatios := map[int64]int64{
+		projectTier30:  params.tier30Ratio,
+		projectTier90:  params.tier90Ratio,
+		projectTier180: params.tier180Ratio,
+	}
+
+	accumulatedTierDistributeAmount := int64(0)
+
+	for _, duration := range projectTierDurations {
+		rewardCollectableDuration := projectTierRewardCollectableDuration[duration]
+		tierDurationTime := projectTierDurationTimes[duration]
+		tierDistributeAmount := gnsmath.SafeMulDivInt64(params.depositAmount, projectTierRatios[duration], 100)
+		accumulatedTierDistributeAmount = gnsmath.SafeAddInt64(accumulatedTierDistributeAmount, tierDistributeAmount)
+
+		// if the last tier, distribute the remaining amount
+		if duration == projectTier180 {
+			remainTierDistributeAmount := gnsmath.SafeSubInt64(params.depositAmount, accumulatedTierDistributeAmount)
+			tierDistributeAmount = gnsmath.SafeAddInt64(tierDistributeAmount, remainTierDistributeAmount)
+		}
+
+		projectTier := newProjectTier(
+			project.ID(),
+			duration,
+			tierDistributeAmount,
+			params.startTime,
+			params.startTime+tierDurationTime,
+		)
+		addProjectTier(project, duration, projectTier)
+
+		projectTierRewardManagers.Set(projectTier.ID(), newRewardManager(
+			projectTier.TotalDistributeAmount(),
+			projectTier.StartTime(),
+			projectTier.EndTime(),
+			rewardCollectableDuration,
+		))
+	}
+
+	project.SetTiersRatios(projectTierRatios)
+	projects.Set(project.ID(), project)
+
+	// Save the modified state back
+	if err := lp.store.SetProjects(0, rlm, projects); err != nil {
+		return nil, err
+	}
+	if err := lp.store.SetProjectTierRewardManagers(0, rlm, projectTierRewardManagers); err != nil {
+		return nil, err
+	}
+	recipients := lp.store.GetProjectRecipients()
+	recipients.Set(project.Recipient().String(), true)
+	if err := lp.store.SetProjectRecipients(0, rlm, recipients); err != nil {
+		return nil, err
+	}
+
+	return project, nil
+}
+
+// TransferLeftFromProjectByAdmin transfers the remaining refundable project-token
+// balance of an ended project to a specified recipient.
+// Only admin can call this function. Amounts reserved for active depositor
+// claims are excluded from the transfer.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded unchanged by the launchpad proxy.
+//   - projectID: ID of the ended project.
+//   - recipient: address that receives the remaining project-token balance.
+//
+// Returns:
+//   - amount: amount of project-token balance transferred to the recipient.
+func (lp *launchpadV1) TransferLeftFromProjectByAdmin(_ int, rlm realm, projectID string, recipient address) int64 {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedLaunchpad()
+
+	previousRealm := rlm.Previous()
+	caller := previousRealm.Address()
+	access.AssertIsAdmin(caller)
+
+	currentHeight := runtime.ChainHeight()
+	currentTime := time.Now().Unix()
+
+	project, err := lp.getProject(projectID)
+	if err != nil {
+		panic(err)
+	}
+
+	projectLeftReward, err := lp.transferLeftFromProject(0, rlm, project, recipient, currentTime)
+	if err != nil {
+		panic(err)
+	}
+
+	tier30, err := getProjectTier(project, projectTier30)
+	if err != nil {
+		panic(err)
+	}
+
+	tier90, err := getProjectTier(project, projectTier90)
+	if err != nil {
+		panic(err)
+	}
+
+	tier180, err := getProjectTier(project, projectTier180)
+	if err != nil {
+		panic(err)
+	}
+
+	chain.Emit(
+		"TransferLeftFromProjectByAdmin",
+		"prevAddr", caller.String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"projectId", projectID,
+		"recipient", recipient.String(),
+		"tokenPath", project.TokenPath(),
+		"leftReward", utils.FormatInt(projectLeftReward),
+		"tier30Full", utils.FormatInt(tier30.TotalDepositAmount()),
+		"tier30Left", utils.FormatInt(getCalculatedLeftReward(tier30)),
+		"tier90Full", utils.FormatInt(tier90.TotalDepositAmount()),
+		"tier90Left", utils.FormatInt(getCalculatedLeftReward(tier90)),
+		"tier180Full", utils.FormatInt(tier180.TotalDepositAmount()),
+		"tier180Left", utils.FormatInt(getCalculatedLeftReward(tier180)),
+		"currentHeight", utils.FormatInt(currentHeight),
+		"currentTime", utils.FormatInt(currentTime),
+	)
+
+	return projectLeftReward
+}
+
+// transferLeftFromProject transfers the remaining rewards of a project to a specified recipient.
+// This function is called by an admin to transfer any unclaimed rewards from a project to a recipient address.
+// It validates the project ID, checks the recipient conditions, calculates the remaining rewards, and performs the transfer.
+// Returns the amount of rewards transferred to the recipient and any error.
+func (lp *launchpadV1) transferLeftFromProject(_ int, rlm realm, project *launchpad.Project, recipient address, currentTime int64) (int64, error) {
+	if err := validateRefundProject(project, recipient, currentTime); err != nil {
+		return 0, err
+	}
+
+	emission.MintAndDistributeGns(cross(rlm))
+
+	accumTotalDistributeAmount := int64(0)
+	accumLeftReward := int64(0)
+	accumCollectedReward := int64(0)
+	accumCollectableReward := int64(0)
+	refundableAmountsByTier := make(map[int64]int64)
+
+	for duration, tier := range project.Tiers() {
+		// Settlement uses tier aggregate accounting, never the unbounded
+		// per-deposit reward tree.
+		tierCollectableReward := int64(0)
+		if getTierCurrentDepositCount(tier) > 0 {
+			var err error
+			tierCollectableReward, err = lp.applyTierRewardGrowthWithRewards(tier, currentTime)
+			if err != nil {
+				return 0, err
+			}
+
+			accumCollectableReward = gnsmath.SafeAddInt64(accumCollectableReward, tierCollectableReward)
+		}
+
+		leftReward := getCalculatedLeftReward(tier)
+		tierRefundableAmount := gnsmath.SafeSubInt64(leftReward, tierCollectableReward)
+		if tierRefundableAmount < 0 {
+			return 0, errors.New(ufmt.Sprintf("tierRefundableAmount(%d) < 0", tierRefundableAmount))
+		}
+
+		refundableAmountsByTier[duration] = tierRefundableAmount
+		accumLeftReward = gnsmath.SafeAddInt64(accumLeftReward, leftReward)
+		accumCollectedReward = gnsmath.SafeAddInt64(accumCollectedReward, tier.TotalCollectedAmount())
+		accumTotalDistributeAmount = gnsmath.SafeAddInt64(accumTotalDistributeAmount, tier.TotalDistributeAmount())
+	}
+
+	if accumLeftReward == 0 {
+		return 0, errors.New("project has no remaining amount")
+	}
+
+	actualTotalDistributeAmount := gnsmath.SafeAddInt64(accumCollectedReward, accumLeftReward)
+	if accumTotalDistributeAmount != actualTotalDistributeAmount {
+		return 0, errors.New(ufmt.Sprintf("accumTotalDistributeAmount(%d) != accumCollectedReward(%d)+accumLeftReward(%d)", accumTotalDistributeAmount, accumCollectedReward, accumLeftReward))
+	}
+
+	// Calculate refundable amount: project remaining minus collectable rewards for remaining depositors
+	projectLeftReward := accumLeftReward
+	projectRefundableAmount := gnsmath.SafeSubInt64(projectLeftReward, accumCollectableReward)
+
+	if projectRefundableAmount < 0 {
+		return 0, errors.New(ufmt.Sprintf("projectRefundableAmount(%d) < 0", projectRefundableAmount))
+	}
+
+	if projectRefundableAmount > 0 {
+		updatedTiers := make(map[int64]*launchpad.ProjectTier)
+		for duration, tier := range project.Tiers() {
+			tierRefundableAmount := refundableAmountsByTier[duration]
+			if tierRefundableAmount > 0 {
+				tier.SetTotalCollectedAmount(gnsmath.SafeAddInt64(tier.TotalCollectedAmount(), tierRefundableAmount))
+			}
+
+			updatedTiers[duration] = tier
+		}
+		project.SetTiers(updatedTiers)
+
+		common.SafeGRC20Transfer(0, rlm, project.TokenPath(), recipient, projectRefundableAmount)
+	}
+
+	return projectRefundableAmount, nil
+}
+
+// applyTierRewardGrowthWithRewards updates a tier index and returns a
+// conservative aggregate reservation for active claims. Rounding dust remains
+// in the project instead of risking an under-reserved depositor claim.
+func (lp *launchpadV1) applyTierRewardGrowthWithRewards(tier *launchpad.ProjectTier, currentTime int64) (int64, error) {
+	rewardManager, err := lp.getProjectTierRewardManager(tier.ID())
+	if err != nil {
+		return 0, err
+	}
+
+	if err := updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(tier), currentTime); err != nil {
+		return 0, err
+	}
+
+	emitUpdateLaunchpadRewardAccumulation(tier.ID(), rewardManager, getTierCurrentDepositAmount(tier))
+
+	return calculateMaximumClaimableRewardsForActiveDeposits(rewardManager), nil
+}
+
+// validateTransferLeft validates the transfer of remaining tokens
+func validateRefundProject(project *launchpad.Project, recipient address, currentTime int64) error {
+	if !recipient.IsValid() {
+		return errors.New(ufmt.Sprintf("invalid recipient address(%s)", recipient.String()))
+	}
+
+	return validateRefundRemainingAmount(project, currentTime)
+}
+
+type createProjectParams struct {
+	name                  string
+	tokenPath             string
+	recipient             address
+	depositAmount         int64
+	conditionTokens       string
+	conditionAmounts      string
+	tier30Ratio           int64
+	tier90Ratio           int64
+	tier180Ratio          int64
+	startTime             int64
+	currentTime           int64
+	currentHeight         int64
+	minimumStartDelayTime int64
+}
+
+func (p *createProjectParams) validate() error {
+	if err := p.validateName(); err != nil {
+		return err
+	}
+
+	if err := p.validateTokenPath(); err != nil {
+		return err
+	}
+
+	if err := p.validateRecipient(); err != nil {
+		return err
+	}
+
+	if err := p.validateDepositAmount(); err != nil {
+		return err
+	}
+
+	if err := p.validateRatio(); err != nil {
+		return err
+	}
+
+	if err := p.validateStartTime(p.currentTime, p.minimumStartDelayTime); err != nil {
+		return err
+	}
+
+	if err := p.validateConditions(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateName checks if the project name is valid.
+func (p *createProjectParams) validateName() error {
+	if p.name == "" {
+		return makeErrorWithDetails(errInvalidInput, "project name cannot be empty")
+	}
+
+	if len(p.name) > 100 {
+		return makeErrorWithDetails(errInvalidInput, "project name is too long")
+	}
+
+	return nil
+}
+
+// validateTokenPath validates the token path is not empty and is registered.
+func (p *createProjectParams) validateTokenPath() error {
+	if p.tokenPath == "" {
+		return makeErrorWithDetails(errInvalidInput, "tokenPath cannot be empty")
+	}
+
+	if err := common.IsRegistered(p.tokenPath); err != nil && !isGovernanceToken(p.tokenPath) {
+		return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("tokenPath(%s) not registered", p.tokenPath))
+	}
+
+	return nil
+}
+
+// validateRecipient checks if the recipient address is valid.
+func (p *createProjectParams) validateRecipient() error {
+	if !p.recipient.IsValid() {
+		return makeErrorWithDetails(errInvalidAddress, ufmt.Sprintf("recipient address(%s)", p.recipient.String()))
+	}
+
+	return nil
+}
+
+// validateDepositAmount ensures that the deposit amount is greater than zero.
+func (p *createProjectParams) validateDepositAmount() error {
+	if p.depositAmount == 0 {
+		return makeErrorWithDetails(errInvalidInput, "deposit amount cannot be 0")
+	}
+
+	if p.depositAmount < 0 {
+		return makeErrorWithDetails(errInvalidInput, "deposit amount cannot be negative")
+	}
+
+	return nil
+}
+
+// validateRatio checks if each tier ratio is non-negative and the sum equals 100.
+func (p *createProjectParams) validateRatio() error {
+	if p.tier30Ratio < 0 || p.tier90Ratio < 0 || p.tier180Ratio < 0 {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("tier ratios must be non-negative (30:%d, 90:%d, 180:%d)", p.tier30Ratio, p.tier90Ratio, p.tier180Ratio),
+		)
+	}
+
+	sum := p.tier30Ratio + p.tier90Ratio + p.tier180Ratio
+	if sum != 100 {
+		return makeErrorWithDetails(
+			errInvalidInput,
+			ufmt.Sprintf("invalid ratio, sum of all tiers(30:%d, 90:%d, 180:%d) should be 100", p.tier30Ratio, p.tier90Ratio, p.tier180Ratio),
+		)
+	}
+
+	return nil
+}
+
+// validateStartTime checks if the start time is available with minimum delay requirement.
+func (p *createProjectParams) validateStartTime(now int64, minimumStartDelayTime int64) error {
+	availableStartTime := now + minimumStartDelayTime
+
+	if p.startTime < availableStartTime {
+		return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("start time(%d) must be greater than now(%d)", p.startTime, availableStartTime))
+	}
+
+	return nil
+}
+
+func (p *createProjectParams) validateConditions() error {
+	if p.conditionTokens == "" && p.conditionAmounts == "" {
+		return nil
+	}
+
+	tokenPaths := strings.Split(p.conditionTokens, stringSplitterPad)
+	minimumAmounts := strings.Split(p.conditionAmounts, stringSplitterPad)
+
+	if len(tokenPaths) != len(minimumAmounts) {
+		return makeErrorWithDetails(errInvalidInput, "conditionTokens and conditionAmounts are not matched")
+	}
+	if len(tokenPaths) > maxProjectConditionCount {
+		return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("condition count(%d) exceeds maximum(%d)", len(tokenPaths), maxProjectConditionCount))
+	}
+
+	tokenPathMap := make(map[string]bool)
+
+	for _, tokenPath := range tokenPaths {
+		err := common.IsRegistered(tokenPath)
+		if err != nil && !isGovernanceToken(tokenPath) {
+			return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("tokenPath(%s) not registered", tokenPath))
+		}
+
+		if tokenPathMap[tokenPath] {
+			return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("tokenPath(%s) is duplicated", tokenPath))
+		}
+
+		tokenPathMap[tokenPath] = true
+	}
+
+	for _, amountStr := range minimumAmounts {
+		minimumAmount, err := strconv.ParseInt(amountStr, 10, 64)
+		if err != nil {
+			return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("invalid condition amount(%s)", amountStr))
+		}
+
+		if minimumAmount <= 0 {
+			return makeErrorWithDetails(errInvalidInput, ufmt.Sprintf("condition amount(%s) is not available", amountStr))
+		}
+	}
+
+	return nil
+}
+
+func isGovernanceToken(tokenPath string) bool {
+	return tokenPath == GOV_XGNS_PATH
+}
