@@ -196,3 +196,46 @@ func TestAssert_assertHasProject(cur realm, t *testing.T) {
 	}
 	lp.assertHasProject(otherRecipient)
 }
+
+func TestAssert_assertIsDepositNotWithdrawn(cur realm, t *testing.T) {
+	deposit := *newDeposit("1", "p", projectTier30, testutils.TestAddress("user"), minimumDepositAmount, 1, 100, 200)
+	uassert.NotPanics(t, cur, func() {
+		assertIsDepositNotWithdrawn(deposit)
+	})
+
+	withdrawn, _ := withdrawDeposit(deposit, 2, 201)
+	uassert.PanicsContains(t, cur, "[GNOSWAP-LAUNCHPAD-013] already collected || (1)", func() {
+		assertIsDepositNotWithdrawn(withdrawn)
+	})
+}
+
+func TestAssert_assertIsDepositEnded(cur realm, t *testing.T) {
+	const endTime = int64(200)
+	deposit := *newDeposit("1", "p", projectTier30, testutils.TestAddress("user"), minimumDepositAmount, 1, 100, endTime)
+
+	tests := []struct {
+		name          string
+		currentTime   int64
+		expectedPanic bool
+	}{
+		{"before created time", 99, true},
+		{"one second before end", endTime - 1, true},
+		{"at end", endTime, true},
+		{"one second after end", endTime + 1, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			if tt.expectedPanic {
+				uassert.PanicsContains(t, cur, "[GNOSWAP-LAUNCHPAD-016] project lock period is not over yet || (1)", func() {
+					assertIsDepositEnded(deposit, tt.currentTime)
+				})
+				return
+			}
+
+			uassert.NotPanics(t, cur, func() {
+				assertIsDepositEnded(deposit, tt.currentTime)
+			})
+		})
+	}
+}

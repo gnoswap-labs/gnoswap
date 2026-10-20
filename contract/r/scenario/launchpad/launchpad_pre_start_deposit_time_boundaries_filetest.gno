@@ -1,4 +1,4 @@
-// launchpad deposit before tier start: claim and deposit time boundaries
+// launchpad deposit before tier start: claim, withdrawal and deposit time boundaries
 
 // PKGPATH: gno.land/r/gnoswap/v1/main
 
@@ -69,8 +69,16 @@ func main(cur realm) {
 	assertEqual("Alice first-day reward", rewardAmount/30, reward)
 	println()
 
-	println("[SCENARIO] 5. Deposit is rejected at the tier end")
+	println("[SCENARIO] 5. Principal stays locked at the tier end")
 	skipTo(startTime + tier30Seconds)
+	uassert.AbortsContains(t, cur, "[GNOSWAP-LAUNCHPAD-016] project lock period is not over yet", func() {
+		testing.SetRealm(testing.NewUserRealm(aliceAddr))
+		launchpad.CollectDepositGns(cross(cur), aliceDepositID)
+	})
+	println("[EXPECTED] withdraw aborted at tier end")
+	println()
+
+	println("[SCENARIO] 6. Deposit is rejected at the tier end")
 	testing.SetRealm(adminRealm)
 	gns.Transfer(cross(cur), bobAddr, depositUnit)
 	testing.SetRealm(testing.NewUserRealm(bobAddr))
@@ -82,7 +90,7 @@ func main(cur realm) {
 	println("[EXPECTED] deposit aborted at tier end")
 	println()
 
-	println("[SCENARIO] 6. Withdraw after the tier end")
+	println("[SCENARIO] 7. Withdraw after the tier end")
 	testing.SkipHeights(1)
 	gnsAmount, rest := withdrawDeposit(cur, aliceAddr, aliceDepositID)
 	assertEqual("GNS principal returned", depositUnit, gnsAmount)
@@ -172,10 +180,13 @@ func assertEqual(label string, expected, actual int64) {
 // [INFO] deposit 1: reward collected=33333333
 // [EXPECTED] Alice first-day reward: 33333333
 //
-// [SCENARIO] 5. Deposit is rejected at the tier end
+// [SCENARIO] 5. Principal stays locked at the tier end
+// [EXPECTED] withdraw aborted at tier end
+//
+// [SCENARIO] 6. Deposit is rejected at the tier end
 // [EXPECTED] deposit aborted at tier end
 //
-// [SCENARIO] 6. Withdraw after the tier end
+// [SCENARIO] 7. Withdraw after the tier end
 // [INFO] deposit 1: GNS withdrawn=1000000, reward collected=966666666
 // [EXPECTED] GNS principal returned: 1000000
 // [EXPECTED] Alice total reward: 999999999

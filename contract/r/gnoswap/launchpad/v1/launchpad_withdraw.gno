@@ -3,13 +3,13 @@ package launchpad
 import (
 	"chain"
 	"chain/runtime"
-	"errors"
 	"time"
 
 	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 	"gno.land/p/gnoswap/utils/v1"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt/v1"
@@ -24,19 +24,17 @@ import (
 //
 // Parameters:
 //   - _: Noncrossing implementation-call discriminator; pass 0.
-//   - rlm: Current realm context forwarded by the launchpad proxy; invalid contexts return an error.
+//   - rlm: Current realm context forwarded by the launchpad proxy; a spoofed context panics.
 //   - depositID: ID of the deposit to withdraw.
 //
 // Returns:
 //   - amount: original GNS deposit amount returned to the depositor, in base units.
-//   - err: non-nil for a spoofed-realm call; other withdrawal failures panic before returning.
+//   - err: always nil; withdrawal failures panic before returning.
 //
 // Only callable by deposit owner when the current time is strictly after the
 // selected tier's end time.
 func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (int64, error) {
-	if !rlm.IsCurrent() {
-		return 0, errors.New(errSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedWithdraw()
 
@@ -45,12 +43,16 @@ func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (in
 	caller := previousRealm.Address()
 	lp.assertIsDepositOwner(depositID, caller)
 
-	emission.MintAndDistributeGns(cross(rlm))
-
 	deposit := lp.mustGetDeposit(depositID)
 	targetProjectTierID := deposit.ProjectTierID()
 	currentHeight := runtime.ChainHeight()
 	currentTime := time.Now().Unix()
+
+	// check deposit state
+	assertIsDepositNotWithdrawn(deposit)
+	assertIsDepositEnded(deposit, currentTime)
+
+	emission.MintAndDistributeGns(cross(rlm))
 
 	// Collect reward before withdrawal
 	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(0, rlm, deposit, currentHeight, currentTime)
