@@ -548,7 +548,7 @@ func TestSwap_ZeroActiveLiquidityCrossesIntoRange(cur realm, t *testing.T) {
 		false,
 		"1000",
 		"1461446703485210103287273052203988822378723970341",
-		func(_ realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
+		func(cur realm, amount0Delta, amount1Delta int64, _ *pl.CallbackMarker) error {
 			callbackCalled = true
 			receivedAmount0Delta = amount0Delta
 			receivedAmount1Delta = amount1Delta

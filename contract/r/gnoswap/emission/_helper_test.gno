@@ -15,8 +15,10 @@ var (
 	govStakerAddr, _     = access.GetAddress(prbac.ROLE_GOV_STAKER.String())
 	devOpsAddr, _        = access.GetAddress(prbac.ROLE_DEVOPS.String())
 	communityPoolAddr, _ = access.GetAddress(prbac.ROLE_COMMUNITY_POOL.String())
+	emissionRoleAddr, _  = access.GetAddress(prbac.ROLE_EMISSION.String())
 
-	emissionRealm  = testing.NewUserRealm(emissionAddr)
+	// emissionAddr is assigned in init(), after package vars are initialized, so use the role address.
+	emissionRealm  = testing.NewUserRealm(emissionRoleAddr)
 	adminRealm     = testing.NewUserRealm(adminAddr)
 	stakerRealm    = testing.NewUserRealm(stakerAddr)
 	govRealm       = testing.NewUserRealm(govAddr)

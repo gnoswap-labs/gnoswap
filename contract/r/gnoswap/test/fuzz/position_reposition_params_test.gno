@@ -94,14 +94,16 @@ func (p *positionRepositionParams) IsValid() bool {
 		return false
 	}
 
-	if !p.IsValidLiquidity() {
+	// Reposition always targets the position's own pool, so validate liquidity against it
+	// rather than the (possibly randomized) p.poolPath.
+	if !p.IsValidLiquidity(poolPath) {
 		return false
 	}
 
 	return true
 }
 
-func (p *positionRepositionParams) IsValidLiquidity() (isValid bool) {
+func (p *positionRepositionParams) IsValidLiquidity(poolPath string) (isValid bool) {
 	defer func() {
 		if r := recover(); r != nil {
 			isValid = false
@@ -113,7 +115,7 @@ func (p *positionRepositionParams) IsValidLiquidity() (isValid bool) {
 	if err0 != nil || err1 != nil {
 		return false
 	}
-	sqrtPriceX96String, err := pool.GetSlot0SqrtPriceX96(p.poolPath)
+	sqrtPriceX96String, err := pool.GetSlot0SqrtPriceX96(poolPath)
 	if err != nil {
 		return false
 	}
