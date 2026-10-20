@@ -14,7 +14,8 @@ and depositors receive rewards according to the selected tier.
 - **Pool Tiers**: 30 days, 90 days, and 180 days
 - **Minimum Start Delay**: 3 days from project creation
 - **Minimum Deposit**: 1 GNS (1,000,000 base units) and integer multiples of that amount
-- **Reward Claim Delay**: 1 day after each deposit, capped at the selected tier's end time
+- **Deposit Window**: From project creation until the selected tier's end time; rewards accrue from the tier start
+- **Reward Claim Delay**: 1 day after each deposit or the tier start, whichever is later, capped at the selected tier's end time
 - **Condition Delimiter**: Use `*PAD*` between condition expressions
 - **Auto-Delegation**: Project deposits can be reflected in governance-staker accounting
 
@@ -36,13 +37,14 @@ and optional `*PAD*`-separated conditions. Only admin or governance may call it.
 ### `DepositGns`
 
 Deposits GNS into a project tier. The deposit amount must meet the minimum and
-multiple rules.
+multiple rules. Deposits are accepted from project creation until the tier
+ends; rewards accrue only from the tier start.
 
 ### `CollectRewardByDepositId`
 
 Claims the project-token reward for a deposit. Only the deposit owner can call
-it, and the reward is claimable one day after deposit creation, capped by the
-tier end time.
+it, and the reward is claimable one day after deposit creation or the tier
+start, whichever is later, capped by the tier end time.
 
 ### `CollectDepositGns`
 

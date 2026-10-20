@@ -888,10 +888,9 @@ func TestRewardManager_ClaimableTimeOverflow(cur realm, t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
 			// given
-			now := time.Now().Unix()
 			manager := newRewardManager(
 				1000000,
-				now,
+				tt.createdAt,
 				tt.distributeEndTime,
 				0,
 			)

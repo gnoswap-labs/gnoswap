@@ -75,7 +75,13 @@ func calculateRewardPerDepositX128(r *launchpad.RewardManager, rewardPerSecondX1
 }
 
 func addRewardStateByDeposit(r *launchpad.RewardManager, deposit launchpad.Deposit) *launchpad.RewardState {
-	claimableTime := deposit.CreatedAt() + r.RewardClaimableDuration()
+	// Pre-start deposits accrue rewards from the distribute start time.
+	adjustedDistributeStartTime := deposit.CreatedAt()
+	if adjustedDistributeStartTime < r.DistributeStartTime() {
+		adjustedDistributeStartTime = r.DistributeStartTime()
+	}
+
+	claimableTime := adjustedDistributeStartTime + r.RewardClaimableDuration()
 	if claimableTime > r.DistributeEndTime() {
 		claimableTime = r.DistributeEndTime()
 	}
@@ -83,7 +89,7 @@ func addRewardStateByDeposit(r *launchpad.RewardManager, deposit launchpad.Depos
 	rewardState := launchpad.NewRewardState(
 		r.AccumulatedRewardPerDepositX128().Clone(),
 		deposit.DepositAmount(),
-		deposit.CreatedAt(),
+		adjustedDistributeStartTime,
 		r.DistributeEndTime(),
 		claimableTime,
 	)

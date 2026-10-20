@@ -140,7 +140,7 @@ func (lp *launchpadV1) depositGns(
 	currentTime := time.Now().Unix()
 	currentHeight := runtime.ChainHeight()
 
-	if !projectTier.IsActivated(currentTime) {
+	if !isTierDepositable(projectTier, currentTime) {
 		return launchpad.DefaultDeposit(), nil, false, "", makeErrorWithDetails(errInactiveProject, project.ID())
 	}
 

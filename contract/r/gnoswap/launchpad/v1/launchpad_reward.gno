@@ -16,8 +16,8 @@ import (
 )
 
 // CollectRewardByDepositId collects the claimable project-token reward from a
-// specific deposit. The reward becomes claimable one day after deposit creation,
-// capped at the selected tier's end time.
+// specific deposit. The reward becomes claimable one day after deposit creation
+// or the tier start, whichever is later, capped at the selected tier's end time.
 //
 // Parameters:
 //   - _: Noncrossing implementation-call discriminator; pass 0.
