@@ -144,6 +144,8 @@ func (lp *launchpadV1) depositGns(
 		return launchpad.DefaultDeposit(), nil, false, "", makeErrorWithDetails(errInactiveProject, project.ID())
 	}
 
+	assertHasTierReward(projectTier)
+
 	depositID := lp.nextDepositID()
 	deposit := launchpad.MakeDeposit(
 		depositID,

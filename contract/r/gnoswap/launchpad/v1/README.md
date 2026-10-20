@@ -38,7 +38,8 @@ and optional `*PAD*`-separated conditions. Only admin or governance may call it.
 
 Deposits GNS into a project tier. The deposit amount must meet the minimum and
 multiple rules. Deposits are accepted from project creation until the tier
-ends; rewards accrue only from the tier start.
+ends; rewards accrue only from the tier start. Tiers with no reward allocation
+reject deposits.
 
 ### `CollectRewardByDepositId`
 

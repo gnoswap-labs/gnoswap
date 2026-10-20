@@ -239,3 +239,34 @@ func TestAssert_assertIsDepositEnded(cur realm, t *testing.T) {
 		})
 	}
 }
+
+func TestAssert_assertHasTierReward(cur realm, t *testing.T) {
+	const startTime = int64(1000)
+	endTime := startTime + projectTierDurationTimes[projectTier90]
+
+	tests := []struct {
+		name          string
+		rewardAmount  int64
+		expectedPanic bool
+	}{
+		{"zero reward", 0, true},
+		{"minimum reward", 1, false},
+		{"regular reward", 1_000_000, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			tier := newProjectTier("p", projectTier90, tt.rewardAmount, startTime, endTime)
+			if tt.expectedPanic {
+				uassert.PanicsContains(t, cur, "[GNOSWAP-LAUNCHPAD-001] no left reward || (p:90)", func() {
+					assertHasTierReward(tier)
+				})
+				return
+			}
+
+			uassert.NotPanics(t, cur, func() {
+				assertHasTierReward(tier)
+			})
+		})
+	}
+}

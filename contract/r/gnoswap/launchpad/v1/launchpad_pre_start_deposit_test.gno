@@ -1,6 +1,7 @@
 package launchpad
 
 import (
+	"chain"
 	"chain/runtime"
 	"testing"
 	"time"
@@ -8,6 +9,7 @@ import (
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/obl"
 
 	u256 "gno.land/p/gnoswap/uint256/v1"
@@ -276,4 +278,68 @@ func TestCollectDepositGns_PreStartDepositLockedUntilTierEnd(cur realm, t *testi
 	_, amount, err := lp.withdrawDeposit(0, cur, deposit, 0, tier.EndTime()+1)
 	uassert.NoError(t, err)
 	uassert.Equal(t, preStartTestDepositUnit, amount)
+}
+
+func TestDepositGns_RejectsZeroRewardTier(cur realm, t *testing.T) {
+	startTime := preStartTestCreatedAt + projectMinimumStartDelayTime
+
+	tests := []struct {
+		name        string
+		depositTime int64
+	}{
+		{"at project creation", preStartTestCreatedAt},
+		{"one second before start", startTime - 1},
+		{"at start", startTime},
+		{"after start", startTime + dayTime},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			lp, _, _, projectID, _ := setupPreStartProject(cur, t)
+			setPreStartTestTime(tt.depositTime)
+			project, err := lp.getProject(projectID)
+			uassert.NoError(t, err)
+
+			for _, duration := range []int64{projectTier90, projectTier180} {
+				tier, err := getProjectTier(project, duration)
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(0), tier.TotalDistributeAmount())
+
+				uassert.PanicsContains(t, cur, "[GNOSWAP-LAUNCHPAD-001] no left reward || ("+tier.ID()+")", func() {
+					lp.depositGns(0, cur, project, duration, preStartTestDepositUnit, testutils.TestAddress("zero_tier_user"))
+				})
+
+				manager, err := lp.getProjectTierRewardManager(tier.ID())
+				uassert.NoError(t, err)
+				uassert.Equal(t, int64(0), tier.TotalDepositAmount())
+				uassert.Equal(t, 0, manager.Rewards().Size())
+			}
+			uassert.Equal(t, 0, lp.store.GetDeposits().Size())
+
+			// The funded tier still accepts the same deposit.
+			deposit, _, _, _, err := lp.depositGns(0, cur, project, projectTier30, preStartTestDepositUnit, testutils.TestAddress("funded_tier_user"))
+			uassert.NoError(t, err)
+			uassert.Equal(t, "1", deposit.ID())
+		})
+	}
+}
+
+func TestDepositGns_ZeroRewardTierKeepsCallerFunds(cur realm, t *testing.T) {
+	lp, launchpadAddr, _, projectID, _ := setupPreStartProject(cur, t)
+	fundDepositCaller(cur, launchpadAddr, preStartTestDepositUnit)
+
+	caller := chain.PackageAddress("gno.land/r/gnoswap/launchpad/v1")
+	gnsBefore := gns.BalanceOf(caller)
+	stakedBefore := lp.store.GetTotalGNSStakedAmount()
+
+	uassert.AbortsContains(t, cur, "[GNOSWAP-LAUNCHPAD-001] no left reward", func() {
+		func(cur realm) {
+			testing.SetRealm(testing.NewCodeRealm(testLaunchpadPkgPath))
+			lp.DepositGns(0, cur, projectID+":90", preStartTestDepositUnit, "")
+		}(cross(cur))
+	})
+
+	uassert.Equal(t, gnsBefore, gns.BalanceOf(caller))
+	uassert.Equal(t, stakedBefore, lp.store.GetTotalGNSStakedAmount())
+	uassert.Equal(t, 0, lp.store.GetDeposits().Size())
 }

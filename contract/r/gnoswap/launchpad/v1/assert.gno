@@ -49,6 +49,14 @@ func assertIsDepositEnded(deposit launchpad.Deposit, currentTime int64) {
 	}
 }
 
+// assertHasTierReward asserts that the tier has rewards to distribute.
+// A zero-rate tier cannot settle rewards, which would lock withdrawals.
+func assertHasTierReward(tier *launchpad.ProjectTier) {
+	if tier.DistributeAmountPerSecondX128().IsZero() {
+		panic(makeErrorWithDetails(errNoLeftReward, ufmt.Sprintf("(%s)", tier.ID())))
+	}
+}
+
 // assertHasProject asserts that the caller is the owner of at least one project.
 // Panics if the caller is not the owner of any project.
 func (lp *launchpadV1) assertHasProject(caller address) {
