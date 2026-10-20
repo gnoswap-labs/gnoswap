@@ -32,9 +32,9 @@ var projectTierDurations = []int64{
 
 // MUST BE IMMUTABLE, DO NOT MODIFY.
 var projectTierDurationTimes = map[int64]int64{
-	projectTier30:  dayTime * 1, // 1 day
-	projectTier90:  dayTime * 2, // 2 days
-	projectTier180: dayTime * 3, // 3 days
+	projectTier30:  minuteTime * 60 * 6,  // 6 hours
+	projectTier90:  minuteTime * 60 * 12, // 12 hours
+	projectTier180: minuteTime * 60 * 18, // 18 hours
 }
 
 // MUST BE IMMUTABLE, DO NOT MODIFY.
