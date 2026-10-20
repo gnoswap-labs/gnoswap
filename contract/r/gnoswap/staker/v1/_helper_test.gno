@@ -396,6 +396,9 @@ func initStakerTest(cur realm, t *testing.T) {
 	}
 
 	initStakerProxyTest(cur, t)
+
+	// Restore the package realm; setup SetRealm calls persist into cur since gnovm#6193.
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/staker/v1"))
 }
 
 func createDefaultInitialPoolForStakerTest(cur realm, t *testing.T) {

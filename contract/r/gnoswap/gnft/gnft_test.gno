@@ -1285,6 +1285,9 @@ func callSetTokenURI(cur realm, tid grc721.TokenID, tURI string) error {
 func resetObject(cur realm, t *testing.T) {
 	t.Helper()
 
+	// Restore the package realm; a prior SetRealm persists into cur since gnovm#6193.
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gnft"))
+
 	token, ledger = grc721.NewToken("GNOSWAP NFT", "GNFT", seqid.ID(0), cur)
 	meta, metaLedger = metadata.NewMetadata(ledger)
 }

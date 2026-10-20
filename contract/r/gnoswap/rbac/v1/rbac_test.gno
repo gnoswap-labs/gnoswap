@@ -191,6 +191,9 @@ func TestRbac_RegisterRole(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// Set realm to rbac for access package calls
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac/v1"))
+
 			tt.setup(cur)
 
 			// Set realm to the specified caller for authorization testing
@@ -276,6 +279,9 @@ func TestRbac_RemoveRole(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// Set realm to rbac for access package calls
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac/v1"))
+
 			tt.setup(cur)
 			testing.SetRealm(testing.NewUserRealm(ADMIN))
 			err := manager.RemoveRole(tt.roleName)
@@ -888,6 +894,9 @@ func TestRbac_UpdateRoleAddress_WithAuthorization(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// Set realm to rbac for access package calls
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac/v1"))
+
 			tt.setup(cur)
 
 			// Set realm to the specified caller for authorization testing
@@ -1016,6 +1025,9 @@ func TestRbac_RemoveRole_WithAuthorization(cur realm, t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
+			// Set realm to rbac for access package calls
+			testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/rbac/v1"))
+
 			tt.setup(cur)
 
 			// Set realm to the specified caller for authorization testing

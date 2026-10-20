@@ -26,6 +26,9 @@ func resetObject(cur realm, t *testing.T) {
 func resetGnsTokenObject(cur realm, t *testing.T) {
 	t.Helper()
 
+	// Restore the package realm; a prior SetRealm persists into cur since gnovm#6193.
+	testing.SetRealm(testing.NewCodeRealm("gno.land/r/gnoswap/gns"))
+
 	token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6, tokenID, cur)
 	userTeller = privateLedger.CallerTeller()
 
