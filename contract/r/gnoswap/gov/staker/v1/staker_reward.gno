@@ -10,6 +10,7 @@ import (
 
 	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/gns"
 	"gno.land/r/gnoswap/gov/xgns"
 	"gno.land/r/gnoswap/halt/v1"
@@ -44,6 +45,8 @@ func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
 	caller := prev.Address()
 	from := rlm.Address()
 	currentTimestamp := time.Now().Unix()
+
+	emission.MintAndDistributeGns(cross(rlm))
 
 	emissionReward, protocolFeeRewards, err := gs.claimRewards(0, rlm, caller.String(), currentTimestamp)
 	if err != nil {
@@ -99,6 +102,8 @@ func (gs *govStakerV1) CollectEmissionReward(_ int, rlm realm) {
 	caller := prev.Address()
 	from := rlm.Address()
 	currentTimestamp := time.Now().Unix()
+
+	emission.MintAndDistributeGns(cross(rlm))
 
 	emissionReward, err := gs.claimRewardsEmissionReward(0, rlm, caller.String(), currentTimestamp)
 	if err != nil {
@@ -253,6 +258,8 @@ func (gs *govStakerV1) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to a
 			ufmt.Sprintf("%s is not project wallet from launchpad", to.String()),
 		))
 	}
+
+	emission.MintAndDistributeGns(cross(rlm))
 
 	emissionReward, err := gs.claimRewardsEmissionReward(0, rlm, launchpadRewardID, currentTimestamp)
 	if err != nil {
