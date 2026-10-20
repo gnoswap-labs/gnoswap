@@ -1,0 +1,175 @@
+package launchpad
+
+import (
+	"chain"
+	"chain/runtime"
+	"errors"
+	"time"
+
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/utils/v1"
+	ufmt "gno.land/p/nt/ufmt/v0"
+
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/halt/v1"
+	"gno.land/r/gnoswap/launchpad"
+
+	gov_staker "gno.land/r/gnoswap/gov/staker"
+)
+
+// CollectDepositGns withdraws the original GNS deposit after the lock period
+// ends. Before returning the principal, it settles any claimable project-token
+// reward for the deposit.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the launchpad proxy; invalid contexts return an error.
+//   - depositID: ID of the deposit to withdraw.
+//
+// Returns:
+//   - amount: original GNS deposit amount returned to the depositor, in base units.
+//   - err: non-nil for a spoofed-realm call; other withdrawal failures panic before returning.
+//
+// Only callable by deposit owner when the current time is strictly after the
+// selected tier's end time.
+func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (int64, error) {
+	if !rlm.IsCurrent() {
+		return 0, errors.New(errSpoofedRealm)
+	}
+
+	halt.AssertIsNotHaltedWithdraw()
+
+	previousRealm := rlm.Previous()
+
+	caller := previousRealm.Address()
+	lp.assertIsDepositOwner(depositID, caller)
+
+	emission.MintAndDistributeGns(cross(rlm))
+
+	deposit := lp.mustGetDeposit(depositID)
+	targetProjectTierID := deposit.ProjectTierID()
+	currentHeight := runtime.ChainHeight()
+	currentTime := time.Now().Unix()
+
+	// Collect reward before withdrawal
+	rewardTokenPath, rewardAmount, err := lp.collectDepositReward(0, rlm, deposit, currentHeight, currentTime)
+	if err != nil {
+		panic(err)
+	}
+
+	beforeTotalGNSStakedAmount := lp.store.GetTotalGNSStakedAmount()
+
+	recipient, withdrawalAmount, err := lp.withdrawDeposit(0, rlm, deposit, runtime.ChainHeight(), currentTime)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	afterTotalGNSStakedAmount := gnsmath.SafeSubInt64(beforeTotalGNSStakedAmount, withdrawalAmount)
+	if err := lp.store.SetTotalGNSStakedAmount(0, rlm, afterTotalGNSStakedAmount); err != nil {
+		panic(err.Error())
+	}
+
+	// Cross-realm governance update before token transfers
+	unStakeGovernance(0, rlm, recipient, withdrawalAmount)
+
+	// Transfer reward token to depositor
+	if rewardAmount > 0 {
+		common.SafeGRC20Transfer(0, rlm, rewardTokenPath, deposit.Depositor(), rewardAmount)
+
+		chain.Emit(
+			"CollectRewardByDepositId",
+			"prevAddr", caller.String(),
+			"prevRealm", previousRealm.PkgPath(),
+			"depositId", depositID,
+			"targetProjectTierId", targetProjectTierID,
+			"amount", utils.FormatInt(rewardAmount),
+		)
+	}
+
+	// Transfer the original GNS deposit back to the depositor
+	common.SafeGRC20Transfer(0, rlm, GNS_TOKEN_KEY, deposit.Depositor(), withdrawalAmount)
+
+	chain.Emit(
+		"CollectDepositGns",
+		"prevAddr", caller.String(),
+		"prevRealm", previousRealm.PkgPath(),
+		"depositId", depositID,
+		"targetProjectTierId", targetProjectTierID,
+		"amount", utils.FormatInt(withdrawalAmount),
+		"totalGNSStakedAmount", utils.FormatInt(afterTotalGNSStakedAmount),
+		"recipient", recipient.String(),
+	)
+
+	return withdrawalAmount, nil
+}
+
+// withdrawDeposit withdraws a deposit and updates the reward manager.
+func (lp *launchpadV1) withdrawDeposit(_ int, rlm realm, deposit launchpad.Deposit, currentHeight, currentTime int64) (address, int64, error) {
+	// Input validation
+	if currentTime <= 0 {
+		return "", 0, makeErrorWithDetails(errInvalidTime, "currentTime must be positive")
+	}
+
+	// State validation
+	if deposit.IsWithdrawn() {
+		return "", 0, makeErrorWithDetails(errAlreadyCollected, ufmt.Sprintf("(%s)", deposit.ID()))
+	}
+
+	if !deposit.IsEnded(currentTime) {
+		return "", 0, makeErrorWithDetails(errNotYetEndedProject, ufmt.Sprintf("(%s)", deposit.ID()))
+	}
+
+	// Get project and tier information
+	project, err := lp.getProject(deposit.ProjectID())
+	if err != nil {
+		return "", 0, err
+	}
+
+	projectTier, err := getProjectTier(project, deposit.Tier())
+	if err != nil {
+		return "", 0, err
+	}
+
+	// Get reward manager and update rewards before withdrawal
+	rewardManager, err := lp.getProjectTierRewardManager(projectTier.ID())
+	if err != nil {
+		return "", 0, err
+	}
+
+	// Update rewards with current deposit amount
+	err = updateRewardPerDepositX128(rewardManager, getTierCurrentDepositAmount(projectTier), currentTime)
+	if err != nil {
+		return "", 0, err
+	}
+
+	// Process withdrawal from project tier
+	withdrawToTier(projectTier, deposit)
+	project.SetTier(deposit.Tier(), projectTier)
+
+	// Finalize withdrawal
+	deposit, withdrawalAmount := withdrawDeposit(deposit, currentHeight, currentTime)
+
+	// Remove the reward state and its reserved active claim after withdrawal.
+	if err := removeRewardState(rewardManager, deposit.ID()); err != nil {
+		return "", 0, err
+	}
+
+	// Persist the updated value; the caller's deposit value is unchanged.
+	deposits := lp.store.GetDeposits()
+	deposits.Set(deposit.ID(), deposit)
+
+	// Save the modified state back
+	if err := lp.store.SetDeposits(0, rlm, deposits); err != nil {
+		return "", 0, err
+	}
+
+	emitUpdateLaunchpadRewardAccumulation(projectTier.ID(), rewardManager, getTierCurrentDepositAmount(projectTier))
+
+	return project.Recipient(), withdrawalAmount, nil
+}
+
+// unStakeGovernance removes the staked amount from governance system
+func unStakeGovernance(_ int, rlm realm, recipient address, withdrawalAmount int64) {
+	gov_staker.SetAmountByProjectWallet(cross(rlm), recipient, withdrawalAmount, false)
+}

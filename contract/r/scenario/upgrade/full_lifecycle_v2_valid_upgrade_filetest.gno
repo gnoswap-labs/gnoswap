@@ -1994,7 +1994,7 @@ func finalInvariants(cur realm) {
 // [EXPECTED] total GNS staked in launchpad: 1000000
 // [EXPECTED] deposit amount: 1000000
 // [EXPECTED] launchpad project wallet xGNS: 1000000 found: true
-// [EXPECTED] launchpad reward claimed: 13333719
+// [EXPECTED] launchpad reward claimed: 13333526
 // [EXPECTED] project recipient collected launchpad rewards
 //
 // [SCENARIO] 15. Capture the pre-upgrade snapshot through the getters
@@ -2064,7 +2064,7 @@ func finalInvariants(cur realm) {
 // [EXPECTED] collected protocol fees: 562 438
 // [EXPECTED] pool protocol fees after: 0 0
 // [EXPECTED] launchpad project ended: true
-// [EXPECTED] launchpad leftover transferred: 900000001
+// [EXPECTED] launchpad leftover transferred: 900000193
 //
 // [SCENARIO] 20. Final invariants
 // [EXPECTED] pool count: 2
