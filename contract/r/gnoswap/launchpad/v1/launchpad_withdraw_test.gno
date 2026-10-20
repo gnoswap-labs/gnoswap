@@ -724,7 +724,7 @@ func TestLaunchpadWithdraw_CollectDepositGnsEdgeCases(cur realm, t *testing.T) {
 
 		// Second collection should fail
 		testing.SetRealm(testing.NewUserRealm(userAddr))
-		uassert.AbortsContains(t, cur, "not exist deposit", func() {
+		uassert.AbortsContains(t, cur, "[GNOSWAP-LAUNCHPAD-013] already collected || (1)", func() {
 			testing.SetOriginCaller(userAddr)
 			func(cur realm) {
 				testing.SetRealm(testing.NewCodeRealm(launchpadPackagePath))

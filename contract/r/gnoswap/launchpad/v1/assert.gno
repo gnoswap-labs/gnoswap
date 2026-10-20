@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/r/gnoswap/launchpad"
 )
 
 // assertIsDepositOwner asserts that the caller is the owner of the deposit.
@@ -31,6 +32,28 @@ func assertIsValidAmount(amount int64) {
 			errInvalidAmount,
 			ufmt.Sprintf("amount(%d) must be a multiple of 1_000_000", amount),
 		))
+	}
+}
+
+// assertIsDepositNotWithdrawn asserts that the deposit is not withdrawn.
+func assertIsDepositNotWithdrawn(deposit launchpad.Deposit) {
+	if deposit.IsWithdrawn() {
+		panic(makeErrorWithDetails(errAlreadyCollected, ufmt.Sprintf("(%s)", deposit.ID())))
+	}
+}
+
+// assertIsDepositEnded asserts that the deposit is ended.
+func assertIsDepositEnded(deposit launchpad.Deposit, currentTime int64) {
+	if !deposit.IsEnded(currentTime) {
+		panic(makeErrorWithDetails(errNotYetEndedProject, ufmt.Sprintf("(%s)", deposit.ID())))
+	}
+}
+
+// assertHasTierReward asserts that the tier has rewards to distribute.
+// A zero-rate tier cannot settle rewards, which would lock withdrawals.
+func assertHasTierReward(tier *launchpad.ProjectTier) {
+	if tier.DistributeAmountPerSecondX128().IsZero() {
+		panic(makeErrorWithDetails(errNoLeftReward, ufmt.Sprintf("(%s)", tier.ID())))
 	}
 }
 

@@ -41,6 +41,7 @@ loadpkg gno.land/r/gnoswap/pool
 loadpkg gno.land/r/gnoswap/position
 loadpkg gno.land/r/gnoswap/router
 loadpkg gno.land/r/gnoswap/staker
+loadpkg gno.land/r/gnoswap/gov/staker
 loadpkg gno.land/r/gnoswap/launchpad
 
 loadpkg gno.land/r/gnoswap/protocol_fee/v1
@@ -48,6 +49,7 @@ loadpkg gno.land/r/gnoswap/pool/v1
 loadpkg gno.land/r/gnoswap/position/v1
 loadpkg gno.land/r/gnoswap/router/v1
 loadpkg gno.land/r/gnoswap/staker/v1
+loadpkg gno.land/r/gnoswap/gov/staker/v1
 loadpkg gno.land/r/gnoswap/launchpad/v1
 
 adduser test_admin
@@ -81,7 +83,43 @@ gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func CreateProject -ar
 # Approve GNS tokens to launchpad realm
 gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1x6r75sxlkp9zfqufew0vcuq9sfclsq8uaqkru9 -args 1000000000 -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
 
-# Time cannot be adjusted in the txtar test environment. Therefore, if `DepositGns` is called after `CreateProject`,
-# the project will not be activated due to the time difference being only around 1~2 blocks.
-! gnokey maketx call -pkgpath gno.land/r/gnoswap/launchpad -func DepositGns -args gno.land/r/onbloc/bar.BAR:8:30 -args 1000000000 -args "" -insecure-password-stdin=true -broadcast=true -chainid=tendermint_test -gas-fee 100000000ugnot -gas-wanted 1000000000 -memo "" test1
-stderr 'project is inactive || gno.land/r/onbloc/bar.BAR:.*'
+# Deposits are accepted after project creation, before the tier starts.
+# The project ID embeds the creation height, so the run script resolves it on-chain.
+gnokey maketx run test1 $WORK/run/deposit_before_start.gno -gas-fee 100000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test
+stdout 'pre-start deposit id: 1'
+stdout 'tier total deposit: 1000000000'
+stdout 'OK!'
+
+-- run/deposit_before_start.gno --
+package main
+
+import (
+	"time"
+
+	"gno.land/r/gnoswap/launchpad"
+)
+
+func main(cur realm) {
+	var projectID string
+	launchpad.GetProjects().Iterate("", "", func(key string, _ any) bool {
+		projectID = key
+		return true
+	})
+
+	startTime, err := launchpad.GetProjectTierStartTime(projectID, 30)
+	if err != nil {
+		panic(err)
+	}
+	if time.Now().Unix() >= startTime {
+		panic("tier already started")
+	}
+
+	depositID := launchpad.DepositGns(cross(cur), projectID+":30", 1000000000, "")
+	println("pre-start deposit id:", depositID)
+
+	totalDeposit, err := launchpad.GetProjectTierTotalDepositAmount(projectID, 30)
+	if err != nil {
+		panic(err)
+	}
+	println("tier total deposit:", totalDeposit)
+}

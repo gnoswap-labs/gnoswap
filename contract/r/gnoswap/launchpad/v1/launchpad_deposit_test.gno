@@ -360,7 +360,7 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-007] invalid tier || pool type(60) is not available",
 		},
 		{
-			name: "fail when project is inactive",
+			name: "successful deposit before project start",
 			setupFunc: func(cur realm, lp *launchpadV1) (string, address) {
 				userAddr := testutils.TestAddress("user10")
 				projectAddr := testutils.TestAddress("project10")
@@ -383,8 +383,6 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 
 				projectID := createDepositTestProject(cur, lp, launchpadAddr, adminRealm, "Future Project", projectAddr, 10000, 30, 30, 40, futureTime)
 
-				// DON'T skip blocks - keep project inactive
-
 				// Setup user with GNS tokens
 				testing.SetRealm(adminRealm)
 				gns.Transfer(cross(cur), userAddr, 2000000)
@@ -398,8 +396,19 @@ func TestLaunchpadDeposit_DepositGns(cur realm, t *testing.T) {
 			targetProjectTierID:  "",
 			depositAmount:        1000000,
 			referrer:             "",
-			expectedPanic:        true,
-			expectedPanicMessage: "[GNOSWAP-LAUNCHPAD-004] project is inactive || gno.land/r/onbloc/obl.OBL:123",
+			expectedPanic:        false,
+			expectedDepositID:    true,
+			validateFunc: func(t *testing.T, lp *launchpadV1, depositID string) {
+				deposit, err := lp.getDeposit(depositID)
+				uassert.NoError(t, err)
+
+				project, err := lp.getProject(deposit.ProjectID())
+				uassert.NoError(t, err)
+				tier, err := getProjectTier(project, 30)
+				uassert.NoError(t, err)
+				uassert.True(t, deposit.CreatedAt() < tier.StartTime())
+				uassert.Equal(t, int64(1000000), tier.TotalDepositAmount())
+			},
 		},
 		{
 			name: "successful deposit when called from contract",

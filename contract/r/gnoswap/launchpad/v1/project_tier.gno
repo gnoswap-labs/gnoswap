@@ -22,6 +22,11 @@ func getCalculatedLeftReward(t *launchpad.ProjectTier) int64 {
 	return gnsmath.SafeSubInt64(t.TotalDistributeAmount(), t.TotalCollectedAmount())
 }
 
+// isTierDepositable allows deposits from project creation until the tier ends.
+func isTierDepositable(t *launchpad.ProjectTier, currentTime int64) bool {
+	return currentTime < t.EndTime()
+}
+
 func depositToTier(t *launchpad.ProjectTier, deposit launchpad.Deposit) {
 	totalDepositAmount := gnsmath.SafeAddInt64(t.TotalDepositAmount(), deposit.DepositAmount())
 	totalDepositCount := gnsmath.SafeAddInt64(t.TotalDepositCount(), 1)
