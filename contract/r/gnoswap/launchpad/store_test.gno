@@ -486,3 +486,64 @@ func TestStoreMultipleSetAndGet(cur realm, t *testing.T) {
 		})
 	}
 }
+
+func TestStoreSettersRejectSpoofedRealm(cur realm, t *testing.T) {
+	const spoofedRealmMessage = "rlm does not match the current crossing frame"
+
+	tests := []struct {
+		name   string
+		set    func(ls ILaunchpadStore, rlm realm) error
+		hasKey func(ls ILaunchpadStore) bool
+	}{
+		{
+			name:   "SetProjects",
+			set:    func(ls ILaunchpadStore, rlm realm) error { return ls.SetProjects(0, rlm, bptree.NewBPTreeN(16)) },
+			hasKey: func(ls ILaunchpadStore) bool { return ls.HasProjectsKey() },
+		},
+		{
+			name:   "SetProjectRecipients",
+			set:    func(ls ILaunchpadStore, rlm realm) error { return ls.SetProjectRecipients(0, rlm, bptree.NewBPTreeN(16)) },
+			hasKey: func(ls ILaunchpadStore) bool { return ls.HasProjectRecipientsKey() },
+		},
+		{
+			name: "SetProjectTierRewardManagers",
+			set: func(ls ILaunchpadStore, rlm realm) error {
+				return ls.SetProjectTierRewardManagers(0, rlm, bptree.NewBPTreeN(16))
+			},
+			hasKey: func(ls ILaunchpadStore) bool { return ls.HasProjectTierRewardManagersKey() },
+		},
+		{
+			name:   "SetDepositCounter",
+			set:    func(ls ILaunchpadStore, rlm realm) error { return ls.SetDepositCounter(0, rlm, NewCounter()) },
+			hasKey: func(ls ILaunchpadStore) bool { return ls.HasDepositCounterStoreKey() },
+		},
+		{
+			name:   "SetDeposits",
+			set:    func(ls ILaunchpadStore, rlm realm) error { return ls.SetDeposits(0, rlm, bptree.NewBPTreeN(16)) },
+			hasKey: func(ls ILaunchpadStore) bool { return ls.HasDepositsKey() },
+		},
+		{
+			name:   "SetTotalGNSStakedAmount",
+			set:    func(ls ILaunchpadStore, rlm realm) error { return ls.SetTotalGNSStakedAmount(0, rlm, 1) },
+			hasKey: func(ls ILaunchpadStore) bool { return ls.HasTotalGNSStakedAmountKey() },
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(cur realm, t *testing.T) {
+			resetTestState(cur, t)
+			ls := NewLaunchpadStore(kvStore)
+
+			stale := cur
+			uassert.AbortsContains(t, cur, spoofedRealmMessage, func() {
+				func(cur realm) {
+					tt.set(ls, stale)
+				}(cross(cur))
+			})
+			uassert.False(t, tt.hasKey(ls))
+
+			uassert.NoError(t, tt.set(ls, cur))
+			uassert.True(t, tt.hasKey(ls))
+		})
+	}
+}

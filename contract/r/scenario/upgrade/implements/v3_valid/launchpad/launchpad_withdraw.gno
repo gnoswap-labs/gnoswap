@@ -7,6 +7,7 @@ import (
 
 	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/emission"
 	"gno.land/r/gnoswap/halt/v1"
@@ -22,9 +23,7 @@ import (
 //
 // Returns amount collected and any error.
 func (lp *launchpadV1) CollectDepositGns(_ int, rlm realm, depositID string) (int64, error) {
-	if !rlm.IsCurrent() {
-		return 0, errSpoofedRealm
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	halt.AssertIsNotHaltedLaunchpad()
 	halt.AssertIsNotHaltedWithdraw()

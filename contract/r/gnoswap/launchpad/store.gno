@@ -1,12 +1,12 @@
 package launchpad
 
 import (
-	"errors"
 	"strconv"
 
 	"gno.land/p/gnoswap/store/v1"
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
+	"gno.land/r/gnoswap/access/v1"
 )
 
 // NewBPTreeN allocates a BP-tree under /r/gnoswap/launchpad's realm context
@@ -79,15 +79,13 @@ func (s *launchpadStore) GetProjects() *bptree.BPTree {
 //
 // Parameters:
 //   - _: cross-call discriminator; callers pass 0.
-//   - rlm: propagated realm context; it must be current (`rlm.IsCurrent()`), otherwise the write returns ErrSpoofedRealm.
+//   - rlm: propagated realm context; it must be current.
 //   - projects: projects BP-tree to persist under the projects store key.
 //
 // Returns:
-//   - err: nil when the tree is stored; non-nil for a spoofed realm or an underlying KV-store write failure.
+//   - err: nil when the tree is stored; non-nil for an underlying KV-store write failure; a spoofed realm panics.
 func (s *launchpadStore) SetProjects(_ int, rlm realm, projects *bptree.BPTree) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return s.kvStore.Set(0, rlm, StoreKeyProjects.String(), projects)
 }
@@ -122,15 +120,13 @@ func (s *launchpadStore) GetProjectRecipients() *bptree.BPTree {
 //
 // Parameters:
 //   - _: cross-call discriminator; callers pass 0.
-//   - rlm: propagated realm context; it must be current (`rlm.IsCurrent()`), otherwise the write returns ErrSpoofedRealm.
+//   - rlm: propagated realm context; it must be current.
 //   - recipients: recipient-membership BP-tree to persist.
 //
 // Returns:
-//   - err: nil when the tree is stored; non-nil for a spoofed realm or an underlying KV-store write failure.
+//   - err: nil when the tree is stored; non-nil for an underlying KV-store write failure; a spoofed realm panics.
 func (s *launchpadStore) SetProjectRecipients(_ int, rlm realm, recipients *bptree.BPTree) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return s.kvStore.Set(0, rlm, StoreKeyProjectRecipients.String(), recipients)
 }
@@ -165,15 +161,13 @@ func (s *launchpadStore) GetProjectTierRewardManagers() *bptree.BPTree {
 //
 // Parameters:
 //   - _: cross-call discriminator; callers pass 0.
-//   - rlm: propagated realm context; it must be current (`rlm.IsCurrent()`), otherwise the write returns ErrSpoofedRealm.
+//   - rlm: propagated realm context; it must be current.
 //   - managers: project-tier reward-manager BP-tree to persist.
 //
 // Returns:
-//   - err: nil when the tree is stored; non-nil for a spoofed realm or an underlying KV-store write failure.
+//   - err: nil when the tree is stored; non-nil for an underlying KV-store write failure; a spoofed realm panics.
 func (s *launchpadStore) SetProjectTierRewardManagers(_ int, rlm realm, managers *bptree.BPTree) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return s.kvStore.Set(0, rlm, StoreKeyProjectTierRewardManagers.String(), managers)
 }
@@ -208,15 +202,13 @@ func (s *launchpadStore) GetDepositCounter() *Counter {
 //
 // Parameters:
 //   - _: cross-call discriminator; callers pass 0.
-//   - rlm: propagated realm context; it must be current (`rlm.IsCurrent()`), otherwise the write returns ErrSpoofedRealm.
+//   - rlm: propagated realm context; it must be current.
 //   - counter: deposit counter to persist.
 //
 // Returns:
-//   - err: nil when the counter is stored; non-nil for a spoofed realm or an underlying KV-store write failure.
+//   - err: nil when the counter is stored; non-nil for an underlying KV-store write failure; a spoofed realm panics.
 func (s *launchpadStore) SetDepositCounter(_ int, rlm realm, counter *Counter) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return s.kvStore.Set(0, rlm, StoreKeyDepositCounter.String(), counter)
 }
@@ -261,15 +253,13 @@ func (s *launchpadStore) GetDeposits() *bptree.BPTree {
 //
 // Parameters:
 //   - _: cross-call discriminator; callers pass 0.
-//   - rlm: propagated realm context; it must be current (`rlm.IsCurrent()`), otherwise the write returns ErrSpoofedRealm.
+//   - rlm: propagated realm context; it must be current.
 //   - deposits: deposits BP-tree to persist.
 //
 // Returns:
-//   - err: nil when the tree is stored; non-nil for a spoofed realm or an underlying KV-store write failure.
+//   - err: nil when the tree is stored; non-nil for an underlying KV-store write failure; a spoofed realm panics.
 func (s *launchpadStore) SetDeposits(_ int, rlm realm, deposits *bptree.BPTree) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return s.kvStore.Set(0, rlm, StoreKeyDeposits.String(), deposits)
 }
@@ -304,15 +294,13 @@ func (s *launchpadStore) GetTotalGNSStakedAmount() int64 {
 //
 // Parameters:
 //   - _: cross-call discriminator; callers pass 0.
-//   - rlm: propagated realm context; it must be current (`rlm.IsCurrent()`), otherwise the write returns ErrSpoofedRealm.
+//   - rlm: propagated realm context; it must be current.
 //   - amount: total currently staked GNS in base units.
 //
 // Returns:
-//   - err: nil when the amount is stored; non-nil for a spoofed realm or an underlying KV-store write failure.
+//   - err: nil when the amount is stored; non-nil for an underlying KV-store write failure; a spoofed realm panics.
 func (s *launchpadStore) SetTotalGNSStakedAmount(_ int, rlm realm, amount int64) error {
-	if !rlm.IsCurrent() {
-		return errors.New(ErrSpoofedRealm)
-	}
+	access.AssertIsRlmCurrent(0, rlm)
 
 	return s.kvStore.Set(0, rlm, StoreKeyTotalGNSStakedAmount.String(), amount)
 }
