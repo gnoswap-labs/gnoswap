@@ -145,5 +145,5 @@ func collectDepositGns(cur realm, depositId string) {
 // [SCENARIO] 3. Skip blocks to end project (27 days)
 //
 // [SCENARIO] 4. Withdraw GNS
-// [EXPECTED] OBL balance after collect: 2999999
+// [EXPECTED] OBL balance after collect: 2699999
 // [EXPECTED] GNS balance after collect: 1000000

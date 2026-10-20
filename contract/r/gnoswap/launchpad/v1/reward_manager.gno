@@ -16,6 +16,13 @@ func isRewardManagerInitialized(r *launchpad.RewardManager) bool {
 	return r.Rewards().Size() > 0
 }
 
+// isPreDepositRewardRefundable reports whether rewards accrued without any
+// deposit are left unallocated. newRewardManager marks this by starting the
+// accumulated time at the distribute start time.
+func isPreDepositRewardRefundable(r *launchpad.RewardManager) bool {
+	return r.AccumulatedTime() > 0
+}
+
 func getDepositRewardState(r *launchpad.RewardManager, depositId string) (*launchpad.RewardState, error) {
 	rewardStateI := r.Rewards().Get(depositId)
 	if rewardStateI == nil {
@@ -196,6 +203,20 @@ func updateRewardPerDepositX128(r *launchpad.RewardManager, totalDepositAmount i
 		return err
 	}
 
+	// Without deposits, only advance the accumulated time so that the rewards
+	// of this period stay refundable instead of going to the next depositor.
+	if totalDepositAmount == 0 && isPreDepositRewardRefundable(r) {
+		if currentTime > r.DistributeEndTime() {
+			currentTime = r.DistributeEndTime()
+		}
+
+		if currentTime > r.AccumulatedTime() {
+			r.SetAccumulatedTime(currentTime)
+		}
+
+		return nil
+	}
+
 	err = addRewardPerDepositX128(r, rewardPerDepositX128, currentTime)
 	if err != nil {
 		return err
@@ -290,6 +311,7 @@ func newRewardManager(
 	manager := launchpad.NewRewardManager(totalDistributeAmount, distributeStartTime, distributeEndTime, rewardCollectableDuration)
 
 	updateDistributeAmountPerSecondX128(manager, totalDistributeAmount, distributeStartTime, distributeEndTime)
+	manager.SetAccumulatedTime(distributeStartTime)
 
 	return manager
 }

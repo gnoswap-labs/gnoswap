@@ -658,7 +658,7 @@ func testRewardStateGetters(cur realm, projectTierId, depositId string) {
 // [EXPECTED] Distribute start time: 1235172690
 // [EXPECTED] Distribute end time: 1237764690
 // [EXPECTED] Accumulated distribute amount: 0
-// [EXPECTED] Accumulated time: 0
+// [EXPECTED] Accumulated time: 1235172690
 // [EXPECTED] Reward claimable duration: 86400
 //
 // [SCENARIO] 6. Test RewardState Getters

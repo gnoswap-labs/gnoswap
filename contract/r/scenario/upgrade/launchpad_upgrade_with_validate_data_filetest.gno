@@ -450,8 +450,8 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 // [EXPECTED] gov staker project wallet: 1000000 found: true
 //
 // [SCENARIO] 4. Collect the tier 30 reward with v1
-// [EXPECTED] collected reward: 13333719
-// [EXPECTED] tier 30 total collected: 13333719
+// [EXPECTED] collected reward: 13333526
+// [EXPECTED] tier 30 total collected: 13333526
 //
 // [SCENARIO] 5. Snapshot v1 data through the getters
 // [EXPECTED] snapshot project count: 1
@@ -498,6 +498,6 @@ func assertAborts(cur realm, callback func(), logMessage string) {
 // [EXPECTED] project recipient collected the gov-staker side rewards
 //
 // [SCENARIO] 11. Admin sweeps the leftovers after the project ends
-// [EXPECTED] leftover transferred: 900000001
+// [EXPECTED] leftover transferred: 900000194
 // [EXPECTED] tier 30 total collected: 56666957
 // [EXPECTED] implementation: gno.land/r/gnoswap/launchpad/v2_valid

@@ -126,7 +126,7 @@ func TestUpdateRewardPerDepositX128_PreStart(t *testing.T) {
 		for _, currentTime := range []int64{500, 999, 1000} {
 			uassert.NoError(t, updateRewardPerDepositX128(manager, 100, currentTime))
 			uassert.True(t, manager.AccumulatedRewardPerDepositX128().IsZero())
-			uassert.Equal(t, int64(0), manager.AccumulatedTime())
+			uassert.Equal(t, int64(1000), manager.AccumulatedTime())
 		}
 	})
 

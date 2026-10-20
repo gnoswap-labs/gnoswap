@@ -155,6 +155,6 @@ func collectRewardAndWithdrawFromContract(cur realm, depositId string) {
 // [SCENARIO] 3. Skip blocks to end project
 //
 // [SCENARIO] 4. Contract collects reward and withdraws GNS
-// [EXPECTED] Contract reward amount: 2999999
-// [EXPECTED] Contract OBL balance delta: 2999999
+// [EXPECTED] Contract reward amount: 2699999
+// [EXPECTED] Contract OBL balance delta: 2699999
 // [EXPECTED] Contract GNS balance delta: 1000000

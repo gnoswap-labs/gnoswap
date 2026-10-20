@@ -277,7 +277,7 @@ func TestLaunchpadReward_CollectDepositReward_ClaimableDuration(cur realm, t *te
 				"Test Project",
 				GNS_TOKEN_KEY,
 				testutils.TestAddress("recipient"),
-				1000000,
+				100_000_000_000, // large enough for a 5-second reward of every tier to be non-zero
 				33,
 				33,
 				34,
