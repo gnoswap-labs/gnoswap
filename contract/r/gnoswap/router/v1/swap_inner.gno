@@ -26,6 +26,8 @@ func (r *routerV1) swapInner(
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
 ) (int64, int64) {
+	assertIsRouterProxyRealm(0, rlm)
+
 	token0Path, token1Path := data.tokenIn, data.tokenOut
 	zeroForOne := data.tokenIn < data.tokenOut
 

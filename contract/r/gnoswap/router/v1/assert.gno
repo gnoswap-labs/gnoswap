@@ -108,6 +108,16 @@ func assertIsRouterImplementation(caller address) {
 	}
 }
 
+// assertIsRouterProxyRealm ensures the swap context was forwarded by the router proxy.
+func assertIsRouterProxyRealm(_ int, rlm realm) {
+	if rlm.PkgPath() != routerProxyPkgPath {
+		panic(makeErrorWithDetails(
+			errUnAuthorizedCaller,
+			ufmt.Sprintf("swap context %s is not router proxy(%s)", rlm.PkgPath(), routerProxyPkgPath),
+		))
+	}
+}
+
 // assertHopFullyConsumed reverts when an exact-in hop consumed less input than specified.
 func assertHopFullyConsumed(hopIndex int, specifiedAmount, consumedAmount int64) {
 	err := validateHopFullyConsumed(hopIndex, specifiedAmount, consumedAmount)
