@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -43,6 +44,7 @@ var (
 	aliceRealm   = testing.NewUserRealm(aliceAddr)
 	keeperAddr   = testutils.TestAddress("keeper")
 	keeperRealm  = testing.NewUserRealm(keeperAddr)
+	devopsAddr   = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 	fooPath      = "gno.land/r/onbloc/foo.FOO"
 	barPath      = "gno.land/r/onbloc/bar.BAR"
 )
@@ -53,35 +55,92 @@ func main(cur realm) {
 	testing.SetRealm(aliceRealm)
 	foo.Approve(cross(cur), lo.Address(), maxApprove)
 	aliceFooBefore := foo.BalanceOf(aliceAddr)
+	aliceBarBefore := bar.BalanceOf(aliceAddr)
+	devopsBarBefore := bar.BalanceOf(devopsAddr)
+	keeperBarBefore := bar.BalanceOf(keeperAddr)
 	escrowBefore := foo.BalanceOf(lo.Address())
 	poolPath := pool.GetPoolPath(barPath, fooPath, fee500)
 	expiry := time.Now().Unix() + 600
 	firstOrderID := lo.CreateOrder(
 		cross(cur), poolPath, address(fooPath), address(barPath),
-		1000, 1000, 0, 50, expiry, aliceAddr,
+		1000, 900, 0, expiry,
 	)
 	secondOrderID := lo.CreateOrder(
 		cross(cur), poolPath, address(fooPath), address(barPath),
-		2000, 2000, 0, 50, expiry, aliceAddr,
+		2000, 1800, 0, expiry,
 	)
 	uassert.Equal(t, uint64(1), firstOrderID)
 	uassert.Equal(t, uint64(2), secondOrderID)
 	uassert.Equal(t, aliceFooBefore-3000, foo.BalanceOf(aliceAddr))
 	uassert.Equal(t, escrowBefore+3000, foo.BalanceOf(lo.Address()))
 
-	testing.SkipHeights(121)
 	testing.SetRealm(keeperRealm)
+	actualInput, routerNetOutput := lo.ExecuteOrder(cross(cur), firstOrderID, 400)
+	uassert.Equal(t, actualInput, "400")
+	output := u256.MustFromDecimal(routerNetOutput).Uint64()
+	fee := feeFor(output, 50)
+	uassert.Equal(t, aliceBarBefore+int64(output-fee), bar.BalanceOf(aliceAddr))
+	uassert.Equal(t, devopsBarBefore+int64(fee), bar.BalanceOf(devopsAddr))
+	uassert.Equal(t, keeperBarBefore, bar.BalanceOf(keeperAddr))
+	uassert.Equal(t, escrowBefore+2600, foo.BalanceOf(lo.Address()))
+
+	view, exists := lo.GetOrder(firstOrderID)
+	uassert.True(t, exists)
+	uassert.Equal(t, view.Status, lo.OrderStatusActive)
+	uassert.Equal(t, view.FeeBps, uint64(50))
+	uassert.Equal(t, view.FeeRecipient, devopsAddr)
+	uassert.Equal(t, view.FilledInput, uint64(400))
+	uassert.Equal(t, view.RemainingInput, uint64(600))
+	uassert.Equal(t, view.GrossOutput, output)
+	uassert.Equal(t, view.ExecutionFee, fee)
+
+	testing.SkipHeights(121)
 	uassert.AbortsContains(t, cur, "[LIMIT_ORDER] order has expired", func() {
-		lo.ExecuteOrder(cross(cur), firstOrderID, keeperAddr)
+		lo.ExecuteOrder(cross(cur), firstOrderID, 100)
 	})
 	uassert.Equal(t, aliceFooBefore-3000, foo.BalanceOf(aliceAddr))
-	uassert.Equal(t, escrowBefore+3000, foo.BalanceOf(lo.Address()))
+	uassert.Equal(t, aliceBarBefore+int64(output-fee), bar.BalanceOf(aliceAddr))
+	uassert.Equal(t, devopsBarBefore+int64(fee), bar.BalanceOf(devopsAddr))
+	uassert.Equal(t, keeperBarBefore, bar.BalanceOf(keeperAddr))
+	uassert.Equal(t, escrowBefore+2600, foo.BalanceOf(lo.Address()))
 
-	cleaned := lo.CleanupExpiredOrders(cross(cur), 10)
-	uassert.Equal(t, uint64(2), cleaned)
-	uassert.Equal(t, aliceFooBefore, foo.BalanceOf(aliceAddr))
+	cleaned := lo.CleanupExpiredOrders(cross(cur), 1)
+	uassert.Equal(t, cleaned, uint64(1))
+	uassert.Equal(t, aliceFooBefore-2400, foo.BalanceOf(aliceAddr))
+	uassert.Equal(t, escrowBefore+2000, foo.BalanceOf(lo.Address()))
+	uassert.Equal(t, aliceBarBefore+int64(output-fee), bar.BalanceOf(aliceAddr))
+	uassert.Equal(t, devopsBarBefore+int64(fee), bar.BalanceOf(devopsAddr))
+	uassert.Equal(t, keeperBarBefore, bar.BalanceOf(keeperAddr))
+
+	view, exists = lo.GetOrder(firstOrderID)
+	uassert.True(t, exists)
+	uassert.Equal(t, view.Status, lo.OrderStatusExpired)
+	uassert.Equal(t, view.FilledInput, uint64(400))
+	uassert.Equal(t, view.RefundedInput, uint64(600))
+	uassert.Equal(t, view.RemainingInput, uint64(0))
+	uassert.Equal(t, view.FeeBps, uint64(50))
+	uassert.Equal(t, view.GrossOutput, output)
+	uassert.Equal(t, view.ExecutionFee, fee)
+
+	cleaned = lo.CleanupExpiredOrders(cross(cur), 10)
+	uassert.Equal(t, cleaned, uint64(1))
+	uassert.Equal(t, aliceFooBefore-400, foo.BalanceOf(aliceAddr))
 	uassert.Equal(t, escrowBefore, foo.BalanceOf(lo.Address()))
+	uassert.Equal(t, aliceBarBefore+int64(output-fee), bar.BalanceOf(aliceAddr))
+	uassert.Equal(t, devopsBarBefore+int64(fee), bar.BalanceOf(devopsAddr))
+	uassert.Equal(t, keeperBarBefore, bar.BalanceOf(keeperAddr))
+
+	view, exists = lo.GetOrder(secondOrderID)
+	uassert.True(t, exists)
+	uassert.Equal(t, view.Status, lo.OrderStatusExpired)
+	uassert.Equal(t, view.FilledInput, uint64(0))
+	uassert.Equal(t, view.RefundedInput, uint64(2000))
+	uassert.Equal(t, view.RemainingInput, uint64(0))
 	uassert.Equal(t, uint64(0), lo.CleanupExpiredOrders(cross(cur), 10))
+}
+
+func feeFor(cumulativeOutput, feeBps uint64) uint64 {
+	return cumulativeOutput * feeBps / 10000
 }
 
 func setupPoolAndLiquidity(cur realm) {

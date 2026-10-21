@@ -3,6 +3,7 @@ package limit_order
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"gno.land/p/gnoswap/store/v1"
 	bptree "gno.land/p/nt/bptree/v0"
@@ -18,6 +19,7 @@ const (
 	StoreKeyOrders        StoreKey = "orders"        // All orders
 	StoreKeyOrderNextID   StoreKey = "orderNextID"   // Next order ID
 	StoreKeyOrdersByOwner StoreKey = "ordersByOwner" // Orders indexed by owner
+	StoreKeyLocked        StoreKey = "locked"
 )
 
 type limitOrderStore struct {
@@ -93,17 +95,6 @@ func (s *limitOrderStore) SetOrder(_ int, rlm realm, orderId uint64, order Limit
 	return s.setValue(0, rlm, StoreKeyOrders.String(), orders)
 }
 
-func (s *limitOrderStore) RemoveOrder(_ int, rlm realm, orderId uint64) error {
-	if !s.HasOrdersStoreKey() {
-		return ErrStoreNotInitialized
-	}
-
-	orders := s.GetOrders()
-	orders.Remove(uint64ToString(orderId))
-
-	return s.setValue(0, rlm, StoreKeyOrders.String(), orders)
-}
-
 func (s *limitOrderStore) HasOrdersByOwnerStoreKey() bool {
 	return s.kvStore.Has(StoreKeyOrdersByOwner.String())
 }
@@ -156,37 +147,6 @@ func (s *limitOrderStore) AddOwnerOrder(_ int, rlm realm, owner address, orderId
 	return s.setValue(0, rlm, StoreKeyOrdersByOwner.String(), ordersByOwner)
 }
 
-func (s *limitOrderStore) RemoveOwnerOrder(_ int, rlm realm, owner address, orderId uint64) error {
-	ordersByOwner := s.GetOrdersByOwner()
-
-	ownerKey := owner.String()
-	result := ordersByOwner.Get(ownerKey)
-	if result == nil {
-		return nil
-	}
-
-	orderIds, ok := result.([]uint64)
-	if !ok {
-		panic("failed to cast result to []uint64")
-	}
-
-	// Find and remove orderId
-	newOrderIds := make([]uint64, 0, len(orderIds))
-	for _, id := range orderIds {
-		if id != orderId {
-			newOrderIds = append(newOrderIds, id)
-		}
-	}
-
-	if len(newOrderIds) == 0 {
-		ordersByOwner.Remove(ownerKey)
-	} else {
-		ordersByOwner.Set(ownerKey, newOrderIds)
-	}
-
-	return s.setValue(0, rlm, StoreKeyOrdersByOwner.String(), ordersByOwner)
-}
-
 func (s *limitOrderStore) setValue(_ int, rlm realm, key string, value any) error {
 	if !rlm.IsCurrent() {
 		return errors.New(store.ErrSpoofedRealm)
@@ -205,11 +165,26 @@ func NewLimitOrderStore(kvStore store.KVStore) ILimitOrderStore {
 }
 
 func uint64ToString(id uint64) string {
-	return strconv.FormatUint(id, 10)
+	value := strconv.FormatUint(id, 10)
+	return strings.Repeat("0", 20-len(value)) + value
+}
+
+func (s *limitOrderStore) IsLocked() bool {
+	value, err := s.kvStore.Get(StoreKeyLocked.String())
+	if err != nil {
+		panic(err)
+	}
+	return value.(bool)
+}
+
+func (s *limitOrderStore) SetLocked(_ int, rlm realm, locked bool) error {
+	return s.setValue(0, rlm, StoreKeyLocked.String(), locked)
 }
 
 // ILimitOrderStore interface for storage operations
 type ILimitOrderStore interface {
+	IsLocked() bool
+	SetLocked(_ int, rlm realm, locked bool) error
 	HasOrdersStoreKey() bool
 	GetOrders() *bptree.BPTree
 	SetOrders(_ int, rlm realm, orders *bptree.BPTree) error
@@ -221,12 +196,10 @@ type ILimitOrderStore interface {
 	HasOrder(orderId uint64) bool
 	GetOrder(orderId uint64) (LimitOrder, bool)
 	SetOrder(_ int, rlm realm, orderId uint64, order LimitOrder) error
-	RemoveOrder(_ int, rlm realm, orderId uint64) error
 
 	HasOrdersByOwnerStoreKey() bool
 	GetOrdersByOwner() *bptree.BPTree
 	SetOrdersByOwner(_ int, rlm realm, ordersByOwner *bptree.BPTree) error
 	GetOwnerOrders(owner address) []uint64
 	AddOwnerOrder(_ int, rlm realm, owner address, orderId uint64) error
-	RemoveOwnerOrder(_ int, rlm realm, owner address, orderId uint64) error
 }

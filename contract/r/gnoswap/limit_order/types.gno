@@ -6,7 +6,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
-// OrderStatus represents the current state of a limit order
 type OrderStatus uint8
 
 const (
@@ -31,196 +30,190 @@ func (s OrderStatus) String() string {
 	}
 }
 
-// LimitOrder represents an intent-based limit order
-// Tokens are escrowed in the contract and executed by keepers when conditions are met
+// LimitOrder keeps the original net exchange ratio and immutable execution fee.
+// GrossOutput is already net of the Router fee. Execution fees are paid at each
+// fill, but rounded on cumulative gross output so splitting cannot evade them.
 type LimitOrder struct {
-	id       uint64
-	owner    address
-	poolPath string
-
-	// Order parameters
-	inputMint    address    // Input token (escrowed)
-	outputMint   address    // Output token (target)
-	makingAmount *u256.Uint // Amount user provides (input)
-	takingAmount *u256.Uint // Amount user wants to receive (output)
-
-	// Execution parameters
-	slippageBps uint64 // Slippage in basis points (0 for exact execution)
-	feeBps      uint64 // Keeper fee in basis points
-
-	// Status and metadata
-	status    OrderStatus
-	deposited bool
-	createdAt int64
-	expiredAt int64
+	id            uint64
+	owner         address
+	poolPath      string
+	inputMint     address
+	outputMint    address
+	makingAmount  *u256.Uint
+	takingAmount  *u256.Uint
+	slippageBps   uint64
+	feeBps        uint64
+	feeRecipient  address
+	status        OrderStatus
+	createdAt     int64
+	expiredAt     int64
+	filledInput   *u256.Uint
+	refundedInput *u256.Uint
+	grossOutput   *u256.Uint
+	executionFee  *u256.Uint
 }
 
-func NewLimitOrder(
-	id uint64,
-	owner address,
-	poolPath string,
-	inputMint address,
-	outputMint address,
-	makingAmount *u256.Uint,
-	takingAmount *u256.Uint,
-	slippageBps uint64,
-	feeBps uint64,
-	expiredAt int64,
-) *LimitOrder {
+// OrderView exposes scalar snapshots rather than mutable accounting pointers.
+type OrderView struct {
+	ID             uint64
+	Owner          address
+	PoolPath       string
+	InputMint      address
+	OutputMint     address
+	MakingAmount   uint64
+	TakingAmount   uint64
+	SlippageBps    uint64
+	FeeBps         uint64
+	FeeRecipient   address
+	Status         OrderStatus
+	CreatedAt      int64
+	ExpiredAt      int64
+	FilledInput    uint64
+	RefundedInput  uint64
+	RemainingInput uint64
+	GrossOutput    uint64
+	ExecutionFee   uint64
+}
+
+func NewLimitOrder(id uint64, owner address, poolPath string, inputMint, outputMint address, makingAmount, takingAmount *u256.Uint, slippageBps uint64, feeRecipient address, expiredAt int64) *LimitOrder {
+	max := u256.NewUint(MAX_TOKEN_AMOUNT)
+	if makingAmount.IsZero() || makingAmount.Gt(max) {
+		panic(ErrInvalidAmountIn)
+	}
+	if takingAmount.IsZero() || takingAmount.Gt(max) {
+		panic(ErrInvalidMinAmountOut)
+	}
+	if slippageBps > 1000 {
+		panic(ErrInvalidSlippage)
+	}
 	return &LimitOrder{
-		id:           id,
-		owner:        owner,
-		poolPath:     poolPath,
-		inputMint:    inputMint,
-		outputMint:   outputMint,
-		makingAmount: makingAmount,
-		takingAmount: takingAmount,
-		slippageBps:  slippageBps,
-		feeBps:       feeBps,
-		status:       OrderStatusActive,
-		deposited:    false,
-		createdAt:    time.Now().Unix(),
-		expiredAt:    expiredAt,
+		id: id, owner: owner, poolPath: poolPath,
+		inputMint: inputMint, outputMint: outputMint,
+		makingAmount: u256.Zero().Set(makingAmount),
+		takingAmount: u256.Zero().Set(takingAmount),
+		slippageBps:  slippageBps, feeBps: EXECUTION_FEE_BPS, feeRecipient: feeRecipient,
+		status: OrderStatusActive, createdAt: time.Now().Unix(), expiredAt: expiredAt,
+		filledInput: u256.Zero(), refundedInput: u256.Zero(),
+		grossOutput: u256.Zero(), executionFee: u256.Zero(),
 	}
 }
 
-// Getters
-func (o *LimitOrder) ID() uint64 {
-	return o.id
+func (o *LimitOrder) ID() uint64                   { return o.id }
+func (o *LimitOrder) Owner() address               { return o.owner }
+func (o *LimitOrder) PoolPath() string             { return o.poolPath }
+func (o *LimitOrder) InputMint() address           { return o.inputMint }
+func (o *LimitOrder) OutputMint() address          { return o.outputMint }
+func (o *LimitOrder) MakingAmount() *u256.Uint     { return o.makingAmount }
+func (o *LimitOrder) TakingAmount() *u256.Uint     { return o.takingAmount }
+func (o *LimitOrder) SlippageBps() uint64          { return o.slippageBps }
+func (o *LimitOrder) FeeBps() uint64               { return o.feeBps }
+func (o *LimitOrder) FeeRecipient() address        { return o.feeRecipient }
+func (o *LimitOrder) Status() OrderStatus          { return o.status }
+func (o *LimitOrder) CreatedAt() int64             { return o.createdAt }
+func (o *LimitOrder) ExpiredAt() int64             { return o.expiredAt }
+func (o *LimitOrder) FilledInput() *u256.Uint      { return o.filledInput }
+func (o *LimitOrder) RefundedInput() *u256.Uint    { return o.refundedInput }
+func (o *LimitOrder) GrossOutput() *u256.Uint      { return o.grossOutput }
+func (o *LimitOrder) ExecutionFee() *u256.Uint     { return o.executionFee }
+func (o *LimitOrder) SetStatus(status OrderStatus) { o.status = status }
+
+func (o *LimitOrder) RemainingInput() *u256.Uint {
+	used := u256.Zero().Add(o.filledInput, o.refundedInput)
+	return u256.Zero().Sub(o.makingAmount, used)
 }
 
-func (o *LimitOrder) Owner() address {
-	return o.owner
-}
-
-func (o *LimitOrder) PoolPath() string {
-	return o.poolPath
-}
-
-func (o *LimitOrder) InputMint() address {
-	return o.inputMint
-}
-
-func (o *LimitOrder) OutputMint() address {
-	return o.outputMint
-}
-
-func (o *LimitOrder) MakingAmount() *u256.Uint {
-	return o.makingAmount
-}
-
-func (o *LimitOrder) TakingAmount() *u256.Uint {
-	return o.takingAmount
-}
-
-func (o *LimitOrder) SlippageBps() uint64 {
-	return o.slippageBps
-}
-
-func (o *LimitOrder) FeeBps() uint64 {
-	return o.feeBps
-}
-
-func (o *LimitOrder) Status() OrderStatus {
-	return o.status
-}
-
-func (o *LimitOrder) Deposited() bool {
-	return o.deposited
-}
-
-func (o *LimitOrder) CreatedAt() int64 {
-	return o.createdAt
-}
-
-func (o *LimitOrder) ExpiredAt() int64 {
-	return o.expiredAt
-}
-
-// Setters
-func (o *LimitOrder) SetStatus(status OrderStatus) {
-	o.status = status
-}
-
-func (o *LimitOrder) SetDeposited(deposited bool) {
-	o.deposited = deposited
-}
-
-// IsActive checks if the order is active and not expired
+func (o *LimitOrder) IsExpired() bool { return time.Now().Unix() >= o.expiredAt }
 func (o *LimitOrder) IsActive() bool {
+	return o.status == OrderStatusActive && !o.IsExpired() && !o.RemainingInput().IsZero()
+}
+
+// MinimumUserOutput rounds the slippage-adjusted exchange ratio upward for
+// this fill. All multiplicands are bounded by int64 or 10000, so the products
+// fit in 140 bits, without relying on truncating uint256 overflow behavior.
+func (o *LimitOrder) MinimumUserOutput(amountIn *u256.Uint) *u256.Uint {
+	if amountIn.IsZero() || amountIn.Gt(o.RemainingInput()) {
+		panic(ErrInvalidFillAmount)
+	}
+	numerator := u256.Zero().Mul(o.takingAmount, amountIn)
+	numerator.Mul(numerator, u256.NewUint(BPS_DENOMINATOR-o.slippageBps))
+	denominator := u256.Zero().Mul(o.makingAmount, u256.NewUint(BPS_DENOMINATOR))
+	return divideRoundingUp(numerator, denominator)
+}
+
+// GetMinimumOutput returns the exact minimum Router-net output needed by this
+// fill, including the next cumulative execution-fee rounding boundary.
+// With net(G) = G-floor(G*f/D) = ceil(G*(D-f)/D), the least gross output
+// producing N net units is floor((N-1)*D/(D-f))+1.
+func (o *LimitOrder) GetMinimumOutput(amountIn *u256.Uint) *u256.Uint {
+	minimum := o.MinimumUserOutput(amountIn)
+	netSoFar := u256.Zero().Sub(o.grossOutput, o.executionFee)
+	requiredNet := u256.Zero().Add(netSoFar, minimum)
+	numerator := u256.Zero().Sub(requiredNet, u256.NewUint(1))
+	numerator.Mul(numerator, u256.NewUint(BPS_DENOMINATOR))
+	requiredGross := u256.Zero().Div(numerator, u256.NewUint(BPS_DENOMINATOR-o.feeBps))
+	requiredGross.Add(requiredGross, u256.NewUint(1))
+	return u256.Zero().Sub(requiredGross, o.grossOutput)
+}
+
+// ApplyFill validates all quantities before changing any accounting. The
+// implementation persists this result before paying the owner and recipient.
+func (o *LimitOrder) ApplyFill(amountIn, amountOut *u256.Uint) {
 	if o.status != OrderStatusActive {
-		return false
+		panic(ErrOrderNotActive)
 	}
-	if !o.deposited {
-		return false
+	if o.IsExpired() {
+		panic(ErrOrderExpired)
 	}
-	if time.Now().Unix() >= o.expiredAt {
-		return false
+	minimum := o.MinimumUserOutput(amountIn)
+	if amountOut.IsZero() || amountOut.Gt(u256.NewUint(MAX_TOKEN_AMOUNT)) {
+		panic(ErrInsufficientOutput)
 	}
-	return true
+	gross := u256.Zero().Add(o.grossOutput, amountOut)
+	if gross.Gt(u256.NewUint(MAX_TOKEN_AMOUNT)) {
+		panic(ErrAmountOverflow)
+	}
+	fee := u256.Zero().Mul(gross, u256.NewUint(o.feeBps))
+	fee.Div(fee, u256.NewUint(BPS_DENOMINATOR))
+	incrementalFee := u256.Zero().Sub(fee, o.executionFee)
+	net := u256.Zero().Sub(amountOut, incrementalFee)
+	if net.Lt(minimum) {
+		panic(ErrSlippageExceeded)
+	}
+	filled := u256.Zero().Add(o.filledInput, amountIn)
+	o.filledInput = filled
+	o.grossOutput = gross
+	o.executionFee = fee
+	if filled.Eq(o.makingAmount) {
+		o.status = OrderStatusExecuted
+	}
 }
 
-// IsExpired checks if the order has passed its expiration time
-func (o *LimitOrder) IsExpired() bool {
-	return time.Now().Unix() >= o.expiredAt
+// RefundInput consumes the remaining escrow exactly once, without pretending
+// that refunded input was traded.
+func (o *LimitOrder) RefundInput() *u256.Uint {
+	remaining := o.RemainingInput()
+	o.refundedInput = u256.Zero().Add(o.refundedInput, remaining)
+	return remaining
 }
 
-// GetLimitPrice calculates the limit price from takingAmount/makingAmount
-// Returns the price of output per input (takingAmount / makingAmount)
-func (o *LimitOrder) GetLimitPrice() *u256.Uint {
-	if o.makingAmount.IsZero() {
-		return u256.Zero()
+func (o *LimitOrder) View() OrderView {
+	return OrderView{
+		ID: o.id, Owner: o.owner, PoolPath: o.poolPath,
+		InputMint: o.inputMint, OutputMint: o.outputMint,
+		MakingAmount: o.makingAmount.Uint64(), TakingAmount: o.takingAmount.Uint64(),
+		SlippageBps: o.slippageBps, FeeBps: o.feeBps, FeeRecipient: o.feeRecipient,
+		Status: o.status, CreatedAt: o.createdAt, ExpiredAt: o.expiredAt,
+		FilledInput: o.filledInput.Uint64(), RefundedInput: o.refundedInput.Uint64(),
+		RemainingInput: o.RemainingInput().Uint64(),
+		GrossOutput:    o.grossOutput.Uint64(), ExecutionFee: o.executionFee.Uint64(),
 	}
-	// Price = takingAmount / makingAmount
-	// Scale up for precision
-	q96 := u256.MustFromDecimal("79228162514264337593543950336") // 2^96
-	scaled := u256.Zero().Mul(o.takingAmount, q96)
-	price := u256.Zero().Div(scaled, o.makingAmount)
-	return price
 }
 
-// CanExecute checks if the order can be executed by a keeper
-// Compares current market price with order's limit price
-func (o *LimitOrder) CanExecute(currentPrice *u256.Uint) bool {
-	if !o.IsActive() {
-		return false
+func divideRoundingUp(numerator, denominator *u256.Uint) *u256.Uint {
+	quotient, remainder := u256.Zero(), u256.Zero()
+	quotient.DivMod(numerator, denominator, remainder)
+	if !remainder.IsZero() {
+		quotient.Add(quotient, u256.NewUint(1))
 	}
-
-	limitPrice := o.GetLimitPrice()
-
-	// For zero slippage: current price must exactly match or be better
-	if o.slippageBps == 0 {
-		return currentPrice.Gte(limitPrice)
-	}
-
-	// With slippage: calculate price with slippage tolerance
-	slippageAmount := u256.Zero().Mul(limitPrice, u256.NewUint(o.slippageBps))
-	slippageAmount = u256.Zero().Div(slippageAmount, u256.NewUint(BPS_DENOMINATOR))
-	minAcceptablePrice := u256.Zero().Sub(limitPrice, slippageAmount)
-
-	return currentPrice.Gte(minAcceptablePrice)
-}
-
-// GetMinimumOutput calculates the minimum acceptable output considering slippage and keeper fee
-// Returns the total output needed so that after keeper fee, user receives at least takingAmount
-func (o *LimitOrder) GetMinimumOutput() *u256.Uint {
-	// Calculate target amount considering slippage
-	var targetAmount *u256.Uint
-	if o.slippageBps == 0 {
-		// Zero slippage: target exact takingAmount
-		targetAmount = o.takingAmount
-	} else {
-		// With slippage: apply slippage tolerance
-		slippageAmount := u256.Zero().Mul(o.takingAmount, u256.NewUint(o.slippageBps))
-		slippageAmount = u256.Zero().Div(slippageAmount, u256.NewUint(BPS_DENOMINATOR))
-		targetAmount = u256.Zero().Sub(o.takingAmount, slippageAmount)
-	}
-
-	// Calculate total output needed to give user targetAmount after keeper fee
-	// Formula: totalOutput = targetAmount * 10000 / (10000 - feeBps)
-	denominator := BPS_DENOMINATOR - o.feeBps
-	minOutput := u256.Zero().Mul(targetAmount, u256.NewUint(BPS_DENOMINATOR))
-	minOutput = u256.Zero().Div(minOutput, u256.NewUint(denominator))
-
-	return minOutput
+	return quotient
 }

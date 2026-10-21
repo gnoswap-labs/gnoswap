@@ -25,6 +25,9 @@ func init(cur realm) {
 
 	kvStore = store.NewKVStore(currentAddress)
 	loStore = NewLimitOrderStore(kvStore)
+	if err := loStore.SetLocked(0, cur, false); err != nil {
+		panic(err)
+	}
 
 	if !loStore.HasOrdersStoreKey() {
 		if err := loStore.SetOrders(0, cur, bptree.NewBPTreeN(16)); err != nil {

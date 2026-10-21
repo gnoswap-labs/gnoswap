@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -33,7 +34,6 @@ import (
 const (
 	fee500     uint32 = 500
 	maxApprove int64  = 9223372036854775806
-	minUserOut int64  = 9405
 )
 
 var t = &testing.T{}
@@ -49,6 +49,7 @@ var (
 	bobRealm      = testing.NewUserRealm(bobAddr)
 	keeperAddr    = testutils.TestAddress("keeper")
 	keeperRealm   = testing.NewUserRealm(keeperAddr)
+	devopsAddr    = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 	fooPath       = "gno.land/r/onbloc/foo.FOO"
 	barPath       = "gno.land/r/onbloc/bar.BAR"
 )
@@ -59,8 +60,12 @@ func main(cur realm) {
 
 	testing.SetRealm(aliceRealm)
 	foo.Approve(cross(cur), lo.Address(), maxApprove)
+	bar.Approve(cross(cur), lo.Address(), maxApprove)
 	aliceFooBefore := foo.BalanceOf(aliceAddr)
 	aliceBarBefore := bar.BalanceOf(aliceAddr)
+	devopsBarBefore := bar.BalanceOf(devopsAddr)
+	keeperBarBefore := bar.BalanceOf(keeperAddr)
+	fooEscrowBefore := foo.BalanceOf(lo.Address())
 	slippageOrderID := lo.CreateOrder(
 		cross(cur),
 		poolPath,
@@ -69,40 +74,81 @@ func main(cur realm) {
 		10000,
 		9500,
 		100,
-		50,
 		time.Now().Unix()+86400,
-		aliceAddr,
 	)
 	uassert.Equal(t, uint64(1), slippageOrderID)
 	uassert.Equal(t, aliceFooBefore-10000, foo.BalanceOf(aliceAddr))
 
-	tokenFaucet(cur, barPath, bobAddr)
-	testing.SetRealm(bobRealm)
-	bar.Approve(cross(cur), routerAddr, maxApprove)
-	router.ExactInSingleSwapRoute(
-		cross(cur),
-		barPath,
-		fooPath,
-		"1000",
-		barPath+":"+fooPath+":500",
-		"1",
-		"0",
-		time.Now().Unix()+300,
-		"",
-	)
+	view, exists := lo.GetOrder(slippageOrderID)
+	uassert.True(t, exists)
+	uassert.Equal(t, view.FeeBps, uint64(50))
+	uassert.Equal(t, view.FeeRecipient, devopsAddr)
 
 	testing.SetRealm(keeperRealm)
-	keeperBarBefore := bar.BalanceOf(keeperAddr)
-	lo.ExecuteOrder(cross(cur), slippageOrderID, keeperAddr)
-	aliceReceived := bar.BalanceOf(aliceAddr) - aliceBarBefore
-	keeperReceived := bar.BalanceOf(keeperAddr) - keeperBarBefore
-	uassert.True(t, aliceReceived >= minUserOut)
-	uassert.True(t, keeperReceived > 0)
+	actualInput, routerNetOutput := lo.ExecuteOrder(cross(cur), slippageOrderID, 10000)
+	uassert.Equal(t, actualInput, "10000")
+	output := u256.MustFromDecimal(routerNetOutput).Uint64()
+	fee := feeFor(output, 50)
+	uassert.True(t, output-fee >= 9405, "owner must receive the 9,405 slippage-adjusted minimum after execution fee")
+	uassert.Equal(t, aliceBarBefore+int64(output-fee), bar.BalanceOf(aliceAddr))
+	uassert.Equal(t, devopsBarBefore+int64(fee), bar.BalanceOf(devopsAddr))
+	uassert.Equal(t, keeperBarBefore, bar.BalanceOf(keeperAddr))
+	uassert.Equal(t, aliceFooBefore-10000, foo.BalanceOf(aliceAddr))
+	uassert.Equal(t, fooEscrowBefore, foo.BalanceOf(lo.Address()))
+
+	view, exists = lo.GetOrder(slippageOrderID)
+	uassert.True(t, exists)
+	uassert.Equal(t, view.Status, lo.OrderStatusExecuted)
+	uassert.Equal(t, view.FeeBps, uint64(50))
+	uassert.Equal(t, view.FeeRecipient, devopsAddr)
+	uassert.Equal(t, view.FilledInput, uint64(10000))
+	uassert.Equal(t, view.GrossOutput, output)
+	uassert.Equal(t, view.ExecutionFee, fee)
+
+	testing.SetRealm(aliceRealm)
+	aliceFooBeforeReverse := foo.BalanceOf(aliceAddr)
+	aliceBarBeforeReverse := bar.BalanceOf(aliceAddr)
+	devopsFooBeforeReverse := foo.BalanceOf(devopsAddr)
+	keeperFooBeforeReverse := foo.BalanceOf(keeperAddr)
+	barEscrowBeforeReverse := bar.BalanceOf(lo.Address())
+	reverseOrderID := lo.CreateOrder(
+		cross(cur),
+		poolPath,
+		address(barPath),
+		address(fooPath),
+		1000,
+		900,
+		100,
+		time.Now().Unix()+86400,
+	)
+	uassert.Equal(t, uint64(2), reverseOrderID)
+	uassert.Equal(t, aliceBarBeforeReverse-1000, bar.BalanceOf(aliceAddr))
+	testing.SetRealm(keeperRealm)
+	reverseInput, reverseRouterOutput := lo.ExecuteOrder(cross(cur), reverseOrderID, 1000)
+	uassert.Equal(t, reverseInput, "1000")
+	reverseOutput := u256.MustFromDecimal(reverseRouterOutput).Uint64()
+	reverseFee := feeFor(reverseOutput, 50)
+	uassert.True(t, reverseOutput-reverseFee >= 891, "reverse-direction owner output must meet the 891 slippage-adjusted minimum")
+	uassert.Equal(t, aliceFooBeforeReverse+int64(reverseOutput-reverseFee), foo.BalanceOf(aliceAddr))
+	uassert.Equal(t, devopsFooBeforeReverse+int64(reverseFee), foo.BalanceOf(devopsAddr))
+	uassert.Equal(t, keeperFooBeforeReverse, foo.BalanceOf(keeperAddr))
+	uassert.Equal(t, barEscrowBeforeReverse, bar.BalanceOf(lo.Address()))
+
+	view, exists = lo.GetOrder(reverseOrderID)
+	uassert.True(t, exists)
+	uassert.Equal(t, view.Status, lo.OrderStatusExecuted)
+	uassert.Equal(t, view.FeeBps, uint64(50))
+	uassert.Equal(t, view.FeeRecipient, devopsAddr)
+	uassert.Equal(t, view.FilledInput, uint64(1000))
+	uassert.Equal(t, view.GrossOutput, reverseOutput)
+	uassert.Equal(t, view.ExecutionFee, reverseFee)
 
 	testing.SetRealm(aliceRealm)
 	fooBeforeExactOrder := foo.BalanceOf(aliceAddr)
 	barBeforeExactOrder := bar.BalanceOf(aliceAddr)
 	escrowBeforeExactOrder := foo.BalanceOf(lo.Address())
+	devopsBarBeforeExactOrder := bar.BalanceOf(devopsAddr)
+	keeperBarBeforeExactOrder := bar.BalanceOf(keeperAddr)
 	exactOrderID := lo.CreateOrder(
 		cross(cur),
 		poolPath,
@@ -111,11 +157,10 @@ func main(cur realm) {
 		10000,
 		9500,
 		0,
-		50,
 		time.Now().Unix()+86400,
-		aliceAddr,
 	)
-	uassert.Equal(t, uint64(2), exactOrderID)
+	uassert.Equal(t, uint64(3), exactOrderID)
+	uassert.Equal(t, fooBeforeExactOrder-10000, foo.BalanceOf(aliceAddr))
 
 	tokenFaucet(cur, fooPath, bobAddr)
 	testing.SetRealm(bobRealm)
@@ -133,17 +178,26 @@ func main(cur realm) {
 	)
 
 	testing.SetRealm(keeperRealm)
-	uassert.AbortsContains(t, cur, "[LIMIT_ORDER] limit price not reached", func() {
-		lo.ExecuteOrder(cross(cur), exactOrderID, keeperAddr)
+	uassert.AbortsContains(t, cur, "[GNOSWAP-ROUTER-001] slippage check failed", func() {
+		lo.ExecuteOrder(cross(cur), exactOrderID, 10000)
 	})
 	uassert.Equal(t, fooBeforeExactOrder-10000, foo.BalanceOf(aliceAddr))
 	uassert.Equal(t, barBeforeExactOrder, bar.BalanceOf(aliceAddr))
 	uassert.Equal(t, escrowBeforeExactOrder+10000, foo.BalanceOf(lo.Address()))
+	uassert.Equal(t, devopsBarBeforeExactOrder, bar.BalanceOf(devopsAddr))
+	uassert.Equal(t, keeperBarBeforeExactOrder, bar.BalanceOf(keeperAddr))
+	view, exists = lo.GetOrder(exactOrderID)
+	uassert.True(t, exists)
+	uassert.Equal(t, view.Status, lo.OrderStatusActive)
+	uassert.Equal(t, view.FeeBps, uint64(50))
+	uassert.Equal(t, view.FilledInput, uint64(0))
+	uassert.Equal(t, view.RemainingInput, uint64(10000))
+	uassert.Equal(t, view.GrossOutput, uint64(0))
+	uassert.Equal(t, view.ExecutionFee, uint64(0))
+}
 
-	testing.SetRealm(aliceRealm)
-	lo.CancelOrder(cross(cur), exactOrderID, aliceAddr)
-	uassert.Equal(t, fooBeforeExactOrder, foo.BalanceOf(aliceAddr))
-	uassert.Equal(t, escrowBeforeExactOrder, foo.BalanceOf(lo.Address()))
+func feeFor(cumulativeOutput, feeBps uint64) uint64 {
+	return cumulativeOutput * feeBps / 10000
 }
 
 func setupPoolAndLiquidity(cur realm) {

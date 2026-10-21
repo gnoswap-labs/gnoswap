@@ -10,7 +10,6 @@ var (
 	ErrSameToken           = errors.New("[LIMIT_ORDER] token in and token out must be different")
 	ErrInvalidAmountIn     = errors.New("[LIMIT_ORDER] invalid amount in (must be > 0)")
 	ErrInvalidMinAmountOut = errors.New("[LIMIT_ORDER] invalid min amount out (must be > 0)")
-	ErrInvalidKeeperFee    = errors.New("[LIMIT_ORDER] invalid keeper fee")
 	ErrInvalidSlippage     = errors.New("[LIMIT_ORDER] invalid slippage (max 10%)")
 	ErrTokenPoolMismatch   = errors.New("[LIMIT_ORDER] tokens do not match pool path")
 	ErrPoolNotFound        = errors.New("[LIMIT_ORDER] pool not found")
@@ -21,10 +20,12 @@ var (
 	ErrOrderNotFound      = errors.New("[LIMIT_ORDER] order not found")
 	ErrOrderNotActive     = errors.New("[LIMIT_ORDER] order is not active")
 	ErrOrderExpired       = errors.New("[LIMIT_ORDER] order has expired")
-	ErrOrderNotDeposited  = errors.New("[LIMIT_ORDER] order tokens not deposited")
-	ErrPriceNotReached    = errors.New("[LIMIT_ORDER] limit price not reached")
 	ErrSlippageExceeded   = errors.New("[LIMIT_ORDER] slippage exceeded, output less than minimum")
 	ErrInsufficientOutput = errors.New("[LIMIT_ORDER] insufficient output amount")
+	ErrInvalidFillAmount  = errors.New("[LIMIT_ORDER] invalid fill amount")
+	ErrAmountOverflow     = errors.New("[LIMIT_ORDER] amount exceeds int64")
+	ErrLocked             = errors.New("[LIMIT_ORDER] operation in progress")
+	ErrInvalidQueryLimit  = errors.New("[LIMIT_ORDER] query limit must be between 1 and 100")
 
 	// Order cancellation errors
 	ErrUnauthorized     = errors.New("[LIMIT_ORDER] unauthorized caller")

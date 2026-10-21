@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256/v1"
 	testutils "gno.land/p/nt/testutils/v0"
 	uassert "gno.land/p/nt/uassert/v0"
 
@@ -41,6 +42,11 @@ var (
 	poolAddr, _  = access.GetAddress(prbac.ROLE_POOL.String())
 	aliceAddr    = testutils.TestAddress("alice")
 	aliceRealm   = testing.NewUserRealm(aliceAddr)
+	bobAddr      = testutils.TestAddress("bob")
+	bobRealm     = testing.NewUserRealm(bobAddr)
+	keeperAddr   = testutils.TestAddress("keeper")
+	keeperRealm  = testing.NewUserRealm(keeperAddr)
+	devopsAddr   = access.MustGetAddress(prbac.ROLE_DEVOPS.String())
 	fooPath      = "gno.land/r/onbloc/foo.FOO"
 	barPath      = "gno.land/r/onbloc/bar.BAR"
 )
@@ -50,8 +56,10 @@ func main(cur realm) {
 
 	testing.SetRealm(aliceRealm)
 	foo.Approve(cross(cur), lo.Address(), maxApprove)
-
 	aliceFooBefore := foo.BalanceOf(aliceAddr)
+	aliceBarBefore := bar.BalanceOf(aliceAddr)
+	devopsBarBefore := bar.BalanceOf(devopsAddr)
+	keeperBarBefore := bar.BalanceOf(keeperAddr)
 	escrowBefore := foo.BalanceOf(lo.Address())
 	poolPath := pool.GetPoolPath(barPath, fooPath, fee500)
 	orderID := lo.CreateOrder(
@@ -60,23 +68,60 @@ func main(cur realm) {
 		address(fooPath),
 		address(barPath),
 		1000,
-		1000,
+		900,
 		0,
-		50,
 		time.Now().Unix()+3600,
-		aliceAddr,
 	)
 
 	uassert.Equal(t, uint64(1), orderID)
 	uassert.Equal(t, aliceFooBefore-1000, foo.BalanceOf(aliceAddr))
 	uassert.Equal(t, escrowBefore+1000, foo.BalanceOf(lo.Address()))
 
-	lo.CancelOrder(cross(cur), orderID, aliceAddr)
-	uassert.Equal(t, aliceFooBefore, foo.BalanceOf(aliceAddr))
-	uassert.Equal(t, escrowBefore, foo.BalanceOf(lo.Address()))
-	uassert.AbortsContains(t, cur, "[LIMIT_ORDER] already cancelled", func() {
-		lo.CancelOrder(cross(cur), orderID, aliceAddr)
+	testing.SetRealm(bobRealm)
+	uassert.AbortsContains(t, cur, "[LIMIT_ORDER] unauthorized caller", func() {
+		lo.CancelOrder(cross(cur), orderID)
 	})
+	uassert.Equal(t, aliceFooBefore-1000, foo.BalanceOf(aliceAddr))
+	uassert.Equal(t, escrowBefore+1000, foo.BalanceOf(lo.Address()))
+
+	testing.SetRealm(keeperRealm)
+	actualInput, routerNetOutput := lo.ExecuteOrder(cross(cur), orderID, 400)
+	uassert.Equal(t, actualInput, "400")
+	output := u256.MustFromDecimal(routerNetOutput).Uint64()
+	fee := feeFor(output, 50)
+	uassert.Equal(t, aliceBarBefore+int64(output-fee), bar.BalanceOf(aliceAddr))
+	uassert.Equal(t, devopsBarBefore+int64(fee), bar.BalanceOf(devopsAddr))
+	uassert.Equal(t, keeperBarBefore, bar.BalanceOf(keeperAddr))
+	uassert.Equal(t, aliceFooBefore-1000, foo.BalanceOf(aliceAddr))
+	uassert.Equal(t, escrowBefore+600, foo.BalanceOf(lo.Address()))
+
+	testing.SetRealm(aliceRealm)
+	lo.CancelOrder(cross(cur), orderID)
+	uassert.Equal(t, aliceFooBefore-400, foo.BalanceOf(aliceAddr))
+	uassert.Equal(t, escrowBefore, foo.BalanceOf(lo.Address()))
+	uassert.Equal(t, aliceBarBefore+int64(output-fee), bar.BalanceOf(aliceAddr))
+	uassert.Equal(t, devopsBarBefore+int64(fee), bar.BalanceOf(devopsAddr))
+	uassert.Equal(t, keeperBarBefore, bar.BalanceOf(keeperAddr))
+
+	view, exists := lo.GetOrder(orderID)
+	uassert.True(t, exists)
+	uassert.Equal(t, view.Status, lo.OrderStatusCancelled)
+	uassert.Equal(t, view.FilledInput, uint64(400))
+	uassert.Equal(t, view.RefundedInput, uint64(600))
+	uassert.Equal(t, view.RemainingInput, uint64(0))
+	uassert.Equal(t, view.GrossOutput, output)
+	uassert.Equal(t, view.ExecutionFee, fee)
+
+	uassert.AbortsContains(t, cur, "[LIMIT_ORDER] already cancelled", func() {
+		lo.CancelOrder(cross(cur), orderID)
+	})
+	uassert.Equal(t, aliceFooBefore-400, foo.BalanceOf(aliceAddr))
+	uassert.Equal(t, aliceBarBefore+int64(output-fee), bar.BalanceOf(aliceAddr))
+	uassert.Equal(t, devopsBarBefore+int64(fee), bar.BalanceOf(devopsAddr))
+}
+
+func feeFor(cumulativeOutput, feeBps uint64) uint64 {
+	return cumulativeOutput * feeBps / 10000
 }
 
 func setupPoolAndLiquidity(cur realm) {
