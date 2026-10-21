@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/uassert"
+	u256 "gno.land/p/gnoswap/uint256/v1"
+	uassert "gno.land/p/nt/uassert/v0"
 )
 
 func TestOrderStatus(t *testing.T) {
@@ -35,25 +35,21 @@ func TestGetLimitPrice(t *testing.T) {
 		name         string
 		makingAmount uint64
 		takingAmount uint64
-		description  string
 	}{
 		{
 			name:         "simple 1:1 ratio",
 			makingAmount: 1000000,
 			takingAmount: 1000000,
-			description:  "Price should be equal to Q96",
 		},
 		{
 			name:         "1:2 ratio",
 			makingAmount: 1000000,
 			takingAmount: 2000000,
-			description:  "Price should be 2 * Q96",
 		},
 		{
 			name:         "2:1 ratio",
 			makingAmount: 2000000,
 			takingAmount: 1000000,
-			description:  "Price should be 0.5 * Q96",
 		},
 	}
 

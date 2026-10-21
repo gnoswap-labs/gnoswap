@@ -14,6 +14,8 @@ func CreateOrder(
 	caller address,
 ) uint64 {
 	return getImplementation().CreateOrder(
+		0,
+		cur,
 		poolPath,
 		inputMint,
 		outputMint,
@@ -28,15 +30,15 @@ func CreateOrder(
 
 // ExecuteOrder executes a limit order when conditions are met
 func ExecuteOrder(cur realm, orderId uint64, caller address) {
-	getImplementation().ExecuteOrder(orderId, caller)
+	getImplementation().ExecuteOrder(0, cur, orderId, caller)
 }
 
 // CancelOrder cancels an active limit order
 func CancelOrder(cur realm, orderId uint64, caller address) {
-	getImplementation().CancelOrder(orderId, caller)
+	getImplementation().CancelOrder(0, cur, orderId, caller)
 }
 
 // CleanupExpiredOrders cleans up expired orders
 func CleanupExpiredOrders(cur realm, maxCount uint64) uint64 {
-	return getImplementation().CleanupExpiredOrders(maxCount)
+	return getImplementation().CleanupExpiredOrders(0, cur, maxCount)
 }

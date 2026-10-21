@@ -1,5 +1,3 @@
-// limit order with slippage tolerance scenario
-
 // PKGPATH: gno.land/r/demo/main
 
 package main
@@ -8,303 +6,179 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/p/nt/testutils"
-	"gno.land/p/nt/uassert"
+	testutils "gno.land/p/nt/testutils/v0"
+	uassert "gno.land/p/nt/uassert/v0"
 
-	prbac "gno.land/p/gnoswap/rbac"
-	_ "gno.land/r/gnoswap/rbac"
+	"gno.land/p/gnoswap/gnsmath/v1"
+	prbac "gno.land/p/gnoswap/rbac/v1"
 
-	_ "gno.land/r/gnoswap/protocol_fee"
-	_ "gno.land/r/gnoswap/protocol_fee/v1"
-
-	"gno.land/r/gnoswap/access"
-	"gno.land/r/gnoswap/common"
-
-	lo "gno.land/r/gnoswap/limit_order"
-	pl "gno.land/r/gnoswap/pool"
-	pn "gno.land/r/gnoswap/position"
-	rt "gno.land/r/gnoswap/router"
-
+	_ "gno.land/r/gnoswap/common/v1"
+	_ "gno.land/r/gnoswap/limit_order/v1"
 	_ "gno.land/r/gnoswap/pool/v1"
 	_ "gno.land/r/gnoswap/position/v1"
+	_ "gno.land/r/gnoswap/protocol_fee/v1"
+	_ "gno.land/r/gnoswap/rbac/v1"
 	_ "gno.land/r/gnoswap/router/v1"
 
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/gns"
+	lo "gno.land/r/gnoswap/limit_order"
+	pool "gno.land/r/gnoswap/pool"
+	position "gno.land/r/gnoswap/position"
+	router "gno.land/r/gnoswap/router"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 )
 
 const (
-	maxApprove int64 = 9223372036854775806
+	fee500     uint32 = 500
+	maxApprove int64  = 9223372036854775806
+	minUserOut int64  = 9405
 )
+
+var t = &testing.T{}
 
 var (
-	adminAddr, _    = access.GetAddress(prbac.ROLE_ADMIN.String())
-	adminRealm      = testing.NewUserRealm(adminAddr)
-	poolAddr, _     = access.GetAddress(prbac.ROLE_POOL.String())
-	positionAddr, _ = access.GetAddress(prbac.ROLE_POSITION.String())
-	routerAddr, _   = access.GetAddress(prbac.ROLE_ROUTER.String())
-	limitOrderAddr  address
-
-	aliceAddr   = testutils.TestAddress("alice")
-	aliceRealm  = testing.NewUserRealm(aliceAddr)
-	bobAddr     = testutils.TestAddress("bob")
-	bobRealm    = testing.NewUserRealm(bobAddr)
-	keeperAddr  = testutils.TestAddress("keeper")
-	keeperRealm = testing.NewUserRealm(keeperAddr)
+	adminAddr, _  = access.GetAddress(prbac.ROLE_ADMIN.String())
+	adminRealm    = testing.NewUserRealm(adminAddr)
+	poolAddr, _   = access.GetAddress(prbac.ROLE_POOL.String())
+	routerAddr, _ = access.GetAddress(prbac.ROLE_ROUTER.String())
+	aliceAddr     = testutils.TestAddress("alice")
+	aliceRealm    = testing.NewUserRealm(aliceAddr)
+	bobAddr       = testutils.TestAddress("bob")
+	bobRealm      = testing.NewUserRealm(bobAddr)
+	keeperAddr    = testutils.TestAddress("keeper")
+	keeperRealm   = testing.NewUserRealm(keeperAddr)
+	fooPath       = "gno.land/r/onbloc/foo.FOO"
+	barPath       = "gno.land/r/onbloc/bar.BAR"
 )
 
-var (
-	fee500      uint32 = 500
-	max_timeout int64  = 9999999999
-)
+func main(cur realm) {
+	setupPoolAndLiquidity(cur)
+	poolPath := pool.GetPoolPath(barPath, fooPath, fee500)
 
-var (
-	fooPath = "gno.land/r/onbloc/foo"
-	barPath = "gno.land/r/onbloc/bar"
-)
-
-var poolSetup bool = false
-
-var t *testing.T
-
-func main() {
-	limitOrderAddr = lo.Address()
-
-	println("[SCENARIO] 1. Setup")
-	setupPoolAndLiquidity()
-	println()
-
-	println("[SCENARIO] 2. Create Order with 1% Slippage Tolerance")
-	testCreateOrderWithSlippage()
-	println()
-
-	println("[SCENARIO] 3. Move Price Slightly")
-	testMovePriceSlightly()
-	println()
-
-	println("[SCENARIO] 4. Execute Order (Should Succeed)")
-	testExecuteOrderWithSlippage()
-	println()
-
-	println("[SCENARIO] 5. Compare: Create Exact Order")
-	testCreateExactOrder()
-	println()
-
-	println("[SCENARIO] 6. Move Price Unfavorably")
-	testMovePriceUnfavorably()
-	println()
-
-	println("[SCENARIO] 7. Try Execute Exact Order (Should Fail)")
-	testExecuteExactOrder()
-	println()
-}
-
-func setupPoolAndLiquidity() {
-	if !poolSetup {
-		testing.SetRealm(adminRealm)
-
-		pl.SetPoolCreationFee(cross, 0)
-		gns.Approve(cross, poolAddr, pl.GetPoolCreationFee())
-		pl.CreatePool(cross, fooPath, barPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-
-		tokenFaucet(fooPath, aliceAddr)
-		tokenFaucet(barPath, aliceAddr)
-
-		testing.SetRealm(aliceRealm)
-		foo.Approve(cross, poolAddr, maxApprove)
-		bar.Approve(cross, poolAddr, maxApprove)
-
-		pn.Mint(
-			cross,
-			fooPath,
-			barPath,
-			fee500,
-			-50000,
-			50000,
-			"10000000",
-			"10000000",
-			"0",
-			"0",
-			max_timeout,
-			aliceAddr,
-			aliceAddr,
-			"",
-		)
-
-		println("[EXPECTED] Deep liquidity pool ready")
-		poolSetup = true
-	}
-}
-
-func testCreateOrderWithSlippage() {
-	println("[INFO] Alice creates order with 1% slippage tolerance")
 	testing.SetRealm(aliceRealm)
-
-	tokenFaucet(fooPath, aliceAddr)
-	foo.Approve(cross, limitOrderAddr, maxApprove)
-
-	poolPath := fooPath + ":" + barPath + ":500"
-	currentTime := time.Now().Unix()
-	expiredAt := currentTime + 86400
-
-	orderId := lo.CreateOrder(cross,
+	foo.Approve(cross(cur), lo.Address(), maxApprove)
+	aliceFooBefore := foo.BalanceOf(aliceAddr)
+	aliceBarBefore := bar.BalanceOf(aliceAddr)
+	slippageOrderID := lo.CreateOrder(
+		cross(cur),
 		poolPath,
 		address(fooPath),
 		address(barPath),
-		10000, // making 10000 foo
-		9500,  // taking 9500 bar (target)
-		100,   // 1% slippage tolerance
-		50,    // 0.5% keeper fee
-		expiredAt,
+		10000,
+		9500,
+		100,
+		50,
+		time.Now().Unix()+86400,
 		aliceAddr,
 	)
+	uassert.Equal(t, uint64(1), slippageOrderID)
+	uassert.Equal(t, aliceFooBefore-10000, foo.BalanceOf(aliceAddr))
 
-	println("[EXPECTED] Order ID:", orderId)
-	println("[EXPECTED] Minimum acceptable: 9405 bar (9500 - 1%)")
-	println("[EXPECTED] Higher success rate due to slippage tolerance")
-}
-
-func testMovePriceSlightly() {
-	println("[INFO] Bob swaps, price moves slightly against Alice")
+	tokenFaucet(cur, barPath, bobAddr)
 	testing.SetRealm(bobRealm)
-
-	tokenFaucet(barPath, bobAddr)
-	bar.Approve(cross, routerAddr, maxApprove)
-
-	rt.ExactInSingleSwapRoute(
-		cross,
+	bar.Approve(cross(cur), routerAddr, maxApprove)
+	router.ExactInSingleSwapRoute(
+		cross(cur),
 		barPath,
 		fooPath,
 		"1000",
 		barPath+":"+fooPath+":500",
 		"1",
 		"0",
-		max_timeout,
+		time.Now().Unix()+300,
 		"",
 	)
 
-	println("[EXPECTED] Price moved slightly (within 1% tolerance)")
-}
-
-func testExecuteOrderWithSlippage() {
-	println("[INFO] Keeper executes order with slippage tolerance")
 	testing.SetRealm(keeperRealm)
+	keeperBarBefore := bar.BalanceOf(keeperAddr)
+	lo.ExecuteOrder(cross(cur), slippageOrderID, keeperAddr)
+	aliceReceived := bar.BalanceOf(aliceAddr) - aliceBarBefore
+	keeperReceived := bar.BalanceOf(keeperAddr) - keeperBarBefore
+	uassert.True(t, aliceReceived >= minUserOut)
+	uassert.True(t, keeperReceived > 0)
 
-	aliceBarBefore := bar.BalanceOf(aliceAddr)
-
-	lo.ExecuteOrder(cross, 1, keeperAddr)
-
-	aliceBarAfter := bar.BalanceOf(aliceAddr)
-	received := aliceBarAfter - aliceBarBefore
-
-	println("[EXPECTED] Order executed successfully")
-	println("[INFO] Alice received:", received, "bar")
-	println("[EXPECTED] Amount >= 9405 bar (minimum with slippage)")
-}
-
-func testCreateExactOrder() {
-	println("[INFO] Alice creates exact order (0% slippage)")
 	testing.SetRealm(aliceRealm)
-
-	foo.Approve(cross, limitOrderAddr, maxApprove)
-
-	poolPath := fooPath + ":" + barPath + ":500"
-	currentTime := time.Now().Unix()
-	expiredAt := currentTime + 86400
-
-	orderId := lo.CreateOrder(cross,
+	fooBeforeExactOrder := foo.BalanceOf(aliceAddr)
+	barBeforeExactOrder := bar.BalanceOf(aliceAddr)
+	escrowBeforeExactOrder := foo.BalanceOf(lo.Address())
+	exactOrderID := lo.CreateOrder(
+		cross(cur),
 		poolPath,
 		address(fooPath),
 		address(barPath),
 		10000,
 		9500,
-		0, // 0% slippage - exact execution required
+		0,
 		50,
-		expiredAt,
+		time.Now().Unix()+86400,
 		aliceAddr,
 	)
+	uassert.Equal(t, uint64(2), exactOrderID)
 
-	println("[EXPECTED] Exact order ID:", orderId)
-	println("[EXPECTED] Must receive exactly 9500 bar (or more)")
-}
-
-func testMovePriceUnfavorably() {
-	println("[INFO] Bob swaps to move price unfavorably for exact order")
+	tokenFaucet(cur, fooPath, bobAddr)
 	testing.SetRealm(bobRealm)
-
-	tokenFaucet(fooPath, bobAddr)
-	foo.Approve(cross, routerAddr, maxApprove)
-
-	// Swap foo -> bar to decrease bar/foo ratio (unfavorable for Alice who wants bar)
-	rt.ExactInSingleSwapRoute(
-		cross,
+	foo.Approve(cross(cur), routerAddr, maxApprove)
+	router.ExactInSingleSwapRoute(
+		cross(cur),
 		fooPath,
 		barPath,
-		"5000000", // Large swap to significantly move price
+		"5000000",
 		fooPath+":"+barPath+":500",
 		"1",
 		"0",
-		max_timeout,
+		time.Now().Unix()+300,
 		"",
 	)
 
-	println("[EXPECTED] Price moved significantly against exact order")
-}
-
-func testExecuteExactOrder() {
-	println("[INFO] Keeper tries to execute exact order")
 	testing.SetRealm(keeperRealm)
-
-	uassert.AbortsContains(t, "limit price not reached", func() {
-		lo.ExecuteOrder(cross, 2, keeperAddr)
+	uassert.AbortsContains(t, cur, "[LIMIT_ORDER] limit price not reached", func() {
+		lo.ExecuteOrder(cross(cur), exactOrderID, keeperAddr)
 	})
+	uassert.Equal(t, fooBeforeExactOrder-10000, foo.BalanceOf(aliceAddr))
+	uassert.Equal(t, barBeforeExactOrder, bar.BalanceOf(aliceAddr))
+	uassert.Equal(t, escrowBeforeExactOrder+10000, foo.BalanceOf(lo.Address()))
 
-	println("[EXPECTED] Exact order failed with 'limit price not reached'")
-	println("[EXPECTED] Slippage tolerance would have allowed order 1 to succeed here")
+	testing.SetRealm(aliceRealm)
+	lo.CancelOrder(cross(cur), exactOrderID, aliceAddr)
+	uassert.Equal(t, fooBeforeExactOrder, foo.BalanceOf(aliceAddr))
+	uassert.Equal(t, escrowBeforeExactOrder, foo.BalanceOf(lo.Address()))
 }
 
-func tokenFaucet(tokenPath string, to address) {
+func setupPoolAndLiquidity(cur realm) {
 	testing.SetRealm(adminRealm)
-	defaultAmount := int64(5_000_000_000)
+	gns.Approve(cross(cur), poolAddr, pool.GetPoolCreationFee())
+	pool.CreatePool(cross(cur), barPath, fooPath, fee500, gnsmath.TickMathGetSqrtRatioAtTick(0).ToString())
+	tokenFaucet(cur, fooPath, aliceAddr)
+	tokenFaucet(cur, barPath, aliceAddr)
 
+	testing.SetRealm(aliceRealm)
+	foo.Approve(cross(cur), poolAddr, maxApprove)
+	bar.Approve(cross(cur), poolAddr, maxApprove)
+	position.Mint(
+		cross(cur),
+		barPath,
+		fooPath,
+		fee500,
+		-50000,
+		50000,
+		"10000000",
+		"10000000",
+		"0",
+		"0",
+		time.Now().Unix()+3600,
+		aliceAddr,
+		"",
+	)
+}
+
+func tokenFaucet(cur realm, tokenPath string, to address) {
+	testing.SetRealm(adminRealm)
+	const amount int64 = 5_000_000_000
 	if tokenPath == fooPath {
-		foo.Transfer(cross, to, defaultAmount)
+		foo.Transfer(cross(cur), to, amount)
 	} else if tokenPath == barPath {
-		bar.Transfer(cross, to, defaultAmount)
+		bar.Transfer(cross(cur), to, amount)
 	}
 }
-
-// Output:
-// [SCENARIO] 1. Setup
-// [EXPECTED] Deep liquidity pool ready
-//
-// [SCENARIO] 2. Create Order with 1% Slippage Tolerance
-// [INFO] Alice creates order with 1% slippage tolerance
-// [EXPECTED] Order ID: 1
-// [EXPECTED] Minimum acceptable: 9405 bar (9500 - 1%)
-// [EXPECTED] Higher success rate due to slippage tolerance
-//
-// [SCENARIO] 3. Move Price Slightly
-// [INFO] Bob swaps, price moves slightly against Alice
-// [EXPECTED] Price moved slightly (within 1% tolerance)
-//
-// [SCENARIO] 4. Execute Order (Should Succeed)
-// [INFO] Keeper executes order with slippage tolerance
-// [EXPECTED] Order executed successfully
-// [INFO] Alice received: 9924 bar
-// [EXPECTED] Amount >= 9405 bar (minimum with slippage)
-//
-// [SCENARIO] 5. Compare: Create Exact Order
-// [INFO] Alice creates exact order (0% slippage)
-// [EXPECTED] Exact order ID: 2
-// [EXPECTED] Must receive exactly 9500 bar (or more)
-//
-// [SCENARIO] 6. Move Price Unfavorably
-// [INFO] Bob swaps to move price unfavorably for exact order
-// [EXPECTED] Price moved significantly against exact order
-//
-// [SCENARIO] 7. Try Execute Exact Order (Should Fail)
-// [INFO] Keeper tries to execute exact order
-// [EXPECTED] Exact order failed with 'limit price not reached'
-// [EXPECTED] Slippage tolerance would have allowed order 1 to succeed here

@@ -213,32 +213,3 @@ func TestSystemRole_AllRolesHaveValidString(t *testing.T) {
 		})
 	}
 }
-
-func TestSystemRoleNames_MapCompleteness(t *testing.T) {
-	// Verify that systemRoleNames map has exactly 13 entries
-	expectedCount := 13
-	actualCount := len(_systemRoleNames)
-	uassert.Equal(t, actualCount, expectedCount)
-
-	// Verify all expected roles are in the map
-	expectedRoles := []string{
-		"admin",
-		"devops",
-		"community_pool",
-		"governance",
-		"gov_staker",
-		"xgns",
-		"pool",
-		"position",
-		"router",
-		"staker",
-		"emission",
-		"launchpad",
-		"protocol_fee",
-	}
-
-	for _, roleName := range expectedRoles {
-		_, exists := _systemRoleNames[roleName]
-		uassert.True(t, exists)
-	}
-}

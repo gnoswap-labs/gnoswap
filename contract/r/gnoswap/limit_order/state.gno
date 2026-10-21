@@ -1,15 +1,17 @@
 package limit_order
 
 import (
-	"chain/runtime"
+	"strings"
 
-	"gno.land/p/gnoswap/store"
-	"gno.land/p/nt/avl"
+	"gno.land/p/gnoswap/store/v1"
+	bptree "gno.land/p/nt/bptree/v0"
+
+	"gno.land/r/gnoswap/access/v1"
 )
 
 var (
-	currentAddress = runtime.CurrentRealm().Address()
-	domainPath     = runtime.CurrentRealm().PkgPath()
+	currentAddress address
+	domainPath     string
 
 	kvStore store.KVStore
 	loStore ILimitOrderStore
@@ -17,21 +19,29 @@ var (
 	implementation ILimitOrder
 )
 
-func init() {
+func init(cur realm) {
+	currentAddress = cur.Address()
+	domainPath = cur.PkgPath()
+
 	kvStore = store.NewKVStore(currentAddress)
 	loStore = NewLimitOrderStore(kvStore)
 
-	// Initialize store keys
 	if !loStore.HasOrdersStoreKey() {
-		loStore.SetOrders(avl.NewTree())
+		if err := loStore.SetOrders(0, cur, bptree.NewBPTreeN(16)); err != nil {
+			panic(err)
+		}
 	}
 
 	if !loStore.HasOrderNextIDStoreKey() {
-		loStore.SetOrderNextID(1)
+		if err := loStore.SetOrderNextID(0, cur, 1); err != nil {
+			panic(err)
+		}
 	}
 
 	if !loStore.HasOrdersByOwnerStoreKey() {
-		loStore.SetOrdersByOwner(avl.NewTree())
+		if err := loStore.SetOrdersByOwner(0, cur, bptree.NewBPTreeN(16)); err != nil {
+			panic(err)
+		}
 	}
 
 	implementation = nil
@@ -42,12 +52,13 @@ func Address() address {
 	return currentAddress
 }
 
-// GetStore returns the limit order store (for v1 implementation)
-func GetStore() ILimitOrderStore {
+// GetStore returns the limit order store to a version implementation.
+func GetStore(cur realm) ILimitOrderStore {
+	assertImplementationRealm(cur)
 	return loStore
 }
 
-// GetContractAddress returns the contract address (for v1 implementation)
+// GetContractAddress returns the address of the limit order contract.
 func GetContractAddress() address {
 	return currentAddress
 }
@@ -59,9 +70,16 @@ func getImplementation() ILimitOrder {
 	return implementation
 }
 
-// RegisterImplementation registers an implementation
-// Called by v1/init.gno
+func assertImplementationRealm(cur realm) {
+	access.AssertIsRlmCurrent(0, cur)
+	if previous := cur.Previous(); previous.IsUser() || !strings.HasPrefix(previous.PkgPath(), domainPath+"/") {
+		panic("limit_order: caller is not an implementation realm")
+	}
+}
+
+// RegisterImplementation registers an implementation from a version realm.
 func RegisterImplementation(cur realm, impl ILimitOrder) {
+	assertImplementationRealm(cur)
 	if implementation != nil {
 		panic("implementation already registered")
 	}

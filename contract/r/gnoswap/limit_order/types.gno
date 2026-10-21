@@ -3,7 +3,7 @@ package limit_order
 import (
 	"time"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256/v1"
 )
 
 // OrderStatus represents the current state of a limit order

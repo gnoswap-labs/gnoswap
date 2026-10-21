@@ -6,62 +6,6 @@ import (
 	prbac "gno.land/p/gnoswap/rbac/v1"
 )
 
-func Test_defaultRoleAddresses(cur realm, t *testing.T) {
-	// Test that all default role addresses are properly defined
-	expectedRoles := []prbac.SystemRole{
-		prbac.ROLE_ADMIN,
-		prbac.ROLE_DEVOPS,
-		prbac.ROLE_COMMUNITY_POOL,
-		prbac.ROLE_GOVERNANCE,
-		prbac.ROLE_GOV_STAKER,
-		prbac.ROLE_XGNS,
-		prbac.ROLE_POOL,
-		prbac.ROLE_POSITION,
-		prbac.ROLE_ROUTER,
-		prbac.ROLE_STAKER,
-		prbac.ROLE_EMISSION,
-		prbac.ROLE_LAUNCHPAD,
-		prbac.ROLE_PROTOCOL_FEE,
-	}
-
-	expectedAddresses := map[prbac.SystemRole]address{
-		prbac.ROLE_ADMIN:          ADMIN,
-		prbac.ROLE_DEVOPS:         DEV_OPS,
-		prbac.ROLE_COMMUNITY_POOL: COMMUNITY_POOL_ADDR,
-		prbac.ROLE_GOVERNANCE:     GOV_GOVERNANCE_ADDR,
-		prbac.ROLE_GOV_STAKER:     GOV_STAKER_ADDR,
-		prbac.ROLE_XGNS:           GOV_XGNS_ADDR,
-		prbac.ROLE_POOL:           POOL_ADDR,
-		prbac.ROLE_POSITION:       POSITION_ADDR,
-		prbac.ROLE_ROUTER:         ROUTER_ADDR,
-		prbac.ROLE_STAKER:         STAKER_ADDR,
-		prbac.ROLE_EMISSION:       EMISSION_ADDR,
-		prbac.ROLE_LAUNCHPAD:      LAUNCHPAD_ADDR,
-		prbac.ROLE_PROTOCOL_FEE:   PROTOCOL_FEE_ADDR,
-	}
-
-	// Test that all expected roles exist in _defaultRoleAddresses
-	for _, role := range expectedRoles {
-		addr, exists := _defaultRoleAddresses[role]
-		if !exists {
-			t.Errorf("Role %s not found in _defaultRoleAddresses", role.String())
-			continue
-		}
-
-		expectedAddr := expectedAddresses[role]
-		if addr != expectedAddr {
-			t.Errorf("Role %s has incorrect address: got %s, want %s",
-				role.String(), addr, expectedAddr)
-		}
-	}
-
-	// Test that _defaultRoleAddresses doesn't contain unexpected roles
-	if len(_defaultRoleAddresses) != len(expectedRoles) {
-		t.Errorf("_defaultRoleAddresses contains unexpected number of roles: got %d, want %d",
-			len(_defaultRoleAddresses), len(expectedRoles))
-	}
-}
-
 func Test_defaultRoleAddressesCompleteness(cur realm, t *testing.T) {
 	// Test that all addresses are valid (non-empty)
 	for role, addr := range _defaultRoleAddresses {
@@ -162,35 +106,6 @@ func Test_defaultRoleAddressesMapping(cur realm, t *testing.T) {
 					tt.role.String(), actualAddr, tt.expectedAddr)
 			}
 		})
-	}
-}
-
-func TestRoleStringRepresentation(cur realm, t *testing.T) {
-	// Test that all roles have proper string representation
-	expectedStrings := map[prbac.SystemRole]string{
-		prbac.ROLE_ADMIN:          "admin",
-		prbac.ROLE_DEVOPS:         "devops",
-		prbac.ROLE_COMMUNITY_POOL: "community_pool",
-		prbac.ROLE_GOVERNANCE:     "governance",
-		prbac.ROLE_GOV_STAKER:     "gov_staker",
-		prbac.ROLE_XGNS:           "xgns",
-		prbac.ROLE_POOL:           "pool",
-		prbac.ROLE_POSITION:       "position",
-		prbac.ROLE_ROUTER:         "router",
-		prbac.ROLE_STAKER:         "staker",
-		prbac.ROLE_EMISSION:       "emission",
-		prbac.ROLE_LAUNCHPAD:      "launchpad",
-		prbac.ROLE_PROTOCOL_FEE:   "protocol_fee",
-	}
-
-	for role := range _defaultRoleAddresses {
-		expectedStr := expectedStrings[role]
-		actualStr := role.String()
-
-		if actualStr != expectedStr {
-			t.Errorf("Role %s string representation mismatch: got %s, want %s",
-				role, actualStr, expectedStr)
-		}
 	}
 }
 

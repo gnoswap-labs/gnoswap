@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/p/nt/ufmt"
+	u256 "gno.land/p/gnoswap/uint256/v1"
+	ufmt "gno.land/p/nt/ufmt/v0"
 
+	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
 	lo "gno.land/r/gnoswap/limit_order"
 	pl "gno.land/r/gnoswap/pool"
@@ -17,6 +18,8 @@ import (
 
 // CreateOrder creates a new limit order
 func (l *limitOrderV1) CreateOrder(
+	_ int,
+	rlm realm,
 	poolPath string,
 	inputMint address,
 	outputMint address,
@@ -27,7 +30,9 @@ func (l *limitOrderV1) CreateOrder(
 	expiredAt int64,
 	caller address,
 ) uint64 {
-	// Get next order ID
+	access.AssertIsRlmCurrent(0, rlm)
+	assertCallerMatches(0, rlm, caller)
+
 	orderId := l.store.GetOrderNextID()
 
 	// Validations
@@ -47,7 +52,7 @@ func (l *limitOrderV1) CreateOrder(
 	takingAmountU256 := u256.NewUint(takingAmount)
 
 	// Increment order ID
-	l.store.SetOrderNextID(orderId + 1)
+	mustStore(l.store.SetOrderNextID(0, rlm, orderId+1))
 
 	// Create order
 	order := lo.NewLimitOrder(
@@ -65,19 +70,20 @@ func (l *limitOrderV1) CreateOrder(
 
 	// Deposit tokens (escrow)
 	amount64 := safeConvertToInt64(makingAmountU256)
-	common.SafeGRC20TransferFrom(cross, inputMint.String(), caller, l.contractAddr, amount64)
+	common.SafeGRC20TransferFrom(0, rlm, inputMint.String(), caller, l.contractAddr, amount64)
 	order.SetDeposited(true)
 
 	// Store order
-	l.store.SetOrder(orderId, *order)
-	l.store.AddOwnerOrder(caller, orderId)
+	mustStore(l.store.SetOrder(0, rlm, orderId, *order))
+	mustStore(l.store.AddOwnerOrder(0, rlm, caller, orderId))
 
 	return orderId
 }
 
 // ExecuteOrder executes a limit order when conditions are met
-func (l *limitOrderV1) ExecuteOrder(orderId uint64, caller address) {
-	// Get order
+func (l *limitOrderV1) ExecuteOrder(_ int, rlm realm, orderId uint64, caller address) {
+	access.AssertIsRlmCurrent(0, rlm)
+	assertCallerMatches(0, rlm, caller)
 	order, exists := l.store.GetOrder(orderId)
 	if !exists {
 		panic(lo.ErrOrderNotFound)
@@ -98,22 +104,22 @@ func (l *limitOrderV1) ExecuteOrder(orderId uint64, caller address) {
 	// Execute swap through router
 	routerAddr := chain.PackageAddress("gno.land/r/gnoswap/router")
 	approveAmount := safeConvertToInt64(order.MakingAmount())
-	common.SafeGRC20Approve(cross, order.InputMint().String(), routerAddr, approveAmount)
-
+	common.SafeGRC20Approve(0, rlm, order.InputMint().String(), routerAddr, approveAmount)
 	deadline := time.Now().Unix() + 300
+	routePath := buildOrderRoutePath(&order)
 
 	_, amountOutStr := router.ExactInSingleSwapRoute(
-		cross,
+		cross(rlm),
 		order.InputMint().String(),
 		order.OutputMint().String(),
 		order.MakingAmount().ToString(),
-		order.PoolPath(),
+		routePath,
 		minOutput.ToString(),
 		"0",
 		deadline,
 		"",
 	)
-	amountOut := parseRouterOutputAmount(amountOutStr)
+	amountOut := u256.MustFromDecimal(amountOutStr)
 
 	// Calculate keeper fee from output
 	keeperFeeAmount := calculateKeeperFeeFromOutput(amountOut, order.FeeBps())
@@ -126,17 +132,19 @@ func (l *limitOrderV1) ExecuteOrder(orderId uint64, caller address) {
 
 	// Transfer tokens
 	userAmountInt := safeConvertToInt64(userAmount)
-	common.SafeGRC20Transfer(cross, order.OutputMint().String(), order.Owner(), userAmountInt)
+	common.SafeGRC20Transfer(0, rlm, order.OutputMint().String(), order.Owner(), userAmountInt)
 	keeperFeeInt := safeConvertToInt64(keeperFeeAmount)
-	common.SafeGRC20Transfer(cross, order.OutputMint().String(), caller, keeperFeeInt)
+	common.SafeGRC20Transfer(0, rlm, order.OutputMint().String(), caller, keeperFeeInt)
 
 	// Update order status
 	order.SetStatus(lo.OrderStatusExecuted)
-	l.store.SetOrder(orderId, order)
+	mustStore(l.store.SetOrder(0, rlm, orderId, order))
 }
 
 // CancelOrder cancels an active limit order
-func (l *limitOrderV1) CancelOrder(orderId uint64, caller address) {
+func (l *limitOrderV1) CancelOrder(_ int, rlm realm, orderId uint64, caller address) {
+	access.AssertIsRlmCurrent(0, rlm)
+	assertCallerMatches(0, rlm, caller)
 	// Get order
 	order, exists := l.store.GetOrder(orderId)
 	if !exists {
@@ -154,20 +162,21 @@ func (l *limitOrderV1) CancelOrder(orderId uint64, caller address) {
 	// Refund tokens
 	if order.Deposited() {
 		refundAmount := safeConvertToInt64(order.MakingAmount())
-		common.SafeGRC20Transfer(cross, order.InputMint().String(), order.Owner(), refundAmount)
+		common.SafeGRC20Transfer(0, rlm, order.InputMint().String(), order.Owner(), refundAmount)
 		order.SetDeposited(false)
 	}
 
 	// Update order status
 	order.SetStatus(lo.OrderStatusCancelled)
-	l.store.SetOrder(orderId, order)
+	mustStore(l.store.SetOrder(0, rlm, orderId, order))
 
 	// Remove from owner index
-	l.store.RemoveOwnerOrder(order.Owner(), orderId)
+	mustStore(l.store.RemoveOwnerOrder(0, rlm, order.Owner(), orderId))
 }
 
 // CleanupExpiredOrders cleans up expired orders
-func (l *limitOrderV1) CleanupExpiredOrders(maxCount uint64) uint64 {
+func (l *limitOrderV1) CleanupExpiredOrders(_ int, rlm realm, maxCount uint64) uint64 {
+	access.AssertIsRlmCurrent(0, rlm)
 	orders := l.store.GetOrders()
 	cleaned := uint64(0)
 	currentTime := time.Now().Unix()
@@ -197,14 +206,14 @@ func (l *limitOrderV1) CleanupExpiredOrders(maxCount uint64) uint64 {
 		// Refund tokens to owner
 		if order.Deposited() {
 			expiredRefundAmount := safeConvertToInt64(order.MakingAmount())
-			common.SafeGRC20Transfer(cross, order.InputMint().String(), order.Owner(), expiredRefundAmount)
+			common.SafeGRC20Transfer(0, rlm, order.InputMint().String(), order.Owner(), expiredRefundAmount)
 			order.SetDeposited(false)
 		}
 
 		// Mark as expired
 		order.SetStatus(lo.OrderStatusExpired)
-		l.store.SetOrder(order.ID(), order)
-		l.store.RemoveOwnerOrder(order.Owner(), order.ID())
+		mustStore(l.store.SetOrder(0, rlm, order.ID(), order))
+		mustStore(l.store.RemoveOwnerOrder(0, rlm, order.Owner(), order.ID()))
 
 		cleaned++
 	}
@@ -213,6 +222,18 @@ func (l *limitOrderV1) CleanupExpiredOrders(maxCount uint64) uint64 {
 }
 
 // Helper functions
+
+func assertCallerMatches(_ int, rlm realm, caller address) {
+	if caller != rlm.Previous().Address() {
+		panic(lo.ErrUnauthorized)
+	}
+}
+
+func mustStore(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 
 func (l *limitOrderV1) validateCreateOrder(
 	poolPath string,
@@ -310,15 +331,15 @@ func (l *limitOrderV1) getCurrentPrice(poolPath string, inputMint, outputMint ad
 	}
 	token0 := parts[0]
 	token1 := parts[1]
-	feeInt, err := strconv.Atoi(parts[2])
+	feeValue, err := strconv.ParseUint(parts[2], 10, 32)
 	if err != nil {
 		panic(lo.ErrInvalidPoolPath)
 	}
-	fee := uint32(feeInt)
+	fee := uint32(feeValue)
 
 	// Get pool to check current price
-	pool, err := pl.GetPool(token0, token1, fee)
-	if err != nil {
+	pool := getPool(token0, token1, fee)
+	if pool == nil {
 		panic(lo.ErrInvalidPoolPath)
 	}
 	slot0 := pool.Slot0()
@@ -360,18 +381,17 @@ func (l *limitOrderV1) validatePoolAndTokens(poolPath string, inputMint, outputM
 	}
 	token0 := parts[0]
 	token1 := parts[1]
-	feeInt, err := strconv.Atoi(parts[2])
+	feeValue, err := strconv.ParseUint(parts[2], 10, 32)
 	if err != nil {
 		panic(lo.ErrInvalidPoolPath)
 	}
-	fee := uint32(feeInt)
+	fee := uint32(feeValue)
 
 	// Verify pool exists
-	pool, err := pl.GetPool(token0, token1, fee)
-	if err != nil {
+	pool := getPool(token0, token1, fee)
+	if pool == nil {
 		panic(lo.ErrPoolNotFound)
 	}
-
 	token0Path := pool.Token0Path()
 	token1Path := pool.Token1Path()
 
@@ -387,23 +407,29 @@ func (l *limitOrderV1) validatePoolAndTokens(poolPath string, inputMint, outputM
 	}
 }
 
-// safeConvertToInt64 safely converts u256 to int64
+// buildOrderRoutePath orders the pool route in the swap direction; pool IDs are canonical.
+func buildOrderRoutePath(order *lo.LimitOrder) string {
+	poolPath := order.PoolPath()
+	feeSeparator := strings.LastIndex(poolPath, ":")
+	if feeSeparator < 0 {
+		panic(lo.ErrInvalidPoolPath)
+	}
+	return order.InputMint().String() + ":" + order.OutputMint().String() + poolPath[feeSeparator:]
+}
+
+func getPool(token0Path, token1Path string, fee uint32) *pl.Pool {
+	value := pl.GetPools().Get(pl.GetPoolPath(token0Path, token1Path, fee))
+	pool, ok := value.(*pl.Pool)
+	if !ok || pool == nil {
+		return nil
+	}
+	return pool
+}
+
 func safeConvertToInt64(value *u256.Uint) int64 {
 	maxInt64 := u256.NewUint(9223372036854775807) // 2^63 - 1
 	if value.Gt(maxInt64) {
 		panic(ufmt.Sprintf("value %s exceeds int64 max", value.ToString()))
 	}
 	return int64(value.Uint64())
-}
-
-// parseRouterOutputAmount parses the router's output amount.
-// The router returns negative values for output amounts (tokens leaving the pool).
-// This function converts the negative string to a positive u256.Uint.
-func parseRouterOutputAmount(amountStr string) *u256.Uint {
-	// Router returns negative values for output (e.g., "-996")
-	// We need to convert to absolute value
-	if strings.HasPrefix(amountStr, "-") {
-		amountStr = amountStr[1:] // Remove the "-" prefix
-	}
-	return u256.MustFromDecimal(amountStr)
 }

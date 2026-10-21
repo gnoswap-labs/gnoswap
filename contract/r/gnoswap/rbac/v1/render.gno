@@ -17,7 +17,7 @@ func Render(path string) string {
 		prbac.ROLE_GOVERNANCE, prbac.ROLE_GOV_STAKER, prbac.ROLE_XGNS,
 		prbac.ROLE_POOL, prbac.ROLE_POSITION, prbac.ROLE_ROUTER,
 		prbac.ROLE_STAKER, prbac.ROLE_EMISSION, prbac.ROLE_LAUNCHPAD,
-		prbac.ROLE_PROTOCOL_FEE,
+		prbac.ROLE_PROTOCOL_FEE, prbac.ROLE_LIMIT_ORDER,
 	}
 
 	ownershipTable := mdtable.Table{
