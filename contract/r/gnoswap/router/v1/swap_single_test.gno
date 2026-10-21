@@ -79,6 +79,7 @@ func TestSingleSwap(cur realm, t *testing.T) {
 			}
 			router := mockRouter()
 			singleSwapFn := func(cur realm) (int64, int64) {
+				testing.SetRealm(routerRealm)
 				return router.singleSwap(0, cur, &tt.params)
 			}
 
@@ -87,6 +88,7 @@ func TestSingleSwap(cur realm, t *testing.T) {
 			common.Approve(0, cur, tt.params.tokenIn, poolAddr, maxApprove)
 			common.Approve(0, cur, tt.params.tokenOut, poolAddr, maxApprove)
 
+			fundRouterImplAsPayer(cur, t, tt.params.tokenIn)
 			amountIn, amountOut := singleSwapFn(cross(cur))
 
 			uassert.Equal(t, strconv.FormatInt(amountIn, 10), tt.expectedIn)
@@ -228,11 +230,14 @@ func TestSingleSwapInputValidation(cur realm, t *testing.T) {
 			if tt.expectError {
 				uassert.AbortsWithMessage(t, cur, tt.errorMessage, func() {
 					func(cur realm) {
+						testing.SetRealm(routerRealm)
 						router.singleSwap(0, cur, &tt.params)
 					}(cross(cur))
 				})
 			} else {
+				fundRouterImplAsPayer(cur, t, tt.params.tokenIn)
 				amountIn, amountOut := func(cur realm) (int64, int64) {
+					testing.SetRealm(routerRealm)
 					return router.singleSwap(0, cur, &tt.params)
 				}(cross(cur))
 

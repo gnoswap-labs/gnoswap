@@ -133,6 +133,7 @@ func TestSwapInner(cur realm, t *testing.T) {
 			router := mockRouter()
 
 			swapInnerFn := func(cur realm) (int64, int64) {
+				testing.SetRealm(routerRealm)
 				return router.swapInner(0, cur,
 					tt.amountSpecified,
 					tt.recipient,

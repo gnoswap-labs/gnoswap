@@ -137,8 +137,10 @@ func TestProcessRoute(cur realm, t *testing.T) {
 	toSwap := int64(1000)
 	swapType := ExactIn
 
+	fundRouterImplAsPayer(cur, t, fooPath)
 	router := mockRouter()
 	func(cur realm) {
+		testing.SetRealm(routerRealm)
 		amountIn, amountOut, err := op.processRoute(0, cur, router, route, toSwap, swapType)
 		uassert.Equal(t, err, nil)
 		uassert.Equal(t, strconv.FormatInt(amountIn, 10), "1000")
@@ -171,7 +173,9 @@ func TestProcessRoutesWithRemainder(cur realm, t *testing.T) {
 		50, // 101 * 50 / 100 = 50
 	}
 
+	fundRouterImplAsPayer(cur, t, fooPath, barPath)
 	func(cur realm) {
+		testing.SetRealm(routerRealm)
 		router := mockRouter()
 		_, amountOut, err := op.processRoutes(0, cur, router, ExactIn)
 		if err != nil {
@@ -759,9 +763,11 @@ func TestProcessRoutes_OverflowDetection(cur realm, t *testing.T) {
 		TokenFaucet(cur, t, barPath, alice)
 		TokenApprove(cur, t, barPath, alice, routerAddr, maxApprove)
 
+		fundRouterImplAsPayer(cur, t, barPath)
 		router := mockRouter()
 
 		runProcessRoutes := func(cur realm) error {
+			testing.SetRealm(routerRealm)
 			_, _, err := tt.op.processRoutes(0, cur, router, ExactIn)
 			return err
 		}
