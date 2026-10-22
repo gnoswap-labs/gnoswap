@@ -4,7 +4,6 @@ import (
 	bptree "gno.land/p/nt/bptree/v0"
 	ufmt "gno.land/p/nt/ufmt/v0"
 
-	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
 	prabc "gno.land/p/gnoswap/rbac/v1"
 	"gno.land/r/gnoswap/access/v1"
 	"gno.land/r/gnoswap/common"
@@ -145,9 +144,8 @@ func (pfs *protocolFeeState) setGovStakerPct(_ int, rlm realm, pct int64) (int64
 // addAccuToGovStaker adds the amount to the accuToGovStaker by token path.
 func (pfs *protocolFeeState) addAccuToGovStaker(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
-
 	// Check for overflow
-	after := gnsmath.SafeAddInt64(before, amount)
+	after := before + amount
 	if err := pfs.store.SetAccuToGovStakerItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}
@@ -157,9 +155,8 @@ func (pfs *protocolFeeState) addAccuToGovStaker(_ int, rlm realm, tokenPath stri
 // addAccuToDevOps adds the amount to the accuToDevOps by token path.
 func (pfs *protocolFeeState) addAccuToDevOps(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath)
-
 	// Check for overflow
-	after := gnsmath.SafeAddInt64(before, amount)
+	after := before + amount
 	if err := pfs.store.SetAccuToDevOpsItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}
@@ -169,7 +166,7 @@ func (pfs *protocolFeeState) addAccuToDevOps(_ int, rlm realm, tokenPath string,
 // addActualDistributedToGovStaker adds the amount to the actual distributed amount to gov/staker by token path.
 func (pfs *protocolFeeState) addActualDistributedToGovStaker(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath)
-	after := gnsmath.SafeAddInt64(before, amount)
+	after := before + amount
 	if err := pfs.store.SetDistributedToGovStakerHistoryItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}
@@ -179,7 +176,7 @@ func (pfs *protocolFeeState) addActualDistributedToGovStaker(_ int, rlm realm, t
 // addActualDistributedToDevOps adds the amount to the actual distributed amount to devOps by token path.
 func (pfs *protocolFeeState) addActualDistributedToDevOps(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath)
-	after := gnsmath.SafeAddInt64(before, amount)
+	after := before + amount
 	if err := pfs.store.SetDistributedToDevOpsHistoryItem(0, rlm, tokenPath, after); err != nil {
 		return err
 	}

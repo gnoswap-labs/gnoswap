@@ -148,7 +148,7 @@ func (self *ProtocolFeeRewardManagerResolver) applyAccrualBuckets(
 		if amount < 0 {
 			return errors.New(errInvalidAccrualBuckets)
 		}
-		feeAmount = gnsmath.SafeAddInt64(feeAmount, amount)
+		feeAmount += amount
 
 		totalStakedAmount := self.GetTotalStakedAmountAt(epoch)
 		if totalStakedAmount <= 0 || amount == 0 {

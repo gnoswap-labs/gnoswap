@@ -247,7 +247,7 @@ func (p *ProtocolFeeRewardStateResolver) claimTokenReward(tokenPath string, view
 
 	if reward > 0 {
 		if tokenState, ok := p.GetTokenState(tokenPath); ok {
-			tokenState.SetClaimedReward(gnsmath.SafeAddInt64(tokenState.GetClaimedReward(), reward))
+			tokenState.SetClaimedReward(tokenState.GetClaimedReward() + reward)
 		}
 	}
 

@@ -83,13 +83,21 @@ func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, toke
 	)
 }
 
+func pendingProtocolFeeAmount(allocated, distributed int64) int64 {
+	pending := allocated - distributed
+	if pending < 0 {
+		panic("protocol fee pending amount exceeds int64 range")
+	}
+	return pending
+}
+
 // distributeProtocolFeeForToken validates and distributes one reserved token's pending fees.
 func (pf *protocolFeeV1) distributeProtocolFeeForToken(_ int, rlm realm, pfs *protocolFeeState, protocolFeeAddr address, tokenPath string) {
-	toDevOpsAmount := gnsmath.SafeSubInt64(
+	toDevOpsAmount := pendingProtocolFeeAmount(
 		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),
 		pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath),
 	)
-	toGovStakerAmount := gnsmath.SafeSubInt64(
+	toGovStakerAmount := pendingProtocolFeeAmount(
 		pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath),
 		pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath),
 	)
