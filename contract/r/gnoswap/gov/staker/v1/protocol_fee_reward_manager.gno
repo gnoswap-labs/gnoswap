@@ -148,6 +148,7 @@ func (self *ProtocolFeeRewardManagerResolver) applyAccrualBuckets(
 		if amount < 0 {
 			return errors.New(errInvalidAccrualBuckets)
 		}
+		// This lifetime statistic deliberately wraps modulo 2^64.
 		feeAmount += amount
 
 		totalStakedAmount := self.GetTotalStakedAmountAt(epoch)

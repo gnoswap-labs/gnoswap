@@ -83,6 +83,9 @@ func (pf *protocolFeeV1) DistributeProtocolFeeByTokenPath(_ int, rlm realm, toke
 	)
 }
 
+// Allocation and distribution-history values are lifetime counters that deliberately
+// wrap modulo 2^64. Their modulo difference is a pending obligation and must remain
+// nonnegative and fit in int64.
 func pendingProtocolFeeAmount(allocated, distributed int64) int64 {
 	pending := allocated - distributed
 	if pending < 0 {

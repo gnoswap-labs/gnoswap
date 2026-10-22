@@ -247,6 +247,7 @@ func (p *ProtocolFeeRewardStateResolver) claimTokenReward(tokenPath string, view
 
 	if reward > 0 {
 		if tokenState, ok := p.GetTokenState(tokenPath); ok {
+			// This lifetime statistic deliberately wraps modulo 2^64.
 			tokenState.SetClaimedReward(tokenState.GetClaimedReward() + reward)
 		}
 	}

@@ -353,14 +353,14 @@ func (gs *govStakerV1) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *
 	return accumulatedFee
 }
 
-// GetProtocolFeeAmount returns the protocol fee amount accumulated for a token
-// path.
+// GetProtocolFeeAmount returns the wrapped lifetime protocol-fee statistic for a
+// token path.
 //
 // Parameters:
-//   - tokenPath: token identifier/path whose folded fee amount is requested.
+//   - tokenPath: token identifier/path whose folded fee statistic is requested.
 //
 // Returns:
-//   - int64: accumulated protocol fee amount for tokenPath.
+//   - int64: accumulated protocol-fee statistic, wrapping modulo 2^64 in its signed representation.
 func (gs *govStakerV1) GetProtocolFeeAmount(tokenPath string) int64 {
 	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
 	return protocolFeeRewardManager.GetProtocolFeeAmount(tokenPath)

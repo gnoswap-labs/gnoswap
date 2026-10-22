@@ -54,10 +54,10 @@ func (pf *protocolFeeV1) GetAccrualBuckets(tokenPath string, limit int) ([]int64
 	return pf.getProtocolFeeState().store.GetAccrualBuckets(tokenPath, limit)
 }
 
-// GetAccuTransfersToGovStaker returns all accumulated transfers to gov/staker.
+// GetAccuTransfersToGovStaker returns Gov/Staker allocation lifetime statistics.
 //
 // Returns:
-//   - transfers: Snapshot map from token path to cumulative amount allocated to Gov/Staker, including amounts still pending distribution.
+//   - transfers: token paths mapped to signed int64 statistics, wrapping modulo 2^64
 func (pf *protocolFeeV1) GetAccuTransfersToGovStaker() map[string]int64 {
 	accuTransfers := make(map[string]int64)
 
@@ -74,10 +74,10 @@ func (pf *protocolFeeV1) GetAccuTransfersToGovStaker() map[string]int64 {
 	return accuTransfers
 }
 
-// GetAccuTransfersToDevOps returns all accumulated transfers to devOps.
+// GetAccuTransfersToDevOps returns DevOps allocation lifetime statistics.
 //
 // Returns:
-//   - transfers: Snapshot map from token path to cumulative amount allocated to DevOps, including amounts still pending distribution.
+//   - transfers: token paths mapped to signed int64 statistics, wrapping modulo 2^64
 func (pf *protocolFeeV1) GetAccuTransfersToDevOps() map[string]int64 {
 	accuTransfers := make(map[string]int64)
 
@@ -94,32 +94,34 @@ func (pf *protocolFeeV1) GetAccuTransfersToDevOps() map[string]int64 {
 	return accuTransfers
 }
 
-// GetAccuTransferToGovStakerByTokenPath returns the accumulated transfer to gov/staker by token path.
+// GetAccuTransferToGovStakerByTokenPath returns the Gov/Staker allocation lifetime
+// statistic for path, wrapping modulo 2^64 in its signed int64 representation.
 //
 // Parameters:
 //   - path: Token path whose cumulative Gov/Staker allocation should be read.
 //
 // Returns:
-//   - amount: Cumulative Gov/Staker amount allocated for path, or zero when no allocation is recorded.
+//   - amount: Cumulative Gov/Staker allocation statistic for path, or zero when absent.
 func (pf *protocolFeeV1) GetAccuTransferToGovStakerByTokenPath(path string) int64 {
 	return pf.getProtocolFeeState().GetAccuTransferToGovStakerByTokenPath(path)
 }
 
-// GetAccuTransferToDevOpsByTokenPath returns the accumulated transfer to devOps by token path.
+// GetAccuTransferToDevOpsByTokenPath returns the DevOps allocation lifetime
+// statistic for path, wrapping modulo 2^64 in its signed int64 representation.
 //
 // Parameters:
 //   - path: Token path whose cumulative DevOps allocation should be read.
 //
 // Returns:
-//   - amount: Cumulative DevOps amount allocated for path, or zero when no allocation is recorded.
+//   - amount: Cumulative DevOps allocation statistic for path, or zero when absent.
 func (pf *protocolFeeV1) GetAccuTransferToDevOpsByTokenPath(path string) int64 {
 	return pf.getProtocolFeeState().GetAccuTransferToDevOpsByTokenPath(path)
 }
 
-// GetActualDistributedToGovStaker returns all actual transfers to gov/staker.
+// GetActualDistributedToGovStaker returns Gov/Staker transfer lifetime statistics.
 //
 // Returns:
-//   - transfers: Snapshot map from token path to cumulative amount actually distributed to Gov/Staker.
+//   - transfers: token paths mapped to signed int64 statistics, wrapping modulo 2^64
 func (pf *protocolFeeV1) GetActualDistributedToGovStaker() map[string]int64 {
 	actualDistributed := make(map[string]int64)
 
@@ -136,10 +138,10 @@ func (pf *protocolFeeV1) GetActualDistributedToGovStaker() map[string]int64 {
 	return actualDistributed
 }
 
-// GetActualDistributedToDevOps returns all actual transfers to devOps.
+// GetActualDistributedToDevOps returns DevOps transfer lifetime statistics.
 //
 // Returns:
-//   - transfers: Snapshot map from token path to cumulative amount actually distributed to DevOps.
+//   - transfers: token paths mapped to signed int64 statistics, wrapping modulo 2^64
 func (pf *protocolFeeV1) GetActualDistributedToDevOps() map[string]int64 {
 	actualDistributed := make(map[string]int64)
 
@@ -156,24 +158,26 @@ func (pf *protocolFeeV1) GetActualDistributedToDevOps() map[string]int64 {
 	return actualDistributed
 }
 
-// GetActualDistributedToGovStakerByTokenPath returns the actual transfer to gov/staker by token path.
+// GetActualDistributedToGovStakerByTokenPath returns the Gov/Staker transfer lifetime
+// statistic for path, wrapping modulo 2^64 in its signed int64 representation.
 //
 // Parameters:
 //   - path: Token path whose cumulative actual Gov/Staker distribution should be read.
 //
 // Returns:
-//   - amount: Cumulative amount actually distributed to Gov/Staker for path, or zero when no history is recorded.
+//   - amount: Cumulative Gov/Staker transfer statistic for path, or zero when absent.
 func (pf *protocolFeeV1) GetActualDistributedToGovStakerByTokenPath(path string) int64 {
 	return pf.getProtocolFeeState().GetActualDistributedToGovStakerByTokenPath(path)
 }
 
-// GetActualDistributedToDevOpsByTokenPath returns the actual transfer to devOps by token path.
+// GetActualDistributedToDevOpsByTokenPath returns the DevOps transfer lifetime
+// statistic for path, wrapping modulo 2^64 in its signed int64 representation.
 //
 // Parameters:
 //   - path: Token path whose cumulative actual DevOps distribution should be read.
 //
 // Returns:
-//   - amount: Cumulative amount actually distributed to DevOps for path, or zero when no history is recorded.
+//   - amount: Cumulative DevOps transfer statistic for path, or zero when absent.
 func (pf *protocolFeeV1) GetActualDistributedToDevOpsByTokenPath(path string) int64 {
 	return pf.getProtocolFeeState().GetActualDistributedToDevOpsByTokenPath(path)
 }

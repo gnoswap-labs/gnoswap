@@ -43,6 +43,8 @@ func emitUpdateProtocolFeeStakeAccrual(manager *staker.ProtocolFeeRewardManager)
 // every token that was just folded. Like the emission variant it must be emitted after
 // every path that folds accrual buckets, otherwise the off-chain accumulator drifts
 // from the contract.
+// Its protocolFeeAmount field is a lifetime statistic that wraps modulo 2^64 in
+// signed int64 representation; the Q128 accumulator remains the reward basis.
 func emitUpdateProtocolFeeRewardAccumulation(manager *staker.ProtocolFeeRewardManager, tokenPaths []string) {
 	for _, tokenPath := range tokenPaths {
 		accumulatedProtocolFeeX128PerStake := "0"

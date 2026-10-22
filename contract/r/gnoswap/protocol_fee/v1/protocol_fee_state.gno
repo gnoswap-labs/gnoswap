@@ -32,8 +32,8 @@ func (pfs *protocolFeeState) GovStakerPct() int64 {
 }
 
 // AccuToGovStaker returns the cumulative amount allocated to GovStaker.
-// It includes allocations that may still be pending distribution; completed
-// transfers are tracked separately in the distribution history.
+// The lifetime total wraps modulo 2^64 in its int64 representation. Pending
+// obligations are derived from its modulo difference with distribution history.
 //
 // Returns:
 //   - tree: BP-tree mapping token paths to cumulative amounts allocated to Gov/Staker, including allocations pending distribution.
@@ -42,8 +42,8 @@ func (pfs *protocolFeeState) AccuToGovStaker() *bptree.BPTree {
 }
 
 // AccuToDevOps returns the cumulative amount allocated to DevOps.
-// It includes allocations that may still be pending distribution; completed
-// transfers are tracked separately in the distribution history.
+// The lifetime total wraps modulo 2^64 in its int64 representation. Pending
+// obligations are derived from its modulo difference with distribution history.
 //
 // Returns:
 //   - tree: BP-tree mapping token paths to cumulative amounts allocated to DevOps, including allocations pending distribution.
@@ -51,18 +51,20 @@ func (pfs *protocolFeeState) AccuToDevOps() *bptree.BPTree {
 	return pfs.store.GetAccuToDevOps()
 }
 
-// ActualDistributedToGovStaker returns the cumulative amounts actually distributed to Gov/Staker.
+// ActualDistributedToGovStaker returns the wrapping lifetime transfer statistic
+// for Gov/Staker, modulo 2^64 in signed int64 representation.
 //
 // Returns:
-//   - tree: BP-tree mapping token paths to cumulative amounts actually distributed to Gov/Staker.
+//   - tree: BP-tree mapping token paths to cumulative amounts actually transferred to Gov/Staker.
 func (pfs *protocolFeeState) ActualDistributedToGovStaker() *bptree.BPTree {
 	return pfs.store.GetDistributedToGovStakerHistory()
 }
 
-// ActualDistributedToDevOps returns the cumulative amounts actually distributed to DevOps.
+// ActualDistributedToDevOps returns the wrapping lifetime transfer statistic
+// for DevOps, modulo 2^64 in signed int64 representation.
 //
 // Returns:
-//   - tree: BP-tree mapping token paths to cumulative amounts actually distributed to DevOps.
+//   - tree: BP-tree mapping token paths to cumulative amounts actually transferred to DevOps.
 func (pfs *protocolFeeState) ActualDistributedToDevOps() *bptree.BPTree {
 	return pfs.store.GetDistributedToDevOpsHistory()
 }
@@ -141,10 +143,9 @@ func (pfs *protocolFeeState) setGovStakerPct(_ int, rlm realm, pct int64) (int64
 	return pct, nil
 }
 
-// addAccuToGovStaker adds the amount to the accuToGovStaker by token path.
+// addAccuToGovStaker adds the amount to the wrapping lifetime total allocated to Gov/Staker.
 func (pfs *protocolFeeState) addAccuToGovStaker(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath)
-	// Check for overflow
 	after := before + amount
 	if err := pfs.store.SetAccuToGovStakerItem(0, rlm, tokenPath, after); err != nil {
 		return err
@@ -152,10 +153,9 @@ func (pfs *protocolFeeState) addAccuToGovStaker(_ int, rlm realm, tokenPath stri
 	return nil
 }
 
-// addAccuToDevOps adds the amount to the accuToDevOps by token path.
+// addAccuToDevOps adds the amount to the wrapping lifetime total allocated to DevOps.
 func (pfs *protocolFeeState) addAccuToDevOps(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath)
-	// Check for overflow
 	after := before + amount
 	if err := pfs.store.SetAccuToDevOpsItem(0, rlm, tokenPath, after); err != nil {
 		return err
@@ -163,7 +163,7 @@ func (pfs *protocolFeeState) addAccuToDevOps(_ int, rlm realm, tokenPath string,
 	return nil
 }
 
-// addActualDistributedToGovStaker adds the amount to the actual distributed amount to gov/staker by token path.
+// addActualDistributedToGovStaker adds the amount to the wrapping lifetime history of transfers to Gov/Staker.
 func (pfs *protocolFeeState) addActualDistributedToGovStaker(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath)
 	after := before + amount
@@ -173,7 +173,7 @@ func (pfs *protocolFeeState) addActualDistributedToGovStaker(_ int, rlm realm, t
 	return nil
 }
 
-// addActualDistributedToDevOps adds the amount to the actual distributed amount to devOps by token path.
+// addActualDistributedToDevOps adds the amount to the wrapping lifetime history of transfers to DevOps.
 func (pfs *protocolFeeState) addActualDistributedToDevOps(_ int, rlm realm, tokenPath string, amount int64) error {
 	before := pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath)
 	after := before + amount
@@ -183,46 +183,52 @@ func (pfs *protocolFeeState) addActualDistributedToDevOps(_ int, rlm realm, toke
 	return nil
 }
 
-// GetAccuTransferToGovStakerByTokenPath gets the accumulated amount to gov/staker by token path.
+// GetAccuTransferToGovStakerByTokenPath returns the Gov/Staker allocation lifetime
+// statistic for tokenPath, wrapping modulo 2^64 in its signed int64 representation.
 //
 // Parameters:
 //   - tokenPath: Token path whose cumulative Gov/Staker allocation should be read.
 //
 // Returns:
-//   - amount: Cumulative Gov/Staker allocation for tokenPath, or zero when no entry is recorded.
+//   - amount: Cumulative Gov/Staker allocation statistic, or zero when no entry is recorded.
 func (pfs *protocolFeeState) GetAccuTransferToGovStakerByTokenPath(tokenPath string) int64 {
 	return retrieveAmount(pfs.store.GetAccuToGovStaker(), tokenPath)
 }
 
-// GetAccuTransferToDevOpsByTokenPath gets the accumulated amount to devOps by token path.
+// GetAccuTransferToDevOpsByTokenPath returns the DevOps allocation lifetime
+// statistic for tokenPath, wrapping modulo 2^64 in its signed int64 representation.
 //
 // Parameters:
 //   - tokenPath: Token path whose cumulative DevOps allocation should be read.
 //
 // Returns:
-//   - amount: Cumulative DevOps allocation for tokenPath, or zero when no entry is recorded.
+//   - amount: Cumulative DevOps allocation statistic, or zero when no entry is recorded.
 func (pfs *protocolFeeState) GetAccuTransferToDevOpsByTokenPath(tokenPath string) int64 {
 	return retrieveAmount(pfs.store.GetAccuToDevOps(), tokenPath)
 }
 
-// GetActualDistributedToGovStakerByTokenPath gets the actual distributed amount to gov/staker by token path.
+// GetActualDistributedToGovStakerByTokenPath returns the Gov/Staker transfer
+// lifetime statistic for tokenPath, wrapping modulo 2^64 in its signed int64
+// representation.
 //
 // Parameters:
 //   - tokenPath: Token path whose cumulative actual Gov/Staker distribution should be read.
 //
 // Returns:
-//   - amount: Cumulative amount actually distributed to Gov/Staker for tokenPath, or zero when no history is recorded.
+//   - amount: Cumulative Gov/Staker transfer statistic, or zero when no history is recorded.
 func (pfs *protocolFeeState) GetActualDistributedToGovStakerByTokenPath(tokenPath string) int64 {
 	return retrieveAmount(pfs.store.GetDistributedToGovStakerHistory(), tokenPath)
 }
 
-// GetActualDistributedToDevOpsByTokenPath gets the actual distributed amount to devOps by token path.
+// GetActualDistributedToDevOpsByTokenPath returns the DevOps transfer lifetime
+// statistic for tokenPath, wrapping modulo 2^64 in its signed int64
+// representation.
 //
 // Parameters:
 //   - tokenPath: Token path whose cumulative actual DevOps distribution should be read.
 //
 // Returns:
-//   - amount: Cumulative amount actually distributed to DevOps for tokenPath, or zero when no history is recorded.
+//   - amount: Cumulative DevOps transfer statistic, or zero when no history is recorded.
 func (pfs *protocolFeeState) GetActualDistributedToDevOpsByTokenPath(tokenPath string) int64 {
 	return retrieveAmount(pfs.store.GetDistributedToDevOpsHistory(), tokenPath)
 }
