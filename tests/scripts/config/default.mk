@@ -41,8 +41,8 @@ ADDR_USER_3 := # SET ACCOUNTS FOR TESTING
 ADDR_USER_4 := # SET ACCOUNTS FOR TESTING
 
 # Incentive Configuration
-TOMORROW_MIDNIGHT := $(shell (gdate -ud 'tomorrow 00:00:00' +%s))
-INCENTIVE_END := $(shell expr $(TOMORROW_MIDNIGHT) + 7776000) # 7776000 SECONDS = 90 DAY
+INCENTIVE_START := $(shell gdate -ud '2 days 00:00:00' +%s)
+INCENTIVE_END := $(shell expr $(INCENTIVE_START) + 7776000) # 7776000 SECONDS = 90 DAY
 
 # Transaction Configuration
 MAX_APPROVE := 9223372036854775806
@@ -51,4 +51,3 @@ TX_EXPIRE := 9999999999
 # Path Configuration
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 ROOT_DIR := $(shell cd $(shell dirname $(MAKEFILE))/../.. && pwd)
-

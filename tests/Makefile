@@ -188,6 +188,7 @@ test-gov:
 	@echo "$(GREEN)Running governance tests on $(ENV) environment...$(NC)"
 	@$(MAKE) -f scripts/test.mk delegate ENV=$(ENV)
 	@$(MAKE) -f scripts/test.mk propose-text ENV=$(ENV)
+	@$(MAKE) -f scripts/test.mk cancel-text ENV=$(ENV)
 	@$(MAKE) -f scripts/test.mk propose-community ENV=$(ENV)
 
 .PHONY: test-all
