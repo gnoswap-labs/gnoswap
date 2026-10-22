@@ -81,6 +81,7 @@ func TestMultiSwap(cur realm, t *testing.T) {
 
 			router := mockRouter()
 			multiSwapFn := func(cur realm) (int64, int64) {
+				testing.SetRealm(routerRealm)
 				return router.multiSwap(0, cur, tt.params, tt.numPools, tt.swapPath)
 			}
 
@@ -91,6 +92,7 @@ func TestMultiSwap(cur realm, t *testing.T) {
 			common.Approve(0, cur, tt.params.tokenIn, poolAddr, maxApprove)
 			common.Approve(0, cur, tt.params.tokenOut, poolAddr, maxApprove)
 
+			fundRouterImplAsPayer(cur, t, tt.params.tokenIn)
 			firstAmountIn, lastAmountOut := multiSwapFn(cross(cur))
 
 			uassert.Equal(t, strconv.FormatInt(firstAmountIn, 10), tt.expectedFirstIn)

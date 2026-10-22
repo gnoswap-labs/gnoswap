@@ -905,9 +905,11 @@ func TestHandleMultiSwap(cur realm, t *testing.T) {
 
 			amountSpecified := utils.SafeParseInt64(tt.amountSpecified)
 
+			fundRouterImplAsPayer(cur, t, tt.inputToken)
 			router := mockRouter()
 
 			handleMultiSwapFn := func(cur realm) (int64, int64) {
+				testing.SetRealm(routerRealm)
 				return router.handleMultiSwap(0, cur,
 					tt.swapType,
 					tt.route,
@@ -1018,8 +1020,10 @@ func TestProcessRoute_MultiHops(cur realm, t *testing.T) {
 
 			common.SafeGRC20Approve(0, cur, barPath, routerAddr, math.MaxInt64)
 
+			fundRouterImplAsPayer(cur, t, barPath)
 			router := mockRouter()
 			processRouteFn := func(cur realm) (int64, int64, error) {
+				testing.SetRealm(routerRealm)
 				return op.processRoute(0, cur, router, tt.route, toSwapAmount, tt.swapType)
 			}
 

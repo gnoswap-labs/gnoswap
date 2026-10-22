@@ -1,0 +1,135 @@
+# Regression test for the router allowance-drain vulnerability.
+#
+# A foreign realm (gno.land/r/test/routerdrain) builds its own router/v1 instance
+# and drives a swap with its OWN realm token. Before the fix, router/v1 only
+# checked rlm.IsCurrent() and derived the payer from rlm.Previous(), so the
+# victim who merely called the attacker realm became the payer and had their
+# GNS pulled on their standing allowance to the router address.
+#
+# The fix (assertIsRouterProxyRealm in router/v1/swap_inner.gno) requires the
+# swap context to be the router proxy, so the forged call reverts and the
+# victim keeps every token. The attacker realm is prefunded with BAR so that,
+# if the guard were removed, the drain would complete end to end -- making this
+# a true regression test for the guard.
+
+loadpkg gno.land/p/nt/bptree/v0
+loadpkg gno.land/p/nt/ufmt/v0
+loadpkg gno.land/p/onbloc/json/v0
+loadpkg gno.land/p/nt/ownable/v0
+loadpkg gno.land/p/nt/grc20/v0
+loadpkg gno.land/p/nt/grc721/v0
+loadpkg gno.land/r/demo/defi/foo20
+
+loadpkg gno.land/r/sys/users
+loadpkg gno.land/r/gnoland/wugnot
+loadpkg gno.land/r/nt/grc20reg/v0
+
+loadpkg gno.land/r/gnoswap/access/v1
+loadpkg gno.land/p/gnoswap/uint256/v1
+loadpkg gno.land/p/gnoswap/int256/v1
+loadpkg gno.land/p/gnoswap/gnsmath/v1
+loadpkg gno.land/p/gnoswap/store/v1
+loadpkg gno.land/p/gnoswap/version_manager/v1
+
+loadpkg gno.land/r/gnoswap/access/v1
+loadpkg gno.land/r/gnoswap/rbac/v1
+loadpkg gno.land/r/gnoswap/halt/v1
+loadpkg gno.land/r/gnoswap/common
+loadpkg gno.land/r/gnoswap/common/v1
+loadpkg gno.land/r/gnoswap/referral/v1
+
+loadpkg gno.land/r/gnoswap/gns
+loadpkg gno.land/r/gnoswap/gnft
+loadpkg gno.land/r/gnoswap/gov/xgns
+loadpkg gno.land/r/gnoswap/emission
+
+loadpkg gno.land/r/gnoswap/protocol_fee
+loadpkg gno.land/r/gnoswap/protocol_fee/v1
+
+loadpkg gno.land/r/gnoswap/pool
+loadpkg gno.land/r/gnoswap/position
+loadpkg gno.land/r/gnoswap/router
+
+loadpkg gno.land/r/gnoswap/pool/v1
+loadpkg gno.land/r/gnoswap/position/v1
+loadpkg gno.land/r/gnoswap/router/v1
+
+loadpkg gno.land/r/onbloc/bar
+
+adduser user1
+patchpkg "g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx" $user1_user_addr
+
+## start a new node
+gnoland start
+
+## Deploy the attacker realm (not a product package; embedded below).
+gnokey maketx addpkg -pkgdir $WORK/routerdrain -pkgpath gno.land/r/test/routerdrain -gas-fee 1000000ugnot -gas-wanted 200000000 -broadcast -chainid=tendermint_test test1
+
+## test1 (= gnoswap admin g1jg8..., holds GNS and BAR supply) is the attacker.
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func SetPoolCreationFee -args 0 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+
+## Attacker creates a GNS/BAR pool priced at tick 0; GNS is token0 (path-ordered).
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Approve -args g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v -args 9223372036854775806 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func CreatePool -args "gno.land/r/gnoswap/gns.GNS" -args "gno.land/r/onbloc/bar.BAR" -args 500 -args 79228162514264337593543950337 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+
+## Attacker is the sole LP.
+gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/gnoswap/gns.GNS" -args "gno.land/r/onbloc/bar.BAR" -args 500 -args "-6960" -args "6960" -args 100000000 -args 100000000 -args 0 -args 0 -args 9999999999 -args g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -args "" -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+
+## Prefund the attacker realm with BAR. In the forged flow the router pays the
+## victim its output via SafeGRC20Transfer from rlm.Address(), which is the
+## attacker realm here. Without this, a guard regression would merely fail at
+## payout; with it, removing the guard drains the victim cleanly.
+gnokey maketx call -pkgpath gno.land/r/onbloc/bar -func Transfer -args g1slcv43e0r3wadt5hnevh5l2dlukp23vex55sdk -args 100000000 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+
+## Victim (user1) is funded with GNS and holds a standing unlimited router allowance.
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Transfer -args $user1_user_addr -args 50000000 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test test1
+gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp -args 9223372036854775806 -gas-fee 10000000ugnot -gas-wanted 1000000000 -broadcast -chainid=tendermint_test user1
+
+## Victim GNS before the attack.
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"$user1_user_addr\")"
+# stdout "50000000"
+
+## Victim calls the attacker's innocuous realm. The forged swap must be rejected
+## because its context is the attacker realm, not the router proxy.
+! gnokey maketx call -pkgpath gno.land/r/test/routerdrain -func Claim -args "gno.land/r/gnoswap/gns.GNS" -args "gno.land/r/onbloc/bar.BAR" -args "gno.land/r/gnoswap/gns.GNS:gno.land/r/onbloc/bar.BAR:500" -args "50000000" -gas-fee 10000000ugnot -gas-wanted 2000000000 -broadcast -chainid=tendermint_test user1
+stderr 'is not router proxy'
+
+## Victim keeps every GNS; the standing router allowance was not abused.
+gnokey query vm/qeval --data "gno.land/r/gnoswap/gns.BalanceOf(\"$user1_user_addr\")"
+# stdout "50000000"
+
+-- routerdrain/gnomod.toml --
+module = "gno.land/r/test/routerdrain"
+gno = "0.9"
+
+-- routerdrain/routerdrain.gno --
+// Package routerdrain is a PoC attacker realm. Claim reads like an innocent
+// airdrop claim. It builds its own router/v1 instance (exported NewRouterV1)
+// over an attacker-owned store, then calls the instance's swap method with
+// the attacker's own realm token. Before the fix, router/v1 treated
+// rlm.Previous() -- the victim who called Claim -- as the payer, and the router
+// proxy callback pulled the victim's tokens using the victim's allowance to the
+// router address.
+package routerdrain
+
+import (
+	"gno.land/p/gnoswap/store/v1"
+
+	"gno.land/r/gnoswap/router"
+	rv1 "gno.land/r/gnoswap/router/v1"
+)
+
+func Claim(cur realm, inputToken, outputToken, route, amount string) {
+	kv := store.NewKVStore(cur.Address())
+	rs := router.NewRouterStore(kv)
+	if err := rs.SetSwapFee(0, cur, 0); err != nil {
+		panic(err)
+	}
+	if err := rs.SetPendingProtocolFees(0, cur, map[string]int64{}); err != nil {
+		panic(err)
+	}
+
+	inst := rv1.NewRouterV1(rs)
+	inst.ExactInSwapRoute(0, cur, inputToken, outputToken, amount, route, "100", "0", 9999999999, "")
+}

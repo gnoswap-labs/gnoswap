@@ -155,6 +155,17 @@ func TokenFaucet2(cur realm, t *testing.T, tokenPath string, to address) {
 	}
 }
 
+// fundRouterImplAsPayer funds routerImplAddr and approves the router proxy to pull it.
+// Swap paths now require the router proxy realm, so unit tests enter them via
+// testing.SetRealm(routerRealm), where the payer (rlm.Previous()) resolves to routerImplAddr.
+func fundRouterImplAsPayer(cur realm, t *testing.T, tokenPaths ...string) {
+	t.Helper()
+	for _, tokenPath := range tokenPaths {
+		TokenFaucet(cur, t, tokenPath, routerImplAddr)
+		TokenApprove(cur, t, tokenPath, routerImplAddr, routerAddr, maxApprove)
+	}
+}
+
 func TokenApprove(cur realm, t *testing.T, tokenPath string, owner, spender address, amount int64) {
 	t.Helper()
 	switch tokenPath {
