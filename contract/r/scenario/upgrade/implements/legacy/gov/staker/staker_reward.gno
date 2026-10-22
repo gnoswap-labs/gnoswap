@@ -1,0 +1,457 @@
+package staker
+
+import (
+	"chain"
+	"time"
+
+	prbac "gno.land/p/gnoswap/rbac/v1"
+	"gno.land/p/gnoswap/utils/v1"
+	ufmt "gno.land/p/nt/ufmt/v0"
+
+	"gno.land/r/gnoswap/access/v1"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/gov/xgns"
+	"gno.land/r/gnoswap/halt/v1"
+)
+
+// CollectReward claims all rewards for the caller.
+//
+// It settles both reward streams:
+//  1. GNS emission rewards from the emission accumulator.
+//  2. Protocol-fee rewards for every known token path.
+//
+// Protocol-fee rewards are divided by the total stake in force for each
+// accrual epoch and settled across the caller's stake-event segments. They
+// are not calculated from one current xGNS/total-xGNS ratio. Q128 fractional
+// remainders remain in state for later collection.
+//
+// The all-token path intentionally grows with the number of known fee tokens.
+// Use the token-specific entry point when bounded work is required.
+//
+// No business parameters are required; the caller's reward ID is used.
+// Rewards are transferred directly to the caller.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before settlement and transfers.
+func (gs *govStakerV1) CollectReward(_ int, rlm realm) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedWithdraw()
+
+	prev := rlm.Previous()
+	caller := prev.Address()
+	from := rlm.Address()
+	currentTimestamp := time.Now().Unix()
+
+	emission.MintAndDistributeGns(cross(rlm))
+
+	emissionReward, protocolFeeRewards, err := gs.claimRewards(0, rlm, caller.String(), currentTimestamp)
+	if err != nil {
+		panic(err)
+	}
+
+	// Transfer emission rewards (GNS tokens) if any
+	if emissionReward > 0 {
+		gns.Transfer(cross(rlm), caller, emissionReward)
+
+		chain.Emit(
+			"CollectEmissionReward",
+			"prevAddr", prev.Address().String(),
+			"prevRealm", prev.PkgPath(),
+			"from", from.String(),
+			"to", caller.String(),
+			"emissionRewardAmount", utils.FormatInt(emissionReward),
+		)
+	}
+
+	// Transfer protocol fee rewards for each token type
+	for tokenPath, amount := range protocolFeeRewards {
+		if amount > 0 {
+			err := transferToken(0, rlm, tokenPath, from, caller, amount)
+			if err != nil {
+				panic(err)
+			}
+
+			chain.Emit(
+				"CollectProtocolFeeReward",
+				"prevAddr", prev.Address().String(),
+				"prevRealm", prev.PkgPath(),
+				"tokenPath", tokenPath,
+				"from", from.String(),
+				"to", caller.String(),
+				"collectedAmount", utils.FormatInt(amount),
+			)
+		}
+	}
+}
+
+// CollectEmissionReward collects accumulated GNS emission rewards only.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before settlement and transfer.
+func (gs *govStakerV1) CollectEmissionReward(_ int, rlm realm) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedWithdraw()
+
+	prev := rlm.Previous()
+	caller := prev.Address()
+	from := rlm.Address()
+	currentTimestamp := time.Now().Unix()
+
+	emission.MintAndDistributeGns(cross(rlm))
+
+	emissionReward, err := gs.claimRewardsEmissionReward(0, rlm, caller.String(), currentTimestamp)
+	if err != nil {
+		panic(err)
+	}
+
+	if emissionReward > 0 {
+		gns.Transfer(cross(rlm), caller, emissionReward)
+
+		chain.Emit(
+			"CollectEmissionReward",
+			"prevAddr", prev.Address().String(),
+			"prevRealm", prev.PkgPath(),
+			"from", from.String(),
+			"to", caller.String(),
+			"emissionRewardAmount", utils.FormatInt(emissionReward),
+		)
+	}
+}
+
+// CollectProtocolFeeReward collects accumulated protocol fee rewards for the provided token path.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before settlement and transfer.
+//   - tokenPath: registered fee-token path whose reward should be collected
+func (gs *govStakerV1) CollectProtocolFeeReward(_ int, rlm realm, tokenPath string) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedWithdraw()
+
+	prev := rlm.Previous()
+	caller := prev.Address()
+	from := rlm.Address()
+	currentTimestamp := time.Now().Unix()
+
+	amount, err := gs.claimRewardProtocolFeeRewardByTokenPath(0, rlm, caller.String(), tokenPath, currentTimestamp)
+	if err != nil {
+		panic(err)
+	}
+
+	if amount > 0 {
+		err := transferToken(0, rlm, tokenPath, from, caller, amount)
+		if err != nil {
+			panic(err)
+		}
+
+		chain.Emit(
+			"CollectProtocolFeeReward",
+			"prevAddr", prev.Address().String(),
+			"prevRealm", prev.PkgPath(),
+			"tokenPath", tokenPath,
+			"from", from.String(),
+			"to", caller.String(),
+			"collectedAmount", utils.FormatInt(amount),
+		)
+	}
+}
+
+// CollectRewardFromLaunchPad collects rewards for launchpad project wallets.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad reward settlement.
+//   - to: project wallet address receiving its emission and protocol-fee rewards
+//
+// Only callable by launchpad contract.
+func (gs *govStakerV1) CollectRewardFromLaunchPad(_ int, rlm realm, to address) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedWithdraw()
+
+	prev := rlm.Previous()
+	caller := prev.Address()
+	access.AssertIsLaunchpad(caller)
+
+	from := rlm.Address()
+	currentTimestamp := time.Now().Unix()
+
+	launchpadRewardID := gs.makeLaunchpadRewardID(to.String())
+	_, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errNoDelegatedAmount,
+			ufmt.Sprintf("%s is not project wallet from launchpad", to.String()),
+		))
+	}
+
+	emissionReward, protocolFeeRewards, err := gs.claimRewardsFromLaunchpad(0, rlm, to.String(), currentTimestamp)
+	if err != nil {
+		panic(err)
+	}
+
+	// Transfer emission rewards (GNS tokens) to project wallet if any
+	if emissionReward > 0 {
+		gns.Transfer(cross(rlm), to, emissionReward)
+
+		chain.Emit(
+			"CollectEmissionFromLaunchPad",
+			"prevAddr", prev.Address().String(),
+			"prevRealm", prev.PkgPath(),
+			"from", from.String(),
+			"to", to.String(),
+			"emissionRewardAmount", utils.FormatInt(emissionReward),
+		)
+	}
+
+	// Transfer protocol fee rewards to project wallet for each token type
+	for tokenPath, amount := range protocolFeeRewards {
+		if amount > 0 {
+			err := transferToken(0, rlm, tokenPath, from, to, amount)
+			if err != nil {
+				panic(err)
+			}
+
+			chain.Emit(
+				"CollectProtocolFeeFromLaunchPad",
+				"prevAddr", prev.Address().String(),
+				"prevRealm", prev.PkgPath(),
+				"tokenPath", tokenPath,
+				"from", from.String(),
+				"to", to.String(),
+				"collectedAmount", utils.FormatInt(amount),
+			)
+		}
+	}
+}
+
+// CollectEmissionRewardFromLaunchPad collects emission rewards only for launchpad project wallets.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad reward settlement.
+//   - to: project wallet address receiving its emission reward
+func (gs *govStakerV1) CollectEmissionRewardFromLaunchPad(_ int, rlm realm, to address) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedWithdraw()
+
+	prev := rlm.Previous()
+	caller := prev.Address()
+	access.AssertIsLaunchpad(caller)
+
+	from := rlm.Address()
+	currentTimestamp := time.Now().Unix()
+
+	launchpadRewardID := gs.makeLaunchpadRewardID(to.String())
+	_, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errNoDelegatedAmount,
+			ufmt.Sprintf("%s is not project wallet from launchpad", to.String()),
+		))
+	}
+
+	emission.MintAndDistributeGns(cross(rlm))
+
+	emissionReward, err := gs.claimRewardsEmissionReward(0, rlm, launchpadRewardID, currentTimestamp)
+	if err != nil {
+		panic(err)
+	}
+
+	if emissionReward > 0 {
+		gns.Transfer(cross(rlm), to, emissionReward)
+
+		chain.Emit(
+			"CollectEmissionFromLaunchPad",
+			"prevAddr", prev.Address().String(),
+			"prevRealm", prev.PkgPath(),
+			"from", from.String(),
+			"to", to.String(),
+			"emissionRewardAmount", utils.FormatInt(emissionReward),
+		)
+	}
+}
+
+// CollectProtocolFeeRewardFromLaunchPad collects one token path of protocol fee rewards for launchpad project wallets.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad reward settlement.
+//   - to: project wallet address receiving the protocol-fee reward
+//   - tokenPath: registered fee-token path whose reward should be collected
+func (gs *govStakerV1) CollectProtocolFeeRewardFromLaunchPad(_ int, rlm realm, to address, tokenPath string) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	halt.AssertIsNotHaltedWithdraw()
+
+	prev := rlm.Previous()
+	caller := prev.Address()
+	access.AssertIsLaunchpad(caller)
+
+	from := rlm.Address()
+	currentTimestamp := time.Now().Unix()
+
+	launchpadRewardID := gs.makeLaunchpadRewardID(to.String())
+	_, exists := gs.getLaunchpadProjectDeposit(launchpadRewardID)
+	if !exists {
+		panic(makeErrorWithDetails(
+			errNoDelegatedAmount,
+			ufmt.Sprintf("%s is not project wallet from launchpad", to.String()),
+		))
+	}
+
+	amount, err := gs.claimRewardProtocolFeeRewardByTokenPath(0, rlm, launchpadRewardID, tokenPath, currentTimestamp)
+	if err != nil {
+		panic(err)
+	}
+
+	if amount > 0 {
+		err := transferToken(0, rlm, tokenPath, from, to, amount)
+		if err != nil {
+			panic(err)
+		}
+
+		chain.Emit(
+			"CollectProtocolFeeFromLaunchPad",
+			"prevAddr", prev.Address().String(),
+			"prevRealm", prev.PkgPath(),
+			"tokenPath", tokenPath,
+			"from", from.String(),
+			"to", to.String(),
+			"collectedAmount", utils.FormatInt(amount),
+		)
+	}
+}
+
+// SetAmountByProjectWallet sets the amount of reward stake for the project wallet.
+// This function is exclusively callable by the launchpad contract to manage
+// xGNS balances for project wallets that participate in launchpad offerings.
+//
+// The function handles both adding and removing stakes:
+// - When adding: mints xGNS to launchpad address and starts reward accumulation
+// - When removing: burns xGNS from launchpad address and stops reward accumulation
+// Adjusts stake amount for project wallet address.
+//
+// Parameters:
+//   - _: Noncrossing implementation-call discriminator; pass 0.
+//   - rlm: Current realm context forwarded by the governance-staker proxy; validated before launchpad authorization and staking changes.
+//   - addr: project wallet address whose launchpad-backed stake should be adjusted
+//   - amount: amount of stake to add or remove
+//   - add: true to add stake and mint xGNS to launchpad, false to remove stake and burn xGNS from launchpad
+//
+// Panics:
+//   - if caller is not the launchpad contract
+//   - if system is halted for withdrawals
+//   - if access control operations fail
+func (gs *govStakerV1) SetAmountByProjectWallet(_ int, rlm realm, addr address, amount int64, add bool) {
+	access.AssertIsRlmCurrent(0, rlm)
+
+	if add {
+		halt.AssertIsNotHaltedGovStaker()
+	} else {
+		halt.AssertIsNotHaltedWithdraw()
+	}
+
+	prev := rlm.Previous()
+	caller := prev.Address()
+	currentTimestamp := time.Now().Unix()
+
+	access.AssertIsLaunchpad(caller)
+
+	launchpadAddr := access.MustGetAddress(prbac.ROLE_LAUNCHPAD.String())
+
+	if add {
+		// Add stake for the project wallet and mint xGNS to launchpad
+		err := gs.addStakeFromLaunchpad(0, rlm, addr.String(), amount, currentTimestamp)
+		if err != nil {
+			panic(err)
+		}
+
+		xgns.Mint(cross(rlm), launchpadAddr, amount)
+	} else {
+		// Remove stake for the project wallet and burn xGNS from launchpad
+		err := gs.removeStakeFromLaunchpad(0, rlm, addr.String(), amount, currentTimestamp)
+		if err != nil {
+			panic(err)
+		}
+
+		xgns.Burn(cross(rlm), launchpadAddr, amount)
+	}
+}
+
+// claimRewards claims both emission and protocol fee rewards.
+// Coordinates claiming process for both reward types.
+func (gs *govStakerV1) claimRewards(_ int, rlm realm, rewardID string, currentTimestamp int64) (int64, map[string]int64, error) {
+	emissionReward, err := gs.claimRewardsEmissionReward(0, rlm, rewardID, currentTimestamp)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	protocolFeeRewards, err := gs.claimRewardsProtocolFeeReward(0, rlm, rewardID, currentTimestamp)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	return emissionReward, protocolFeeRewards, nil
+}
+
+// claimRewardsFromLaunchpad claims rewards for launchpad project wallets.
+// Uses special reward ID format for launchpad integration.
+func (gs *govStakerV1) claimRewardsFromLaunchpad(_ int, rlm realm, address string, currentTimestamp int64) (int64, map[string]int64, error) {
+	launchpadRewardID := gs.makeLaunchpadRewardID(address)
+
+	return gs.claimRewards(0, rlm, launchpadRewardID, currentTimestamp)
+}
+
+// transferToken transfers tokens from the staker contract to a recipient address.
+// transferToken handles token transfers for reward distribution.
+//
+// Non-crossing helper: takes `_ int, rlm realm` so the realm token threaded
+// in by the public reward-collection entry points reaches the underlying
+// GRC-20 transfer without forcing each caller to recompute it.
+func transferToken(
+	_ int,
+	rlm realm,
+	tokenPath string,
+	from, to address,
+	amount int64,
+) error {
+	common.MustRegistered(tokenPath)
+
+	// Validate recipient address
+	if !to.IsValid() {
+		return makeErrorWithDetails(
+			errInvalidAddress,
+			ufmt.Sprintf("invalid address %s to transfer protocol fee", to.String()),
+		)
+	}
+
+	// Validate transfer amount
+	if amount < 0 {
+		return makeErrorWithDetails(
+			errInvalidAmount,
+			ufmt.Sprintf("invalid amount %d to transfer protocol fee", amount),
+		)
+	}
+
+	// Check sufficient balance
+	balance := common.BalanceOf(tokenPath, from)
+	if balance < amount {
+		return makeErrorWithDetails(
+			errNotEnoughBalance,
+			ufmt.Sprintf("not enough %s balance(%d) to collect(%d)", tokenPath, balance, amount),
+		)
+	}
+
+	common.SafeGRC20Transfer(0, rlm, tokenPath, to, amount)
+
+	return nil
+}

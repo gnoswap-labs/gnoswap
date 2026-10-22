@@ -1,0 +1,406 @@
+package staker
+
+import (
+	"time"
+
+	gnsmath "gno.land/p/gnoswap/gnsmath/v1"
+	"gno.land/p/gnoswap/uint256/v1"
+	rotree "gno.land/p/nt/bptree/rotree/v0"
+	ufmt "gno.land/p/nt/ufmt/v0"
+
+	"gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/gov/staker"
+	"gno.land/r/gnoswap/gov/xgns"
+)
+
+// GetTotalxGnsSupply returns the total amount of xGNS supply, including
+// xGNS held by the launchpad.
+//
+// Returns:
+//   - int64: total xGNS supply, including the launchpad balance.
+func (gs *govStakerV1) GetTotalxGnsSupply() int64 {
+	return xgns.TotalSupply()
+}
+
+// GetTotalDelegated returns the total amount of xGNS delegated.
+//
+// Returns:
+//   - int64: total xGNS amount currently delegated.
+func (gs *govStakerV1) GetTotalDelegated() int64 {
+	return gs.store.GetTotalDelegatedAmount()
+}
+
+// GetTotalLockedAmount returns the total amount of locked GNS.
+//
+// Returns:
+//   - int64: total GNS amount currently locked.
+func (gs *govStakerV1) GetTotalLockedAmount() int64 {
+	return gs.store.GetTotalLockedAmount()
+}
+
+// GetUnDelegationLockupPeriod returns the undelegation lockup period in seconds.
+//
+// Returns:
+//   - int64: number of seconds an undelegation remains locked.
+func (gs *govStakerV1) GetUnDelegationLockupPeriod() int64 {
+	return gs.store.GetUnDelegationLockupPeriod()
+}
+
+// GetDelegations returns a read-only view of every delegation, keyed by the
+// decimal string form of the delegation ID.
+//
+// Returns:
+//   - *rotree.ReadOnlyTree: read-only delegation tree keyed by decimal ID.
+func (gs *govStakerV1) GetDelegations() *rotree.ReadOnlyTree {
+	return rotree.Wrap(gs.store.GetAllDelegations(), cloneDelegationEntry)
+}
+
+// ExistsDelegation checks if a delegation exists.
+//
+// Parameters:
+//   - delegationID: delegation identifier to look up.
+//
+// Returns:
+//   - bool: true when delegationID is stored, otherwise false.
+func (gs *govStakerV1) ExistsDelegation(delegationID int64) bool {
+	return gs.store.HasDelegation(delegationID)
+}
+
+// GetDelegatorDelegations returns a read-only view of a delegator's delegations,
+// keyed by delegatee address with that pair's delegation IDs as the value.
+// nil is returned when the delegator has no delegations.
+//
+// Parameters:
+//   - delegator: address whose outgoing delegations are requested.
+//
+// Returns:
+//   - *rotree.ReadOnlyTree: read-only tree keyed by delegatee address, or nil
+//     when delegator has no delegation entries.
+func (gs *govStakerV1) GetDelegatorDelegations(delegator address) *rotree.ReadOnlyTree {
+	delegationManager := gs.store.GetDelegationManager()
+	delegatorTree, exists := delegationManager.GetDelegatorDelegations(delegator.String())
+	if !exists {
+		return nil
+	}
+	return rotree.Wrap(delegatorTree, cloneDelegationIDsEntry)
+}
+
+// GetUserDelegationIDs returns the delegation IDs for a specific delegator and
+// delegatee.
+//
+// Parameters:
+//   - delegator: address that created the delegations.
+//   - delegatee: address receiving the delegations.
+//
+// Returns:
+//   - []int64: delegation IDs for the delegator/delegatee pair, or an empty
+//     slice when no pair is stored.
+func (gs *govStakerV1) GetUserDelegationIDs(delegator address, delegatee address) []int64 {
+	delegationManager := gs.store.GetDelegationManager()
+
+	delegationIDs, exists := delegationManager.GetDelegationIDs(delegator.String(), delegatee.String())
+	if !exists {
+		return []int64{}
+	}
+
+	return delegationIDs
+}
+
+// HasDelegationSnapshotsKey reports whether delegation history has been stored.
+//
+// Returns:
+//   - bool: true when the total delegation history storage key exists.
+func (gs *govStakerV1) HasDelegationSnapshotsKey() bool {
+	return gs.store.HasTotalDelegationHistoryStoreKey()
+}
+
+// GetTotalDelegationAmountAtSnapshot returns the total delegation amount at a
+// Unix timestamp. It uses ReverseIterate to find the most recent history entry
+// at or before that timestamp; this is a timestamp lookup, not a block snapshot.
+//
+// Parameters:
+//   - snapshotTime: Unix timestamp to retrieve the history value for
+//
+// Returns:
+//   - int64: total delegation amount at the specified time
+//   - bool: true when a history entry exists at or before the timestamp
+func (gs *govStakerV1) GetTotalDelegationAmountAtSnapshot(snapshotTime int64) (int64, bool) {
+	history := gs.store.GetTotalDelegationHistory()
+	if history.Size() == 0 {
+		return 0, false
+	}
+
+	var (
+		totalAmount int64
+		exists      bool
+	)
+
+	// ReverseIterate from 0 to snapshotTime to find the most recent entry at or before snapshotTime
+	history.ReverseIterate(0, snapshotTime, func(key int64, value any) bool {
+		amountInt, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("invalid amount type: %T", value))
+		}
+
+		totalAmount = amountInt
+		exists = true
+
+		return true // stop after first (most recent) entry
+	})
+
+	return totalAmount, exists
+}
+
+// GetUserDelegationAmountAtSnapshot returns one user's delegation amount at a
+// Unix timestamp. The history is keyed by address and timestamp, and the
+// lookup returns the most recent entry at or before the requested time.
+//
+// Parameters:
+//   - userAddr: address of the user
+//   - snapshotTime: Unix timestamp to retrieve
+//
+// Returns:
+//   - int64: user delegation amount at the specified time
+//   - bool: true when a history entry exists at or before the timestamp
+func (gs *govStakerV1) GetUserDelegationAmountAtSnapshot(userAddr address, snapshotTime int64) (int64, bool) {
+	history := gs.store.GetUserDelegationHistory()
+
+	addrStr := userAddr.String()
+	lo, _ := userHistoryKeyRange(addrStr)
+	// Inclusive upper bound: largest key for this address at or before snapshotTime.
+	hi := makeUserHistoryKey(addrStr, snapshotTime)
+
+	var (
+		userAmount int64
+		exists     bool
+	)
+
+	// ReverseIterate from hi down to lo to find the most recent entry at or before snapshotTime
+	history.ReverseIterate(lo, hi, func(_ string, value any) bool {
+		amountInt, ok := value.(int64)
+		if !ok {
+			panic(ufmt.Sprintf("invalid amount type: %T", value))
+		}
+
+		userAmount = amountInt
+		exists = true
+
+		return true // stop after first (most recent) entry
+	})
+
+	return userAmount, exists
+}
+
+// GetClaimableRewardByAddress returns the claimable rewards for an address.
+//
+// Parameters:
+//   - addr: staker address whose emission and protocol fee rewards are requested.
+//
+// Returns:
+//   - int64: claimable emission reward amount.
+//   - map[string]int64: claimable protocol fee amounts keyed by token path.
+//   - error: nil on success; an error when emission or protocol fee reward
+//     resolution fails.
+func (gs *govStakerV1) GetClaimableRewardByAddress(addr address) (int64, map[string]int64, error) {
+	return gs.GetClaimableRewardByRewardID(addr.String())
+}
+
+// GetClaimableRewardByLaunchpad returns the claimable rewards for a launchpad
+// project address.
+//
+// Parameters:
+//   - addr: launchpad project address used to derive its reward ID.
+//
+// Returns:
+//   - int64: claimable emission reward amount for the launchpad project.
+//   - map[string]int64: claimable protocol fee amounts keyed by token path.
+//   - error: nil on success; an error when emission or protocol fee reward
+//     resolution fails.
+func (gs *govStakerV1) GetClaimableRewardByLaunchpad(addr address) (int64, map[string]int64, error) {
+	return gs.GetClaimableRewardByRewardID(gs.makeLaunchpadRewardID(addr.String()))
+}
+
+// GetClaimableRewardByRewardID returns the claimable rewards for a reward ID.
+//
+// Parameters:
+//   - rewardID: emission/protocol-fee reward state identifier to inspect.
+//
+// Returns:
+//   - int64: claimable emission reward amount.
+//   - map[string]int64: claimable protocol fee amounts keyed by token path.
+//   - error: nil on success; an error when emission or protocol fee reward
+//     resolution fails.
+func (gs *govStakerV1) GetClaimableRewardByRewardID(rewardID string) (int64, map[string]int64, error) {
+	emissionDistributedAmount := emission.GetAccuDistributedToGovStaker()
+	emissionRewardManager := gs.store.GetEmissionRewardManager()
+	emissionResolver := NewEmissionRewardManagerResolver(emissionRewardManager)
+	emissionReward, err := emissionResolver.GetClaimableRewardAmount(emissionDistributedAmount, rewardID, time.Now().Unix())
+	if err != nil {
+		return 0, make(map[string]int64), err
+	}
+
+	protocolFeeRewards, err := gs.getClaimableProtocolFeeRewards(rewardID)
+	if err != nil {
+		return 0, make(map[string]int64), err
+	}
+
+	return emissionReward, protocolFeeRewards, nil
+}
+
+// GetLaunchpadProjectDeposit returns the deposit amount for a launchpad project.
+//
+// Parameters:
+//   - projectAddr: launchpad project address used to derive its reward ID.
+//
+// Returns:
+//   - int64: stored launchpad project deposit amount.
+//   - bool: true when a deposit exists for projectAddr, otherwise false.
+func (gs *govStakerV1) GetLaunchpadProjectDeposit(projectAddr string) (int64, bool) {
+	launchpadDeposits := gs.store.GetLaunchpadProjectDeposits()
+	return launchpadDeposits.GetDeposit(gs.makeLaunchpadRewardID(projectAddr))
+}
+
+// GetDelegationWithdrawCount returns the total number of delegation withdraws
+// for a specific delegation.
+//
+// Parameters:
+//   - delegationID: delegation identifier whose withdrawals are counted.
+//
+// Returns:
+//   - int: number of withdrawals recorded for delegationID, or zero when the
+//     delegation does not exist.
+func (gs *govStakerV1) GetDelegationWithdrawCount(delegationID int64) int {
+	delegation, exists := gs.store.GetDelegation(delegationID)
+	if !exists {
+		return 0
+	}
+	return len(delegation.Withdraws())
+}
+
+// GetDelegationWithdraws returns a paginated list of delegation withdraws for a
+// specific delegation.
+//
+// Parameters:
+//   - delegationID: delegation identifier whose withdrawals are requested.
+//   - offset: zero-based index of the first withdrawal to return.
+//   - count: maximum number of withdrawals to return.
+//
+// Returns:
+//   - []staker.DelegationWithdraw: withdrawals in the requested range, or an
+//     empty slice when the delegation or page is absent.
+//   - error: nil; this accessor currently has no error path.
+func (gs *govStakerV1) GetDelegationWithdraws(delegationID int64, offset, count int) ([]staker.DelegationWithdraw, error) {
+	delegation, exists := gs.store.GetDelegation(delegationID)
+	if !exists {
+		return []staker.DelegationWithdraw{}, nil
+	}
+
+	withdraws := delegation.Withdraws()
+	size := len(withdraws)
+	if offset >= size {
+		return []staker.DelegationWithdraw{}, nil
+	}
+
+	end := offset + count
+	if end > size {
+		end = size
+	}
+
+	return withdraws[offset:end], nil
+}
+
+// GetCollectableWithdrawAmount returns the collectable withdraw amount for a
+// specific delegation as of the current Unix time.
+//
+// Parameters:
+//   - delegationID: delegation identifier whose matured withdrawals are summed.
+//
+// Returns:
+//   - int64: total amount currently collectable, or zero when the delegation
+//     does not exist.
+func (gs *govStakerV1) GetCollectableWithdrawAmount(delegationID int64) int64 {
+	delegation, exists := gs.store.GetDelegation(delegationID)
+	if !exists {
+		return 0
+	}
+
+	totalAmount := int64(0)
+	currentTime := time.Now().Unix()
+	for _, withdraw := range delegation.Withdraws() {
+		resolver := NewDelegationWithdrawResolver(&withdraw)
+		totalAmount = gnsmath.SafeAddInt64(totalAmount, resolver.CollectableAmount(currentTime))
+	}
+
+	return totalAmount
+}
+
+// GetProtocolFeeAccumulatedX128PerStake returns the accumulated protocol fee per
+// stake (Q128) for a token path.
+//
+// Parameters:
+//   - tokenPath: token identifier/path whose accumulator is requested.
+//
+// Returns:
+//   - *uint256.Uint: accumulated protocol fee per stake scaled by 2^128, or a
+//     zero value when no accumulator exists for tokenPath.
+func (gs *govStakerV1) GetProtocolFeeAccumulatedX128PerStake(tokenPath string) *uint256.Uint {
+	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
+	accumulatedFee := protocolFeeRewardManager.GetAccumulatedProtocolFeeX128PerStake(tokenPath)
+	if accumulatedFee == nil {
+		return uint256.NewUint(0)
+	}
+
+	return accumulatedFee
+}
+
+// GetProtocolFeeAmount returns the protocol fee amount accumulated for a token
+// path.
+//
+// Parameters:
+//   - tokenPath: token identifier/path whose folded fee amount is requested.
+//
+// Returns:
+//   - int64: accumulated protocol fee amount for tokenPath.
+func (gs *govStakerV1) GetProtocolFeeAmount(tokenPath string) int64 {
+	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
+	return protocolFeeRewardManager.GetProtocolFeeAmount(tokenPath)
+}
+
+// GetProtocolFeeAccumulatedTimestamp returns the accumulated timestamp for
+// protocol fee rewards.
+//
+// Returns:
+//   - int64: Unix timestamp represented by protocol fee accumulation state.
+func (gs *govStakerV1) GetProtocolFeeAccumulatedTimestamp() int64 {
+	protocolFeeRewardManager := gs.store.GetProtocolFeeRewardManager()
+	return protocolFeeRewardManager.GetAccumulatedTimestamp()
+}
+
+// GetEmissionAccumulatedX128PerStake returns the accumulated emission per stake
+// (Q128).
+//
+// Returns:
+//   - *uint256.Uint: accumulated emission reward per stake scaled by 2^128.
+func (gs *govStakerV1) GetEmissionAccumulatedX128PerStake() *uint256.Uint {
+	emissionRewardManager := gs.store.GetEmissionRewardManager()
+	return emissionRewardManager.GetAccumulatedRewardX128PerStake()
+}
+
+// GetEmissionDistributedAmount returns the total distributed emission amount.
+//
+// Returns:
+//   - int64: total emission amount recorded as distributed to governance stakers.
+func (gs *govStakerV1) GetEmissionDistributedAmount() int64 {
+	emissionRewardManager := gs.store.GetEmissionRewardManager()
+	return emissionRewardManager.GetDistributedAmount()
+}
+
+// GetEmissionAccumulatedTimestamp returns the accumulated timestamp for emission
+// rewards.
+//
+// Returns:
+//   - int64: Unix timestamp represented by emission accumulation state.
+func (gs *govStakerV1) GetEmissionAccumulatedTimestamp() int64 {
+	emissionRewardManager := gs.store.GetEmissionRewardManager()
+	return emissionRewardManager.GetAccumulatedTimestamp()
+}

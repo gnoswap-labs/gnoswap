@@ -3,6 +3,7 @@ package protocol_fee
 import (
 	"chain"
 	"chain/runtime"
+	"math"
 	"testing"
 
 	testutils "gno.land/p/nt/testutils/v0"
@@ -708,76 +709,77 @@ func TestProtocolFee_AddToProtocolFee_EdgeCases(cur realm, t *testing.T) {
 	}
 }
 
-func TestProtocolFee_AddToProtocolFee_Overflow(cur realm, t *testing.T) {
-	tests := []struct {
-		name         string
-		tokenPath    string
-		initialValue int64
-		addAmount    int64
-		shouldPanic  bool
-		panicMsg     string
-	}{
-		{
-			name:         "error - overflow at boundary",
-			tokenPath:    "gno.land/r/onbloc/bar.BAR",
-			initialValue: 9223372036854775806, // MAX_INT64 - 1
-			addAmount:    2,
-			shouldPanic:  true,
-			panicMsg:     "int64 addition overflow",
-		},
-		{
-			name:         "error - overflow with large values",
-			tokenPath:    "gno.land/r/onbloc/bar.BAR",
-			initialValue: 9223372036854775800,
-			addAmount:    10,
-			shouldPanic:  true,
-			panicMsg:     "int64 addition overflow",
-		},
-		{
-			name:         "success - at exact boundary",
-			tokenPath:    "gno.land/r/onbloc/bar.BAR",
-			initialValue: 9223372036854775806, // MAX_INT64 - 1
-			addAmount:    1,
-			shouldPanic:  false,
-		},
-		{
-			name:         "success - normal addition",
-			tokenPath:    "gno.land/r/onbloc/bar.BAR",
-			initialValue: 1000,
-			addAmount:    500,
-			shouldPanic:  false,
-		},
-	}
+func TestProtocolFee_ReserveCollectedProtocolFee_CounterRollover(cur realm, t *testing.T) {
+	pf := createTestProtocolFee(t)
+	pfs := pf.getProtocolFeeState()
+	tokenPath := "gno.land/r/onbloc/bar.BAR"
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given
-			pf := createTestProtocolFee(t)
-			pfs := pf.getProtocolFeeState()
-			if err := pfs.addAccuToGovStaker(0, cur, tt.tokenPath, tt.initialValue); err != nil {
-				panic(err)
-			}
-			poolRealm := testing.NewCodeRealm(poolPath)
-			fundRealmAndApproveProtocolFee(cross(cur), t, poolRealm, tt.tokenPath, tt.addAmount)
-			testing.SetRealm(poolRealm)
+	uassert.NoError(t, pfs.store.SetDevOpsPct(0, cur, 5000))
+	uassert.NoError(t, pfs.addAccuToDevOps(0, cur, tokenPath, math.MaxInt64))
+	uassert.NoError(t, pfs.addAccuToGovStaker(0, cur, tokenPath, math.MaxInt64))
+	uassert.NoError(t, pfs.addActualDistributedToDevOps(0, cur, tokenPath, math.MaxInt64-1))
+	uassert.NoError(t, pfs.addActualDistributedToGovStaker(0, cur, tokenPath, math.MaxInt64-1))
 
-			// When & Then
-			if tt.shouldPanic {
-				uassert.AbortsContains(t, cur, tt.panicMsg, func() {
-					func(cur realm) {
-						pf.AddToProtocolFee(0, cur, tt.tokenPath, tt.addAmount)
-					}(cross(cur))
-				})
-			} else {
-				func(cur realm) {
-					pf.AddToProtocolFee(0, cur, tt.tokenPath, tt.addAmount)
-				}(cross(cur))
-				expectedTotal := tt.initialValue + tt.addAmount
-				uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath(tt.tokenPath), expectedTotal)
-				uassert.Equal(t, pfs.ReservedTokens()[0], tt.tokenPath)
-			}
-		})
-	}
+	uassert.Equal(t, pendingProtocolFeeAmount(
+		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),
+		pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath),
+	), int64(1))
+	uassert.Equal(t, pendingProtocolFeeAmount(
+		pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath),
+		pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath),
+	), int64(1))
+
+	// A split fee advances both lifetime totals across MaxInt64 while keeping
+	// their outstanding obligations small and independently recoverable.
+	pf.reserveCollectedProtocolFee(0, cur, tokenPath, 2)
+	uassert.Equal(t, pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath), int64(math.MinInt64))
+	uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath), int64(math.MinInt64))
+	uassert.Equal(t, pendingProtocolFeeAmount(
+		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),
+		pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath),
+	), int64(2))
+	uassert.Equal(t, pendingProtocolFeeAmount(
+		pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath),
+		pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath),
+	), int64(2))
+
+	// The distributed-history counters wrap as their pending amounts are settled;
+	// a later fee still appears as one unit pending for each side of the split.
+	uassert.NoError(t, pfs.addActualDistributedToDevOps(0, cur, tokenPath, 2))
+	uassert.NoError(t, pfs.addActualDistributedToGovStaker(0, cur, tokenPath, 2))
+	uassert.Equal(t, pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath), int64(math.MinInt64))
+	uassert.Equal(t, pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath), int64(math.MinInt64))
+	uassert.Equal(t, pendingProtocolFeeAmount(
+		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),
+		pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath),
+	), int64(0))
+	uassert.Equal(t, pendingProtocolFeeAmount(
+		pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath),
+		pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath),
+	), int64(0))
+
+	pf.reserveCollectedProtocolFee(0, cur, tokenPath, 2)
+	uassert.Equal(t, pendingProtocolFeeAmount(
+		pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath),
+		pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath),
+	), int64(1))
+	uassert.Equal(t, pendingProtocolFeeAmount(
+		pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath),
+		pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath),
+	), int64(1))
+
+	pfs.store.SetAccuToDevOpsItem(0, cur, tokenPath, -1)
+	pfs.store.SetAccuToGovStakerItem(0, cur, tokenPath, -1)
+	pfs.store.SetDistributedToDevOpsHistoryItem(0, cur, tokenPath, -1)
+	pfs.store.SetDistributedToGovStakerHistoryItem(0, cur, tokenPath, -1)
+	uassert.NoError(t, pfs.addAccuToDevOps(0, cur, tokenPath, 1))
+	uassert.NoError(t, pfs.addAccuToGovStaker(0, cur, tokenPath, 1))
+	uassert.NoError(t, pfs.addActualDistributedToDevOps(0, cur, tokenPath, 1))
+	uassert.NoError(t, pfs.addActualDistributedToGovStaker(0, cur, tokenPath, 1))
+	uassert.Equal(t, pfs.GetAccuTransferToDevOpsByTokenPath(tokenPath), int64(0))
+	uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath(tokenPath), int64(0))
+	uassert.Equal(t, pfs.GetActualDistributedToDevOpsByTokenPath(tokenPath), int64(0))
+	uassert.Equal(t, pfs.GetActualDistributedToGovStakerByTokenPath(tokenPath), int64(0))
 }
 
 func TestProtocolFee_AddToProtocolFee_UnauthorizedCaller(cur realm, t *testing.T) {

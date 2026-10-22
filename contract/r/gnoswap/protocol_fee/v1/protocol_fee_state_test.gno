@@ -1,6 +1,7 @@
 package protocol_fee
 
 import (
+	"math"
 	"testing"
 
 	bptree "gno.land/p/nt/bptree/v0"
@@ -325,142 +326,82 @@ func TestProtocolFeeState_SetGovStakerPct_EdgeCases(cur realm, t *testing.T) {
 	}
 }
 
-func TestProtocolFeeState_AddAccuToGovStaker_Overflow(cur realm, t *testing.T) {
+func TestProtocolFeeState_AddAccuToGovStaker_WrapsLifetimeTotal(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		tokenPath    string
 		initialValue int64
 		addAmount    int64
-		shouldPanic  bool
-		panicMsg     string
+		expected     int64
 	}{
 		{
-			name:         "error - overflow at boundary",
-			tokenPath:    "test_token",
-			initialValue: 9223372036854775806, // MAX_INT64 - 1
-			addAmount:    2,
-			shouldPanic:  true,
-			panicMsg:     "int64 addition overflow",
-		},
-		{
-			name:         "error - overflow with large values",
-			tokenPath:    "test_token",
-			initialValue: 9223372036854775800,
-			addAmount:    10,
-			shouldPanic:  true,
-			panicMsg:     "int64 addition overflow",
-		},
-		{
-			name:         "success - at exact boundary",
-			tokenPath:    "test_token",
-			initialValue: 9223372036854775806, // MAX_INT64 - 1
+			name:         "signed boundary",
+			initialValue: math.MaxInt64,
 			addAmount:    1,
-			shouldPanic:  false,
+			expected:     math.MinInt64,
 		},
 		{
-			name:         "success - normal addition",
-			tokenPath:    "test_token",
+			name:         "full word boundary",
+			initialValue: -1,
+			addAmount:    1,
+			expected:     0,
+		},
+		{
+			name:         "normal addition",
 			initialValue: 1000,
 			addAmount:    500,
-			shouldPanic:  false,
-		},
-		{
-			name:         "success - zero initial value",
-			tokenPath:    "test_token",
-			initialValue: 0,
-			addAmount:    100,
-			shouldPanic:  false,
+			expected:     1500,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given
 			pfs := newProtocolFeeStateInternal(t)
-			if tt.initialValue > 0 {
-				pfs.store.SetAccuToGovStakerItem(0, cur, tt.tokenPath, tt.initialValue)
+			if tt.initialValue != 0 {
+				pfs.store.SetAccuToGovStakerItem(0, cur, "test_token", tt.initialValue)
 			}
 
-			// When & Then
-			if tt.shouldPanic {
-				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
-					pfs.addAccuToGovStaker(0, cur, tt.tokenPath, tt.addAmount)
-				})
-			} else {
-				pfs.addAccuToGovStaker(0, cur, tt.tokenPath, tt.addAmount)
-				expectedTotal := tt.initialValue + tt.addAmount
-				uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath(tt.tokenPath), expectedTotal)
-			}
+			uassert.NoError(t, pfs.addAccuToGovStaker(0, cur, "test_token", tt.addAmount))
+			uassert.Equal(t, pfs.GetAccuTransferToGovStakerByTokenPath("test_token"), tt.expected)
 		})
 	}
 }
 
-func TestProtocolFeeState_AddAccuToDevOps_Overflow(cur realm, t *testing.T) {
+func TestProtocolFeeState_AddAccuToDevOps_WrapsLifetimeTotal(cur realm, t *testing.T) {
 	tests := []struct {
 		name         string
-		tokenPath    string
 		initialValue int64
 		addAmount    int64
-		shouldPanic  bool
-		panicMsg     string
+		expected     int64
 	}{
 		{
-			name:         "error - overflow at boundary",
-			tokenPath:    "test_token",
-			initialValue: 9223372036854775806, // MAX_INT64 - 1
-			addAmount:    2,
-			shouldPanic:  true,
-			panicMsg:     "int64 addition overflow",
-		},
-		{
-			name:         "error - overflow with large values",
-			tokenPath:    "test_token",
-			initialValue: 9223372036854775800,
-			addAmount:    10,
-			shouldPanic:  true,
-			panicMsg:     "int64 addition overflow",
-		},
-		{
-			name:         "success - at exact boundary",
-			tokenPath:    "test_token",
-			initialValue: 9223372036854775806, // MAX_INT64 - 1
+			name:         "signed boundary",
+			initialValue: math.MaxInt64,
 			addAmount:    1,
-			shouldPanic:  false,
+			expected:     math.MinInt64,
 		},
 		{
-			name:         "success - normal addition",
-			tokenPath:    "test_token",
+			name:         "full word boundary",
+			initialValue: -1,
+			addAmount:    1,
+			expected:     0,
+		},
+		{
+			name:         "normal addition",
 			initialValue: 2000,
 			addAmount:    800,
-			shouldPanic:  false,
-		},
-		{
-			name:         "success - zero initial value",
-			tokenPath:    "test_token",
-			initialValue: 0,
-			addAmount:    500,
-			shouldPanic:  false,
+			expected:     2800,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(cur realm, t *testing.T) {
-			// Given
 			pfs := newProtocolFeeStateInternal(t)
-			if tt.initialValue > 0 {
-				pfs.addAccuToDevOps(0, cur, tt.tokenPath, tt.initialValue)
+			if tt.initialValue != 0 {
+				pfs.store.SetAccuToDevOpsItem(0, cur, "test_token", tt.initialValue)
 			}
 
-			// When & Then
-			if tt.shouldPanic {
-				uassert.PanicsContains(t, cur, tt.panicMsg, func() {
-					pfs.addAccuToDevOps(0, cur, tt.tokenPath, tt.addAmount)
-				})
-			} else {
-				pfs.addAccuToDevOps(0, cur, tt.tokenPath, tt.addAmount)
-				expectedTotal := tt.initialValue + tt.addAmount
-				uassert.Equal(t, pfs.GetAccuTransferToDevOpsByTokenPath(tt.tokenPath), expectedTotal)
-			}
+			uassert.NoError(t, pfs.addAccuToDevOps(0, cur, "test_token", tt.addAmount))
+			uassert.Equal(t, pfs.GetAccuTransferToDevOpsByTokenPath("test_token"), tt.expected)
 		})
 	}
 }

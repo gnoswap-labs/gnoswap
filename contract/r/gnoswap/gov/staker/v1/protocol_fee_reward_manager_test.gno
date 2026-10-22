@@ -181,6 +181,82 @@ func TestProtocolFeeRewardManager_applyAccrualBuckets(cur realm, t *testing.T) {
 	})
 }
 
+func TestProtocolFeeRewardManager_LifetimeCountersWrapWithoutChangingPayouts(cur realm, t *testing.T) {
+	t.Run("fold and claim across the signed boundary", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 100, 1))
+
+		accumulator := staker.NewProtocolFeeTokenAccumulator()
+		accumulator.SetProtocolFeeAmount(math.MaxInt64)
+		resolver.SetTokenAccumulator(pfTestBar, accumulator)
+
+		foldAll(t, resolver, pfTestBar, []int64{1}, []int64{100}, 10)
+		uassert.Equal(t, accumulator.GetProtocolFeeAmount(), int64(math.MinInt64+99))
+		reward, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(100))
+
+		alice, ok, err := resolver.GetRewardState("alice")
+		uassert.NoError(t, err)
+		uassert.True(t, ok)
+		tokenState, ok := alice.GetTokenState(pfTestBar)
+		uassert.True(t, ok)
+		tokenState.SetClaimedReward(math.MaxInt64)
+
+		uassert.NoError(t, resolver.removeStake("alice", 0, 2))
+		foldAll(t, resolver, pfTestBar, []int64{2}, []int64{200}, 20)
+		uassert.Equal(t, accumulator.GetProtocolFeeAmount(), int64(math.MinInt64+299))
+
+		reward, err = resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(200))
+		uassert.Equal(t, tokenState.GetClaimedReward(), int64(math.MinInt64+199))
+
+		reward, err = resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(0))
+		uassert.Equal(t, tokenState.GetClaimedReward(), int64(math.MinInt64+199))
+	})
+
+	t.Run("fold total wraps from minus one to zero", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		accumulator := staker.NewProtocolFeeTokenAccumulator()
+		accumulator.SetProtocolFeeAmount(-1)
+		resolver.SetTokenAccumulator(pfTestBar, accumulator)
+
+		foldAll(t, resolver, pfTestBar, []int64{0}, []int64{1}, 10)
+		uassert.Equal(t, accumulator.GetProtocolFeeAmount(), int64(0))
+	})
+
+	t.Run("claim total wraps from minus one to zero", func(cur realm, t *testing.T) {
+		resolver := newPfTestManager()
+		uassert.NoError(t, resolver.addStake("alice", 1, 1))
+
+		foldAll(t, resolver, pfTestBar, []int64{1}, []int64{1}, 10)
+		reward, err := resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(1))
+
+		alice, ok, err := resolver.GetRewardState("alice")
+		uassert.NoError(t, err)
+		uassert.True(t, ok)
+		tokenState, ok := alice.GetTokenState(pfTestBar)
+		uassert.True(t, ok)
+		tokenState.SetClaimedReward(-1)
+
+		uassert.NoError(t, resolver.removeStake("alice", 0, 2))
+		foldAll(t, resolver, pfTestBar, []int64{2}, []int64{1}, 20)
+		reward, err = resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(1))
+		uassert.Equal(t, tokenState.GetClaimedReward(), int64(0))
+
+		reward, err = resolver.claimTokenReward("alice", pfTestBar, 0)
+		uassert.NoError(t, err)
+		uassert.Equal(t, reward, int64(0))
+	})
+}
+
 // TestProtocolFeeRewardManager_claimRewards_ExactAcrossStakeChanges is the core
 // correctness check: fees folded long after the stake changes they span are still
 // attributed to the stake distribution in force when they arrived.
