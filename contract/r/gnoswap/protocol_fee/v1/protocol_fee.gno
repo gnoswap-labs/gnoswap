@@ -237,7 +237,6 @@ func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, am
 
 	prev := rlm.Previous()
 	caller := prev.Address()
-	assertIsPoolOrPositionOrRouterOrStaker(caller)
 
 	if amount < 0 {
 		panic(makeErrorWithDetail(
