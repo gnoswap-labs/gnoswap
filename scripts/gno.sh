@@ -19,6 +19,8 @@ export PATH="$GNO_TOOLCHAIN/bin:$PATH"
 
 setup() {
 	if [ -d "$GNOROOT/.git" ]; then
+		# follow GNO_REPO even if the checkout was cloned from another fork
+		git -C "$GNOROOT" remote set-url origin "$GNO_REPO"
 		git -C "$GNOROOT" fetch -q --depth 1 origin "$GNO_REF"
 		# reset and clean also drop what integration-link left behind
 		git -C "$GNOROOT" reset -q --hard FETCH_HEAD

@@ -209,7 +209,7 @@ make -C tests transfer-tokens ENV=default
 
 ## Integration runner
 
-The repository-root Makefile (or `mise run integration`) runs the `.txtar`
+The repository-root Makefile (or `mise run integration --all`) runs the `.txtar`
 integration tests against the toolchain built by `make gno-setup`. Each run
 links `contract/` and the txtars into that toolchain checkout first:
 

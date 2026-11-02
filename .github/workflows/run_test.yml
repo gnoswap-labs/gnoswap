@@ -40,7 +40,11 @@ jobs:
 
       - name: Resolve gno master commit
         id: ref
-        run: echo "key=gno-toolchain-$(git ls-remote https://github.com/gnoswap-labs/gno.git refs/heads/master | cut -f1)" >> $GITHUB_OUTPUT
+        shell: bash
+        run: |
+          sha="$(git ls-remote https://github.com/gnoswap-labs/gno.git refs/heads/master | cut -f1)"
+          test -n "$sha"
+          echo "key=gno-toolchain-$sha" >> "$GITHUB_OUTPUT"
 
       - name: Restore gno toolchain
         id: cache

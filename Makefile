@@ -21,7 +21,7 @@ gno-setup:
 
 .PHONY: test
 test:
-	@$(GNO) test $(or $(PKG),./...) -v $(if $(RUN),-run $(RUN)) $(if $(COVER),-cover)
+	@$(GNO) test $(or $(PKG),./...) -v $(if $(RUN),-run $(RUN))
 
 .PHONY: integration-test
 integration-test:
