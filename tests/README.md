@@ -95,8 +95,8 @@ make -C tests remove-test
 
 This deletion is destructive to the working tree; preserve or commit any
 work first. Skip this target when you still need the test files. The normal
-integration setup has its own `setup.py --exclude-tests` option and does not
-make `remove-test` a prerequisite for running integration tests.
+integration setup (`scripts/gno.sh integration-link`) already leaves test
+files out, so `remove-test` is not a prerequisite for running integration tests.
 
 `faucet-admin` is not a faucet-service call. It broadcasts three native-coin
 transfers of `10,000,000,000ugnot` each, from `test1` to `ADDR_GNOSWAP`,
@@ -207,22 +207,22 @@ TRX, and USDT to `ADDR_TEST_ADMIN` and any non-empty `ADDR_USER_1` through
 make -C tests transfer-tokens ENV=default
 ```
 
-## Docker integration runner
+## Integration runner
 
-The repository-root Makefile provides a separate Docker-backed runner for the
-`.txtar` integration tests. It prepares the Gno checkout inside the container
-before running the selected test:
+The repository-root Makefile (or `mise run integration`) runs the `.txtar`
+integration tests against the toolchain built by `make gno-setup`. Each run
+links `contract/` and the txtars into that toolchain checkout first:
 
 ```bash
 # From the repository root.
-make integration-test-build
 make integration-test-list
 make integration-test-run TEST=pool_create_pool_and_mint
-make integration-test
+make integration-test             # add SKIP=1 to drop testdata-skip.txt entries
+make integration-test-docker      # same, inside the Docker image (TEST=<name> for one)
 ```
 
 `integration-test-run` accepts a converted test name without `.txtar` and runs
-one test. `integration-test` runs all discovered integration tests; the Make
-target does not pass the optional skip flag. The runner uses the integration
+one test. `integration-test` runs all discovered integration tests, skipping
+the ones in `testdata-skip.txt` only with `SKIP=1`. The runner uses the integration
 sources under `tests/integration/testdata/`; see
 [`bless/README.md`](integration/bless/README.md) for refreshing expectations.

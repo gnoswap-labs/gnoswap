@@ -21,3 +21,10 @@ run = "scripts/gno.sh test"
 
 [tasks.fmt]
 run = "find contract -name '*.gno' -exec gofumpt -w -l {} +"
+
+[tasks.integration]
+description = "Run integration txtars: mise run integration TEST | --all [--skip]"
+run = "scripts/gno.sh integration"
+
+[tasks.integration-list]
+run = "scripts/gno.sh integration-list"

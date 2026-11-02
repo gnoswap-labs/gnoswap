@@ -12,30 +12,13 @@ jobs:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Check out gno
-        uses: actions/checkout@v4
-        with:
-          repository: gnoswap-labs/gno
-          ref: master
-          path: ./gno
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25.x"
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install gno
-        run: |
-          cd gno
-          make install.gno
-
-      - name: Run setup.py
-        run: python3 setup.py --exclude-tests -w .
+      - name: Build gno toolchain
+        run: scripts/gno.sh setup
 
       - name: Run integration tests
-        run: ./scripts/all-integration-tests.sh ./gno/gno.land/pkg/integration . --skip
+        run: scripts/gno.sh integration --all --skip

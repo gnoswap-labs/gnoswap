@@ -1,9 +1,8 @@
-# Project Paths
 PROJECT_ROOT := $(shell pwd)
-TMP_PATH := $(PROJECT_ROOT)/tmp
-GNO_PATH := $(TMP_PATH)/gno
-GNOSWAP_PATH := $(TMP_PATH)/gnoswap
-SCRIPT := $(PROJECT_ROOT)/scripts/test.sh
+GNO := $(PROJECT_ROOT)/scripts/gno.sh
+GNO_REF ?= master
+GNO_TOOLCHAIN ?= $(HOME)/.cache/gno-toolchains/gnoswap-$(GNO_REF)
+export GNO_REF GNO_TOOLCHAIN
 
 include $(PROJECT_ROOT)/scripts/test_values.mk
 
@@ -11,79 +10,43 @@ include $(PROJECT_ROOT)/scripts/test_values.mk
 .PHONY: all
 all: help
 
-# 📌 Run tests on specific folders only
-.PHONY: test-folder
-test-folder: 
-	@if [ -z "$(FOLDER)" ]; then \
-		echo "❌ Error: Please specify a folder using 'make test-folder FOLDER=<path>'"; \
-		exit 1; \
-	else \
-		DEBUG=$(DEBUG) bash $(SCRIPT) test-folder $(FOLDER); \
-	fi
-
-# 📌 Reset the test environment
-.PHONY: reset
-reset: clean clone setup
-
-# 📌 Initial setup (Go installation & GnoVM setup)
-.PHONY: setup
-setup:
-	@DEBUG=$(DEBUG) bash $(SCRIPT) setup $(GNOSWAP_PATH)
-
-# 📌 Project Clone (GnoVM & Gnoswap)
-.PHONY: clone
-clone:
-	@DEBUG=$(DEBUG) bash $(SCRIPT) clone
-
-# 📌 Delete the temporary folder
-.PHONY: clean
-clean:
-	@rm -rf $(TMP_PATH)
-
-# 📌 find test files
-.PHONY: search
-search:
-	@DEBUG=$(DEBUG) bash $(SCRIPT) search $(FOLDER) $(EXTENSION)
-  
 .PHONY: fmt
 fmt:
 	find . -name "*.gno" -type f -exec gofumpt -w {} \;
 
-# 📌 Gno toolchain and package tests (see scripts/gno.sh, same flow as `mise run`)
+# 📌 Gno toolchain and tests (see scripts/gno.sh, same flow as `mise run`)
 .PHONY: gno-setup
 gno-setup:
-	@$(PROJECT_ROOT)/scripts/gno.sh setup
+	@$(GNO) setup
 
 .PHONY: test
 test:
-	@$(PROJECT_ROOT)/scripts/gno.sh test $(or $(PKG),./...) -v $(if $(RUN),-run $(RUN)) $(if $(COVER),-cover)
+	@$(GNO) test $(or $(PKG),./...) -v $(if $(RUN),-run $(RUN)) $(if $(COVER),-cover)
 
-# 📌 Integration test commands (Docker-based)
 .PHONY: integration-test
 integration-test:
-	@docker-compose run --rm test --all
+	@$(GNO) integration --all $(if $(SKIP),--skip)
 
 .PHONY: integration-test-list
 integration-test-list:
-	@python3 $(PROJECT_ROOT)/setup.py --list-tests
+	@$(GNO) integration-list $(if $(SKIP),--skip)
 
 .PHONY: integration-test-run
 integration-test-run:
-	@if [ -z "$(TEST)" ]; then \
-		echo "❌ Error: Please specify a test using 'make integration-test-run TEST=<name>'"; \
-		exit 1; \
-	else \
-		docker-compose run --rm test -t $(TEST); \
-	fi
+	@$(GNO) integration $(or $(TEST),$(error Please specify a test using 'make integration-test-run TEST=<name>'))
 
-.PHONY: integration-test-build
-integration-test-build:
-	@docker-compose build
+.PHONY: integration-test-docker
+integration-test-docker:
+	@docker-compose run --build --rm test $(or $(TEST),--all)
 
 # 📌 Gas report generation
 BLESS_DIR := $(PROJECT_ROOT)/tests/integration/bless
-GNO_INTEGRATION_DIR ?= $(HOME)/gno/gno.land/pkg/integration
+GNO_INTEGRATION_DIR ?= $(GNO_TOOLCHAIN)/src/gno.land/pkg/integration
 TXTAR_BLESS := $(shell go env GOPATH)/bin/txtar-bless
+
+.PHONY: integration-link
+integration-link:
+	@$(GNO) integration-link
 
 .PHONY: bless-install
 bless-install:
@@ -91,7 +54,7 @@ bless-install:
 	@echo "✅ Installed txtar-bless to $(TXTAR_BLESS)"
 
 .PHONY: gas-report
-gas-report:
+gas-report: integration-link
 	@if [ -z "$(TEST)" ]; then \
 		echo "❌ Error: Please specify a test using 'make gas-report TEST=<name>'"; \
 		echo "   Example: make gas-report TEST=uint256_gas_measurement"; \
@@ -101,7 +64,7 @@ gas-report:
 	fi
 
 .PHONY: gas-report-tsv
-gas-report-tsv:
+gas-report-tsv: integration-link
 	@if [ -z "$(TEST)" ]; then \
 		echo "❌ Error: Please specify a test using 'make gas-report-tsv TEST=<name>'"; \
 		echo "   Example: make gas-report-tsv TEST=uint256_gas_measurement"; \
@@ -120,19 +83,14 @@ help:
 	@echo "  make test PKG=<path>                  Run gno test for a package (module path or contract/ path)"
 	@echo "  make test PKG=<path> RUN=<name>       Run specific test function"
 	@echo ""
-	@echo "  make test-folder FOLDER=<path>        Run test for a specific folder"
-	@echo "  make setup                            Install dependencies (Go, etc.)"
-	@echo "  make clone                            Clone GnoVM and Gnoswap repositories"
 	@echo "  make help                             Show this help message"
-	@echo "  make clean                            Delete the temporary folder"
-	@echo "  make search                           Find test files"
-	@echo "  make reset                            Reset the test environment"
 	@echo "  make fmt                              Format all .gno files"
 	@echo ""
-	@echo "  make integration-test                 Run all integration tests"
-	@echo "  make integration-test-list            List available integration tests"
+	@echo "  make integration-test [SKIP=1]        Run all integration tests (SKIP=1 drops testdata-skip.txt)"
+	@echo "  make integration-test-list [SKIP=1]   List available integration tests"
 	@echo "  make integration-test-run TEST=<name> Run specific integration test"
-	@echo "  make integration-test-build           Build Docker image for integration tests"
+	@echo "  make integration-test-docker [TEST=]  Run integration tests in Docker"
+	@echo "  make integration-link                 Link contracts and txtars into the toolchain (for bless)"
 	@echo ""
 	@echo "  make bless-install                    Install bless tool to GOPATH/bin"
 	@echo "  make gas-report TEST=<name>           Generate gas measurement report (markdown)"

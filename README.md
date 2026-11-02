@@ -5,8 +5,7 @@ Smart contracts for GnoSwap AMM DEX on Gno.land.
 ## Prerequisites
 
 - Go 1.25+ and GNU Make, or [mise](https://mise.jdx.dev) (installs Go from `mise.toml`)
-- Python 3.11+ for the integration-test helpers
-- Docker and the `docker-compose` command for integration tests
+- Optional: Docker and `docker-compose` to run integration tests in a container
 
 ## Directory Structure
 
@@ -83,12 +82,20 @@ make test PKG=gno.land/r/gnoswap/scenario/router
 
 ### Run Integration Tests
 
+The integration node loads packages from the toolchain checkout, so these
+targets link `contract/` (without test files) and `tests/integration/testdata/`
+into it before running:
+
 ```bash
-make integration-test-build
-make integration-test-list
-make integration-test-run TEST=pool_create_pool_and_mint
-make integration-test
+make integration-test-list                           # or: mise run integration-list
+make integration-test-run TEST=pool_create_pool_and_mint   # or: mise run integration pool_create_pool_and_mint
+make integration-test SKIP=1                         # or: mise run integration --all --skip
+make integration-test-docker TEST=pool_create_pool_and_mint
 ```
+
+Nested txtar paths are flattened into names, e.g.
+`testdata/pool/create_pool_and_mint.txtar` becomes `pool_create_pool_and_mint`.
+`SKIP=1` / `--skip` drops the tests listed in `tests/integration/testdata-skip.txt`.
 
 ## Security
 

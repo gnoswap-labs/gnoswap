@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Builds a gno toolchain outside the repo and runs tests straight from contract/,
-# which is a gnowork.toml workspace. No files are linked into a gno checkout.
+# which is a gnowork.toml workspace. Package tests link nothing into the gno checkout.
 #
-#   scripts/gno.sh setup                 clone/update GNO_REPO at GNO_REF and build gno + gnokey
-#   scripts/gno.sh test [PKG] [flags]    PKG is a module path or a path under contract/ (default: all)
+#   scripts/gno.sh setup                       clone/update GNO_REPO at GNO_REF and build gno + gnokey
+#   scripts/gno.sh test [PKG] [flags]          PKG is a module path or a path under contract/ (default: all)
+#   scripts/gno.sh integration-list [--skip]   txtar names, --skip drops tests/integration/testdata-skip.txt
+#   scripts/gno.sh integration-link            link contracts and txtars into the toolchain checkout
+#   scripts/gno.sh integration TEST | --all [--skip]
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -17,7 +20,9 @@ export PATH="$GNO_TOOLCHAIN/bin:$PATH"
 setup() {
 	if [ -d "$GNOROOT/.git" ]; then
 		git -C "$GNOROOT" fetch -q --depth 1 origin "$GNO_REF"
-		git -C "$GNOROOT" checkout -q --detach FETCH_HEAD
+		# reset and clean also drop what integration-link left behind
+		git -C "$GNOROOT" reset -q --hard FETCH_HEAD
+		git -C "$GNOROOT" clean -fdq -- examples gno.land/pkg/integration/testdata
 	else
 		git clone -q --depth 1 --branch "$GNO_REF" "$GNO_REPO" "$GNOROOT"
 	fi
@@ -74,11 +79,60 @@ run_test() {
 	gno test "$pkg" "$@"
 }
 
+integration_list() {
+	local skip=""
+	[ "${1:-}" = "--skip" ] && skip="$ROOT/tests/integration/testdata-skip.txt"
+	(cd "$ROOT/tests/integration/testdata" && find . -name '*.txtar') |
+		sed -e 's|^\./||' -e 's|\.txtar$||' -e 's|/|_|g' | sort |
+		if [ -n "$skip" ]; then grep -vxF -f <(grep -v '^#' "$skip" | grep .); else cat; fi
+}
+
+# The integration node loads packages from GNOROOT/examples and txtars from its own testdata,
+# so these still have to be linked into the toolchain checkout. Test files are left out.
+integration_link() {
+	[ -d "$GNOROOT/.git" ] || { echo "gno toolchain missing, run setup first" >&2; exit 1; }
+	git -C "$GNOROOT" clean -fdq -- examples
+	local mod dir dest
+	while IFS= read -r mod; do
+		dir="$(dirname "$mod")"
+		dest="$GNOROOT/examples/$(sed -n 's|^module = "\(gno\.land/.*\)"$|\1|p' "$mod")"
+		[ "$dest" != "$GNOROOT/examples/" ] || continue
+		mkdir -p "$dest"
+		find "$dir" -maxdepth 1 -type f ! -name '*test.gno' -exec ln -s {} "$dest/" \;
+	done < <(find "$ROOT/contract" -name gnomod.toml)
+
+	local testdata="$GNOROOT/gno.land/pkg/integration/testdata" src
+	rm -rf "$testdata" && mkdir -p "$testdata"
+	(cd "$ROOT/tests/integration/testdata" && find . -name '*.txtar') | sed 's|^\./||' | while IFS= read -r src; do
+		ln -s "$ROOT/tests/integration/testdata/$src" "$testdata/$(echo "${src%.txtar}" | tr / _).txtar"
+	done
+	echo "linked contracts and txtars into $GNOROOT"
+}
+
+run_integration() {
+	[ $# -gt 0 ] || { echo "usage: $0 integration TEST | --all [--skip]" >&2; exit 1; }
+	integration_link
+	cd "$GNOROOT/gno.land/pkg/integration"
+	if [ "$1" != "--all" ]; then
+		go test -v . -run "TestTestdata/^$1\$"
+		return
+	fi
+	local t failed=()
+	while IFS= read -r t; do
+		echo "=== integration: $t"
+		go test -v . -run "TestTestdata/^$t\$" || failed+=("$t")
+	done < <(integration_list "${2:-}")
+	[ ${#failed[@]} -eq 0 ] || { printf 'FAILED: %s\n' "${failed[@]}" >&2; exit 1; }
+}
+
 case "${1:-}" in
 setup) setup ;;
 test) shift && run_test "$@" ;;
+integration-list) shift && integration_list "$@" ;;
+integration-link) integration_link ;;
+integration) shift && run_integration "$@" ;;
 *)
-	echo "usage: $0 setup | test [PKG] [gno test flags]" >&2
+	echo "usage: $0 setup | test [PKG] [flags] | integration-list [--skip] | integration-link | integration TEST|--all [--skip]" >&2
 	exit 1
 	;;
 esac
