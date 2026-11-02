@@ -92,13 +92,17 @@ integration_list() {
 integration_link() {
 	[ -d "$GNOROOT/.git" ] || { echo "gno toolchain missing, run setup first" >&2; exit 1; }
 	git -C "$GNOROOT" clean -fdq -- examples
-	local mod dir dest
+	# the whole subtree is linked, as txtars addpkg nested modules by their dir under the parent
+	# (e.g. scenario/upgrade/implements/v2_invalid/pool)
+	local mod dir dest f
 	while IFS= read -r mod; do
 		dir="$(dirname "$mod")"
 		dest="$GNOROOT/examples/$(sed -n 's|^module = "\(gno\.land/.*\)"$|\1|p' "$mod")"
 		[ "$dest" != "$GNOROOT/examples/" ] || continue
-		mkdir -p "$dest"
-		find "$dir" -maxdepth 1 -type f ! -name '*test.gno' -exec ln -s {} "$dest/" \;
+		while IFS= read -r f; do
+			mkdir -p "$(dirname "$dest/$f")"
+			ln -sf "$dir/$f" "$dest/$f"
+		done < <(cd "$dir" && find -L . -type f ! -name '*test.gno' | sed 's|^\./||')
 	done < <(find "$ROOT/contract" -name gnomod.toml)
 
 	local testdata="$GNOROOT/gno.land/pkg/integration/testdata" src
