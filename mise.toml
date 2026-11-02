@@ -1,0 +1,23 @@
+[tools]
+go = "1.25"
+gofumpt = "0.12.0"
+
+[env]
+# gno fork and ref the toolchain is built from. CI follows the same branch.
+GNO_REPO = "https://github.com/gnoswap-labs/gno"
+GNO_REF = "master"
+# the toolchain lives outside the repo so the contract/ workspace never sees a second copy of each package
+GNO_TOOLCHAIN = "{{env.HOME}}/.cache/gno-toolchains/gnoswap-{{env.GNO_REF}}"
+GNOROOT = "{{env.GNO_TOOLCHAIN}}/src"
+_.path = ["{{env.GNO_TOOLCHAIN}}/bin"]
+
+[tasks.setup]
+description = "Build gno and gnokey at GNO_REF and seed test deps"
+run = "scripts/gno.sh setup"
+
+[tasks.test]
+description = "Run gno test: mise run test [PKG] [flags], e.g. mise run test gno.land/r/gnoswap/pool/v1 -run TestSwap"
+run = "scripts/gno.sh test"
+
+[tasks.fmt]
+run = "find contract -name '*.gno' -exec gofumpt -w -l {} +"

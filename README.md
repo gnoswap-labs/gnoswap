@@ -4,8 +4,8 @@ Smart contracts for GnoSwap AMM DEX on Gno.land.
 
 ## Prerequisites
 
-- GNU Make and Python 3.11+ for the package-test wrapper
-- The [GnoSwap Gno fork](https://github.com/gnoswap-labs/gno), with its matching `gno` executable on `PATH`
+- Go 1.25+ and GNU Make, or [mise](https://mise.jdx.dev) (installs Go from `mise.toml`)
+- Python 3.11+ for the integration-test helpers
 - Docker and the `docker-compose` command for integration tests
 
 ## Directory Structure
@@ -52,21 +52,27 @@ gnoswap/
 
 ### Run Package Tests
 
-Run these commands from the repository root:
+Build the toolchain once (re-run to update it). It clones the
+[GnoSwap Gno fork](https://github.com/gnoswap-labs/gno) at `GNO_REF` (default
+`master`) into `~/.cache/gno-toolchains/gnoswap-<GNO_REF>` and builds `gno`
+and `gnokey` there:
+
+```bash
+make gno-setup        # or: mise run setup
+```
+
+Then run tests from the repository root. `contract/` is a `gnowork.toml`
+workspace, so `gno test` runs on this checkout directly:
 
 ```bash
 make test PKG=gno.land/r/gnoswap/pool/v1
 make test PKG=gno.land/r/gnoswap/pool/v1 RUN=TestCreatePool
+mise run test gno.land/r/gnoswap/pool/v1 -run TestCreatePool
+mise run test ./p/gnoswap/gnsmath/v1   # path relative to contract/
 ```
 
-`PKG` is required. The wrapper runs `setup.py` to link this checkout into
-`WORKDIR/gno/examples`, then invokes the `gno` executable on `PATH`. `WORKDIR`
-defaults to `tmp`; if its `gno` directory is absent, the wrapper clones the
-GnoSwap Gno fork there. To use an existing toolchain checkout:
-
-```bash
-make test WORKDIR=/path/to/toolchain-parent PKG=gno.land/p/gnoswap/gnsmath/v1
-```
+`PKG` is a module path or a path under `contract/`; without it every package
+is tested.
 
 ### Run Scenario Tests
 

@@ -49,25 +49,14 @@ search:
 fmt:
 	find . -name "*.gno" -type f -exec gofumpt -w {} \;
 
-# 📌 Gno test commands (quick test runner)
-# WORKDIR: Parent directory containing gno repo (default: ../)
-WORKDIR ?= tmp
+# 📌 Gno toolchain and package tests (see scripts/gno.sh, same flow as `mise run`)
+.PHONY: gno-setup
+gno-setup:
+	@$(PROJECT_ROOT)/scripts/gno.sh setup
 
 .PHONY: test
 test:
-	@if [ -z "$(PKG)" ]; then \
-		echo "❌ Error: Please specify a package using 'make test PKG=<path>'"; \
-		echo "   Example: make test PKG=gno.land/r/gnoswap/pool/v1"; \
-		echo "   Example: make test PKG=gno.land/r/gnoswap/pool/v1 RUN=TestCreatePool"; \
-		exit 1; \
-	fi
-	@if [ ! -d "$(WORKDIR)/gno" ]; then \
-		echo "📦 gno repository not found. Cloning..."; \
-		git clone git@github.com:gnoswap-labs/gno.git $(WORKDIR)/gno; \
-	fi
-	@python3 $(PROJECT_ROOT)/setup.py -w $(WORKDIR)
-	@cd $(WORKDIR)/gno/examples && \
-		gno test -v $(if $(RUN),-run $(RUN)) $(if $(COVER),-cover) ./$(PKG)
+	@$(PROJECT_ROOT)/scripts/gno.sh test $(or $(PKG),./...) -v $(if $(RUN),-run $(RUN)) $(if $(COVER),-cover)
 
 # 📌 Integration test commands (Docker-based)
 .PHONY: integration-test
@@ -127,9 +116,9 @@ gas-report-tsv:
 help:
 	@echo "🔹 Available commands:"
 	@echo ""
-	@echo "  make test PKG=<path>                  Run gno test for a package"
+	@echo "  make gno-setup                        Build the gno toolchain into ~/.cache/gno-toolchains"
+	@echo "  make test PKG=<path>                  Run gno test for a package (module path or contract/ path)"
 	@echo "  make test PKG=<path> RUN=<name>       Run specific test function"
-	@echo "  make test WORKDIR=<path> PKG=<path>   Run gno test for a package in a specific work directory"
 	@echo ""
 	@echo "  make test-folder FOLDER=<path>        Run test for a specific folder"
 	@echo "  make setup                            Install dependencies (Go, etc.)"

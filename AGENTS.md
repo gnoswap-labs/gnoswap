@@ -67,21 +67,20 @@ tests/
 ## Commands
 
 ```bash
-# Run these commands from the repository/worktree root, not contract/.
-# Prerequisites: Python 3 and a gno binary built from the matching
-# gnoswap-labs/gno checkout. make test clones WORKDIR/gno if absent,
-# but does not build/install the CLI.
-python3 setup.py -w tmp                 # Relink an existing tmp/gno checkout
-python3 setup.py --list-tests           # List integration txtar names
+# Run these commands from the repository/worktree root.
+# Prerequisites: Go 1.25+ (mise installs it from mise.toml). The toolchain is a
+# gnoswap-labs/gno checkout built under ~/.cache/gno-toolchains/gnoswap-<GNO_REF>.
+make gno-setup                          # or: mise run setup (re-run to update GNO_REF)
 
 # Whole-repository formatting (includes temporary checkouts and fixtures).
 # Do not run this for a documentation-only or otherwise narrowly scoped edit.
 make fmt                               # gofumpt over all .gno files
 
-# Package tests (Makefile runs setup.py, then gno test under <workdir>/gno/examples)
+# Package tests (gno test runs directly in the contract/ gnowork.toml workspace)
 make test PKG=gno.land/r/gnoswap/pool/v1
 make test PKG=gno.land/r/gnoswap/pool/v1 RUN=TestCreatePool
-make test WORKDIR=tmp PKG=gno.land/p/gnoswap/gnsmath/v1
+mise run test gno.land/r/gnoswap/scenario/pool -run TestX
+mise run test ./p/gnoswap/gnsmath/v1    # paths are relative to contract/
 
 # Integration tests
 make integration-test
@@ -91,8 +90,9 @@ make integration-test-build
 ```
 
 - The current `gno` CLI has no `build` subcommand. Use the repository's `make test` wrapper for compilation and runtime checks.
-- `WORKDIR` defaults to `tmp`. Match the installed CLI to that checkout; `make -C tmp/gno install.gno` builds/installs it when needed.
-- `setup.py -w <workdir>` replaces linked module directories under `<workdir>/gno/examples/gno.land` and links integration resources. Always specify the workdir; the script's standalone default is the home directory.
+- `scripts/gno.sh` backs both `make` and `mise`. `PKG` accepts a module path (resolved through `gnomod.toml`, so `gno.land/r/gnoswap/scenario/*` maps to `contract/r/scenario/*`) or a path under `contract/`; it defaults to `./...`. Override `GNO_REPO`/`GNO_REF` to test against another fork or ref.
+- Test deps come from the toolchain's `examples/` copied into its `GNOHOME/pkg/mod`; nothing is downloaded from a chain and nothing is linked into a gno checkout.
+- `setup.py -w <workdir>` is now only needed for integration tests: it links integration resources (and modules) into `<workdir>/gno`. Always specify the workdir; the script's standalone default is the home directory.
 - `make setup`, `make clone`, and `make test-folder` use the legacy `scripts/test.sh` workflow, not the quick package-test wrapper. That workflow expects `tmp/gnoswap`, clones upstream `gnolang/gno`, patches a legacy stdlib path, and the folder runner temporarily renames test files. Do not use it as routine worktree setup or verification.
 - `RUN=` maps to `gno test -run`; use regexes for subtests. Integration `TEST=` names come from `make integration-test-list`; the integration targets invoke `docker-compose`.
 - Filetests and integration txtar cases are coarse-grained. Do not update golden/bless outputs without reviewing diffs.
