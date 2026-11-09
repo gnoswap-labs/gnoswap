@@ -1,6 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    ":approveMajorUpdates"
+  ],
+  "automerge": false,
+  "prConcurrentLimit": 3,
+  "addLabels": [
+    "renovate"
   ]
 }
