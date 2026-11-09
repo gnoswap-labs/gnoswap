@@ -8,5 +8,18 @@
   "prConcurrentLimit": 3,
   "addLabels": [
     "renovate"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "action"
+      ],
+      "groupName": "GitHub Actions",
+      "groupSlug": "github-actions",
+      "separateMajorMinor": true
+    }
   ]
 }
