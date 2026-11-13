@@ -1,6 +1,7 @@
 package protocol_fee
 
 import (
+	"chain"
 	"testing"
 
 	prbac "gno.land/p/gnoswap/rbac/v1"
@@ -8,6 +9,7 @@ import (
 	uassert "gno.land/p/nt/uassert/v0"
 
 	"gno.land/r/gnoswap/access/v1"
+	"gno.land/r/gnoswap/rbac/v1"
 )
 
 func TestAssertIsAdminOrGovStaker(cur realm, t *testing.T) {
@@ -84,7 +86,20 @@ func TestAssertIsAdminOrGovStaker(cur realm, t *testing.T) {
 	}
 }
 
-func TestAssertIsPoolOrPositionOrRouterOrStaker(cur realm, t *testing.T) {
+func TestAssertIsAuthorizedFeeCaller(cur realm, t *testing.T) {
+	orderDCAAddr := chain.PackageAddress("gno.land/r/gnoswap/order/dca")
+	orderLimitAddr := chain.PackageAddress("gno.land/r/gnoswap/order/limit")
+
+	// Order roles are not system roles; register them through RBAC as admin.
+	if _, ok := access.GetAddress(roleOrderDCA); !ok {
+		testing.SetRealm(adminRealm)
+		rbac.RegisterRole(cross(cur), roleOrderDCA, orderDCAAddr)
+	}
+	if _, ok := access.GetAddress(roleOrderLimit); !ok {
+		testing.SetRealm(adminRealm)
+		rbac.RegisterRole(cross(cur), roleOrderLimit, orderLimitAddr)
+	}
+
 	tests := []struct {
 		name        string
 		setupFn     func() address
@@ -122,6 +137,28 @@ func TestAssertIsPoolOrPositionOrRouterOrStaker(cur realm, t *testing.T) {
 				return addr
 			},
 			shouldPanic: false,
+		},
+		{
+			name: "success - order dca caller",
+			setupFn: func() address {
+				return orderDCAAddr
+			},
+			shouldPanic: false,
+		},
+		{
+			name: "success - order limit caller",
+			setupFn: func() address {
+				return orderLimitAddr
+			},
+			shouldPanic: false,
+		},
+		{
+			name: "fail - unregistered order role",
+			setupFn: func() address {
+				return chain.PackageAddress("gno.land/r/gnoswap/order/unregistered")
+			},
+			shouldPanic: true,
+			panicMsg:    "unauthorized: caller",
 		},
 		{
 			name: "fail - unauthorized caller",
@@ -169,7 +206,7 @@ func TestAssertIsPoolOrPositionOrRouterOrStaker(cur realm, t *testing.T) {
 				}()
 			}
 
-			assertIsPoolOrPositionOrRouterOrStaker(caller)
+			assertIsAuthorizedFeeCaller(caller)
 		})
 	}
 }
