@@ -1,25 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    ":approveMajorUpdates"
-  ],
-  "automerge": false,
-  "prConcurrentLimit": 3,
-  "addLabels": [
-    "renovate"
-  ],
-  "packageRules": [
-    {
-      "matchManagers": [
-        "github-actions"
-      ],
-      "matchDepTypes": [
-        "action"
-      ],
-      "groupName": "GitHub Actions",
-      "groupSlug": "github-actions",
-      "separateMajorMinor": true
-    }
+    "github>onbloc/renovate-config",
+    "github>onbloc/renovate-config:go"
   ]
 }
