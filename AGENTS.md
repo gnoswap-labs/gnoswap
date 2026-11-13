@@ -13,7 +13,7 @@ GnoSwap is a concentrated liquidity AMM (Uniswap V3 fork) running on GnoVM. Pool
 - **Math**: `uint256`/`int256`, `gnsmath` (AMM calculations)
 - **Storage**: Write-authorized KV stores, proxy/implementation pattern
 - **Access**: RBAC with 2-step ownership
-- **Tests**: Gno unit/file tests plus Docker-backed integration txtar tests
+- **Tests**: Gno unit/file tests plus integration txtar tests, all driven by `scripts/gno.sh` (make or mise)
 
 ## Project Structure
 
@@ -52,7 +52,7 @@ contract/
 └── r/scenario/          # Scenario/filetest packages
 
 tests/
-├── integration/         # Docker/Gno integration txtar tests and bless tooling
+├── integration/         # Gno integration txtar tests and bless tooling
 ├── deploy/              # Deployment code generation helpers
 └── scripts/             # Test/deploy helper make fragments
 ```
@@ -67,36 +67,35 @@ tests/
 ## Commands
 
 ```bash
-# Run these commands from the repository/worktree root, not contract/.
-# Prerequisites: Python 3 and a gno binary built from the matching
-# gnoswap-labs/gno checkout. make test clones WORKDIR/gno if absent,
-# but does not build/install the CLI.
-python3 setup.py -w tmp                 # Relink an existing tmp/gno checkout
-python3 setup.py --list-tests           # List integration txtar names
+# Run these commands from the repository/worktree root.
+# Prerequisites: Go 1.25+ (mise installs it from mise.toml). The toolchain is a
+# gnoswap-labs/gno checkout built under ~/.cache/gno-toolchains/gnoswap-<GNO_REF>.
+make gno-setup                          # or: mise run setup (re-run to update GNO_REF)
 
 # Whole-repository formatting (includes temporary checkouts and fixtures).
 # Do not run this for a documentation-only or otherwise narrowly scoped edit.
 make fmt                               # gofumpt over all .gno files
 
-# Package tests (Makefile runs setup.py, then gno test under <workdir>/gno/examples)
+# Package tests (gno test runs directly in the contract/ gnowork.toml workspace)
 make test PKG=gno.land/r/gnoswap/pool/v1
 make test PKG=gno.land/r/gnoswap/pool/v1 RUN=TestCreatePool
-make test WORKDIR=tmp PKG=gno.land/p/gnoswap/gnsmath/v1
+mise run test gno.land/r/gnoswap/scenario/pool -run TestX
+mise run test ./p/gnoswap/gnsmath/v1    # paths are relative to contract/
 
 # Integration tests
-make integration-test
-make integration-test-list
+make integration-test-list              # or: mise run integration-list
 make integration-test-run TEST=pool_create_pool_and_mint
-make integration-test-build
+make integration-test SKIP=1             # or: mise run integration --all --skip
+make integration-test-docker TEST=pool_create_pool_and_mint
 ```
 
 - The current `gno` CLI has no `build` subcommand. Use the repository's `make test` wrapper for compilation and runtime checks.
-- `WORKDIR` defaults to `tmp`. Match the installed CLI to that checkout; `make -C tmp/gno install.gno` builds/installs it when needed.
-- `setup.py -w <workdir>` replaces linked module directories under `<workdir>/gno/examples/gno.land` and links integration resources. Always specify the workdir; the script's standalone default is the home directory.
-- `make setup`, `make clone`, and `make test-folder` use the legacy `scripts/test.sh` workflow, not the quick package-test wrapper. That workflow expects `tmp/gnoswap`, clones upstream `gnolang/gno`, patches a legacy stdlib path, and the folder runner temporarily renames test files. Do not use it as routine worktree setup or verification.
-- `RUN=` maps to `gno test -run`; use regexes for subtests. Integration `TEST=` names come from `make integration-test-list`; the integration targets invoke `docker-compose`.
+- `scripts/gno.sh` backs both `make` and `mise`. `PKG` accepts a module path (resolved through `gnomod.toml`, so `gno.land/r/gnoswap/scenario/*` maps to `contract/r/scenario/*`) or a path under `contract/`; it defaults to `./...`. Override `GNO_REPO`/`GNO_REF` to test against another fork or ref.
+- Test deps come from the toolchain's `examples/` copied into its `GNOHOME/pkg/mod`; nothing is downloaded from a chain and nothing is linked into a gno checkout.
+- Integration tests are the only flow that writes into the toolchain checkout: `scripts/gno.sh integration-link` resets `examples/` with `git clean`, symlinks every `contract/` module (without `*test.gno`) into `examples/gno.land/...`, and replaces `gno.land/pkg/integration/testdata` with flattened txtar symlinks. `make gas-report` and bless need this link step first (`make integration-link`).
+- `RUN=` maps to `gno test -run`; use regexes for subtests. Integration `TEST=` names come from `make integration-test-list`; only `integration-test-docker` uses `docker-compose`.
 - Filetests and integration txtar cases are coarse-grained. Do not update golden/bless outputs without reviewing diffs.
-- Package-test CI clones `gnoswap-labs/gno` master, builds the CLI, runs `setup.py`, updates fuzz seeds, and executes packages via `.github/scripts/run_tests.rb`. The workflow follows a branch, not a fixed toolchain revision.
+- Package-test CI builds the toolchain with `scripts/gno.sh setup` (cached by `gnoswap-labs/gno` master commit), updates fuzz seeds, and runs `scripts/gno.sh test <module>` per matrix entry. Integration CI runs `scripts/gno.sh integration --all --skip`. Both follow a branch, not a fixed toolchain revision.
 
 ## Conventions & Rules
 
