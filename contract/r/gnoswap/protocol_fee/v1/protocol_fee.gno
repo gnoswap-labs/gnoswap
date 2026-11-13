@@ -223,7 +223,7 @@ func (pf *protocolFeeV1) SetGovStakerPct(_ int, rlm realm, pct int64) {
 // Returns:
 //   - err: nil on success; errSpoofedRealm for a spoofed-realm call; errProtocolFeeHalted when protocol-fee collection is halted
 //
-// Only callable by pool, position, router or staker contracts.
+// Only callable by pool, position, router, staker, or order (DCA/limit) contracts.
 // Caller must approve the protocol fee realm for at least amount before calling.
 // Note: Accumulated fees are distributed when DistributeProtocolFee is called.
 func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, amount int64) error {
@@ -237,7 +237,7 @@ func (pf *protocolFeeV1) AddToProtocolFee(_ int, rlm realm, tokenPath string, am
 
 	prev := rlm.Previous()
 	caller := prev.Address()
-	assertIsPoolOrPositionOrRouterOrStaker(caller)
+	assertIsAuthorizedFeeCaller(caller)
 
 	if amount < 0 {
 		panic(makeErrorWithDetail(
