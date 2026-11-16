@@ -7,24 +7,23 @@ expectations after each command.
 
 ## Prerequisites and test names
 
-The integration runner lives in a Gno checkout, not in this repository. From
-the GnoSwap repository root, set up a Gno checkout under the selected work
-directory first:
+The integration runner lives in the Gno toolchain checkout, not in this
+repository. From the GnoSwap repository root, build the toolchain and link this
+repository's contracts and txtars into it first:
 
 ```bash
-# `tmp/gno` must be an existing Gno checkout.
-python3 setup.py -w tmp
+make gno-setup           # once; builds ~/.cache/gno-toolchains/gnoswap-master
+make integration-link    # re-run after adding, moving, or removing files
 
 # Names are printed without the .txtar suffix. Nested directories are flattened
 # (for example, testdata/pool/create_pool_and_mint.txtar becomes
 # pool_create_pool_and_mint.txtar in the Gno integration directory).
-python3 setup.py --list-tests
+make integration-test-list
 ```
 
-`setup.py -w <workdir>` links this repository's contract modules into
-`<workdir>/gno/examples/gno.land` and the integration test resources into
-`<workdir>/gno/gno.land/pkg/integration`. If the Gno checkout is elsewhere,
-replace `tmp` with its parent work-directory path.
+`integration-link` links every `contract/` module (without test files) into
+`<toolchain>/src/examples/gno.land` and the txtars into
+`<toolchain>/src/gno.land/pkg/integration/testdata`.
 
 ## Blessing a test
 
@@ -34,14 +33,14 @@ package directory explicitly:
 ```bash
 go run ./tests/integration/bless \
   -test pool_create_pool_and_mint \
-  -integration-dir "$PWD/tmp/gno/gno.land/pkg/integration"
+  -integration-dir ~/.cache/gno-toolchains/gnoswap-master/src/gno.land/pkg/integration
 ```
 
 The tool invokes the equivalent of `go test -v . -run Testdata/<name>` with its
 working directory set to `-integration-dir`. The selected file is therefore
 resolved as `<integration-dir>/testdata/<name>.txtar`.
 
-When `setup.py` has linked the test files, those files are symlinks back to
+When `integration-link` has linked the test files, those files are symlinks back to
 this repository's `tests/integration/testdata/` tree. The tool resolves the
 symlink before writing, so normal blessing updates the source `.txtar` in this
 repository rather than only changing the Gno checkout. Review the resulting
@@ -51,7 +50,7 @@ diff before committing it.
 
 | Flag | Description |
 | ---- | ----------- |
-| `-test NAME` | Required test name without the `.txtar` extension. Use `python3 setup.py --list-tests` to find converted names. |
+| `-test NAME` | Required test name without the `.txtar` extension. Use `make integration-test-list` to find converted names. |
 | `-integration-dir PATH` | Integration package directory containing `testdata/`; defaults to `gno.land/pkg/integration` relative to the process's current directory. |
 | `-mask SPEC` | Replaces the default field-mask list. Use comma-separated one- or two-segment fields, optionally with a replacement regex (`key`, `parent.child`, or `key=regex`). The default is `timestamp,bytes_delta,fee_delta.amount,currentTime,currentHeight,observationTimestamp`. Addresses and numeric values on recognized metric lines are masked independently of this list. |
 | `-dry-run` | Print the refreshed script to stdout instead of leaving the source file updated. Existing expectations are sanitized temporarily and restored before the command exits. |
@@ -85,21 +84,16 @@ The root Makefile can build the tool into `$(go env GOPATH)/bin`:
 make bless-install
 "$(go env GOPATH)/bin/txtar-bless" \
   -test pool_create_pool_and_mint \
-  -integration-dir "$PWD/tmp/gno/gno.land/pkg/integration"
+  -integration-dir ~/.cache/gno-toolchains/gnoswap-master/src/gno.land/pkg/integration
 ```
 
-The root Makefile's report wrappers use the same binary and default the
-integration directory to `$HOME/gno/gno.land/pkg/integration` (override it when
-using `tmp`):
+The root Makefile's report wrappers use the same binary, run
+`integration-link` first, and default the integration directory to the toolchain
+checkout (`GNO_INTEGRATION_DIR` overrides it):
 
 ```bash
-make gas-report \
-  TEST=base_uint256_gas_measurement \
-  GNO_INTEGRATION_DIR="$PWD/tmp/gno/gno.land/pkg/integration"
-
-make gas-report-tsv \
-  TEST=base_uint256_gas_measurement \
-  GNO_INTEGRATION_DIR="$PWD/tmp/gno/gno.land/pkg/integration"
+make gas-report TEST=base_uint256_gas_measurement
+make gas-report-tsv TEST=base_uint256_gas_measurement
 ```
 
 `gas-report` prints markdown. `gas-report-tsv` writes a file named

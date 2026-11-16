@@ -32,28 +32,36 @@ jobs:
 
   setup-gno:
     runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.ref.outputs.key }}
     steps:
-      - name: Check out gno (master)
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve gno master commit
+        id: ref
+        shell: bash
         run: |
-          git clone --depth 1 https://github.com/gnoswap-labs/gno.git gno -b master
+          sha="$(git ls-remote https://github.com/gnoswap-labs/gno.git refs/heads/master | cut -f1)"
+          test -n "$sha"
+          echo "key=gno-toolchain-$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Restore gno toolchain
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/gno-toolchains
+          key: ${{ steps.ref.outputs.key }}
 
       - name: Set up Go
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
-          cache-dependency-path: gno/go.sum
+          go-version: "1.25.x"
 
-      - name: Build gno
-        run: |
-          cd gno
-          make install.gno
-
-      - name: Upload gno binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: gno-bin
-          path: ~/go/bin/gno
-          retention-days: 1
+      - name: Build gno toolchain
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: scripts/gno.sh setup
 
   test-gnoswap:
     needs: [generate-matrix, setup-gno]
@@ -66,27 +74,12 @@ jobs:
       - name: Check out gnoswap repo
         uses: actions/checkout@v4
 
-      - name: Check out gno (master)
-        run: |
-          git clone --depth 1 https://github.com/gnoswap-labs/gno.git gno -b master
-
-      - name: Link contracts into gno/examples/gno.land (setup.py, same as Makefile)
-        run: python3 setup.py -w .
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Restore gno toolchain
+        uses: actions/cache/restore@v4
         with:
-          go-version: "1.24.x"
-          cache-dependency-path: gno/go.sum
-
-      - name: Download gno binary
-        uses: actions/download-artifact@v4
-        with:
-          name: gno-bin
-          path: ~/go/bin
-
-      - name: Make gno binary executable
-        run: chmod +x ~/go/bin/gno
+          path: ~/.cache/gno-toolchains
+          key: ${{ needs.setup-gno.outputs.cache-key }}
+          fail-on-cache-miss: true
 
       - name: Update fuzz test seed
         run: |
@@ -94,8 +87,4 @@ jobs:
           .github/scripts/update_fuzz_seed.sh
 
       - name: "Run tests for ${{ matrix.name }}"
-        run: |
-          chmod +x .github/scripts/run_tests.rb
-          ruby .github/scripts/run_tests.rb \
-            -p "${{ matrix.pkg }}" \
-            -r "/home/runner/work/gnoswap/gnoswap/gno"
+        run: scripts/gno.sh test "${{ matrix.pkg }}" -v
